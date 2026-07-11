@@ -52,9 +52,11 @@ const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick, isSignUp
 
 interface LoginClientProps {
   error?: string;
+  /** Validated by the login page (resolveCallbackUrl) before being passed in. */
+  callbackUrl?: string;
 }
 
-const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
+const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [payload, setPayload] = useState<Record<string, string>>({
     email: '',
@@ -157,7 +159,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
     } else {
       signIn('credentials', {
         payload: JSON.stringify(payload),
-        callbackUrl: '/ade',
+        callbackUrl,
         redirect: true,
       }).finally(() => setSignInEnabled(true));
     }
@@ -178,7 +180,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error }) => {
           return;
         }
       }
-      await signIn(provider, { callbackUrl: '/ade' });
+      await signIn(provider, { callbackUrl });
     } catch (error) {
       console.error('SSO sign-in error:', error);
       setIsSSOLoading(false);

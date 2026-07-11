@@ -38,6 +38,17 @@ export function clearSessionCookie(response: NextResponse, cookieName: string): 
     maxAge: 0,
     path: '/',
   });
+
+  // Session cookies may be scoped to NEXTAUTH_COOKIE_DOMAIN (shared across
+  // subdomains); a host-only expiry does not remove those. Appended as a raw
+  // header because response.cookies keys by name and would drop the first set.
+  const domain = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  if (domain && process.env.NODE_ENV === 'production') {
+    response.headers.append(
+      'Set-Cookie',
+      `${cookieName}=; Max-Age=0; Path=/; Domain=${domain}; Secure; HttpOnly; SameSite=Lax`,
+    );
+  }
 }
 
 /**

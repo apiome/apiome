@@ -103,6 +103,14 @@ services:
     build:
       context: .
       dockerfile: private-suite/suite/designer/Dockerfile
+      # NEXT_PUBLIC_* values are baked into the Next.js bundle at build time,
+      # so they must be passed here as build args — the runtime environment
+      # copies below do not affect the compiled client code.
+      args:
+        NEXT_PUBLIC_MAIN_APP_URL: https://${DEPLOY_APP_DOMAIN:-app.apiome.app}
+        NEXT_PUBLIC_STUDIO_URL: https://${DEPLOY_STUDIO_DOMAIN:?set DEPLOY_STUDIO_DOMAIN}
+        NEXT_PUBLIC_API_URL: https://${DEPLOY_API_DOMAIN}
+        NEXT_PUBLIC_REST_API_BASE_URL: http://rest:8000/v1
     environment:
       NODE_ENV: production
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?set NEXTAUTH_SECRET in your .env}

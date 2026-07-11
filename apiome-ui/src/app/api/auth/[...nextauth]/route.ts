@@ -13,9 +13,16 @@ import {
   checkLinkingIntent,
   ICredentials,
 } from '../../../../../lib/auth/credentials';
+import {
+  buildAuthCookieOverrides,
+  isAllowedCallbackUrl,
+} from '../../../../../lib/auth/cookie-options';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
+  // Scope session cookies to NEXTAUTH_COOKIE_DOMAIN so subdomain apps
+  // (e.g. the studio) can share the login session.
+  ...buildAuthCookieOverrides(),
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID as string,
@@ -100,6 +107,18 @@ export const authOptions: NextAuthOptions = {
       }
 
       return `/login?error=Your login attempt failed, provider "${loginProvider}" is not yet supported`;
+    },
+    async redirect({ url, baseUrl }) {
+      // Default NextAuth behaviour only allows same-origin callback URLs.
+      // Also allow subdomains covered by the shared session cookie so login
+      // can return to e.g. the studio app.
+      if (url.startsWith('/') && !url.startsWith('//')) {
+        return `${baseUrl}${url}`;
+      }
+      if (isAllowedCallbackUrl(url, baseUrl)) {
+        return url;
+      }
+      return baseUrl;
     },
     // async redirect({ url, baseUrl }) {
     //     // Override the login, redirecting to the login page if properly set.
