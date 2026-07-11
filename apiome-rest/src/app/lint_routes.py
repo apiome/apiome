@@ -16,9 +16,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
+from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
-from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors
+from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
+    CustomRuleOut,
+    CustomRulesValidateRequest,
+    CustomRulesValidateResponse,
+    CustomRuleThenOut,
     LintCategoryScoreOut,
     LintFindingOut,
     LintReportResponse,
@@ -59,6 +64,61 @@ async def list_lint_rules(
         for d in descriptors
     ]
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)
+
+
+@rules_router.post(
+    "/custom-rules/validate",
+    response_model=CustomRulesValidateResponse,
+    responses={
+        422: {
+            "description": "Malformed guide: `detail.message` explains the problem and "
+            "`detail.pointer` points at the offending YAML node (e.g. "
+            "`rules.my-rule.then.functionOptions.match`)."
+        }
+    },
+)
+async def validate_custom_rules(
+    payload: CustomRulesValidateRequest,
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> CustomRulesValidateResponse:
+    """
+    Strictly validate a custom-rule style guide (GOV-1.3, #4429).
+
+    Accepts the Spectral-compatible subset DSL: a YAML document with `rules.<id>:
+    {description, severity, given, then}` where `then` uses the core functions `pattern`,
+    `casing`, `enumeration`, `truthy`, `defined`, `undefined`, and `length`. On success the
+    parsed rules are echoed back (the shape stored in `style_guide_rules.custom_def`).
+    A malformed guide returns HTTP 422 whose `detail` carries a `message` and a `pointer`
+    to the offending definition. Custom rule ids may not shadow built-in rule ids.
+    """
+    try:
+        ruleset = parse_style_guide_yaml(
+            payload.yaml, reserved_rule_ids=frozenset(builtin_rule_ids())
+        )
+    except CustomRuleValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": exc.message, "pointer": exc.pointer},
+        ) from exc
+
+    rules = [
+        CustomRuleOut(
+            rule_id=rule.rule_id,
+            description=rule.description,
+            severity=rule.severity,
+            given=list(rule.given),
+            then=[
+                CustomRuleThenOut(
+                    field=t.field,
+                    function=t.function,
+                    function_options=dict(t.function_options),
+                )
+                for t in rule.then
+            ],
+        )
+        for rule in ruleset.rules
+    ]
+    return CustomRulesValidateResponse(valid=True, count=len(rules), rules=rules)
 
 
 def build_lint_report(
