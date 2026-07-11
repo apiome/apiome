@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.115.0] - 2026-07-11
+
+### Added
+- **Style-guide engine integration & score mapping (#4430, GOV-1.4)** — assigned style guides
+  (GOV-1.1–1.3) now have runtime effect: every lint entry point (editor lint, catalog lint,
+  import scoring, conversion scoring, publish precheck) resolves and applies the governing
+  guide. See `docs/guide/lint-and-quality.md`.
+  - New module `app.style_guide_engine`: resolves the guide **project → tenant → default**,
+    compiles rule rows (enable/disable, severity overrides, GOV-1.3 custom rules) into a
+    content-hash-cached `CompiledStyleGuide`, and re-scores engine results through the shared
+    severity-weighted formula (`error` ≫ `warning` ≫ `info`, per-rule capped). Under the
+    default guide, scores/grades/fingerprints are byte-identical to the pre-guide engine —
+    pinned by a new grade-stability regression corpus. Findings from rules outside the GOV-1.2
+    registry (external-tool extras) pass through ungoverned. Resolution is strictly
+    best-effort: any fault degrades to the in-code "Apiome Recommended" defaults.
+  - New `db` accessors `get_assigned_style_guide` (single-query precedence chain, tenant-scoped)
+    and `get_style_guide_rules` (V159 rows for compilation).
+  - `GET …/lint` responses now report the applied guide (`guideId` / `guideName` /
+    `guideSource`).
+  - Publish prechecks compute the guide's error-level violation count and return it on a new
+    `PublishPrecheckOutcome` — the signal the GOV-2.5 publish gate will enforce (advisory for
+    now; a lint fault never blocks publishing).
+
 ## [1.114.0] - 2026-07-11
 
 ### Added

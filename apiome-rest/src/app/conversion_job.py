@@ -596,13 +596,17 @@ class DbLintScorer:
         try:
             from .compatibility_engine import openapi_for_revision
             from .database import db
-            from .schema_lint import lint_openapi_spec
+            from .style_guide_engine import guided_lint_openapi_spec
 
             version = db.get_version_by_id(version_record_id, tenant_id)
             if not version:
                 return None
             spec = openapi_for_revision(version, tenant_slug, tenant_id)
-            result = lint_openapi_spec(spec)
+            # GOV-1.4: score under the revision's resolved style guide (project → tenant →
+            # default), matching the import path's guided capture.
+            result, _guide = guided_lint_openapi_spec(
+                spec, tenant_id, project_id=str(version.get("project_id") or "") or None
+            )
             db.set_version_quality_score(
                 version_record_id, tenant_id, result.score, result.grade, result.report_fingerprint
             )

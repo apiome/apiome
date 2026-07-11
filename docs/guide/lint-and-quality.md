@@ -61,6 +61,27 @@ Content-Type: application/json
 Strictly validates a [Spectral-compatible custom-rule guide](custom-rules.md) and echoes the
 parsed rules; a malformed guide returns HTTP 422 with a pointer to the offending YAML node.
 
+## Style guides govern every lint run
+
+Every lint entry point — the editor/CLI lint above, the catalog item lint, the quality score
+captured at import and conversion time, and the publish precheck — scores under the **style
+guide** resolved for the run (GOV-1.4):
+
+1. a guide **assigned to the project** wins, else
+2. the guide **assigned tenant-wide**, else
+3. the tenant's **default** guide (every tenant is seeded with the read-only
+   *Apiome Recommended* guide, which mirrors the shipped rule defaults).
+
+The applied guide governs which registered rules count and at what severity: findings for rules
+the guide disables (or omits) are dropped, and each kept finding is weighted by the guide's
+severity (`error` ≫ `warning` ≫ `info`) in the same capped scoring formula as always — so with
+nothing assigned, scores and grades are exactly what they were before style guides existed.
+Custom rules in the guide are evaluated against the raw document and their findings merged.
+The lint response reports the applied guide in `guideId` / `guideName` / `guideSource`
+(`builtin`, `custom`, or `fallback` for the in-code defaults). At publish time the precheck also
+computes the guide's **error-level violation count**, the signal the upcoming publish quality
+gate (GOV-2.5) will enforce.
+
 ## Verify
 
 The grade and findings returned by the CLI match what the UI shows for the same version — that

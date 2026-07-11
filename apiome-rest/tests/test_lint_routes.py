@@ -314,3 +314,54 @@ def test_lint_rules_requires_authentication():
     app.dependency_overrides.clear()
     r = client.get("/v1/lint/rules")
     assert r.status_code == 401
+
+
+# ===========================================================================
+# GOV-1.4 (#4430): lint runs under the resolved style guide
+# ===========================================================================
+
+
+def test_lint_reports_the_fallback_guide_when_nothing_is_assigned():
+    """With no resolvable guide the report is scored (and labelled) by the in-code defaults."""
+    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
+    ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
+        body = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
+
+    assert body["guideId"] is None
+    assert body["guideName"] == "Apiome Recommended"
+    assert body["guideSource"] == "fallback"
+
+
+def test_lint_scores_under_the_assigned_style_guide():
+    """An assigned guide governs the report: disabled rules vanish, severities remap."""
+    guide_row = {"id": "00000000-0000-4000-8000-0000000000d1", "name": "Team Guide", "source": "custom"}
+    # Enable only the info-description rule, escalated to error; everything else is ungoverned.
+    rules = [
+        {
+            "rule_id": "documentation.info-missing-description",
+            "enabled": True,
+            "severity": "error",
+            "custom_def": None,
+        }
+    ]
+
+    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
+    ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC), patch(
+        "app.lint_routes.db.get_assigned_style_guide", return_value=guide_row
+    ) as m_resolve, patch(
+        "app.lint_routes.db.get_style_guide_rules", return_value=rules
+    ):
+        body = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
+
+    assert body["guideId"] == guide_row["id"]
+    assert body["guideName"] == "Team Guide"
+    assert body["guideSource"] == "custom"
+    # HEAD_SPEC's only governed defect: info.description missing — escalated info -> error.
+    assert {f["rule"] for f in body["findings"]} == {"documentation.info-missing-description"}
+    assert body["findings"][0]["severity"] == "error"
+    assert body["severityCounts"]["error"] == 1
+    assert body["score"] == 90  # one error-severity rule: 100 - 10
+    # The resolution chain received this tenant and project (project tier first).
+    m_resolve.assert_called_once_with("t1", PID)

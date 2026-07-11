@@ -190,3 +190,83 @@ def test_publish_allows_breaking_when_allow_breaking_true():
 
     assert res.status_code == 200
     shared.publish_version.assert_called_once()
+
+
+# ===========================================================================
+# GOV-1.4 (#4430): the prechecks compute the style-guide error-violation count
+# ===========================================================================
+
+
+def _direct_precheck(request_kwargs=None, guided_lint=None):
+    """Call enforce_publish_prechecks directly with a happy-path mocked environment."""
+    from app.models import VersionPublishRequest
+    from app.version_publish_prechecks import enforce_publish_prechecks
+
+    shared = MagicMock()
+    shared.get_classes_for_version.return_value = [{"name": "Pet", "description": "Animal"}]
+
+    patches = [
+        patch("app.version_publish_prechecks.db", shared),
+        patch("app.publication_change_report.db", shared),
+        patch("app.version_publish_prechecks.openapi_for_revision", return_value=_OPENAPI),
+    ]
+    shared.get_prior_published_baseline_revision_id.return_value = None
+    if guided_lint is not None:
+        patches.append(patch("app.style_guide_engine.guided_lint_openapi_spec", guided_lint))
+
+    request = VersionPublishRequest(**(request_kwargs or {"short_message": "Note"}))
+    with patches[0], patches[1], patches[2], (
+        patches[3] if len(patches) > 3 else patch("app.version_publish_prechecks.logger")
+    ):
+        return enforce_publish_prechecks(
+            tenant_slug="acme",
+            tenant_id="t1",
+            project_id="pid-1",
+            existing=dict(_UNPUBLISHED),
+            request=request,
+        )
+
+
+def test_prechecks_report_the_style_guide_error_count():
+    """The publish check consumes the error-level violation count under the resolved guide."""
+    from types import SimpleNamespace
+
+    guided = MagicMock(
+        return_value=(
+            SimpleNamespace(severity_counts={"error": 3, "warning": 1, "info": 0}),
+            SimpleNamespace(guide_id="g-1", name="Team Guide", source="custom"),
+        )
+    )
+    outcome = _direct_precheck(guided_lint=guided)
+
+    assert outcome.lint_error_count == 3
+    assert outcome.guide_id == "g-1"
+    assert outcome.guide_name == "Team Guide"
+    # The guide chain is resolved for this tenant/project pair.
+    guided.assert_called_once_with(_OPENAPI, "t1", project_id="pid-1")
+
+
+def test_prechecks_skip_returns_an_empty_outcome():
+    """skip_publish_checks bypasses every gate — including the lint signal."""
+    outcome = _direct_precheck(
+        request_kwargs={"short_message": "Note", "skip_publish_checks": True}
+    )
+    assert outcome.lint_error_count is None
+    assert outcome.guide_id is None
+    assert outcome.guide_name is None
+
+
+def test_precheck_lint_fault_never_blocks_the_publish():
+    """A style-guide lint fault degrades to 'no signal' — the other gates still run."""
+    guided = MagicMock(side_effect=RuntimeError("guide engine down"))
+    outcome = _direct_precheck(guided_lint=guided)
+    assert outcome.lint_error_count is None
+    assert outcome.guide_id is None
+
+
+def test_prechecks_compute_a_zero_error_count_for_a_clean_spec():
+    """End-to-end through the real engine: _OPENAPI has no error-level violations."""
+    outcome = _direct_precheck()
+    assert outcome.lint_error_count == 0
+    assert outcome.guide_name == "Apiome Recommended"  # fallback guide (tenant 't1' unresolvable)
+    assert outcome.guide_id is None

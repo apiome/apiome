@@ -33049,6 +33049,42 @@
             "title": "Scoreisstale",
             "description": "True when a captured fingerprint exists and differs from this live report's fingerprint, signalling the persisted score is out of date. Always False when a base revision is compared (the live report folds in extra findings) or when no score has been captured.",
             "default": false
+          },
+          "guideId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guideid",
+            "description": "The style guide this report was scored under (GOV-1.4). Null when the in-code default guide applied (no guide assigned or resolvable)."
+          },
+          "guideName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guidename",
+            "description": "Display name of the applied style guide (e.g. 'Apiome Recommended')."
+          },
+          "guideSource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guidesource",
+            "description": "Origin of the applied guide: builtin | custom | fallback (in-code defaults)."
           }
         },
         "type": "object",

@@ -3011,6 +3011,24 @@ class LintReportResponse(BaseModel):
             "score has been captured."
         ),
     )
+    guide_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="guideId",
+        description=(
+            "The style guide this report was scored under (GOV-1.4). Null when the in-code "
+            "default guide applied (no guide assigned or resolvable)."
+        ),
+    )
+    guide_name: Optional[str] = Field(
+        default=None,
+        serialization_alias="guideName",
+        description="Display name of the applied style guide (e.g. 'Apiome Recommended').",
+    )
+    guide_source: Optional[str] = Field(
+        default=None,
+        serialization_alias="guideSource",
+        description="Origin of the applied guide: builtin | custom | fallback (in-code defaults).",
+    )
 
 
 class LintRuleOut(BaseModel):
