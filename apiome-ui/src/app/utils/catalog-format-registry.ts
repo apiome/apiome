@@ -182,7 +182,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
 
   // ---- Data schema ----
   { id: 'jsonschema', label: 'JSON Schema', icon: Braces, tone: 'indigo', aliases: ['json'], description: 'JSON Schema type definitions.' },
-  { id: 'avro', label: 'Avro', icon: Binary, tone: 'cyan', aliases: ['avsc'], description: 'Apache Avro record schema (.avsc).' },
+  { id: 'avro', label: 'Avro', icon: Binary, tone: 'cyan', importable: true, aliases: ['avsc'], description: 'Apache Avro record schema (.avsc).' },
   { id: 'jtd', label: 'JSON Type Definition', icon: Braces, tone: 'indigo', aliases: ['jsontypedefinition', 'rfc8927'], description: 'JSON Type Definition (RFC 8927).' },
   { id: 'xsd', label: 'XSD', icon: FileCode, tone: 'stone', aliases: ['xmlschema'], description: 'XML Schema Definition (XSD).' },
   { id: 'asn1', label: 'ASN.1', icon: Binary, tone: 'stone', aliases: ['asn'], description: 'ASN.1 data structure definitions.' },

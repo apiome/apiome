@@ -31,6 +31,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('restdescription')?.sourceKind).toBe('wadl');
     expect(catalogAdapterForFormat('openrpc')?.sourceKind).toBe('openrpc');
     expect(catalogAdapterForFormat('jsonrpc')?.sourceKind).toBe('openrpc');
+    expect(catalogAdapterForFormat('avro')?.sourceKind).toBe('avro');
+    expect(catalogAdapterForFormat('avsc')?.sourceKind).toBe('avro');
   });
 
   test('is case/space-insensitive', () => {
@@ -38,8 +40,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('GraphQL')?.sourceKind).toBe('graphql');
   });
 
-  test('returns null for formats with no catalog importer (Avro/…)', () => {
-    for (const f of ['avro', 'postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+  test('returns null for formats with no catalog importer (…)', () => {
+    for (const f of ['postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -47,7 +49,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl']);
+    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -72,6 +74,10 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'openrpc' },
     });
+    expect(decideCatalogImportRouting('avro')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'avro' },
+    });
   });
 
   test('routes OpenAPI, Swagger, and Arazzo to Projects', () => {
@@ -95,7 +101,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('avro')).toMatchObject({
+    expect(decideCatalogImportRouting('odata')).toMatchObject({
       destination: 'not-importable',
       adapter: null,
     });
@@ -142,13 +148,15 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('restdescription')).toBe('rest');
     expect(paradigmForFormat('openrpc')).toBe('rpc');
     expect(paradigmForFormat('jsonrpc')).toBe('rpc');
+    expect(paradigmForFormat('avro')).toBe('dataschema');
+    expect(paradigmForFormat('avsc')).toBe('dataschema');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');
   });
 
   test('returns null paradigm for unknown / unmapped formats', () => {
-    for (const f of ['avro', 'unknown', '', null, undefined]) {
+    for (const f of ['odata', 'unknown', '', null, undefined]) {
       expect(paradigmForFormat(f)).toBeNull();
     }
   });

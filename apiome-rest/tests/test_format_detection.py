@@ -104,12 +104,10 @@ def test_openapi_routes_to_importable_adapter() -> None:
 
 
 def test_sniffed_formats_are_not_importable_yet() -> None:
-    # Avro is still sniffer-only (its adapter lands in a later epic).
-    detection = detect_format(
-        DetectionInput(text='{"type":"record","name":"Example","fields":[]}')
-    )
+    # OData is still sniffer-only (its adapter lands in a later epic).
+    detection = detect_format(DetectionInput(text=_FIXTURES["odata"]))
     assert detection.detected is not None
-    assert detection.detected.format == "avro"
+    assert detection.detected.format == "odata"
     assert detection.detected.importable is False
     assert detection.detected.source_key is None
 
@@ -128,6 +126,14 @@ def test_wadl_is_now_importable() -> None:
     assert detection.detected.format == "wadl"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "wadl"
+
+
+def test_avro_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["avro"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "avro"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "avro"
 
 
 def test_openrpc_is_now_importable() -> None:

@@ -728,6 +728,7 @@ def load_builtin_import_sources() -> None:
     from . import raml_import_source as _raml  # noqa: F401
     from . import wadl_import_source as _wadl  # noqa: F401
     from . import openrpc_import_source as _openrpc  # noqa: F401
+    from . import avro_import_source as _avro  # noqa: F401
 
 
 # ===========================================================================
