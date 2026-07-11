@@ -25,30 +25,86 @@ jobs:
   test:
     name: Lint, type-check and test apiome-mcp
     runs-on: self-hosted
-    env:
-      APIOME_MCP_DATABASE_URL: postgresql://postgres:postgres@localhost:55432/apiome_ci
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: apiome_ci
-        ports:
-          # Publish on a non-standard host port: the self-hosted runner already has
-          # a PostgreSQL on 5432, so binding host 5432 fails ("port is already
-          # allocated"). The job connects via localhost:55432 (see DATABASE_URL above).
-          - 55432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d apiome_ci"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # PostgreSQL is started manually (see "Start PostgreSQL" below) instead of via
+    # a `services:` block. A service maps to a fixed host port, and on this shared
+    # self-hosted runner two concurrent runs binding the same host port collide
+    # ("port is already allocated"). Instead we bind a randomly chosen free port
+    # per run and tear the container down in an always() step.
+    env:
+      POSTGRES_DB: apiome_ci
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Unique per run+attempt so parallel/retried jobs never share a container name.
+      PG_CONTAINER: apiome-mcp-pg-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Start PostgreSQL on a random free port
+        run: |
+          set -euo pipefail
+
+          pick_free_port() {
+            if command -v python3 >/dev/null 2>&1; then
+              python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+            else
+              while :; do
+                p=$(( (RANDOM % 20000) + 20000 ))
+                if ! (exec 3<>/dev/tcp/127.0.0.1/"$p") 2>/dev/null; then
+                  echo "$p"; return
+                fi
+              done
+            fi
+          }
+
+          started=""
+          for attempt in $(seq 1 10); do
+            port="$(pick_free_port)"
+            echo "Attempt ${attempt}: starting postgres on host port ${port}"
+            if docker run -d \
+                --name "$PG_CONTAINER" \
+                -e POSTGRES_DB="$POSTGRES_DB" \
+                -e POSTGRES_USER="$POSTGRES_USER" \
+                -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+                -p "${port}:5432" \
+                --health-cmd "pg_isready -U postgres -d $POSTGRES_DB" \
+                --health-interval 10s \
+                --health-timeout 5s \
+                --health-retries 5 \
+                postgres:16 >/dev/null 2>docker-run.err; then
+              echo "POSTGRES_PORT=${port}" >> "$GITHUB_ENV"
+              echo "APIOME_MCP_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${port}/${POSTGRES_DB}" >> "$GITHUB_ENV"
+              echo "Started container ${PG_CONTAINER} on host port ${port}"
+              started="yes"
+              break
+            fi
+            echo "Could not bind port ${port}:"; cat docker-run.err || true
+            docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+            sleep 1
+          done
+
+          if [ -z "$started" ]; then
+            echo "Failed to start PostgreSQL on a free port after 10 attempts" >&2
+            exit 1
+          fi
+
+      - name: Wait for PostgreSQL to be healthy
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "$PG_CONTAINER" 2>/dev/null || echo unknown)"
+            echo "Health check ${i}: ${status}"
+            if [ "$status" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL did not become healthy in time" >&2
+          docker logs "$PG_CONTAINER" || true
+          exit 1
 
       - name: Validate Docker Compose specification
         run: docker compose config
@@ -82,6 +138,11 @@ jobs:
       - name: Run pytest
         run: uv run pytest
         working-directory: apiome-mcp
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: |
+          docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
 
   publish-docker-image:
     name: Build and push apiome-mcp image
