@@ -71,6 +71,11 @@ from .models import (
     SpecImportJobResult,
     SpecImportJobStatus,
 )
+from .style_guide_engine import (
+    FALLBACK_GUIDE_SOURCE,
+    apply_style_guide_to_lint_report,
+    resolve_style_guide,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -768,6 +773,27 @@ async def run_adapter_import_job(
 
     # --- lint -----------------------------------------------------------------
     lint = adapter.lint(model)
+    # GOV-1.4: re-score the adapter's report under the tenant's resolved style guide
+    # (tenant → default; a canonical import has no owning project yet, so the project tier
+    # never applies). Resolution is a single indexed read and runs inline like the
+    # adapter's own phases — the pipeline task must not really suspend here, since the
+    # engine schedules it fire-and-forget and only awaits it opportunistically. Strictly
+    # best-effort: any fault leaves the adapter's default-scored report untouched.
+    guide_tenant_id = str(payload.get("tenant_id") or "")
+    if guide_tenant_id and lint.score is not None:
+        try:
+            guide = resolve_style_guide(guide_tenant_id)
+            # Only a *resolved* guide re-scores. Under the in-code fallback the adapter's
+            # own roll-up is already the default-guide score, and MFI-4.2 promises the
+            # adapter-produced report is persisted verbatim.
+            if guide.source != FALLBACK_GUIDE_SOURCE:
+                lint = apply_style_guide_to_lint_report(lint, guide)
+        except Exception:  # noqa: BLE001 - guide application must never fail the import
+            logger.warning(
+                "Style-guide application failed for import job %s; keeping default score",
+                job_id,
+                exc_info=True,
+            )
     state.event(
         "LINT_COMPLETED",
         f"Lint produced {len(lint.findings)} finding(s)"

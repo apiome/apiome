@@ -550,13 +550,17 @@ def test_db_provenance_store_maps_fields(monkeypatch: pytest.MonkeyPatch) -> Non
 async def test_db_lint_scorer_success(monkeypatch: pytest.MonkeyPatch) -> None:
     import app.compatibility_engine as compat
     import app.database as database
-    import app.schema_lint as schema_lint
+    import app.style_guide_engine as style_guide_engine
 
     monkeypatch.setattr(database.db, "get_version_by_id", lambda vid, tid: {"id": vid})
     monkeypatch.setattr(compat, "openapi_for_revision", lambda v, s, t: {"openapi": "3.1.0"})
+    # GOV-1.4: the scorer lints through the style-guide-aware entry point.
     monkeypatch.setattr(
-        schema_lint, "lint_openapi_spec",
-        lambda spec: types.SimpleNamespace(score=82, grade="B", report_fingerprint="fp"),
+        style_guide_engine, "guided_lint_openapi_spec",
+        lambda spec, tenant_id, project_id=None: (
+            types.SimpleNamespace(score=82, grade="B", report_fingerprint="fp"),
+            types.SimpleNamespace(guide_id=None, name="Apiome Recommended", source="fallback"),
+        ),
     )
     saved: Dict[str, Any] = {}
     monkeypatch.setattr(

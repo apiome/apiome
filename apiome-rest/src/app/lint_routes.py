@@ -30,7 +30,8 @@ from .models import (
     LintRuleCatalogResponse,
     LintRuleOut,
 )
-from .schema_lint import lint_openapi_spec, merge_compatibility_findings
+from .schema_lint import merge_compatibility_findings
+from .style_guide_engine import guided_lint_openapi_spec
 
 router = APIRouter(prefix="/v1/versions", tags=["lint"])
 
@@ -160,7 +161,11 @@ def build_lint_report(
         compatibility_overall = compat.overall
         extra_findings = merge_compatibility_findings(compat.findings)
 
-    result = lint_openapi_spec(head_spec, extra_findings=extra_findings)
+    # GOV-1.4: score under the resolved style guide (project → tenant → default). A catalog
+    # item id passed as ``project_id`` simply misses the project tier and resolves onward.
+    result, guide = guided_lint_openapi_spec(
+        head_spec, tenant_id, project_id=project_id, extra_findings=extra_findings
+    )
 
     findings_out = [
         LintFindingOut(
@@ -210,6 +215,9 @@ def build_lint_report(
         captured_grade=captured.get("quality_grade"),
         captured_report_fingerprint=captured_fingerprint,
         score_is_stale=score_is_stale,
+        guide_id=guide.guide_id,
+        guide_name=guide.name,
+        guide_source=guide.source,
     )
 
 

@@ -3,8 +3,9 @@
 > **GOV-1.3 (#4429).** Author organization-specific lint rules ("all list endpoints paginate",
 > "headers use Train-Case") in a YAML dialect that is a strict subset of the
 > [Spectral](https://stoplight.io/open-source/spectral) ruleset format, easing migration from
-> Stoplight/Redocly. Rules are validated by `POST /v1/lint/custom-rules/validate`; evaluation
-> against assigned style guides in every lint path lands with GOV-1.4.
+> Stoplight/Redocly. Rules are validated by `POST /v1/lint/custom-rules/validate`; since
+> GOV-1.4 (#4430), the custom rules of the resolved style guide (project → tenant → default)
+> are evaluated in every lint path and their findings count toward the quality score.
 
 ## The format
 

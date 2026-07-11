@@ -2425,6 +2425,82 @@ class Database:
         rows = self.execute_query(query, (version_record_id, tenant_id))
         return rows[0] if rows else None
 
+    def get_assigned_style_guide(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve the style guide governing a lint run (GOV-1.4, #4430).
+
+        Walks the V159 assignment chain in one query: a **project**-level assignment wins
+        over a **tenant**-wide assignment, which wins over the tenant's ``is_default``
+        guide. Every candidate is joined back to ``style_guides`` scoped by ``tenant_id``,
+        so an assignment can never resolve to another tenant's guide.
+
+        Args:
+            tenant_id: The tenant whose guide chain applies.
+            project_id: The owning project, when the caller has one. A non-UUID value
+                (e.g. a slug) simply skips the project tier.
+
+        Returns:
+            A dict with ``id`` / ``name`` / ``source`` for the winning guide, or ``None``
+            when the tenant has no assignment and no default guide (the caller then falls
+            back to the in-code defaults).
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        project_param = (
+            str(project_id) if project_id and is_uuid_string(str(project_id)) else None
+        )
+        query = """
+            SELECT g.id, g.name, g.source
+            FROM (
+                SELECT a.guide_id, 0 AS precedence
+                FROM apiome.style_guide_assignments a
+                WHERE a.project_id = %s
+                UNION ALL
+                SELECT a.guide_id, 1 AS precedence
+                FROM apiome.style_guide_assignments a
+                WHERE a.tenant_id = %s
+                UNION ALL
+                SELECT g2.id AS guide_id, 2 AS precedence
+                FROM apiome.style_guides g2
+                WHERE g2.tenant_id = %s AND g2.is_default
+            ) candidate
+            JOIN apiome.style_guides g
+              ON g.id = candidate.guide_id AND g.tenant_id = %s
+            ORDER BY candidate.precedence
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (project_param, tenant_id, tenant_id, tenant_id))
+        return rows[0] if rows else None
+
+    def get_style_guide_rules(self, guide_id: str, tenant_id: str) -> List[Dict[str, Any]]:
+        """Read a style guide's rule rows for compilation (GOV-1.4, #4430).
+
+        Returns every ``style_guide_rules`` row of the guide — enabled and disabled alike,
+        so the compiled guide's content fingerprint reflects the full row set — scoped to
+        ``tenant_id`` via the owning guide so a caller cannot read another tenant's rules.
+
+        Args:
+            guide_id: The ``style_guides.id`` to read rules for.
+            tenant_id: The tenant that must own the guide.
+
+        Returns:
+            Rows with ``rule_id`` / ``enabled`` / ``severity`` / ``custom_def`` (jsonb,
+            already decoded to a dict or ``None``), sorted by ``rule_id``.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return []
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return []
+        query = """
+            SELECT r.rule_id, r.enabled, r.severity, r.custom_def
+            FROM apiome.style_guide_rules r
+            JOIN apiome.style_guides g ON r.guide_id = g.id
+            WHERE r.guide_id = %s AND g.tenant_id = %s
+            ORDER BY r.rule_id
+        """
+        return self.execute_query(query, (guide_id, tenant_id))
+
     def get_project_by_id(
         self, project_id: str, tenant_id: str, *, include_deleted: bool = False
     ) -> Optional[Dict[str, Any]]:

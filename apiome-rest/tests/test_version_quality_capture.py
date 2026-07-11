@@ -17,16 +17,22 @@ def test_capture_persists_lint_result_onto_the_revision():
         "version_id": "1.0.0",
     }
     lint_result = MagicMock(score=87, grade="B", report_fingerprint="fp-abc")
+    guide = MagicMock(guide_id=None, name="Apiome Recommended", source="fallback")
 
+    # GOV-1.4: the capture lints through the style-guide-aware entry point.
     with patch("app.database.db", mock_db), patch(
         "app.compatibility_engine.openapi_for_revision", return_value={"openapi": "3.1.0"}
     ) as m_recon, patch(
-        "app.schema_lint.lint_openapi_spec", return_value=lint_result
+        "app.style_guide_engine.guided_lint_openapi_spec", return_value=(lint_result, guide)
     ) as m_lint:
         _capture_version_quality_score("acme", "tenant-1", "ver-1")
 
     m_recon.assert_called_once()
     m_lint.assert_called_once()
+    # The guided lint receives the tenant and the revision's owning project, so the
+    # project → tenant → default resolution chain applies to import-time scores too.
+    assert m_lint.call_args.args[1] == "tenant-1"
+    assert m_lint.call_args.kwargs.get("project_id") == "proj-1"
     mock_db.set_version_quality_score.assert_called_once_with(
         "ver-1", "tenant-1", 87, "B", "fp-abc"
     )
