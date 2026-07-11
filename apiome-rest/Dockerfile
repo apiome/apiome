@@ -19,7 +19,6 @@ COPY apiome-db/package.json ./apiome-db/package.json
 COPY apiome-mcp/package.json ./apiome-mcp/package.json
 COPY apiome-ui/package.json ./apiome-ui/package.json
 COPY apiome-browse/package.json ./apiome-browse/package.json
-COPY apiome-web/package.json ./apiome-web/package.json
 COPY apiome-rest/package.json ./apiome-rest/package.json
 
 # Install only apiome-ui's dependency tree (includes the tsx dev dependency).
