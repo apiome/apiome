@@ -78,6 +78,7 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   postmancollection: { sourceKind: 'postman', label: 'Postman' },
   cloudevents: { sourceKind: 'cloudevents', label: 'CloudEvents' },
   'cloud-events': { sourceKind: 'cloudevents', label: 'CloudEvents' },
+  smithy: { sourceKind: 'smithy', label: 'Smithy' },
 };
 
 /**
@@ -114,6 +115,7 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   postmancollection: 'rest',
   cloudevents: 'event',
   'cloud-events': 'event',
+  smithy: 'rpc',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

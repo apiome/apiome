@@ -88,6 +88,8 @@ def is_thrift(content: str) -> bool:
     trimmed = content.strip()
     if not trimmed:
         return False
+    if re.search(r"""^\s*\$version\s*:\s*['"]""", trimmed, re.MULTILINE):
+        return False
     if re.search(r'\binclude\s+"', trimmed):
         return True
     if re.search(r"^\s*namespace\s+\w+\s+", trimmed, re.MULTILINE):

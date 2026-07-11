@@ -41,6 +41,7 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('postmancollection')?.sourceKind).toBe('postman');
     expect(catalogAdapterForFormat('cloudevents')?.sourceKind).toBe('cloudevents');
     expect(catalogAdapterForFormat('cloud-events')?.sourceKind).toBe('cloudevents');
+    expect(catalogAdapterForFormat('smithy')?.sourceKind).toBe('smithy');
   });
 
   test('is case/space-insensitive', () => {
@@ -57,7 +58,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -101,6 +102,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('cloudevents')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'cloudevents' },
+    });
+    expect(decideCatalogImportRouting('smithy')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'smithy' },
     });
   });
 
@@ -178,6 +183,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('postman')).toBe('rest');
     expect(paradigmForFormat('cloudevents')).toBe('event');
     expect(paradigmForFormat('cloud-events')).toBe('event');
+    expect(paradigmForFormat('smithy')).toBe('rpc');
     expect(paradigmForFormat('avsc')).toBe('dataschema');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
