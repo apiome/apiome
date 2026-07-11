@@ -330,7 +330,15 @@ def _publish_imported_version(
             # Report what we are overriding before bypassing the gate, so the warnings
             # behind "…with warnings." are visible rather than silently swallowed.
             _report_publish_warnings(response)
-            client.post(path, json={**body, "skipPublishChecks": True, "allowBreaking": True})
+            client.post(
+                path,
+                json={
+                    **body,
+                    "skipPublishChecks": True,
+                    "allowBreaking": True,
+                    "forcePublishReason": "CLI --force bypass",
+                },
+            )
             forced_past_warnings = True
         else:
             exit_on_api_error(response)

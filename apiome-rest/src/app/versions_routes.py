@@ -2035,6 +2035,20 @@ async def publish_version(
             detail="Only the version creator or a tenant administrator can publish this version"
         )
 
+    if bool(request.skip_publish_checks):
+        db.insert_workflow_audit(
+            auth_data["tenant_id"],
+            project_id,
+            version_record_id,
+            "version.publish_checks_override",
+            "success",
+            user_id,
+            {
+                "reason": request.force_publish_reason,
+                "visibility": visibility,
+            },
+        )
+
     background_tasks.add_task(
         generate_change_report_on_publish,
         tenant_slug=tenant_slug,

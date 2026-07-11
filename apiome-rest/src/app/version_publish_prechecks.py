@@ -19,23 +19,26 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class PublishPrecheckOutcome:
-    """What the publish prechecks observed (GOV-1.4, #4430).
+    """What the publish prechecks observed (GOV-1.4, #4430; gate enforced GOV-2.5, #4437).
 
-    Carries the style-guide lint signal computed at publish time so the publish flow (and,
-    with GOV-2.5, a configurable gate) can consume it. All fields are ``None`` when the
-    checks were skipped (``skip_publish_checks``) or the lint step faulted — computing the
-    signal is best-effort and never blocks a publish by itself.
+    Carries the style-guide lint signal computed at publish time so the publish flow can
+    surface guide violations and enforce the error-severity gate. All fields are ``None`` when
+    the checks were skipped (``skip_publish_checks``) or the lint step faulted.
 
     Attributes:
         lint_error_count: Number of **error**-severity violations under the resolved style
             guide, or ``None`` when not computed.
         guide_id: The applied guide's id (``None`` for the in-code fallback or when skipped).
         guide_name: The applied guide's display name, when computed.
+        severity_counts: Per-severity violation counts when lint succeeded.
+        error_findings: Error-severity findings (rule id + location) when lint succeeded.
     """
 
     lint_error_count: Optional[int] = None
     guide_id: Optional[str] = None
     guide_name: Optional[str] = None
+    severity_counts: Optional[Dict[str, int]] = None
+    error_findings: Optional[tuple[Dict[str, str], ...]] = None
 
 
 def enforce_publish_prechecks(
@@ -49,10 +52,10 @@ def enforce_publish_prechecks(
     """
     Ensure draft revisions satisfy publication gates unless ``skip_publish_checks`` is set.
 
-    Since GOV-1.4 the prechecks also lint the revision under its resolved style guide
-    (project → tenant → default) and report the error-level violation count on the returned
-    :class:`PublishPrecheckOutcome` — the signal the GOV-2.5 publish gate will enforce.
-    Computing it never blocks a publish on its own.
+    Since GOV-1.4 the prechecks lint the revision under its resolved style guide
+    (project → tenant → default) and report the violation counts on the returned
+    :class:`PublishPrecheckOutcome`. Since GOV-2.5 (#4437) **error**-severity violations
+    block publish (422) unless ``skip_publish_checks`` is set with a force-publish reason.
 
     Returns:
         The observed :class:`PublishPrecheckOutcome`.
@@ -76,18 +79,28 @@ def enforce_publish_prechecks(
             detail=f"Could not build OpenAPI for this revision (schema validation): {exc}",
         ) from exc
 
-    # GOV-1.4: lint the materialized head under the resolved style guide and count the
-    # error-level violations. Best-effort — the count feeds GOV-2.5's gate; a lint fault
-    # must not block publishing today.
+    # GOV-1.4 / GOV-2.5: lint the materialized head under the resolved style guide. A lint
+    # fault degrades to "no signal" so other gates still run; error-level violations block.
     outcome = PublishPrecheckOutcome()
     try:
         from .style_guide_engine import guided_lint_openapi_spec
 
         result, guide = guided_lint_openapi_spec(head_spec, tenant_id, project_id=project_id)
+        error_findings = tuple(
+            {
+                "rule": str(f.rule),
+                "path": str(f.path),
+                "message": str(f.message),
+            }
+            for f in result.findings
+            if str(f.severity) == "error"
+        )
         outcome = PublishPrecheckOutcome(
             lint_error_count=int(result.severity_counts.get("error", 0)),
             guide_id=guide.guide_id,
             guide_name=guide.name,
+            severity_counts=dict(result.severity_counts),
+            error_findings=error_findings,
         )
         logger.info(
             "Publish precheck lint for revision %s: %d error-level violation(s) under "
@@ -96,12 +109,29 @@ def enforce_publish_prechecks(
             outcome.lint_error_count,
             guide.name,
         )
-    except Exception:  # noqa: BLE001 - the lint signal is advisory until GOV-2.5
+    except Exception:  # noqa: BLE001 - lint faults must not block publishing
         logger.warning(
             "Publish precheck lint failed for revision %s; continuing without the "
             "style-guide signal",
             version_record_id,
             exc_info=True,
+        )
+
+    if outcome.lint_error_count and outcome.lint_error_count > 0:
+        guide_label = outcome.guide_name or "style guide"
+        first = (outcome.error_findings or ())[0] if outcome.error_findings else None
+        first_hint = ""
+        if first:
+            first_hint = (
+                f" (first: rule {first['rule']!r} at {first['path']!r})"
+            )
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"{outcome.lint_error_count} style-guide error violation(s) under "
+                f"{guide_label!r}{first_hint}. Fix the violations or force-publish with a "
+                "reason."
+            ),
         )
 
     classes = db.get_classes_for_version(version_record_id)
