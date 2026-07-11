@@ -158,7 +158,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'corbaidl', label: 'CORBA IDL', icon: Network, tone: 'red', aliases: ['corba', 'idl'], description: 'CORBA interface definition language.' },
   { id: 'oncrpc', label: 'ONC RPC', icon: Network, tone: 'slate', aliases: ['sunrpc', 'rpcgen', 'xdr'], description: 'ONC/Sun RPC (XDR) interface definition.' },
   { id: 'xmlrpc', label: 'XML-RPC', icon: FileCode, tone: 'stone', description: 'XML-RPC method interface.' },
-  { id: 'openrpc', label: 'OpenRPC', icon: Workflow, tone: 'blue', aliases: ['jsonrpc'], description: 'OpenRPC JSON-RPC 2.0 service description.' },
+  { id: 'openrpc', label: 'OpenRPC', icon: Workflow, tone: 'blue', importable: true, aliases: ['jsonrpc'], description: 'OpenRPC JSON-RPC 2.0 service description.' },
 
   // ---- Graph ----
   { id: 'graphql', label: 'GraphQL', icon: Share2, tone: 'pink', importable: true, aliases: ['gql', 'sdl'], description: 'GraphQL schema (SDL) or introspection.' },

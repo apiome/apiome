@@ -69,7 +69,7 @@ JSON_SCHEMA_FORMAT = "json-schema"
 #: Top-level keys that mark a document as *another* format the pipeline handles through
 #: its own adapter/sniffer. An OpenAPI 3.1 document *is* JSON Schema, so this adapter
 #: must decline anything carrying an API-description discriminator to avoid stealing it.
-_API_MARKERS = ("openapi", "swagger", "asyncapi", "arazzo")
+_API_MARKERS = ("openapi", "swagger", "asyncapi", "arazzo", "openrpc")
 
 #: The ``type`` keyword values that are valid JSON Schema types. A structural sniff on
 #: ``type`` matches only these, so an arbitrary JSON object with a domain ``type`` field

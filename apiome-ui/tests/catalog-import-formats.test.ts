@@ -29,6 +29,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('raml')?.sourceKind).toBe('raml');
     expect(catalogAdapterForFormat('wadl')?.sourceKind).toBe('wadl');
     expect(catalogAdapterForFormat('restdescription')?.sourceKind).toBe('wadl');
+    expect(catalogAdapterForFormat('openrpc')?.sourceKind).toBe('openrpc');
+    expect(catalogAdapterForFormat('jsonrpc')?.sourceKind).toBe('openrpc');
   });
 
   test('is case/space-insensitive', () => {
@@ -45,7 +47,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'raml', 'thrift', 'wadl', 'wsdl']);
+    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'raml', 'thrift', 'wadl', 'wsdl']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -65,6 +67,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('wadl')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'wadl' },
+    });
+    expect(decideCatalogImportRouting('openrpc')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'openrpc' },
     });
   });
 
@@ -134,6 +140,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('raml')).toBe('rest');
     expect(paradigmForFormat('wadl')).toBe('rest');
     expect(paradigmForFormat('restdescription')).toBe('rest');
+    expect(paradigmForFormat('openrpc')).toBe('rpc');
+    expect(paradigmForFormat('jsonrpc')).toBe('rpc');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');

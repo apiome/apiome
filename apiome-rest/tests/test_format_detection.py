@@ -44,6 +44,10 @@ _FIXTURES = {
         "sourceDescriptions:\n  - name: api\n    url: ./openapi.yaml\n    type: openapi\n"
     ),
     "avro": '{"type": "record", "name": "User", "fields": [{"name": "id", "type": "string"}]}',
+    "openrpc": (
+        '{"openrpc":"1.2.6","info":{"title":"Wallet API","version":"1.0.0"},'
+        '"methods":[{"name":"getBalance"}]}'
+    ),
 }
 
 
@@ -124,6 +128,14 @@ def test_wadl_is_now_importable() -> None:
     assert detection.detected.format == "wadl"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "wadl"
+
+
+def test_openrpc_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["openrpc"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "openrpc"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "openrpc"
 
 
 def test_protobuf_is_now_importable() -> None:

@@ -257,6 +257,18 @@ def _sniff_arazzo(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_openrpc(payload: DetectionInput) -> DetectionResult:
+    document = payload.document
+    if not isinstance(document, dict):
+        return NO_MATCH
+    version = document.get("openrpc")
+    if isinstance(version, str) and version.strip():
+        return DetectionResult(
+            confidence=0.98, format="openrpc", reason=f"`openrpc: {version}` marker"
+        )
+    return NO_MATCH
+
+
 def _sniff_avro(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if not isinstance(document, dict):
@@ -282,6 +294,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_typespec,
     _sniff_asyncapi,
     _sniff_arazzo,
+    _sniff_openrpc,
     _sniff_avro,
 )
 
@@ -301,6 +314,7 @@ SNIFFED_FORMATS = frozenset(
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",
+        "openrpc",
         "avro",
     }
 )
