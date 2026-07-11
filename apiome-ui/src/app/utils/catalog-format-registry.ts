@@ -172,7 +172,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
   { id: 'odata', label: 'OData', icon: Database, tone: 'orange', aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
   { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', importable: true, aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
-  { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', aliases: ['restdescription'], description: 'WADL REST resource description.' },
+  { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', importable: true, aliases: ['restdescription'], description: 'WADL REST resource description.' },
   { id: 'apiblueprint', label: 'API Blueprint', icon: FileText, tone: 'blue', aliases: ['blueprint', 'apib'], description: 'API Blueprint markdown API description.' },
   { id: 'smithy', label: 'Smithy', icon: Hammer, tone: 'amber', description: 'Smithy service / protocol model.' },
   { id: 'typespec', label: 'TypeSpec', icon: FileCode, tone: 'cyan', aliases: ['tsp', 'cadl'], description: 'Microsoft TypeSpec API definition.' },

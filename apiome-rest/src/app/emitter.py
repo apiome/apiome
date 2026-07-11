@@ -633,6 +633,7 @@ def load_builtin_emitters() -> None:
     from . import capnproto_emitter as _capnproto  # noqa: F401
     from . import wsdl_emitter as _wsdl  # noqa: F401
     from . import raml_emitter as _raml  # noqa: F401
+    from . import wadl_emitter as _wadl  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

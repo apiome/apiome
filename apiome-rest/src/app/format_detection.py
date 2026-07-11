@@ -174,6 +174,18 @@ def _sniff_wsdl(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_wadl(payload: DetectionInput) -> DetectionResult:
+    text = _text_of(payload)
+    if "<application" in text and any(marker in text for marker in (
+        "http://wadl.dev.java.net/2009/02",
+        "http://wadl.dev.java.net/ns/wadl",
+    )):
+        return DetectionResult(
+            confidence=0.97, format="wadl", reason="`<application>` root with WADL namespace"
+        )
+    return NO_MATCH
+
+
 def _sniff_odata(payload: DetectionInput) -> DetectionResult:
     text = _text_of(payload)
     if "<edmx:Edmx" in text or ("<Edmx" in text and "docs.oasis-open.org/odata" in text):
@@ -264,6 +276,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_protobuf,
     _sniff_graphql,
     _sniff_wsdl,
+    _sniff_wadl,
     _sniff_odata,
     _sniff_smithy,
     _sniff_typespec,
@@ -281,6 +294,7 @@ SNIFFED_FORMATS = frozenset(
         "protobuf",
         "graphql",
         "wsdl",
+        "wadl",
         "odata",
         "smithy",
         "typespec",

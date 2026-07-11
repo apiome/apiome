@@ -27,6 +27,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('wsdl')?.sourceKind).toBe('wsdl');
     expect(catalogAdapterForFormat('soap')?.sourceKind).toBe('wsdl');
     expect(catalogAdapterForFormat('raml')?.sourceKind).toBe('raml');
+    expect(catalogAdapterForFormat('wadl')?.sourceKind).toBe('wadl');
+    expect(catalogAdapterForFormat('restdescription')?.sourceKind).toBe('wadl');
   });
 
   test('is case/space-insensitive', () => {
@@ -43,7 +45,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'raml', 'thrift', 'wsdl']);
+    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'raml', 'thrift', 'wadl', 'wsdl']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -59,6 +61,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('raml')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'raml' },
+    });
+    expect(decideCatalogImportRouting('wadl')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'wadl' },
     });
   });
 
@@ -126,6 +132,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('wsdl')).toBe('rest');
     expect(paradigmForFormat('soap')).toBe('rest');
     expect(paradigmForFormat('raml')).toBe('rest');
+    expect(paradigmForFormat('wadl')).toBe('rest');
+    expect(paradigmForFormat('restdescription')).toBe('rest');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');

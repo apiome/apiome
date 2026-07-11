@@ -126,7 +126,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'protobuf', 'raml', 'thrift', 'wsdl'].sort(),
+      ['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'protobuf', 'raml', 'thrift', 'wadl', 'wsdl'].sort(),
     );
   });
 

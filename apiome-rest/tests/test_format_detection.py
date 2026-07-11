@@ -26,6 +26,12 @@ _FIXTURES = {
         '<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">'
         "</wsdl:definitions>"
     ),
+    "wadl": (
+        '<?xml version="1.0"?>\n'
+        '<application xmlns="http://wadl.dev.java.net/2009/02">'
+        "<resources base=\"https://api.example.com/\"><resource path=\"items\">"
+        "<method name=\"GET\"/></resource></resources></application>"
+    ),
     "odata": (
         '<edmx:Edmx Version="4.0" '
         'xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"></edmx:Edmx>'
@@ -110,6 +116,14 @@ def test_raml_is_now_importable() -> None:
     assert detection.detected.format == "raml"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "raml"
+
+
+def test_wadl_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["wadl"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "wadl"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "wadl"
 
 
 def test_protobuf_is_now_importable() -> None:
