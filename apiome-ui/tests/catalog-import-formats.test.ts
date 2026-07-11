@@ -26,6 +26,7 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('capnp')?.sourceKind).toBe('capnproto');
     expect(catalogAdapterForFormat('wsdl')?.sourceKind).toBe('wsdl');
     expect(catalogAdapterForFormat('soap')?.sourceKind).toBe('wsdl');
+    expect(catalogAdapterForFormat('raml')?.sourceKind).toBe('raml');
   });
 
   test('is case/space-insensitive', () => {
@@ -33,8 +34,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('GraphQL')?.sourceKind).toBe('graphql');
   });
 
-  test('returns null for formats with no catalog importer (Avro/RAML/…)', () => {
-    for (const f of ['avro', 'raml', 'postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+  test('returns null for formats with no catalog importer (Avro/…)', () => {
+    for (const f of ['avro', 'postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -42,7 +43,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'thrift', 'wsdl']);
+    expect(kinds).toEqual(['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'raml', 'thrift', 'wsdl']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -54,6 +55,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('protobuf')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'grpc' },
+    });
+    expect(decideCatalogImportRouting('raml')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'raml' },
     });
   });
 
@@ -78,7 +83,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('raml')).toMatchObject({
+    expect(decideCatalogImportRouting('avro')).toMatchObject({
       destination: 'not-importable',
       adapter: null,
     });
@@ -120,13 +125,14 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('capnp')).toBe('rpc');
     expect(paradigmForFormat('wsdl')).toBe('rest');
     expect(paradigmForFormat('soap')).toBe('rest');
+    expect(paradigmForFormat('raml')).toBe('rest');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');
   });
 
   test('returns null paradigm for unknown / unmapped formats', () => {
-    for (const f of ['raml', 'unknown', '', null, undefined]) {
+    for (const f of ['avro', 'unknown', '', null, undefined]) {
       expect(paradigmForFormat(f)).toBeNull();
     }
   });

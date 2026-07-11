@@ -94,12 +94,22 @@ def test_openapi_routes_to_importable_adapter() -> None:
 
 
 def test_sniffed_formats_are_not_importable_yet() -> None:
-    # RAML is still sniffer-only (its adapter lands in a later epic).
-    detection = detect_format(DetectionInput(text="#%RAML 1.0\ntitle: Example\n"))
+    # Avro is still sniffer-only (its adapter lands in a later epic).
+    detection = detect_format(
+        DetectionInput(text='{"type":"record","name":"Example","fields":[]}')
+    )
     assert detection.detected is not None
-    assert detection.detected.format == "raml"
+    assert detection.detected.format == "avro"
     assert detection.detected.importable is False
     assert detection.detected.source_key is None
+
+
+def test_raml_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text="#%RAML 1.0\ntitle: Example\nbaseUri: https://api.example.com\n/books:\n  get:\n"))
+    assert detection.detected is not None
+    assert detection.detected.format == "raml"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "raml"
 
 
 def test_protobuf_is_now_importable() -> None:

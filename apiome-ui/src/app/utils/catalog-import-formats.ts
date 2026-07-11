@@ -5,8 +5,9 @@
  * through the REST spec-import adapter pipeline, which persists a catalog item and keeps the raw
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
- * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto and WSDL (OpenAPI/Swagger are
- * native and go to Projects, not the catalog).
+ * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC,
+ * FlatBuffers, Cap'n Proto, WSDL, and RAML (OpenAPI/Swagger are native and go to Projects, not
+ * the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
  * adapter registry key the REST job needs, or `null` when no adapter can store the format yet —
@@ -62,6 +63,7 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   capnp: { sourceKind: 'capnproto', label: "Cap'n Proto" },
   wsdl: { sourceKind: 'wsdl', label: 'WSDL' },
   soap: { sourceKind: 'wsdl', label: 'WSDL' },
+  raml: { sourceKind: 'raml', label: 'RAML' },
 };
 
 /**
@@ -83,6 +85,7 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   capnp: 'rpc',
   wsdl: 'rest',
   soap: 'rest',
+  raml: 'rest',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

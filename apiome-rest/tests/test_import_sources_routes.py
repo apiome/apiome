@@ -119,17 +119,17 @@ def test_new_adapter_appears_without_route_changes():
 # ---------------------------------------------------------------------------
 
 
-def test_detect_format_routes_recognized_sniffer_format():
-    # RAML is still sniffer-only: recognized but not importable until its epic lands.
+def test_detect_format_routes_importable_raml():
     r = client.post(
         "/v1/import/detect",
-        json={"text": "#%RAML 1.0\ntitle: Example\n"},
+        json={"text": "#%RAML 1.0\ntitle: Example\nbaseUri: https://api.example.com\n/books:\n  get:\n"},
     )
     assert r.status_code == 200
     body = r.json()
     assert body["matched"] is True
     assert body["detected"]["format"] == "raml"
-    assert body["detected"]["importable"] is False
+    assert body["detected"]["importable"] is True
+    assert body["detected"]["source_key"] == "raml"
     assert body["ambiguous"] is False
 
 

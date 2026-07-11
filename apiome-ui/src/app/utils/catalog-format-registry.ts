@@ -168,7 +168,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cloudevents', label: 'CloudEvents', icon: Cloud, tone: 'sky', description: 'CloudEvents event envelope schema.' },
 
   // ---- REST (non-OpenAPI) ----
-  { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', description: 'RAML 1.0 REST API definition.' },
+  { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', importable: true, description: 'RAML 1.0 REST API definition.' },
   { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
   { id: 'odata', label: 'OData', icon: Database, tone: 'orange', aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
   { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', importable: true, aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
