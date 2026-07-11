@@ -31,6 +31,7 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | Topic | Guide |
 |---|---|
 | **API reference** (interactive Swagger UI for the REST API) | [api-reference.md](api-reference.md) |
+| **Built-in lint rules** (stable ids, severities, rationales — `GET /v1/lint/rules`) | [lint-rules.md](lint-rules.md) |
 | **CLI** quick-start (`apiome …`) | [cli-quickstart.md](cli-quickstart.md) |
 | **MCP** setup quick-start (Claude Desktop / IDE hosts) | [mcp-quickstart.md](mcp-quickstart.md) |
 

@@ -14,13 +14,51 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .auth import validate_authentication
+from .auth import validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .database import db
-from .models import LintCategoryScoreOut, LintFindingOut, LintReportResponse
+from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors
+from .models import (
+    LintCategoryScoreOut,
+    LintFindingOut,
+    LintReportResponse,
+    LintRuleCatalogResponse,
+    LintRuleOut,
+)
 from .schema_lint import lint_openapi_spec, merge_compatibility_findings
 
 router = APIRouter(prefix="/v1/versions", tags=["lint"])
+
+# The rule-catalog registry (GOV-1.2) is not version-scoped, so it lives under its own prefix.
+rules_router = APIRouter(prefix="/v1/lint", tags=["lint"])
+
+
+@rules_router.get("/rules", response_model=LintRuleCatalogResponse)
+async def list_lint_rules(
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> LintRuleCatalogResponse:
+    """
+    List every registered built-in lint rule (GOV-1.2, #4428).
+
+    Returns the full rule-catalog registry: each rule's stable id (the exact string lint
+    findings carry in their ``rule`` field), its pack, category, default severity, one-line
+    rationale, and a docs anchor into the rule reference page. Sorted by rule id, so the
+    payload is deterministic. The catalog is the same for every tenant — style guides
+    (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.
+    """
+    descriptors = builtin_rule_descriptors()
+    rules = [
+        LintRuleOut(
+            rule_id=d.rule_id,
+            pack=d.pack,
+            category=d.category,
+            default_severity=d.default_severity,
+            rationale=d.rationale,
+            docs_anchor=d.docs_anchor,
+        )
+        for d in descriptors
+    ]
+    return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)
 
 
 def build_lint_report(

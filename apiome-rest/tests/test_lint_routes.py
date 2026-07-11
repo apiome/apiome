@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.auth import validate_authentication
+from app.auth import validate_authentication, validate_session_credentials
 from app.main import app
 
 client = TestClient(app)
@@ -41,6 +41,8 @@ def _override_auth():
 @pytest.fixture(autouse=True)
 def _auth():
     app.dependency_overrides[validate_authentication] = _override_auth
+    # The tenant-less rule-catalog route (GOV-1.2) authenticates via session credentials.
+    app.dependency_overrides[validate_session_credentials] = _override_auth
     yield
     app.dependency_overrides.clear()
 
@@ -253,3 +255,62 @@ def test_lint_captured_read_failure_does_not_break_live_report():
     body = r.json()
     assert body["capturedScore"] is None
     assert body["scoreIsStale"] is False
+
+
+# ---------------------------------------------------------------------------
+# GET /v1/lint/rules — built-in rule catalog registry (GOV-1.2, #4428)
+# ---------------------------------------------------------------------------
+
+
+def test_lint_rules_catalog_returns_every_registered_rule():
+    from app.lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_ids
+
+    r = client.get("/v1/lint/rules")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["docsPage"] == LINT_RULE_DOCS_PAGE
+    assert body["count"] == len(body["rules"]) == len(builtin_rule_ids())
+    assert [rule["ruleId"] for rule in body["rules"]] == builtin_rule_ids()
+
+
+def test_lint_rules_catalog_entries_are_fully_populated():
+    body = client.get("/v1/lint/rules").json()
+    for rule in body["rules"]:
+        assert set(rule) == {
+            "ruleId",
+            "pack",
+            "category",
+            "defaultSeverity",
+            "rationale",
+            "docsAnchor",
+        }
+        assert rule["ruleId"] and rule["pack"] and rule["category"]
+        assert rule["defaultSeverity"] in {"error", "warning", "info"}
+        assert rule["rationale"].strip()
+        assert rule["docsAnchor"] == rule["ruleId"].replace(".", "-")
+
+
+def test_lint_rules_catalog_is_deterministic():
+    a = client.get("/v1/lint/rules").json()
+    b = client.get("/v1/lint/rules").json()
+    assert a == b
+
+
+def test_lint_report_findings_attributable_to_rule_catalog():
+    # Acceptance: every violation the lint report emits carries a registered rule id.
+    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
+    ), patch("app.lint_routes.openapi_for_revision", return_value=HEAD_SPEC):
+        report = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
+    catalog = client.get("/v1/lint/rules").json()
+    registered = {rule["ruleId"] for rule in catalog["rules"]}
+    assert report["findings"]  # HEAD_SPEC trips at least the info-description rule
+    for finding in report["findings"]:
+        assert finding["rule"] in registered
+
+
+def test_lint_rules_requires_authentication():
+    # Drop the module-level auth override: the catalog is still an authenticated v1 endpoint.
+    app.dependency_overrides.clear()
+    r = client.get("/v1/lint/rules")
+    assert r.status_code == 401

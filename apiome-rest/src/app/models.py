@@ -3013,6 +3013,52 @@ class LintReportResponse(BaseModel):
     )
 
 
+class LintRuleOut(BaseModel):
+    """One registered built-in lint rule from the rule-catalog registry (GOV-1.2, #4428).
+
+    ``rule_id`` is the stable identifier findings carry in their ``rule`` field, so every
+    violation is attributable to a registered rule. ``default_severity`` is the severity the
+    rule applies when no style guide overrides it.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(
+        serialization_alias="ruleId",
+        description="Stable rule identifier — exactly the string findings carry in `rule`.",
+    )
+    pack: str = Field(
+        description="Rule pack the rule belongs to (openapi, common, asyncapi, graphql, ...)."
+    )
+    category: str = Field(
+        description="Rule group (naming, documentation, structure, compatibility, ...)."
+    )
+    default_severity: str = Field(
+        serialization_alias="defaultSeverity",
+        description="Severity applied when no style guide overrides it (error/warning/info).",
+    )
+    rationale: str = Field(description="One-line explanation of why the rule exists.")
+    docs_anchor: str = Field(
+        serialization_alias="docsAnchor",
+        description="Anchor slug into the rule reference page documenting this rule.",
+    )
+
+
+class LintRuleCatalogResponse(BaseModel):
+    """The full built-in lint-rule catalog (GOV-1.2, #4428), sorted by rule id."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rules: List[LintRuleOut] = Field(
+        description="Every registered built-in rule, sorted by ruleId (deterministic)."
+    )
+    count: int = Field(description="Number of registered rules (== len(rules)).")
+    docs_page: str = Field(
+        serialization_alias="docsPage",
+        description="Repository-relative path of the rule reference page docsAnchor points into.",
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

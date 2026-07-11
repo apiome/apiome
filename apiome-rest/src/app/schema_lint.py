@@ -157,19 +157,73 @@ class LintResult:
 
 
 # --- Rule catalogue -------------------------------------------------------------------------
-# Each rule maps to (category, severity). Centralised so the engine and the API stay in sync.
+# Each rule maps to (category, severity, rationale). Centralised so the engine, the rule-catalog
+# registry (GOV-1.2, :mod:`app.lint_rule_registry`), and the API stay in sync.
+#
+# Rule ids are **stable identifiers**: they form each finding's ``rule`` field and are hashed
+# into finding ids and the ``report_fingerprint``, so they must not change once shipped
+# (a rename would flag every captured score stale).
 
+#: Rule id -> (category, default severity, one-line rationale) for the OpenAPI spec linter.
+#: The single source of truth this module and the GOV-1.2 rule registry both read.
+OPENAPI_RULES: Mapping[str, Tuple[str, Severity, str]] = {
+    "naming.schema-pascal-case": (
+        "naming",
+        "warning",
+        "Component schema names should be PascalCase so generated client types are idiomatic.",
+    ),
+    "naming.property-name": (
+        "naming",
+        "warning",
+        "Property names should be camelCase or snake_case for predictable client bindings.",
+    ),
+    "documentation.schema-missing-description": (
+        "documentation",
+        "warning",
+        "A schema without a description forces consumers to guess what it models.",
+    ),
+    "documentation.property-missing-description": (
+        "documentation",
+        "info",
+        "Every property should describe what it holds.",
+    ),
+    "documentation.property-missing-example": (
+        "documentation",
+        "info",
+        "Scalar leaf properties should carry an example so docs and mocks stay realistic.",
+    ),
+    "documentation.operation-missing-summary": (
+        "documentation",
+        "warning",
+        "An operation needs a summary or description to produce usable reference docs.",
+    ),
+    "documentation.info-missing-description": (
+        "documentation",
+        "info",
+        "The API info block should describe what the API is for.",
+    ),
+    "structure.unbounded-array": (
+        "structure",
+        "warning",
+        "An array without maxItems permits unbounded payloads that strain clients and servers.",
+    ),
+    "compatibility.breaking": (
+        "compatibility",
+        "error",
+        "A change relative to the base revision breaks existing consumers.",
+    ),
+    "compatibility.unknown": (
+        "compatibility",
+        "warning",
+        "A change relative to the base revision has an unclassified compatibility impact.",
+    ),
+}
+
+#: Rule id -> (category, severity), derived from :data:`OPENAPI_RULES` for the engine's
+#: hot path (:func:`_make_finding`) and for existing consumers of the two-tuple shape.
 RULE_CATALOGUE: Mapping[str, Tuple[str, Severity]] = {
-    "naming.schema-pascal-case": ("naming", "warning"),
-    "naming.property-name": ("naming", "warning"),
-    "documentation.schema-missing-description": ("documentation", "warning"),
-    "documentation.property-missing-description": ("documentation", "info"),
-    "documentation.property-missing-example": ("documentation", "info"),
-    "documentation.operation-missing-summary": ("documentation", "warning"),
-    "documentation.info-missing-description": ("documentation", "info"),
-    "structure.unbounded-array": ("structure", "warning"),
-    "compatibility.breaking": ("compatibility", "error"),
-    "compatibility.unknown": ("compatibility", "warning"),
+    rule_id: (category, severity)
+    for rule_id, (category, severity, _rationale) in OPENAPI_RULES.items()
 }
 
 
