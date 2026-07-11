@@ -1,5 +1,6 @@
 import {
   buildAuthCookieOverrides,
+  canonicalizeCrossAppCallback,
   getSharedCookieDomain,
   isAllowedCallbackUrl,
   resolveCallbackUrl,
@@ -53,6 +54,28 @@ describe('cookie-options', () => {
     process.env.NEXTAUTH_URL = 'https://main.apiome.dev';
 
     expect(resolveCallbackUrl('https://evil.example/phish')).toBe('/ade');
+  });
+
+  it('ignores a stale cookie domain that does not match the deployment hostnames', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.NEXTAUTH_COOKIE_DOMAIN = '.apiome.app';
+    process.env.NEXTAUTH_URL = 'https://main.apiome.dev';
+
+    expect(getSharedCookieDomain()).toBe('.apiome.dev');
+    expect(resolveCallbackUrl('https://suite.apiome.dev/editor')).toBe(
+      'https://suite.apiome.dev/editor'
+    );
+  });
+
+  it('rewrites stale studio hostnames to the configured studio origin', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.NEXTAUTH_COOKIE_DOMAIN;
+    process.env.NEXTAUTH_URL = 'https://main.apiome.dev';
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://suite.apiome.dev';
+
+    const stale = 'https://studio.apiome.dev/editor';
+    expect(canonicalizeCrossAppCallback(stale)).toBe('https://suite.apiome.dev/editor');
+    expect(resolveCallbackUrl(stale)).toBe('https://suite.apiome.dev/editor');
   });
 
   it('does not apply a production cookie domain on localhost', () => {

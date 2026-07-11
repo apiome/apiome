@@ -20,19 +20,39 @@ function normalizeCookieDomain(domain: string): string {
   return trimmed.startsWith('.') ? trimmed : `.${trimmed}`;
 }
 
+function tryOrigin(raw: string | undefined): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    return null;
+  }
+}
+
 /** Origins of the main app, studio, and NextAuth base — always trusted callback targets. */
 export function trustedAppOrigins(): Set<string> {
   const origins = new Set<string>();
   for (const key of TRUSTED_URL_ENVS) {
+    const origin = tryOrigin(process.env[key]);
+    if (origin) origins.add(origin);
+  }
+  return origins;
+}
+
+function trustedRegistrableDomains(): Set<string> {
+  const domains = new Set<string>();
+  for (const key of TRUSTED_URL_ENVS) {
     const raw = process.env[key]?.trim();
     if (!raw) continue;
     try {
-      origins.add(new URL(raw).origin);
+      const domain = registrableDomain(new URL(raw).hostname);
+      if (domain) domains.add(domain);
     } catch {
       // ignore malformed env
     }
   }
-  return origins;
+  return domains;
 }
 
 function inferCookieDomain(): string | undefined {
@@ -52,12 +72,22 @@ function inferCookieDomain(): string | undefined {
 
 /** Parent domain for shared session cookies, or undefined on localhost / dev. */
 export function getSharedCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== 'production') return undefined;
+
   const configured = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  const inferred = inferCookieDomain();
+
   if (configured) {
-    if (process.env.NODE_ENV !== 'production') return undefined;
-    return normalizeCookieDomain(configured);
+    const normalized = normalizeCookieDomain(configured);
+    // A stale .apiome.app cookie domain on an apiome.dev deploy is ignored by
+    // browsers and breaks both session sharing and callback validation.
+    if (inferred && normalized.slice(1) !== inferred.slice(1)) {
+      return inferred;
+    }
+    return normalized;
   }
-  return inferCookieDomain();
+
+  return inferred;
 }
 
 /**
@@ -114,6 +144,63 @@ function hostnameMatchesCookieDomain(hostname: string, cookieDomain: string): bo
   return hostname === bare || hostname.endsWith(suffix);
 }
 
+function hostnameMatchesTrustedDeployment(hostname: string): boolean {
+  const targetDomain = registrableDomain(hostname);
+  if (!targetDomain) return false;
+  return trustedRegistrableDomains().has(targetDomain);
+}
+
+/**
+ * Rewrite a stale studio hostname baked into an older bundle (e.g.
+ * studio.apiome.dev) to the configured studio origin (suite.apiome.dev).
+ */
+export function canonicalizeCrossAppCallback(url: string): string {
+  if (url.startsWith('/')) return url;
+
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    return url;
+  }
+
+  const mainOrigin = tryOrigin(process.env.NEXTAUTH_URL);
+  const studioOrigin = tryOrigin(process.env.NEXT_PUBLIC_STUDIO_URL);
+  const targetDomain = registrableDomain(target.hostname);
+  if (!targetDomain) return url;
+
+  if (studioOrigin) {
+    try {
+      const canonical = new URL(studioOrigin);
+      if (
+        registrableDomain(canonical.hostname) === targetDomain &&
+        target.origin !== canonical.origin
+      ) {
+        return `${canonical.origin}${target.pathname}${target.search}${target.hash}`;
+      }
+    } catch {
+      // ignore malformed studio URL
+    }
+  }
+
+  // Fall back to any other trusted non-main origin on the same registrable domain.
+  if (target.origin !== mainOrigin) {
+    for (const origin of trustedAppOrigins()) {
+      if (origin === mainOrigin) continue;
+      try {
+        if (registrableDomain(new URL(origin).hostname) === targetDomain) {
+          const canonical = new URL(origin);
+          return `${canonical.origin}${target.pathname}${target.search}${target.hash}`;
+        }
+      } catch {
+        // ignore malformed trusted origin
+      }
+    }
+  }
+
+  return url;
+}
+
 /**
  * A login callback URL may leave this origin only for hosts covered by the
  * shared session cookie (e.g. suite.apiome.dev when the cookie domain is
@@ -147,6 +234,10 @@ export function isAllowedCallbackUrl(url: string, baseUrl?: string): boolean {
 
   if (target.protocol !== 'https:') return false;
 
+  if (hostnameMatchesTrustedDeployment(target.hostname)) {
+    return true;
+  }
+
   const cookieDomain = getSharedCookieDomain();
   if (!cookieDomain) return false;
   return hostnameMatchesCookieDomain(target.hostname, cookieDomain);
@@ -156,7 +247,9 @@ export function isAllowedCallbackUrl(url: string, baseUrl?: string): boolean {
 export function resolveCallbackUrl(url: string | undefined | null, baseUrl?: string): string {
   const trimmed = url?.trim();
   if (!trimmed) return DEFAULT_LOGIN_LANDING;
-  return isAllowedCallbackUrl(trimmed, baseUrl ?? process.env.NEXTAUTH_URL)
-    ? trimmed
+
+  const canonical = canonicalizeCrossAppCallback(trimmed);
+  return isAllowedCallbackUrl(canonical, baseUrl ?? process.env.NEXTAUTH_URL)
+    ? canonical
     : DEFAULT_LOGIN_LANDING;
 }

@@ -15,6 +15,7 @@ import {
 } from '../../../../../lib/auth/credentials';
 import {
   buildAuthCookieOverrides,
+  canonicalizeCrossAppCallback,
   isAllowedCallbackUrl,
 } from '../../../../../lib/auth/cookie-options';
 
@@ -115,8 +116,9 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith('/') && !url.startsWith('//')) {
         return `${baseUrl}${url}`;
       }
-      if (isAllowedCallbackUrl(url, baseUrl)) {
-        return url;
+      const canonical = canonicalizeCrossAppCallback(url);
+      if (isAllowedCallbackUrl(canonical, baseUrl)) {
+        return canonical;
       }
       return baseUrl;
     },
