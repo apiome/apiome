@@ -47,12 +47,28 @@ const BASE_REPORT: VersionLintReport = {
   compatibilityOverall: null,
 };
 
-/** Mock `fetch` to resolve the given report (ok) or a JSON error (not ok). */
+/** Mock catalog lint + rule-catalog fetches. */
 function mockLintFetch(report: unknown, ok = true) {
-  global.fetch = jest.fn().mockResolvedValue({
-    ok,
-    status: ok ? 200 : 500,
-    json: async () => (ok ? { success: true, ...(report as object) } : { success: false, error: 'boom' }),
+  global.fetch = jest.fn((input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url.includes('/api/lint/rules')) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          rules: [],
+          count: 0,
+          docsPage: 'docs/guide/lint-rules.md',
+        }),
+      });
+    }
+    return Promise.resolve({
+      ok,
+      status: ok ? 200 : 500,
+      json: async () =>
+        ok ? { success: true, ...(report as object) } : { success: false, error: 'boom' },
+    });
   }) as unknown as typeof fetch;
 }
 
@@ -191,7 +207,10 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
     mockLintFetch(BASE_REPORT);
     const { rerender } = renderPanel();
     await screen.findByTestId('catalog-lint-gauge');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const lintCalls = (global.fetch as jest.Mock).mock.calls.filter((call) =>
+      String(call[0]).includes(`/api/catalog/${ITEM_ID}/lint`),
+    );
+    expect(lintCalls).toHaveLength(1);
 
     rerender(
       <CatalogLintPanel
@@ -211,7 +230,10 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
         qualityAvailable
       />,
     );
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const lintCallsAfterReactivate = (global.fetch as jest.Mock).mock.calls.filter((call) =>
+      String(call[0]).includes(`/api/catalog/${ITEM_ID}/lint`),
+    );
+    expect(lintCallsAfterReactivate).toHaveLength(1);
   });
 
   it('falls back to a severity breakdown when no category scores are present', async () => {

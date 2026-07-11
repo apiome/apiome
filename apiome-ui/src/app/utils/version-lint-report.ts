@@ -17,6 +17,9 @@ export interface VersionLintFinding {
   message: string;
 }
 
+/** Guide metadata echoed on lint reports (GOV-1.4). */
+export type LintGuideSource = 'builtin' | 'custom' | 'fallback';
+
 /**
  * A per-category 0–100 rollup score (MFI-25.6). Optional on the report: until the REST enrichment
  * lands, `/lint` omits it and the inline panel (MFI-25.5) degrades to a severity breakdown derived
@@ -49,6 +52,10 @@ export interface VersionLintReport {
   capturedReportFingerprint?: string | null;
   /** True when the persisted score is out of date relative to this live report (MFI-4.4). */
   scoreIsStale?: boolean;
+  /** Style guide applied for this lint run (GOV-1.4). */
+  guideId?: string | null;
+  guideName?: string | null;
+  guideSource?: LintGuideSource | null;
 }
 
 /** CSS utility classes for the grade chip, keyed by letter grade. */

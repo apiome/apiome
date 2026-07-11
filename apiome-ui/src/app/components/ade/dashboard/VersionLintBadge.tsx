@@ -112,6 +112,7 @@ export function VersionLintBadge({ projectId, versionId, versionLabel }: Version
         title={`Quality & Lint report${versionLabel ? ` — v${versionLabel}` : ''}`}
         description="Server-computed quality score and itemized findings for this version."
         report={report}
+        preferenceView="studio-lint"
       />
     </>
   );

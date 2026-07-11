@@ -20,6 +20,7 @@ import {
 import { getImportStatus, rollbackCompletedImport } from '../../../../../lib/db/import-actions';
 import { buildDesignerEditorHref } from '../../../../../lib/external-links';
 import { buildImportErrorReport, getImportErrorReportFilename, type ImportErrorReport, type ImportStatusForReport } from '../../../../../lib/db/import-error-report';
+import { SchemaVersionScoringPanel } from './SchemaVersionScoringPanel';
 
 interface ImportCompletePanelProps {
   jobId: string;
@@ -485,6 +486,17 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
             </div>
           )}
         </div>
+      )}
+
+      {/* Quality lint report (GOV-2.4) — server findings with rule metadata after a successful import. */}
+      {isSuccess && !isDryRun && summary?.projectId && summary?.versionId && !isRolledBack && (
+        <SchemaVersionScoringPanel
+          projectId={summary.projectId}
+          versionId={summary.versionId}
+          versionLabel={summary.versionId}
+          active
+          preferenceView="import-report"
+        />
       )}
 
       {/* Imported Schemas */}

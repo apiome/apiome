@@ -36,8 +36,35 @@ describe('VersionLintBadge', () => {
     jest.restoreAllMocks();
   });
 
+  function mockBadgeFetch(report: object) {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/lint/rules')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            rules: [
+              {
+                ruleId: 'naming.schema-pascal-case',
+                pack: 'openapi',
+                category: 'naming',
+                defaultSeverity: 'warning',
+                rationale: 'Component schema names should be PascalCase.',
+                docsAnchor: 'naming-schema-pascal-case',
+              },
+            ],
+            count: 1,
+            docsPage: 'docs/guide/lint-rules.md',
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => report });
+    }) as unknown as typeof fetch;
+  }
+
   it('fetches the server report and shows the grade and score', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(REPORT) });
+    mockBadgeFetch(REPORT);
 
     render(<VersionLintBadge projectId="p1" versionId="v1" versionLabel="1.0.0" />);
 
@@ -50,7 +77,7 @@ describe('VersionLintBadge', () => {
   });
 
   it('opens the report dialog with itemized findings on click', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(REPORT) });
+    mockBadgeFetch(REPORT);
 
     render(<VersionLintBadge projectId="p1" versionId="v1" versionLabel="1.0.0" />);
     await waitFor(() => expect(screen.getByTestId('version-lint-badge')).toBeInTheDocument());
@@ -58,9 +85,13 @@ describe('VersionLintBadge', () => {
     fireEvent.click(screen.getByTestId('version-lint-badge'));
 
     await waitFor(() =>
-      expect(screen.getByText(/Quality & Lint report/)).toBeInTheDocument()
+      expect(screen.getByText(/Quality & Lint report/)).toBeInTheDocument(),
     );
-    expect(screen.getByText('naming.schema-pascal-case')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('lint-violation-rule-chip')).toHaveTextContent(
+        'naming.schema-pascal-case',
+      );
+    });
     expect(screen.getByText("Schema 'payment' is not PascalCase.")).toBeInTheDocument();
   });
 
@@ -72,9 +103,7 @@ describe('VersionLintBadge', () => {
       capturedReportFingerprint: 'old',
       scoreIsStale: true,
     };
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue({ ok: true, json: () => Promise.resolve(staleReport) });
+    mockBadgeFetch(staleReport);
 
     render(<VersionLintBadge projectId="p1" versionId="v1" versionLabel="1.0.0" />);
     await waitFor(() => expect(screen.getByTestId('version-lint-badge')).toBeInTheDocument());
@@ -89,7 +118,7 @@ describe('VersionLintBadge', () => {
   });
 
   it('omits the stale-score note when the persisted score is current', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(REPORT) });
+    mockBadgeFetch(REPORT);
 
     render(<VersionLintBadge projectId="p1" versionId="v1" versionLabel="1.0.0" />);
     await waitFor(() => expect(screen.getByTestId('version-lint-badge')).toBeInTheDocument());
