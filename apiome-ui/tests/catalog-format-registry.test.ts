@@ -126,7 +126,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'protobuf', 'thrift'].sort(),
+      ['asyncapi', 'capnproto', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'protobuf', 'thrift', 'wsdl'].sort(),
     );
   });
 
@@ -139,7 +139,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
 
   test('recognized-but-not-importable formats are flagged, not silently claimed', () => {
     // A sampling of formats that ship an examples/ sample but have no importer.
-    for (const id of ['fhir', 'hl7v2', 'edix12', 'iso20022', 'iso8583', 'fix', 'wsdl', 'odata', 'xsd', 'smithy']) {
+    for (const id of ['fhir', 'hl7v2', 'edix12', 'iso20022', 'iso8583', 'fix', 'odata', 'xsd', 'smithy']) {
       const fmt = RECOGNIZED_ALTERNATIVE_FORMATS.find((f) => f.id === id);
       expect(fmt).toBeDefined();
       expect(fmt?.importable).not.toBe(true);

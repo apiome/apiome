@@ -631,6 +631,7 @@ def load_builtin_emitters() -> None:
     from . import connectrpc_emitter as _connectrpc  # noqa: F401
     from . import flatbuffers_emitter as _flatbuffers  # noqa: F401
     from . import capnproto_emitter as _capnproto  # noqa: F401
+    from . import wsdl_emitter as _wsdl  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

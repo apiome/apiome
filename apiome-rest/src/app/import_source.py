@@ -724,6 +724,7 @@ def load_builtin_import_sources() -> None:
     from . import connectrpc_import_source as _connectrpc  # noqa: F401
     from . import flatbuffers_import_source as _flatbuffers  # noqa: F401
     from . import capnproto_import_source as _capnproto  # noqa: F401
+    from . import wsdl_import_source as _wsdl  # noqa: F401
 
 
 # ===========================================================================

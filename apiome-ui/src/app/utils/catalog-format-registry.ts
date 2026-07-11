@@ -124,7 +124,7 @@ export interface CatalogFormat {
    * `true` when the format can actually be **imported into the catalog today** — i.e. a
  * server-registered import-source adapter can parse it, so the catalog store-raw flow (MFI-23.7)
  * can persist it *unconverted* and convert it later. In practice this is gRPC/Protobuf, GraphQL,
- * AsyncAPI, Thrift, Connect RPC, FlatBuffers and Cap'n Proto (OpenAPI/Swagger are native → Projects).
+ * AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto and WSDL (OpenAPI/Swagger are native → Projects).
    *
    * The remaining entries are **recognized but not yet importable** — the registry knows the format
    * (so a pill renders and the gallery can list it) but no adapter exists to bring it into the
@@ -171,7 +171,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', description: 'RAML 1.0 REST API definition.' },
   { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
   { id: 'odata', label: 'OData', icon: Database, tone: 'orange', aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
-  { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
+  { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', importable: true, aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
   { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', aliases: ['restdescription'], description: 'WADL REST resource description.' },
   { id: 'apiblueprint', label: 'API Blueprint', icon: FileText, tone: 'blue', aliases: ['blueprint', 'apib'], description: 'API Blueprint markdown API description.' },
   { id: 'smithy', label: 'Smithy', icon: Hammer, tone: 'amber', description: 'Smithy service / protocol model.' },
@@ -219,7 +219,7 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers and Cap'n Proto. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto and WSDL. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
