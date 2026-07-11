@@ -122,9 +122,9 @@ export interface CatalogFormat {
   native?: boolean;
   /**
    * `true` when the format can actually be **imported into the catalog today** — i.e. a
-   * server-registered import-source adapter can parse it, so the catalog store-raw flow (MFI-23.7)
-   * can persist it *unconverted* and convert it later. In practice this is gRPC/Protobuf, GraphQL
-   * and AsyncAPI (OpenAPI/Swagger are native → Projects).
+ * server-registered import-source adapter can parse it, so the catalog store-raw flow (MFI-23.7)
+ * can persist it *unconverted* and convert it later. In practice this is gRPC/Protobuf, GraphQL,
+ * AsyncAPI and Thrift (OpenAPI/Swagger are native → Projects).
    *
    * The remaining entries are **recognized but not yet importable** — the registry knows the format
    * (so a pill renders and the gallery can list it) but no adapter exists to bring it into the
@@ -151,7 +151,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   // ---- RPC ----
   { id: 'grpc', label: 'gRPC', icon: Network, tone: 'emerald', importable: true, aliases: ['protobufservice'], description: 'gRPC service defined in Protocol Buffers.' },
   { id: 'protobuf', label: 'Protobuf', icon: Binary, tone: 'teal', importable: true, aliases: ['proto', 'proto3'], description: 'Protocol Buffers messages (.proto).' },
-  { id: 'thrift', label: 'Thrift', icon: Network, tone: 'lime', description: 'Apache Thrift IDL services & structs.' },
+  { id: 'thrift', label: 'Thrift', icon: Network, tone: 'lime', importable: true, description: 'Apache Thrift IDL services & structs.' },
   { id: 'connectrpc', label: 'Connect', icon: Network, tone: 'emerald', aliases: ['connect'], description: 'Connect RPC (Protobuf-based) services.' },
   { id: 'capnproto', label: "Cap'n Proto", icon: Zap, tone: 'lime', aliases: ['capnp'], description: "Cap'n Proto schema & RPC interfaces." },
   { id: 'flatbuffers', label: 'FlatBuffers', icon: Boxes, tone: 'teal', aliases: ['fbs'], description: 'FlatBuffers serialization schema (.fbs).' },
@@ -219,14 +219,14 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL and AsyncAPI. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI and Thrift. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
 
 /**
  * The alternative formats the registry *recognizes* (so a pill renders and detection can name them)
- * but which have **no catalog importer yet** — Thrift, Avro, RAML, Postman, FHIR, HL7 v2, EDI X12,
+ * but which have **no catalog importer yet** — Avro, RAML, Postman, FHIR, HL7 v2, EDI X12,
  * ISO 20022/8583, FIX, OData, WSDL, XSD, and the rest. Listed separately in the gallery as "not yet
  * importable" so support is never over-stated.
  */

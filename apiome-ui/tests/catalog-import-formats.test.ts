@@ -17,6 +17,7 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('grpc')?.sourceKind).toBe('grpc');
     expect(catalogAdapterForFormat('graphql')?.sourceKind).toBe('graphql');
     expect(catalogAdapterForFormat('asyncapi')?.sourceKind).toBe('asyncapi');
+    expect(catalogAdapterForFormat('thrift')?.sourceKind).toBe('thrift');
   });
 
   test('is case/space-insensitive', () => {
@@ -24,8 +25,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('GraphQL')?.sourceKind).toBe('graphql');
   });
 
-  test('returns null for formats with no catalog importer (Thrift/Avro/RAML/…)', () => {
-    for (const f of ['thrift', 'avro', 'raml', 'postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+  test('returns null for formats with no catalog importer (Avro/RAML/…)', () => {
+    for (const f of ['avro', 'raml', 'postman', 'jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -33,7 +34,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'graphql', 'grpc']);
+    expect(kinds).toEqual(['asyncapi', 'graphql', 'grpc', 'thrift']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -103,13 +104,14 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('grpc')).toBe('rpc');
     expect(paradigmForFormat('graphql')).toBe('graph');
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
+    expect(paradigmForFormat('thrift')).toBe('rpc');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');
   });
 
   test('returns null paradigm for unknown / unmapped formats', () => {
-    for (const f of ['raml', 'thrift', 'unknown', '', null, undefined]) {
+    for (const f of ['raml', 'unknown', '', null, undefined]) {
       expect(paradigmForFormat(f)).toBeNull();
     }
   });
