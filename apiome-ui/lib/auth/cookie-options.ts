@@ -1,21 +1,73 @@
 const DEFAULT_LOGIN_LANDING = '/ade';
 
-function resolveCookieDomain(): string | undefined {
-  const configured = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
-  if (!configured) return undefined;
-  // Localhost cannot use production cookie domains (e.g. .apiome.app).
+const TRUSTED_URL_ENVS = [
+  'NEXTAUTH_URL',
+  'NEXT_PUBLIC_STUDIO_URL',
+  'NEXT_PUBLIC_MAIN_APP_URL',
+] as const;
+
+function registrableDomain(hostname: string): string | null {
+  if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
+    return null;
+  }
+  const parts = hostname.split('.').filter(Boolean);
+  if (parts.length < 2) return null;
+  return parts.slice(-2).join('.');
+}
+
+function normalizeCookieDomain(domain: string): string {
+  const trimmed = domain.trim();
+  return trimmed.startsWith('.') ? trimmed : `.${trimmed}`;
+}
+
+/** Origins of the main app, studio, and NextAuth base — always trusted callback targets. */
+export function trustedAppOrigins(): Set<string> {
+  const origins = new Set<string>();
+  for (const key of TRUSTED_URL_ENVS) {
+    const raw = process.env[key]?.trim();
+    if (!raw) continue;
+    try {
+      origins.add(new URL(raw).origin);
+    } catch {
+      // ignore malformed env
+    }
+  }
+  return origins;
+}
+
+function inferCookieDomain(): string | undefined {
   if (process.env.NODE_ENV !== 'production') return undefined;
-  return configured;
+  for (const key of TRUSTED_URL_ENVS) {
+    const raw = process.env[key]?.trim();
+    if (!raw) continue;
+    try {
+      const domain = registrableDomain(new URL(raw).hostname);
+      if (domain) return normalizeCookieDomain(domain);
+    } catch {
+      // ignore malformed env
+    }
+  }
+  return undefined;
+}
+
+/** Parent domain for shared session cookies, or undefined on localhost / dev. */
+export function getSharedCookieDomain(): string | undefined {
+  const configured = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  if (configured) {
+    if (process.env.NODE_ENV !== 'production') return undefined;
+    return normalizeCookieDomain(configured);
+  }
+  return inferCookieDomain();
 }
 
 /**
  * Cookie overrides for NextAuth when sharing sessions across subdomains
- * (e.g. app + studio on *.apiome.app). Must mirror the studio's
+ * (e.g. app + studio on *.apiome.dev). Must mirror the studio's
  * private-suite/suite/designer/lib/auth/cookie-options.ts so both apps
  * read and write the same cookies.
  */
 export function buildAuthCookieOverrides() {
-  const cookieDomain = resolveCookieDomain();
+  const cookieDomain = getSharedCookieDomain();
   const sharedCookieOptions = {
     httpOnly: true,
     sameSite: 'lax' as const,
@@ -56,10 +108,16 @@ export function buildAuthCookieOverrides() {
   };
 }
 
+function hostnameMatchesCookieDomain(hostname: string, cookieDomain: string): boolean {
+  const suffix = normalizeCookieDomain(cookieDomain);
+  const bare = suffix.slice(1);
+  return hostname === bare || hostname.endsWith(suffix);
+}
+
 /**
  * A login callback URL may leave this origin only for hosts covered by the
- * shared session cookie (e.g. studio.apiome.app when NEXTAUTH_COOKIE_DOMAIN
- * is .apiome.app) — anything else is an open-redirect vector.
+ * shared session cookie (e.g. suite.apiome.dev when the cookie domain is
+ * .apiome.dev) or configured app URLs — anything else is an open-redirect vector.
  */
 export function isAllowedCallbackUrl(url: string, baseUrl?: string): boolean {
   if (url.startsWith('/')) return !url.startsWith('//');
@@ -75,18 +133,23 @@ export function isAllowedCallbackUrl(url: string, baseUrl?: string): boolean {
     try {
       if (target.origin === new URL(baseUrl).origin) return true;
     } catch {
-      // Malformed baseUrl — fall through to the cookie-domain check.
+      // Malformed baseUrl — fall through.
     }
+  }
+
+  if (trustedAppOrigins().has(target.origin)) {
+    return process.env.NODE_ENV !== 'production' || target.protocol === 'https:';
   }
 
   if (process.env.NODE_ENV !== 'production') {
     return target.hostname === 'localhost' || target.hostname === '127.0.0.1';
   }
 
-  const cookieDomain = resolveCookieDomain();
-  if (!cookieDomain || target.protocol !== 'https:') return false;
-  const suffix = cookieDomain.startsWith('.') ? cookieDomain : `.${cookieDomain}`;
-  return target.hostname === suffix.slice(1) || target.hostname.endsWith(suffix);
+  if (target.protocol !== 'https:') return false;
+
+  const cookieDomain = getSharedCookieDomain();
+  if (!cookieDomain) return false;
+  return hostnameMatchesCookieDomain(target.hostname, cookieDomain);
 }
 
 /** Validated callback URL for the login flow, or the default landing page. */

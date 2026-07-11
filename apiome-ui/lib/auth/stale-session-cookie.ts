@@ -1,6 +1,7 @@
 import { hkdf } from '@panva/hkdf';
 import { jwtDecrypt } from 'jose';
 import type { NextRequest, NextResponse } from 'next/server';
+import { getSharedCookieDomain } from '@lib/auth/cookie-options';
 
 const SESSION_COOKIE_NAMES = [
   'next-auth.session-token',
@@ -42,7 +43,7 @@ export function clearSessionCookie(response: NextResponse, cookieName: string): 
   // Session cookies may be scoped to NEXTAUTH_COOKIE_DOMAIN (shared across
   // subdomains); a host-only expiry does not remove those. Appended as a raw
   // header because response.cookies keys by name and would drop the first set.
-  const domain = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  const domain = getSharedCookieDomain();
   if (domain && process.env.NODE_ENV === 'production') {
     response.headers.append(
       'Set-Cookie',
