@@ -727,6 +727,7 @@ def test_import_openapi_force_bypasses_publish_gate_with_warnings(
     retry_body = json.loads(publish_posts[1].content)
     assert retry_body["skipPublishChecks"] is True
     assert retry_body["allowBreaking"] is True
+    assert retry_body["forcePublishReason"] == "CLI --force bypass"
     # The bypassed warnings are reported, not silently swallowed.
     assert "Publish warnings (bypassed with --force):" in result.stderr
     assert "7 class(es) are missing required descriptions" in result.stderr

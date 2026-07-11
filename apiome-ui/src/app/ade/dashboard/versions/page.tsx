@@ -141,6 +141,8 @@ import {
   type VersionsDashboardSortDirection,
 } from '@/app/utils/versions-dashboard-sort';
 import { VersionMockCell, type VersionMockChange } from '../../../components/ade/dashboard/VersionMockCell';
+import { PublishGuideViolationsPanel } from '../../../components/ade/dashboard/PublishGuideViolationsPanel';
+import type { VersionLintReport } from '@/app/utils/version-lint-report';
 import { useMockUsage } from '@/app/hooks/useMockUsage';
 import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
 
@@ -416,8 +418,11 @@ const Versions = () => {
   const [publishVisibility, setPublishVisibility] = useState<'private' | 'public'>('private');
   const [publishShortMessage, setPublishShortMessage] = useState('');
   const [publishChangelog, setPublishChangelog] = useState('');
-  /** Force publish: bypass publish prechecks (missing descriptions, OpenAPI build, compatibility). */
+  /** Force publish: bypass publish prechecks (missing descriptions, OpenAPI build, compatibility, style-guide errors). */
   const [publishForce, setPublishForce] = useState(false);
+  /** Required when force publish is checked (GOV-2.5). */
+  const [publishForceReason, setPublishForceReason] = useState('');
+  const [publishLintReport, setPublishLintReport] = useState<VersionLintReport | null>(null);
   /** Publication change report baseline (CR): mirrors REST publish-preview / publish bodies. */
   const [publishChangeReportBaselineMode, setPublishChangeReportBaselineMode] = useState<
     'auto' | 'initial' | 'manual'
@@ -1368,6 +1373,8 @@ const Versions = () => {
     setPublishChangeReportBaselineMode('auto');
     setPublishManualBaselineRevisionId('');
     setPublishForce(false);
+    setPublishForceReason('');
+    setPublishLintReport(null);
     setPublishPreview(null);
     setPublishPreviewError(null);
     setShowPublishDialog(true);
@@ -1461,6 +1468,10 @@ const Versions = () => {
     }
   }, [publishChangeReportBaselineMode, publishManualBaselineOptions, publishManualBaselineRevisionId]);
 
+  const publishLintErrorCount = publishLintReport?.severityCounts?.error ?? 0;
+  const publishBlockedByGuideErrors = publishLintErrorCount > 0 && !publishForce;
+  const publishForceReasonMissing = publishForce && !publishForceReason.trim();
+
   const handlePublishConfirm = async () => {
     if (!publishVersionId) return;
     const version = versions.find((v) => v.id === publishVersionId);
@@ -1484,6 +1495,20 @@ const Versions = () => {
       });
       return;
     }
+    if (publishForceReasonMissing) {
+      await alertDialog({
+        message: 'Enter a reason for force publishing — it is recorded in the audit trail.',
+        variant: 'error',
+      });
+      return;
+    }
+    if (publishBlockedByGuideErrors) {
+      await alertDialog({
+        message: 'Resolve style-guide error violations or enable force publish with a reason.',
+        variant: 'error',
+      });
+      return;
+    }
     try {
       const res = await fetch(`/api/versions/${publishVersionId}/publish`, {
         method: 'POST',
@@ -1493,7 +1518,9 @@ const Versions = () => {
           visibility: publishVisibility,
           shortMessage: publishShortMessage.trim(),
           changelog: publishChangelog.trim() || null,
-          ...(publishForce ? { skipPublishChecks: true } : {}),
+          ...(publishForce
+            ? { skipPublishChecks: true, forcePublishReason: publishForceReason.trim() }
+            : {}),
           ...(changeReportUiEnabled
             ? {
                 changeReportBaselineMode: publishChangeReportBaselineMode,
@@ -4199,22 +4226,49 @@ const Versions = () => {
                 className="font-mono text-sm"
               />
             </div>
-            <div className="space-y-1">
+            {publishVersionId && (() => {
+              const publishVersion = versions.find((v) => v.id === publishVersionId);
+              if (!publishVersion) return null;
+              return (
+                <PublishGuideViolationsPanel
+                  projectId={publishVersion.project_id}
+                  versionId={publishVersionId}
+                  onReportChange={(report) => setPublishLintReport(report)}
+                />
+              );
+            })()}
+            <div className="space-y-2">
               <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={publishForce}
-                  onChange={(e) => setPublishForce(e.target.checked)}
+                  onChange={(e) => {
+                    setPublishForce(e.target.checked);
+                    if (!e.target.checked) setPublishForceReason('');
+                  }}
                   className="mt-0.5 rounded border-gray-300 dark:border-gray-600"
                 />
                 <span>Force publish (ignore validation errors)</span>
               </label>
               {publishForce && (
-                <Alert variant="warning" className="text-sm">
-                  Publish prechecks will be bypassed — missing class descriptions, OpenAPI build,
-                  and backward-compatibility gates are not enforced. Use only when you intend to
-                  publish despite these errors.
-                </Alert>
+                <>
+                  <Alert variant="warning" className="text-sm">
+                    Publish prechecks will be bypassed — missing class descriptions, OpenAPI build,
+                    backward-compatibility gates, and style-guide error violations are not enforced.
+                    A reason is required and recorded in the audit trail.
+                  </Alert>
+                  <div className="space-y-2">
+                    <Label htmlFor="publish-force-reason">Force publish reason *</Label>
+                    <Textarea
+                      id="publish-force-reason"
+                      value={publishForceReason}
+                      onChange={(e) => setPublishForceReason(e.target.value)}
+                      rows={3}
+                      placeholder="Why are you bypassing publish gates?"
+                      className="text-sm"
+                    />
+                  </div>
+                </>
               )}
             </div>
             {changeReportUiEnabled && (
@@ -4313,7 +4367,12 @@ const Versions = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowPublishDialog(false); setPublishVersionId(null); }}>Cancel</Button>
-            <Button onClick={handlePublishConfirm}>Publish</Button>
+            <Button
+              onClick={handlePublishConfirm}
+              disabled={publishBlockedByGuideErrors || publishForceReasonMissing}
+            >
+              Publish
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

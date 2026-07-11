@@ -2373,7 +2373,13 @@ class VersionPublishRequest(BaseModel):
     skip_publish_checks: Optional[bool] = Field(
         default=False,
         validation_alias=AliasChoices("skipPublishChecks", "skip_publish_checks"),
-        description="Bypass OpenAPI build, documentation, and compatibility gates (emergency only; prefer CLI flags).",
+        description="Bypass OpenAPI build, documentation, compatibility, and style-guide gates (emergency only).",
+    )
+    force_publish_reason: Optional[str] = Field(
+        default=None,
+        max_length=2000,
+        validation_alias=AliasChoices("forcePublishReason", "force_publish_reason"),
+        description="Required when skipPublishChecks is true — recorded to the audit trail (GOV-2.5).",
     )
 
     @model_validator(mode="after")
@@ -2385,6 +2391,13 @@ class VersionPublishRequest(BaseModel):
                     "changeReportBaselineRevisionId is required when changeReportBaselineMode is manual"
                 )
             self.change_report_baseline_revision_id = bid
+        if bool(self.skip_publish_checks):
+            reason = (self.force_publish_reason or "").strip()
+            if not reason:
+                raise ValueError(
+                    "forcePublishReason is required when skipPublishChecks is true"
+                )
+            self.force_publish_reason = reason
         return self
 
 

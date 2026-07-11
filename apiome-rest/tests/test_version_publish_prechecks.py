@@ -233,23 +233,29 @@ def test_prechecks_report_the_style_guide_error_count():
 
     guided = MagicMock(
         return_value=(
-            SimpleNamespace(severity_counts={"error": 3, "warning": 1, "info": 0}),
+            SimpleNamespace(
+                severity_counts={"error": 0, "warning": 1, "info": 0},
+                findings=(),
+            ),
             SimpleNamespace(guide_id="g-1", name="Team Guide", source="custom"),
         )
     )
     outcome = _direct_precheck(guided_lint=guided)
 
-    assert outcome.lint_error_count == 3
+    assert outcome.lint_error_count == 0
     assert outcome.guide_id == "g-1"
     assert outcome.guide_name == "Team Guide"
-    # The guide chain is resolved for this tenant/project pair.
     guided.assert_called_once_with(_OPENAPI, "t1", project_id="pid-1")
 
 
 def test_prechecks_skip_returns_an_empty_outcome():
     """skip_publish_checks bypasses every gate — including the lint signal."""
     outcome = _direct_precheck(
-        request_kwargs={"short_message": "Note", "skip_publish_checks": True}
+        request_kwargs={
+            "short_message": "Note",
+            "skip_publish_checks": True,
+            "force_publish_reason": "Test bypass",
+        }
     )
     assert outcome.lint_error_count is None
     assert outcome.guide_id is None
@@ -270,3 +276,126 @@ def test_prechecks_compute_a_zero_error_count_for_a_clean_spec():
     assert outcome.lint_error_count == 0
     assert outcome.guide_name == "Apiome Recommended"  # fallback guide (tenant 't1' unresolvable)
     assert outcome.guide_id is None
+
+
+def test_prechecks_block_publish_on_style_guide_error_violations():
+    """GOV-2.5 (#4437): error-severity guide violations return 422."""
+    from types import SimpleNamespace
+
+    from fastapi import HTTPException
+
+    from app.schema_lint import LintFinding
+
+    guided = MagicMock(
+        return_value=(
+            SimpleNamespace(
+                severity_counts={"error": 2, "warning": 1, "info": 0},
+                findings=(
+                    LintFinding(
+                        path="components.schemas.Pet",
+                        category="documentation",
+                        rule="schema-description",
+                        severity="error",
+                        message="Missing description",
+                    ),
+                    LintFinding(
+                        path="components.schemas.Cat",
+                        category="documentation",
+                        rule="schema-description",
+                        severity="error",
+                        message="Missing description",
+                    ),
+                ),
+            ),
+            SimpleNamespace(guide_id="g-1", name="Team Guide", source="custom"),
+        )
+    )
+    with pytest.raises(HTTPException) as exc:
+        _direct_precheck(guided_lint=guided)
+    assert exc.value.status_code == 422
+    assert "2 style-guide error violation(s)" in exc.value.detail
+    assert "Team Guide" in exc.value.detail
+    assert "schema-description" in exc.value.detail
+
+
+def test_prechecks_allow_warn_only_violations():
+    """Warn/info violations do not block publish (GOV-2.5)."""
+    from types import SimpleNamespace
+
+    from app.schema_lint import LintFinding
+
+    guided = MagicMock(
+        return_value=(
+            SimpleNamespace(
+                severity_counts={"error": 0, "warning": 2, "info": 1},
+                findings=(
+                    LintFinding(
+                        path="components.schemas.Pet",
+                        category="naming",
+                        rule="schema-pascal-case",
+                        severity="warning",
+                        message="Use PascalCase",
+                    ),
+                ),
+            ),
+            SimpleNamespace(guide_id="g-1", name="Team Guide", source="custom"),
+        )
+    )
+    outcome = _direct_precheck(guided_lint=guided)
+    assert outcome.lint_error_count == 0
+    assert outcome.severity_counts == {"error": 0, "warning": 2, "info": 1}
+
+
+def test_publish_force_requires_reason():
+    """skipPublishChecks without forcePublishReason is rejected at validation."""
+    draft = dict(_UNPUBLISHED)
+    shared = MagicMock()
+    shared.get_version_by_id.return_value = draft
+    shared.get_classes_for_version.return_value = [{"name": "Pet", "description": "Animal"}]
+    shared.get_project_by_id.return_value = {"id": "pid-1", "slug": "pay", "metadata": {}}
+
+    with patch("app.versions_routes.db", shared):
+        res = client.post(
+            "/v1/versions/acme/pid-1/vid-1/publish",
+            json={"shortMessage": "Note", "skipPublishChecks": True},
+        )
+
+    assert res.status_code == 422
+    assert "forcePublishReason" in str(res.json()["detail"])
+
+
+def test_publish_force_audits_reason():
+    """Force publish records the override reason to workflow audit (GOV-2.5)."""
+    draft = dict(_UNPUBLISHED)
+    shared = MagicMock()
+    shared.get_version_by_id.return_value = draft
+    shared.get_classes_for_version.return_value = [{"name": "Pet", "description": "Animal"}]
+    shared.get_project_by_id.return_value = {"id": "pid-1", "slug": "pay", "metadata": {}}
+    shared.publish_version.return_value = _PUBLISHED_ROW
+
+    with patch("app.versions_routes.db", shared), patch(
+        "app.version_publish_prechecks.db", shared,
+    ), patch("app.version_publish_prechecks.openapi_for_revision", return_value=_OPENAPI), patch(
+        "app.publication_change_report.db", shared,
+    ), patch(
+        "app.publication_change_report.openapi_for_revision",
+        return_value=_OPENAPI,
+    ), patch(
+        "app.publication_change_report.resolve_effective_change_report_template",
+        return_value=bundled_system_template_row(),
+    ):
+        res = client.post(
+            "/v1/versions/acme/pid-1/vid-1/publish",
+            json={
+                "shortMessage": "Note",
+                "skipPublishChecks": True,
+                "forcePublishReason": "Emergency hotfix for prod",
+            },
+        )
+
+    assert res.status_code == 200
+    shared.insert_workflow_audit.assert_called_once()
+    args = shared.insert_workflow_audit.call_args[0]
+    assert args[3] == "version.publish_checks_override"
+    assert args[4] == "success"
+    assert shared.insert_workflow_audit.call_args[0][6]["reason"] == "Emergency hotfix for prod"

@@ -5,6 +5,14 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.2] - 2026-07-11
+
+### Added
+- **Publish gate UX for style-guide violations (#4437, GOV-2.5)** — error-severity guide
+  violations now block `POST …/publish` with HTTP 422 (same pattern as the description gate).
+  `skipPublishChecks` requires a non-empty `forcePublishReason`, recorded to
+  `workflow_audit` as `version.publish_checks_override`. Warn/info violations do not block.
+
 ## [1.115.0] - 2026-07-11
 
 ### Added
