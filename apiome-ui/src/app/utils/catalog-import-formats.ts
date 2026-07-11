@@ -79,6 +79,10 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   cloudevents: { sourceKind: 'cloudevents', label: 'CloudEvents' },
   'cloud-events': { sourceKind: 'cloudevents', label: 'CloudEvents' },
   smithy: { sourceKind: 'smithy', label: 'Smithy' },
+  apiblueprint: { sourceKind: 'apiblueprint', label: 'API Blueprint' },
+  'api-blueprint': { sourceKind: 'apiblueprint', label: 'API Blueprint' },
+  apib: { sourceKind: 'apiblueprint', label: 'API Blueprint' },
+  blueprint: { sourceKind: 'apiblueprint', label: 'API Blueprint' },
 };
 
 /**
@@ -116,6 +120,10 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   cloudevents: 'event',
   'cloud-events': 'event',
   smithy: 'rpc',
+  apiblueprint: 'rest',
+  'api-blueprint': 'rest',
+  apib: 'rest',
+  blueprint: 'rest',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

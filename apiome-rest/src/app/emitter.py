@@ -640,6 +640,7 @@ def load_builtin_emitters() -> None:
     from . import postman_emitter as _postman  # noqa: F401
     from . import cloudevents_emitter as _cloudevents  # noqa: F401
     from . import smithy_emitter as _smithy  # noqa: F401
+    from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:
