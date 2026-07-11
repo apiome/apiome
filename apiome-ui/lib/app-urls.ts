@@ -1,5 +1,5 @@
-const DEFAULT_BROWSE_APP_URL = 'https://browse.apiome.app';
-const DEFAULT_STUDIO_APP_URL = 'https://studio.apiome.app';
+const DEFAULT_BROWSE_APP_URL = 'https://browse.apiome.dev';
+const DEFAULT_STUDIO_APP_URL = 'https://suite.apiome.dev';
 
 /** Normalize external app URLs to a trailing slash for consistent linking. */
 export function normalizePublicAppUrl(url: string): string {
