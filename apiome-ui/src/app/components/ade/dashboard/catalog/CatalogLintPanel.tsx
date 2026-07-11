@@ -34,7 +34,16 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { Switch } from '@/app/components/ui/Switch';
 import { dashboardPanelClass } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import { LintViolationFindingMeta } from '@/app/components/ade/dashboard/lint/LintViolationFindingMeta';
+import { LintViolationFindingsList } from '@/app/components/ade/dashboard/lint/LintViolationFindingsList';
+import { useLintViolationContext } from '@/app/components/ade/dashboard/lint/useLintViolationContext';
+import { enrichLintViolations, type EnrichedLintViolation } from '@/app/utils/lint-violation-display';
+import {
+  persistLintViolationDisplayPreferences,
+  readLintViolationDisplayPreferences,
+} from '@/app/utils/lint-violation-display-preferences';
 import {
   fetchCatalogLintReport,
   gradeChipClass,
@@ -335,21 +344,18 @@ function FindingRow({
   entityName,
   onNavigateToEntity,
 }: {
-  finding: VersionLintFinding;
+  finding: EnrichedLintViolation;
   rowClass: string;
-  /** The parsed entity this finding resolves to, or `null` when it is not entity-scoped. */
   entityName: string | null;
   onNavigateToEntity?: (name: string) => void;
 }) {
   const linkable = entityName != null && !!onNavigateToEntity;
   return (
-    <li className={cn('rounded-lg p-3', rowClass)}>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
-          {finding.rule}
-        </span>
-        {finding.path ? (
-          linkable ? (
+    <li className={cn('rounded-lg p-3', rowClass)} data-testid="catalog-lint-finding-row">
+      <LintViolationFindingMeta finding={finding} />
+      {finding.path ? (
+        <div className="mt-1">
+          {linkable ? (
             <button
               type="button"
               data-testid="catalog-lint-finding-link"
@@ -364,9 +370,9 @@ function FindingRow({
             <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500">
               {finding.path}
             </span>
-          )
-        ) : null}
-      </div>
+          )}
+        </div>
+      ) : null}
       <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">{finding.message}</p>
     </li>
   );
@@ -380,8 +386,7 @@ function TierSection({
   onNavigateToEntity,
 }: {
   meta: CatalogLintTierMeta;
-  findings: VersionLintFinding[];
-  /** Resolve a finding to the parsed-entity name it flags (or `null`). */
+  findings: EnrichedLintViolation[];
   resolveEntity: (finding: VersionLintFinding) => string | null;
   onNavigateToEntity?: (name: string) => void;
 }) {
@@ -438,6 +443,8 @@ export function CatalogLintPanel({
   const [status, setStatus] = useState<LintStatus>('idle');
   const [report, setReport] = useState<VersionLintReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [groupByRule, setGroupByRule] = useState(false);
+  const { catalog, customDescriptions } = useLintViolationContext(report?.guideId, active);
   // Guards the one-shot lazy fetch so re-activating the tab never re-fetches.
   const fetchStartedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -480,8 +487,16 @@ export function CatalogLintPanel({
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  // Retry from the error affordance — an event handler, so re-opening the one-shot and re-running
-  // the fetch synchronously is fine.
+  useEffect(() => {
+    setGroupByRule(readLintViolationDisplayPreferences('catalog-lint').groupByRule);
+  }, []);
+
+  const onGroupByRuleChange = useCallback((checked: boolean) => {
+    setGroupByRule(checked);
+    persistLintViolationDisplayPreferences('catalog-lint', { groupByRule: checked });
+  }, []);
+
+  // Retry from the error affordance
   const retry = useCallback(() => {
     fetchStartedRef.current = false;
     void loadReport();
@@ -498,12 +513,67 @@ export function CatalogLintPanel({
   // Findings grouped into MUST/SHOULD/advisory tier sections (MFI-28.2), empty tiers dropped.
   const tierGroups = catalogLintGroupByTier(findings).filter((g) => g.findings.length > 0);
 
-  // Deep-link resolution: a finding's `path` links to its Overview entity when it names a known
-  // parsed entity. The name set is memoized so it is rebuilt only when the entity list changes.
   const entityNameSet = useMemo(() => new Set(entityNames ?? []), [entityNames]);
   const resolveEntity = useCallback(
     (finding: VersionLintFinding) => resolveCatalogFindingEntity(finding.path, entityNameSet),
     [entityNameSet],
+  );
+
+  const enrichedFindings = useMemo(() => {
+    if (!catalog || findings.length === 0) return [];
+    return enrichLintViolations(findings, {
+      guideName: report?.guideName ?? null,
+      catalog,
+      customDescriptions,
+    });
+  }, [findings, report?.guideName, catalog, customDescriptions]);
+
+  const enrichedById = useMemo(
+    () => new Map(enrichedFindings.map((f) => [f.id, f])),
+    [enrichedFindings],
+  );
+
+  const tierGroupsEnriched = useMemo(
+    () =>
+      tierGroups.map((group) => ({
+        ...group,
+        findings: group.findings.map(
+          (f) =>
+            enrichedById.get(f.id) ?? {
+              ...f,
+              guideName: report?.guideName ?? null,
+              rationale: f.message,
+              docsHref: null,
+            },
+        ),
+      })),
+    [tierGroups, enrichedById, report?.guideName],
+  );
+
+  const renderCatalogPath = useCallback(
+    (finding: EnrichedLintViolation) => {
+      const entityName = resolveCatalogFindingEntity(finding.path, entityNameSet);
+      const linkable = entityName != null && !!onNavigateToEntity;
+      if (!finding.path) return null;
+      if (linkable) {
+        return (
+          <button
+            type="button"
+            data-testid="catalog-lint-finding-link"
+            onClick={() => onNavigateToEntity!(entityName!)}
+            className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            title={`Jump to ${entityName} in Overview`}
+          >
+            {finding.path}
+            <ArrowUpRight className="h-3 w-3" aria-hidden />
+          </button>
+        );
+      }
+      return (
+        <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500">{finding.path}</span>
+      );
+    },
+    [entityNameSet, onNavigateToEntity],
   );
 
   return (
@@ -623,9 +693,22 @@ export function CatalogLintPanel({
               )}
             </div>
 
-            <h3 className="mt-6 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Findings
-            </h3>
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Findings
+              </h3>
+              {findings.length > 0 ? (
+                <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                  <Switch
+                    checked={groupByRule}
+                    onCheckedChange={onGroupByRuleChange}
+                    aria-label="Group findings by rule"
+                    data-testid="catalog-lint-group-by-rule"
+                  />
+                  Group by rule
+                </label>
+              ) : null}
+            </div>
             {findings.length === 0 ? (
               <p
                 data-testid="catalog-lint-no-findings"
@@ -633,11 +716,22 @@ export function CatalogLintPanel({
               >
                 No findings — clean bill of health.
               </p>
+            ) : groupByRule ? (
+              <div className="mt-3" data-testid="catalog-lint-findings">
+                <LintViolationFindingsList
+                  findings={findings}
+                  guideName={report.guideName ?? null}
+                  guideId={report.guideId ?? null}
+                  preferenceView="catalog-lint"
+                  groupByRule={groupByRule}
+                  onGroupByRuleChange={onGroupByRuleChange}
+                  showHeader={false}
+                  renderPath={renderCatalogPath}
+                />
+              </div>
             ) : (
-              // Findings grouped into MUST/SHOULD/advisory tier sections (MFI-28.2). Each finding's
-              // `path` deep-links to its Overview entity when it resolves to a parsed entity.
               <div className="mt-3 space-y-6" data-testid="catalog-lint-findings">
-                {tierGroups.map((group) => (
+                {tierGroupsEnriched.map((group) => (
                   <TierSection
                     key={group.meta.key}
                     meta={group.meta}

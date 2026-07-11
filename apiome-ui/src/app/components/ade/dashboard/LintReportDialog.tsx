@@ -5,10 +5,10 @@
  *
  * Extracted from {@link VersionLintBadge} so the per-version badge and the Catalog card/detail lint
  * orbs render the *identical* report surface (score + A-F grade, severity counts, optional
- * stale-score note, and the itemized findings table). The component is purely presentational: the
- * caller owns fetching and passes the `report` (plus optional `loading`/`error`/`onRetry` for the
- * lazily-fetched catalog case). The grade/score are the authoritative values computed by
- * apiome-rest — this component never recomputes them.
+ * stale-score note, and the itemized findings list with GOV-2.4 violation metadata). The component
+ * is purely presentational: the caller owns fetching and passes the `report` (plus optional
+ * `loading`/`error`/`onRetry` for the lazily-fetched catalog case). The grade/score are the
+ * authoritative values computed by apiome-rest — this component never recomputes them.
  */
 
 import {
@@ -24,6 +24,11 @@ import {
   sortLintFindings,
   type VersionLintReport,
 } from '../../../utils/version-lint-report';
+import type { LintViolationDisplayView } from '../../../utils/lint-violation-display-preferences';
+import {
+  LintViolationFindingsList,
+  lintReportGuideContext,
+} from './lint/LintViolationFindingsList';
 
 interface LintReportDialogProps {
   open: boolean;
@@ -40,11 +45,13 @@ interface LintReportDialogProps {
   error?: string | null;
   /** Retry handler shown alongside an error, when provided. */
   onRetry?: () => void;
+  /** Which surface's group-by-rule preference to use (GOV-2.4). */
+  preferenceView?: LintViolationDisplayView;
 }
 
 /**
  * Render a server lint report inside a dialog. Shows a loading line, an error + retry affordance, or
- * the score header and itemized findings table depending on the caller's fetch state.
+ * the score header and itemized findings depending on the caller's fetch state.
  */
 export function LintReportDialog({
   open,
@@ -55,9 +62,11 @@ export function LintReportDialog({
   loading = false,
   error = null,
   onRetry,
+  preferenceView = 'catalog-lint',
 }: LintReportDialogProps) {
   const findings = report ? sortLintFindings(report.findings) : [];
   const severity = report?.severityCounts ?? {};
+  const guide = lintReportGuideContext(report);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,7 +106,7 @@ export function LintReportDialog({
             <div className="flex flex-wrap items-center gap-3">
               <span
                 className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-lg font-bold ${gradeChipClass(
-                  report.grade
+                  report.grade,
                 )}`}
               >
                 {report.grade}
@@ -116,6 +125,14 @@ export function LintReportDialog({
                   {severity.info ?? 0} info
                 </span>
               </span>
+              {report.guideName ? (
+                <span
+                  data-testid="lint-report-guide-name"
+                  className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200"
+                >
+                  Guide: {report.guideName}
+                </span>
+              ) : null}
               {report.compatibilityOverall && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   Compatibility vs base: {report.compatibilityOverall}
@@ -136,41 +153,13 @@ export function LintReportDialog({
               </p>
             )}
 
-            <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
-              {findings.length === 0 ? (
-                <p className="p-4 text-sm text-gray-600 dark:text-gray-300">
-                  No findings — clean bill of health.
-                </p>
-              ) : (
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">
-                    <tr>
-                      <th className="px-3 py-2">Severity</th>
-                      <th className="px-3 py-2">Rule</th>
-                      <th className="px-3 py-2">Path</th>
-                      <th className="px-3 py-2">Message</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {findings.map((f) => (
-                      <tr key={f.id}>
-                        <td className="px-3 py-2 align-top">
-                          <span className={`rounded px-1.5 py-0.5 text-xs ${severityBadgeClass(f.severity)}`}>
-                            {f.severity}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 align-top font-mono text-xs text-gray-700 dark:text-gray-300">
-                          {f.rule}
-                        </td>
-                        <td className="px-3 py-2 align-top font-mono text-xs text-gray-500 dark:text-gray-400">
-                          {f.path}
-                        </td>
-                        <td className="px-3 py-2 align-top text-gray-700 dark:text-gray-200">{f.message}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <div className="mt-3 max-h-[50vh] overflow-y-auto rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+              <LintViolationFindingsList
+                findings={findings}
+                guideName={guide.guideName}
+                guideId={guide.guideId}
+                preferenceView={preferenceView}
+              />
             </div>
           </>
         )}
