@@ -5,7 +5,7 @@
  * through the REST spec-import adapter pipeline, which persists a catalog item and keeps the raw
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
- * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI and Thrift (OpenAPI/Swagger are
+ * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift and Connect RPC (OpenAPI/Swagger are
  * native and go to Projects, not the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
@@ -54,6 +54,8 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   graphql: { sourceKind: 'graphql', label: 'GraphQL' },
   asyncapi: { sourceKind: 'asyncapi', label: 'AsyncAPI' },
   thrift: { sourceKind: 'thrift', label: 'Thrift' },
+  connectrpc: { sourceKind: 'connectrpc', label: 'Connect RPC' },
+  connect: { sourceKind: 'connectrpc', label: 'Connect RPC' },
 };
 
 /**
@@ -67,6 +69,8 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   graphql: 'graph',
   asyncapi: 'event',
   thrift: 'rpc',
+  connectrpc: 'rpc',
+  connect: 'rpc',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',

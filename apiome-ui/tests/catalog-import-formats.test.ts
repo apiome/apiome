@@ -18,6 +18,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('graphql')?.sourceKind).toBe('graphql');
     expect(catalogAdapterForFormat('asyncapi')?.sourceKind).toBe('asyncapi');
     expect(catalogAdapterForFormat('thrift')?.sourceKind).toBe('thrift');
+    expect(catalogAdapterForFormat('connectrpc')?.sourceKind).toBe('connectrpc');
+    expect(catalogAdapterForFormat('connect')?.sourceKind).toBe('connectrpc');
   });
 
   test('is case/space-insensitive', () => {
@@ -34,7 +36,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['asyncapi', 'graphql', 'grpc', 'thrift']);
+    expect(kinds).toEqual(['asyncapi', 'connectrpc', 'graphql', 'grpc', 'thrift']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -105,6 +107,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('graphql')).toBe('graph');
     expect(paradigmForFormat('asyncapi-2')).toBe('event');
     expect(paradigmForFormat('thrift')).toBe('rpc');
+    expect(paradigmForFormat('connectrpc')).toBe('rpc');
     expect(paradigmForFormat('openapi-3.1')).toBe('rest');
     expect(paradigmForFormat('swagger-2.0')).toBe('rest');
     expect(paradigmForFormat('json-schema-2020-12')).toBe('dataschema');
