@@ -743,6 +743,7 @@ def load_builtin_import_sources() -> None:
     from . import fhir_import_source as _fhir  # noqa: F401
     from . import typespec_import_source as _typespec  # noqa: F401
     from . import hl7v2_import_source as _hl7v2  # noqa: F401
+    from . import iso20022_import_source as _iso20022  # noqa: F401
 
 
 # ===========================================================================

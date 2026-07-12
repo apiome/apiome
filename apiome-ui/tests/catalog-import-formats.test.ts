@@ -64,6 +64,7 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('hl7v2')?.sourceKind).toBe('hl7v2');
     expect(catalogAdapterForFormat('hl7')?.sourceKind).toBe('hl7v2');
     expect(catalogAdapterForFormat('hl7v2x')?.sourceKind).toBe('hl7v2');
+    expect(catalogAdapterForFormat('iso20022')?.sourceKind).toBe('iso20022');
     expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
@@ -83,7 +84,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -164,6 +165,10 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'hl7v2' },
     });
+    expect(decideCatalogImportRouting('iso20022')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'iso20022' },
+    });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
@@ -191,7 +196,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('iso20022')).toMatchObject({
+    expect(decideCatalogImportRouting('iso8583')).toMatchObject({
       destination: 'not-importable',
       adapter: null,
     });
@@ -257,6 +262,7 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('structuredefinition')).toBe('rest');
     expect(paradigmForFormat('hl7v2')).toBe('dataschema');
     expect(paradigmForFormat('hl7')).toBe('dataschema');
+    expect(paradigmForFormat('iso20022')).toBe('dataschema');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

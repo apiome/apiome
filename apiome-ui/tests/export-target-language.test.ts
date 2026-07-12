@@ -32,6 +32,7 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('fhir')).toBe('json');
     expect(monacoLanguageForExportTarget('hl7v2')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('hl7')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('iso20022')).toBe('xml');
     expect(monacoLanguageForExportTarget('typespec')).toBe('typescript');
     expect(monacoLanguageForExportTarget('tsp')).toBe('typescript');
     expect(monacoLanguageForExportTarget('structuredefinition')).toBe('json');
@@ -102,6 +103,7 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('fhir')).toBe('.json');
     expect(fileExtensionForExportTarget('hl7v2')).toBe('.hl7');
     expect(fileExtensionForExportTarget('hl7')).toBe('.hl7');
+    expect(fileExtensionForExportTarget('iso20022')).toBe('.xml');
     expect(fileExtensionForExportTarget('typespec')).toBe('.tsp');
     expect(fileExtensionForExportTarget('tsp')).toBe('.tsp');
     expect(fileExtensionForExportTarget('edmx')).toBe('.edmx');
@@ -142,6 +144,7 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('fhir')).toBe('resource.json');
     expect(downloadFileNameForExportTarget('hl7v2')).toBe('message.hl7');
     expect(downloadFileNameForExportTarget('hl7')).toBe('message.hl7');
+    expect(downloadFileNameForExportTarget('iso20022')).toBe('message.xml');
     expect(downloadFileNameForExportTarget('typespec')).toBe('api.tsp');
     expect(downloadFileNameForExportTarget('tsp')).toBe('api.tsp');
   });

@@ -39,6 +39,10 @@ _FIXTURES = {
     "smithy": '$version: "2.0"\nnamespace com.example\nservice Foo { version: "1" }\n',
     "typespec": 'import "@typespec/http";\nnamespace Demo;\nmodel Pet { name: string; }\n',
     "hl7v2": "MSH|^~\\&|ADT1|GOOD HEALTH|GHH|GOOD HEALTH|20260115083000||ADT^A01|MSG00001|P|2.5\nPID|1||MRN-1\n",
+    "iso20022": (
+        '<?xml version="1.0"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">'
+        "<CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-1</MsgId></GrpHdr></CstmrCdtTrfInitn></Document>"
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -128,6 +132,14 @@ def test_typespec_is_now_importable() -> None:
     assert detection.detected.format == "typespec"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "typespec"
+
+
+def test_iso20022_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["iso20022"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "iso20022"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "iso20022"
 
 
 def test_hl7v2_is_now_importable() -> None:

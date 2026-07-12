@@ -519,6 +519,21 @@ async def _validate_hl7v2(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_iso20022(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted ISO 20022 XML document by re-parsing it."""
+    from .iso20022_emitter import validate_iso20022_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_iso20022_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -533,6 +548,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "fhir": _validate_fhir,
     "typespec": _validate_typespec,
     "hl7v2": _validate_hl7v2,
+    "iso20022": _validate_iso20022,
 }
 
 

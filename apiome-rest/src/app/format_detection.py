@@ -233,6 +233,19 @@ def _sniff_hl7v2(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_iso20022(payload: DetectionInput) -> DetectionResult:
+    from .iso20022_parser import is_iso20022
+
+    text = _text_of(payload)
+    if is_iso20022(text):
+        return DetectionResult(
+            confidence=0.97,
+            format="iso20022",
+            reason="`urn:iso:std:iso:20022:tech:xsd:` namespace",
+        )
+    return NO_MATCH
+
+
 def _sniff_asyncapi(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if not isinstance(document, dict):
@@ -390,6 +403,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_smithy,
     _sniff_typespec,
     _sniff_hl7v2,
+    _sniff_iso20022,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -414,6 +428,7 @@ SNIFFED_FORMATS = frozenset(
         "smithy",
         "typespec",
         "hl7v2",
+        "iso20022",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",
