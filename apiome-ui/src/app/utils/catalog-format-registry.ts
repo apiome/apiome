@@ -170,7 +170,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   // ---- REST (non-OpenAPI) ----
   { id: 'raml', label: 'RAML', icon: BookMarked, tone: 'red', importable: true, description: 'RAML 1.0 REST API definition.' },
   { id: 'postman', label: 'Postman', icon: FileJson, tone: 'orange', importable: true, aliases: ['postmancollection'], description: 'Postman v2.1 request collection.' },
-  { id: 'odata', label: 'OData', icon: Database, tone: 'orange', aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
+  { id: 'odata', label: 'OData', icon: Database, tone: 'orange', importable: true, aliases: ['edmx'], description: 'OData EDMX / CSDL service metadata.' },
   { id: 'wsdl', label: 'WSDL', icon: FileCode, tone: 'slate', importable: true, aliases: ['soap'], description: 'SOAP web service description (WSDL).' },
   { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', importable: true, aliases: ['restdescription'], description: 'WADL REST resource description.' },
   { id: 'apiblueprint', label: 'API Blueprint', icon: FileText, tone: 'blue', importable: true, aliases: ['blueprint', 'apib'], description: 'API Blueprint 1A markdown API description.' },
@@ -219,14 +219,14 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, ONC RPC, and CORBA IDL. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, ONC RPC, CORBA IDL, and OData. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
 
 /**
  * The alternative formats the registry *recognizes* (so a pill renders and detection can name them)
- * but which have **no catalog importer yet** — FHIR, HL7 v2, ISO 20022/8583, FIX, OData, and the rest. Listed separately in the gallery as "not yet
+ * but which have **no catalog importer yet** — FHIR, HL7 v2, ISO 20022/8583, FIX, and the rest. Listed separately in the gallery as "not yet
  * importable" so support is never over-stated.
  */
 export const RECOGNIZED_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =

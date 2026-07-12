@@ -122,12 +122,20 @@ def test_openapi_routes_to_importable_adapter() -> None:
 
 
 def test_sniffed_formats_are_not_importable_yet() -> None:
-    # OData is still sniffer-only (its adapter lands in a later epic).
+    # TypeSpec is still sniffer-only (its adapter lands in a later epic).
+    detection = detect_format(DetectionInput(text=_FIXTURES["typespec"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "typespec"
+    assert detection.detected.importable is False
+    assert detection.detected.source_key is None
+
+
+def test_odata_is_now_importable() -> None:
     detection = detect_format(DetectionInput(text=_FIXTURES["odata"]))
     assert detection.detected is not None
     assert detection.detected.format == "odata"
-    assert detection.detected.importable is False
-    assert detection.detected.source_key is None
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "odata"
 
 
 def test_raml_is_now_importable() -> None:

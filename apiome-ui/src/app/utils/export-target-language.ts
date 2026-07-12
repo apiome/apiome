@@ -60,6 +60,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   edix12: { language: 'plaintext', extension: '.edi', baseName: 'interchange' },
   oncrpc: { language: 'plaintext', extension: '.x', baseName: 'program' },
   corbaidl: { language: 'plaintext', extension: '.idl', baseName: 'module' },
+  odata: { language: 'xml', extension: '.edmx', baseName: 'service' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -74,6 +75,7 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   xdr: 'oncrpc',
   corba: 'corbaidl',
   idl: 'corbaidl',
+  edmx: 'odata',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

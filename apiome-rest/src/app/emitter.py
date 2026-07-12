@@ -645,6 +645,7 @@ def load_builtin_emitters() -> None:
     from . import edix12_emitter as _edix12  # noqa: F401
     from . import oncrpc_emitter as _oncrpc  # noqa: F401
     from . import corbaidl_emitter as _corbaidl  # noqa: F401
+    from . import odata_emitter as _odata  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

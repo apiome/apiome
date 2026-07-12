@@ -459,6 +459,21 @@ async def _validate_corbaidl(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_odata(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted OData EDMX / CSDL document by re-parsing it."""
+    from .odata_emitter import validate_odata_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_odata_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -469,6 +484,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "edix12": _validate_edix12,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,
+    "odata": _validate_odata,
 }
 
 

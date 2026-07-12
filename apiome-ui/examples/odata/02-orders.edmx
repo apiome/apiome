@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OData v4 CSDL (EDMX) example — orders with enums and complex types.
+
+  Demonstrates EnumType, ComplexType, and a single EntitySet beyond the
+  Northwind product/category model.
+-->
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Example.Orders" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EnumType Name="OrderStatus">
+        <Member Name="Open" Value="0"/>
+        <Member Name="Closed" Value="1"/>
+      </EnumType>
+
+      <ComplexType Name="Address">
+        <Property Name="Street" Type="Edm.String"/>
+        <Property Name="City" Type="Edm.String"/>
+      </ComplexType>
+
+      <EntityType Name="Order">
+        <Key>
+          <PropertyRef Name="Id"/>
+        </Key>
+        <Property Name="Id" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Status" Type="Example.Orders.OrderStatus"/>
+        <Property Name="ShipTo" Type="Example.Orders.Address"/>
+      </EntityType>
+
+      <EntityContainer Name="Container">
+        <EntitySet Name="Orders" EntityType="Example.Orders.Order"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
