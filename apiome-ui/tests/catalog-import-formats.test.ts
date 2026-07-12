@@ -61,6 +61,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('fhir')?.sourceKind).toBe('fhir');
     expect(catalogAdapterForFormat('fhirr4')?.sourceKind).toBe('fhir');
     expect(catalogAdapterForFormat('structuredefinition')?.sourceKind).toBe('fhir');
+    expect(catalogAdapterForFormat('hl7v2')?.sourceKind).toBe('hl7v2');
+    expect(catalogAdapterForFormat('hl7')?.sourceKind).toBe('hl7v2');
+    expect(catalogAdapterForFormat('hl7v2x')?.sourceKind).toBe('hl7v2');
     expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
@@ -80,7 +83,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -157,6 +160,10 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'fhir' },
     });
+    expect(decideCatalogImportRouting('hl7v2')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'hl7v2' },
+    });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
@@ -184,7 +191,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('hl7v2')).toMatchObject({
+    expect(decideCatalogImportRouting('iso20022')).toMatchObject({
       destination: 'not-importable',
       adapter: null,
     });
@@ -248,6 +255,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('edmx')).toBe('rest');
     expect(paradigmForFormat('fhir')).toBe('rest');
     expect(paradigmForFormat('structuredefinition')).toBe('rest');
+    expect(paradigmForFormat('hl7v2')).toBe('dataschema');
+    expect(paradigmForFormat('hl7')).toBe('dataschema');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

@@ -224,6 +224,15 @@ def _sniff_typespec(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_hl7v2(payload: DetectionInput) -> DetectionResult:
+    from .hl7v2_parser import is_hl7v2
+
+    text = _text_of(payload)
+    if is_hl7v2(text):
+        return DetectionResult(confidence=0.97, format="hl7v2", reason="`MSH|^~\\&|` message header")
+    return NO_MATCH
+
+
 def _sniff_asyncapi(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if not isinstance(document, dict):
@@ -380,6 +389,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_odata,
     _sniff_smithy,
     _sniff_typespec,
+    _sniff_hl7v2,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -403,6 +413,7 @@ SNIFFED_FORMATS = frozenset(
         "odata",
         "smithy",
         "typespec",
+        "hl7v2",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",

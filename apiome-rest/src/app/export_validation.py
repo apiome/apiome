@@ -504,6 +504,21 @@ async def _validate_typespec(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_hl7v2(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted HL7 v2 message by re-parsing it."""
+    from .hl7v2_emitter import validate_hl7v2_message
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_hl7v2_message(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -517,6 +532,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "odata": _validate_odata,
     "fhir": _validate_fhir,
     "typespec": _validate_typespec,
+    "hl7v2": _validate_hl7v2,
 }
 
 
