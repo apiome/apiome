@@ -399,12 +399,28 @@ async def _validate_proto(
 # not-applicable. Keyed by the resolved emitter format so it tracks the emitter registry.
 _Validator = Callable[[str, EmitResult, CanonicalApi], Awaitable[EmittedArtifactValidation]]
 
+async def _validate_asn1(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted ASN.1 module with ``asn1tools``."""
+    from .asn1_emitter import validate_asn1_module
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_asn1_module(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
     "asyncapi-3": _validate_asyncapi,
     "avro": _validate_avro,
     "proto3": _validate_proto,
+    "asn1": _validate_asn1,
 }
 
 

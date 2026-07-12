@@ -56,12 +56,14 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   grpc: { language: 'protobuf', extension: '.proto', baseName: 'api' },
   graphql: { language: 'graphql', extension: '.graphql', baseName: 'schema' },
   avro: { language: 'json', extension: '.avsc', baseName: 'schema' },
+  asn1: { language: 'plaintext', extension: '.asn1', baseName: 'schema' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
 /** Emitter format keys that collapse to a canonical export-target id (`proto3` → `protobuf`). */
 const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   avsc: 'avro',
+  asn: 'asn1',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

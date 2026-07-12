@@ -45,6 +45,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('apiblueprint')?.sourceKind).toBe('apiblueprint');
     expect(catalogAdapterForFormat('api-blueprint')?.sourceKind).toBe('apiblueprint');
     expect(catalogAdapterForFormat('apib')?.sourceKind).toBe('apiblueprint');
+    expect(catalogAdapterForFormat('asn1')?.sourceKind).toBe('asn1');
+    expect(catalogAdapterForFormat('asn')?.sourceKind).toBe('asn1');
   });
 
   test('is case/space-insensitive', () => {
@@ -61,7 +63,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -113,6 +115,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('api-blueprint')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'apiblueprint' },
+    });
+    expect(decideCatalogImportRouting('asn1')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'asn1' },
     });
   });
 
@@ -187,6 +193,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('avro')).toBe('dataschema');
     expect(paradigmForFormat('xmlrpc')).toBe('rpc');
     expect(paradigmForFormat('xsd')).toBe('dataschema');
+    expect(paradigmForFormat('asn1')).toBe('dataschema');
+    expect(paradigmForFormat('asn')).toBe('dataschema');
     expect(paradigmForFormat('postman')).toBe('rest');
     expect(paradigmForFormat('cloudevents')).toBe('event');
     expect(paradigmForFormat('cloud-events')).toBe('event');

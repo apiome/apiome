@@ -23,6 +23,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('graphql')).toBe('graphql');
     expect(monacoLanguageForExportTarget('gql')).toBe('graphql');
     expect(monacoLanguageForExportTarget('avro')).toBe('json');
+    expect(monacoLanguageForExportTarget('asn1')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('asn')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('avsc')).toBe('json');
   });
 
@@ -77,6 +79,8 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('gql')).toBe('.graphql');
     expect(fileExtensionForExportTarget('avro')).toBe('.avsc');
     expect(fileExtensionForExportTarget('avsc')).toBe('.avsc');
+    expect(fileExtensionForExportTarget('asn1')).toBe('.asn1');
+    expect(fileExtensionForExportTarget('asn')).toBe('.asn1');
     expect(fileExtensionForExportTarget('sdl')).toBe('.graphql');
   });
 
@@ -102,6 +106,7 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('sdl')).toBe('schema.graphql');
     expect(downloadFileNameForExportTarget('avro')).toBe('schema.avsc');
     expect(downloadFileNameForExportTarget('avsc')).toBe('schema.avsc');
+    expect(downloadFileNameForExportTarget('asn1')).toBe('schema.asn1');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

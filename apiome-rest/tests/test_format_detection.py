@@ -186,6 +186,22 @@ def test_postman_is_now_importable() -> None:
     assert detection.detected.source_key == "postman"
 
 
+def test_asn1_is_now_importable() -> None:
+    detection = detect_format(
+        DetectionInput(
+            text=(
+                "PersonModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN\n"
+                "  Status ::= ENUMERATED { active(0) }\n"
+                "END\n"
+            )
+        )
+    )
+    assert detection.detected is not None
+    assert detection.detected.format == "asn1"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "asn1"
+
+
 def test_smithy_is_now_importable() -> None:
     detection = detect_format(DetectionInput(text=_FIXTURES["smithy"]))
     assert detection.detected is not None

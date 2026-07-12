@@ -185,7 +185,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'avro', label: 'Avro', icon: Binary, tone: 'cyan', importable: true, aliases: ['avsc'], description: 'Apache Avro record schema (.avsc).' },
   { id: 'jtd', label: 'JSON Type Definition', icon: Braces, tone: 'indigo', aliases: ['jsontypedefinition', 'rfc8927'], description: 'JSON Type Definition (RFC 8927).' },
   { id: 'xsd', label: 'XSD', icon: FileCode, tone: 'stone', importable: true, aliases: ['xmlschema'], description: 'XML Schema Definition (XSD).' },
-  { id: 'asn1', label: 'ASN.1', icon: Binary, tone: 'stone', aliases: ['asn'], description: 'ASN.1 data structure definitions.' },
+  { id: 'asn1', label: 'ASN.1', icon: Binary, tone: 'stone', importable: true, aliases: ['asn'], description: 'ASN.1 data structure definitions.' },
   { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', aliases: ['copybook', 'cobol'], description: 'COBOL copybook record layout.' },
 
   // ---- Healthcare ----
@@ -219,7 +219,7 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto and WSDL. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, and ASN.1. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
