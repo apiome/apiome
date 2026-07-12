@@ -1,0 +1,45 @@
+{
+  "_comment": "JTD order schema with shared definitions and a tagged delivery union.",
+  "metadata": {
+    "title": "Order",
+    "description": "A commerce order with line items and delivery options."
+  },
+  "definitions": {
+    "OrderLine": {
+      "properties": {
+        "sku": { "type": "string" },
+        "quantity": { "type": "uint32" }
+      }
+    },
+    "DigitalDelivery": {
+      "properties": {
+        "downloadUrl": { "type": "string" }
+      }
+    },
+    "PhysicalDelivery": {
+      "properties": {
+        "address": { "type": "string" },
+        "postalCode": { "type": "string" }
+      },
+      "optionalProperties": {
+        "instructions": { "type": "string" }
+      }
+    }
+  },
+  "properties": {
+    "orderId": { "type": "string" },
+    "lines": {
+      "elements": { "ref": "OrderLine" }
+    },
+    "delivery": {
+      "discriminator": "method",
+      "mapping": {
+        "digital": { "ref": "DigitalDelivery" },
+        "physical": { "ref": "PhysicalDelivery" }
+      }
+    }
+  },
+  "optionalProperties": {
+    "note": { "type": "string" }
+  }
+}

@@ -97,7 +97,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'json-schema', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -206,6 +206,14 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'json-schema' },
     });
+    expect(decideCatalogImportRouting('jtd')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'jtd' },
+    });
+    expect(decideCatalogImportRouting('jsontypedefinition')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'jtd' },
+    });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
@@ -230,8 +238,8 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('jtd')).toMatchObject({
-      destination: 'not-importable',
+    expect(decideCatalogImportRouting('arazzo')).toMatchObject({
+      destination: 'project',
       adapter: null,
     });
   });
@@ -309,6 +317,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('zos-connect')).toBe('rest');
     expect(paradigmForFormat('jsonschema')).toBe('dataschema');
     expect(paradigmForFormat('json-schema')).toBe('dataschema');
+    expect(paradigmForFormat('jtd')).toBe('dataschema');
+    expect(paradigmForFormat('jsontypedefinition')).toBe('dataschema');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

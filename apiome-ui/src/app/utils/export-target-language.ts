@@ -70,6 +70,9 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   zosconnect: { language: 'json', extension: '.json', baseName: 'zosconnect' },
   'json-schema': { language: 'json', extension: '.json', baseName: 'schema' },
   jsonschema: { language: 'json', extension: '.json', baseName: 'schema' },
+  jtd: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
+  jsontypedefinition: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
+  rfc8927: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
@@ -97,6 +100,8 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   zos: 'zosconnect',
   'zos-connect': 'zosconnect',
   jsonschema: 'json-schema',
+  jsontypedefinition: 'jtd',
+  rfc8927: 'jtd',
   tsp: 'typespec',
   cadl: 'typespec',
   gql: 'graphql',

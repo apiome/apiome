@@ -269,6 +269,29 @@ def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_jtd(payload: DetectionInput) -> DetectionResult:
+    from .jtd_import_source import is_jtd
+
+    text = _text_of(payload)
+    if is_jtd(text):
+        return DetectionResult(
+            confidence=0.94,
+            format="jtd",
+            reason="`optionalProperties` / `elements` JTD schema document",
+        )
+    document = payload.document
+    if isinstance(document, dict):
+        import json
+
+        if is_jtd(json.dumps(document, separators=(",", ":"))):
+            return DetectionResult(
+                confidence=0.93,
+                format="jtd",
+                reason="`optionalProperties` / `elements` JTD schema document",
+            )
+    return NO_MATCH
+
+
 def _sniff_jsonschema(payload: DetectionInput) -> DetectionResult:
     from .jsonschema_import_source import is_jsonschema
 
@@ -503,6 +526,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_cobolcopybook,
     _sniff_fix,
     _sniff_zosconnect,
+    _sniff_jtd,
     _sniff_jsonschema,
     _sniff_asyncapi,
     _sniff_arazzo,
@@ -533,6 +557,7 @@ SNIFFED_FORMATS = frozenset(
         "cobolcopybook",
         "fix",
         "zosconnect",
+        "jtd",
         "json-schema",
         "asyncapi-2",
         "asyncapi-3",

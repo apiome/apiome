@@ -609,6 +609,21 @@ async def _validate_jsonschema(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_jtd(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted JTD document by re-parsing it."""
+    from .jtd_emitter import validate_jtd_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_jtd_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -629,6 +644,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "fix": _validate_fix,
     "zosconnect": _validate_zosconnect,
     "json-schema": _validate_jsonschema,
+    "jtd": _validate_jtd,
 }
 
 

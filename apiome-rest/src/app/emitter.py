@@ -655,6 +655,7 @@ def load_builtin_emitters() -> None:
     from . import fix_emitter as _fix  # noqa: F401
     from . import zosconnect_emitter as _zosconnect  # noqa: F401
     from . import jsonschema_emitter as _jsonschema_emitter  # noqa: F401
+    from . import jtd_emitter as _jtd_emitter  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

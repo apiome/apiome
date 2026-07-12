@@ -66,6 +66,9 @@ _FIXTURES = {
         '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"User","type":"object",'
         '"properties":{"id":{"type":"string"}},"required":["id"]}'
     ),
+    "jtd": (
+        '{"properties":{"id":{"type":"string"}},"optionalProperties":{"label":{"type":"string"}}}'
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -195,6 +198,14 @@ def test_json_schema_is_now_importable() -> None:
     assert detection.detected.format in {"json-schema", "json-schema-2020-12"}
     assert detection.detected.importable is True
     assert detection.detected.source_key == "json-schema"
+
+
+def test_jtd_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["jtd"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "jtd"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "jtd"
 
 
 def test_iso20022_is_now_importable() -> None:
