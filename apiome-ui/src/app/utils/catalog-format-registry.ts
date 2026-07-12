@@ -189,7 +189,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', aliases: ['copybook', 'cobol'], description: 'COBOL copybook record layout.' },
 
   // ---- Healthcare ----
-  { id: 'fhir', label: 'FHIR', icon: HeartPulse, tone: 'red', aliases: ['fhirr4', 'structuredefinition'], description: 'HL7 FHIR healthcare resource definition.' },
+  { id: 'fhir', label: 'FHIR', icon: HeartPulse, tone: 'red', importable: true, aliases: ['fhirr4', 'structuredefinition'], description: 'HL7 FHIR healthcare resource definition.' },
   { id: 'hl7v2', label: 'HL7 v2', icon: HeartPulse, tone: 'pink', aliases: ['hl7', 'hl7v2x'], description: 'HL7 v2.x healthcare messaging.' },
 
   // ---- Finance / B2B ----
@@ -219,14 +219,14 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, ONC RPC, CORBA IDL, and OData. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, ONC RPC, CORBA IDL, OData, and FHIR. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
 
 /**
  * The alternative formats the registry *recognizes* (so a pill renders and detection can name them)
- * but which have **no catalog importer yet** — FHIR, HL7 v2, ISO 20022/8583, FIX, and the rest. Listed separately in the gallery as "not yet
+ * but which have **no catalog importer yet** — HL7 v2, ISO 20022/8583, FIX, and the rest. Listed separately in the gallery as "not yet
  * importable" so support is never over-stated.
  */
 export const RECOGNIZED_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =

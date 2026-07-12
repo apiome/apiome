@@ -6,7 +6,7 @@
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
  * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC,
- * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, Avro, XML-RPC, XSD, ASN.1, EDI X12, ONC RPC, CORBA IDL, OData, and Postman (OpenAPI/Swagger are native and go to Projects, not
+ * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, Avro, XML-RPC, XSD, ASN.1, EDI X12, ONC RPC, CORBA IDL, OData, FHIR, and Postman (OpenAPI/Swagger are native and go to Projects, not
  * the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
@@ -97,6 +97,9 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   idl: { sourceKind: 'corbaidl', label: 'CORBA IDL' },
   odata: { sourceKind: 'odata', label: 'OData' },
   edmx: { sourceKind: 'odata', label: 'OData' },
+  fhir: { sourceKind: 'fhir', label: 'FHIR' },
+  fhirr4: { sourceKind: 'fhir', label: 'FHIR' },
+  structuredefinition: { sourceKind: 'fhir', label: 'FHIR' },
 };
 
 /**
@@ -156,6 +159,9 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   idl: 'rpc',
   odata: 'rest',
   edmx: 'rest',
+  fhir: 'rest',
+  fhirr4: 'rest',
+  structuredefinition: 'rest',
 };
 
 /**

@@ -138,6 +138,21 @@ def test_odata_is_now_importable() -> None:
     assert detection.detected.source_key == "odata"
 
 
+def test_fhir_is_now_importable() -> None:
+    detection = detect_format(
+        DetectionInput(
+            text=(
+                '{"resourceType":"StructureDefinition","name":"Demo",'
+                '"type":"Patient","differential":{"element":[]}}'
+            )
+        )
+    )
+    assert detection.detected is not None
+    assert detection.detected.format == "fhir"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "fhir"
+
+
 def test_raml_is_now_importable() -> None:
     detection = detect_format(DetectionInput(text="#%RAML 1.0\ntitle: Example\nbaseUri: https://api.example.com\n/books:\n  get:\n"))
     assert detection.detected is not None

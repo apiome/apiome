@@ -474,6 +474,21 @@ async def _validate_odata(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_fhir(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted FHIR JSON document by re-parsing it."""
+    from .fhir_emitter import validate_fhir_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_fhir_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -485,6 +500,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,
     "odata": _validate_odata,
+    "fhir": _validate_fhir,
 }
 
 

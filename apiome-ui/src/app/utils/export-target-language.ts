@@ -61,6 +61,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   oncrpc: { language: 'plaintext', extension: '.x', baseName: 'program' },
   corbaidl: { language: 'plaintext', extension: '.idl', baseName: 'module' },
   odata: { language: 'xml', extension: '.edmx', baseName: 'service' },
+  fhir: { language: 'json', extension: '.json', baseName: 'resource' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -76,6 +77,8 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   corba: 'corbaidl',
   idl: 'corbaidl',
   edmx: 'odata',
+  fhirr4: 'fhir',
+  structuredefinition: 'fhir',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',
