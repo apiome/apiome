@@ -10,7 +10,7 @@ behind the multi-format SPI. It wraps the shared pipeline rather than reimplemen
 
 Registering this adapter (``register=True``) is all the UI source card, CLI ``import --list``,
 and ``POST /v1/import/detect`` need: an Arazzo document now auto-detects with
-``importable: true`` and routes to publishable Projects per the §0.3 policy.
+``importable: true`` and routes to a non-publishable catalog item (store-raw, MFI-23.7).
 """
 
 from __future__ import annotations

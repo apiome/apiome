@@ -73,6 +73,8 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   jtd: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
   jsontypedefinition: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
   rfc8927: { language: 'json', extension: '.jtd.json', baseName: 'schema' },
+  arazzo: { language: 'yaml', extension: '.yaml', baseName: 'workflow' },
+  workflows: { language: 'yaml', extension: '.yaml', baseName: 'workflow' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
@@ -102,6 +104,7 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   jsonschema: 'json-schema',
   jsontypedefinition: 'jtd',
   rfc8927: 'jtd',
+  workflows: 'arazzo',
   tsp: 'typespec',
   cadl: 'typespec',
   gql: 'graphql',

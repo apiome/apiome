@@ -44,6 +44,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('zos-connect')).toBe('json');
     expect(monacoLanguageForExportTarget('json-schema')).toBe('json');
     expect(monacoLanguageForExportTarget('jtd')).toBe('json');
+    expect(monacoLanguageForExportTarget('arazzo')).toBe('yaml');
+    expect(monacoLanguageForExportTarget('workflows')).toBe('yaml');
     expect(monacoLanguageForExportTarget('jsontypedefinition')).toBe('json');
     expect(monacoLanguageForExportTarget('jsonschema')).toBe('json');
     expect(monacoLanguageForExportTarget('typespec')).toBe('typescript');
@@ -128,6 +130,8 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('jsonschema')).toBe('.json');
     expect(fileExtensionForExportTarget('jtd')).toBe('.jtd.json');
     expect(fileExtensionForExportTarget('rfc8927')).toBe('.jtd.json');
+    expect(fileExtensionForExportTarget('arazzo')).toBe('.yaml');
+    expect(fileExtensionForExportTarget('workflows')).toBe('.yaml');
     expect(fileExtensionForExportTarget('typespec')).toBe('.tsp');
     expect(fileExtensionForExportTarget('tsp')).toBe('.tsp');
     expect(fileExtensionForExportTarget('edmx')).toBe('.edmx');
@@ -178,6 +182,8 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('zos-connect')).toBe('zosconnect.json');
     expect(downloadFileNameForExportTarget('json-schema')).toBe('schema.json');
     expect(downloadFileNameForExportTarget('jtd')).toBe('schema.jtd.json');
+    expect(downloadFileNameForExportTarget('arazzo')).toBe('workflow.yaml');
+    expect(downloadFileNameForExportTarget('workflows')).toBe('workflow.yaml');
     expect(downloadFileNameForExportTarget('rfc8927')).toBe('schema.jtd.json');
     expect(downloadFileNameForExportTarget('jsonschema')).toBe('schema.json');
     expect(downloadFileNameForExportTarget('typespec')).toBe('api.tsp');

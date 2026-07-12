@@ -37,8 +37,8 @@ export interface CatalogImportRoutingDecision {
 }
 
 // Format *families* (post-{@link formatFamily} normalization) that route to Projects rather than the
-// catalog: the native REST formats plus Arazzo workflows.
-const PROJECT_FORMATS = new Set(['openapi', 'swagger', 'arazzo']);
+// catalog: the native REST formats.
+const PROJECT_FORMATS = new Set(['openapi', 'swagger']);
 
 // JSON Schema families that still trigger the Catalog-vs-Types/Projects prompt when no adapter
 // mapping exists (e.g. a spaced label). Registered `json-schema` / `jsonschema` families route
@@ -85,6 +85,8 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   'api-blueprint': { sourceKind: 'apiblueprint', label: 'API Blueprint' },
   apib: { sourceKind: 'apiblueprint', label: 'API Blueprint' },
   blueprint: { sourceKind: 'apiblueprint', label: 'API Blueprint' },
+  arazzo: { sourceKind: 'arazzo', label: 'Arazzo' },
+  workflows: { sourceKind: 'arazzo', label: 'Arazzo' },
   asn1: { sourceKind: 'asn1', label: 'ASN.1' },
   asn: { sourceKind: 'asn1', label: 'ASN.1' },
   edix12: { sourceKind: 'edix12', label: 'EDI X12' },
@@ -165,6 +167,8 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   'api-blueprint': 'rest',
   apib: 'rest',
   blueprint: 'rest',
+  arazzo: 'rest',
+  workflows: 'rest',
   openapi: 'rest',
   swagger: 'rest',
   jsonschema: 'dataschema',
@@ -267,7 +271,7 @@ export function decideCatalogImportRouting(
     return {
       destination: 'project',
       label: 'Projects',
-      description: 'OpenAPI, Swagger, and Arazzo create publishable Project versions instead of catalog items.',
+      description: 'OpenAPI and Swagger create publishable Project versions instead of catalog items.',
       adapter: null,
     };
   }

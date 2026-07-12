@@ -178,7 +178,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'typespec', label: 'TypeSpec', icon: FileCode, tone: 'cyan', importable: true, aliases: ['tsp', 'cadl'], description: 'Microsoft TypeSpec API definition.' },
 
   // ---- Workflows ----
-  { id: 'arazzo', label: 'Arazzo', icon: Workflow, tone: 'violet', aliases: ['workflows'], description: 'Arazzo API workflow description.' },
+  { id: 'arazzo', label: 'Arazzo', icon: Workflow, tone: 'violet', importable: true, aliases: ['workflows'], description: 'Arazzo API workflow description.' },
 
   // ---- Data schema ----
   { id: 'jsonschema', label: 'JSON Schema', icon: Braces, tone: 'indigo', importable: true, aliases: ['json'], description: 'JSON Schema type definitions.' },

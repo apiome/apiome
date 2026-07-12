@@ -89,7 +89,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('returns null for formats with no catalog importer (…)', () => {
-    for (const f of ['arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+    for (const f of ['openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -97,7 +97,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['apiblueprint', 'arazzo', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'json-schema', 'jtd', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -218,10 +218,18 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
     });
+    expect(decideCatalogImportRouting('arazzo')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'arazzo' },
+    });
+    expect(decideCatalogImportRouting('workflows')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'arazzo' },
+    });
   });
 
-  test('routes OpenAPI, Swagger, and Arazzo to Projects', () => {
-    for (const f of ['openapi', 'openapi-3.1', 'swagger', 'swagger-2.0', 'arazzo']) {
+  test('routes OpenAPI, Swagger to Projects', () => {
+    for (const f of ['openapi', 'openapi-3.1', 'swagger', 'swagger-2.0']) {
       expect(decideCatalogImportRouting(f)).toMatchObject({
         destination: 'project',
         label: 'Projects',
@@ -238,8 +246,8 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('arazzo')).toMatchObject({
-      destination: 'project',
+    expect(decideCatalogImportRouting('totally-made-up')).toMatchObject({
+      destination: 'not-importable',
       adapter: null,
     });
   });
@@ -319,6 +327,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('json-schema')).toBe('dataschema');
     expect(paradigmForFormat('jtd')).toBe('dataschema');
     expect(paradigmForFormat('jsontypedefinition')).toBe('dataschema');
+    expect(paradigmForFormat('arazzo')).toBe('rest');
+    expect(paradigmForFormat('workflows')).toBe('rest');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

@@ -163,13 +163,19 @@ def test_openapi_31_routes_to_project() -> None:
     assert "publishable Project" in decision.reason
 
 
-def test_openapi_30_swagger_and_arazzo_route_to_project() -> None:
-    for fmt in ("openapi-3.0", "openapi-3.2", "swagger-2.0", "arazzo"):
+def test_openapi_30_and_swagger_route_to_project() -> None:
+    for fmt in ("openapi-3.0", "openapi-3.2", "swagger-2.0"):
         decision = _decide(
             key="openapi", paradigm=ApiParadigm.REST, fmt=fmt, operations=1
         )
         assert decision.target is ImportTarget.PROJECT, fmt
         assert decision.publishable is True, fmt
+
+
+def test_arazzo_routes_to_catalog() -> None:
+    decision = _decide(key="arazzo", paradigm=ApiParadigm.REST, fmt="arazzo", operations=2)
+    assert decision.target is ImportTarget.CATALOG
+    assert decision.publishable is False
 
 
 def test_publishable_formats_set_is_the_project_family() -> None:
@@ -178,7 +184,6 @@ def test_publishable_formats_set_is_the_project_family() -> None:
         "openapi-3.1",
         "openapi-3.2",
         "swagger-2.0",
-        "arazzo",
     }
 
 
@@ -366,8 +371,8 @@ def test_requested_target_is_case_and_whitespace_insensitive() -> None:
 
 def test_requested_target_ignored_for_openapi_no_regression() -> None:
     # The guardrail: an OpenAPI import ignores a stray as-current opt-in and still routes to a
-    # publishable Project. This is the "no regression to OpenAPI/Arazzo routing" criterion.
-    for fmt in ("openapi-3.1", "swagger-2.0", "arazzo"):
+    # publishable Project. This is the "no regression to OpenAPI routing" criterion.
+    for fmt in ("openapi-3.1", "swagger-2.0"):
         decision = _decide(
             key="openapi",
             paradigm=ApiParadigm.REST,

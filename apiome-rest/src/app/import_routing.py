@@ -9,11 +9,11 @@ and — crucially for the UI — *why*.
 
 The rule (from the roadmap):
 
-* **OpenAPI / Swagger / Arazzo** (including **TypeSpec-emitted OpenAPI**, which a TypeSpec
+* **OpenAPI / Swagger** (including **TypeSpec-emitted OpenAPI**, which a TypeSpec
   adapter normalizes to an ``openapi-3.x`` format) → **Project** (``publishable``),
   exactly as today.
 * **Everything else that is OpenAPI-worthy** — a non-OpenAPI import that still carries
-  operations and/or types (gRPC, GraphQL, AsyncAPI, OData, …) → **catalog item**
+  operations and/or types (gRPC, GraphQL, AsyncAPI, Arazzo, OData, …) → **catalog item**
   (non-publishable).
 * **Pure data-schema sources** (Avro, Protobuf-schema, JSON-Schema, XSD) — types but no
   operations/channels → **catalog item**, additionally flagged **``schemas_only``** so
@@ -52,11 +52,11 @@ __all__ = [
 
 
 #: Emitted canonical format keys whose import becomes a **publishable Project** — the
-#: OpenAPI/Swagger/Arazzo family, as today. A non-OpenAPI source that *emits* one of these
+#: OpenAPI/Swagger family, as today. A non-OpenAPI source that *emits* one of these
 #: (TypeSpec → ``openapi-3.x``) routes here too, because the branch is on the emitted
 #: format, not the source tool. Every other format routes to the catalog.
 PUBLISHABLE_FORMATS = frozenset(
-    {"openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0", "arazzo"}
+    {"openapi-3.0", "openapi-3.1", "openapi-3.2", "swagger-2.0"}
 )
 
 #: The explicit ``requested_target`` values (from the JSON Schema disambiguation prompt,
@@ -173,9 +173,9 @@ def decide_import_routing(
     The one exception is **JSON Schema** (§0.3 / MFI-26.7): it is the only format that prompts
     the user, so a ``requested_target`` of ``types``/``project`` redirects it to
     :attr:`ImportTarget.TYPES` — imported *as current* into the type registry — instead of the
-    catalog. The request is honored **only** for JSON Schema: OpenAPI/Swagger/Arazzo always
-    route to a publishable Project and every other non-OpenAPI format always routes to the
-    catalog, regardless of ``requested_target`` (so there is no regression to their routing).
+    catalog. The request is honored **only** for JSON Schema: OpenAPI/Swagger always route to a
+    publishable Project and every other non-OpenAPI format always routes to the catalog,
+    regardless of ``requested_target`` (so there is no regression to their routing).
 
     Args:
         adapter: The resolved import-source adapter the document ran through.
@@ -200,7 +200,7 @@ def decide_import_routing(
     type_count = len(model.types)
     channel_count = len(model.channels)
 
-    # --- OpenAPI/Swagger/Arazzo (incl. TypeSpec-emitted OpenAPI) → publishable Project ---
+    # --- OpenAPI/Swagger (incl. TypeSpec-emitted OpenAPI) → publishable Project ---
     # This branch is intentionally reached before ``requested_target`` is consulted: only
     # OpenAPI and Arazzo create Projects (§0.3 rule 1), and no user opt-in can change that.
     if fmt_key in PUBLISHABLE_FORMATS:

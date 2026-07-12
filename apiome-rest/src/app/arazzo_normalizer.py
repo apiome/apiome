@@ -80,14 +80,16 @@ class ArazzoNormalizer(Normalizer, register=True):
                 continue
             workflow_id = workflow.get("workflowId")
             if not isinstance(workflow_id, str) or not workflow_id.strip():
+                workflow_id = workflow.get("name")
+            if not isinstance(workflow_id, str) or not workflow_id.strip():
                 continue
             steps = workflow.get("steps") or []
             step_order = [
-                step["stepId"]
+                step.get("stepId") or step.get("name")
                 for step in steps
                 if isinstance(step, dict)
-                and isinstance(step.get("stepId"), str)
-                and step["stepId"].strip()
+                and isinstance(step.get("stepId") or step.get("name"), str)
+                and (step.get("stepId") or step.get("name")).strip()
             ]
             operations = [
                 op
@@ -118,6 +120,8 @@ class ArazzoNormalizer(Normalizer, register=True):
     ) -> Operation:
         step_id = step.get("stepId")
         if not isinstance(step_id, str) or not step_id.strip():
+            step_id = step.get("name")
+        if not isinstance(step_id, str) or not step_id.strip():
             step_id = f"step{index}"
         op_key = Keys.workflow_step(workflow_id, step_id)
 
@@ -134,6 +138,12 @@ class ArazzoNormalizer(Normalizer, register=True):
             extras["parameters"] = step["parameters"]
         if step.get("requestBody"):
             extras["requestBody"] = step["requestBody"]
+        if step.get("request"):
+            extras["request"] = step["request"]
+        if step.get("when"):
+            extras["when"] = step["when"]
+        if step.get("assertions"):
+            extras["assertions"] = step["assertions"]
         if step.get("outputs"):
             extras["outputs"] = step["outputs"]
 

@@ -125,11 +125,12 @@ def test_asyncapi_v3_detected_distinctly() -> None:
 
 def test_arazzo_detected_by_version_marker() -> None:
     # MFI-26.6 (#4101): an Arazzo workflow document is named by its `arazzo:` version
-    # marker so the §0.3 routing policy can send it to the publishable Projects path
-    # instead of letting it fall through to the catalog.
+    # marker and routes to the catalog adapter (store-raw, MFI-23.7).
     detection = detect_format(DetectionInput(text=_FIXTURES["arazzo"]))
     assert detection.detected is not None
     assert detection.detected.format == "arazzo"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "arazzo"
     assert not detection.ambiguous
 
 

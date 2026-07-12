@@ -203,3 +203,43 @@ def test_format_detection_marks_arazzo_importable() -> None:
     assert detection.detected.format == "arazzo"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "arazzo"
+
+
+def test_routes_to_non_publishable_catalog_item(adapter: ArazzoImportSource) -> None:
+    from app.import_routing import ImportTarget, decide_import_routing
+
+    model = adapter.normalize(_base_doc())
+    routing = decide_import_routing(adapter, model)
+    assert routing.target is ImportTarget.CATALOG
+    assert routing.publishable is False
+
+
+def test_emitter_round_trips_checkout_fixture() -> None:
+    from pathlib import Path
+
+    import yaml
+
+    from app.arazzo_emitter import validate_arazzo_document
+    from app.emitter import get_emitter
+
+    fixture = (
+        Path(__file__).resolve().parent
+        / "fixtures/openapi_family/arazzo-checkout.yaml"
+    )
+    raw = fixture.read_text(encoding="utf-8")
+    adapter = ArazzoImportSource()
+    api = adapter.normalize(adapter.parse(raw, source_label="arazzo-checkout.yaml"))
+    emitter = get_emitter("arazzo")
+    assert emitter is not None
+    result = emitter().emit(api)
+    text = str(result.files[0].content)
+    validate_arazzo_document(text)
+    round_trip = yaml.safe_load(text)
+    assert round_trip["arazzo"] == "1.0.1"
+    assert round_trip["workflows"][0]["workflowId"] == "checkout"
+
+
+def test_catalog_conversion_resolves_arazzo_adapter() -> None:
+    from app.catalog_conversion import resolve_conversion_adapter
+
+    assert resolve_conversion_adapter("arazzo", "arazzo: 1.0.1").key == "arazzo"

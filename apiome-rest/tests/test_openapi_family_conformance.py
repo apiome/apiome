@@ -57,6 +57,7 @@ class OpenApiFamilyCase:
     source_key: str
     entity_counts: EntityCounts
     emit_roundtrip: bool
+    publishable: bool = True
 
 
 _MATRIX: Tuple[OpenApiFamilyCase, ...] = (
@@ -98,7 +99,8 @@ _MATRIX: Tuple[OpenApiFamilyCase, ...] = (
         expected_format="arazzo",
         source_key="arazzo",
         entity_counts=EntityCounts(services=1, operations=2, types=0),
-        emit_roundtrip=False,
+        emit_roundtrip=True,
+        publishable=False,
     ),
 )
 
@@ -217,20 +219,27 @@ def _assert_emit_roundtrip(case: OpenApiFamilyCase, model: CanonicalApi) -> None
     )
 
 
-def _assert_routes_to_project(
+def _assert_routing(
     case: OpenApiFamilyCase,
     adapter: ImportSource,
     model: CanonicalApi,
 ) -> None:
-    assert case.expected_format in PUBLISHABLE_FORMATS, (
-        f"{case.case_id}: {case.expected_format!r} missing from PUBLISHABLE_FORMATS"
-    )
     decision = decide_import_routing(adapter, model)
-    assert decision.target is ImportTarget.PROJECT, (
-        f"{case.case_id}: routing target {decision.target!r} != PROJECT — "
-        f"reason: {decision.reason}"
+    if case.publishable:
+        assert case.expected_format in PUBLISHABLE_FORMATS, (
+            f"{case.case_id}: {case.expected_format!r} missing from PUBLISHABLE_FORMATS"
+        )
+        assert decision.target is ImportTarget.PROJECT, (
+            f"{case.case_id}: routing target {decision.target!r} != PROJECT — "
+            f"reason: {decision.reason}"
+        )
+        assert decision.publishable is True
+        return
+
+    assert decision.target is ImportTarget.CATALOG, (
+        f"{case.case_id}: routing target {decision.target!r} != CATALOG — reason: {decision.reason}"
     )
-    assert decision.publishable is True
+    assert decision.publishable is False
 
 
 @pytest.fixture(scope="module")
@@ -267,16 +276,26 @@ def test_openapi_family_conformance_matrix(
     model = _assert_detect_normalize_agree(case, document, adapter)
     _assert_entity_counts(case, model)
     _assert_fingerprint_stable(case, adapter, document)
-    _assert_routes_to_project(case, adapter, model)
+    _assert_routing(case, adapter, model)
 
     if case.emit_roundtrip:
-        roundtrip_model = _normalize_via_adapter(adapter, document, include_raw=False)
-        _assert_emit_roundtrip(case, roundtrip_model)
+        if case.source_key == "arazzo":
+            roundtrip_model = _normalize_via_adapter(adapter, document, include_raw=True)
+            emitter_cls = get_emitter("arazzo")
+            assert emitter_cls is not None
+            emitted = emitter_cls().emit(roundtrip_model)
+            text = str(emitted.files[0].content)
+            from app.arazzo_emitter import validate_arazzo_document
+
+            validate_arazzo_document(text)
+        else:
+            roundtrip_model = _normalize_via_adapter(adapter, document, include_raw=False)
+            _assert_emit_roundtrip(case, roundtrip_model)
 
 
 def test_matrix_covers_all_publishable_openapi_family_formats() -> None:
     """Every publishable OpenAPI-family format has a conformance fixture row."""
-    covered = {case.expected_format for case in _MATRIX}
+    covered = {case.expected_format for case in _MATRIX if case.publishable}
     assert covered == PUBLISHABLE_FORMATS
 
 
