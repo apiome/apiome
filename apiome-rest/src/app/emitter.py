@@ -652,6 +652,7 @@ def load_builtin_emitters() -> None:
     from . import iso20022_emitter as _iso20022  # noqa: F401
     from . import iso8583_emitter as _iso8583  # noqa: F401
     from . import cobolcopybook_emitter as _cobolcopybook  # noqa: F401
+    from . import fix_emitter as _fix  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

@@ -196,7 +196,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'edix12', label: 'EDI X12', icon: FileText, tone: 'orange', importable: true, aliases: ['x12', 'edi'], description: 'ANSI X12 EDI transaction sets.' },
   { id: 'iso20022', label: 'ISO 20022', icon: Landmark, tone: 'amber', importable: true, description: 'ISO 20022 financial messaging schema.' },
   { id: 'iso8583', label: 'ISO 8583', icon: CreditCard, tone: 'orange', importable: true, description: 'ISO 8583 card transaction messaging.' },
-  { id: 'fix', label: 'FIX', icon: TrendingUp, tone: 'emerald', aliases: ['fixprotocol'], description: 'FIX financial trading protocol.' },
+  { id: 'fix', label: 'FIX', icon: TrendingUp, tone: 'emerald', importable: true, aliases: ['fixprotocol'], description: 'FIX financial trading protocol.' },
 
   // ---- Mainframe ----
   { id: 'zosconnect', label: 'z/OS Connect', icon: Server, tone: 'blue', aliases: ['zos'], description: 'z/OS Connect mainframe API.' },

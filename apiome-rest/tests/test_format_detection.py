@@ -51,6 +51,10 @@ _FIXTURES = {
         "           05  CUST-ID                 PIC 9(8).\n"
         "           05  CUST-STATUS             PIC X(1).\n"
     ),
+    "fix": (
+        "8=FIX.4.4|9=154|35=D|34=1089|49=BUYSIDE|56=SELLSIDE|52=20260115-08:30:00.000|"
+        "11=ORDER-0001|55=AAPL|54=1|38=100|40=2|44=185.50|10=062|"
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -156,6 +160,14 @@ def test_cobolcopybook_is_now_importable() -> None:
     assert detection.detected.format == "cobolcopybook"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "cobolcopybook"
+
+
+def test_fix_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["fix"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "fix"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "fix"
 
 
 def test_iso20022_is_now_importable() -> None:

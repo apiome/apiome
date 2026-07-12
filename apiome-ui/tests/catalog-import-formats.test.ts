@@ -70,6 +70,8 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('copybook')?.sourceKind).toBe('cobolcopybook');
     expect(catalogAdapterForFormat('cobol')?.sourceKind).toBe('cobolcopybook');
     expect(catalogAdapterForFormat('cobol-copybook')?.sourceKind).toBe('cobolcopybook');
+    expect(catalogAdapterForFormat('fix')?.sourceKind).toBe('fix');
+    expect(catalogAdapterForFormat('fixprotocol')?.sourceKind).toBe('fix');
     expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
@@ -89,7 +91,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -182,6 +184,10 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'cobolcopybook' },
     });
+    expect(decideCatalogImportRouting('fix')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'fix' },
+    });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
@@ -209,7 +215,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('routes unsupported formats to not-importable', () => {
-    expect(decideCatalogImportRouting('fix')).toMatchObject({
+    expect(decideCatalogImportRouting('jtd')).toMatchObject({
       destination: 'not-importable',
       adapter: null,
     });
@@ -281,6 +287,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('copybook')).toBe('dataschema');
     expect(paradigmForFormat('cobol')).toBe('dataschema');
     expect(paradigmForFormat('cobol-copybook')).toBe('dataschema');
+    expect(paradigmForFormat('fix')).toBe('dataschema');
+    expect(paradigmForFormat('fixprotocol')).toBe('dataschema');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

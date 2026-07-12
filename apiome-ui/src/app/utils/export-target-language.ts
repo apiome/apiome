@@ -66,6 +66,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   iso20022: { language: 'xml', extension: '.xml', baseName: 'message' },
   iso8583: { language: 'json', extension: '.json', baseName: 'message' },
   cobolcopybook: { language: 'plaintext', extension: '.cpy', baseName: 'record' },
+  fix: { language: 'plaintext', extension: '.fix', baseName: 'message' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
@@ -89,6 +90,7 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   copybook: 'cobolcopybook',
   cobol: 'cobolcopybook',
   'cobol-copybook': 'cobolcopybook',
+  fixprotocol: 'fix',
   tsp: 'typespec',
   cadl: 'typespec',
   gql: 'graphql',
@@ -142,6 +144,7 @@ const EXTENSION_LANGUAGE: Readonly<Record<string, string>> = {
   '.asn1': 'plaintext',
   '.asn': 'plaintext',
   '.cpy': 'plaintext', // COBOL copybook
+  '.fix': 'plaintext', // FIX tag=value message
   '.cbl': 'plaintext',
   '.cob': 'plaintext',
   '.copybook': 'plaintext',

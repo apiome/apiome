@@ -564,6 +564,21 @@ async def _validate_cobolcopybook(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_fix(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted FIX message by re-parsing it."""
+    from .fix_emitter import validate_fix_message
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_fix_message(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -581,6 +596,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "iso20022": _validate_iso20022,
     "iso8583": _validate_iso8583,
     "cobolcopybook": _validate_cobolcopybook,
+    "fix": _validate_fix,
 }
 
 

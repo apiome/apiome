@@ -269,6 +269,19 @@ def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_fix(payload: DetectionInput) -> DetectionResult:
+    from .fix_parser import is_fix
+
+    text = _text_of(payload)
+    if is_fix(text):
+        return DetectionResult(
+            confidence=0.97,
+            format="fix",
+            reason="`8=FIX.` BeginString with tag=value fields",
+        )
+    return NO_MATCH
+
+
 def _sniff_cobolcopybook(payload: DetectionInput) -> DetectionResult:
     from .cobolcopybook_parser import is_cobolcopybook
 
@@ -442,6 +455,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_iso20022,
     _sniff_iso8583,
     _sniff_cobolcopybook,
+    _sniff_fix,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -469,6 +483,7 @@ SNIFFED_FORMATS = frozenset(
         "iso20022",
         "iso8583",
         "cobolcopybook",
+        "fix",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",
