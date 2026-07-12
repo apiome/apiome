@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import jwt from 'jsonwebtoken';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
+import { applyUiMockBaseUrl } from '@lib/mock/mockUrl';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -151,7 +152,13 @@ export async function PUT(
       return NextResponse.json({ success: false, error }, { status });
     }
 
-    return NextResponse.json({ success: true, version: data });
+    return NextResponse.json({
+      success: true,
+      version: applyUiMockBaseUrl(
+        data && typeof data === 'object' ? (data as Record<string, unknown>) : {},
+        tenantSlug
+      ),
+    });
   } catch (error) {
     console.error('Error toggling version mock:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';

@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import jwt from 'jsonwebtoken';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { getTenantById, listVersionBranches } from '@lib/db/helper';
+import { applyUiMockBaseUrls } from '@lib/mock/mockUrl';
 import {
   collectRecentRevisionsOnLineage,
   type VersionLineageRow,
@@ -248,10 +249,16 @@ export async function GET(request: NextRequest) {
         branchRow.tip_version_id.trim(),
         lineageLimit
       );
-      return NextResponse.json({ success: true, versions: lineage });
+      return NextResponse.json({
+        success: true,
+        versions: applyUiMockBaseUrls(lineage, tenantSlug),
+      });
     }
 
-    return NextResponse.json({ success: true, versions: data });
+    return NextResponse.json({
+      success: true,
+      versions: applyUiMockBaseUrls(Array.isArray(data) ? data : [], tenantSlug),
+    });
   } catch (error) {
     console.error('Error fetching versions:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
