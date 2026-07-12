@@ -738,6 +738,7 @@ def load_builtin_import_sources() -> None:
     from . import asn1_import_source as _asn1  # noqa: F401
     from . import edix12_import_source as _edix12  # noqa: F401
     from . import oncrpc_import_source as _oncrpc  # noqa: F401
+    from . import corbaidl_import_source as _corbaidl  # noqa: F401
 
 
 # ===========================================================================

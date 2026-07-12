@@ -6,7 +6,7 @@
  * bytes for later conversion. That pipeline resolves the request's `source_kind` against the
  * server-side import-source registry, so a source is storable only when a **registered adapter**
  * can parse it. Today those adapters are gRPC/Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC,
- * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, Avro, XML-RPC, XSD, ASN.1, EDI X12, ONC RPC, and Postman (OpenAPI/Swagger are native and go to Projects, not
+ * FlatBuffers, Cap'n Proto, WSDL, RAML, WADL, OpenRPC, Avro, XML-RPC, XSD, ASN.1, EDI X12, ONC RPC, CORBA IDL, and Postman (OpenAPI/Swagger are native and go to Projects, not
  * the catalog).
  *
  * This maps the client analyzer's detected `format` token (see `openapi-analyzer.ts`) to the
@@ -92,6 +92,9 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   sunrpc: { sourceKind: 'oncrpc', label: 'ONC RPC' },
   rpcgen: { sourceKind: 'oncrpc', label: 'ONC RPC' },
   xdr: { sourceKind: 'oncrpc', label: 'ONC RPC' },
+  corbaidl: { sourceKind: 'corbaidl', label: 'CORBA IDL' },
+  corba: { sourceKind: 'corbaidl', label: 'CORBA IDL' },
+  idl: { sourceKind: 'corbaidl', label: 'CORBA IDL' },
 };
 
 /**
@@ -146,6 +149,9 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   sunrpc: 'rpc',
   rpcgen: 'rpc',
   xdr: 'rpc',
+  corbaidl: 'rpc',
+  corba: 'rpc',
+  idl: 'rpc',
 };
 
 /**

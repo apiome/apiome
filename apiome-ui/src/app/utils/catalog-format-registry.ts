@@ -155,7 +155,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'connectrpc', label: 'Connect', icon: Network, tone: 'emerald', importable: true, aliases: ['connect'], description: 'Connect RPC (Protobuf-based) services.' },
   { id: 'capnproto', label: "Cap'n Proto", icon: Zap, tone: 'lime', importable: true, aliases: ['capnp'], description: "Cap'n Proto schema & RPC interfaces." },
   { id: 'flatbuffers', label: 'FlatBuffers', icon: Boxes, tone: 'teal', importable: true, aliases: ['fbs'], description: 'FlatBuffers serialization schema (.fbs).' },
-  { id: 'corbaidl', label: 'CORBA IDL', icon: Network, tone: 'red', aliases: ['corba', 'idl'], description: 'CORBA interface definition language.' },
+  { id: 'corbaidl', label: 'CORBA IDL', icon: Network, tone: 'red', importable: true, aliases: ['corba', 'idl'], description: 'CORBA interface definition language.' },
   { id: 'oncrpc', label: 'ONC RPC', icon: Network, tone: 'slate', importable: true, aliases: ['sunrpc', 'rpcgen', 'xdr'], description: 'ONC/Sun RPC (XDR) interface definition.' },
   { id: 'xmlrpc', label: 'XML-RPC', icon: FileCode, tone: 'stone', importable: true, aliases: ['xml-rpc'], description: 'XML-RPC method interface.' },
   { id: 'openrpc', label: 'OpenRPC', icon: Workflow, tone: 'blue', importable: true, aliases: ['jsonrpc'], description: 'OpenRPC JSON-RPC 2.0 service description.' },
@@ -219,7 +219,7 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, and ONC RPC. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, ONC RPC, and CORBA IDL. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);

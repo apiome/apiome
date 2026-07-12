@@ -59,6 +59,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   asn1: { language: 'plaintext', extension: '.asn1', baseName: 'schema' },
   edix12: { language: 'plaintext', extension: '.edi', baseName: 'interchange' },
   oncrpc: { language: 'plaintext', extension: '.x', baseName: 'program' },
+  corbaidl: { language: 'plaintext', extension: '.idl', baseName: 'module' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -71,6 +72,8 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   sunrpc: 'oncrpc',
   rpcgen: 'oncrpc',
   xdr: 'oncrpc',
+  corba: 'corbaidl',
+  idl: 'corbaidl',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

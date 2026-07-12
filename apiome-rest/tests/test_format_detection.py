@@ -204,6 +204,24 @@ def test_oncrpc_is_now_importable() -> None:
     assert detection.detected.source_key == "oncrpc"
 
 
+def test_corbaidl_is_now_importable() -> None:
+    detection = detect_format(
+        DetectionInput(
+            text=(
+                "module Demo {\n"
+                "  interface Ping {\n"
+                "    long echo(in long value);\n"
+                "  };\n"
+                "};\n"
+            )
+        )
+    )
+    assert detection.detected is not None
+    assert detection.detected.format == "corbaidl"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "corbaidl"
+
+
 def test_edix12_is_now_importable() -> None:
     detection = detect_format(
         DetectionInput(

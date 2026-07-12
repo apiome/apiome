@@ -26,6 +26,7 @@ def adapter() -> CapnpImportSource:
 def test_is_capnproto_recognizes_address_book():
     assert is_capnproto(_ADDRESS_BOOK) is True
     assert is_capnproto("openapi: 3.0.0") is False
+    assert is_capnproto("module Demo { interface Ping { long echo(in long value); }; };") is False
 
 
 def test_parse_collects_structs_enums_interfaces():

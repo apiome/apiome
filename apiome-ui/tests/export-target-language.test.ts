@@ -27,6 +27,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('asn')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('edix12')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('oncrpc')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('corbaidl')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('idl')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('sunrpc')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('x12')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('avsc')).toBe('json');
@@ -87,6 +89,8 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('asn')).toBe('.asn1');
     expect(fileExtensionForExportTarget('edix12')).toBe('.edi');
     expect(fileExtensionForExportTarget('oncrpc')).toBe('.x');
+    expect(fileExtensionForExportTarget('corbaidl')).toBe('.idl');
+    expect(fileExtensionForExportTarget('idl')).toBe('.idl');
     expect(fileExtensionForExportTarget('sunrpc')).toBe('.x');
     expect(fileExtensionForExportTarget('x12')).toBe('.edi');
     expect(fileExtensionForExportTarget('x12')).toBe('.edi');
@@ -118,6 +122,7 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('asn1')).toBe('schema.asn1');
     expect(downloadFileNameForExportTarget('edix12')).toBe('interchange.edi');
     expect(downloadFileNameForExportTarget('oncrpc')).toBe('program.x');
+    expect(downloadFileNameForExportTarget('corbaidl')).toBe('module.idl');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

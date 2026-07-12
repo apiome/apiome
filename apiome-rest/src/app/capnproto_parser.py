@@ -80,9 +80,15 @@ def is_capnproto(content: str) -> bool:
     trimmed = content.strip()
     if not trimmed:
         return False
+    if re.search(r"\bmodule\s+\w+\s*\{", trimmed):
+        return False
+    if re.search(r"\braises\s*\(", trimmed):
+        return False
+    if re.search(r"\b(in|out|inout)\s+\w+", trimmed):
+        return False
     if re.search(r"@0x[0-9a-fA-F]+\s*;", trimmed):
         return True
-    if re.search(r"\binterface\s+\w+\s*\{", trimmed):
+    if re.search(r"\binterface\s+\w+\s*\{[^}]*@\d+\s*\(", trimmed, re.DOTALL):
         return True
     if re.search(r"\bstruct\s+\w+\s*\{[^}]*@\d+\s*:", trimmed, re.DOTALL):
         return True
