@@ -19,6 +19,7 @@ def test_get_version_quality_score_returns_row():
         "quality_score": 87,
         "quality_grade": "B",
         "quality_report_fingerprint": "fp-abc",
+        "quality_report": {"score": 87, "findings": []},
     }
     with patch.object(db, "execute_query", return_value=[row]) as mq:
         out = db.get_version_quality_score(_VID, _TID)

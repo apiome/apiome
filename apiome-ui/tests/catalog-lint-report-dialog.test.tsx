@@ -31,8 +31,11 @@ const REPORT = {
   projectId: 'cat-1',
   versionRecordId: 'rev-1',
   versionId: '1.0.0',
-  score: 81,
-  grade: 'B',
+  score: 100,
+  grade: 'A',
+  capturedScore: 56,
+  capturedGrade: 'C',
+  scoreIsStale: true,
   findings: [
     {
       id: 'f1',
@@ -84,6 +87,8 @@ describe('CatalogLintReportDialog', () => {
         'naming.schema-pascal-case',
       ),
     );
+    expect(screen.getByText('C')).toBeInTheDocument();
+    expect(screen.getByText('56', { selector: 'span.font-semibold' })).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
       '/api/catalog/cat-1/lint',
       expect.objectContaining({ method: 'GET' }),

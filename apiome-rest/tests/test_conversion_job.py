@@ -555,22 +555,39 @@ async def test_db_lint_scorer_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database.db, "get_version_by_id", lambda vid, tid: {"id": vid})
     monkeypatch.setattr(compat, "openapi_for_revision", lambda v, s, t: {"openapi": "3.1.0"})
     # GOV-1.4: the scorer lints through the style-guide-aware entry point.
+    saved: Dict[str, Any] = {}
     monkeypatch.setattr(
         style_guide_engine, "guided_lint_openapi_spec",
         lambda spec, tenant_id, project_id=None: (
-            types.SimpleNamespace(score=82, grade="B", report_fingerprint="fp"),
+            types.SimpleNamespace(
+                score=82,
+                grade="B",
+                report_fingerprint="fp",
+                report_dict=lambda: {
+                    "score": 82,
+                    "grade": "B",
+                    "report_fingerprint": "fp",
+                    "findings": [],
+                    "rule_hits": {},
+                    "severity_counts": {},
+                    "categories": [],
+                },
+            ),
             types.SimpleNamespace(guide_id=None, name="Apiome Recommended", source="fallback"),
         ),
     )
-    saved: Dict[str, Any] = {}
     monkeypatch.setattr(
         database.db, "set_version_quality_score",
-        lambda vid, tid, score, grade, fp: saved.update(score=score, grade=grade, fp=fp) or True,
+        lambda vid, tid, score, grade, fp, quality_report=None: saved.update(
+            score=score, grade=grade, fp=fp, quality_report=quality_report
+        )
+        or True,
     )
 
     lint = await DbLintScorer().score(tenant_slug="acme", tenant_id="t", version_record_id="v-1")
     assert lint == LintScore(score=82, grade="B", report_fingerprint="fp")
-    assert saved == {"score": 82, "grade": "B", "fp": "fp"}
+    assert saved["score"] == 82
+    assert saved["quality_report"]["score"] == 82
 
 
 async def test_db_lint_scorer_missing_version_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:

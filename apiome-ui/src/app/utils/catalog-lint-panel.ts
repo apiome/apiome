@@ -4,10 +4,13 @@
  * The panel renders a grade gauge, category bars, and a findings list from the server lint report
  * (`GET /api/catalog/{id}/lint`). These helpers are the panel's data-shaping layer, kept pure (no
  * React, no DOM) so the gauge geometry, the category-bar source selection, and the MUST/SHOULD
- * mapping are unit-testable in isolation. The authoritative score/grade always come from the server
- * report — nothing here recomputes them.
+ * mapping are unit-testable in isolation. Catalog surfaces prefer the import-captured score when the
+ * lint API returns one — non-OpenAPI items are scored on their native model at import, while the live
+ * `/lint` recompute linting the converted OpenAPI can disagree (e.g. Cap'n Proto).
  */
 
+import type { ProjectQualitySnapshot } from './project-quality-score-history';
+import { letterGradeFromOverallPercent } from './numeric-score-tier';
 import type {
   LintCategoryScore,
   LintSeverity,
@@ -257,6 +260,38 @@ const SOURCE_LABELS: Record<CatalogLintSource, string> = {
 };
 
 /**
+ * The score/grade catalog surfaces should show for a lint report. When the revision carries an
+ * import-captured score (MFI-23.2 / MFI-4.4), that is what the list/card orbs already display —
+ * the live OpenAPI recompute in the same payload can differ for non-OpenAPI source formats.
+ */
+export function catalogDisplayLintScore(
+  report: Pick<
+    VersionLintReport,
+    'score' | 'grade' | 'capturedScore' | 'capturedGrade'
+  >,
+): { score: number; grade: string; usesCaptured: boolean } {
+  if (report.capturedScore != null && !Number.isNaN(report.capturedScore)) {
+    const grade =
+      (report.capturedGrade ?? '').trim() ||
+      letterGradeFromOverallPercent(report.capturedScore);
+    return { score: report.capturedScore, grade, usesCaptured: true };
+  }
+  return { score: report.score, grade: report.grade, usesCaptured: false };
+}
+
+/**
+ * Provenance label for catalog lint surfaces that prefer the import-captured score for display.
+ */
+export function catalogLintProvenanceForDisplay(
+  report: Pick<VersionLintReport, 'capturedScore' | 'scoreIsStale'>,
+): CatalogLintProvenance {
+  if (report.capturedScore != null) {
+    return { source: 'stored', label: SOURCE_LABELS.stored, stale: false };
+  }
+  return catalogLintProvenance(report);
+}
+
+/**
  * Classify a report's provenance from its captured-score fields. `capturedScore == null` means the
  * version was never scored at import, so this is a live computation; a captured score that is stale
  * (`scoreIsStale`) means the persisted score no longer matches this recompute; otherwise the live
@@ -310,4 +345,16 @@ export function resolveCatalogFindingEntity(
     if (entityNames.has(segments[i])) return segments[i];
   }
   return null;
+}
+
+/**
+ * Whether the quality orb should open the server-backed lint report instead of the browser-only
+ * quality-history dialog. When the item has a server-captured score (MFI-23.2), always use the lint
+ * report — even if stale browser-local snapshots exist from an unrelated import flow.
+ */
+export function catalogQualityOpensServerLintReport(
+  _qualityHistory: ProjectQualitySnapshot[],
+  qualityScore?: number | null,
+): boolean {
+  return typeof qualityScore === 'number' && !Number.isNaN(qualityScore);
 }

@@ -8,6 +8,7 @@
  */
 
 import { letterGradeFromOverallPercent } from './numeric-score-tier';
+import type { ProjectQualitySnapshot } from './project-quality-score-history';
 
 /** The avatar gradient palette; an item's id picks one deterministically. */
 export const CATALOG_CARD_GRADIENTS = [
@@ -57,4 +58,37 @@ export function catalogItemGrade(item: {
     return letterGradeFromOverallPercent(item.qualityScore);
   }
   return null;
+}
+
+/**
+ * Resolve the quality/lint orb values for a catalog card or detail header. Server-captured scores
+ * from import (MFI-23.2) win over browser-local import snapshots — catalog items are usually
+ * server-imported and the REST spine is authoritative.
+ */
+export function catalogOrbScores(
+  item: {
+    qualityScore?: number | null;
+    qualityGrade?: string | null;
+  },
+  qualityHistory: ProjectQualitySnapshot[],
+): { qualityValue: number | null; lintLetter: string | null } {
+  const hasServerScore = typeof item.qualityScore === 'number' && !Number.isNaN(item.qualityScore);
+  if (hasServerScore) {
+    const qualityValue = item.qualityScore as number;
+    return {
+      qualityValue,
+      lintLetter: item.qualityGrade?.trim() || letterGradeFromOverallPercent(qualityValue),
+    };
+  }
+
+  const latest = qualityHistory.length > 0 ? qualityHistory[qualityHistory.length - 1] : null;
+  if (latest != null) {
+    return {
+      qualityValue: latest.overall,
+      lintLetter: latest.grade ?? letterGradeFromOverallPercent(latest.overall),
+    };
+  }
+
+  const lintLetter = item.qualityGrade?.trim() || null;
+  return { qualityValue: null, lintLetter };
 }

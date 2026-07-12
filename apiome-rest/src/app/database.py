@@ -2311,17 +2311,23 @@ class Database:
         score: int,
         grade: str,
         report_fingerprint: Optional[str] = None,
+        quality_report: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """Persist the captured quality/lint score onto a revision (#3609 follow-up).
 
         Scoped to ``tenant_id`` via the owning project so a caller cannot write a score onto another
-        tenant's revision. Returns True when a row was updated.
+        tenant's revision. When ``quality_report`` is supplied, the full report JSON (findings,
+        tallies, categories) is stored alongside the headline score/grade/fingerprint so lint
+        routes can serve the import-time report without recomputing. Returns True when a row was
+        updated.
         """
+        report_json = Json(quality_report if quality_report is not None else {})
         query = """
             UPDATE apiome.versions v
             SET quality_score = %s,
                 quality_grade = %s,
                 quality_report_fingerprint = %s,
+                quality_report = %s::jsonb,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p
             WHERE v.id = %s
@@ -2331,7 +2337,8 @@ class Database:
             RETURNING v.id
         """
         rows = self.execute_query(
-            query, (score, grade, report_fingerprint, version_record_id, tenant_id)
+            query,
+            (score, grade, report_fingerprint, report_json, version_record_id, tenant_id),
         )
         return bool(rows)
 
@@ -2395,26 +2402,29 @@ class Database:
     ) -> Optional[Dict[str, Any]]:
         """Read the captured quality/lint score persisted on a revision (MFI-4.4 surfacing).
 
-        Returns the ``quality_score`` / ``quality_grade`` / ``quality_report_fingerprint`` that
-        was rolled up and stored at import time (#3609 for specs, MFI-4.2 for canonical models)
-        so all three surfaces (REST, ADE, CLI) can show the *authoritative persisted* score for a
-        version rather than only a live recompute. Scoped to ``tenant_id`` via the owning project
-        so a caller cannot read another tenant's revision.
+        Returns the ``quality_score`` / ``quality_grade`` / ``quality_report_fingerprint`` /
+        ``quality_report`` that was rolled up and stored at import time (#3609 for specs,
+        MFI-4.2 for canonical models) so all three surfaces (REST, ADE, CLI) can show the
+        *authoritative persisted* score and findings for a version rather than only a live
+        recompute. Scoped to ``tenant_id`` via the owning project so a caller cannot read
+        another tenant's revision.
 
         Args:
             version_record_id: The ``versions.id`` (revision UUID) to read.
             tenant_id: The tenant that must own the revision's project.
 
         Returns:
-            A dict with keys ``quality_score`` (int or None), ``quality_grade`` (str or None), and
-            ``quality_report_fingerprint`` (str or None) when the revision exists; ``None`` when
-            no matching revision is found for the tenant. A revision that has never been scored
-            yields a dict whose three values are all ``None``.
+            A dict with keys ``quality_score`` (int or None), ``quality_grade`` (str or None),
+            ``quality_report_fingerprint`` (str or None), and ``quality_report`` (dict) when the
+            revision exists; ``None`` when no matching revision is found for the tenant. A revision
+            that has never been scored yields a dict whose score fields are all ``None`` and
+            ``quality_report`` is ``{}``.
         """
         if not version_record_id or not is_uuid_string(str(version_record_id)):
             return None
         query = """
-            SELECT v.quality_score, v.quality_grade, v.quality_report_fingerprint
+            SELECT v.quality_score, v.quality_grade, v.quality_report_fingerprint,
+                   v.quality_report
             FROM apiome.versions v
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE v.id = %s

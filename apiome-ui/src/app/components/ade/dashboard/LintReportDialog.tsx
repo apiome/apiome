@@ -24,6 +24,7 @@ import {
   sortLintFindings,
   type VersionLintReport,
 } from '../../../utils/version-lint-report';
+import { catalogDisplayLintScore } from '../../../utils/catalog-lint-panel';
 import type { LintViolationDisplayView } from '../../../utils/lint-violation-display-preferences';
 import {
   LintViolationFindingsList,
@@ -47,6 +48,11 @@ interface LintReportDialogProps {
   onRetry?: () => void;
   /** Which surface's group-by-rule preference to use (GOV-2.4). */
   preferenceView?: LintViolationDisplayView;
+  /**
+   * Catalog surfaces prefer the import-captured score when present — non-OpenAPI items are scored on
+   * their native model at import, while the live OpenAPI recompute in the same payload can differ.
+   */
+  preferCapturedScore?: boolean;
 }
 
 /**
@@ -63,10 +69,16 @@ export function LintReportDialog({
   error = null,
   onRetry,
   preferenceView = 'catalog-lint',
+  preferCapturedScore = false,
 }: LintReportDialogProps) {
   const findings = report ? sortLintFindings(report.findings) : [];
   const severity = report?.severityCounts ?? {};
   const guide = lintReportGuideContext(report);
+  const displayLint = report
+    ? preferCapturedScore
+      ? catalogDisplayLintScore(report)
+      : { score: report.score, grade: report.grade, usesCaptured: false }
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,13 +118,13 @@ export function LintReportDialog({
             <div className="flex flex-wrap items-center gap-3">
               <span
                 className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-lg font-bold ${gradeChipClass(
-                  report.grade,
+                  displayLint!.grade,
                 )}`}
               >
-                {report.grade}
+                {displayLint!.grade}
               </span>
               <span className="text-sm text-gray-600 dark:text-gray-300">
-                Score <span className="font-semibold">{report.score}</span>/100
+                Score <span className="font-semibold">{displayLint!.score}</span>/100
               </span>
               <span className="flex items-center gap-2 text-xs">
                 <span className={`rounded px-1.5 py-0.5 ${severityBadgeClass('error')}`}>
@@ -140,7 +152,20 @@ export function LintReportDialog({
               )}
             </div>
 
-            {report.scoreIsStale && (
+            {preferCapturedScore &&
+            displayLint?.usesCaptured &&
+            report.scoreIsStale &&
+            (report.score !== displayLint.score || report.grade !== displayLint.grade) ? (
+              <p
+                className="mt-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-300"
+                data-testid="lint-report-live-recompute-note"
+              >
+                Converted OpenAPI lint of this item scores {report.grade} · {report.score}/100. The
+                score above is the one captured when the source was imported.
+              </p>
+            ) : null}
+
+            {!preferCapturedScore && report.scoreIsStale && (
               <p
                 className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
                 data-testid="version-lint-stale-note"

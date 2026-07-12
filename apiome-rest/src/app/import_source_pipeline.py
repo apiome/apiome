@@ -292,6 +292,7 @@ def capture_canonical_quality_score(
             report.score,
             report.grade,
             report.report_fingerprint,
+            quality_report=report.to_persisted_dict(),
         )
     except Exception:  # noqa: BLE001 - capture is strictly best-effort
         logger.warning(

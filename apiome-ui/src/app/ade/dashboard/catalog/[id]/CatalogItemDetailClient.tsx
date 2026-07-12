@@ -37,11 +37,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
-import {
-  getNumericScoreTier,
-  letterGradeFromOverallPercent,
-  type NumericScoreTierStyle,
-} from '@/app/utils/numeric-score-tier';
+import { catalogOrbScores } from '@/app/utils/catalog-card-presentation';
+import { getNumericScoreTier, type NumericScoreTierStyle } from '@/app/utils/numeric-score-tier';
 import { getProjectQualityHistory } from '@/app/utils/project-quality-score-history';
 import { ProjectQualityHistoryDialog } from '@/app/components/ade/dashboard/ProjectQualityHistoryDialog';
 import { CatalogLintReportDialog } from '@/app/components/ade/dashboard/catalog/CatalogLintReportDialog';
@@ -81,7 +78,10 @@ import {
   deriveParsedSummaryNote,
   type CatalogParsedGroup,
 } from '@/app/components/ade/dashboard/catalog/CatalogParsedModel';
-import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
+import {
+  catalogEntityAnchorId,
+  catalogQualityOpensServerLintReport,
+} from '@/app/utils/catalog-lint-panel';
 import { CatalogSourceViewer } from '@/app/components/ade/dashboard/catalog/CatalogSourceViewer';
 import { CatalogLintPanel } from '@/app/components/ade/dashboard/catalog/CatalogLintPanel';
 import { CatalogVersionsPanel } from '@/app/components/ade/dashboard/catalog/CatalogVersionsPanel';
@@ -342,15 +342,20 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
     () => (item ? getProjectQualityHistory(item.id) : []),
     [item],
   );
-  const qualityValue = useMemo(() => {
-    const latest = qualityHistory.length > 0 ? qualityHistory[qualityHistory.length - 1] : null;
-    if (latest != null) return latest.overall;
-    return typeof item?.qualityScore === 'number' ? item.qualityScore : null;
-  }, [qualityHistory, item]);
+  const { qualityValue, lintLetter } = useMemo(
+    () => (item ? catalogOrbScores(item, qualityHistory) : { qualityValue: null, lintLetter: null }),
+    [item, qualityHistory],
+  );
   const scoreTier = qualityValue != null ? getNumericScoreTier(qualityValue) : null;
-  const lintLetter =
-    qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : item?.qualityGrade ?? null;
 
+  const openQualityReport = useCallback(() => {
+    if (!item) return;
+    if (catalogQualityOpensServerLintReport(qualityHistory, item.qualityScore)) {
+      setLintOpen(true);
+      return;
+    }
+    setQualityOpen(true);
+  }, [item, qualityHistory]);
 
   if (loading) {
     return (
@@ -466,7 +471,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   <button
                     type="button"
                     data-testid="catalog-detail-quality-orb"
-                    onClick={() => setQualityOpen(true)}
+                    onClick={openQualityReport}
                     className={cn(
                       'mt-1 inline-flex h-11 w-11 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold tabular-nums hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30',
                       scoreOrbBorderClass(scoreTier!.band),
@@ -685,7 +690,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             itemId={item.id}
             active={activeTab === 'lint'}
             onOpenReport={() => setLintOpen(true)}
-            onOpenQualityHistory={() => setQualityOpen(true)}
+            onOpenQualityHistory={openQualityReport}
             qualityAvailable={qualityValue != null}
             entityNames={entityNames}
             onNavigateToEntity={navigateToEntity}

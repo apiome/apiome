@@ -70,6 +70,7 @@ import { ConversionPreviewDialog } from '../../../components/ade/dashboard/catal
 import { CatalogSupportedFormats } from '../../../components/ade/dashboard/catalog/CatalogSupportedFormats';
 import { CatalogStatsRow } from '../../../components/ade/dashboard/catalog/CatalogStatsRow';
 import { CatalogNonPublishableBanner } from '../../../components/ade/dashboard/catalog/CatalogNonPublishableBanner';
+import { catalogQualityOpensServerLintReport } from '../../../utils/catalog-lint-panel';
 import {
   CatalogImportDialog,
   type JsonSchemaHandoffPayload,
@@ -698,8 +699,12 @@ const Catalog = () => {
     setLintDialogItem(item);
   }, []);
 
-  /** Open the quality-history dialog for an item. */
+  /** Open quality details — server lint report when scored, otherwise browser-local history. */
   const handleOpenQuality = useCallback((item: CatalogItem) => {
+    if (catalogQualityOpensServerLintReport([], item.qualityScore)) {
+      setLintDialogItem(item);
+      return;
+    }
     setQualityDialogItem(item);
   }, []);
 

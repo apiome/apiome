@@ -135,6 +135,7 @@ def _capture_version_quality_score(
             result.score,
             result.grade,
             result.report_fingerprint,
+            quality_report=result.report_dict(),
         )
     except Exception:  # noqa: BLE001 - capture is strictly best-effort
         logger.warning(

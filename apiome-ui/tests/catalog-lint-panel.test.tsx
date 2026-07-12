@@ -173,11 +173,29 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
     expect(screen.getByTestId('catalog-lint-provenance-source')).toHaveTextContent('Stored report');
   });
 
-  it('flags a stale stored score in the provenance strip', async () => {
+  it('shows the import-captured score on the gauge when it differs from live OpenAPI lint', async () => {
+    mockLintFetch({
+      ...BASE_REPORT,
+      score: 100,
+      grade: 'A',
+      capturedScore: 56,
+      capturedGrade: 'C',
+      scoreIsStale: true,
+    });
+    renderPanel();
+    await screen.findByTestId('catalog-lint-gauge');
+    expect(screen.getByTestId('catalog-lint-gauge-grade')).toHaveTextContent('C');
+    expect(screen.getByTestId('catalog-lint-gauge')).toHaveTextContent('56/100');
+    expect(screen.getByTestId('catalog-lint-live-recompute-note')).toHaveTextContent(
+      'Converted OpenAPI lint: A · 100/100',
+    );
+  });
+
+  it('labels captured scores as stored in the provenance strip', async () => {
     mockLintFetch({ ...BASE_REPORT, capturedScore: 40, capturedGrade: 'F', scoreIsStale: true });
     renderPanel();
     await screen.findByTestId('catalog-lint-provenance-source');
-    expect(screen.getByTestId('catalog-lint-provenance-source')).toHaveTextContent(/stale/i);
+    expect(screen.getByTestId('catalog-lint-provenance-source')).toHaveTextContent('Stored report');
   });
 
   it('deep-links an entity-scoped finding to its Overview entity', async () => {

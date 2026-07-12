@@ -17,6 +17,15 @@ def test_capture_persists_lint_result_onto_the_revision():
         "version_id": "1.0.0",
     }
     lint_result = MagicMock(score=87, grade="B", report_fingerprint="fp-abc")
+    lint_result.report_dict.return_value = {
+        "score": 87,
+        "grade": "B",
+        "report_fingerprint": "fp-abc",
+        "rule_hits": {},
+        "severity_counts": {},
+        "findings": [],
+        "categories": [],
+    }
     guide = MagicMock(guide_id=None, name="Apiome Recommended", source="fallback")
 
     # GOV-1.4: the capture lints through the style-guide-aware entry point.
@@ -34,7 +43,7 @@ def test_capture_persists_lint_result_onto_the_revision():
     assert m_lint.call_args.args[1] == "tenant-1"
     assert m_lint.call_args.kwargs.get("project_id") == "proj-1"
     mock_db.set_version_quality_score.assert_called_once_with(
-        "ver-1", "tenant-1", 87, "B", "fp-abc"
+        "ver-1", "tenant-1", 87, "B", "fp-abc", quality_report=lint_result.report_dict()
     )
 
 

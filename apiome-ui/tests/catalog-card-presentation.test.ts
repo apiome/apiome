@@ -5,7 +5,23 @@
  * from the numeric `qualityScore` via the shared score→letter bands, else `null`. This keeps the
  * Grade column consistent with the `grade` sort (which orders on `qualityGrade`).
  */
-import { catalogItemGrade } from '../src/app/utils/catalog-card-presentation';
+import { catalogItemGrade, catalogOrbScores } from '../src/app/utils/catalog-card-presentation';
+
+describe('catalogOrbScores', () => {
+  const localHistory = [{ recordedAt: '2026-06-01T00:00:00.000Z', overall: 100, grade: 'A' as const }];
+
+  it('prefers server score and grade over browser-local history', () => {
+    expect(
+      catalogOrbScores({ qualityScore: 56, qualityGrade: 'C' }, localHistory),
+    ).toEqual({ qualityValue: 56, lintLetter: 'C' });
+  });
+
+  it('falls back to browser-local history when the server has not scored the item', () => {
+    expect(
+      catalogOrbScores({ qualityScore: null, qualityGrade: null }, localHistory),
+    ).toEqual({ qualityValue: 100, lintLetter: 'A' });
+  });
+});
 
 describe('catalogItemGrade', () => {
   it('prefers the captured qualityGrade verbatim (trimmed) when present', () => {

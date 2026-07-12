@@ -155,6 +155,18 @@ class LintResult:
     def category_dicts(self) -> List[Dict[str, Any]]:
         return [c.as_dict() for c in self.categories]
 
+    def report_dict(self) -> Dict[str, Any]:
+        """Return the full scoring report as a JSON-ready dict for ``versions.quality_report``."""
+        return {
+            "score": self.score,
+            "grade": self.grade,
+            "report_fingerprint": self.report_fingerprint,
+            "rule_hits": dict(self.rule_hits),
+            "severity_counts": dict(self.severity_counts),
+            "findings": self.finding_dicts(),
+            "categories": self.category_dicts(),
+        }
+
 
 # --- Rule catalogue -------------------------------------------------------------------------
 # Each rule maps to (category, severity, rationale). Centralised so the engine, the rule-catalog

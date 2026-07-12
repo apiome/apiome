@@ -53,8 +53,9 @@ import {
 } from '@/app/utils/version-lint-report';
 import { getNumericScoreTier } from '@/app/utils/numeric-score-tier';
 import {
+  catalogDisplayLintScore,
   catalogLintGroupByTier,
-  catalogLintProvenance,
+  catalogLintProvenanceForDisplay,
   deriveCategorySeverityBreakdown,
   gaugeDashOffset,
   humanizeCategory,
@@ -290,7 +291,7 @@ function ProvenanceStrip({
   report: VersionLintReport;
   scoredAt?: string | null;
 }) {
-  const provenance = catalogLintProvenance(report);
+  const provenance = catalogLintProvenanceForDisplay(report);
   const scored = formatScoredAt(scoredAt);
   return (
     <dl
@@ -503,6 +504,10 @@ export function CatalogLintPanel({
   }, [loadReport]);
 
   const findings = report ? sortLintFindings(report.findings) : [];
+  const displayLint = useMemo(
+    () => (report ? catalogDisplayLintScore(report) : null),
+    [report],
+  );
   const categoryScores = resolveCategoryScores(report);
   const breakdown = report ? deriveCategorySeverityBreakdown(report.findings) : [];
   // Severity tallies for the summary strip (error → MUST, warning → SHOULD, info → advisory).
@@ -659,7 +664,19 @@ export function CatalogLintPanel({
         <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           {/* Grade gauge */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <GradeGauge score={report.score} grade={report.grade} />
+            {displayLint ? (
+              <GradeGauge score={displayLint.score} grade={displayLint.grade} />
+            ) : null}
+            {displayLint?.usesCaptured &&
+            report.scoreIsStale &&
+            (report.score !== displayLint.score || report.grade !== displayLint.grade) ? (
+              <p
+                className="mt-3 text-center text-[11px] text-gray-500 dark:text-gray-400"
+                data-testid="catalog-lint-live-recompute-note"
+              >
+                Converted OpenAPI lint: {report.grade} · {report.score}/100
+              </p>
+            ) : null}
           </div>
 
           {/* Category bars + findings */}

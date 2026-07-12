@@ -168,12 +168,13 @@ def test_lint_base_revision_must_differ():
 # --- MFI-4.4: captured (import-time) score surfacing -----------------------------------------
 
 
-def _captured(score, grade, fingerprint):
+def _captured(score, grade, fingerprint, *, quality_report=None):
     """Build a get_version_quality_score row (the persisted MFI-4.2 score)."""
     return {
         "quality_score": score,
         "quality_grade": grade,
         "quality_report_fingerprint": fingerprint,
+        "quality_report": quality_report or {},
     }
 
 
@@ -241,6 +242,43 @@ def test_lint_base_revision_comparison_never_stale():
         ).json()
     assert body["capturedScore"] == 42
     assert body["scoreIsStale"] is False
+
+
+def test_lint_serves_stored_quality_report_without_recompute():
+    """When a full report was persisted at import, GET lint serves it without OpenAPI recompute."""
+    stored = {
+        "score": 56,
+        "grade": "C",
+        "report_fingerprint": "fp-stored-capnp",
+        "rule_hits": {"common.type-missing-description": 3},
+        "severity_counts": {"warning": 3, "error": 0, "info": 0},
+        "findings": [
+            {
+                "id": "lint-abc",
+                "path": "types.Person",
+                "category": "documentation",
+                "rule": "common.type-missing-description",
+                "severity": "warning",
+                "message": "Type Person has no description.",
+            }
+        ],
+        "categories": [{"name": "documentation", "score": 40}],
+    }
+    with patch("app.lint_routes.db.get_project_by_id", return_value={"id": PID}), patch(
+        "app.lint_routes.db.get_version_by_id", return_value=_version_row(VID)
+    ), patch("app.lint_routes.openapi_for_revision") as m_recon, patch(
+        "app.lint_routes.db.get_version_quality_score",
+        return_value=_captured(56, "C", "fp-stored-capnp", quality_report=stored),
+    ):
+        body = client.get(f"/v1/versions/acme/{PID}/{VID}/lint").json()
+    m_recon.assert_not_called()
+    assert body["score"] == 56
+    assert body["grade"] == "C"
+    assert body["reportFingerprint"] == "fp-stored-capnp"
+    assert len(body["findings"]) == 1
+    assert body["findings"][0]["rule"] == "common.type-missing-description"
+    assert body["scoreIsStale"] is False
+    assert body["capturedScore"] == 56
 
 
 def test_lint_captured_read_failure_does_not_break_live_report():

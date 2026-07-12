@@ -20,6 +20,9 @@ import {
   mustLabelForSeverity,
   resolveCatalogFindingEntity,
   resolveCategoryScores,
+  catalogQualityOpensServerLintReport,
+  catalogDisplayLintScore,
+  catalogLintProvenanceForDisplay,
 } from '../src/app/utils/catalog-lint-panel';
 import type { VersionLintFinding } from '../src/app/utils/version-lint-report';
 
@@ -232,5 +235,61 @@ describe('resolveCatalogFindingEntity', () => {
     expect(resolveCatalogFindingEntity('info.title', names)).toBeNull();
     expect(resolveCatalogFindingEntity('', names)).toBeNull();
     expect(resolveCatalogFindingEntity('components.schemas.Order', new Set())).toBeNull();
+  });
+});
+
+describe('catalogDisplayLintScore', () => {
+  it('prefers the import-captured score over the live OpenAPI recompute', () => {
+    expect(
+      catalogDisplayLintScore({
+        score: 100,
+        grade: 'A',
+        capturedScore: 56,
+        capturedGrade: 'C',
+      }),
+    ).toEqual({ score: 56, grade: 'C', usesCaptured: true });
+  });
+
+  it('falls back to the live score when nothing was captured at import', () => {
+    expect(
+      catalogDisplayLintScore({
+        score: 72,
+        grade: 'B',
+        capturedScore: null,
+        capturedGrade: null,
+      }),
+    ).toEqual({ score: 72, grade: 'B', usesCaptured: false });
+  });
+});
+
+describe('catalogLintProvenanceForDisplay', () => {
+  it('labels a captured score as stored even when the live recompute is stale', () => {
+    expect(
+      catalogLintProvenanceForDisplay({ capturedScore: 56, scoreIsStale: true }),
+    ).toEqual({ source: 'stored', label: 'Stored report', stale: false });
+  });
+});
+
+describe('catalogQualityOpensServerLintReport', () => {
+  it('returns true whenever a server score exists, even with browser-local history', () => {
+    expect(
+      catalogQualityOpensServerLintReport(
+        [{ recordedAt: '2026-06-01T00:00:00.000Z', overall: 100, grade: 'A' }],
+        56,
+      ),
+    ).toBe(true);
+  });
+
+  it('returns false when only browser-local history exists', () => {
+    expect(
+      catalogQualityOpensServerLintReport(
+        [{ recordedAt: '2026-06-01T00:00:00.000Z', overall: 95, grade: 'A' }],
+        null,
+      ),
+    ).toBe(false);
+  });
+
+  it('returns false when there is no score at all', () => {
+    expect(catalogQualityOpensServerLintReport([], null)).toBe(false);
   });
 });

@@ -20,19 +20,15 @@
  *     time on the right (MFI-24.5), instead of the project card's enabled/active status text.
  *
  * A catalog item's id *is* a project id (the Catalog is a projection over the `projects` table), so
- * the orbs reuse the project quality-history machinery unchanged. When a catalog item has no
- * browser-local quality history (the common case — items are minted by server-side import routing,
- * MFI-23.7), the orbs fall back to the server-captured `qualityScore` / `qualityGrade` so they still
- * render a grade instead of an empty dash.
+ * the orbs reuse the project quality-history machinery for the click-through dialogs. Display values
+ * prefer the server-captured `qualityScore` / `qualityGrade` (MFI-23.2) and only fall back to
+ * browser-local import snapshots when the server has not scored the item yet.
  */
 
 import type { ReactNode } from 'react';
 import { cn } from '@lib/utils';
-import {
-  getNumericScoreTier,
-  letterGradeFromOverallPercent,
-  type NumericScoreTierStyle,
-} from '@/app/utils/numeric-score-tier';
+import { getNumericScoreTier, type NumericScoreTierStyle } from '@/app/utils/numeric-score-tier';
+import { catalogOrbScores } from '@/app/utils/catalog-card-presentation';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history-dag';
 
@@ -111,15 +107,8 @@ export function CatalogItemCard({
   const isDeleted = Boolean(item.deleted_at);
   const attentionVisual = !item.enabled || isDeleted;
 
-  // Prefer the browser-local trend's latest snapshot; fall back to the server-captured score so
-  // server/CLI imports (which have no local history) still light up the orbs (mirrors the page's
-  // existing quality-badge fallback).
-  const latest = qualityHistory.length > 0 ? qualityHistory[qualityHistory.length - 1] : null;
-  const qualityValue =
-    latest != null ? latest.overall : typeof item.qualityScore === 'number' ? item.qualityScore : null;
+  const { qualityValue, lintLetter } = catalogOrbScores(item, qualityHistory);
   const scoreTier = qualityValue != null ? getNumericScoreTier(qualityValue) : null;
-  const lintLetter =
-    qualityValue != null ? letterGradeFromOverallPercent(qualityValue) : item.qualityGrade ?? null;
 
   const versionsCount = typeof item.versionsCount === 'number' ? item.versionsCount : 0;
   const versionsLabel = `${versionsCount} version${versionsCount === 1 ? '' : 's'}`;

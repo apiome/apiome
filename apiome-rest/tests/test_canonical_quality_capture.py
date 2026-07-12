@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from app.import_source import LintReport
+from app.import_source import LintFinding, LintReport
 from app.import_source_pipeline import capture_canonical_quality_score
 
 
@@ -24,6 +24,16 @@ def _report() -> LintReport:
         report_fingerprint="fp-xyz",
         rule_hits={"r1": 2},
         severity_counts={"error": 0, "warning": 2, "info": 0},
+        findings=[
+            LintFinding(
+                path="types.Foo",
+                rule="common.type-missing-description",
+                severity="warning",
+                message="missing description",
+                category="documentation",
+                id="lint-test",
+            )
+        ],
     )
 
 
@@ -34,7 +44,12 @@ def test_capture_persists_the_rolled_up_report_onto_the_revision():
         capture_canonical_quality_score("ver-1", "tenant-1", _report())
 
     mock_db.set_version_quality_score.assert_called_once_with(
-        "ver-1", "tenant-1", 74, "C", "fp-xyz"
+        "ver-1",
+        "tenant-1",
+        74,
+        "C",
+        "fp-xyz",
+        quality_report=_report().to_persisted_dict(),
     )
 
 

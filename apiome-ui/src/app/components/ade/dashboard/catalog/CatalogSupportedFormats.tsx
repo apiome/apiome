@@ -144,7 +144,8 @@ export function CatalogSupportedFormats({
               Supported import formats
             </span>
             <span className="block text-xs text-gray-500 dark:text-gray-400">
-              {availableImportableCount} alternative formats importable now · {recognizedCount} more recognized
+              {availableImportableCount} alternative formats importable now
+              {recognizedCount > 0 ? ` · ${recognizedCount} more recognized` : null}
             </span>
           </span>
           <ChevronDown

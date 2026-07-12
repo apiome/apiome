@@ -145,15 +145,51 @@ describe('CatalogItemDetailClient', () => {
     expect(provenance).toHaveTextContent('Dana Import');
   });
 
-  it('opens the shared quality dialog from the quality orb', async () => {
-    mockFetchItem(RICH_ITEM);
+  it('opens the server-backed lint report from the quality orb when there is no browser history', async () => {
+    const LINT_REPORT = {
+      success: true,
+      projectId: RICH_ITEM.id,
+      versionRecordId: 'rev-1',
+      versionId: '1.0.0',
+      score: 82,
+      grade: 'B',
+      findings: [
+        {
+          id: 'lint-1',
+          path: 'components.schemas.Order',
+          category: 'documentation',
+          rule: 'documentation.schema-missing-description',
+          severity: 'warning',
+          message: 'Schema is missing a description.',
+        },
+      ],
+      ruleHits: { 'documentation.schema-missing-description': 1 },
+      severityCounts: { error: 0, warning: 1, info: 0 },
+      reportFingerprint: 'fp',
+      baseRevisionId: null,
+      compatibilityOverall: null,
+    };
+    global.fetch = jest.fn((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: async () =>
+          url.endsWith('/lint') ? LINT_REPORT : { success: true, item: RICH_ITEM },
+      }),
+    ) as unknown as typeof fetch;
+
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 
     const orb = await screen.findByTestId('catalog-detail-quality-orb');
     expect(orb).toHaveTextContent('82');
     fireEvent.click(orb);
-    // The shared ProjectQualityHistoryDialog renders open (a dialog role appears).
-    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+
+    await waitFor(() =>
+      expect(screen.getByText('documentation.schema-missing-description')).toBeInTheDocument(),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      `/api/catalog/${encodeURIComponent(RICH_ITEM.id)}/lint`,
+      expect.anything(),
+    );
   });
 
   it('opens the server-backed lint report from the lint orb (MFI-23.10)', async () => {

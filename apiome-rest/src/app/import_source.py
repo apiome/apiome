@@ -263,6 +263,14 @@ class LintFinding(BaseModel):
     rule: str = Field(description="The rule id that fired.")
     severity: str = Field(description="error/warning/info.")
     message: str = Field(description="Human-readable explanation.")
+    id: Optional[str] = Field(
+        default=None,
+        description="Stable finding id (matches engine LintFinding.id when adapted).",
+    )
+    category: Optional[str] = Field(
+        default=None,
+        description="Rule category (documentation/naming/structure/…).",
+    )
 
 
 class LintReport(BaseModel):
@@ -295,6 +303,47 @@ class LintReport(BaseModel):
         default_factory=dict,
         description="Count of findings per severity (error/warning/info).",
     )
+    categories: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Per-category 0–100 rollup scores when adapted from an engine LintResult.",
+    )
+
+    def to_persisted_dict(self) -> Dict[str, Any]:
+        """Serialize the report for ``versions.quality_report`` JSONB persistence.
+
+        The payload mirrors :meth:`app.schema_lint.LintResult.report_dict` and
+        ``MCPScoreResult.report_dict()`` so every import surface stores findings the lint API
+        can serve without recomputing.
+        """
+        import hashlib
+
+        findings_out: List[Dict[str, str]] = []
+        for finding in self.findings:
+            finding_id = finding.id
+            if not finding_id:
+                digest = hashlib.sha256(
+                    f"{finding.path}|{finding.rule}|{finding.message}".encode("utf-8")
+                ).hexdigest()[:16]
+                finding_id = f"lint-{digest}"
+            findings_out.append(
+                {
+                    "id": finding_id,
+                    "path": finding.path,
+                    "category": finding.category or "",
+                    "rule": finding.rule,
+                    "severity": finding.severity,
+                    "message": finding.message,
+                }
+            )
+        return {
+            "score": self.score,
+            "grade": self.grade,
+            "report_fingerprint": self.report_fingerprint,
+            "rule_hits": dict(self.rule_hits),
+            "severity_counts": dict(self.severity_counts),
+            "findings": findings_out,
+            "categories": list(self.categories),
+        }
 
     @classmethod
     def from_lint_result(cls, result: "LintResult") -> "LintReport":
@@ -321,6 +370,8 @@ class LintReport(BaseModel):
                     rule=finding.rule,
                     severity=finding.severity,
                     message=finding.message,
+                    id=finding.id,
+                    category=finding.category,
                 )
                 for finding in result.findings
             ],
@@ -329,6 +380,7 @@ class LintReport(BaseModel):
             report_fingerprint=result.report_fingerprint,
             rule_hits=dict(result.rule_hits),
             severity_counts=dict(result.severity_counts),
+            categories=result.category_dicts(),
         )
 
 

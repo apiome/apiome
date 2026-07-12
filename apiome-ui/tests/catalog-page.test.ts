@@ -99,7 +99,9 @@ describe('CatalogItemCard wiring (MFI-23.4)', () => {
     expect(src).toMatch(/actionsSlot=\{/);
   });
 
-  it('wires the quality orb to the shared ProjectQualityHistoryDialog', () => {
+  it('wires the quality orb to the server lint report when a server score exists', () => {
+    expect(src).toContain('catalogQualityOpensServerLintReport');
+    expect(src).toMatch(/handleOpenQuality[\s\S]{0,200}?setLintDialogItem\(item\)/);
     expect(src).toContain('ProjectQualityHistoryDialog');
     expect(src).toContain('onOpenQualityHistory={() => handleOpenQuality(item)}');
   });

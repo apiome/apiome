@@ -94,6 +94,7 @@ export function CatalogLintReportDialog({
       loading={loading}
       error={error}
       onRetry={retry}
+      preferCapturedScore
     />
   );
 }

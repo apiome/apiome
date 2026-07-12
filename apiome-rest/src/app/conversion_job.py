@@ -608,7 +608,12 @@ class DbLintScorer:
                 spec, tenant_id, project_id=str(version.get("project_id") or "") or None
             )
             db.set_version_quality_score(
-                version_record_id, tenant_id, result.score, result.grade, result.report_fingerprint
+                version_record_id,
+                tenant_id,
+                result.score,
+                result.grade,
+                result.report_fingerprint,
+                quality_report=result.report_dict(),
             )
             return LintScore(
                 score=result.score, grade=result.grade, report_fingerprint=result.report_fingerprint

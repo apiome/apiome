@@ -117,11 +117,20 @@ describe('CatalogItemCard — quality + lint orbs', () => {
     expect(onOpenLintReport).toHaveBeenCalledTimes(1);
   });
 
-  it('prefers the browser-local quality history over the server score', () => {
+  it('prefers the server score over browser-local quality history', () => {
     const history: ProjectQualitySnapshot[] = [
       { recordedAt: '2026-06-01T00:00:00.000Z', overall: 95, grade: 'A' },
     ];
-    renderCard({ item: makeItem({ qualityScore: 50, qualityGrade: 'F' }), qualityHistory: history });
+    renderCard({ item: makeItem({ qualityScore: 56, qualityGrade: 'C' }), qualityHistory: history });
+    expect(screen.getByTitle('Open quality score history')).toHaveTextContent('56');
+    expect(screen.getByTitle('Open lint report')).toHaveTextContent('C');
+  });
+
+  it('falls back to browser-local quality history when the server has not scored the item', () => {
+    const history: ProjectQualitySnapshot[] = [
+      { recordedAt: '2026-06-01T00:00:00.000Z', overall: 95, grade: 'A' },
+    ];
+    renderCard({ item: makeItem({ qualityScore: null, qualityGrade: null }), qualityHistory: history });
     expect(screen.getByTitle('Open quality score history')).toHaveTextContent('95');
     expect(screen.getByTitle('Open lint report')).toHaveTextContent('A');
   });

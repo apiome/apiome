@@ -18,6 +18,7 @@ from .auth import validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
+from .import_routing import PUBLISHABLE_FORMATS
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
     CustomRuleOut,
@@ -122,6 +123,130 @@ async def validate_custom_rules(
     return CustomRulesValidateResponse(valid=True, count=len(rules), rules=rules)
 
 
+def _coerce_quality_report(raw: Any) -> Dict[str, Any]:
+    """Normalize ``quality_report`` from the DB (dict or JSON string) to a dict."""
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str) and raw.strip():
+        import json
+
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {}
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def lint_report_response_from_persisted_dict(
+    *,
+    version: Dict[str, Any],
+    project_id: str,
+    report: Dict[str, Any],
+    captured: Optional[Dict[str, Any]] = None,
+    base_revision_id: Optional[str] = None,
+    compatibility_overall: Optional[str] = None,
+    guide: Optional[Any] = None,
+) -> LintReportResponse:
+    """Build a :class:`LintReportResponse` from a persisted ``quality_report`` dict.
+
+    The import-time report and the MCP ``mcp_version_scores.report`` JSONB share the same key
+    set (score/grade/fingerprint/tallies/findings/categories), so stored reports flow through
+    one shaping path.
+    """
+    findings_out = [
+        LintFindingOut(
+            id=str(f.get("id") or ""),
+            path=str(f.get("path") or ""),
+            category=str(f.get("category") or ""),
+            rule=str(f.get("rule") or ""),
+            severity=str(f.get("severity") or "info"),
+            message=str(f.get("message") or ""),
+        )
+        for f in (report.get("findings") or [])
+        if isinstance(f, dict)
+    ]
+    fingerprint = str(report.get("report_fingerprint") or "")
+    score = int(report.get("score") or 0)
+    grade = str(report.get("grade") or "F")
+    captured = captured or {}
+    captured_score = captured.get("quality_score")
+    captured_grade = captured.get("quality_grade")
+    captured_fingerprint = captured.get("quality_report_fingerprint")
+    return LintReportResponse(
+        project_id=project_id,
+        version_record_id=version["id"],
+        version_id=version["version_id"],
+        score=score,
+        grade=grade,
+        findings=findings_out,
+        rule_hits=dict(report.get("rule_hits") or {}),
+        severity_counts=dict(report.get("severity_counts") or {}),
+        categories=[
+            LintCategoryScoreOut(name=str(c["name"]), score=int(c["score"]))
+            for c in (report.get("categories") or [])
+            if isinstance(c, dict) and "name" in c and "score" in c
+        ],
+        report_fingerprint=fingerprint,
+        base_revision_id=base_revision_id,
+        compatibility_overall=compatibility_overall,
+        captured_score=captured_score if captured_score is not None else score,
+        captured_grade=captured_grade if captured_grade is not None else grade,
+        captured_report_fingerprint=(
+            captured_fingerprint if captured_fingerprint is not None else fingerprint
+        ),
+        score_is_stale=False,
+        guide_id=getattr(guide, "guide_id", None) if guide is not None else None,
+        guide_name=getattr(guide, "name", None) if guide is not None else None,
+        guide_source=getattr(guide, "source", None) if guide is not None else None,
+    )
+
+
+def _try_relint_canonical_source(
+    version: Dict[str, Any],
+    *,
+    catalog_item: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Re-lint from the native canonical model when no stored report exists (legacy imports).
+
+    Native catalog imports capture score/grade from the canonical-model linter at import time,
+    but pre-V160 rows lack persisted findings. Reconstruct the canonical model from the stored
+    source and re-run the adapter lint so GET lint returns the same findings the card score
+    reflects — without requiring a re-import.
+    """
+    from .catalog_parsed_model import reconstruct_catalog_api
+    from .import_source import get_import_source
+
+    item: Dict[str, Any] = dict(catalog_item) if catalog_item else {}
+    source_format = (
+        item.get("source_format") or version.get("source_format") or ""
+    ).strip().lower()
+    if not source_format or source_format in PUBLISHABLE_FORMATS:
+        return None
+    if source_format.startswith("openapi") or source_format in ("swagger", "swagger-2.0"):
+        return None
+
+    item.setdefault("id", item.get("id") or version.get("project_id") or "catalog-item")
+    if not item.get("format_metadata"):
+        item.setdefault("source_format", version.get("source_format"))
+        item.setdefault("format_metadata", version.get("format_metadata") or {})
+    if not item.get("source_format"):
+        item["source_format"] = version.get("source_format")
+
+    api = reconstruct_catalog_api(item)
+    if api is None:
+        return None
+
+    adapter = get_import_source(source_format) or get_import_source(api.format)
+    if adapter is None:
+        return None
+
+    lint_report = adapter.lint(api)
+    if lint_report.score is None or lint_report.grade is None:
+        return None
+    return lint_report.to_persisted_dict()
+
+
 def build_lint_report(
     version: Dict[str, Any],
     project_id: str,
@@ -129,6 +254,7 @@ def build_lint_report(
     tenant_id: str,
     base_version: Optional[Dict[str, Any]] = None,
     resolved_base_id: Optional[str] = None,
+    catalog_item: Optional[Dict[str, Any]] = None,
 ) -> LintReportResponse:
     """
     Compute the deterministic lint report for an already-resolved revision.
@@ -147,10 +273,39 @@ def build_lint_report(
             compatibility findings relative to it are folded into the report.
         resolved_base_id: The base revision's ``versions.id`` echoed back on the response (and used
             to suppress staleness, since a base comparison legitimately changes the fingerprint).
+        catalog_item: Optional catalog item row for canonical-model re-lint fallback on native
+            imports that predate full report persistence.
 
     Returns:
         The server-computed quality score, grade and itemized findings for ``version``.
     """
+    try:
+        captured = db.get_version_quality_score(version["id"], tenant_id) or {}
+    except Exception:  # pragma: no cover - defensive; surfacing must not break the live report
+        captured = {}
+
+    stored_report = _coerce_quality_report(captured.get("quality_report"))
+    if (
+        resolved_base_id is None
+        and stored_report.get("report_fingerprint")
+    ):
+        return lint_report_response_from_persisted_dict(
+            version=version,
+            project_id=project_id,
+            report=stored_report,
+            captured=captured,
+        )
+
+    if resolved_base_id is None:
+        canonical_report = _try_relint_canonical_source(version, catalog_item=catalog_item)
+        if canonical_report and canonical_report.get("report_fingerprint"):
+            return lint_report_response_from_persisted_dict(
+                version=version,
+                project_id=project_id,
+                report=canonical_report,
+                captured=captured,
+            )
+
     head_spec = openapi_for_revision(version, tenant_slug, tenant_id)
 
     extra_findings = []
@@ -185,10 +340,6 @@ def build_lint_report(
     # A base-revision comparison folds in extra findings, so its fingerprint legitimately differs
     # from the (base-less) captured one — never flag staleness in that case. Best-effort: a read
     # failure must never break the authoritative live lint, so fall back to "no captured score".
-    try:
-        captured = db.get_version_quality_score(version["id"], tenant_id) or {}
-    except Exception:  # pragma: no cover - defensive; surfacing must not break the live report
-        captured = {}
     captured_fingerprint = captured.get("quality_report_fingerprint")
     score_is_stale = (
         resolved_base_id is None
