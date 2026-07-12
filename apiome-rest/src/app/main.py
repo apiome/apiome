@@ -18,6 +18,7 @@ from .observability import ObservabilityMiddleware, build_error_envelope
 from .ops_routes import health_router, ops_router
 from .rate_limit import RateLimitMiddleware
 from .openapi_generator import generate_openapi_spec, generate_class_openapi_spec
+from .openapi_enrichment import enrich_openapi_spec
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .jsonschema_generator import generate_jsonschema_spec, generate_class_jsonschema_spec
 from .models import OpenAPIResponse
@@ -74,8 +75,11 @@ configure_logging(log_level=settings.effective_log_level, json_output=settings.l
 # Create FastAPI app
 app = FastAPI(
     title="Apiome REST API",
-    description="REST API for serving OpenAPI specifications from the Apiome database",
-    version="1.0.65"
+    description=(
+        "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
+        "catalog items, imports, exports, governance, and MCP catalog surfaces."
+    ),
+    version="1.0.66",
 )
 
 
@@ -106,6 +110,7 @@ def custom_openapi() -> Dict[str, Any]:
             "description": "API key for tenant-scoped access (alternative to JWT)",
         },
     }
+    openapi_schema = enrich_openapi_spec(openapi_schema)
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
