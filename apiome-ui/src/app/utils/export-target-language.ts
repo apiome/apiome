@@ -58,6 +58,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   avro: { language: 'json', extension: '.avsc', baseName: 'schema' },
   asn1: { language: 'plaintext', extension: '.asn1', baseName: 'schema' },
   edix12: { language: 'plaintext', extension: '.edi', baseName: 'interchange' },
+  oncrpc: { language: 'plaintext', extension: '.x', baseName: 'program' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -67,6 +68,9 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   asn: 'asn1',
   x12: 'edix12',
   edi: 'edix12',
+  sunrpc: 'oncrpc',
+  rpcgen: 'oncrpc',
+  xdr: 'oncrpc',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

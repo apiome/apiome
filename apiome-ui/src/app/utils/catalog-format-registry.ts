@@ -156,7 +156,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'capnproto', label: "Cap'n Proto", icon: Zap, tone: 'lime', importable: true, aliases: ['capnp'], description: "Cap'n Proto schema & RPC interfaces." },
   { id: 'flatbuffers', label: 'FlatBuffers', icon: Boxes, tone: 'teal', importable: true, aliases: ['fbs'], description: 'FlatBuffers serialization schema (.fbs).' },
   { id: 'corbaidl', label: 'CORBA IDL', icon: Network, tone: 'red', aliases: ['corba', 'idl'], description: 'CORBA interface definition language.' },
-  { id: 'oncrpc', label: 'ONC RPC', icon: Network, tone: 'slate', aliases: ['sunrpc', 'rpcgen', 'xdr'], description: 'ONC/Sun RPC (XDR) interface definition.' },
+  { id: 'oncrpc', label: 'ONC RPC', icon: Network, tone: 'slate', importable: true, aliases: ['sunrpc', 'rpcgen', 'xdr'], description: 'ONC/Sun RPC (XDR) interface definition.' },
   { id: 'xmlrpc', label: 'XML-RPC', icon: FileCode, tone: 'stone', importable: true, aliases: ['xml-rpc'], description: 'XML-RPC method interface.' },
   { id: 'openrpc', label: 'OpenRPC', icon: Workflow, tone: 'blue', importable: true, aliases: ['jsonrpc'], description: 'OpenRPC JSON-RPC 2.0 service description.' },
 
@@ -219,15 +219,14 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, and EDI X12. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, EDI X12, and ONC RPC. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);
 
 /**
  * The alternative formats the registry *recognizes* (so a pill renders and detection can name them)
- * but which have **no catalog importer yet** — Avro, RAML, Postman, FHIR, HL7 v2, EDI X12,
- * ISO 20022/8583, FIX, OData, WSDL, XSD, and the rest. Listed separately in the gallery as "not yet
+ * but which have **no catalog importer yet** — FHIR, HL7 v2, ISO 20022/8583, FIX, OData, and the rest. Listed separately in the gallery as "not yet
  * importable" so support is never over-stated.
  */
 export const RECOGNIZED_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =

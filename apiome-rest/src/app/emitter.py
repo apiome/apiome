@@ -643,6 +643,7 @@ def load_builtin_emitters() -> None:
     from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
     from . import asn1_emitter as _asn1  # noqa: F401
     from . import edix12_emitter as _edix12  # noqa: F401
+    from . import oncrpc_emitter as _oncrpc  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:

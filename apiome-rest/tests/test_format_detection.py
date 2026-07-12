@@ -186,6 +186,24 @@ def test_postman_is_now_importable() -> None:
     assert detection.detected.source_key == "postman"
 
 
+def test_oncrpc_is_now_importable() -> None:
+    detection = detect_format(
+        DetectionInput(
+            text=(
+                "program DEMO {\n"
+                "    version VERS {\n"
+                "        int PING(void) = 1;\n"
+                "    } = 1;\n"
+                "} = 1;\n"
+            )
+        )
+    )
+    assert detection.detected is not None
+    assert detection.detected.format == "oncrpc"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "oncrpc"
+
+
 def test_edix12_is_now_importable() -> None:
     detection = detect_format(
         DetectionInput(

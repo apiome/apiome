@@ -153,7 +153,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.117.3"
+version = "1.117.4"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "asn1tools" },
@@ -179,6 +179,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "python-dotenv" },
     { name = "python-multipart" },
+    { name = "pyx12" },
     { name = "pyyaml" },
     { name = "regex" },
     { name = "structlog" },
@@ -213,6 +214,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "python-multipart", specifier = ">=0.0.9" },
+    { name = "pyx12", specifier = ">=4.0.0" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "regex", specifier = ">=2024.4.16" },
     { name = "requests", marker = "extra == 'dev'", specifier = ">=2.31.0" },
@@ -654,6 +656,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/74/89/f4c775c651d91f9cd8149f70baec94c902a34e5f17a7a67881881bcfb244/cyclopts-4.20.0.tar.gz", hash = "sha256:1d819de2b12dc6b1c9f17ce0f4937d82922c0b83ac846eb4b3289c9c9f321c9f", size = 190236, upload-time = "2026-06-29T15:04:42.253Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dd/d4/7243bc65d33c5ff5150569c42c8c1154aadae20b25638afe35f7f568489c/cyclopts-4.20.0-py3-none-any.whl", hash = "sha256:0b4337e9c11303d86b33d3f37c629dc01638f84591681e0e5611286bdd507646", size = 229383, upload-time = "2026-06-29T15:04:40.621Z" },
+]
+
+[[package]]
+name = "defusedxml"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
 ]
 
 [[package]]
@@ -1994,6 +2005,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/85/9f/01a1a99704853cb63f253eea009390c88e7131c67e66a0a02099a8c917cb/pywin32-ctypes-0.2.3.tar.gz", hash = "sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755", size = 29471, upload-time = "2024-08-14T10:15:34.626Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/de/3d/8161f7711c017e01ac9f008dfddd9410dff3674334c233bde66e7ba65bbf/pywin32_ctypes-0.2.3-py3-none-any.whl", hash = "sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8", size = 30756, upload-time = "2024-08-14T10:15:33.187Z" },
+]
+
+[[package]]
+name = "pyx12"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "defusedxml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/7f/5faae65f7b41a1ab1d26fc8753a24635f0961609eb48ac1eab9d9a169497/pyx12-4.0.0.tar.gz", hash = "sha256:d45c572e19971f7f67d65227bc7da158b01179ece2947a7038412dd935c59660", size = 540895, upload-time = "2026-05-05T22:34:08.73Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/6a/f8c18811c912f2a287f684f731a1031a24490f6d780e95ee17e5d601baf7/pyx12-4.0.0-py3-none-any.whl", hash = "sha256:8e983b5a3a76a307bea3be9203fb32f0ea1580e13cb66ed60d8b028dc015d1cc", size = 633962, upload-time = "2026-05-05T22:34:06.808Z" },
 ]
 
 [[package]]

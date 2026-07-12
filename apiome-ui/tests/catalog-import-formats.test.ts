@@ -50,6 +50,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('edix12')?.sourceKind).toBe('edix12');
     expect(catalogAdapterForFormat('x12')?.sourceKind).toBe('edix12');
     expect(catalogAdapterForFormat('edi')?.sourceKind).toBe('edix12');
+    expect(catalogAdapterForFormat('oncrpc')?.sourceKind).toBe('oncrpc');
+    expect(catalogAdapterForFormat('sunrpc')?.sourceKind).toBe('oncrpc');
+    expect(catalogAdapterForFormat('xdr')?.sourceKind).toBe('oncrpc');
   });
 
   test('is case/space-insensitive', () => {
@@ -66,7 +69,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'edix12', 'flatbuffers', 'graphql', 'grpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'edix12', 'flatbuffers', 'graphql', 'grpc', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -126,6 +129,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('edix12')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'edix12' },
+    });
+    expect(decideCatalogImportRouting('oncrpc')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'oncrpc' },
     });
   });
 
@@ -205,6 +212,9 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('edix12')).toBe('dataschema');
     expect(paradigmForFormat('x12')).toBe('dataschema');
     expect(paradigmForFormat('edi')).toBe('dataschema');
+    expect(paradigmForFormat('oncrpc')).toBe('rpc');
+    expect(paradigmForFormat('sunrpc')).toBe('rpc');
+    expect(paradigmForFormat('xdr')).toBe('rpc');
     expect(paradigmForFormat('postman')).toBe('rest');
     expect(paradigmForFormat('cloudevents')).toBe('event');
     expect(paradigmForFormat('cloud-events')).toBe('event');
