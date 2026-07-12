@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState, useMemo } from 'react';
 import { Eye, Lock, Globe, Copy, ExternalLink, Search, FileText, MoreVertical, ChevronLeft } from 'lucide-react';
 import { getPublishedVersionsForTenant, updateVersionVisibility, getApiKeysForTenant } from '../../../../../lib/db/helper';
+import { buildMockBaseUrl } from '@lib/mock/mockUrl';
 import {
   Dialog,
   DialogContent,
@@ -147,7 +148,8 @@ const PublishedVersions = ({
   const getAccessUrl = (version: PublishedVersion) => `${version.tenant_slug}/${version.project_slug}/${version.version_id}`;
   const getFullAccessUrl = (version: PublishedVersion) => `${restApiBaseUrl}/schema/${getAccessUrl(version)}`;
   // Mirrors the REST `_mock_base_url` shape: {mockHost}/{tenant}/{project}/{version} (#4422).
-  const getMockUrl = (version: PublishedVersion) => `${mockApiBaseUrl.replace(/\/+$/, '')}/${getAccessUrl(version)}`;
+  const getMockUrl = (version: PublishedVersion) =>
+    buildMockBaseUrl(mockApiBaseUrl, version.tenant_slug, version.project_slug, version.version_id);
   const getSwaggerUrl = (version: PublishedVersion) => `${restApiBaseUrl}/swagger/${getAccessUrl(version)}`;
   const getArazzoUrl = (version: PublishedVersion) => `${restApiBaseUrl}/arazzo/${getAccessUrl(version)}`;
   const getJsonUrl = (version: PublishedVersion) => `${restApiBaseUrl}/json/${getAccessUrl(version)}`;

@@ -279,6 +279,8 @@ prompt APIOME_MCP_HTTP_PORT "MCP HTTP port (docker compose)" "8765"
 printf '\n'
 info "Mock runtime (apiome-mock)"
 prompt APIOME_MOCK_HTTP_PORT "Mock HTTP port" "8775"
+DEFAULT_APIOME_MOCK_PUBLIC_BASE_URL="http://localhost:${APIOME_MOCK_HTTP_PORT}"
+prompt APIOME_MOCK_PUBLIC_BASE_URL "Mock public base URL (browser-reachable)" "$DEFAULT_APIOME_MOCK_PUBLIC_BASE_URL"
 
 printf '\n'
 info "Browse app (apiome-browse)"
@@ -336,6 +338,9 @@ RELOAD=$(format_env_value "$REST_RELOAD")
 
 # JWT Authentication (must match apiome-ui NEXTAUTH_SECRET)
 NEXTAUTH_SECRET=$(format_env_value "$NEXTAUTH_SECRET")
+
+# Public mock runtime URL (must match apiome-ui and apiome-browse)
+APIOME_MOCK_PUBLIC_BASE_URL=$(format_env_value "$APIOME_MOCK_PUBLIC_BASE_URL")
 EOF
   ((CREATED++)) || true
 }
@@ -370,6 +375,9 @@ ADMIN_PASSWORD=$(format_env_value "$ADMIN_PASSWORD")
 
 # Ollama LLM Server URL for AI-powered import feature
 OLLAMA_BASE_URL=$(format_env_value "$OLLAMA_BASE_URL")
+
+# Public mock runtime URL (must match apiome-rest and apiome-browse)
+APIOME_MOCK_PUBLIC_BASE_URL=$(format_env_value "$APIOME_MOCK_PUBLIC_BASE_URL")
 EOF
     if [[ "$configure_github" == true ]]; then
       cat <<EOF
@@ -464,6 +472,9 @@ NEXT_PUBLIC_REST_API_BASE_URL=$(format_env_value "$NEXT_PUBLIC_REST_API_BASE_URL
 
 # Base path for sub-path hosting (optional)
 NEXT_PUBLIC_BASE_PATH=$(format_env_value "$NEXT_PUBLIC_BASE_PATH")
+
+# Public mock runtime URL (must match apiome-rest and apiome-ui)
+APIOME_MOCK_PUBLIC_BASE_URL=$(format_env_value "$APIOME_MOCK_PUBLIC_BASE_URL")
 EOF
   ((CREATED++)) || true
 }
@@ -485,6 +496,7 @@ APIOME_MCP_HTTP_PORT=$(format_env_value "$APIOME_MCP_HTTP_PORT")
 APIOME_MCP_INTERNAL_SECRET=$(format_env_value "$APIOME_MCP_INTERNAL_SECRET")
 
 APIOME_MOCK_HTTP_PORT=$(format_env_value "$APIOME_MOCK_HTTP_PORT")
+APIOME_MOCK_PUBLIC_BASE_URL=$(format_env_value "$APIOME_MOCK_PUBLIC_BASE_URL")
 EOF
   ((CREATED++)) || true
 }

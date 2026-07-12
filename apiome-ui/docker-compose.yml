@@ -11,6 +11,8 @@ services:
     environment:
       # REST API Base URL
       - NEXT_PUBLIC_REST_API_BASE_URL=${NEXT_PUBLIC_REST_API_BASE_URL:-http://localhost:8000/v1}
+      # Public mock runtime URL (published-versions dashboard mock links)
+      - APIOME_MOCK_PUBLIC_BASE_URL=${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
       # Public API browser (apiome-browse)
       - NEXT_PUBLIC_BROWSE_URL=${NEXT_PUBLIC_BROWSE_URL:-https://browse.apiome.app}
       # NextAuth Configuration
