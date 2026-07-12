@@ -130,6 +130,87 @@ PROPERTY_DESCRIPTIONS: Dict[str, str] = {
     "OperationSchema.operation": "HTTP verb for the operation.",
 }
 
+# Operation parameter descriptions keyed by parameter name.
+PARAMETER_DESCRIPTIONS: Dict[str, str] = {
+    "authorization": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``).",
+    "X-API-Key": "Tenant-scoped API key used as an alternative to JWT bearer authentication.",
+    "tenant_slug": "URL-safe tenant slug that scopes the request.",
+    "tenant": "URL-safe tenant slug that scopes the request.",
+    "project_slug": "URL-safe project slug within the tenant.",
+    "project_id": "Project identifier that scopes the request.",
+    "version_slug": "Semantic version label or version slug (for example ``1.0.0``).",
+    "version_id": "Version identifier or semantic version label, depending on the route.",
+    "version_record_id": "Version row identifier (``versions.id`` UUID).",
+    "class_name": "Class name within the version.",
+    "class_id": "Class identifier within the version.",
+    "property_id": "Property identifier on the class.",
+    "path_id": "Path identifier within the version.",
+    "operation_id": "Operation identifier within the path.",
+    "record_id": "Data record identifier.",
+    "item_id": "Catalog item identifier.",
+    "job_id": "Asynchronous job identifier.",
+    "endpoint_id": "MCP endpoint identifier.",
+    "guide_id": "Style guide identifier.",
+    "role_id": "Role identifier.",
+    "member_id": "Tenant member identifier.",
+    "tag_id": "Tag identifier.",
+    "primitive_id": "Primitive type identifier in the registry.",
+    "repository_id": "Connected repository identifier.",
+    "branch": "Git branch name.",
+    "path": "Repository-relative file path.",
+    "search": "Case-insensitive substring filter.",
+    "sort": "Sort order for the result set.",
+    "limit": "Maximum number of rows to return.",
+    "offset": "Number of rows to skip before returning results.",
+    "page": "One-based page index.",
+    "page_size": "Number of items per page.",
+    "dry_run": "When true, validate without persisting side effects.",
+    "dryRun": "When true, validate without persisting side effects.",
+    "include_deleted": "When true, include soft-deleted records in the response.",
+    "format": "Requested output format.",
+    "accept": "Requested response content type (``Accept`` header).",
+    "If-None-Match": "ETag from a prior response; returns 304 when unchanged.",
+    "If-Match": "ETag of the resource version being updated (optimistic concurrency).",
+    "Content-Type": "Request body media type.",
+    "slug": "URL-safe resource slug.",
+    "target": "Export or conversion target format key.",
+    "source_kind": "Import source adapter key (for example ``openapi`` or ``graphql``).",
+    "base_revision_id": "Base revision UUID used for compatibility comparison.",
+    "revision_id": "Revision UUID (``versions.id``).",
+    "visibility": "Visibility filter (for example ``public`` or ``private``).",
+    "paradigm": "API paradigm filter (REST, RPC, graph, event, data-schema, agent).",
+    "source_format": "Source format filter (for example ``graphql`` or ``protobuf``).",
+    "feed": "Feed format selector (``rss``, ``atom``, or ``json``).",
+    "badge": "Badge snippet format.",
+    "file": "Uploaded file bytes.",
+    "metadata": "JSON metadata string accompanying a multipart upload.",
+    "summary": "Normalized summary counts for the resource.",
+    "source": "Source material descriptor (file, URL, paste, or discovery).",
+    "parsed": "Parsed canonical entity groups derived from the captured source.",
+    "directory_stats": "Aggregate browse directory statistics.",
+    "schemas": "Referenced component schemas implicated in the change.",
+    "descriptor": "Export target descriptor metadata.",
+    "capability_profile": "Capability profile for the export target.",
+    "credential": "Stored MCP credential metadata (never includes secret material).",
+    "job": "Asynchronous discovery job status payload.",
+    "latency": "Observed latency measurements for the endpoint.",
+    "endpoint": "MCP endpoint catalog record.",
+    "version": "Endpoint or API version metadata.",
+    "type_counts": "Counts grouped by entity type.",
+    "change_counts": "Counts grouped by change category.",
+    "severity_counts": "Counts grouped by finding severity.",
+    "facets": "Facet counts for the faceted search response.",
+    "graph": "Graph insight payload for the endpoint.",
+    "profile": "Profile summary for the requested insight dimension.",
+    "discovery": "Discovery reliability metrics.",
+    "invocation": "Invocation reliability metrics.",
+    "health": "Health signal summary.",
+    "tools": "Tool surface metrics for the endpoint.",
+    "metrics": "Computed surface metrics for the endpoint.",
+    "conversion": "Catalog conversion provenance when the item was converted to OpenAPI.",
+    "relatedArtifacts": "Related artifacts linked to the catalog item.",
+}
+
 # Property examples keyed like PROPERTY_DESCRIPTIONS.
 PROPERTY_EXAMPLES: Dict[str, Any] = {
     "id": "res_01h2xcejqtf3fz5y5j0v8k9m2p",
@@ -213,12 +294,16 @@ _ACRONYMS = {
 }
 
 
+_HTTP_METHODS = frozenset({"get", "put", "post", "delete", "patch", "options", "head", "trace"})
+
+
 def enrich_openapi_spec(spec: Mapping[str, Any]) -> Dict[str, Any]:
     """Return an enriched copy of ``spec`` that satisfies :func:`app.schema_lint.lint_openapi_spec`."""
     enriched = copy.deepcopy(spec)
     _rename_component_schemas(enriched)
     _enrich_info(enriched)
     _enrich_component_schemas(enriched)
+    _enrich_paths(enriched)
     return enriched
 
 
@@ -277,6 +362,132 @@ def _enrich_component_schemas(spec: MutableMapping[str, Any]) -> None:
             _enrich_schema_node(schema_name, schema, f"components.schemas.{schema_name}")
 
 
+def _enrich_paths(spec: MutableMapping[str, Any]) -> None:
+    paths = spec.get("paths")
+    if not isinstance(paths, dict):
+        return
+    for path_name, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            continue
+        path_params = path_item.get("parameters")
+        if isinstance(path_params, list):
+            for param in path_params:
+                if isinstance(param, dict):
+                    _enrich_parameter(param, path_name=path_name)
+        for method, operation in path_item.items():
+            if method not in _HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            op_label = _operation_label(operation, path_name, method)
+            for param in operation.get("parameters") or []:
+                if isinstance(param, dict):
+                    _enrich_parameter(param, path_name=path_name, operation_label=op_label)
+            request_body = operation.get("requestBody")
+            if isinstance(request_body, dict):
+                _enrich_request_body(request_body, op_label)
+            for status_code, response in (operation.get("responses") or {}).items():
+                if isinstance(response, dict):
+                    _enrich_response(response, op_label, status_code)
+
+
+def _operation_label(operation: Mapping[str, Any], path_name: str, method: str) -> str:
+    for key in ("summary", "description", "operationId"):
+        value = operation.get(key)
+        if _nonempty_str(value):
+            return str(value).strip().rstrip(".")
+    return f"{method.upper()} {path_name}"
+
+
+def _enrich_parameter(
+    param: MutableMapping[str, Any],
+    *,
+    path_name: str = "",
+    operation_label: str = "",
+) -> None:
+    name = str(param.get("name") or "").strip()
+    if not _nonempty_str(param.get("description")):
+        param["description"] = _parameter_description(name, param, path_name=path_name)
+    schema = param.get("schema")
+    if isinstance(schema, dict):
+        schema_name = _inline_schema_name(operation_label or path_name, name)
+        _enrich_schema_node(schema_name, schema, f"parameter.{name}")
+        if not _nonempty_str(schema.get("description")):
+            schema["description"] = param["description"]
+
+
+def _enrich_request_body(request_body: MutableMapping[str, Any], operation_label: str) -> None:
+    if not _nonempty_str(request_body.get("description")):
+        request_body["description"] = f"Request body for {operation_label.lower()}."
+    content = request_body.get("content")
+    if not isinstance(content, dict):
+        return
+    for media_type, media_obj in content.items():
+        if not isinstance(media_obj, dict):
+            continue
+        schema = media_obj.get("schema")
+        if isinstance(schema, dict):
+            schema_name = _inline_schema_name(operation_label, "requestBody")
+            _enrich_schema_node(schema_name, schema, f"requestBody.{media_type}")
+
+
+def _enrich_response(
+    response: MutableMapping[str, Any], operation_label: str, status_code: str
+) -> None:
+    desc = response.get("description")
+    generic = {"", "successful response", "success"}
+    if not _nonempty_str(desc) or str(desc).strip().lower() in generic:
+        response["description"] = _response_description(operation_label, status_code)
+    content = response.get("content")
+    if not isinstance(content, dict):
+        return
+    for media_type, media_obj in content.items():
+        if not isinstance(media_obj, dict):
+            continue
+        schema = media_obj.get("schema")
+        if isinstance(schema, dict):
+            schema_name = _inline_schema_name(operation_label, f"response{status_code}")
+            _enrich_schema_node(schema_name, schema, f"response.{status_code}.{media_type}")
+
+
+def _inline_schema_name(context: str, suffix: str) -> str:
+    token = re.sub(r"[^A-Za-z0-9]+", "", context)[:40] or "Operation"
+    suffix_token = re.sub(r"[^A-Za-z0-9]+", "", suffix)[:20] or "Body"
+    return f"{token}{suffix_token}"
+
+
+def _parameter_description(
+    name: str, param: Mapping[str, Any], *, path_name: str = ""
+) -> str:
+    if name in PARAMETER_DESCRIPTIONS:
+        return PARAMETER_DESCRIPTIONS[name]
+    location = str(param.get("in") or "query")
+    label = _humanize_identifier(name)
+    if location == "path":
+        if path_name and f"{{{name}}}" in path_name:
+            return f"Path parameter identifying the {_humanize_identifier(name).lower()} segment."
+        return f"Path parameter: {label.lower()}."
+    if location == "header":
+        return f"Header parameter: {label}."
+    if location == "cookie":
+        return f"Cookie parameter: {label.lower()}."
+    required = "Required. " if param.get("required") else ""
+    return f"{required}Query parameter: {label.lower()}."
+
+
+def _response_description(operation_label: str, status_code: str) -> str:
+    code = str(status_code)
+    if code.startswith("2"):
+        return f"Successful response for {operation_label.lower()}."
+    if code == "202":
+        return f"Accepted — asynchronous work started for {operation_label.lower()}."
+    if code == "204":
+        return f"No content — {operation_label.lower()} completed successfully."
+    if code.startswith("4"):
+        return f"Client error response for {operation_label.lower()}."
+    if code.startswith("5"):
+        return f"Server error response for {operation_label.lower()}."
+    return f"Response for {operation_label.lower()} (HTTP {code})."
+
+
 def _enrich_schema_node(schema_name: str, schema: MutableMapping[str, Any], path: str) -> None:
     description = schema.get("description")
     if schema_name in SCHEMA_DESCRIPTIONS:
@@ -320,11 +531,22 @@ def _enrich_property(
     schema: MutableMapping[str, Any],
     path: str,
 ) -> None:
+    if not _nonempty_str(schema.get("description")):
+        schema["description"] = _property_description(schema_name, prop_name)
+
     if _is_ref_only(schema):
         return
 
-    if not _nonempty_str(schema.get("description")):
-        schema["description"] = _property_description(schema_name, prop_name)
+    for composite_key in ("allOf", "oneOf", "anyOf"):
+        variants = schema.get(composite_key)
+        if isinstance(variants, list):
+            for index, variant in enumerate(variants):
+                if isinstance(variant, dict) and "$ref" not in variant:
+                    _enrich_schema_node(
+                        schema_name,
+                        variant,
+                        f"{path}.{composite_key}[{index}]",
+                    )
 
     schema_types = _schema_type_set(schema)
     non_null_types = schema_types - {"null"}
