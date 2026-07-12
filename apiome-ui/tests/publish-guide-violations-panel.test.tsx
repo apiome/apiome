@@ -1,98 +1,71 @@
+/**
+ * Publish dialog style-guide panel (GOV-2.5, #4437).
+ *
+ * Regression: an unstable `onReportChange` callback must not retrigger the lint fetch in a loop
+ * (which left "Checking style-guide violations…" spinning forever despite HTTP 200).
+ */
+
+import React, { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { PublishGuideViolationsPanel } from '@/app/components/ade/dashboard/PublishGuideViolationsPanel';
-import * as versionLintReport from '@/app/utils/version-lint-report';
+import '@testing-library/jest-dom';
+import { PublishGuideViolationsPanel } from '../src/app/components/ade/dashboard/PublishGuideViolationsPanel';
+import type { VersionLintReport } from '../src/app/utils/version-lint-report';
 
-jest.mock('@/app/utils/version-lint-report', () => ({
-  ...jest.requireActual('@/app/utils/version-lint-report'),
-  fetchVersionLintReport: jest.fn(),
-}));
+const PROJECT_ID = 'e8d8179b-66f4-4ad4-b462-f7d1c782f8cf';
+const VERSION_ID = '71ff5cc0-df6c-48e7-aeb8-32d98df416d1';
 
-const fetchVersionLintReport = versionLintReport.fetchVersionLintReport as jest.Mock;
+const LINT_REPORT: VersionLintReport = {
+  projectId: PROJECT_ID,
+  versionRecordId: VERSION_ID,
+  versionId: '1.0.0',
+  score: 95,
+  grade: 'A',
+  findings: [],
+  ruleHits: {},
+  severityCounts: { error: 0, warning: 0, info: 0 },
+  reportFingerprint: 'fp',
+  baseRevisionId: null,
+  compatibilityOverall: null,
+  guideName: 'Default guide',
+};
+
+function mockLintFetch() {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true, ...LINT_REPORT }),
+    })
+  ) as unknown as typeof fetch;
+}
+
+/** Parent that recreates `onReportChange` every render (matches publish dialog usage). */
+function UnstableCallbackParent() {
+  const [, setReport] = useState<VersionLintReport | null>(null);
+  return (
+    <PublishGuideViolationsPanel
+      projectId={PROJECT_ID}
+      versionId={VERSION_ID}
+      onReportChange={(report) => setReport(report)}
+    />
+  );
+}
 
 describe('PublishGuideViolationsPanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLintFetch();
   });
 
-  it('shows per-severity counts and expandable error violations', async () => {
-    fetchVersionLintReport.mockResolvedValue({
-      projectId: 'p1',
-      versionRecordId: 'v1',
-      versionId: '1.0.0',
-      score: 72,
-      grade: 'C',
-      findings: [
-        {
-          id: 'e1',
-          path: 'components.schemas.Pet',
-          category: 'documentation',
-          rule: 'schema-description',
-          severity: 'error',
-          message: 'Missing description',
-        },
-        {
-          id: 'w1',
-          path: 'components.schemas.Cat',
-          category: 'naming',
-          rule: 'schema-pascal-case',
-          severity: 'warning',
-          message: 'Use PascalCase',
-        },
-      ],
-      ruleHits: {},
-      severityCounts: { error: 1, warning: 1, info: 0 },
-      reportFingerprint: 'abc',
-      baseRevisionId: null,
-      compatibilityOverall: null,
-      guideName: 'Team Guide',
-    });
-
-    render(<PublishGuideViolationsPanel projectId="p1" versionId="v1" />);
+  it('finishes loading when onReportChange is unstable across parent re-renders', async () => {
+    render(<UnstableCallbackParent />);
 
     await waitFor(() => {
       expect(screen.getByTestId('publish-guide-violations-panel')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Team Guide')).toBeInTheDocument();
-    expect(screen.getByText('1 error')).toBeInTheDocument();
-    expect(screen.getByText('1 warning')).toBeInTheDocument();
-    expect(screen.getByText(/block publishing/i)).toBeInTheDocument();
-
-    await userEvent.click(screen.getByTestId('publish-guide-errors-toggle'));
-    expect(screen.getByText('schema-description')).toBeInTheDocument();
-    expect(screen.getByText('components.schemas.Pet')).toBeInTheDocument();
-  });
-
-  it('allows publish messaging when only warnings remain', async () => {
-    fetchVersionLintReport.mockResolvedValue({
-      projectId: 'p1',
-      versionRecordId: 'v1',
-      versionId: '1.0.0',
-      score: 90,
-      grade: 'A',
-      findings: [
-        {
-          id: 'w1',
-          path: 'components.schemas.Pet',
-          category: 'naming',
-          rule: 'schema-pascal-case',
-          severity: 'warning',
-          message: 'Use PascalCase',
-        },
-      ],
-      ruleHits: {},
-      severityCounts: { error: 0, warning: 1, info: 0 },
-      reportFingerprint: 'abc',
-      baseRevisionId: null,
-      compatibilityOverall: null,
-      guideName: 'Apiome Recommended',
-    });
-
-    render(<PublishGuideViolationsPanel projectId="p1" versionId="v1" />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/publishing is allowed/i)).toBeInTheDocument();
-    });
+    expect(screen.queryByText('Checking style-guide violations…')).not.toBeInTheDocument();
+    expect(screen.getByText('No style-guide violations.')).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

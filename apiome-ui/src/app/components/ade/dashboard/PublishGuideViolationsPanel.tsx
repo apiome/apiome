@@ -41,6 +41,8 @@ export function PublishGuideViolationsPanel({
   const [error, setError] = useState<string | null>(null);
   const [errorsExpanded, setErrorsExpanded] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const onReportChangeRef = useRef(onReportChange);
+  onReportChangeRef.current = onReportChange;
 
   const loadReport = useCallback(() => {
     abortRef.current?.abort();
@@ -53,7 +55,7 @@ export function PublishGuideViolationsPanel({
         if (controller.signal.aborted) return;
         setReport(r);
         setLoading(false);
-        onReportChange?.(r, null);
+        onReportChangeRef.current?.(r, null);
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
@@ -61,9 +63,9 @@ export function PublishGuideViolationsPanel({
         setReport(null);
         setError(message);
         setLoading(false);
-        onReportChange?.(null, message);
+        onReportChangeRef.current?.(null, message);
       });
-  }, [projectId, versionId, onReportChange]);
+  }, [projectId, versionId]);
 
   useEffect(() => {
     loadReport();
