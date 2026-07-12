@@ -127,6 +127,7 @@ We continue to improve the platform based on your feedback with improvements and
 - UI: Improved Profile layout
 - UI: Fixed sidebar so that "Sunset Timeline" doesn't also highlight Projects at the same time
 - UI: Fixed sidebar to be static with scrollable content to the right-hand side
+- UI: Moved Primitives/Types to Specifications
 - Naming: Renamed the project to Apiome
 
 ---

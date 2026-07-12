@@ -70,12 +70,6 @@ const DashboardSideNav: React.FC = () => {
       ],
     },
     {
-      header: 'Data Management',
-      items: [
-        { label: 'Primitives', href: '/ade/dashboard/primitives', icon: Database, disabled: !hasTenant },
-      ],
-    },
-    {
       header: 'Access & IAM',
       items: [
         { label: 'Roles', href: '/ade/dashboard/roles', icon: Shield, disabled: !hasTenant },
@@ -102,6 +96,12 @@ const DashboardSideNav: React.FC = () => {
           label: 'Repositories',
           href: '/ade/dashboard/repositories',
           icon: FolderGit2,
+          disabled: !hasTenant,
+        },
+        {
+          label: 'Primitives/Types',
+          href: '/ade/dashboard/primitives',
+          icon: Database,
           disabled: !hasTenant,
         },
         {
@@ -156,6 +156,9 @@ const DashboardSideNav: React.FC = () => {
     }
     if (href === '/ade/dashboard/repositories') {
       return pathname === '/ade/dashboard/repositories' || pathname.startsWith('/ade/dashboard/repositories/');
+    }
+    if (href === '/ade/dashboard/primitives') {
+      return pathname === '/ade/dashboard/primitives' || pathname.startsWith('/ade/dashboard/primitives/');
     }
     if (href === '/ade/dashboard/mcp/analytics') {
       return pathname === '/ade/dashboard/mcp/analytics';
