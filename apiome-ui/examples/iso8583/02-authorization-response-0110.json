@@ -1,0 +1,14 @@
+{
+  "mti": "0110",
+  "name": "Authorization Response",
+  "dataElements": {
+    "2": { "name": "Primary Account Number", "type": "n", "length": "..19", "value": "4111111111111111" },
+    "3": { "name": "Processing Code", "type": "n", "length": "6", "value": "000000" },
+    "4": { "name": "Amount, Transaction", "type": "n", "length": "12", "value": "000000018550" },
+    "7": { "name": "Transmission Date & Time", "type": "n", "length": "10", "value": "0115083000" },
+    "11": { "name": "System Trace Audit Number", "type": "n", "length": "6", "value": "000001" },
+    "39": { "name": "Response Code", "type": "an", "length": "2", "value": "00" },
+    "41": { "name": "Card Acceptor Terminal ID", "type": "ans", "length": "8", "value": "TERM0001" },
+    "49": { "name": "Currency Code, Transaction", "type": "n", "length": "3", "value": "840" }
+  }
+}

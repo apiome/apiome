@@ -64,6 +64,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   fhir: { language: 'json', extension: '.json', baseName: 'resource' },
   hl7v2: { language: 'plaintext', extension: '.hl7', baseName: 'message' },
   iso20022: { language: 'xml', extension: '.xml', baseName: 'message' },
+  iso8583: { language: 'json', extension: '.json', baseName: 'message' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };

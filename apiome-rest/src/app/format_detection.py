@@ -246,6 +246,29 @@ def _sniff_iso20022(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
+    from .iso8583_parser import is_iso8583
+
+    text = _text_of(payload)
+    if is_iso8583(text):
+        return DetectionResult(
+            confidence=0.97,
+            format="iso8583",
+            reason="`mti` + `dataElements` ISO 8583 field map",
+        )
+    document = payload.document
+    if isinstance(document, dict):
+        import json
+
+        if is_iso8583(json.dumps(document, separators=(",", ":"))):
+            return DetectionResult(
+                confidence=0.96,
+                format="iso8583",
+                reason="`mti` + `dataElements` ISO 8583 field map",
+            )
+    return NO_MATCH
+
+
 def _sniff_asyncapi(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if not isinstance(document, dict):
@@ -404,6 +427,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_typespec,
     _sniff_hl7v2,
     _sniff_iso20022,
+    _sniff_iso8583,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -429,6 +453,7 @@ SNIFFED_FORMATS = frozenset(
         "typespec",
         "hl7v2",
         "iso20022",
+        "iso8583",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",

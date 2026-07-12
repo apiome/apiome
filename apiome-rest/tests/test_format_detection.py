@@ -43,6 +43,9 @@ _FIXTURES = {
         '<?xml version="1.0"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">'
         "<CstmrCdtTrfInitn><GrpHdr><MsgId>MSG-1</MsgId></GrpHdr></CstmrCdtTrfInitn></Document>"
     ),
+    "iso8583": (
+        '{"mti":"0100","name":"Authorization Request","dataElements":{"2":{"name":"PAN","type":"n","value":"4111"}}}'
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -132,6 +135,14 @@ def test_typespec_is_now_importable() -> None:
     assert detection.detected.format == "typespec"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "typespec"
+
+
+def test_iso8583_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["iso8583"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "iso8583"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "iso8583"
 
 
 def test_iso20022_is_now_importable() -> None:

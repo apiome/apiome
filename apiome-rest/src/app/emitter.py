@@ -650,6 +650,7 @@ def load_builtin_emitters() -> None:
     from . import typespec_emitter as _typespec  # noqa: F401
     from . import hl7v2_emitter as _hl7v2  # noqa: F401
     from . import iso20022_emitter as _iso20022  # noqa: F401
+    from . import iso8583_emitter as _iso8583  # noqa: F401
 
 
 def get_emitter(format_key: str) -> Optional[type[Emitter]]:
