@@ -35,6 +35,6 @@ jobs:
           cd apiome-cli
           uv sync
           # Base URL, tenant, and API key come from the saved APIOME_* secrets above.
-          ./run.sh import openapi ../apiome-rest/openapi.yaml --publish public --poll-interval 1000
+          ./run.sh import openapi ../apiome-rest/openapi.yaml --publish public --poll-interval 1000 --import-timeout 900
         env:
           APIOME_LOAD_DOTENV: "0"
