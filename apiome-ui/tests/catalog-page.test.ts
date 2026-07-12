@@ -228,9 +228,18 @@ describe('table column parity (MFI-24.4)', () => {
     expect(src).toMatch(/resolveCatalogSource\(item\.formatMetadata, item\.metadata\)[\s\S]{0,120}?<SourceBadge source=\{source\}/);
   });
 
-  it('adds a Grade column driven by the shared GradeChip + grade derivation', () => {
+  it('adds a Grade column driven by the shared GradeChip + orb score resolution', () => {
     expect(src).toContain("import { GradeChip }");
-    expect(src).toMatch(/<GradeChip grade=\{catalogItemGrade\(item\)\}/);
+    expect(src).toContain('catalogOrbScores(');
+    expect(src).toContain('<GradeChip grade={lintLetter}');
+  });
+
+  it('wires the table Quality and Grade cells to the same dialogs as the card orbs', () => {
+    expect(src).toMatch(
+      /qualityValue != null[\s\S]{0,120}?\(\) => handleOpenQuality\(item\)/,
+    );
+    expect(src).toMatch(/lintLetter[\s\S]{0,200}?\(\) => handleOpenLint\(item\)/);
+    expect(src).toMatch(/<CatalogQualityBadge[\s\S]{0,120}?score=\{qualityValue\}/);
   });
 
   it('renders the .av.sm avatar (initials + gradient) in the artifact cell', () => {

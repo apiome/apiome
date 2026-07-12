@@ -99,7 +99,7 @@ import {
 import {
   catalogCardInitials,
   catalogCardGradientClass,
-  catalogItemGrade,
+  catalogOrbScores,
   formatShortCatalogId,
 } from '../../../utils/catalog-card-presentation';
 import {
@@ -444,12 +444,22 @@ function CatalogFormatBadge({ item }: { item: CatalogItem }) {
   );
 }
 
+/** Shared hover/focus ring for clickable quality/grade cells in the table view. */
+const catalogTableScoreButtonClass =
+  'inline-flex rounded-md border border-transparent transition-colors hover:border-indigo-200 hover:bg-indigo-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/40';
+
 /**
- * Inline quality score badge (server-captured, MFI-23.2). Shows just the numeric score, tinted by
- * its band — the letter grade now lives in its own table column via {@link GradeChip} (MFI-24.4).
+ * Inline quality score badge for the table view (MFI-23.2 / MFI-24.4). Shows the numeric score
+ * tinted by its band; when `onClick` is supplied the badge opens the same quality dialog the card
+ * orb uses.
  */
-function CatalogQualityBadge({ item }: { item: CatalogItem }) {
-  const score = typeof item.qualityScore === 'number' ? item.qualityScore : null;
+function CatalogQualityBadge({
+  score,
+  onClick,
+}: {
+  score: number | null;
+  onClick?: () => void;
+}) {
   if (score === null) {
     return (
       <span className="text-xs text-gray-400 dark:text-gray-600" title="No quality score captured yet">
@@ -458,13 +468,23 @@ function CatalogQualityBadge({ item }: { item: CatalogItem }) {
     );
   }
   const tier = getNumericScoreTier(score);
-  return (
+  const label = (
     <span
       className={`inline-flex items-center gap-1 text-sm font-semibold tabular-nums leading-none ${tier?.textClass ?? ''}`}
-      title="Quality score captured at import"
     >
       {score}
     </span>
+  );
+  if (!onClick) return label;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(catalogTableScoreButtonClass, 'px-1 py-0.5')}
+      title="Open quality score"
+    >
+      {label}
+    </button>
   );
 }
 
@@ -1231,6 +1251,10 @@ const Catalog = () => {
                       <tbody className={dashboardTbodyClass}>
                         {displayedItems.map((item) => {
                           const isDeleted = Boolean(item.deleted_at);
+                          const { qualityValue, lintLetter } = catalogOrbScores(
+                            item,
+                            catalogQualityHistoryMap[item.id] ?? [],
+                          );
                           return (
                             <tr
                               key={item.id}
@@ -1303,10 +1327,26 @@ const Catalog = () => {
                                 })()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <CatalogQualityBadge item={item} />
+                                <CatalogQualityBadge
+                                  score={qualityValue}
+                                  onClick={
+                                    qualityValue != null ? () => handleOpenQuality(item) : undefined
+                                  }
+                                />
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <GradeChip grade={catalogItemGrade(item)} />
+                                {lintLetter ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenLint(item)}
+                                    className={cn(catalogTableScoreButtonClass, 'p-0.5')}
+                                    title="Open lint report"
+                                  >
+                                    <GradeChip grade={lintLetter} />
+                                  </button>
+                                ) : (
+                                  <GradeChip grade={null} />
+                                )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex flex-col gap-2">
