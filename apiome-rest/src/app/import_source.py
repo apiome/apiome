@@ -745,6 +745,7 @@ def load_builtin_import_sources() -> None:
     from . import hl7v2_import_source as _hl7v2  # noqa: F401
     from . import iso20022_import_source as _iso20022  # noqa: F401
     from . import iso8583_import_source as _iso8583  # noqa: F401
+    from . import cobolcopybook_import_source as _cobolcopybook  # noqa: F401
 
 
 # ===========================================================================

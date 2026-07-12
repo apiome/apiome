@@ -269,6 +269,19 @@ def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_cobolcopybook(payload: DetectionInput) -> DetectionResult:
+    from .cobolcopybook_parser import is_cobolcopybook
+
+    text = _text_of(payload)
+    if is_cobolcopybook(text):
+        return DetectionResult(
+            confidence=0.97,
+            format="cobolcopybook",
+            reason="level-01 group with `PIC` clauses",
+        )
+    return NO_MATCH
+
+
 def _sniff_asyncapi(payload: DetectionInput) -> DetectionResult:
     document = payload.document
     if not isinstance(document, dict):
@@ -428,6 +441,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_hl7v2,
     _sniff_iso20022,
     _sniff_iso8583,
+    _sniff_cobolcopybook,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -454,6 +468,7 @@ SNIFFED_FORMATS = frozenset(
         "hl7v2",
         "iso20022",
         "iso8583",
+        "cobolcopybook",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",

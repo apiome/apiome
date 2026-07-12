@@ -34,6 +34,9 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('hl7')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('iso20022')).toBe('xml');
     expect(monacoLanguageForExportTarget('iso8583')).toBe('json');
+    expect(monacoLanguageForExportTarget('cobolcopybook')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('copybook')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('cobol')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('typespec')).toBe('typescript');
     expect(monacoLanguageForExportTarget('tsp')).toBe('typescript');
     expect(monacoLanguageForExportTarget('structuredefinition')).toBe('json');
@@ -106,6 +109,8 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('hl7')).toBe('.hl7');
     expect(fileExtensionForExportTarget('iso20022')).toBe('.xml');
     expect(fileExtensionForExportTarget('iso8583')).toBe('.json');
+    expect(fileExtensionForExportTarget('cobolcopybook')).toBe('.cpy');
+    expect(fileExtensionForExportTarget('copybook')).toBe('.cpy');
     expect(fileExtensionForExportTarget('typespec')).toBe('.tsp');
     expect(fileExtensionForExportTarget('tsp')).toBe('.tsp');
     expect(fileExtensionForExportTarget('edmx')).toBe('.edmx');
@@ -148,6 +153,8 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('hl7')).toBe('message.hl7');
     expect(downloadFileNameForExportTarget('iso20022')).toBe('message.xml');
     expect(downloadFileNameForExportTarget('iso8583')).toBe('message.json');
+    expect(downloadFileNameForExportTarget('cobolcopybook')).toBe('record.cpy');
+    expect(downloadFileNameForExportTarget('copybook')).toBe('record.cpy');
     expect(downloadFileNameForExportTarget('typespec')).toBe('api.tsp');
     expect(downloadFileNameForExportTarget('tsp')).toBe('api.tsp');
   });

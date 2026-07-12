@@ -186,7 +186,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'jtd', label: 'JSON Type Definition', icon: Braces, tone: 'indigo', aliases: ['jsontypedefinition', 'rfc8927'], description: 'JSON Type Definition (RFC 8927).' },
   { id: 'xsd', label: 'XSD', icon: FileCode, tone: 'stone', importable: true, aliases: ['xmlschema'], description: 'XML Schema Definition (XSD).' },
   { id: 'asn1', label: 'ASN.1', icon: Binary, tone: 'stone', importable: true, aliases: ['asn'], description: 'ASN.1 data structure definitions.' },
-  { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', aliases: ['copybook', 'cobol'], description: 'COBOL copybook record layout.' },
+  { id: 'cobolcopybook', label: 'COBOL Copybook', icon: FileCode, tone: 'slate', importable: true, aliases: ['copybook', 'cobol', 'cobol-copybook'], description: 'COBOL copybook record layout.' },
 
   // ---- Healthcare ----
   { id: 'fhir', label: 'FHIR', icon: HeartPulse, tone: 'red', importable: true, aliases: ['fhirr4', 'structuredefinition'], description: 'HL7 FHIR healthcare resource definition.' },

@@ -65,6 +65,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   hl7v2: { language: 'plaintext', extension: '.hl7', baseName: 'message' },
   iso20022: { language: 'xml', extension: '.xml', baseName: 'message' },
   iso8583: { language: 'json', extension: '.json', baseName: 'message' },
+  cobolcopybook: { language: 'plaintext', extension: '.cpy', baseName: 'record' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
@@ -85,6 +86,9 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   structuredefinition: 'fhir',
   hl7: 'hl7v2',
   hl7v2x: 'hl7v2',
+  copybook: 'cobolcopybook',
+  cobol: 'cobolcopybook',
+  'cobol-copybook': 'cobolcopybook',
   tsp: 'typespec',
   cadl: 'typespec',
   gql: 'graphql',

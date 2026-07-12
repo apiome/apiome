@@ -46,6 +46,11 @@ _FIXTURES = {
     "iso8583": (
         '{"mti":"0100","name":"Authorization Request","dataElements":{"2":{"name":"PAN","type":"n","value":"4111"}}}'
     ),
+    "cobolcopybook": (
+        "       01  CUSTOMER-RECORD.\n"
+        "           05  CUST-ID                 PIC 9(8).\n"
+        "           05  CUST-STATUS             PIC X(1).\n"
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -143,6 +148,14 @@ def test_iso8583_is_now_importable() -> None:
     assert detection.detected.format == "iso8583"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "iso8583"
+
+
+def test_cobolcopybook_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["cobolcopybook"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "cobolcopybook"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "cobolcopybook"
 
 
 def test_iso20022_is_now_importable() -> None:
