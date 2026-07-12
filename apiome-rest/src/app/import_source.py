@@ -736,6 +736,7 @@ def load_builtin_import_sources() -> None:
     from . import smithy_import_source as _smithy  # noqa: F401
     from . import apiblueprint_import_source as _apiblueprint  # noqa: F401
     from . import asn1_import_source as _asn1  # noqa: F401
+    from . import edix12_import_source as _edix12  # noqa: F401
 
 
 # ===========================================================================

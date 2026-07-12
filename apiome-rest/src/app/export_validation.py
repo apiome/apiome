@@ -414,6 +414,21 @@ async def _validate_asn1(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_edix12(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted EDI X12 interchange with ``pyx12``."""
+    from .edix12_emitter import validate_edix12_interchange
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_edix12_interchange(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -421,6 +436,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "avro": _validate_avro,
     "proto3": _validate_proto,
     "asn1": _validate_asn1,
+    "edix12": _validate_edix12,
 }
 
 

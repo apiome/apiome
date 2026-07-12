@@ -186,6 +186,26 @@ def test_postman_is_now_importable() -> None:
     assert detection.detected.source_key == "postman"
 
 
+def test_edix12_is_now_importable() -> None:
+    detection = detect_format(
+        DetectionInput(
+            text=(
+                "ISA*00*          *00*          *ZZ*SENDERID       *ZZ*RECEIVERID     "
+                "*260115*0830*U*00401*000000001*0*P*>~\n"
+                "GS*PO*SENDERID*RECEIVERID*20260115*0830*1*X*004010~\n"
+                "ST*850*0001~\n"
+                "SE*2*0001~\n"
+                "GE*1*1~\n"
+                "IEA*1*000000001~\n"
+            )
+        )
+    )
+    assert detection.detected is not None
+    assert detection.detected.format == "edix12"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "edix12"
+
+
 def test_asn1_is_now_importable() -> None:
     detection = detect_format(
         DetectionInput(

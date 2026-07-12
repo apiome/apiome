@@ -193,7 +193,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'hl7v2', label: 'HL7 v2', icon: HeartPulse, tone: 'pink', aliases: ['hl7', 'hl7v2x'], description: 'HL7 v2.x healthcare messaging.' },
 
   // ---- Finance / B2B ----
-  { id: 'edix12', label: 'EDI X12', icon: FileText, tone: 'orange', aliases: ['x12', 'edi'], description: 'ANSI X12 EDI transaction sets.' },
+  { id: 'edix12', label: 'EDI X12', icon: FileText, tone: 'orange', importable: true, aliases: ['x12', 'edi'], description: 'ANSI X12 EDI transaction sets.' },
   { id: 'iso20022', label: 'ISO 20022', icon: Landmark, tone: 'amber', description: 'ISO 20022 financial messaging schema.' },
   { id: 'iso8583', label: 'ISO 8583', icon: CreditCard, tone: 'orange', description: 'ISO 8583 card transaction messaging.' },
   { id: 'fix', label: 'FIX', icon: TrendingUp, tone: 'emerald', aliases: ['fixprotocol'], description: 'FIX financial trading protocol.' },
@@ -219,7 +219,7 @@ export const ALTERNATIVE_CATALOG_FORMATS: readonly CatalogFormat[] = CATALOG_FOR
 /**
  * The alternative formats that can be **imported into the catalog today** — the ones a
  * server-registered adapter can parse, so the store-raw flow persists them unconverted: gRPC,
- * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, and ASN.1. The catalog gallery lists these as available now.
+ * Protobuf, GraphQL, AsyncAPI, Thrift, Connect RPC, FlatBuffers, Cap'n Proto, WSDL, ASN.1, and EDI X12. The catalog gallery lists these as available now.
  */
 export const IMPORTABLE_ALTERNATIVE_FORMATS: readonly CatalogFormat[] =
   ALTERNATIVE_CATALOG_FORMATS.filter((f) => f.importable);

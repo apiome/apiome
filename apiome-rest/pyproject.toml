@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.117.3"
+version = "1.117.4"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,6 +45,7 @@ dependencies = [
     "jsonpath-ng>=1.6.1",
     "regex>=2024.4.16",
     "asn1tools>=0.167.0",
+    "pyx12>=4.0.0",
 ]
 
 [project.optional-dependencies]

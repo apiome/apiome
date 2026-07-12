@@ -57,6 +57,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   graphql: { language: 'graphql', extension: '.graphql', baseName: 'schema' },
   avro: { language: 'json', extension: '.avsc', baseName: 'schema' },
   asn1: { language: 'plaintext', extension: '.asn1', baseName: 'schema' },
+  edix12: { language: 'plaintext', extension: '.edi', baseName: 'interchange' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -64,6 +65,8 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
 const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   avsc: 'avro',
   asn: 'asn1',
+  x12: 'edix12',
+  edi: 'edix12',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

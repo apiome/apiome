@@ -25,6 +25,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('avro')).toBe('json');
     expect(monacoLanguageForExportTarget('asn1')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('asn')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('edix12')).toBe('plaintext');
+    expect(monacoLanguageForExportTarget('x12')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('avsc')).toBe('json');
   });
 
@@ -81,6 +83,9 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('avsc')).toBe('.avsc');
     expect(fileExtensionForExportTarget('asn1')).toBe('.asn1');
     expect(fileExtensionForExportTarget('asn')).toBe('.asn1');
+    expect(fileExtensionForExportTarget('edix12')).toBe('.edi');
+    expect(fileExtensionForExportTarget('x12')).toBe('.edi');
+    expect(fileExtensionForExportTarget('x12')).toBe('.edi');
     expect(fileExtensionForExportTarget('sdl')).toBe('.graphql');
   });
 
@@ -107,6 +112,7 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('avro')).toBe('schema.avsc');
     expect(downloadFileNameForExportTarget('avsc')).toBe('schema.avsc');
     expect(downloadFileNameForExportTarget('asn1')).toBe('schema.asn1');
+    expect(downloadFileNameForExportTarget('edix12')).toBe('interchange.edi');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {
