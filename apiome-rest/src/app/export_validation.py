@@ -489,6 +489,21 @@ async def _validate_fhir(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_typespec(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted TypeSpec `.tsp` document by re-parsing it."""
+    from .typespec_emitter import validate_typespec_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_typespec_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -501,6 +516,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "corbaidl": _validate_corbaidl,
     "odata": _validate_odata,
     "fhir": _validate_fhir,
+    "typespec": _validate_typespec,
 }
 
 

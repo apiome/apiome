@@ -121,13 +121,12 @@ def test_openapi_routes_to_importable_adapter() -> None:
     assert detection.detected.source_key == "openapi"
 
 
-def test_sniffed_formats_are_not_importable_yet() -> None:
-    # TypeSpec is still sniffer-only (its adapter lands in a later epic).
+def test_typespec_is_now_importable() -> None:
     detection = detect_format(DetectionInput(text=_FIXTURES["typespec"]))
     assert detection.detected is not None
     assert detection.detected.format == "typespec"
-    assert detection.detected.importable is False
-    assert detection.detected.source_key is None
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "typespec"
 
 
 def test_odata_is_now_importable() -> None:

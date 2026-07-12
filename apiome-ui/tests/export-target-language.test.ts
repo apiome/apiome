@@ -30,6 +30,8 @@ describe('monacoLanguageForExportTarget', () => {
     expect(monacoLanguageForExportTarget('corbaidl')).toBe('plaintext');
     expect(monacoLanguageForExportTarget('odata')).toBe('xml');
     expect(monacoLanguageForExportTarget('fhir')).toBe('json');
+    expect(monacoLanguageForExportTarget('typespec')).toBe('typescript');
+    expect(monacoLanguageForExportTarget('tsp')).toBe('typescript');
     expect(monacoLanguageForExportTarget('structuredefinition')).toBe('json');
     expect(monacoLanguageForExportTarget('edmx')).toBe('xml');
     expect(monacoLanguageForExportTarget('idl')).toBe('plaintext');
@@ -96,6 +98,8 @@ describe('fileExtensionForExportTarget', () => {
     expect(fileExtensionForExportTarget('corbaidl')).toBe('.idl');
     expect(fileExtensionForExportTarget('odata')).toBe('.edmx');
     expect(fileExtensionForExportTarget('fhir')).toBe('.json');
+    expect(fileExtensionForExportTarget('typespec')).toBe('.tsp');
+    expect(fileExtensionForExportTarget('tsp')).toBe('.tsp');
     expect(fileExtensionForExportTarget('edmx')).toBe('.edmx');
     expect(fileExtensionForExportTarget('idl')).toBe('.idl');
     expect(fileExtensionForExportTarget('sunrpc')).toBe('.x');
@@ -132,6 +136,8 @@ describe('downloadFileNameForExportTarget', () => {
     expect(downloadFileNameForExportTarget('corbaidl')).toBe('module.idl');
     expect(downloadFileNameForExportTarget('odata')).toBe('service.edmx');
     expect(downloadFileNameForExportTarget('fhir')).toBe('resource.json');
+    expect(downloadFileNameForExportTarget('typespec')).toBe('api.tsp');
+    expect(downloadFileNameForExportTarget('tsp')).toBe('api.tsp');
   });
 
   it('falls back to export.txt for unrecognised targets', () => {

@@ -175,7 +175,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'wadl', label: 'WADL', icon: FileCode, tone: 'slate', importable: true, aliases: ['restdescription'], description: 'WADL REST resource description.' },
   { id: 'apiblueprint', label: 'API Blueprint', icon: FileText, tone: 'blue', importable: true, aliases: ['blueprint', 'apib'], description: 'API Blueprint 1A markdown API description.' },
   { id: 'smithy', label: 'Smithy', icon: Hammer, tone: 'amber', importable: true, description: 'Smithy 2.x service / protocol model.' },
-  { id: 'typespec', label: 'TypeSpec', icon: FileCode, tone: 'cyan', aliases: ['tsp', 'cadl'], description: 'Microsoft TypeSpec API definition.' },
+  { id: 'typespec', label: 'TypeSpec', icon: FileCode, tone: 'cyan', importable: true, aliases: ['tsp', 'cadl'], description: 'Microsoft TypeSpec API definition.' },
 
   // ---- Workflows ----
   { id: 'arazzo', label: 'Arazzo', icon: Workflow, tone: 'violet', aliases: ['workflows'], description: 'Arazzo API workflow description.' },

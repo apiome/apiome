@@ -62,6 +62,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   corbaidl: { language: 'plaintext', extension: '.idl', baseName: 'module' },
   odata: { language: 'xml', extension: '.edmx', baseName: 'service' },
   fhir: { language: 'json', extension: '.json', baseName: 'resource' },
+  typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
 
@@ -79,6 +80,8 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   edmx: 'odata',
   fhirr4: 'fhir',
   structuredefinition: 'fhir',
+  tsp: 'typespec',
+  cadl: 'typespec',
   gql: 'graphql',
   proto: 'protobuf',
   proto3: 'protobuf',

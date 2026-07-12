@@ -741,6 +741,7 @@ def load_builtin_import_sources() -> None:
     from . import corbaidl_import_source as _corbaidl  # noqa: F401
     from . import odata_import_source as _odata  # noqa: F401
     from . import fhir_import_source as _fhir  # noqa: F401
+    from . import typespec_import_source as _typespec  # noqa: F401
 
 
 # ===========================================================================

@@ -61,6 +61,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('fhir')?.sourceKind).toBe('fhir');
     expect(catalogAdapterForFormat('fhirr4')?.sourceKind).toBe('fhir');
     expect(catalogAdapterForFormat('structuredefinition')?.sourceKind).toBe('fhir');
+    expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
+    expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
+    expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
   });
 
   test('is case/space-insensitive', () => {
@@ -77,7 +80,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'flatbuffers', 'graphql', 'grpc', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -153,6 +156,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('fhir')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'fhir' },
+    });
+    expect(decideCatalogImportRouting('typespec')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'typespec' },
     });
   });
 
@@ -241,6 +248,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('edmx')).toBe('rest');
     expect(paradigmForFormat('fhir')).toBe('rest');
     expect(paradigmForFormat('structuredefinition')).toBe('rest');
+    expect(paradigmForFormat('typespec')).toBe('rest');
+    expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');
     expect(paradigmForFormat('cloudevents')).toBe('event');
     expect(paradigmForFormat('cloud-events')).toBe('event');

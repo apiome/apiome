@@ -100,6 +100,9 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   fhir: { sourceKind: 'fhir', label: 'FHIR' },
   fhirr4: { sourceKind: 'fhir', label: 'FHIR' },
   structuredefinition: { sourceKind: 'fhir', label: 'FHIR' },
+  typespec: { sourceKind: 'typespec', label: 'TypeSpec' },
+  tsp: { sourceKind: 'typespec', label: 'TypeSpec' },
+  cadl: { sourceKind: 'typespec', label: 'TypeSpec' },
 };
 
 /**
@@ -162,6 +165,9 @@ const FORMAT_TO_PARADIGM: Readonly<Record<string, string>> = {
   fhir: 'rest',
   fhirr4: 'rest',
   structuredefinition: 'rest',
+  typespec: 'rest',
+  tsp: 'rest',
+  cadl: 'rest',
 };
 
 /**
