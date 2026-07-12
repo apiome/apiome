@@ -67,6 +67,7 @@ const EXPORT_TARGET_LANGUAGE: Readonly<Record<string, ExportTargetMeta>> = {
   iso8583: { language: 'json', extension: '.json', baseName: 'message' },
   cobolcopybook: { language: 'plaintext', extension: '.cpy', baseName: 'record' },
   fix: { language: 'plaintext', extension: '.fix', baseName: 'message' },
+  zosconnect: { language: 'json', extension: '.json', baseName: 'zosconnect' },
   typespec: { language: 'typescript', extension: '.tsp', baseName: 'api' },
   sample: { language: 'plaintext', extension: '.txt', baseName: 'sample' },
 };
@@ -91,6 +92,8 @@ const EXPORT_TARGET_ALIASES: Readonly<Record<string, string>> = {
   cobol: 'cobolcopybook',
   'cobol-copybook': 'cobolcopybook',
   fixprotocol: 'fix',
+  zos: 'zosconnect',
+  'zos-connect': 'zosconnect',
   tsp: 'typespec',
   cadl: 'typespec',
   gql: 'graphql',

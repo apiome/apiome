@@ -269,6 +269,29 @@ def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_zosconnect(payload: DetectionInput) -> DetectionResult:
+    from .zosconnect_parser import is_zosconnect
+
+    text = _text_of(payload)
+    if is_zosconnect(text):
+        return DetectionResult(
+            confidence=0.97,
+            format="zosconnect",
+            reason="`apiRequester` / `apiProvider` with mapped `operations`",
+        )
+    document = payload.document
+    if isinstance(document, dict):
+        import json
+
+        if is_zosconnect(json.dumps(document, separators=(",", ":"))):
+            return DetectionResult(
+                confidence=0.96,
+                format="zosconnect",
+                reason="`apiRequester` / `apiProvider` with mapped `operations`",
+            )
+    return NO_MATCH
+
+
 def _sniff_fix(payload: DetectionInput) -> DetectionResult:
     from .fix_parser import is_fix
 
@@ -456,6 +479,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_iso8583,
     _sniff_cobolcopybook,
     _sniff_fix,
+    _sniff_zosconnect,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -484,6 +508,7 @@ SNIFFED_FORMATS = frozenset(
         "iso8583",
         "cobolcopybook",
         "fix",
+        "zosconnect",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",

@@ -747,6 +747,7 @@ def load_builtin_import_sources() -> None:
     from . import iso8583_import_source as _iso8583  # noqa: F401
     from . import cobolcopybook_import_source as _cobolcopybook  # noqa: F401
     from . import fix_import_source as _fix  # noqa: F401
+    from . import zosconnect_import_source as _zosconnect  # noqa: F401
 
 
 # ===========================================================================

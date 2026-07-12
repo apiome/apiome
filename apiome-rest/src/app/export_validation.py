@@ -579,6 +579,21 @@ async def _validate_fix(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_zosconnect(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted z/OS Connect descriptor by re-parsing it."""
+    from .zosconnect_emitter import validate_zosconnect_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_zosconnect_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -597,6 +612,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "iso8583": _validate_iso8583,
     "cobolcopybook": _validate_cobolcopybook,
     "fix": _validate_fix,
+    "zosconnect": _validate_zosconnect,
 }
 
 

@@ -72,6 +72,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('cobol-copybook')?.sourceKind).toBe('cobolcopybook');
     expect(catalogAdapterForFormat('fix')?.sourceKind).toBe('fix');
     expect(catalogAdapterForFormat('fixprotocol')?.sourceKind).toBe('fix');
+    expect(catalogAdapterForFormat('zosconnect')?.sourceKind).toBe('zosconnect');
+    expect(catalogAdapterForFormat('zos')?.sourceKind).toBe('zosconnect');
+    expect(catalogAdapterForFormat('zos-connect')?.sourceKind).toBe('zosconnect');
     expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
@@ -91,7 +94,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -187,6 +190,10 @@ describe('catalog-import-formats', () => {
     expect(decideCatalogImportRouting('fix')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'fix' },
+    });
+    expect(decideCatalogImportRouting('zosconnect')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'zosconnect' },
     });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
@@ -289,6 +296,9 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('cobol-copybook')).toBe('dataschema');
     expect(paradigmForFormat('fix')).toBe('dataschema');
     expect(paradigmForFormat('fixprotocol')).toBe('dataschema');
+    expect(paradigmForFormat('zosconnect')).toBe('rest');
+    expect(paradigmForFormat('zos')).toBe('rest');
+    expect(paradigmForFormat('zos-connect')).toBe('rest');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

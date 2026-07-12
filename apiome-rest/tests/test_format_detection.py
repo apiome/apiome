@@ -55,6 +55,13 @@ _FIXTURES = {
         "8=FIX.4.4|9=154|35=D|34=1089|49=BUYSIDE|56=SELLSIDE|52=20260115-08:30:00.000|"
         "11=ORDER-0001|55=AAPL|54=1|38=100|40=2|44=185.50|10=062|"
     ),
+    "zosconnect": (
+        '{"apiRequester":{"name":"InventoryRequester","version":"1.0.0"},'
+        '"api":{"title":"Inventory API","specification":"openapi-3.0","basePath":"/inventory"},'
+        '"language":{"type":"cobol","codepage":"IBM-1047"},'
+        '"operations":[{"operationId":"getStock","method":"GET","path":"/items/{sku}/stock",'
+        '"requestStructure":"REQ","responseStructure":"RESP","pathParameters":[{"name":"sku","field":"SKU","type":"string"}]}]}'
+    ),
     "asyncapi-2": "asyncapi: 2.6.0\ninfo:\n  title: x\n  version: 1.0.0\n",
     "arazzo": (
         "arazzo: 1.0.1\ninfo:\n  title: My Workflow\n  version: 1.0.0\n"
@@ -168,6 +175,14 @@ def test_fix_is_now_importable() -> None:
     assert detection.detected.format == "fix"
     assert detection.detected.importable is True
     assert detection.detected.source_key == "fix"
+
+
+def test_zosconnect_is_now_importable() -> None:
+    detection = detect_format(DetectionInput(text=_FIXTURES["zosconnect"]))
+    assert detection.detected is not None
+    assert detection.detected.format == "zosconnect"
+    assert detection.detected.importable is True
+    assert detection.detected.source_key == "zosconnect"
 
 
 def test_iso20022_is_now_importable() -> None:

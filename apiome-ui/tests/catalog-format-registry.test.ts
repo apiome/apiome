@@ -126,7 +126,7 @@ describe('catalog-format-registry — importable vs recognized (MFI-23.12)', () 
   test('importable alternatives are exactly the adapter-backed (store-raw) formats', () => {
     // Only formats with a server-registered adapter can be stored raw in the catalog today.
     expect(IMPORTABLE_ALTERNATIVE_FORMATS.map((f) => f.id).sort()).toEqual(
-      ['asn1', 'asyncapi', 'avro', 'apiblueprint', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fix', 'flatbuffers', 'fhir', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd'].sort(),
+      ['asn1', 'asyncapi', 'avro', 'apiblueprint', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fix', 'flatbuffers', 'fhir', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'protobuf', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect'].sort(),
     );
   });
 

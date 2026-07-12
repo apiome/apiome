@@ -1,0 +1,40 @@
+{
+  "apiProvider": {
+    "name": "CustomerProvider",
+    "version": "1.0.0",
+    "description": "Inbound z/OS Connect provider exposing a CICS COBOL program as REST."
+  },
+  "api": {
+    "title": "Customer API",
+    "specification": "openapi-3.0",
+    "basePath": "https://mainframe.example.com/customer"
+  },
+  "language": {
+    "type": "cobol",
+    "codepage": "IBM-1047"
+  },
+  "operations": [
+    {
+      "operationId": "getCustomer",
+      "method": "GET",
+      "path": "/customers/{customerId}",
+      "program": "CUSTGET",
+      "requestStructure": "GET-CUSTOMER-REQUEST",
+      "responseStructure": "GET-CUSTOMER-RESPONSE",
+      "pathParameters": [
+        { "name": "customerId", "field": "CUST-ID", "type": "string" }
+      ]
+    },
+    {
+      "operationId": "updateCustomer",
+      "method": "PUT",
+      "path": "/customers/{customerId}",
+      "program": "CUSTPUT",
+      "requestStructure": "UPDATE-CUSTOMER-REQUEST",
+      "responseStructure": "UPDATE-CUSTOMER-RESPONSE",
+      "pathParameters": [
+        { "name": "customerId", "field": "CUST-ID", "type": "string" }
+      ]
+    }
+  ]
+}

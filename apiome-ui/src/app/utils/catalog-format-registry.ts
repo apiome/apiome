@@ -199,7 +199,7 @@ export const CATALOG_FORMATS: readonly CatalogFormat[] = [
   { id: 'fix', label: 'FIX', icon: TrendingUp, tone: 'emerald', importable: true, aliases: ['fixprotocol'], description: 'FIX financial trading protocol.' },
 
   // ---- Mainframe ----
-  { id: 'zosconnect', label: 'z/OS Connect', icon: Server, tone: 'blue', aliases: ['zos'], description: 'z/OS Connect mainframe API.' },
+  { id: 'zosconnect', label: 'z/OS Connect', icon: Server, tone: 'blue', importable: true, aliases: ['zos', 'zos-connect'], description: 'z/OS Connect mainframe API.' },
 ] as const;
 
 /** Ids of the *native* / publishable formats (OpenAPI, Swagger) that route to Projects, not the Catalog. */
