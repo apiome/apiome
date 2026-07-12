@@ -23,6 +23,7 @@ import {
   type CatalogFormat,
 } from '@/app/utils/catalog-format-registry';
 import { catalogAdapterForFormat } from '@/app/utils/catalog-import-formats';
+import { catalogFormatDocumentationUrl } from '@/app/utils/catalog-format-documentation';
 import { useCatalogImportAvailability } from './useCatalogImportAvailability';
 
 export interface CatalogSupportedFormatsProps {
@@ -41,22 +42,26 @@ function FormatChip({
   fmt,
   muted,
   unavailableNote,
+  documentationUrl,
 }: {
   fmt: CatalogFormat;
   muted?: boolean;
   unavailableNote?: string;
+  /** When set, the chip opens this URL in a new tab (importable formats only). */
+  documentationUrl?: string;
 }) {
   const Icon = fmt.icon;
   const dimmed = muted || Boolean(unavailableNote);
-  return (
-    <div
-      className={cn(
-        'flex items-start gap-2.5 rounded-md border p-2.5',
-        dimmed
-          ? 'border-dashed border-gray-200 bg-gray-50/40 dark:border-gray-700/60 dark:bg-gray-900/20'
-          : 'border-gray-100 bg-gray-50/60 dark:border-gray-700/60 dark:bg-gray-900/30',
-      )}
-    >
+  const chipClassName = cn(
+    'flex items-start gap-2.5 rounded-md border p-2.5',
+    dimmed
+      ? 'border-dashed border-gray-200 bg-gray-50/40 dark:border-gray-700/60 dark:bg-gray-900/20'
+      : 'border-gray-100 bg-gray-50/60 dark:border-gray-700/60 dark:bg-gray-900/30',
+    documentationUrl &&
+      'cursor-pointer transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:hover:border-indigo-700/60 dark:hover:bg-indigo-950/20',
+  );
+  const body = (
+    <>
       <span
         className={cn(
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
@@ -85,8 +90,24 @@ function FormatChip({
           </span>
         ) : null}
       </span>
-    </div>
+    </>
   );
+
+  if (documentationUrl) {
+    return (
+      <a
+        href={documentationUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={chipClassName}
+        aria-label={`${fmt.label} technical documentation (opens in new tab)`}
+      >
+        {body}
+      </a>
+    );
+  }
+
+  return <div className={chipClassName}>{body}</div>;
 }
 
 const GRID_CLASS =
@@ -180,7 +201,12 @@ export function CatalogSupportedFormats({
             </div>
             <div className={GRID_CLASS}>
               {IMPORTABLE_ALTERNATIVE_FORMATS.map((fmt) => (
-                <FormatChip key={fmt.id} fmt={fmt} unavailableNote={unavailableNoteFor(fmt)} />
+                <FormatChip
+                  key={fmt.id}
+                  fmt={fmt}
+                  unavailableNote={unavailableNoteFor(fmt)}
+                  documentationUrl={catalogFormatDocumentationUrl(fmt.id)}
+                />
               ))}
             </div>
           </div>
