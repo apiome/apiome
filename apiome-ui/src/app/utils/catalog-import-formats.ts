@@ -40,8 +40,10 @@ export interface CatalogImportRoutingDecision {
 // catalog: the native REST formats plus Arazzo workflows.
 const PROJECT_FORMATS = new Set(['openapi', 'swagger', 'arazzo']);
 
-// JSON Schema families that trigger the Catalog-vs-Types/Projects prompt (MFI-26.7).
-const JSON_SCHEMA_FORMATS = new Set(['jsonschema', 'json-schema', 'json schema']);
+// JSON Schema families that still trigger the Catalog-vs-Types/Projects prompt when no adapter
+// mapping exists (e.g. a spaced label). Registered `json-schema` / `jsonschema` families route
+// directly to the catalog adapter like other store-raw formats.
+const JSON_SCHEMA_FORMATS = new Set(['json schema']);
 
 /**
  * Detected-format token → adapter source. Keys are format *families* (see {@link formatFamily}); a
@@ -114,6 +116,8 @@ const FORMAT_TO_ADAPTER: Readonly<Record<string, CatalogAdapterSource>> = {
   zosconnect: { sourceKind: 'zosconnect', label: 'z/OS Connect' },
   zos: { sourceKind: 'zosconnect', label: 'z/OS Connect' },
   'zos-connect': { sourceKind: 'zosconnect', label: 'z/OS Connect' },
+  jsonschema: { sourceKind: 'json-schema', label: 'JSON Schema' },
+  'json-schema': { sourceKind: 'json-schema', label: 'JSON Schema' },
   typespec: { sourceKind: 'typespec', label: 'TypeSpec' },
   tsp: { sourceKind: 'typespec', label: 'TypeSpec' },
   cadl: { sourceKind: 'typespec', label: 'TypeSpec' },

@@ -111,6 +111,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Import/Export: Adds COBOL Copybook support
 - Import/Export: Adds FIX support
 - Import/Export: Adds z/OS Connect support
+- Import/Export: Adds JSON Schema support
 - REST: Swagger 2.0 documents normalize into the canonical model through the import SPI (MFI-30.1), closing the detect-without-normalize gap for cross-format diff and catalog persistence
 - Projects: Now displays quality and linting information in each project
 - UI: Fixes Published Versions viewing of OpenAPI and Arazzo URLs

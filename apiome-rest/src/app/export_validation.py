@@ -594,6 +594,21 @@ async def _validate_zosconnect(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_jsonschema(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted JSON Schema document by re-parsing it."""
+    from .jsonschema_emitter import validate_jsonschema_document
+
+    errors: List[str] = []
+    for emitted in emit_result.files:
+        try:
+            validate_jsonschema_document(str(emitted.content))
+        except Exception as exc:
+            errors.append(f"{emitted.path}: {exc}")
+    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+
+
 _VALIDATORS: Dict[str, _Validator] = {
     "openapi-3.1": _validate_openapi,
     "graphql": _validate_graphql,
@@ -613,6 +628,7 @@ _VALIDATORS: Dict[str, _Validator] = {
     "cobolcopybook": _validate_cobolcopybook,
     "fix": _validate_fix,
     "zosconnect": _validate_zosconnect,
+    "json-schema": _validate_jsonschema,
 }
 
 

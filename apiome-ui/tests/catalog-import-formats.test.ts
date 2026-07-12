@@ -75,6 +75,9 @@ describe('catalog-import-formats', () => {
     expect(catalogAdapterForFormat('zosconnect')?.sourceKind).toBe('zosconnect');
     expect(catalogAdapterForFormat('zos')?.sourceKind).toBe('zosconnect');
     expect(catalogAdapterForFormat('zos-connect')?.sourceKind).toBe('zosconnect');
+    expect(catalogAdapterForFormat('jsonschema')?.sourceKind).toBe('json-schema');
+    expect(catalogAdapterForFormat('json-schema')?.sourceKind).toBe('json-schema');
+    expect(catalogAdapterForFormat('json-schema-2020-12')?.sourceKind).toBe('json-schema');
     expect(catalogAdapterForFormat('typespec')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('tsp')?.sourceKind).toBe('typespec');
     expect(catalogAdapterForFormat('cadl')?.sourceKind).toBe('typespec');
@@ -86,7 +89,7 @@ describe('catalog-import-formats', () => {
   });
 
   test('returns null for formats with no catalog importer (…)', () => {
-    for (const f of ['jsonschema', 'arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
+    for (const f of ['arazzo', 'openapi', 'swagger', 'unknown', '', null, undefined]) {
       expect(catalogAdapterForFormat(f)).toBeNull();
       expect(isCatalogStorableFormat(f)).toBe(false);
     }
@@ -94,7 +97,7 @@ describe('catalog-import-formats', () => {
 
   test('exposes the distinct storable sources (deduped by source_kind)', () => {
     const kinds = CATALOG_STORABLE_SOURCES.map((s) => s.sourceKind).sort();
-    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
+    expect(kinds).toEqual(['apiblueprint', 'asn1', 'asyncapi', 'avro', 'capnproto', 'cloudevents', 'cobolcopybook', 'connectrpc', 'corbaidl', 'edix12', 'fhir', 'fix', 'flatbuffers', 'graphql', 'grpc', 'hl7v2', 'iso20022', 'iso8583', 'json-schema', 'odata', 'oncrpc', 'openrpc', 'postman', 'raml', 'smithy', 'thrift', 'typespec', 'wadl', 'wsdl', 'xmlrpc', 'xsd', 'zosconnect']);
   });
 
   test('routes adapter-backed formats to catalog', () => {
@@ -195,6 +198,14 @@ describe('catalog-import-formats', () => {
       destination: 'catalog',
       adapter: { sourceKind: 'zosconnect' },
     });
+    expect(decideCatalogImportRouting('json-schema')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'json-schema' },
+    });
+    expect(decideCatalogImportRouting('jsonschema')).toMatchObject({
+      destination: 'catalog',
+      adapter: { sourceKind: 'json-schema' },
+    });
     expect(decideCatalogImportRouting('typespec')).toMatchObject({
       destination: 'catalog',
       adapter: { sourceKind: 'typespec' },
@@ -211,14 +222,11 @@ describe('catalog-import-formats', () => {
     }
   });
 
-  test('routes JSON Schema to the destination choice', () => {
-    for (const f of ['jsonschema', 'json-schema', 'json-schema-2020-12', 'JSON Schema']) {
-      expect(decideCatalogImportRouting(f)).toMatchObject({
-        destination: 'json-schema-choice',
-        label: 'Choose destination',
-        adapter: null,
-      });
-    }
+  test('routes spaced JSON Schema label to destination choice', () => {
+    expect(decideCatalogImportRouting('JSON Schema')).toMatchObject({
+      destination: 'json-schema-choice',
+      adapter: null,
+    });
   });
 
   test('routes unsupported formats to not-importable', () => {
@@ -299,6 +307,8 @@ describe('catalog-import-formats', () => {
     expect(paradigmForFormat('zosconnect')).toBe('rest');
     expect(paradigmForFormat('zos')).toBe('rest');
     expect(paradigmForFormat('zos-connect')).toBe('rest');
+    expect(paradigmForFormat('jsonschema')).toBe('dataschema');
+    expect(paradigmForFormat('json-schema')).toBe('dataschema');
     expect(paradigmForFormat('typespec')).toBe('rest');
     expect(paradigmForFormat('tsp')).toBe('rest');
     expect(paradigmForFormat('postman')).toBe('rest');

@@ -269,6 +269,29 @@ def _sniff_iso8583(payload: DetectionInput) -> DetectionResult:
     return NO_MATCH
 
 
+def _sniff_jsonschema(payload: DetectionInput) -> DetectionResult:
+    from .jsonschema_import_source import is_jsonschema
+
+    text = _text_of(payload)
+    if is_jsonschema(text):
+        return DetectionResult(
+            confidence=0.94,
+            format="json-schema",
+            reason="`$schema` / `$defs` JSON Schema document",
+        )
+    document = payload.document
+    if isinstance(document, dict):
+        import json
+
+        if is_jsonschema(json.dumps(document, separators=(",", ":"))):
+            return DetectionResult(
+                confidence=0.93,
+                format="json-schema",
+                reason="`$schema` / `$defs` JSON Schema document",
+            )
+    return NO_MATCH
+
+
 def _sniff_zosconnect(payload: DetectionInput) -> DetectionResult:
     from .zosconnect_parser import is_zosconnect
 
@@ -480,6 +503,7 @@ _SNIFFERS: tuple[Callable[[DetectionInput], DetectionResult], ...] = (
     _sniff_cobolcopybook,
     _sniff_fix,
     _sniff_zosconnect,
+    _sniff_jsonschema,
     _sniff_asyncapi,
     _sniff_arazzo,
     _sniff_openrpc,
@@ -509,6 +533,7 @@ SNIFFED_FORMATS = frozenset(
         "cobolcopybook",
         "fix",
         "zosconnect",
+        "json-schema",
         "asyncapi-2",
         "asyncapi-3",
         "arazzo",

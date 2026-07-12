@@ -59,7 +59,12 @@ from .import_source import (
     InputKind,
 )
 
-__all__ = ["JsonSchemaImportSource", "JSON_SCHEMA_FORMAT"]
+__all__ = [
+    "JsonSchemaImportSource",
+    "JSON_SCHEMA_FORMAT",
+    "is_jsonschema",
+    "is_jsonschema_document",
+]
 
 #: The emitted canonical format key for a JSON Schema import. It folds to the
 #: ``json-schema`` family the UI routing (``catalog-import-formats.ts``) recognizes, so
@@ -259,6 +264,18 @@ def _has_schema_keywords(document: Dict[str, Any]) -> bool:
     return False
 
 
+def is_jsonschema_document(document: Any) -> bool:
+    """Return ``True`` when a parsed mapping looks like a JSON Schema document."""
+    return JsonSchemaImportSource().detect(DetectionInput(document=document)).matched
+
+
+def is_jsonschema(content: str) -> bool:
+    """Return ``True`` when ``content`` looks like a JSON Schema document."""
+    if not content or not isinstance(content, str) or not content.strip():
+        return False
+    return JsonSchemaImportSource().detect(DetectionInput(text=content)).matched
+
+
 class JsonSchemaImportSource(ImportSource, register=True):
     """Adapter for JSON Schema 2020-12 (and variants) → a schemas-only catalog item."""
 
@@ -272,7 +289,7 @@ class JsonSchemaImportSource(ImportSource, register=True):
     paradigm = ApiParadigm.DATA_SCHEMA
     input_kinds = (InputKind.FILE, InputKind.URL, InputKind.PASTE)
     supports_live_discovery = False
-    formats = (JSON_SCHEMA_FORMAT,)
+    formats = (JSON_SCHEMA_FORMAT, "jsonschema", "json-schema-2020-12")
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
         """Recognize a JSON Schema document (dialect marker or structural keywords).

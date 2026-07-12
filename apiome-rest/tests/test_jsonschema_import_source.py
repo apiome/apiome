@@ -236,3 +236,44 @@ def test_lint_scores_the_model(adapter: JsonSchemaImportSource) -> None:
     model = adapter.normalize(adapter.parse(_SCHEMA))
     report = adapter.lint(model)
     assert report.score is not None
+
+
+def test_emitter_round_trips_simple_person_fixture() -> None:
+    from pathlib import Path
+
+    from app.emitter import get_emitter
+
+    fixture = (
+        Path(__file__).resolve().parents[2]
+        / "apiome-ui/examples/json-schema/01-simple-person.json"
+    ).read_text(encoding="utf-8")
+    adapter = JsonSchemaImportSource()
+    api = adapter.normalize(adapter.parse(fixture))
+    emitter = get_emitter("json-schema")
+    assert emitter is not None
+    text = emitter().emit(api).files[0].content
+    assert '"firstName"' in text
+    assert '"lastName"' in text
+    from app.jsonschema_emitter import validate_jsonschema_document
+
+    validate_jsonschema_document(text)
+
+
+def test_emitter_round_trips_multiple_defs_fixture() -> None:
+    from pathlib import Path
+
+    from app.emitter import get_emitter
+    from app.jsonschema_emitter import validate_jsonschema_document
+
+    fixture = (
+        Path(__file__).resolve().parents[2]
+        / "apiome-ui/examples/json-schema/03-multiple-defs.json"
+    ).read_text(encoding="utf-8")
+    adapter = JsonSchemaImportSource()
+    api = adapter.normalize(adapter.parse(fixture))
+    emitter = get_emitter("json-schema")
+    assert emitter is not None
+    text = emitter().emit(api).files[0].content
+    assert '"$defs"' in text
+    assert "Contact" in text
+    validate_jsonschema_document(text)
