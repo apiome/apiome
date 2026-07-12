@@ -64,7 +64,7 @@ class XmlRpcFidelityRulePack(CapabilityRulePack):
                 message=f"{self.target_label} has no HTTP binding; operation {operation.key!r} is dropped",
                 target_mapping="HTTP operation → dropped",
             )
-        return FidelityVerdict.keep()
+        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}")
 
 
 class XmlRpcEmitOptions(EmitOptions):

@@ -55,7 +55,7 @@ class CloudEventsFidelityRulePack(CapabilityRulePack):
                 target_mapping="REST/RPC operation → dropped",
             )
         if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.keep()
+            return FidelityVerdict.ok(message=f"operation carried to {self.target_label}")
         return FidelityVerdict.drop(
             message=f"{self.target_label} only supports event operations; "
             f"operation {operation.key!r} is dropped",

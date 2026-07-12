@@ -63,7 +63,7 @@ class PostmanFidelityRulePack(CapabilityRulePack):
                 message=f"{self.target_label} requires HTTP operations; operation {operation.key!r} is dropped",
                 target_mapping="non-HTTP operation → dropped",
             )
-        return FidelityVerdict.keep()
+        return FidelityVerdict.ok(message=f"operation carried to {self.target_label}")
 
 
 class PostmanEmitOptions(EmitOptions):
