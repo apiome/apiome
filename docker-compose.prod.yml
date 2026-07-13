@@ -120,6 +120,8 @@ services:
       NEXT_PUBLIC_STUDIO_URL: https://${DEPLOY_STUDIO_DOMAIN}
       NEXT_PUBLIC_API_URL: https://${DEPLOY_API_DOMAIN}
       NEXT_PUBLIC_REST_API_BASE_URL: http://rest:8000/v1
+      # Server-side BFF reads this at runtime (not baked at build time).
+      REST_API_BASE_URL: http://rest:8000/v1
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}@postgres:5432/${POSTGRES_DB:-apiome}
       PGHOST: postgres
       PGPORT: "5432"

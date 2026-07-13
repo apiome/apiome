@@ -63,6 +63,8 @@ export type TopHeaderProps = {
   initialTenantContext?: SerializableTopHeaderTenantContext;
   /** Pass session from the studio shell to avoid a duplicate next-auth module graph. */
   sessionBridge?: TopHeaderSessionBridge;
+  /** Called after the session tenant is updated (studio project/version reload). */
+  onTenantSelected?: (tenantId: string) => void;
 };
 
 async function loadDefaultTenantContext(userId: string): Promise<TopHeaderTenantContext> {
@@ -84,6 +86,7 @@ type TopHeaderViewProps = Omit<TopHeaderProps, 'sessionBridge'> & TopHeaderSessi
 function TopHeaderView({
   loadTenantContext = loadDefaultTenantContext,
   initialTenantContext,
+  onTenantSelected,
   session,
   update,
 }: TopHeaderViewProps) {
@@ -204,6 +207,11 @@ function TopHeaderView({
     setIsSwitchingTenant(true);
     try {
       await update({ current_tenant_id: tenantId });
+      const selected = userTenants.find((t) => t.id === tenantId);
+      if (selected) {
+        setCurrentTenantName(selected.name);
+      }
+      onTenantSelected?.(tenantId);
       setTenantMenuOpen(false);
     } catch (error) {
       console.error('Failed to switch tenant:', error);
