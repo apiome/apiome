@@ -16,8 +16,7 @@
     "apiome-mock",
     "apiome-ui",
     "apiome-browse",
-    "apiome-rest",
-    "private-suite/designer"
+    "apiome-rest"
   ],
   "packageManager": "yarn@4.12.0",
   "resolutions": {
