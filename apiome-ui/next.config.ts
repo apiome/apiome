@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Yarn workspaces hoist dependencies to the repo root; Turbopack must use the
 // same root (not infer it from stray package-lock.json files in the monorepo).
-const monorepoRoot = path.resolve(process.cwd(), "..");
+const packageRoot = path.dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = path.resolve(packageRoot, "..");
 
 // Comma-separated hostnames/IPs allowed to load dev assets (/_next/webpack-hmr, etc.)
 // when the UI is opened from a non-localhost origin (e.g. http://10.0.0.96:3000 on LAN).

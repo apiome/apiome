@@ -3,7 +3,7 @@
   "version": "0.12.3",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "./scripts/run.sh dev",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",

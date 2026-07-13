@@ -3,7 +3,7 @@
   "version": "0.96.3",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "./scripts/run.sh dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
