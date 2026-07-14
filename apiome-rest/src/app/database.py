@@ -3,7 +3,7 @@ import json
 import logging
 import secrets
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import bcrypt
 import numpy as np
@@ -2603,6 +2603,455 @@ class Database:
         rows = self.execute_query(query, (version_id, algorithm_id))
         return rows[0] if rows else None
 
+    # --- Policy packs / waivers (CLX-1.3, #4850) ---------------------------------------------
+
+    _POLICY_VERSION_COLUMNS = """
+            pv.id, pv.guide_id, pv.tenant_id, pv.version_number, pv.content_fingerprint,
+            pv.rules_snapshot, pv.axis_gates, pv.required_coverage, pv.ci_outcomes,
+            pv.actor_user_id, pv.actor_label, pv.created_at
+    """
+
+    def update_style_guide_policy_settings(
+        self,
+        guide_id: str,
+        tenant_id: str,
+        *,
+        axis_gates: Optional[Dict[str, Any]] = None,
+        required_coverage: Optional[List[Any]] = None,
+        ci_outcomes: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Update draft policy gate settings on a custom style guide (CLX-1.3, #4850).
+
+        Builtin guides are excluded in the WHERE clause. Passing ``None`` for a field leaves
+        the existing column value untouched.
+
+        Args:
+            guide_id: Guide to update.
+            tenant_id: Owning tenant.
+            axis_gates: New axis gates object, or ``None`` to leave unchanged.
+            required_coverage: New required-coverage list, or ``None`` to leave unchanged.
+            ci_outcomes: New CI outcome toggles, or ``None`` to leave unchanged.
+
+        Returns:
+            The updated guide row (subset of columns), or ``None`` when no custom guide matched.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        query = """
+            UPDATE apiome.style_guides
+            SET axis_gates = COALESCE(%s::jsonb, axis_gates),
+                required_coverage = COALESCE(%s::jsonb, required_coverage),
+                ci_outcomes = COALESCE(%s::jsonb, ci_outcomes),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
+            RETURNING id, name, description, source, is_default,
+                      axis_gates, required_coverage, ci_outcomes, created_at, updated_at
+        """
+        rows = self.execute_query(
+            query,
+            (
+                Json(axis_gates) if axis_gates is not None else None,
+                Json(required_coverage) if required_coverage is not None else None,
+                Json(ci_outcomes) if ci_outcomes is not None else None,
+                guide_id,
+                tenant_id,
+            ),
+        )
+        return rows[0] if rows else None
+
+    def insert_style_guide_policy_version(
+        self,
+        *,
+        guide_id: str,
+        tenant_id: str,
+        rules_snapshot: List[Dict[str, Any]],
+        axis_gates: Dict[str, Any],
+        required_coverage: List[Any],
+        ci_outcomes: Dict[str, Any],
+        content_fingerprint: str,
+        actor_user_id: Optional[str] = None,
+        actor_label: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Append one immutable policy pack version for a style guide (CLX-1.3, #4850).
+
+        Assigns the next monotonic ``version_number`` for the guide.
+
+        Returns:
+            The inserted policy version row, or ``None`` when inputs are invalid.
+        """
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return None
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        query = """
+            INSERT INTO apiome.style_guide_policy_versions (
+                guide_id, tenant_id, version_number, content_fingerprint,
+                rules_snapshot, axis_gates, required_coverage, ci_outcomes,
+                actor_user_id, actor_label
+            )
+            SELECT %s::uuid, %s::uuid,
+                   COALESCE((
+                       SELECT MAX(pv.version_number)
+                       FROM apiome.style_guide_policy_versions pv
+                       WHERE pv.guide_id = %s::uuid
+                   ), 0) + 1,
+                   %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
+                   %s::uuid, %s
+            RETURNING id, guide_id, tenant_id, version_number, content_fingerprint,
+                      rules_snapshot, axis_gates, required_coverage, ci_outcomes,
+                      actor_user_id, actor_label, created_at
+        """
+        rows = self.execute_query(
+            query,
+            (
+                guide_id,
+                tenant_id,
+                guide_id,
+                content_fingerprint,
+                Json(rules_snapshot),
+                Json(axis_gates),
+                Json(required_coverage),
+                Json(ci_outcomes),
+                actor_user_id,
+                actor_label,
+            ),
+        )
+        return rows[0] if rows else None
+
+    def list_style_guide_policy_versions(
+        self, guide_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """List policy pack versions for a guide, newest first (CLX-1.3, #4850)."""
+        if not guide_id or not is_uuid_string(str(guide_id)):
+            return []
+        query = """
+            SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
+                   rules_snapshot, axis_gates, required_coverage, ci_outcomes,
+                   actor_user_id, actor_label, created_at
+            FROM apiome.style_guide_policy_versions
+            WHERE guide_id = %s AND tenant_id = %s
+            ORDER BY version_number DESC
+        """
+        return self.execute_query(query, (guide_id, tenant_id))
+
+    def get_style_guide_policy_version(
+        self, policy_version_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one policy pack version scoped to a tenant (CLX-1.3, #4850)."""
+        if not policy_version_id or not is_uuid_string(str(policy_version_id)):
+            return None
+        query = """
+            SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
+                   rules_snapshot, axis_gates, required_coverage, ci_outcomes,
+                   actor_user_id, actor_label, created_at
+            FROM apiome.style_guide_policy_versions
+            WHERE id = %s AND tenant_id = %s
+        """
+        rows = self.execute_query(query, (policy_version_id, tenant_id))
+        return rows[0] if rows else None
+
+    def get_latest_style_guide_policy_version(
+        self, guide_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the newest policy pack for a guide, or ``None`` (CLX-1.3, #4850)."""
+        rows = self.list_style_guide_policy_versions(guide_id, tenant_id)
+        return rows[0] if rows else None
+
+    def list_lint_finding_decisions(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        fingerprints: Optional[Sequence[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List finding decisions for a tenant, optionally filtered (CLX-1.3, #4850).
+
+        When ``project_id`` is set, returns both project-scoped and tenant-wide rows so
+        callers can prefer project scope on match. When ``fingerprints`` is set, restricts
+        to those source fingerprints.
+        """
+        clauses = ["d.tenant_id = %s"]
+        params: List[Any] = [tenant_id]
+        if project_id:
+            clauses.append("(d.project_id IS NULL OR d.project_id = %s)")
+            params.append(project_id)
+        if fingerprints:
+            clauses.append("d.source_fingerprint = ANY(%s)")
+            params.append(list(fingerprints))
+        query = f"""
+            SELECT d.id, d.tenant_id, d.project_id, d.source_fingerprint, d.rule_id, d.state,
+                   d.owner_user_id, d.rationale, d.linked_ticket, d.expires_at,
+                   d.policy_version_id, d.evidence_fingerprint_at_decision,
+                   d.actor_user_id, d.actor_label, d.created_at, d.updated_at
+            FROM apiome.lint_finding_decisions d
+            WHERE {' AND '.join(clauses)}
+            ORDER BY d.updated_at DESC
+        """
+        return self.execute_query(query, tuple(params))
+
+    def get_lint_finding_decision(
+        self, decision_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one finding decision by id (CLX-1.3, #4850)."""
+        if not decision_id or not is_uuid_string(str(decision_id)):
+            return None
+        query = """
+            SELECT d.id, d.tenant_id, d.project_id, d.source_fingerprint, d.rule_id, d.state,
+                   d.owner_user_id, d.rationale, d.linked_ticket, d.expires_at,
+                   d.policy_version_id, d.evidence_fingerprint_at_decision,
+                   d.actor_user_id, d.actor_label, d.created_at, d.updated_at
+            FROM apiome.lint_finding_decisions d
+            WHERE d.id = %s AND d.tenant_id = %s
+        """
+        rows = self.execute_query(query, (decision_id, tenant_id))
+        return rows[0] if rows else None
+
+    def upsert_lint_finding_decision(
+        self,
+        *,
+        tenant_id: str,
+        source_fingerprint: str,
+        state: str,
+        project_id: Optional[str] = None,
+        rule_id: Optional[str] = None,
+        owner_user_id: Optional[str] = None,
+        rationale: Optional[str] = None,
+        linked_ticket: Optional[str] = None,
+        expires_at: Optional[Any] = None,
+        policy_version_id: Optional[str] = None,
+        evidence_fingerprint_at_decision: Optional[str] = None,
+        actor_user_id: Optional[str] = None,
+        actor_label: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Insert or update a finding decision and append an audit event (CLX-1.3, #4850).
+
+        Matching key is ``(tenant_id, source_fingerprint)`` when ``project_id`` is NULL, or
+        ``(project_id, source_fingerprint)`` when set. Always records an append-only event.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                if project_id:
+                    cursor.execute(
+                        """
+                        SELECT id, state FROM apiome.lint_finding_decisions
+                        WHERE project_id = %s AND source_fingerprint = %s
+                        FOR UPDATE
+                        """,
+                        (project_id, source_fingerprint),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        SELECT id, state FROM apiome.lint_finding_decisions
+                        WHERE tenant_id = %s AND project_id IS NULL
+                          AND source_fingerprint = %s
+                        FOR UPDATE
+                        """,
+                        (tenant_id, source_fingerprint),
+                    )
+                existing = cursor.fetchone()
+                before_state = None
+                if existing:
+                    before_state = existing.get("state")
+                    decision_id = str(existing["id"])
+                    cursor.execute(
+                        """
+                        UPDATE apiome.lint_finding_decisions
+                        SET state = %s, rule_id = COALESCE(%s, rule_id),
+                            owner_user_id = %s, rationale = %s, linked_ticket = %s,
+                            expires_at = %s, policy_version_id = %s,
+                            evidence_fingerprint_at_decision = COALESCE(%s, evidence_fingerprint_at_decision),
+                            actor_user_id = %s, actor_label = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                        RETURNING id, tenant_id, project_id, source_fingerprint, rule_id, state,
+                                  owner_user_id, rationale, linked_ticket, expires_at,
+                                  policy_version_id, evidence_fingerprint_at_decision,
+                                  actor_user_id, actor_label, created_at, updated_at
+                        """,
+                        (
+                            state,
+                            rule_id,
+                            owner_user_id,
+                            rationale,
+                            linked_ticket,
+                            expires_at,
+                            policy_version_id,
+                            evidence_fingerprint_at_decision or source_fingerprint,
+                            actor_user_id,
+                            actor_label,
+                            decision_id,
+                        ),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.lint_finding_decisions (
+                            tenant_id, project_id, source_fingerprint, rule_id, state,
+                            owner_user_id, rationale, linked_ticket, expires_at,
+                            policy_version_id, evidence_fingerprint_at_decision,
+                            actor_user_id, actor_label
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                        RETURNING id, tenant_id, project_id, source_fingerprint, rule_id, state,
+                                  owner_user_id, rationale, linked_ticket, expires_at,
+                                  policy_version_id, evidence_fingerprint_at_decision,
+                                  actor_user_id, actor_label, created_at, updated_at
+                        """,
+                        (
+                            tenant_id,
+                            project_id,
+                            source_fingerprint,
+                            rule_id,
+                            state,
+                            owner_user_id,
+                            rationale,
+                            linked_ticket,
+                            expires_at,
+                            policy_version_id,
+                            evidence_fingerprint_at_decision or source_fingerprint,
+                            actor_user_id,
+                            actor_label,
+                        ),
+                    )
+                decision = dict(cursor.fetchone())
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.lint_finding_decision_events (
+                        decision_id, tenant_id, before_state, after_state, rationale,
+                        expires_at, linked_ticket, policy_version_id, actor_user_id, actor_label
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        str(decision["id"]),
+                        tenant_id,
+                        before_state,
+                        state,
+                        rationale,
+                        expires_at,
+                        linked_ticket,
+                        policy_version_id,
+                        actor_user_id,
+                        actor_label,
+                    ),
+                )
+            conn.commit()
+            return decision
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def list_lint_finding_decision_events(
+        self, decision_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """List audit events for a decision, oldest first (CLX-1.3, #4850)."""
+        query = """
+            SELECT id, decision_id, tenant_id, before_state, after_state, rationale,
+                   expires_at, linked_ticket, policy_version_id, actor_user_id, actor_label,
+                   created_at
+            FROM apiome.lint_finding_decision_events
+            WHERE decision_id = %s AND tenant_id = %s
+            ORDER BY created_at ASC
+        """
+        return self.execute_query(query, (decision_id, tenant_id))
+
+    def record_lint_policy_evaluation(self, evaluation: Dict[str, Any]) -> Optional[str]:
+        """Insert one write-once policy evaluation (CLX-1.3, #4850).
+
+        Skips when the same subject + policy content fingerprint + evidence fingerprint
+        already exists (reproducible no-op recompute).
+
+        Args:
+            evaluation: Column-name -> value dict for ``lint_policy_evaluations``.
+
+        Returns:
+            The new evaluation id, or ``None`` when an identical row already exists.
+        """
+        query = """
+            INSERT INTO apiome.lint_policy_evaluations (
+                subject_type, version_record_id, mcp_version_id, policy_version_id,
+                policy_content_fingerprint, evidence_run_id, axis_evaluation_id,
+                evidence_fingerprint, passed, gate_results, finding_decisions
+            )
+            SELECT %s, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid, %s, %s,
+                   %s::jsonb, %s::jsonb
+            WHERE NOT EXISTS (
+                SELECT 1 FROM apiome.lint_policy_evaluations e
+                WHERE e.policy_content_fingerprint = %s
+                  AND e.evidence_fingerprint IS NOT DISTINCT FROM %s
+                  AND (
+                        (%s::uuid IS NOT NULL AND e.version_record_id = %s::uuid)
+                        OR (%s::uuid IS NOT NULL AND e.mcp_version_id = %s::uuid)
+                      )
+            )
+            RETURNING id
+        """
+        version_record_id = evaluation.get("version_record_id")
+        mcp_version_id = evaluation.get("mcp_version_id")
+        rows = self.execute_query(
+            query,
+            (
+                evaluation["subject_type"],
+                version_record_id,
+                mcp_version_id,
+                evaluation["policy_version_id"],
+                evaluation["policy_content_fingerprint"],
+                evaluation.get("evidence_run_id"),
+                evaluation.get("axis_evaluation_id"),
+                evaluation.get("evidence_fingerprint"),
+                bool(evaluation.get("passed")),
+                Json(evaluation.get("gate_results") or {}),
+                Json(evaluation.get("finding_decisions") or []),
+                evaluation["policy_content_fingerprint"],
+                evaluation.get("evidence_fingerprint"),
+                version_record_id,
+                version_record_id,
+                mcp_version_id,
+                mcp_version_id,
+            ),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    def get_latest_lint_policy_evaluation_for_version(
+        self, version_record_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the latest policy evaluation for a catalog revision (CLX-1.3, #4850)."""
+        query = """
+            SELECT e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
+                   e.policy_version_id, e.policy_content_fingerprint, e.evidence_run_id,
+                   e.axis_evaluation_id, e.evidence_fingerprint, e.passed, e.gate_results,
+                   e.finding_decisions, e.evaluated_at, e.created_at
+            FROM apiome.lint_policy_evaluations e
+            JOIN apiome.versions v ON v.id = e.version_record_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE e.version_record_id = %s AND p.tenant_id = %s
+            ORDER BY e.evaluated_at DESC, e.id DESC
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (version_record_id, tenant_id))
+        return rows[0] if rows else None
+
+    def get_latest_lint_policy_evaluation_for_mcp_version(
+        self, version_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the latest policy evaluation for an MCP snapshot (CLX-1.3, #4850)."""
+        query = """
+            SELECT e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
+                   e.policy_version_id, e.policy_content_fingerprint, e.evidence_run_id,
+                   e.axis_evaluation_id, e.evidence_fingerprint, e.passed, e.gate_results,
+                   e.finding_decisions, e.evaluated_at, e.created_at
+            FROM apiome.lint_policy_evaluations e
+            WHERE e.mcp_version_id = %s
+            ORDER BY e.evaluated_at DESC, e.id DESC
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (version_id,))
+        return rows[0] if rows else None
+
     def set_version_source_format(
         self,
         version_record_id: str,
@@ -2863,7 +3312,9 @@ class Database:
         if not tenant_id or not is_uuid_string(str(tenant_id)):
             return None
         query = """
-            SELECT id, name, description, source, is_default, created_at, updated_at
+            SELECT id, name, description, source, is_default,
+                   axis_gates, required_coverage, ci_outcomes,
+                   created_at, updated_at
             FROM apiome.style_guides
             WHERE id = %s AND tenant_id = %s
         """

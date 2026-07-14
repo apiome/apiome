@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.78",
+    "version": "1.0.79",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6944,6 +6944,135 @@
         }
       }
     },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/policy": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Lint Revision Policy",
+        "description": "Evaluate the assigned style-guide policy pack against revision evidence (CLX-1.3, #4850).\n\nSeparates raw findings from policy decisions. Waivers require rationale + expiry and reopen\nwhen expired. Persists an append-only ``lint_policy_evaluations`` row for reproducibility.",
+        "operationId": "lint_revision_policy_v1_versions__tenant_slug___project_id___version_record_id__lint_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "policyVersionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Policypolicy Version ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Policypolicy Version ID schema."
+                }
+              ],
+              "description": "Optional historical policy pack id; defaults to the latest for the assigned guide.",
+              "title": "Policyversionid"
+            },
+            "description": "Optional historical policy pack id; defaults to the latest for the assigned guide."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Policyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Policyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Policy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Policy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for lint revision policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintPolicyResponse",
+                  "description": "Response payload for lint revision policyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for lint revision policyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/lint/rules": {
       "get": {
         "tags": [
@@ -7096,6 +7225,410 @@
           },
           "422": {
             "description": "Malformed guide: `detail.message` explains the problem and `detail.pointer` points at the offending YAML node (e.g. `rules.my-rule.then.functionOptions.match`)."
+          }
+        }
+      }
+    },
+    "/v1/lint/decisions": {
+      "get": {
+        "tags": [
+          "lint-decisions"
+        ],
+        "summary": "List Lint Finding Decisions",
+        "description": "List finding remediation / waiver decisions for the tenant (CLX-1.3, #4850).",
+        "operationId": "list_lint_finding_decisions_v1_lint_decisions_get",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Lint Finding Decisionsproject ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Lint Finding Decisionsproject ID schema."
+                }
+              ],
+              "title": "Projectid",
+              "description": "Projectid schema."
+            },
+            "description": "Query parameter: project id."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Lint Finding Decisionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Lint Finding Decisionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Lint Finding Decisions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Lint Finding Decisions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list lint finding decisions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFindingDecisionListResponse",
+                  "description": "Response payload for list lint finding decisionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list lint finding decisionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lint-decisions"
+        ],
+        "summary": "Upsert Lint Finding Decision",
+        "description": "Create or update a finding decision / waiver (CLX-1.3, #4850).\n\nWaived state requires non-empty rationale and an expiry timestamp.",
+        "operationId": "upsert_lint_finding_decision_v1_lint_decisions_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Upsert Lint Finding Decisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Upsert Lint Finding Decisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Upsert Lint Finding Decision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Upsert Lint Finding Decision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LintFindingDecisionUpsertRequest",
+                "description": "Request body for upsert lint finding decisionrequest."
+              }
+            }
+          },
+          "description": "Request body for upsert lint finding decision."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for upsert lint finding decision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFindingDecisionOut",
+                  "description": "Response payload for upsert lint finding decisionresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for upsert lint finding decisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lint/decisions/{decision_id}": {
+      "get": {
+        "tags": [
+          "lint-decisions"
+        ],
+        "summary": "Get Lint Finding Decision",
+        "description": "Fetch one finding decision by id (CLX-1.3, #4850).",
+        "operationId": "get_lint_finding_decision_v1_lint_decisions__decision_id__get",
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Decision Id",
+              "description": "Decision Id schema."
+            },
+            "description": "Path parameter identifying the decision id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Lint Finding Decisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Lint Finding Decisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Lint Finding Decision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Lint Finding Decision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get lint finding decision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintFindingDecisionOut",
+                  "description": "Response payload for get lint finding decisionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get lint finding decisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lint/decisions/{decision_id}/events": {
+      "get": {
+        "tags": [
+          "lint-decisions"
+        ],
+        "summary": "List Lint Finding Decision Events",
+        "description": "Audit history for a finding decision (CLX-1.3, #4850).",
+        "operationId": "list_lint_finding_decision_events_v1_lint_decisions__decision_id__events_get",
+        "parameters": [
+          {
+            "name": "decision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Decision Id",
+              "description": "Decision Id schema."
+            },
+            "description": "Path parameter identifying the decision id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Lint Finding Decision Eventsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Lint Finding Decision Eventsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Lint Finding Decision Events Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Lint Finding Decision Events Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list lint finding decision events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LintFindingDecisionEventOut"
+                  },
+                  "title": "Response List Lint Finding Decision Events V1 Lint Decisions  Decision Id  Events Get",
+                  "description": "Response List Lint Finding Decision Events V1 Lint Decisions  Decision Id  Events Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list lint finding decision eventsresponse422."
+                }
+              }
+            }
           }
         }
       }
@@ -8306,6 +8839,515 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for unassign projectresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/policy": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Get Style Guide Policy Settings",
+        "description": "Return draft policy gate settings for a style guide (CLX-1.3, #4850).",
+        "operationId": "get_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Style Guide Policy Settingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Style Guide Policy Settingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Style Guide Policy Settings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Style Guide Policy Settings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get style guide policy settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuidePolicySettingsOut",
+                  "description": "Response payload for get style guide policy settingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get style guide policy settingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Put Style Guide Policy Settings",
+        "description": "Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).",
+        "operationId": "put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Style Guide Policy Settingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Style Guide Policy Settingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Style Guide Policy Settings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Style Guide Policy Settings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleGuidePolicySettingsPutRequest",
+                "description": "Request body for put style guide policy settingsrequest."
+              }
+            }
+          },
+          "description": "Request body for put style guide policy settings."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put style guide policy settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuidePolicySettingsOut",
+                  "description": "Response payload for put style guide policy settingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put style guide policy settingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/policy-versions": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "List Style Guide Policy Versions",
+        "description": "List immutable policy pack versions for a style guide (CLX-1.3, #4850).",
+        "operationId": "list_style_guide_policy_versions_v1_style_guides__tenant_slug___guide_id__policy_versions_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Style Guide Policy Versionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Style Guide Policy Versionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Style Guide Policy Versions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Style Guide Policy Versions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list style guide policy versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuidePolicyVersionListResponse",
+                  "description": "Response payload for list style guide policy versionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list style guide policy versionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Publish Style Guide Policy Version",
+        "description": "Snapshot the live guide into a new immutable policy pack (CLX-1.3, #4850).",
+        "operationId": "publish_style_guide_policy_version_v1_style_guides__tenant_slug___guide_id__policy_versions_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish Style Guide Policy Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish Style Guide Policy Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish Style Guide Policy Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish Style Guide Policy Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful response for publish style guide policy version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuidePolicyVersionOut",
+                  "description": "Response payload for publish style guide policy versionresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for publish style guide policy versionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/policy-versions/{policy_version_id}": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Get Style Guide Policy Version",
+        "description": "Fetch one policy pack version for a style guide (CLX-1.3, #4850).",
+        "operationId": "get_style_guide_policy_version_v1_style_guides__tenant_slug___guide_id__policy_versions__policy_version_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "policy_version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Version Id",
+              "description": "Policy Version Id schema."
+            },
+            "description": "Path parameter identifying the policy version id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Style Guide Policy Versionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Style Guide Policy Versionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Style Guide Policy Version Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Style Guide Policy Version Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get style guide policy version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuidePolicyVersionOut",
+                  "description": "Response payload for get style guide policy versionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get style guide policy versionresponse422."
                 }
               }
             }
@@ -30426,6 +31468,137 @@
         }
       }
     },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/policy": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Endpoint Version Lint Policy",
+        "description": "Evaluate the assigned style-guide policy pack against MCP version evidence (CLX-1.3, #4850).",
+        "operationId": "get_mcp_endpoint_version_lint_policy_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "policyVersionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Policypolicy Version ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Policypolicy Version ID schema."
+                }
+              ],
+              "description": "Optional historical policy pack id; defaults to the latest for the assigned guide.",
+              "title": "Policyversionid"
+            },
+            "description": "Optional historical policy pack id; defaults to the latest for the assigned guide."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Policyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Policyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Policy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Policy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp endpoint version lint policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintPolicyResponse",
+                  "description": "Response payload for get mcp endpoint version lint policyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp endpoint version lint policyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/credentials": {
       "get": {
         "tags": [
@@ -41704,6 +42877,499 @@
         "title": "LintEvidenceRunOut",
         "description": "One immutable lint evidence run for a revision/snapshot (CLX-1.1, #4848).\n\nThe provenance record of a single scanner execution: who ran, under which profile and\nconfiguration fingerprint, when, with what outcome, over how much of the subject. The raw\noutput artifact is access-controlled \u2014 the API exposes only its availability, never the\nstorage reference or command line."
       },
+      "LintFindingDecisionEventOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "decisionId": {
+            "type": "string",
+            "title": "Decisionid",
+            "description": "Decision ID.",
+            "example": "example"
+          },
+          "beforeState": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Beforestate",
+            "description": "Before State."
+          },
+          "afterState": {
+            "type": "string",
+            "title": "Afterstate",
+            "description": "After State.",
+            "example": "example"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Rationale",
+            "description": "Rationale."
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Expiresat",
+            "description": "Expires At."
+          },
+          "linkedTicket": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Linkedticket",
+            "description": "Linked Ticket."
+          },
+          "policyVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Policyversionid",
+            "description": "Policy Version ID."
+          },
+          "actorUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Actoruserid",
+            "description": "Actor User ID."
+          },
+          "actorLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Actorlabel",
+            "description": "Actor Label."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision event."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision event."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "decisionId",
+          "afterState"
+        ],
+        "title": "LintFindingDecisionEventOut",
+        "description": "One audit event for a finding decision (CLX-1.3, #4850)."
+      },
+      "LintFindingDecisionListResponse": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/LintFindingDecisionOut"
+            },
+            "type": "array",
+            "title": "Decisions",
+            "description": "Decisions.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0,
+            "description": "Number of count.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "title": "LintFindingDecisionListResponse",
+        "description": "List of finding decisions (CLX-1.3, #4850)."
+      },
+      "LintFindingDecisionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenantId": {
+            "type": "string",
+            "title": "Tenantid",
+            "description": "Tenant ID.",
+            "example": "example"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Projectid",
+            "description": "Project ID."
+          },
+          "sourceFingerprint": {
+            "type": "string",
+            "title": "Sourcefingerprint",
+            "description": "Source Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Ruleid",
+            "description": "Rule ID."
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "open | acknowledged | waived | fixed | false_positive",
+            "example": "example"
+          },
+          "ownerUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Owneruserid",
+            "description": "Owner User ID."
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Rationale",
+            "description": "Rationale."
+          },
+          "linkedTicket": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Linkedticket",
+            "description": "Linked Ticket."
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Expiresat",
+            "description": "Expires At."
+          },
+          "policyVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Policyversionid",
+            "description": "Policy Version ID."
+          },
+          "evidenceFingerprintAtDecision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Evidencefingerprintatdecision",
+            "description": "Evidence Fingerprint At Decision."
+          },
+          "actorUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Actoruserid",
+            "description": "Actor User ID."
+          },
+          "actorLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Actorlabel",
+            "description": "Actor Label."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint finding decision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint finding decision."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tenantId",
+          "sourceFingerprint",
+          "state"
+        ],
+        "title": "LintFindingDecisionOut",
+        "description": "One finding remediation / waiver decision (CLX-1.3, #4850)."
+      },
+      "LintFindingDecisionUpsertRequest": {
+        "properties": {
+          "sourceFingerprint": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Sourcefingerprint",
+            "description": "Source Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "open | acknowledged | waived | fixed | false_positive",
+            "example": "example"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Projectid",
+            "description": "Project ID."
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Ruleid",
+            "description": "Rule ID."
+          },
+          "ownerUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Owneruserid",
+            "description": "Owner User ID."
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Rationale",
+            "description": "Rationale."
+          },
+          "linkedTicket": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Linkedticket",
+            "description": "Linked Ticket."
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Expiresat",
+            "description": "Required when state is waived."
+          },
+          "policyVersionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for lint finding decision upsert."
+              },
+              {
+                "type": "null",
+                "description": "Request body for lint finding decision upsert."
+              }
+            ],
+            "title": "Policyversionid",
+            "description": "Policy Version ID."
+          }
+        },
+        "type": "object",
+        "required": [
+          "sourceFingerprint",
+          "state"
+        ],
+        "title": "LintFindingDecisionUpsertRequest",
+        "description": "Create or update a finding decision / waiver (CLX-1.3, #4850)."
+      },
       "LintFindingOut": {
         "properties": {
           "id": {
@@ -41754,6 +43420,152 @@
         ],
         "title": "LintFindingOut",
         "description": "One itemized lint finding from the deterministic quality-scoring service (#3609)."
+      },
+      "LintPolicyAnnotatedFindingOut": {
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/LintEvidenceFindingOut",
+            "description": "Evidence."
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LintFindingDecisionOut"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint policy annotated finding."
+              }
+            ],
+            "description": "Decision."
+          },
+          "effectiveState": {
+            "type": "string",
+            "title": "Effectivestate",
+            "description": "Effective State.",
+            "example": "example"
+          },
+          "waived": {
+            "type": "boolean",
+            "title": "Waived",
+            "default": false,
+            "description": "Waived.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence",
+          "effectiveState"
+        ],
+        "title": "LintPolicyAnnotatedFindingOut",
+        "description": "One finding with raw evidence kept separate from the policy decision (CLX-1.3)."
+      },
+      "LintPolicyEvaluationOut": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint policy evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint policy evaluation."
+              }
+            ],
+            "title": "Id",
+            "description": "Stable resource identifier."
+          },
+          "subjectType": {
+            "type": "string",
+            "title": "Subjecttype",
+            "description": "Subject Type.",
+            "example": "example"
+          },
+          "subjectId": {
+            "type": "string",
+            "title": "Subjectid",
+            "description": "Subject ID.",
+            "example": "example"
+          },
+          "policyVersionId": {
+            "type": "string",
+            "title": "Policyversionid",
+            "description": "Policy Version ID.",
+            "example": "1.0.0"
+          },
+          "policyContentFingerprint": {
+            "type": "string",
+            "title": "Policycontentfingerprint",
+            "description": "Policy Content Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed",
+            "description": "Passed.",
+            "example": false
+          },
+          "gateResults": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Gateresults",
+            "description": "Gate Results."
+          },
+          "evaluatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint policy evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint policy evaluation."
+              }
+            ],
+            "title": "Evaluatedat",
+            "description": "Evaluated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subjectType",
+          "subjectId",
+          "policyVersionId",
+          "policyContentFingerprint",
+          "passed"
+        ],
+        "title": "LintPolicyEvaluationOut",
+        "description": "Persisted / computed policy evaluation (CLX-1.3, #4850)."
+      },
+      "LintPolicyResponse": {
+        "properties": {
+          "policyVersion": {
+            "$ref": "#/components/schemas/StyleGuidePolicyVersionOut",
+            "description": "Policy Version."
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/LintPolicyEvaluationOut",
+            "description": "Evaluation."
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/LintPolicyAnnotatedFindingOut"
+            },
+            "type": "array",
+            "title": "Findings",
+            "description": "Findings.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "policyVersion",
+          "evaluation"
+        ],
+        "title": "LintPolicyResponse",
+        "description": "GET \u2026/lint/policy response: pack pin, evaluation, findings with decisions."
       },
       "LintReportResponse": {
         "properties": {
@@ -57200,6 +59012,34 @@
         "title": "StagedTypeCandidate",
         "description": "One candidate type detected in a staged import (#3460, #3461)."
       },
+      "StyleGuideCiOutcomesOut": {
+        "properties": {
+          "failOnUnwaivedErrors": {
+            "type": "boolean",
+            "title": "Failonunwaivederrors",
+            "default": true,
+            "description": "Fail On Unwaived Errors.",
+            "example": false
+          },
+          "failOnRequiredCoverage": {
+            "type": "boolean",
+            "title": "Failonrequiredcoverage",
+            "default": true,
+            "description": "Fail On Required Coverage.",
+            "example": false
+          },
+          "failOnAxisGates": {
+            "type": "boolean",
+            "title": "Failonaxisgates",
+            "default": true,
+            "description": "Fail On Axis Gates.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "title": "StyleGuideCiOutcomesOut",
+        "description": "CI outcome toggles on a policy pack / draft guide settings (CLX-1.3, #4850)."
+      },
       "StyleGuideCreateRequest": {
         "properties": {
           "name": {
@@ -57532,6 +59372,220 @@
         ],
         "title": "StyleGuideOut",
         "description": "One tenant style guide with its list-view rollups (GOV-2.1, #4433).\n\n``source == 'builtin'`` marks the seeded read-only \"Apiome Recommended\" guide: it can be\nduplicated and assigned but never edited or deleted. ``is_default`` is the tenant-default\nbadge; ``tenant_assigned`` reports an explicit tenant-wide assignment row (which resolves\nahead of the default flag in the GOV-1.4 chain \u2014 the API keeps the two in sync)."
+      },
+      "StyleGuidePolicySettingsOut": {
+        "properties": {
+          "guideId": {
+            "type": "string",
+            "title": "Guideid",
+            "description": "Guide ID.",
+            "example": "example"
+          },
+          "axisGates": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Axisgates",
+            "description": "Per-axis min grade/score floors, e.g. {quality: {minGrade: B}}."
+          },
+          "requiredCoverage": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requiredcoverage",
+            "description": "Required Coverage.",
+            "maxItems": 1000
+          },
+          "ciOutcomes": {
+            "$ref": "#/components/schemas/StyleGuideCiOutcomesOut",
+            "description": "Ci Outcomes."
+          }
+        },
+        "type": "object",
+        "required": [
+          "guideId"
+        ],
+        "title": "StyleGuidePolicySettingsOut",
+        "description": "Draft policy gate settings on a live style guide (CLX-1.3, #4850)."
+      },
+      "StyleGuidePolicySettingsPutRequest": {
+        "properties": {
+          "axisGates": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Request body for style guide policy settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "title": "Axisgates",
+            "description": "Axis Gates."
+          },
+          "requiredCoverage": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Request body for style guide policy settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "title": "Requiredcoverage",
+            "description": "Required Coverage."
+          },
+          "ciOutcomes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleGuideCiOutcomesOut"
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "description": "Ci Outcomes."
+          },
+          "snapshot": {
+            "type": "boolean",
+            "title": "Snapshot",
+            "description": "When true (default), also append an immutable policy pack version.",
+            "default": true,
+            "example": false
+          }
+        },
+        "type": "object",
+        "title": "StyleGuidePolicySettingsPutRequest",
+        "description": "Replace draft policy gate settings on a custom style guide (CLX-1.3, #4850)."
+      },
+      "StyleGuidePolicyVersionListResponse": {
+        "properties": {
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuidePolicyVersionOut"
+            },
+            "type": "array",
+            "title": "Versions",
+            "description": "Versions.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0,
+            "description": "Number of count.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "title": "StyleGuidePolicyVersionListResponse",
+        "description": "List of policy pack versions for a style guide (CLX-1.3, #4850)."
+      },
+      "StyleGuidePolicyVersionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "guideId": {
+            "type": "string",
+            "title": "Guideid",
+            "description": "Guide ID.",
+            "example": "example"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "title": "Versionnumber",
+            "description": "Version Number.",
+            "example": 1
+          },
+          "contentFingerprint": {
+            "type": "string",
+            "title": "Contentfingerprint",
+            "description": "Content Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "axisGates": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Axisgates",
+            "description": "Axis Gates."
+          },
+          "requiredCoverage": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Requiredcoverage",
+            "description": "Required Coverage.",
+            "maxItems": 1000
+          },
+          "ciOutcomes": {
+            "$ref": "#/components/schemas/StyleGuideCiOutcomesOut",
+            "description": "Ci Outcomes."
+          },
+          "actorUserId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide policy version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide policy version."
+              }
+            ],
+            "title": "Actoruserid",
+            "description": "Actor User ID."
+          },
+          "actorLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide policy version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide policy version."
+              }
+            ],
+            "title": "Actorlabel",
+            "description": "Actor Label."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide policy version."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide policy version."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "guideId",
+          "versionNumber",
+          "contentFingerprint"
+        ],
+        "title": "StyleGuidePolicyVersionOut",
+        "description": "One immutable style-guide policy pack version (CLX-1.3, #4850)."
       },
       "StyleGuideProjectAssignmentOut": {
         "properties": {

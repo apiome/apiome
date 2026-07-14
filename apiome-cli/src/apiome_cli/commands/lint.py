@@ -8,8 +8,8 @@ from apiome_cli.client import api_paths
 from apiome_cli.client.project_version_resolve import resolve_version_uuid
 from apiome_cli.client.version_scope import resolve_version_scope
 from apiome_cli.exit_codes import EXIT_ERROR
-from apiome_cli.output import emit_json, json_mode_from_context
-from apiome_cli.output_lint import emit_lint_report, grade_meets_minimum
+from apiome_cli.output import json_mode_from_context
+from apiome_cli.output_lint import emit_lint_command_output, lint_command_should_fail
 
 app = typer.Typer(
     name="lint",
@@ -34,12 +34,18 @@ def lint(
         "--min-grade",
         help="Exit non-zero when the grade is worse than this (A best, F worst).",
     ),
+    fail_on_policy: bool = typer.Option(
+        False,
+        "--fail-on-policy",
+        help="Fetch lint policy evaluation and exit non-zero when policy gates fail.",
+    ),
 ) -> None:
     """Fetch the server-computed quality score and findings (GET .../lint).
 
     The score and A-F grade are computed by the REST service from the generated
     OpenAPI/JSON-Schema — deterministic for a fixed input. ``--base-version`` folds
-    breaking-change risk into the report; ``--min-grade`` turns the report into a CI gate.
+    breaking-change risk into the report; ``--min-grade`` turns the report into a CI gate;
+    ``--fail-on-policy`` also evaluates style-guide policy gates (GET .../lint/policy).
     """
     if min_grade is not None and min_grade.strip().upper() not in {"A", "B", "C", "D", "F"}:
         raise typer.BadParameter(
@@ -65,10 +71,25 @@ def lint(
 
     report = client.get(path).json()
 
-    if json_mode_from_context(ctx):
-        emit_json(report)
-    else:
-        emit_lint_report(report)
+    policy = None
+    if fail_on_policy:
+        policy_path = api_paths.version_lint_policy(tenant_slug, project_id, version_id)
+        if base_version:
+            policy_path = f"{policy_path}?baseRevisionId={base_version_id}"
+        policy = client.get(policy_path).json()
 
-    if min_grade is not None and not grade_meets_minimum(str(report.get("grade", "")), min_grade):
+    json_mode = json_mode_from_context(ctx)
+    emit_lint_command_output(
+        json_mode=json_mode,
+        report=report,
+        policy=policy,
+        fail_on_policy=fail_on_policy,
+    )
+
+    if lint_command_should_fail(
+        report,
+        min_grade=min_grade,
+        policy=policy,
+        fail_on_policy=fail_on_policy,
+    ):
         raise typer.Exit(EXIT_ERROR)

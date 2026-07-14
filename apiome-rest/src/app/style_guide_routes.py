@@ -53,12 +53,24 @@ from .models import (
     StyleGuideCustomRulesResponse,
     StyleGuideListResponse,
     StyleGuideOut,
+    StyleGuidePolicySettingsOut,
+    StyleGuidePolicySettingsPutRequest,
+    StyleGuidePolicyVersionListResponse,
+    StyleGuidePolicyVersionOut,
     StyleGuideProjectAssignmentOut,
     StyleGuideRuleOut,
     StyleGuideRulesPutRequest,
     StyleGuideRulesResponse,
     StyleGuideUpdateRequest,
     LintFindingOut,
+    style_guide_ci_outcomes_from_raw,
+    style_guide_policy_version_out_from_row,
+)
+from .lint_policy_service import snapshot_style_guide_policy
+from .policy_evaluate import (
+    default_axis_gates,
+    default_ci_outcomes,
+    default_required_coverage,
 )
 
 router = APIRouter(prefix="/v1/style-guides", tags=["style-guides"])
@@ -341,6 +353,13 @@ async def put_style_guide_rules(
     ]
     if not db.replace_style_guide_builtin_rules(str(guide["id"]), tenant_id, rows):
         raise HTTPException(status_code=404, detail="Style guide not found")
+    actor = get_authenticated_user_id(auth_data)
+    snapshot_style_guide_policy(
+        str(guide["id"]),
+        tenant_id,
+        actor_user_id=actor,
+        actor_label=actor,
+    )
     return _rules_view(guide, db.get_style_guide_rules(str(guide["id"]), tenant_id))
 
 
@@ -447,6 +466,13 @@ async def put_style_guide_custom_rules(
     ]
     if not db.replace_style_guide_custom_rules(str(guide["id"]), tenant_id, rows):
         raise HTTPException(status_code=404, detail="Style guide not found")
+    actor = get_authenticated_user_id(auth_data)
+    snapshot_style_guide_policy(
+        str(guide["id"]),
+        tenant_id,
+        actor_user_id=actor,
+        actor_label=actor,
+    )
     return _custom_rules_view(guide, db.get_style_guide_rules(str(guide["id"]), tenant_id))
 
 
@@ -564,3 +590,139 @@ async def unassign_project(
     if not db.unassign_style_guide_from_project(tenant_id, project_id):
         raise HTTPException(status_code=404, detail="No assignment found for this project")
     return {"status": "unassigned", "projectId": project_id}
+
+
+def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
+    """Map a guide row's draft gate columns onto the settings response."""
+    ci = default_ci_outcomes(guide.get("ci_outcomes"))
+    return StyleGuidePolicySettingsOut(
+        guide_id=str(guide["id"]),
+        axis_gates=default_axis_gates(guide.get("axis_gates")),
+        required_coverage=default_required_coverage(guide.get("required_coverage")),
+        ci_outcomes=style_guide_ci_outcomes_from_raw(ci),
+    )
+
+
+@router.get(
+    "/{tenant_slug}/{guide_id}/policy",
+    response_model=StyleGuidePolicySettingsOut,
+)
+async def get_style_guide_policy_settings(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuidePolicySettingsOut:
+    """Return draft policy gate settings for a style guide (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    return _policy_settings_out(guide)
+
+
+@router.put(
+    "/{tenant_slug}/{guide_id}/policy",
+    response_model=StyleGuidePolicySettingsOut,
+)
+async def put_style_guide_policy_settings(
+    tenant_slug: str,
+    guide_id: str,
+    body: StyleGuidePolicySettingsPutRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuidePolicySettingsOut:
+    """Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    _reject_builtin(guide, "edited")
+
+    ci_payload = None
+    if body.ci_outcomes is not None:
+        ci_payload = {
+            "failOnUnwaivedErrors": body.ci_outcomes.fail_on_unwaived_errors,
+            "failOnRequiredCoverage": body.ci_outcomes.fail_on_required_coverage,
+            "failOnAxisGates": body.ci_outcomes.fail_on_axis_gates,
+        }
+
+    updated = db.update_style_guide_policy_settings(
+        str(guide["id"]),
+        tenant_id,
+        axis_gates=body.axis_gates,
+        required_coverage=body.required_coverage,
+        ci_outcomes=ci_payload,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Style guide not found")
+
+    if body.snapshot:
+        actor = get_authenticated_user_id(auth_data)
+        snapshot_style_guide_policy(
+            str(guide["id"]),
+            tenant_id,
+            actor_user_id=actor,
+            actor_label=actor,
+        )
+    return _policy_settings_out(updated)
+
+
+@router.get(
+    "/{tenant_slug}/{guide_id}/policy-versions",
+    response_model=StyleGuidePolicyVersionListResponse,
+)
+async def list_style_guide_policy_versions(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuidePolicyVersionListResponse:
+    """List immutable policy pack versions for a style guide (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    _load_guide_or_404(guide_id, tenant_id)
+    rows = db.list_style_guide_policy_versions(guide_id, tenant_id)
+    versions = [style_guide_policy_version_out_from_row(r) for r in rows]
+    return StyleGuidePolicyVersionListResponse(versions=versions, count=len(versions))
+
+
+@router.get(
+    "/{tenant_slug}/{guide_id}/policy-versions/{policy_version_id}",
+    response_model=StyleGuidePolicyVersionOut,
+)
+async def get_style_guide_policy_version(
+    tenant_slug: str,
+    guide_id: str,
+    policy_version_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuidePolicyVersionOut:
+    """Fetch one policy pack version for a style guide (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    _load_guide_or_404(guide_id, tenant_id)
+    row = db.get_style_guide_policy_version(policy_version_id, tenant_id)
+    if not row or str(row.get("guide_id")) != str(guide_id):
+        raise HTTPException(status_code=404, detail="Policy version not found")
+    return style_guide_policy_version_out_from_row(row)
+
+
+@router.post(
+    "/{tenant_slug}/{guide_id}/policy-versions",
+    response_model=StyleGuidePolicyVersionOut,
+    status_code=201,
+)
+async def publish_style_guide_policy_version(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuidePolicyVersionOut:
+    """Snapshot the live guide into a new immutable policy pack (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    actor = get_authenticated_user_id(auth_data)
+    row = snapshot_style_guide_policy(
+        str(guide["id"]),
+        tenant_id,
+        actor_user_id=actor,
+        actor_label=actor,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Style guide not found")
+    return style_guide_policy_version_out_from_row(row)

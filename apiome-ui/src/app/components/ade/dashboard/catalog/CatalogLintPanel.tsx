@@ -66,6 +66,7 @@ import {
 } from '@/app/utils/catalog-lint-panel';
 import { lintAxisEvaluationFromLintReport } from '@/app/utils/lint-axis-ui';
 import { LintAxisCoveragePanel } from '@/app/components/ade/dashboard/lint/LintAxisCoveragePanel';
+import { LintDecisionBadge } from '@/app/utils/lint-policy-ui';
 
 /** SVG progress-ring geometry (viewBox 0 0 40 40, radius 16 like `SchemaVersionScoringPanel`). */
 const GAUGE_R = 16;
@@ -346,16 +347,39 @@ function FindingRow({
   rowClass,
   entityName,
   onNavigateToEntity,
+  decisionState,
+  decisionWaived,
+  onWaive,
 }: {
   finding: EnrichedLintViolation;
   rowClass: string;
   entityName: string | null;
   onNavigateToEntity?: (name: string) => void;
+  decisionState?: string;
+  decisionWaived?: boolean;
+  onWaive?: (finding: EnrichedLintViolation) => void;
 }) {
   const linkable = entityName != null && !!onNavigateToEntity;
   return (
     <li className={cn('rounded-lg p-3', rowClass)} data-testid="catalog-lint-finding-row">
-      <LintViolationFindingMeta finding={finding} />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <LintViolationFindingMeta finding={finding} />
+        <div className="flex items-center gap-2">
+          {decisionState ? (
+            <LintDecisionBadge state={decisionState} waived={decisionWaived} />
+          ) : null}
+          {onWaive && finding.severity === 'error' && decisionState !== 'waived' ? (
+            <button
+              type="button"
+              data-testid="catalog-lint-waive-button"
+              className="text-[11px] font-medium text-amber-700 hover:underline dark:text-amber-400"
+              onClick={() => onWaive(finding)}
+            >
+              Waive
+            </button>
+          ) : null}
+        </div>
+      </div>
       {finding.path ? (
         <div className="mt-1">
           {linkable ? (
@@ -387,11 +411,15 @@ function TierSection({
   findings,
   resolveEntity,
   onNavigateToEntity,
+  decisionsById,
+  onWaive,
 }: {
   meta: CatalogLintTierMeta;
   findings: EnrichedLintViolation[];
   resolveEntity: (finding: VersionLintFinding) => string | null;
   onNavigateToEntity?: (name: string) => void;
+  decisionsById?: Record<string, { state: string; waived: boolean }>;
+  onWaive?: (finding: EnrichedLintViolation) => void;
 }) {
   return (
     <section data-testid={`catalog-lint-tier-${meta.key}`}>
@@ -422,6 +450,9 @@ function TierSection({
             rowClass={meta.rowClass}
             entityName={resolveEntity(f)}
             onNavigateToEntity={onNavigateToEntity}
+            decisionState={decisionsById?.[f.id]?.state}
+            decisionWaived={decisionsById?.[f.id]?.waived}
+            onWaive={onWaive}
           />
         ))}
       </ul>
@@ -447,6 +478,14 @@ export function CatalogLintPanel({
   const [report, setReport] = useState<VersionLintReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [groupByRule, setGroupByRule] = useState(false);
+  const [decisionsById, setDecisionsById] = useState<
+    Record<string, { state: string; waived: boolean }>
+  >({});
+  const [waiveTarget, setWaiveTarget] = useState<EnrichedLintViolation | null>(null);
+  const [waiveRationale, setWaiveRationale] = useState('');
+  const [waiveExpiry, setWaiveExpiry] = useState('');
+  const [waiveError, setWaiveError] = useState<string | null>(null);
+  const [waiveSaving, setWaiveSaving] = useState(false);
   const { catalog, customDescriptions } = useLintViolationContext(report?.guideId, active);
   // Guards the one-shot lazy fetch so re-activating the tab never re-fetches.
   const fetchStartedRef = useRef(false);
@@ -480,9 +519,68 @@ export function CatalogLintPanel({
       } else {
         setReport(loadedReport);
         setStatus('loaded');
+        // Best-effort: load tenant decisions so badges can show policy state separately from raw severity.
+        void fetch('/api/lint/decisions')
+          .then((r) => r.json())
+          .then((j) => {
+            if (!j?.success || !Array.isArray(j.decisions)) return;
+            const map: Record<string, { state: string; waived: boolean }> = {};
+            for (const d of j.decisions as {
+              sourceFingerprint?: string;
+              state?: string;
+            }[]) {
+              if (!d.sourceFingerprint) continue;
+              map[d.sourceFingerprint] = {
+                state: d.state || 'open',
+                waived: d.state === 'waived' || d.state === 'fixed' || d.state === 'false_positive',
+              };
+            }
+            setDecisionsById(map);
+          })
+          .catch(() => {
+            /* decisions are additive chrome — ignore failures */
+          });
       }
     }
   }, [active, itemId]);
+
+  const submitWaive = useCallback(async () => {
+    if (!waiveTarget) return;
+    setWaiveSaving(true);
+    setWaiveError(null);
+    try {
+      const res = await fetch('/api/lint/decisions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceFingerprint: waiveTarget.id,
+          state: 'waived',
+          rationale: waiveRationale,
+          expiresAt: waiveExpiry ? new Date(waiveExpiry).toISOString() : undefined,
+          ruleId: waiveTarget.rule,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        const detail =
+          typeof json.detail === 'string'
+            ? json.detail
+            : json.error || 'Failed to save waiver';
+        throw new Error(detail);
+      }
+      setDecisionsById((prev) => ({
+        ...prev,
+        [waiveTarget.id]: { state: 'waived', waived: true },
+      }));
+      setWaiveTarget(null);
+      setWaiveRationale('');
+      setWaiveExpiry('');
+    } catch (e) {
+      setWaiveError(e instanceof Error ? e.message : 'Failed to save waiver');
+    } finally {
+      setWaiveSaving(false);
+    }
+  }, [waiveTarget, waiveRationale, waiveExpiry]);
 
   useEffect(() => {
     void loadReport();
@@ -770,6 +868,11 @@ export function CatalogLintPanel({
                     findings={group.findings}
                     resolveEntity={resolveEntity}
                     onNavigateToEntity={onNavigateToEntity}
+                    decisionsById={decisionsById}
+                    onWaive={(f) => {
+                      setWaiveTarget(f);
+                      setWaiveError(null);
+                    }}
                   />
                 ))}
               </div>
@@ -777,6 +880,66 @@ export function CatalogLintPanel({
           </div>
         </div>
         </>
+      ) : null}
+
+      {waiveTarget ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          data-testid="catalog-lint-waive-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Waive lint finding"
+        >
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Waive finding
+            </h3>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Raw severity stays visible; this records an audited policy decision with
+              rationale and expiry.
+            </p>
+            <p className="mt-3 font-mono text-[11px] text-gray-500">{waiveTarget.id}</p>
+            <label className="mt-3 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Rationale
+              <textarea
+                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                rows={3}
+                value={waiveRationale}
+                onChange={(e) => setWaiveRationale(e.target.value)}
+              />
+            </label>
+            <label className="mt-3 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              Expires
+              <input
+                type="date"
+                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                value={waiveExpiry}
+                onChange={(e) => setWaiveExpiry(e.target.value)}
+              />
+            </label>
+            {waiveError ? (
+              <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{waiveError}</p>
+            ) : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-slate-800"
+                onClick={() => setWaiveTarget(null)}
+                disabled={waiveSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+                onClick={() => void submitWaive()}
+                disabled={waiveSaving || !waiveRationale.trim() || !waiveExpiry}
+              >
+                {waiveSaving ? 'Saving…' : 'Save waiver'}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   );

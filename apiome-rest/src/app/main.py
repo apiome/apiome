@@ -41,6 +41,7 @@ from .version_tags_routes import router as version_tags_router
 from .compatibility_routes import router as compatibility_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
+from .lint_routes import decisions_router as lint_decisions_router
 from .style_guide_routes import router as style_guide_router
 from .draft_lock_routes import router as draft_lock_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
@@ -82,7 +83,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.0.78",
+    version="1.0.79",
 )
 
 
@@ -229,6 +230,7 @@ app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(lint_router)
 app.include_router(lint_rules_router)
+app.include_router(lint_decisions_router)
 app.include_router(style_guide_router)
 app.include_router(version_merge_router)
 app.include_router(workflow_audit_router)

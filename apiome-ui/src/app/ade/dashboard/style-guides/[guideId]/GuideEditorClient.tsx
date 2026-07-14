@@ -39,8 +39,9 @@ import {
   type RuleSeverity,
 } from '../api';
 import CustomRulesTab from './CustomRulesTab';
+import PolicyTab from './PolicyTab';
 
-type GuideEditorTab = 'catalog' | 'custom';
+type GuideEditorTab = 'catalog' | 'custom' | 'policy';
 
 /** The editable half of a rule row — what the save bar diffs and the PUT persists. */
 interface RuleState {
@@ -296,6 +297,19 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
             >
               Custom rules
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'policy'}
+              onClick={() => setActiveTab('policy')}
+              className={
+                activeTab === 'policy'
+                  ? 'border-b-2 border-indigo-600 pb-2 text-sm font-semibold text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+                  : 'border-b-2 border-transparent pb-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }
+            >
+              Policy
+            </button>
           </nav>
         </div>
       </header>
@@ -303,6 +317,8 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
       <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
         {activeTab === 'custom' ? (
           <CustomRulesTab guideId={guideId} />
+        ) : activeTab === 'policy' ? (
+          <PolicyTab guideId={guideId} readOnly={readOnly} />
         ) : (
           <>
         {error && (

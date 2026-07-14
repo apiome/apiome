@@ -41,7 +41,7 @@ from apiome_cli.output import (
     emit_list_table,
     emit_record_table,
 )
-from apiome_cli.output_lint import emit_lint_report, grade_meets_minimum
+from apiome_cli.output_lint import emit_lint_command_output, lint_command_should_fail
 
 # Letter grades accepted by ``--min-grade`` (mirrors the project ``lint`` command).
 _LINT_GRADES = frozenset({"A", "B", "C", "D", "F"})
@@ -505,6 +505,11 @@ def lint_endpoint(
         "--min-grade",
         help="Exit non-zero when the grade is worse than this (A best, F worst).",
     ),
+    fail_on_policy: bool = typer.Option(
+        False,
+        "--fail-on-policy",
+        help="Fetch lint policy evaluation and exit non-zero when policy gates fail.",
+    ),
     output: str | None = typer.Option(
         None,
         "--output",
@@ -516,7 +521,8 @@ def lint_endpoint(
     The MCP-catalog analogue of the project ``lint`` command: the server computes a
     deterministic 0-100 quality score, an A-F grade, and itemized findings for a
     discovered surface snapshot. ``--version`` targets a specific snapshot; omitted, the
-    endpoint's current version is scored. ``--min-grade`` turns the report into a CI gate.
+    endpoint's current version is scored. ``--min-grade`` turns the report into a CI gate;
+    ``--fail-on-policy`` also evaluates style-guide policy gates (GET .../lint/policy).
     """
     if min_grade is not None and min_grade.strip().upper() not in _LINT_GRADES:
         raise typer.BadParameter(
@@ -534,10 +540,23 @@ def lint_endpoint(
         api_paths.mcp_endpoint_version_lint(tenant_slug, endpoint_str, version_id)
     ).json()
 
-    if json_mode:
-        emit_json(report)
-    else:
-        emit_lint_report(report)
+    policy = None
+    if fail_on_policy:
+        policy = client.get(
+            api_paths.mcp_version_lint_policy(tenant_slug, endpoint_str, version_id)
+        ).json()
 
-    if min_grade is not None and not grade_meets_minimum(str(report.get("grade", "")), min_grade):
+    emit_lint_command_output(
+        json_mode=json_mode,
+        report=report,
+        policy=policy,
+        fail_on_policy=fail_on_policy,
+    )
+
+    if lint_command_should_fail(
+        report,
+        min_grade=min_grade,
+        policy=policy,
+        fail_on_policy=fail_on_policy,
+    ):
         raise typer.Exit(EXIT_ERROR)
