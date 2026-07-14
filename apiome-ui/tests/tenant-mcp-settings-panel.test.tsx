@@ -1,6 +1,6 @@
 /**
  * Tenant MCP Settings panel — MTG-4.1 (#4780) / MTG-4.2 (#4781) / MTG-4.4 (#4783)
- * / MTG-4.5 (#4784) / MTG-5.1 (#4785).
+ * / MTG-4.5 (#4784) / MTG-5.1 (#4785) / MTG-5.2 (#4786).
  */
 
 import React from 'react';
@@ -99,6 +99,9 @@ function mockFetch() {
       body: init?.body ? JSON.parse(init.body as string) : null,
     });
 
+    if (url.includes('/api/tenants/mcp-policy/history') && method === 'GET') {
+      return jsonResponse({ success: true, data: { changes: [] } });
+    }
     if (url.includes('/api/tenants/mcp-policy') && method === 'GET') {
       return jsonResponse({ success: true, data: POLICY });
     }

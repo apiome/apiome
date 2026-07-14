@@ -181,6 +181,7 @@ def test_admin_put_persists_and_returns_body():
             }
         ],
         updated_by=_USER,
+        actor_label=None,
     )
 
 
@@ -285,3 +286,75 @@ def test_put_allows_anonymous_enabled_outside_ceiling():
         )
     assert r.status_code == 200
     replace.assert_called_once()
+
+
+def test_put_forwards_actor_label_from_auth():
+    stored = _policy_row(default_mode="explicit", tools=[])
+    app.dependency_overrides[validate_authentication] = lambda: {
+        "tenant_id": _TENANT,
+        "user_id": _USER,
+        "auth_method": "jwt",
+        "user_email": "dana@acme.io",
+    }
+    with patch(
+        "app.mcp_policy_routes.db.replace_tenant_mcp_policy", return_value=stored
+    ) as replace:
+        r = client.put(
+            BASE,
+            json={"default_mode": "explicit", "allow_anonymous_mcp": True, "tools": []},
+        )
+    assert r.status_code == 200
+    assert replace.call_args.kwargs["actor_label"] == "dana@acme.io"
+
+
+def test_history_returns_change_rows_newest_first():
+    rows = [
+        {
+            "id": "c2",
+            "actor_user_id": _USER,
+            "actor_label": "dana@acme.io",
+            "created_at": NOW,
+            "before_policy": {
+                "default_mode": "all",
+                "allow_anonymous_mcp": True,
+                "tools": [],
+            },
+            "after_policy": {
+                "default_mode": "explicit",
+                "allow_anonymous_mcp": False,
+                "tools": [
+                    {
+                        "tool_id": "ping",
+                        "in_ceiling": True,
+                        "default_enabled": False,
+                        "anonymous_enabled": False,
+                    }
+                ],
+            },
+        }
+    ]
+    with patch(
+        "app.mcp_policy_routes.db.list_tenant_mcp_policy_changes", return_value=rows
+    ) as list_changes:
+        r = client.get(f"{BASE}/history?limit=10")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["changes"]) == 1
+    change = body["changes"][0]
+    assert change["id"] == "c2"
+    assert change["actor_label"] == "dana@acme.io"
+    assert change["before_policy"]["default_mode"] == "all"
+    assert change["after_policy"]["tools"][0]["tool_id"] == "ping"
+    assert change["after_policy"]["tools"][0]["default_enabled"] is False
+    list_changes.assert_called_once_with(_TENANT, limit=10)
+
+
+def test_history_readable_by_non_admin_members():
+    with patch(
+        "app.mcp_policy_routes.db.is_user_tenant_admin", return_value=False
+    ), patch(
+        "app.mcp_policy_routes.db.list_tenant_mcp_policy_changes", return_value=[]
+    ):
+        r = client.get(f"{BASE}/history")
+    assert r.status_code == 200
+    assert r.json() == {"changes": []}

@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "actor_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "actor_user_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "after_policy": {
+      "$ref": "#/components/schemas/TenantMcpPolicySnapshot"
+    },
+    "before_policy": {
+      "$ref": "#/components/schemas/TenantMcpPolicySnapshot"
+    },
+    "created_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "created_at",
+    "before_policy",
+    "after_policy"
+  ],
+  "type": "object"
+}

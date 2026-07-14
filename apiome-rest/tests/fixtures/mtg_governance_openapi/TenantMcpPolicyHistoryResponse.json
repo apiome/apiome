@@ -1,0 +1,12 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "changes": {
+      "items": {
+        "$ref": "#/components/schemas/TenantMcpPolicyChangeEntry"
+      },
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

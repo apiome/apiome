@@ -27,10 +27,11 @@ _FIXTURE_DIR = (
 )
 
 # Closeout semver for the MTG EPIC-3 REST train (AGENTS.md: bump when contract lands).
-_MTG_REST_OPENAPI_VERSION = "1.0.75"
+_MTG_REST_OPENAPI_VERSION = "1.0.76"
 
 _GOVERNANCE_PATHS: Mapping[str, Set[str]] = {
     "/v1/tenants/{tenant_slug}/mcp-policy": {"get", "put"},
+    "/v1/tenants/{tenant_slug}/mcp-policy/history": {"get"},
     "/v1/tenants/{tenant_slug}/mcp-keys": {"get", "post"},
     "/v1/tenants/{tenant_slug}/mcp-keys/{key_id}": {"get", "patch", "delete"},
     "/v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities": {"put"},
@@ -41,6 +42,9 @@ _POLICY_SCHEMAS = (
     "TenantMcpPolicyTool",
     "TenantMcpPolicyPutRequest",
     "TenantMcpPolicyResponse",
+    "TenantMcpPolicySnapshot",
+    "TenantMcpPolicyChangeEntry",
+    "TenantMcpPolicyHistoryResponse",
 )
 
 _KEY_CAPABILITY_SCHEMAS = (
