@@ -28,6 +28,7 @@ from app.lint_evidence import (
     COVERAGE_PARTIAL,
     ENVELOPE_VERSION,
     MCP_CONFORMANCE_SCANNER_ID,
+    MCP_POSTURE_SCANNER_ID,
     MCP_SCANNER_ID,
     NATIVE_ADAPTER_VERSION,
     NATIVE_SCANNER_ID,
@@ -319,12 +320,14 @@ def test_mcp_conformance_evidence_run_coverage_is_partial_when_rules_were_skippe
 
 def test_expected_scanners_per_subject():
     assert expected_scanners_for_subject(SUBJECT_CATALOG_REVISION) == [NATIVE_SCANNER_ID]
-    # An MCP snapshot is covered by two native engines (CLX-3.1, #4855): the surface lint and
-    # the protocol-conformance / agent-readiness scanner. Both are *expected*, so a snapshot
-    # that has never been conformance-scanned renders as not_run rather than silently clean.
+    # An MCP snapshot is covered by three native engines: the surface lint, the
+    # protocol-conformance / agent-readiness scanner (CLX-3.1, #4855), and the source /
+    # supply-chain / trust-posture scanner (CLX-3.2, #4856). All are *expected*, so a snapshot
+    # that has never been scanned by one of them renders as not_run rather than silently clean.
     assert expected_scanners_for_subject(SUBJECT_MCP_ENDPOINT_VERSION) == [
         MCP_SCANNER_ID,
         MCP_CONFORMANCE_SCANNER_ID,
+        MCP_POSTURE_SCANNER_ID,
     ]
 
 

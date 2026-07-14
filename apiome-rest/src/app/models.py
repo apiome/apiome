@@ -7066,6 +7066,375 @@ def mcp_conformance_report_from_report(
     )
 
 
+# --- MCP trust posture (CLX-3.2, #4856) -------------------------------------------------------
+
+class McpSourceLinkRequest(BaseModel):
+    """Request to link a source artifact to an MCP endpoint (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_kind: str = Field(
+        validation_alias=AliasChoices("source_kind", "sourceKind"),
+        description="git | package | image | registry.",
+    )
+    reference: str = Field(
+        description=(
+            "The source reference. A git remote URL, a Package URL, an OCI image reference, or an "
+            "MCP registry server id — meaning depends on source_kind."
+        ),
+    )
+    revision: Optional[str] = Field(
+        default=None,
+        description=(
+            "For git, the branch / tag / commit sha. A full 40-hex commit pins the source; a "
+            "branch or tag leaves it a moving reference (verification_state 'unverified')."
+        ),
+    )
+    provenance: str = Field(
+        default="operator_declared",
+        description=(
+            "How this association is known: operator_declared | registry_published | "
+            "discovery_advertised | attested. Never inferred."
+        ),
+    )
+
+
+class McpSourceOut(BaseModel):
+    """One linked MCP source association (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    source_kind: str = Field(serialization_alias="sourceKind")
+    locator: str = Field(description="The canonical, normalized reference.")
+    purl: Optional[str] = None
+    revision: Optional[str] = None
+    digest: Optional[str] = Field(
+        default=None,
+        description="Immutable content identity, when the reference carried one. Never invented.",
+    )
+    digest_algorithm: Optional[str] = Field(default=None, serialization_alias="digestAlgorithm")
+    provenance: str = Field(description="How the association is known.")
+    verification_state: str = Field(
+        serialization_alias="verificationState",
+        description=(
+            "unverified (moving reference; findings not reproducible) | digest_pinned | attested."
+        ),
+    )
+    retired_at: Optional[str] = Field(default=None, serialization_alias="retiredAt")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+
+
+class McpSourceListResponse(BaseModel):
+    """An endpoint's linked source associations (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    sources: List[McpSourceOut]
+
+
+class McpSourceResponse(BaseModel):
+    """A single linked source association (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    source: McpSourceOut
+
+
+class McpSbomAttachRequest(BaseModel):
+    """Request to attach a CycloneDX/SPDX SBOM to a linked source (CLX-3.2, #4856).
+
+    The document is read for component **coordinates only** — name / version / purl / license.
+    Source and file contents are never extracted or stored; the SBOM model has no field for them.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    document: Dict[str, Any] = Field(
+        description="A parsed CycloneDX (with 'bomFormat') or SPDX (with 'spdxVersion') document.",
+    )
+    subject_digest: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("subject_digest", "subjectDigest"),
+        description=(
+            "The artifact digest this inventory describes. Defaults to the source's own pinned "
+            "digest; required when the source is not pinned, since an inventory must name the "
+            "specific artifact it inventories."
+        ),
+    )
+
+
+class McpSbomOut(BaseModel):
+    """The dependency inventory of a source artifact — coordinates only (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    source_id: str = Field(serialization_alias="sourceId")
+    subject_digest: str = Field(serialization_alias="subjectDigest")
+    sbom_format: str = Field(serialization_alias="sbomFormat")
+    origin: str = Field(
+        description="operator_supplied (authoritative) | manifest_derived (best-effort).",
+    )
+    component_count: int = Field(serialization_alias="componentCount")
+    sbom_fingerprint: Optional[str] = Field(default=None, serialization_alias="sbomFingerprint")
+    authoritative: bool = Field(
+        description="Whether this inventory came from a real SBOM rather than lockfile derivation.",
+    )
+
+
+class McpPostureFindingOut(BaseModel):
+    """One trust-posture finding (CLX-3.2, #4856).
+
+    A superset of :class:`LintFindingOut`. The extra fields are the point of the whole engine:
+    ``origin`` says which evidence lane it came from, ``owasp_ids`` names the risk it instances, and
+    ``exploitability`` / ``exploitability_label`` state — explicitly — that a static finding is a
+    *signal*, not a demonstrated exploit. A consumer must not drop these; the honesty of the render
+    depends on them.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    path: str
+    category: str
+    rule: str
+    severity: str
+    message: str
+    origin: str = Field(description="metadata | source | dependency | protocol.")
+    origin_label: str = Field(serialization_alias="originLabel")
+    owasp_ids: List[str] = Field(default_factory=list, serialization_alias="owaspIds")
+    exploitability: str = Field(
+        description="static_signal for everything a static rule can produce; proven needs a probe.",
+    )
+    exploitability_label: str = Field(
+        serialization_alias="exploitabilityLabel",
+        description="Human label — 'Signal — not proven exploitable' for static findings.",
+    )
+    confidence: str = Field(
+        description="high for reproducible evidence; medium for a moving source reference.",
+    )
+    excerpt: Optional[str] = Field(
+        default=None,
+        description="Redacted, bounded excerpt for a source finding. Never a secret in clear.",
+    )
+    remediation: Optional[str] = None
+
+
+class McpPostureGateOut(BaseModel):
+    """The pass/fail decision for one trust-posture run, and why (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    passed: bool
+    fail_on: str = Field(serialization_alias="failOn")
+    min_score: Optional[int] = Field(default=None, serialization_alias="minScore")
+    require_full_coverage: bool = Field(
+        default=False,
+        serialization_alias="requireFullCoverage",
+        description="When set, any skipped rule fails the gate — 'do not call it clean unscanned'.",
+    )
+    reasons: List[str] = Field(default_factory=list)
+
+
+class McpPostureRuleOut(BaseModel):
+    """One trust-posture rule descriptor (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId")
+    origin: str = Field(description="metadata | source | dependency | protocol.")
+    origin_label: str = Field(serialization_alias="originLabel")
+    severity: str
+    owasp_ids: List[str] = Field(default_factory=list, serialization_alias="owaspIds")
+    rationale: str
+    reference: str
+    requires: str = Field(
+        description="The evidence the rule needs: surface | source | sbom | vulnerabilities | probe.",
+    )
+
+
+class McpPostureProfileOut(BaseModel):
+    """One runnable, gateable trust-posture profile (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    profile_id: str = Field(serialization_alias="profileId")
+    label: str
+    origins: List[str]
+    description: str
+
+
+class McpOwaspRiskOut(BaseModel):
+    """One OWASP MCP Top 10 risk in the catalog (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    risk_id: str = Field(serialization_alias="riskId")
+    title: str
+    description: str
+    reference: str
+
+
+class McpPostureRulesResponse(BaseModel):
+    """The trust-posture rule catalog, profiles, and OWASP risk catalog (CLX-3.2, #4856)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    owasp_revision: str = Field(
+        serialization_alias="owaspRevision",
+        description="The OWASP MCP Top 10 revision this rule set's mapping tracks.",
+    )
+    profiles: List[McpPostureProfileOut]
+    rules: List[McpPostureRuleOut]
+    owasp_risks: List[McpOwaspRiskOut] = Field(serialization_alias="owaspRisks")
+
+
+class McpPostureReportResponse(BaseModel):
+    """Source / supply-chain / trust-posture report for one MCP snapshot (CLX-3.2, #4856).
+
+    The third MCP scan report, alongside :class:`McpLintReportResponse` (advertised surface) and
+    :class:`McpConformanceReportResponse` (observed protocol). This one assesses what the server is
+    *built from*.
+
+    Fields that carry the honesty guarantees, and must never be dropped by a consumer:
+
+    * ``proven_count`` — findings a dynamic probe demonstrated. **Always 0** until CLX-3.3 (#4857);
+      every finding here is a signal, not a proven exploit.
+    * ``skipped_rules`` / ``skip_reasons`` — rules that could not be evaluated for lack of evidence
+      (no linked source, no SBOM, no vulnerability lookup). Unverified, not passing.
+    * ``owasp_coverage.uncovered`` — OWASP risks the evaluated rules do *not* cover, so an
+      unmentioned risk never reads as an absent one.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    version_id: str = Field(serialization_alias="versionId")
+    version_seq: int = Field(serialization_alias="versionSeq")
+    version_tag: Optional[str] = Field(default=None, serialization_alias="versionTag")
+    profile: str
+    owasp_revision: str = Field(serialization_alias="owaspRevision")
+    score: int
+    grade: str
+    findings: List[McpPostureFindingOut]
+    rule_hits: Dict[str, int] = Field(default_factory=dict, serialization_alias="ruleHits")
+    severity_counts: Dict[str, int] = Field(
+        default_factory=dict, serialization_alias="severityCounts"
+    )
+    origin_counts: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="originCounts",
+        description="Findings per origin — how much came from claims vs code vs dependencies.",
+    )
+    owasp_counts: Dict[str, int] = Field(default_factory=dict, serialization_alias="owaspCounts")
+    owasp_coverage: Dict[str, Any] = Field(
+        default_factory=dict,
+        serialization_alias="owaspCoverage",
+        description="Which OWASP risks the evaluated rules cover — and, crucially, which they do not.",
+    )
+    report_fingerprint: str = Field(serialization_alias="reportFingerprint")
+    evaluated_rules: List[str] = Field(default_factory=list, serialization_alias="evaluatedRules")
+    skipped_rules: List[str] = Field(
+        default_factory=list,
+        serialization_alias="skippedRules",
+        description="Rules that could not be evaluated for lack of evidence. Unverified, not passing.",
+    )
+    skip_reasons: Dict[str, str] = Field(default_factory=dict, serialization_alias="skipReasons")
+    proven_count: int = Field(
+        default=0,
+        serialization_alias="provenCount",
+        description="Findings a dynamic probe demonstrated. Always 0 until CLX-3.3 (#4857).",
+    )
+    source: Optional[McpSourceOut] = Field(
+        default=None,
+        description="The linked source that was scanned, or null when none is linked.",
+    )
+    gate: McpPostureGateOut
+
+
+def mcp_source_out_from_row(row: Dict[str, Any]) -> McpSourceOut:
+    """Shape one ``mcp_endpoint_sources`` row into its API model."""
+    return McpSourceOut(
+        id=str(row["id"]),
+        source_kind=str(row["source_kind"]),
+        locator=str(row["locator"]),
+        purl=row.get("purl"),
+        revision=row.get("revision"),
+        digest=row.get("digest"),
+        digest_algorithm=row.get("digest_algorithm"),
+        provenance=str(row.get("provenance") or "operator_declared"),
+        verification_state=str(row.get("verification_state") or "unverified"),
+        retired_at=_iso_or_none(row.get("retired_at")),
+        created_at=_iso_or_none(row.get("created_at")),
+    )
+
+
+def mcp_posture_report_from_report(
+    endpoint_id: str,
+    version: Dict[str, Any],
+    report: Dict[str, Any],
+) -> McpPostureReportResponse:
+    """Shape a trust-posture report dict + its version row into the API response.
+
+    Args:
+        endpoint_id: The owning MCP endpoint.
+        version: The ``mcp_endpoint_versions`` row (supplies snapshot identity).
+        report: An :meth:`app.mcp_trust_posture.PostureReport.report_dict` payload.
+
+    Returns:
+        The populated :class:`McpPostureReportResponse`.
+    """
+    gate = report.get("gate") or {}
+    source = report.get("source")
+    return McpPostureReportResponse(
+        endpoint_id=endpoint_id,
+        version_id=str(version["id"]),
+        version_seq=int(version["version_seq"]),
+        version_tag=version.get("version_tag"),
+        profile=str(report.get("profile") or ""),
+        owasp_revision=str(report.get("owasp_revision") or ""),
+        score=int(report.get("score") or 0),
+        grade=str(report.get("grade") or ""),
+        findings=[McpPostureFindingOut(**f) for f in (report.get("findings") or [])],
+        rule_hits=dict(report.get("rule_hits") or {}),
+        severity_counts=dict(report.get("severity_counts") or {}),
+        origin_counts=dict(report.get("origin_counts") or {}),
+        owasp_counts=dict(report.get("owasp_counts") or {}),
+        owasp_coverage=dict(report.get("owasp_coverage") or {}),
+        report_fingerprint=str(report.get("report_fingerprint") or ""),
+        evaluated_rules=list(report.get("evaluated_rules") or []),
+        skipped_rules=list(report.get("skipped_rules") or []),
+        skip_reasons=dict(report.get("skip_reasons") or {}),
+        proven_count=int(report.get("proven_count") or 0),
+        source=McpSourceOut(
+            id=str(source.get("id") or ""),
+            source_kind=str(source.get("source_kind") or ""),
+            locator=str(source.get("locator") or ""),
+            purl=source.get("purl"),
+            revision=source.get("revision"),
+            digest=source.get("digest"),
+            digest_algorithm=source.get("digest_algorithm"),
+            provenance=str(source.get("provenance") or "operator_declared"),
+            verification_state=str(source.get("verification_state") or "unverified"),
+        )
+        if isinstance(source, dict)
+        else None,
+        gate=McpPostureGateOut(
+            passed=bool(gate.get("passed")),
+            fail_on=str(gate.get("fail_on") or ""),
+            min_score=gate.get("min_score"),
+            require_full_coverage=bool(gate.get("require_full_coverage")),
+            reasons=list(gate.get("reasons") or []),
+        ),
+    )
+
+
 class McpLintReportResponse(BaseModel):
     """Server-computed lint score + itemized findings for one MCP version snapshot (#3686).
 
