@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from .axis_score import catalog_axis_evaluation
 from .auth import validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
@@ -26,12 +27,15 @@ from .models import (
     CustomRulesValidateRequest,
     CustomRulesValidateResponse,
     CustomRuleThenOut,
+    LintAxesResponse,
     LintCategoryScoreOut,
     LintEvidenceResponse,
     LintFindingOut,
     LintReportResponse,
     LintRuleCatalogResponse,
     LintRuleOut,
+    lint_axis_evaluation_out_from_row,
+    lint_axis_fields_from_evaluation,
     lint_evidence_response_from_rows,
 )
 from .schema_lint import merge_compatibility_findings
@@ -176,6 +180,14 @@ def lint_report_response_from_persisted_dict(
     captured_score = captured.get("quality_score")
     captured_grade = captured.get("quality_grade")
     captured_fingerprint = captured.get("quality_report_fingerprint")
+
+    # Merge compatibility context into the report for axis evaluation when available.
+    axis_report = dict(report)
+    if base_revision_id and "base_revision_id" not in axis_report:
+        axis_report["base_revision_id"] = base_revision_id
+    if compatibility_overall and "compatibility_overall" not in axis_report:
+        axis_report["compatibility_overall"] = compatibility_overall
+    axis_eval = catalog_axis_evaluation(axis_report).as_dict()
     return LintReportResponse(
         project_id=project_id,
         version_record_id=version["id"],
@@ -202,6 +214,7 @@ def lint_report_response_from_persisted_dict(
         guide_id=getattr(guide, "guide_id", None) if guide is not None else None,
         guide_name=getattr(guide, "name", None) if guide is not None else None,
         guide_source=getattr(guide, "source", None) if guide is not None else None,
+        **lint_axis_fields_from_evaluation(axis_eval),
     )
 
 
@@ -350,6 +363,12 @@ def build_lint_report(
         and captured_fingerprint != result.report_fingerprint
     )
 
+    axis_report = result.report_dict()
+    if resolved_base_id:
+        axis_report["base_revision_id"] = resolved_base_id
+    if compatibility_overall:
+        axis_report["compatibility_overall"] = compatibility_overall
+
     return LintReportResponse(
         project_id=project_id,
         version_record_id=version["id"],
@@ -372,6 +391,7 @@ def build_lint_report(
         guide_id=guide.guide_id,
         guide_name=guide.name,
         guide_source=guide.source,
+        **lint_axis_fields_from_evaluation(catalog_axis_evaluation(axis_report).as_dict()),
     )
 
 
@@ -480,4 +500,88 @@ async def lint_revision_evidence(
     rows = db.list_lint_evidence_runs_for_version(version_record_id, tenant_id)
     return lint_evidence_response_from_rows(
         SUBJECT_CATALOG_REVISION, version_record_id, rows
+    )
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/lint/axes",
+    response_model=LintAxesResponse,
+)
+async def lint_revision_axes(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintAxesResponse:
+    """
+    Return the multi-axis score and coverage evaluation for a schema revision (CLX-1.2, #4849).
+
+    Prefers the latest stored ``lint_axis_evaluations`` row for algorithm ``clx-axis-v1``.
+    When no evaluation has been persisted yet, computes one from the revision's captured
+    quality report (and optionally records it). Legacy ``qualityScore`` / ``qualityGrade``
+    list fields are unchanged — quality remains the backwards-compatible axis.
+    """
+    _ = tenant_slug
+    tenant_id = auth_data["tenant_id"]
+
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
+    if version["project_id"] != project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Revision does not belong to the specified project",
+        )
+
+    stored = db.get_latest_axis_evaluation_for_version(version_record_id, tenant_id)
+    if stored:
+        return LintAxesResponse(
+            evaluation=lint_axis_evaluation_out_from_row(
+                stored,
+                subject_type=SUBJECT_CATALOG_REVISION,
+                subject_id=version_record_id,
+            )
+        )
+
+    captured = db.get_version_quality_score(version_record_id, tenant_id) or {}
+    report = (
+        captured.get("quality_report")
+        if isinstance(captured.get("quality_report"), dict)
+        else {}
+    )
+    if not report and captured.get("quality_score") is not None:
+        report = {
+            "score": captured.get("quality_score"),
+            "grade": captured.get("quality_grade"),
+            "findings": [],
+            "severity_counts": {"error": 0, "warning": 0, "info": 0},
+            "report_fingerprint": captured.get("quality_report_fingerprint"),
+        }
+    evaluation = catalog_axis_evaluation(report or {})
+    try:
+        from .axis_score import evaluation_row
+
+        db.record_axis_evaluation(
+            evaluation_row(
+                evaluation,
+                subject_type=SUBJECT_CATALOG_REVISION,
+                subject_id=version_record_id,
+            )
+        )
+    except Exception:  # noqa: BLE001 - persistence is best-effort on read path
+        pass
+
+    payload = evaluation.as_dict()
+    payload["subject_type"] = SUBJECT_CATALOG_REVISION
+    payload["version_record_id"] = version_record_id
+    return LintAxesResponse(
+        evaluation=lint_axis_evaluation_out_from_row(
+            payload,
+            subject_type=SUBJECT_CATALOG_REVISION,
+            subject_id=version_record_id,
+        )
     )

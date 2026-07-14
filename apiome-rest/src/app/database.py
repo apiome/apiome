@@ -10,9 +10,20 @@ import numpy as np
 import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 
+from .axis_score import (
+    ALGORITHM_ID,
+    catalog_axis_evaluation,
+    evaluation_row,
+    mcp_axis_evaluation,
+)
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .jsonschema_generator import generate_class_jsonschema_spec
-from .lint_evidence import mcp_evidence_run, native_evidence_run
+from .lint_evidence import (
+    SUBJECT_CATALOG_REVISION,
+    SUBJECT_MCP_ENDPOINT_VERSION,
+    mcp_evidence_run,
+    native_evidence_run,
+)
 from .mcp_facets import (
     COMPLEXITY_MODERATE_MAX_PROPERTIES,
     COMPLEXITY_SIMPLE_MAX_PROPERTIES,
@@ -2353,6 +2364,21 @@ class Database:
                     version_record_id,
                     exc_info=True,
                 )
+            # CLX-1.2 (#4849): mirror the report into a versioned multi-axis evaluation.
+            try:
+                self.record_axis_evaluation(
+                    evaluation_row(
+                        catalog_axis_evaluation(quality_report),
+                        subject_type=SUBJECT_CATALOG_REVISION,
+                        subject_id=version_record_id,
+                    )
+                )
+            except Exception:  # noqa: BLE001 - axis capture is strictly additive
+                _logger.warning(
+                    "Failed to record axis evaluation for revision %s",
+                    version_record_id,
+                    exc_info=True,
+                )
         return bool(rows)
 
     def record_lint_evidence_run(self, run: Dict[str, Any]) -> Optional[str]:
@@ -2477,6 +2503,105 @@ class Database:
             ORDER BY r.created_at DESC, r.id
         """
         return self.execute_query(query, (version_id,))
+
+    def record_axis_evaluation(self, evaluation: Dict[str, Any]) -> Optional[str]:
+        """Insert one write-once multi-axis evaluation (CLX-1.2, #4849).
+
+        Evaluations are immutable and append-only (``lint_axis_evaluations``, V168): a re-score
+        inserts a NEW row. To keep unchanged re-scores from appending duplicates, the insert is
+        skipped when the same subject + ``algorithm_id`` already has a row with the same
+        ``source_report_fingerprint``.
+
+        Args:
+            evaluation: Column-name -> value dict from :func:`app.axis_score.evaluation_row`.
+
+        Returns:
+            The new evaluation's id, or ``None`` when an identical evaluation already exists.
+        """
+        query = """
+            INSERT INTO apiome.lint_axis_evaluations (
+                subject_type, version_record_id, mcp_version_id, algorithm_id, algorithm_version,
+                axes, composite_score, composite_grade, required_coverage_met,
+                source_report_fingerprint
+            )
+            SELECT %s, %s::uuid, %s::uuid, %s, %s, %s::jsonb, %s, %s, %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM apiome.lint_axis_evaluations e
+                WHERE e.algorithm_id = %s
+                  AND e.source_report_fingerprint = %s
+                  AND (
+                        (%s::uuid IS NOT NULL AND e.version_record_id = %s::uuid)
+                        OR (%s::uuid IS NOT NULL AND e.mcp_version_id = %s::uuid)
+                      )
+            )
+            RETURNING id
+        """
+        version_record_id = evaluation.get("version_record_id")
+        mcp_version_id = evaluation.get("mcp_version_id")
+        rows = self.execute_query(
+            query,
+            (
+                evaluation["subject_type"],
+                version_record_id,
+                mcp_version_id,
+                evaluation.get("algorithm_id", ALGORITHM_ID),
+                evaluation.get("algorithm_version", "1"),
+                Json(evaluation.get("axes") or []),
+                evaluation.get("composite_score"),
+                evaluation.get("composite_grade"),
+                bool(evaluation.get("required_coverage_met")),
+                evaluation.get("source_report_fingerprint"),
+                evaluation.get("algorithm_id", ALGORITHM_ID),
+                evaluation.get("source_report_fingerprint"),
+                version_record_id,
+                version_record_id,
+                mcp_version_id,
+                mcp_version_id,
+            ),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    _AXIS_EVALUATION_COLUMNS = """
+            e.id, e.subject_type, e.version_record_id, e.mcp_version_id, e.algorithm_id,
+            e.algorithm_version, e.axes, e.composite_score, e.composite_grade,
+            e.required_coverage_met, e.source_report_fingerprint, e.evaluated_at, e.created_at
+    """
+
+    def get_latest_axis_evaluation_for_version(
+        self, version_record_id: str, tenant_id: str, *, algorithm_id: str = ALGORITHM_ID
+    ) -> Optional[Dict[str, Any]]:
+        """Return the latest axis evaluation for a catalog revision (CLX-1.2, #4849).
+
+        Tenant-scoped through the owning project. Prefer the newest row for ``algorithm_id``.
+        """
+        query = f"""
+            SELECT {self._AXIS_EVALUATION_COLUMNS}
+            FROM apiome.lint_axis_evaluations e
+            JOIN apiome.versions v ON v.id = e.version_record_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE e.version_record_id = %s AND p.tenant_id = %s AND e.algorithm_id = %s
+            ORDER BY e.evaluated_at DESC, e.id DESC
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (version_record_id, tenant_id, algorithm_id))
+        return rows[0] if rows else None
+
+    def get_latest_axis_evaluation_for_mcp_version(
+        self, version_id: str, *, algorithm_id: str = ALGORITHM_ID
+    ) -> Optional[Dict[str, Any]]:
+        """Return the latest axis evaluation for an MCP snapshot (CLX-1.2, #4849).
+
+        Tenant scoping is the caller's job (mirrors :meth:`get_mcp_version_score`).
+        """
+        query = f"""
+            SELECT {self._AXIS_EVALUATION_COLUMNS}
+            FROM apiome.lint_axis_evaluations e
+            WHERE e.mcp_version_id = %s AND e.algorithm_id = %s
+            ORDER BY e.evaluated_at DESC, e.id DESC
+            LIMIT 1
+        """
+        rows = self.execute_query(query, (version_id, algorithm_id))
+        return rows[0] if rows else None
 
     def set_version_source_format(
         self,
@@ -13782,6 +13907,21 @@ class Database:
             except Exception:  # noqa: BLE001 - evidence capture is strictly additive
                 _logger.warning(
                     "Failed to record lint evidence for MCP version %s",
+                    version_id,
+                    exc_info=True,
+                )
+            # CLX-1.2 (#4849): mirror the report into a versioned multi-axis evaluation.
+            try:
+                self.record_axis_evaluation(
+                    evaluation_row(
+                        mcp_axis_evaluation(report),
+                        subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+                        subject_id=version_id,
+                    )
+                )
+            except Exception:  # noqa: BLE001 - axis capture is strictly additive
+                _logger.warning(
+                    "Failed to record axis evaluation for MCP version %s",
                     version_id,
                     exc_info=True,
                 )

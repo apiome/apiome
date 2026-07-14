@@ -51,6 +51,13 @@ export interface McpLintReport {
   /** `stored` when served from persistence, `computed` when scored live for the request. */
   source: string;
   scored_at: string | null;
+  /** Multi-axis scoring algorithm id (CLX-1.2). */
+  algorithm_id?: string | null;
+  /** Per-axis scores and coverage (CLX-1.2); raw wire axes for {@link lintAxisEvaluationFromLintReport}. */
+  axes?: unknown[] | null;
+  composite_score?: number | null;
+  composite_grade?: string | null;
+  required_coverage_met?: boolean | null;
 }
 
 function asString(value: unknown): string | null {
@@ -107,6 +114,15 @@ export function mcpLintReportFromPayload(data: unknown): McpLintReport | null {
     report_fingerprint: asString(r.reportFingerprint) ?? asString(r.report_fingerprint) ?? '',
     source: asString(r.source) ?? 'computed',
     scored_at: asString(r.scoredAt) ?? asString(r.scored_at),
+    algorithm_id: asString(r.algorithmId) ?? asString(r.algorithm_id),
+    axes: Array.isArray(r.axes) ? r.axes : null,
+    composite_score:
+      typeof (r.compositeScore ?? r.composite_score) === 'number'
+        ? asInt(r.compositeScore ?? r.composite_score)
+        : null,
+    composite_grade: asString(r.compositeGrade) ?? asString(r.composite_grade),
+    required_coverage_met:
+      r.requiredCoverageMet === true || r.required_coverage_met === true,
   };
 }
 

@@ -3043,6 +3043,30 @@ class LintReportResponse(BaseModel):
         serialization_alias="guideSource",
         description="Origin of the applied guide: builtin | custom | fallback (in-code defaults).",
     )
+    algorithm_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="algorithmId",
+        description="Multi-axis scoring algorithm id (CLX-1.2), e.g. clx-axis-v1.",
+    )
+    axes: Optional[List["LintAxisOut"]] = Field(
+        default=None,
+        description="Per-axis scores and coverage (CLX-1.2). Null when not evaluated.",
+    )
+    composite_score: Optional[int] = Field(
+        default=None,
+        serialization_alias="compositeScore",
+        description="Weighted composite when required coverage is met; null otherwise.",
+    )
+    composite_grade: Optional[str] = Field(
+        default=None,
+        serialization_alias="compositeGrade",
+        description="A-F grade of the composite; null when compositeScore is null.",
+    )
+    required_coverage_met: Optional[bool] = Field(
+        default=None,
+        serialization_alias="requiredCoverageMet",
+        description="True when required axes (v1: quality) are assessed.",
+    )
 
 
 class LintRuleOut(BaseModel):
@@ -3290,6 +3314,89 @@ class LintEvidenceResponse(BaseModel):
     count: int = Field(description="Number of evidence runs (== len(runs)).")
 
 
+class LintAxisOut(BaseModel):
+    """One scoring axis with coverage and not-assessed semantics (CLX-1.2, #4849).
+
+    ``assessed=false`` means the axis was not evaluated — never conflate that with a clean
+    score of 100 / zero findings. When assessed, empty findings legitimately score 100.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str = Field(description="Stable axis key (quality, protocol, security, …).")
+    label: str = Field(description="Human-readable axis label.")
+    weight: float = Field(description="Relative weight used in the composite (v1: 1.0).")
+    assessed: bool = Field(description="False when the axis was not assessed.")
+    score: Optional[int] = Field(
+        default=None, description="0-100 axis score; null when not assessed."
+    )
+    grade: Optional[str] = Field(
+        default=None, description="A-F letter grade; null when not assessed."
+    )
+    severity_counts: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="severityCounts",
+        description="Finding counts by severity attributed to this axis.",
+    )
+    coverage: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Coverage state for this axis ({'state': full|partial|none|unknown}).",
+    )
+    not_assessed_reason: Optional[str] = Field(
+        default=None,
+        serialization_alias="notAssessedReason",
+        description="Why the axis was not assessed; required when assessed is false.",
+    )
+
+
+class LintAxisEvaluationOut(BaseModel):
+    """One versioned multi-axis evaluation (CLX-1.2, #4849)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[str] = Field(default=None, description="Persisted evaluation id when stored.")
+    subject_type: str = Field(
+        serialization_alias="subjectType",
+        description="Subject kind: catalog_revision or mcp_endpoint_version.",
+    )
+    subject_id: str = Field(
+        serialization_alias="subjectId",
+        description="The revision (versions.id) or snapshot (mcp_endpoint_versions.id).",
+    )
+    algorithm_id: str = Field(
+        serialization_alias="algorithmId",
+        description="Scoring algorithm id (clx-axis-v1).",
+    )
+    algorithm_version: str = Field(
+        serialization_alias="algorithmVersion",
+        description="Implementation revision of the algorithm.",
+    )
+    axes: List[LintAxisOut] = Field(default_factory=list)
+    composite_score: Optional[int] = Field(
+        default=None, serialization_alias="compositeScore"
+    )
+    composite_grade: Optional[str] = Field(
+        default=None, serialization_alias="compositeGrade"
+    )
+    required_coverage_met: bool = Field(
+        default=False, serialization_alias="requiredCoverageMet"
+    )
+    source_report_fingerprint: Optional[str] = Field(
+        default=None, serialization_alias="sourceReportFingerprint"
+    )
+    evaluated_at: Optional[str] = Field(
+        default=None, serialization_alias="evaluatedAt"
+    )
+
+
+class LintAxesResponse(BaseModel):
+    """Response envelope for GET …/lint/axes (CLX-1.2, #4849)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    evaluation: LintAxisEvaluationOut
+
+
 def _iso_or_none(value: Any) -> Optional[str]:
     """Render a timestamp column value as an ISO-8601 string, passing strings through."""
     if value is None:
@@ -3297,6 +3404,71 @@ def _iso_or_none(value: Any) -> Optional[str]:
     if isinstance(value, datetime):
         return value.isoformat()
     return str(value)
+
+
+def lint_axis_out_from_dict(axis: Mapping[str, Any]) -> LintAxisOut:
+    """Shape one axis payload dict into :class:`LintAxisOut`."""
+    severity = axis.get("severity_counts") or {}
+    coverage = axis.get("coverage") if isinstance(axis.get("coverage"), dict) else {}
+    return LintAxisOut(
+        key=str(axis.get("key") or ""),
+        label=str(axis.get("label") or ""),
+        weight=float(axis.get("weight") or 1.0),
+        assessed=bool(axis.get("assessed")),
+        score=axis.get("score"),
+        grade=axis.get("grade"),
+        severity_counts={
+            "error": int(severity.get("error") or 0),
+            "warning": int(severity.get("warning") or 0),
+            "info": int(severity.get("info") or 0),
+        },
+        coverage=coverage,
+        not_assessed_reason=axis.get("not_assessed_reason"),
+    )
+
+
+def lint_axis_evaluation_out_from_row(
+    row: Mapping[str, Any],
+    *,
+    subject_type: Optional[str] = None,
+    subject_id: Optional[str] = None,
+) -> LintAxisEvaluationOut:
+    """Shape a ``lint_axis_evaluations`` row (or computed evaluation dict) into the API model."""
+    resolved_type = subject_type or str(row.get("subject_type") or "")
+    resolved_id = subject_id or str(
+        row.get("version_record_id") or row.get("mcp_version_id") or row.get("subject_id") or ""
+    )
+    axes_raw = row.get("axes") or []
+    return LintAxisEvaluationOut(
+        id=str(row["id"]) if row.get("id") is not None else None,
+        subject_type=resolved_type,
+        subject_id=resolved_id,
+        algorithm_id=str(row.get("algorithm_id") or ""),
+        algorithm_version=str(row.get("algorithm_version") or "1"),
+        axes=[lint_axis_out_from_dict(a) for a in axes_raw if isinstance(a, dict)],
+        composite_score=row.get("composite_score"),
+        composite_grade=row.get("composite_grade"),
+        required_coverage_met=bool(row.get("required_coverage_met")),
+        source_report_fingerprint=row.get("source_report_fingerprint"),
+        evaluated_at=_iso_or_none(row.get("evaluated_at") or row.get("created_at")),
+    )
+
+
+def lint_axis_fields_from_evaluation(
+    evaluation: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Keyword args to merge axis fields onto a lint report response."""
+    return {
+        "algorithm_id": evaluation.get("algorithm_id"),
+        "axes": [
+            lint_axis_out_from_dict(a)
+            for a in (evaluation.get("axes") or [])
+            if isinstance(a, dict)
+        ],
+        "composite_score": evaluation.get("composite_score"),
+        "composite_grade": evaluation.get("composite_grade"),
+        "required_coverage_met": evaluation.get("required_coverage_met"),
+    }
 
 
 def lint_evidence_run_out_from_row(row: Mapping[str, Any]) -> LintEvidenceRunOut:
@@ -6238,6 +6410,30 @@ class McpLintReportResponse(BaseModel):
         serialization_alias="scoredAt",
         description="When the persisted score was last (re)computed, when applicable.",
     )
+    algorithm_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="algorithmId",
+        description="Multi-axis scoring algorithm id (CLX-1.2), e.g. clx-axis-v1.",
+    )
+    axes: Optional[List[LintAxisOut]] = Field(
+        default=None,
+        description="Per-axis scores and coverage (CLX-1.2). Null when not evaluated.",
+    )
+    composite_score: Optional[int] = Field(
+        default=None,
+        serialization_alias="compositeScore",
+        description="Weighted composite when required coverage is met; null otherwise.",
+    )
+    composite_grade: Optional[str] = Field(
+        default=None,
+        serialization_alias="compositeGrade",
+        description="A-F grade of the composite; null when compositeScore is null.",
+    )
+    required_coverage_met: Optional[bool] = Field(
+        default=None,
+        serialization_alias="requiredCoverageMet",
+        description="True when required axes (v1: quality) are assessed.",
+    )
 
 
 def mcp_lint_report_from_report(
@@ -6268,6 +6464,9 @@ def mcp_lint_report_from_report(
         The fully shaped lint report response.
     """
     findings = [LintFindingOut(**f) for f in (report.get("findings") or [])]
+    from .axis_score import mcp_axis_evaluation
+
+    axis_eval = mcp_axis_evaluation(report).as_dict()
     return McpLintReportResponse(
         endpoint_id=str(endpoint_id),
         version_id=str(version["id"]),
@@ -6281,6 +6480,7 @@ def mcp_lint_report_from_report(
         report_fingerprint=str(report.get("report_fingerprint") or ""),
         source=source,
         scored_at=_mcp_ts(scored_at),
+        **lint_axis_fields_from_evaluation(axis_eval),
     )
 
 

@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.31] - 2026-07-14
+
+### Added
+- **Multi-axis score and coverage model (CLX-1.2, #4849)** — versioned
+  `clx-axis-v1` evaluations stored in append-only `lint_axis_evaluations` (V168)
+  for catalog revisions and MCP endpoint versions. Axes expose score/grade,
+  severity counts, coverage, weight, and explicit not-assessed reasons; quality
+  remains the backwards-compatible legacy axis; composite is published only when
+  required coverage (quality) is present. New `GET …/lint/axes` routes and
+  optional axis fields on lint report responses. OpenAPI **1.0.78**.
+
 ## [1.117.30] - 2026-07-14
 
 ### Added
