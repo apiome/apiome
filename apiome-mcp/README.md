@@ -77,6 +77,10 @@ to one boolean per tool via ``app.mcp_effective_policy`` (re-exported as
 ``apiome_mcp.effective_policy``). See **[docs/EFFECTIVE_POLICY.md](docs/EFFECTIVE_POLICY.md)**.
 Call-time enable-set gating wires this in MTG-2.2.
 
+**List-always (MTG-2.1):** ``tools/list`` always returns the full live registry —
+never filtered by tenant/key enable-set (contrast AGX-3.1). See
+**[docs/LIST_ALWAYS.md](docs/LIST_ALWAYS.md)**.
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

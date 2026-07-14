@@ -46,8 +46,8 @@ flowchart TD
   LIST[tools/list] --> FULL[Return full registry — MTG-2.1]
 ```
 
-`tools/list` stays unfiltered (MTG-2.1). Anonymous callers are out of
-scope for this resolver (MTG-2.3).
+`tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
+Anonymous callers are out of scope for this resolver (MTG-2.3).
 
 ## API surface
 
