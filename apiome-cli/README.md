@@ -703,6 +703,54 @@ version is scored — the CLI exits with guidance when the endpoint has never be
 `--min-grade` turns the report into a CI gate, exiting non-zero when the grade is worse than the
 floor (A best, F worst). `--output json` (or the global `--json`) prints the raw report.
 
+### MCP governance (policy & key capabilities)
+
+Tenant MCP policy and per-key capability grants are managed with a **session bearer**
+(`APIOME_SESSION_TOKEN` / `--session-token`) and tenant scope. Mutations require a
+**tenant administrator** JWT — workspace API keys cannot write governance (MTG-3.4 / MTG-5.3).
+
+Print or replace the tenant policy (`GET` / `PUT /v1/tenants/{slug}/mcp-policy`). `--json`
+emits the raw document; `policy set` accepts a JSON file (or `-` for stdin) and/or field
+flags. Flags alone fetch the current policy, merge, validate locally, then PUT:
+
+```bash
+apiome mcp policy get
+apiome --json mcp policy get
+apiome mcp policy set --file policy.json
+apiome mcp policy get --output json | apiome mcp policy set --file - --allow-anonymous false
+apiome mcp policy set --default-mode explicit --allow-anonymous false
+```
+
+Example `policy.json` body (matches `TenantMcpPolicyPutRequest`; response-only
+`updated_at` / `updated_by` fields are stripped when piping `get` into `set`):
+
+```json
+{
+  "default_mode": "all",
+  "allow_anonymous_mcp": true,
+  "tools": [
+    {
+      "tool_id": "ping",
+      "in_ceiling": true,
+      "default_enabled": true,
+      "anonymous_enabled": true
+    }
+  ]
+}
+```
+
+Read or replace per-key grants. `key capabilities get` projects
+`GET …/mcp-keys/{id}` onto `{mode, enabled_tools}` so the shape matches
+`PUT …/capabilities`:
+
+```bash
+apiome mcp key capabilities get <key-uuid>
+apiome --json mcp key capabilities get <key-uuid>
+apiome mcp key capabilities set <key-uuid> --mode inherit
+apiome mcp key capabilities set <key-uuid> --mode explicit --tool ping --tool spec.list
+apiome mcp key capabilities set <key-uuid> --file caps.json
+```
+
 ### Import JSON Schema types
 
 Import system-wide JSON Schema type definitions (typically a `$defs` library) into the platform type table:

@@ -112,6 +112,26 @@ def tenant_repository_file_content(
     return f"{tenant_repository_files(tenant_slug, repository_id)}/{file_id}/content"
 
 
+def tenant_mcp_policy(tenant_slug: str) -> str:
+    """Tenant MCP governance policy (GET/PUT; MTG-3.1 / MTG-5.3)."""
+    return f"{V1}/tenants/{tenant_slug}/mcp-policy"
+
+
+def tenant_mcp_keys(tenant_slug: str) -> str:
+    """MCP API keys collection for a tenant (MTG-3.2)."""
+    return f"{V1}/tenants/{tenant_slug}/mcp-keys"
+
+
+def tenant_mcp_key(tenant_slug: str, key_id: str | UUID) -> str:
+    """One MCP API key's public metadata (MTG-3.2)."""
+    return f"{tenant_mcp_keys(tenant_slug)}/{key_id}"
+
+
+def tenant_mcp_key_capabilities(tenant_slug: str, key_id: str | UUID) -> str:
+    """Per-key capability grants (PUT; MTG-3.3 / MTG-5.3)."""
+    return f"{tenant_mcp_key(tenant_slug, key_id)}/capabilities"
+
+
 def mcp_endpoints(tenant_slug: str) -> str:
     """MCP catalog endpoints collection (list / register)."""
     return f"{V1}/mcp/{tenant_slug}/endpoints"

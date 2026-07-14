@@ -1,10 +1,9 @@
-"""MCP catalog endpoint commands (Tier 2 API key auth).
+"""MCP catalog and governance commands.
 
-Thin client over the ``apiome-rest`` MCP catalog routes
-(``/v1/mcp/{tenant_slug}/endpoints``). The command group registers an external
-MCP server in the caller's tenant catalog, lists the registered endpoints, and
-shows one endpoint by id. Tenant scope is resolved to a ``tenant_slug`` the same
-way as ``repos`` (the server re-scopes from the token, not the URL slug).
+Catalog subcommands (``register`` / ``list`` / ``show`` / ``discover`` / ``lint``)
+use Tier 2 API key auth against ``/v1/mcp/{tenant_slug}/endpoints``. Governance
+subcommands (``policy``, ``key capabilities``) use a tenant-admin session bearer
+against ``/v1/tenants/{tenant_slug}/mcp-policy`` and ``…/mcp-keys/…`` (MTG-5.3).
 """
 
 from __future__ import annotations
@@ -30,6 +29,7 @@ from apiome_cli.client.mcp_discovery import (
     wait_for_discovery_job,
 )
 from apiome_cli.client.tenant_scope import require_tenant_slug
+from apiome_cli.commands.mcp_governance import key_app, policy_app
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -48,10 +48,15 @@ _LINT_GRADES = frozenset({"A", "B", "C", "D", "F"})
 
 app = typer.Typer(
     name="mcp",
-    help="Register, list, and inspect MCP catalog endpoints.",
+    help=(
+        "MCP catalog endpoints and tenant governance "
+        "(policy / key capabilities)."
+    ),
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
+app.add_typer(policy_app, name="policy")
+app.add_typer(key_app, name="key")
 
 # Mirrors ``MCP_ENDPOINT_TRANSPORTS`` / ``MCP_ENDPOINT_VISIBILITIES`` in the REST
 # models; the server re-validates, but rejecting locally yields a usage exit code
