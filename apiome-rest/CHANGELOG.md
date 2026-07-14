@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.36] - 2026-07-14
+
+### Added
+- **Format lint capability matrix and adapter evidence migration (CLX-2.4, #4854)** —
+  published `GET /v1/lint/format-capabilities` classifies every sniffed/importable format as
+  native / adapted / unsupported (planned Smithy/RAML/TypeSpec/Avro/OData/API Blueprint/WS-I
+  packs stay linked to existing MFI issues). GraphQL ESLint joins the CLX-2.1 adapter SPI
+  (`graphql.eslint`); Buf and GraphQL ESLint persist CLX-1.1 evidence; catalog evidence coverage
+  is format-aware. Catalog UI **Source-format checks** strip shows which scanners ran.
+  OpenAPI **1.0.83**.
+
 ## [1.117.35] - 2026-07-14
 
 ### Added

@@ -294,6 +294,20 @@ def capture_canonical_quality_score(
             report.report_fingerprint,
             quality_report=report.to_persisted_dict(),
         )
+        # CLX-2.4: Buf / GraphQL ESLint → CLX-1.1 evidence (best-effort; never fails import).
+        try:
+            from .format_adapter_evidence import capture_format_adapters_for_revision_sync
+
+            capture_format_adapters_for_revision_sync(
+                version_record_id=version_record_id,
+                tenant_id=tenant_id,
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Failed to capture format-adapter evidence for revision %s",
+                version_record_id,
+                exc_info=True,
+            )
     except Exception:  # noqa: BLE001 - capture is strictly best-effort
         logger.warning(
             "Failed to capture canonical quality score for revision %s",

@@ -30,6 +30,8 @@ from .models import (
     CustomRuleThenOut,
     ExternalLintAdapterOut,
     ExternalLintAdaptersResponse,
+    FormatLintCapabilitiesResponse,
+    FormatLintCapabilityOut,
     LintAxesResponse,
     LintCategoryScoreOut,
     LintEvidenceResponse,
@@ -107,6 +109,31 @@ async def list_external_lint_adapters(
         default_bulk_runner=DEFAULT_BULK_RUNNER,
         profiles=list(VALIDATION_PROFILES),
         rationale=parity_default_runner_rationale(),
+    )
+
+
+_FORMAT_CAPABILITIES_DOCS = "apiome-rest/docs/format_lint_capabilities.md"
+
+
+@rules_router.get("/format-capabilities", response_model=FormatLintCapabilitiesResponse)
+async def list_format_lint_capabilities(
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> FormatLintCapabilitiesResponse:
+    """Publish the per-format lint capability matrix (CLX-2.4 / #4854).
+
+    Every sniffed / importable format reports ``native``, ``adapted``, or
+    ``unsupported``. Unsupported planned packs link their existing MFI issues
+    rather than duplicating parser/normalizer work.
+    """
+    _ = auth_data
+    from .format_lint_capabilities import capability_dicts
+
+    rows = capability_dicts()
+    formats = [FormatLintCapabilityOut(**row) for row in rows]
+    return FormatLintCapabilitiesResponse(
+        formats=formats,
+        count=len(formats),
+        docs_page=_FORMAT_CAPABILITIES_DOCS,
     )
 
 
@@ -562,9 +589,31 @@ async def lint_revision_evidence(
             detail="Revision does not belong to the specified project",
         )
 
+    source_projection = db.get_version_source_projection(version_record_id, tenant_id)
+    raw_format = (
+        source_projection.get("source_format")
+        if isinstance(source_projection, dict)
+        else None
+    )
+    source_format = raw_format if isinstance(raw_format, str) else None
+    # CLX-2.4: ensure Buf / GraphQL ESLint evidence exists when viewing coverage.
+    try:
+        from .format_adapter_evidence import capture_format_adapters_for_revision
+
+        await capture_format_adapters_for_revision(
+            version_record_id=version_record_id,
+            tenant_id=tenant_id,
+            source_format=source_format,
+        )
+    except Exception:  # noqa: BLE001 — evidence must never break the read path
+        pass
+
     rows = db.list_lint_evidence_runs_for_version(version_record_id, tenant_id)
     return lint_evidence_response_from_rows(
-        SUBJECT_CATALOG_REVISION, version_record_id, rows
+        SUBJECT_CATALOG_REVISION,
+        version_record_id,
+        rows,
+        source_format=source_format,
     )
 
 

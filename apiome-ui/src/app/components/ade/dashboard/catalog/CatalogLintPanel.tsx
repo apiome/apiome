@@ -66,6 +66,7 @@ import {
 } from '@/app/utils/catalog-lint-panel';
 import { lintAxisEvaluationFromLintReport } from '@/app/utils/lint-axis-ui';
 import { LintAxisCoveragePanel } from '@/app/components/ade/dashboard/lint/LintAxisCoveragePanel';
+import { SourceFormatChecksPanel } from '@/app/components/ade/dashboard/lint/SourceFormatChecksPanel';
 import { LintDecisionBadge } from '@/app/utils/lint-policy-ui';
 
 /** SVG progress-ring geometry (viewBox 0 0 40 40, radius 16 like `SchemaVersionScoringPanel`). */
@@ -96,6 +97,8 @@ interface CatalogLintPanelProps {
    * strip. Optional — the strip omits the "Scored" row when it is absent.
    */
   scoredAt?: string | null;
+  /** Imported source format (e.g. `graphql`) for the source-format checks strip (CLX-2.4). */
+  sourceFormat?: string | null;
 }
 
 /** The fetch lifecycle of the lint report (`idle`/`loading` render the spinner). */
@@ -473,6 +476,7 @@ export function CatalogLintPanel({
   entityNames,
   onNavigateToEntity,
   scoredAt,
+  sourceFormat,
 }: CatalogLintPanelProps) {
   const [status, setStatus] = useState<LintStatus>('idle');
   const [report, setReport] = useState<VersionLintReport | null>(null);
@@ -748,6 +752,16 @@ export function CatalogLintPanel({
         {axisEvaluation ? (
           <div className="mt-4">
             <LintAxisCoveragePanel evaluation={axisEvaluation} />
+          </div>
+        ) : null}
+
+        {report.projectId && report.versionRecordId ? (
+          <div className="mt-4">
+            <SourceFormatChecksPanel
+              projectId={report.projectId}
+              versionRecordId={report.versionRecordId}
+              sourceFormat={sourceFormat}
+            />
           </div>
         ) : null}
 

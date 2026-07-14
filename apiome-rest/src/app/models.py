@@ -3210,6 +3210,54 @@ class ExternalLintAdaptersResponse(BaseModel):
     )
 
 
+class FormatLintCapabilityOut(BaseModel):
+    """One format's lint coverage classification (CLX-2.4 / #4854)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    format: str = Field(description="Catalog / detection format key.")
+    mode: str = Field(
+        description="native | adapted | unsupported — primary coverage classification."
+    )
+    importable: bool = Field(
+        description="Whether an import-source adapter can ingest this format today."
+    )
+    native_pack: Optional[str] = Field(
+        default=None,
+        serialization_alias="nativePack",
+        description="Registered rule-pack key or openapi-schema-lint when applicable.",
+    )
+    adapted_scanners: List[str] = Field(
+        default_factory=list,
+        serialization_alias="adaptedScanners",
+        description="External adapter scanner ids covering this format.",
+    )
+    common_pack_only: bool = Field(
+        default=False,
+        serialization_alias="commonPackOnly",
+        description="True when only the cross-format common pack applies (no format pack).",
+    )
+    related_issues: List[str] = Field(
+        default_factory=list,
+        serialization_alias="relatedIssues",
+        description="Linked GitHub issues for planned pack work (no duplicate tickets).",
+    )
+    notes: str = Field(default="", description="Short rationale for the classification.")
+
+
+class FormatLintCapabilitiesResponse(BaseModel):
+    """Published per-format lint capability matrix (CLX-2.4 / #4854)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    formats: List[FormatLintCapabilityOut]
+    count: int
+    docs_page: str = Field(
+        serialization_alias="docsPage",
+        description="Repository-relative path of the capability matrix documentation.",
+    )
+
+
 class LintEvidenceFindingOut(BaseModel):
     """One normalized finding in the source-neutral evidence envelope (CLX-1.1, #4848).
 
@@ -3946,6 +3994,9 @@ def lint_evidence_response_from_rows(
     subject_type: str,
     subject_id: str,
     rows: Sequence[Mapping[str, Any]],
+    *,
+    source_format: Optional[str] = None,
+    expected_scanners: Optional[Sequence[str]] = None,
 ) -> LintEvidenceResponse:
     """Build the full evidence response for one subject from its stored runs.
 
@@ -3958,12 +4009,23 @@ def lint_evidence_response_from_rows(
         subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.
         subject_id: The revision or snapshot id the evidence belongs to.
         rows: Evidence rows, most recent first (as the list queries return them).
+        source_format: Optional revision source format; when set for catalog revisions,
+            expected scanners include format-specific adapters (CLX-2.4).
+        expected_scanners: Explicit override of the expected scanner set.
 
     Returns:
         The API-ready evidence response.
     """
     runs = [lint_evidence_run_out_from_row(row) for row in rows]
-    entries = coverage_entries(rows, expected_scanners_for_subject(subject_type))
+    if expected_scanners is not None:
+        scanners = list(expected_scanners)
+    elif source_format and subject_type == "catalog_revision":
+        from .format_lint_capabilities import expected_scanners_for_catalog_format
+
+        scanners = expected_scanners_for_catalog_format(source_format)
+    else:
+        scanners = expected_scanners_for_subject(subject_type)
+    entries = coverage_entries(rows, scanners)
     coverage = [
         LintEvidenceCoverageOut(
             scanner_id=str(e["scanner_id"]),

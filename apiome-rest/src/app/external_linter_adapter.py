@@ -273,11 +273,15 @@ def load_builtin_adapters() -> None:
     # CLX-2.3 (#4853): oasdiff OpenAPI compatibility adapter.
     from . import openapi_compatibility_adapters as _oas_compat  # noqa: F401
 
+    # CLX-2.4 (#4854): GraphQL ESLint adapter (evidence contract migration).
+    from . import graphql_eslint_adapter as _gql_eslint  # noqa: F401
+
     _ = (
         _oas_packs.SpectralOasAdapter,
         _oas_packs.VacuumOasAdapter,
         _oas_packs.RedoclyOasAdapter,
         _oas_compat.OasdiffAdapter,
+        _gql_eslint.GraphqlEslintAdapter,
     )
     _builtin_adapters_loaded = True
 

@@ -711,6 +711,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             entityNames={entityNames}
             onNavigateToEntity={navigateToEntity}
             scoredAt={item.updated_at ?? item.created_at ?? null}
+            sourceFormat={item.sourceFormat ?? null}
           />
         </TabPanel>
 
