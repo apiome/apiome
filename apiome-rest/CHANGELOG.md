@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.24] - 2026-07-14
+
+### Added
+- **MCP API key REST management (MTG-3.2, #4776)** — tenant-admin lifecycle over
+  `apiome.mcp_api_keys`: `GET`/`POST /v1/tenants/{tenant_slug}/mcp-keys` and
+  `GET`/`PATCH`/`DELETE …/mcp-keys/{key_id}`. Create returns plaintext `secret`
+  once; list/get never include secret or hash; revoke soft-sets `revoked_at`.
+  Capability grant writes remain MTG-3.3. OpenAPI **1.0.71**.
+
 ## [1.117.23] - 2026-07-14
 
 ### Added

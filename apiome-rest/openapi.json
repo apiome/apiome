@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.70",
+    "version": "1.0.71",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -20321,6 +20321,487 @@
         }
       }
     },
+    "/v1/tenants/{tenant_slug}/mcp-keys": {
+      "get": {
+        "tags": [
+          "mcp-keys"
+        ],
+        "summary": "List MCP API keys",
+        "description": "List MCP API key metadata for the tenant (prefix, label, scope, capability_mode, timestamps). Includes revoked keys for audit. Never returns secret or hash. Tenant administrators only (MTG-3.2, #4776).",
+        "operationId": "list_mcp_api_keys_v1_tenants__tenant_slug__mcp_keys_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Mcpapikeysauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Mcpapikeysauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Mcpapikeys Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Mcpapikeys Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp api keys.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpApiKeyListResponse",
+                  "description": "Response payload for list mcpapikeysresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcpapikeysresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mcp-keys"
+        ],
+        "summary": "Create MCP API key",
+        "description": "Issue a new MCP API key. Returns plaintext ``secret`` once; subsequent reads never include it. Defaults to capability_mode=inherit. Tenant administrators only (MTG-3.2, #4776).",
+        "operationId": "create_mcp_api_key_v1_tenants__tenant_slug__mcp_keys_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Mcpapikeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Mcpapikeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Mcpapikey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Mcpapikey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpApiKeyCreateRequest",
+                "description": "Request body for create mcpapikeyrequest."
+              }
+            }
+          },
+          "description": "Request body for create mcp api key."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create mcp api key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpApiKeyCreateResponse",
+                  "description": "Response payload for create mcpapikeyresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create mcpapikeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/mcp-keys/{key_id}": {
+      "get": {
+        "tags": [
+          "mcp-keys"
+        ],
+        "summary": "Get MCP API key",
+        "description": "Return one MCP API key's public metadata. Never returns secret or hash. Tenant administrators only (MTG-3.2, #4776).",
+        "operationId": "get_mcp_api_key_v1_tenants__tenant_slug__mcp_keys__key_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Mcpapikeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Mcpapikeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Mcpapikey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Mcpapikey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp api key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpApiKeyMetadata",
+                  "description": "Response payload for get mcpapikeyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcpapikeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "mcp-keys"
+        ],
+        "summary": "Update MCP API key",
+        "description": "Update label, expires_at, and/or scope_json on an active (non-revoked) MCP API key. Capability grants are MTG-3.3. Tenant administrators only (MTG-3.2, #4776).",
+        "operationId": "patch_mcp_api_key_v1_tenants__tenant_slug__mcp_keys__key_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Mcpapikeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Mcpapikeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Mcpapikey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Mcpapikey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpApiKeyPatchRequest",
+                "description": "Request body for update mcpapikeyrequest."
+              }
+            }
+          },
+          "description": "Request body for update mcp api key."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update mcp api key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpApiKeyMetadata",
+                  "description": "Response payload for update mcpapikeyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for update mcpapikeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mcp-keys"
+        ],
+        "summary": "Revoke MCP API key",
+        "description": "Soft-revoke an MCP API key (sets revoked_at). Idempotent for already-revoked keys. MCP auth rejects the key immediately. Tenant administrators only (MTG-3.2, #4776).",
+        "operationId": "revoke_mcp_api_key_v1_tenants__tenant_slug__mcp_keys__key_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Revoke Mcpapikeyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Revoke Mcpapikeyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Revoke Mcpapikey Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Revoke Mcpapikey Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for revoke mcp api key."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for revoke mcpapikeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{tenant_slug}/imports": {
       "get": {
         "tags": [
@@ -40222,6 +40703,348 @@
         "title": "McpAnnotationCoverageOut",
         "description": "Per-hint behavioural-annotation coverage over a surface's tools."
       },
+      "McpApiKeyCreateRequest": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Label",
+            "description": "Human label for admin UX.",
+            "example": "example"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Request body for mcp api key create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp api key create."
+              }
+            ],
+            "title": "Expires At",
+            "description": "Optional absolute expiry; omit for no expiry."
+          },
+          "scope_json": {
+            "$ref": "#/components/schemas/McpKeyScopeJson",
+            "description": "Read scope: {\"tenants\":[...],\"projects\":[...]}."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "McpApiKeyCreateRequest",
+        "description": "Issue a new MCP API key."
+      },
+      "McpApiKeyCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "Prefix.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Label.",
+            "example": "example"
+          },
+          "scope_json": {
+            "$ref": "#/components/schemas/McpKeyScopeJson",
+            "description": "Scope JSON."
+          },
+          "capability_mode": {
+            "type": "string",
+            "enum": [
+              "inherit",
+              "explicit"
+            ],
+            "title": "Capability Mode",
+            "description": "Capability Mode.",
+            "example": "inherit"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for mcp api key create."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp api key create."
+              }
+            ],
+            "title": "Expires At",
+            "description": "Expires At timestamp (ISO 8601)."
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for mcp api key create."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp api key create."
+              }
+            ],
+            "title": "Revoked At",
+            "description": "Revoked At timestamp (ISO 8601)."
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for mcp api key create."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp api key create."
+              }
+            ],
+            "title": "Last Used At",
+            "description": "Last Used At timestamp (ISO 8601)."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp api key create."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp api key create."
+              }
+            ],
+            "title": "Created By",
+            "description": "Created By."
+          },
+          "secret": {
+            "type": "string",
+            "title": "Secret",
+            "description": "Plaintext MCP API key; shown only in this response.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "prefix",
+          "label",
+          "scope_json",
+          "capability_mode",
+          "created_at",
+          "secret"
+        ],
+        "title": "McpApiKeyCreateResponse",
+        "description": "Create response: metadata plus one-time plaintext ``secret``."
+      },
+      "McpApiKeyListResponse": {
+        "properties": {
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/McpApiKeyMetadata"
+            },
+            "type": "array",
+            "title": "Keys",
+            "description": "Keys.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "keys"
+        ],
+        "title": "McpApiKeyListResponse",
+        "description": "Tenant MCP API key listing."
+      },
+      "McpApiKeyMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "Prefix.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Label.",
+            "example": "example"
+          },
+          "scope_json": {
+            "$ref": "#/components/schemas/McpKeyScopeJson",
+            "description": "Scope JSON."
+          },
+          "capability_mode": {
+            "type": "string",
+            "enum": [
+              "inherit",
+              "explicit"
+            ],
+            "title": "Capability Mode",
+            "description": "Capability Mode.",
+            "example": "inherit"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "MCP API Key Metadata schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP API Key Metadata schema."
+              }
+            ],
+            "title": "Expires At",
+            "description": "Expires At timestamp (ISO 8601)."
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "MCP API Key Metadata schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP API Key Metadata schema."
+              }
+            ],
+            "title": "Revoked At",
+            "description": "Revoked At timestamp (ISO 8601)."
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "MCP API Key Metadata schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP API Key Metadata schema."
+              }
+            ],
+            "title": "Last Used At",
+            "description": "Last Used At timestamp (ISO 8601)."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP API Key Metadata schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP API Key Metadata schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Created By."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "prefix",
+          "label",
+          "scope_json",
+          "capability_mode",
+          "created_at"
+        ],
+        "title": "McpApiKeyMetadata",
+        "description": "Public MCP API key metadata (never includes secret or hash)."
+      },
+      "McpApiKeyPatchRequest": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "Request body for mcp api key patch."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp api key patch."
+              }
+            ],
+            "title": "Label",
+            "description": "Replace label when set."
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Request body for mcp api key patch."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp api key patch."
+              }
+            ],
+            "title": "Expires At",
+            "description": "Replace expiry when field is present; null clears expiry."
+          },
+          "scope_json": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpKeyScopeJson"
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp api key patch."
+              }
+            ],
+            "description": "Replace scope_json when set."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "McpApiKeyPatchRequest",
+        "description": "Partial update of label, expiry, and/or scope (active keys only)."
+      },
       "McpAuthOverride": {
         "properties": {
           "authType": {
@@ -45952,6 +46775,32 @@
         ],
         "title": "McpInvocationReliabilityOut",
         "description": "Test-invocation reliability: call/error tallies, error rate, and latency statistics."
+      },
+      "McpKeyScopeJson": {
+        "properties": {
+          "tenants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tenants",
+            "description": "Tenant UUIDs the key may read; empty = any tenant.",
+            "maxItems": 1000
+          },
+          "projects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Projects",
+            "description": "Project UUIDs the key may read; empty = any project in scope.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "McpKeyScopeJson",
+        "description": "Read scope stored in ``mcp_api_keys.scope_json`` (empty list = unrestricted)."
       },
       "McpLatencyBucketOut": {
         "properties": {

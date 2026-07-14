@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -14357,6 +14358,304 @@ class Database:
             raise
         finally:
             conn.autocommit = prev_autocommit
+
+    # ------------------------------------------------------------------
+    # MCP API keys lifecycle (MTG-3.2, #4776)
+    # ------------------------------------------------------------------
+
+    _MCP_API_KEY_PREFIX_CHARS = 12
+
+    _MCP_API_KEY_METADATA_SELECT = """
+        id, prefix, label, scope_json, capability_mode,
+        created_at, expires_at, revoked_at, last_used_at, created_by
+    """
+
+    @staticmethod
+    def hash_mcp_api_key_secret(plain: str) -> str:
+        """Hash an MCP API key secret the same way apiome-mcp does (bcrypt of SHA-256)."""
+        digest = hashlib.sha256(plain.encode("utf-8")).digest()
+        return bcrypt.hashpw(digest, bcrypt.gensalt()).decode("ascii")
+
+    @classmethod
+    def mcp_api_key_prefix(cls, secret: str) -> str:
+        """Indexed lookup prefix: first 12 characters of the secret plus ``...``."""
+        n = cls._MCP_API_KEY_PREFIX_CHARS
+        if len(secret) < n:
+            return secret + "..."
+        return secret[:n] + "..."
+
+    @staticmethod
+    def _normalize_mcp_api_key_row(row: Dict[str, Any]) -> Dict[str, Any]:
+        """Map a metadata SELECT row to JSON-serializable public fields (never ``key_hash``)."""
+        scope = row.get("scope_json")
+        if isinstance(scope, str):
+            try:
+                scope = json.loads(scope)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                scope = {}
+        if not isinstance(scope, dict):
+            scope = {}
+        created_by = row.get("created_by")
+        return {
+            "id": str(row["id"]),
+            "prefix": str(row["prefix"]),
+            "label": str(row["label"]),
+            "scope_json": {
+                "tenants": list(scope.get("tenants") or []),
+                "projects": list(scope.get("projects") or []),
+            },
+            "capability_mode": str(row.get("capability_mode") or "inherit"),
+            "created_at": row.get("created_at"),
+            "expires_at": row.get("expires_at"),
+            "revoked_at": row.get("revoked_at"),
+            "last_used_at": row.get("last_used_at"),
+            "created_by": str(created_by) if created_by is not None else None,
+        }
+
+    def list_mcp_api_keys(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List MCP API key metadata for a tenant (includes revoked; never returns hashes).
+
+        Args:
+            tenant_id: Owning tenant UUID.
+
+        Returns:
+            Public metadata dicts ordered by ``created_at`` descending. Empty when none.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_API_KEY_METADATA_SELECT}
+            FROM apiome.mcp_api_keys
+            WHERE tenant_id = %s::uuid
+            ORDER BY created_at DESC
+            """,
+            (tenant_id,),
+        )
+        return [self._normalize_mcp_api_key_row(row) for row in rows]
+
+    def get_mcp_api_key(
+        self, tenant_id: str, key_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Load one MCP API key's public metadata for the tenant, or ``None``.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            key_id: Key row UUID.
+        """
+        if (
+            not tenant_id
+            or not is_uuid_string(str(tenant_id))
+            or not key_id
+            or not is_uuid_string(str(key_id))
+        ):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_API_KEY_METADATA_SELECT}
+            FROM apiome.mcp_api_keys
+            WHERE tenant_id = %s::uuid AND id = %s::uuid
+            """,
+            (tenant_id, key_id),
+        )
+        if not rows:
+            return None
+        return self._normalize_mcp_api_key_row(rows[0])
+
+    def create_mcp_api_key(
+        self,
+        tenant_id: str,
+        *,
+        label: str,
+        scope_json: Optional[Dict[str, Any]] = None,
+        expires_at: Optional[datetime] = None,
+        created_by: Optional[str] = None,
+    ) -> Tuple[Dict[str, Any], str]:
+        """Issue a new MCP API key; return ``(public_metadata, plaintext_secret)``.
+
+        The plaintext secret is returned **once** for the caller to display; only the
+        bcrypt(SHA-256) hash and prefix are stored. ``capability_mode`` / ``enabled_tools``
+        use table defaults (``inherit`` / ``[]``) — capability writes are MTG-3.3.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            label: Human label (non-empty).
+            scope_json: ``{"tenants":[...],"projects":[...]}``; default empty lists.
+            expires_at: Optional expiry timestamp (timezone-aware preferred).
+            created_by: Acting user UUID, or ``None``.
+
+        Returns:
+            Tuple of public metadata dict and the one-time plaintext secret.
+
+        Raises:
+            ValueError: When ids are not UUIDs or ``label`` is blank.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            raise ValueError("tenant_id must be a UUID")
+        if created_by is not None and not is_uuid_string(str(created_by)):
+            raise ValueError("created_by must be a UUID or None")
+        trimmed = (label or "").strip()
+        if not trimmed:
+            raise ValueError("label must be non-empty")
+
+        scope = scope_json if isinstance(scope_json, dict) else {}
+        tenants = scope.get("tenants") if isinstance(scope.get("tenants"), list) else []
+        projects = (
+            scope.get("projects") if isinstance(scope.get("projects"), list) else []
+        )
+        stored_scope = {
+            "tenants": [str(t) for t in tenants if isinstance(t, str)],
+            "projects": [str(p) for p in projects if isinstance(p, str)],
+        }
+
+        plain = secrets.token_urlsafe(32)
+        key_hash = self.hash_mcp_api_key_secret(plain)
+        prefix = self.mcp_api_key_prefix(plain)
+
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.mcp_api_keys (
+                key_hash, prefix, label, tenant_id, scope_json, created_by, expires_at
+            )
+            VALUES (%s, %s, %s, %s::uuid, %s::jsonb, %s::uuid, %s)
+            RETURNING {self._MCP_API_KEY_METADATA_SELECT}
+            """,
+            (
+                key_hash,
+                prefix,
+                trimmed,
+                tenant_id,
+                Json(stored_scope),
+                created_by,
+                expires_at,
+            ),
+        )
+        if not rows:
+            raise RuntimeError("INSERT INTO mcp_api_keys returned no row")
+        return self._normalize_mcp_api_key_row(rows[0]), plain
+
+    def update_mcp_api_key(
+        self,
+        tenant_id: str,
+        key_id: str,
+        *,
+        label: Optional[str] = None,
+        update_label: bool = False,
+        expires_at: Optional[datetime] = None,
+        update_expires_at: bool = False,
+        scope_json: Optional[Dict[str, Any]] = None,
+        update_scope_json: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Patch label / expires_at / scope_json on an **active** MCP API key.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            key_id: Key row UUID.
+            label: New label when ``update_label``.
+            update_label: Whether to apply ``label``.
+            expires_at: New expiry (or ``None`` to clear) when ``update_expires_at``.
+            update_expires_at: Whether to apply ``expires_at``.
+            scope_json: New scope object when ``update_scope_json``.
+            update_scope_json: Whether to apply ``scope_json``.
+
+        Returns:
+            Updated public metadata, or ``None`` when the key is missing / revoked /
+            not in this tenant.
+        """
+        if (
+            not tenant_id
+            or not is_uuid_string(str(tenant_id))
+            or not key_id
+            or not is_uuid_string(str(key_id))
+        ):
+            return None
+        if not (update_label or update_expires_at or update_scope_json):
+            return self.get_mcp_api_key(tenant_id, key_id)
+
+        sets: List[str] = []
+        params: List[Any] = []
+        if update_label:
+            trimmed = (label or "").strip()
+            if not trimmed:
+                raise ValueError("label must be non-empty")
+            sets.append("label = %s")
+            params.append(trimmed)
+        if update_expires_at:
+            sets.append("expires_at = %s")
+            params.append(expires_at)
+        if update_scope_json:
+            scope = scope_json if isinstance(scope_json, dict) else {}
+            tenants = (
+                scope.get("tenants") if isinstance(scope.get("tenants"), list) else []
+            )
+            projects = (
+                scope.get("projects") if isinstance(scope.get("projects"), list) else []
+            )
+            stored_scope = {
+                "tenants": [str(t) for t in tenants if isinstance(t, str)],
+                "projects": [str(p) for p in projects if isinstance(p, str)],
+            }
+            sets.append("scope_json = %s::jsonb")
+            params.append(Json(stored_scope))
+
+        params.extend([tenant_id, key_id])
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.mcp_api_keys
+            SET {", ".join(sets)}
+            WHERE tenant_id = %s::uuid
+              AND id = %s::uuid
+              AND revoked_at IS NULL
+            RETURNING {self._MCP_API_KEY_METADATA_SELECT}
+            """,
+            tuple(params),
+        )
+        if not rows:
+            return None
+        return self._normalize_mcp_api_key_row(rows[0])
+
+    def revoke_mcp_api_key(
+        self, tenant_id: str, key_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Soft-revoke an MCP API key (set ``revoked_at``).
+
+        Already-revoked keys are returned unchanged (idempotent). Missing keys
+        yield ``None``.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            key_id: Key row UUID.
+
+        Returns:
+            Public metadata after revoke (``revoked_at`` set), or ``None`` if unknown.
+        """
+        if (
+            not tenant_id
+            or not is_uuid_string(str(tenant_id))
+            or not key_id
+            or not is_uuid_string(str(key_id))
+        ):
+            return None
+        existing = self.get_mcp_api_key(tenant_id, key_id)
+        if existing is None:
+            return None
+        if existing.get("revoked_at") is not None:
+            return existing
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.mcp_api_keys
+            SET revoked_at = CURRENT_TIMESTAMP
+            WHERE tenant_id = %s::uuid
+              AND id = %s::uuid
+              AND revoked_at IS NULL
+            RETURNING {self._MCP_API_KEY_METADATA_SELECT}
+            """,
+            (tenant_id, key_id),
+        )
+        if not rows:
+            # Race: another writer revoked between SELECT and UPDATE.
+            return self.get_mcp_api_key(tenant_id, key_id)
+        return self._normalize_mcp_api_key_row(rows[0])
 
     def list_mcp_tool_invocation_stats(
         self, endpoint_id: str, window_days: int
