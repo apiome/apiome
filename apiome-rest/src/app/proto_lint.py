@@ -44,7 +44,6 @@ from __future__ import annotations
 
 import json
 import re
-import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from .canonical_model import (
@@ -444,34 +443,6 @@ BUF_LINT_MODULE_YAML = (
 _BUF_LINT_VIOLATIONS_EXIT = 100
 
 
-def _buf_lint_spec() -> "Any":
-    """Build the ``buf lint`` :class:`~app.toolchain_runner.ToolSpec`.
-
-    Derived from the bundled ``buf`` tool (so the deployment's ``APIOME_BUF_BIN`` override
-    and pinned binary still apply), with a ``lint`` leading verb and ``parses_json=False`` —
-    buf's ``--error-format=json`` is *newline-delimited* JSON, parsed by
-    :func:`parse_buf_lint_output`, not a single JSON document.
-    """
-    from .toolchain_packaging import bundled_tool
-    from .toolchain_runner import ToolSpec
-
-    from .proto_descriptor import BUF_TOOL_KEY
-
-    tool = bundled_tool(BUF_TOOL_KEY)
-    executable = tool.executable if tool is not None else "buf"
-    env_override_keys = (tool.env_override_key,) if tool is not None else ()
-    default_timeout = tool.default_timeout_seconds if tool is not None else 60.0
-    return ToolSpec(
-        key=BUF_TOOL_KEY,
-        executable=executable,
-        description="buf lint → findings (MFI-9.4).",
-        base_args=("lint",),
-        default_timeout_seconds=default_timeout,
-        env_override_keys=env_override_keys,
-        parses_json=False,
-    )
-
-
 async def run_buf_lint(
     files: "Any",
     *,
@@ -481,19 +452,17 @@ async def run_buf_lint(
 ) -> List[Dict[str, Any]]:
     """Run ``buf lint`` over a set of ``.proto`` files and return its parsed findings.
 
-    The supplied files are materialised into a private scratch ``buf`` module (the same layout
-    MFI-9.1 compiles, plus a ``buf.yaml`` enabling the STANDARD + COMMENTS lint categories), and
-    ``buf lint <module> --error-format=json`` is run through the MFI-5.1 toolchain runner
-    (no-network sandbox). Lint violations make ``buf`` exit non-zero (code 100); that is the
-    *normal* outcome here — its JSON findings are read off stdout and returned. An operational
-    failure (``buf`` absent, a timeout, a proto that does not build) raises
+    Delegates to the CLX-2.1 :class:`~app.external_linter_adapter.BufLintAdapter` under the
+    restricted runner (no-network sandbox, redacted logs). Lint violations make ``buf`` exit
+    non-zero (code 100); that is the *normal* outcome here — its JSON findings are returned.
+    An operational failure (``buf`` absent, a timeout, a proto that does not build) raises
     :class:`ProtoLintError` instead.
 
     Args:
         files: The ``.proto`` files to lint (each :class:`~app.proto_descriptor.ProtoFile` with
             a module-relative path). Must be non-empty.
-        runner: The toolchain runner to use; defaults to the shared
-            :data:`app.toolchain_runner.default_runner`. Injectable for tests.
+        runner: The toolchain runner to use; defaults to the shared default. Injectable for
+            tests. May also be a :class:`~app.external_linter_runner.RestrictedRunner`.
         timeout: Optional per-call timeout in seconds; falls back to the tool/service default.
         policy: Optional sandbox policy override; falls back to the runner's default.
 
@@ -507,53 +476,82 @@ async def run_buf_lint(
         app.proto_descriptor.ProtoCompileError: If a file carries an unsafe/duplicate path.
     """
     # Imported lazily so importing this pack (e.g. for native-rule registration on the always-on
-    # lint path) never pulls in the toolchain/descriptor machinery.
-    from .proto_descriptor import materialize_proto_module
-    from .toolchain_runner import (
-        ToolExecutionError,
-        ToolNotAvailableError,
-        ToolTimeoutError,
-        ToolchainError,
-        default_runner,
+    # lint path) never pulls in the toolchain/descriptor / adapter machinery.
+    from .external_linter_adapter import (
+        AdapterInput,
+        BufLintAdapter,
+        InputFormat,
+        ScanMode,
+        run_adapter,
+    )
+    from .external_linter_runner import (
+        FAILURE_CRASH,
+        FAILURE_FAILED,
+        FAILURE_TIMEOUT,
+        FAILURE_UNAVAILABLE,
+        RestrictedRunner,
+        default_restricted_runner,
     )
 
     file_list = list(files)
     if not file_list:
         raise ProtoLintError("At least one .proto file is required to lint")
 
-    active_runner = runner if runner is not None else default_runner
-    spec = _buf_lint_spec()
+    if runner is None:
+        restricted: RestrictedRunner = default_restricted_runner
+    elif isinstance(runner, RestrictedRunner):
+        restricted = runner
+    else:
+        restricted = RestrictedRunner(inner=runner)
 
-    with tempfile.TemporaryDirectory(prefix="apiome-proto-lint-") as scratch:
-        materialize_proto_module(scratch, file_list, buf_yaml=BUF_LINT_MODULE_YAML)
-        args = [scratch, "--error-format=json"]
+    file_map = {str(f.path): str(f.content) for f in file_list}
+    try:
+        result = await run_adapter(
+            BufLintAdapter(),
+            AdapterInput(
+                files=file_map,
+                format=InputFormat.PROTOBUF,
+                scan_mode=ScanMode.LINT,
+            ),
+            runner=restricted,
+            timeout=timeout,
+            policy=policy,
+        )
+    except Exception as exc:
+        # ProtoCompileError (unsafe path) and unexpected errors surface unchanged.
+        from .proto_descriptor import ProtoCompileError
 
-        try:
-            result = await active_runner.run_spec(spec, args, timeout=timeout, policy=policy)
-        except ToolNotAvailableError as exc:
-            raise ProtoLintError(
-                "The 'buf' tool is not available in this runtime; protobuf/gRPC lint is "
-                "unavailable here (see the bundled toolchain packaging, MFI-5.2)."
-            ) from exc
-        except ToolTimeoutError as exc:
-            raise ProtoLintError(f"buf lint timed out: {exc}") from exc
-        except ToolExecutionError as exc:
-            # A non-zero exit is buf's signal that it found violations (exit 100): the findings
-            # are the JSON on stdout. Anything else (a build/config failure) has no parseable
-            # findings — surface its diagnostics as an operational error.
-            findings = parse_buf_lint_output(exc.stdout)
-            if findings or exc.exit_code == _BUF_LINT_VIOLATIONS_EXIT:
-                return findings
-            diagnostics = (exc.stderr.strip() or exc.stdout.strip()) or None
-            raise ProtoLintError(
-                "buf lint failed to process the supplied .proto files",
-                diagnostics=diagnostics,
-            ) from exc
-        except ToolchainError as exc:
-            raise ProtoLintError(f"buf lint failed: {exc}") from exc
+        if isinstance(exc, ProtoCompileError):
+            raise
+        raise ProtoLintError(f"buf lint failed: {exc}") from exc
 
-        # Exit 0 → no violations. (Findings on a clean exit would be unusual but are honoured.)
-        return parse_buf_lint_output(result.stdout)
+    if result.failure_kind == FAILURE_UNAVAILABLE:
+        raise ProtoLintError(
+            "The 'buf' tool is not available in this runtime; protobuf/gRPC lint is "
+            "unavailable here (see the bundled toolchain packaging, MFI-5.2)."
+        )
+    if result.failure_kind == FAILURE_TIMEOUT:
+        raise ProtoLintError(
+            f"buf lint timed out: {result.diagnostics or 'timeout'}"
+        )
+    if result.failure_kind in (FAILURE_CRASH, FAILURE_FAILED):
+        # Prefer stderr/stdout diagnostics the way the pre-SPI path did.
+        diagnostics = (
+            (result.stderr.strip() or result.stdout.strip()) or result.diagnostics
+        ) or None
+        # Exit 100 with no parseable rows is still the violations-exit convention.
+        if result.exit_code == _BUF_LINT_VIOLATIONS_EXIT:
+            return list(result.raw_findings)
+        raise ProtoLintError(
+            "buf lint failed to process the supplied .proto files",
+            diagnostics=diagnostics,
+        )
+    if result.failure_kind:
+        raise ProtoLintError(
+            f"buf lint failed: {result.diagnostics or result.failure_kind}"
+        )
+
+    return list(result.raw_findings)
 
 
 # ===========================================================================

@@ -17,8 +17,9 @@ merge into one score:
 ```
 
 The native pack runs on the always-on import-time path (MFI-4.2) with no `buf` binary; the
-`buf lint` half is run through the bundled-toolchain runner (MFI-4.3 / MFI-5.1) and wrapped in,
-degrading gracefully when `buf` is absent.
+`buf lint` half runs through the [external-linter adapter SPI](./external_linter_adapter.md)
+(CLX-2.1 / #4851) on the restricted toolchain runner (MFI-5.1–5.3) and degrades gracefully
+when `buf` is absent.
 
 ## Native rules (`ProtobufRulePack`)
 
