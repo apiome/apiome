@@ -104,10 +104,21 @@ def _load_fixture(name: str) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _semver_tuple(value: str) -> tuple:
+    """Parse a dotted numeric version into a comparable tuple (e.g. '1.0.76' -> (1, 0, 76))."""
+    return tuple(int(part) for part in value.split("."))
+
+
 def test_mtg_rest_openapi_version_is_bumped():
-    """Release-train bump: one OpenAPI version covers the landed MTG REST surface."""
-    assert app.version == _MTG_REST_OPENAPI_VERSION
-    assert _live_spec()["info"]["version"] == _MTG_REST_OPENAPI_VERSION
+    """Release-train bump: the live OpenAPI version is at or past the MTG closeout.
+
+    AGENTS.md bumps ``info.version`` on every REST change, so later tickets move the live
+    version past the MTG train's closeout pin; the contract here is that the MTG surface
+    landed no later than ``_MTG_REST_OPENAPI_VERSION`` and the served spec always carries
+    the app's version.
+    """
+    assert _semver_tuple(app.version) >= _semver_tuple(_MTG_REST_OPENAPI_VERSION)
+    assert _live_spec()["info"]["version"] == app.version
 
 
 @pytest.mark.parametrize(

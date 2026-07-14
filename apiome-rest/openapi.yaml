@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.0.76
+  version: 1.0.77
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -4852,6 +4852,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for lint revisionresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/evidence:
+    get:
+      tags:
+      - lint
+      summary: Lint Revision Evidence
+      description: 'Return the immutable lint evidence recorded for a schema revision
+        (CLX-1.1, #4848).
+
+
+        Lists every evidence run captured for the revision — provenance (scanner,
+        adapter,
+
+        profile, fingerprints), outcome, normalized findings, and coverage — plus
+        a per-scanner
+
+        coverage summary in which a scanner that never ran reads as ``not_run`` (never
+        as clean).
+
+        Raw output artifacts are access-controlled: responses expose only their availability,
+
+        never the storage reference or command metadata. Evidence is read-only by
+        design; rows
+
+        are written at score-capture time and are immutable.'
+      operationId: lint_revision_evidence_v1_versions__tenant_slug___project_id___version_record_id__lint_evidence_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Evidenceauthorization schema.
+          - type: 'null'
+            description: Lint Revision Evidenceauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Evidence Xapikey schema.
+          - type: 'null'
+            description: Lint Revision Evidence Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for lint revision evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintEvidenceResponse'
+                description: Response payload for lint revision evidenceresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for lint revision evidenceresponse422.
   /v1/lint/rules:
     get:
       tags:
@@ -21284,6 +21374,99 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for recompute mcp endpoint version lintresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/evidence:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Get Mcp Endpoint Version Lint Evidence
+      description: 'Return the immutable lint evidence recorded for a version snapshot
+        (CLX-1.1, #4848).
+
+
+        Lists every evidence run captured for the snapshot — provenance (scanner,
+        adapter,
+
+        profile, fingerprints), outcome, normalized findings, and coverage — plus
+        a per-scanner
+
+        coverage summary in which a scanner that never ran reads as ``not_run`` (never
+        as clean).
+
+        Raw output artifacts are access-controlled: responses expose only their availability,
+
+        never the storage reference or command metadata. 404 when the endpoint — or
+        the version
+
+        under it — is not the caller''s tenant''s.'
+      operationId: get_mcp_endpoint_version_lint_evidence_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_evidence_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Evidenceauthorization schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Evidenceauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Evidence Xapikey schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Evidence Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get mcp endpoint version lint evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintEvidenceResponse'
+                description: Response payload for get mcp endpoint version lint evidenceresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get mcp endpoint version lint evidenceresponse422.
   /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/credentials:
     get:
       tags:
@@ -29542,6 +29725,338 @@ components:
         score, scoped to
 
         the category''s findings, so a clean category is 100 and a noisy one is low.'
+    LintEvidenceCoverageOut:
+      properties:
+        scannerId:
+          type: string
+          title: Scannerid
+          description: The scanner this entry covers.
+          example: example
+        outcome:
+          type: string
+          title: Outcome
+          description: Latest run outcome for the scanner, or not_run when it never
+            ran.
+          example: example
+        coverage:
+          additionalProperties: true
+          type: object
+          title: Coverage
+          description: 'Latest run''s coverage state ({''state'': none} when the scanner
+            never ran).'
+        runId:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence coverage.
+          - type: 'null'
+            description: Response payload for lint evidence coverage.
+          title: Runid
+          description: Evidence run backing this entry; null for synthetic not_run
+            entries.
+        recordedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence coverage.
+          - type: 'null'
+            description: Response payload for lint evidence coverage.
+          title: Recordedat
+          description: When the backing run was recorded; null for synthetic not_run
+            entries.
+      type: object
+      required:
+      - scannerId
+      - outcome
+      title: LintEvidenceCoverageOut
+      description: 'Per-scanner coverage entry for a subject (CLX-1.1, #4848).
+
+
+        Every scanner expected for the subject appears exactly once. A scanner that
+        never ran
+
+        reads as ``outcome=''not_run''`` with ``coverage.state=''none''`` — an absent
+        scan is a
+
+        visible state and is never displayed as clean.'
+    LintEvidenceFindingOut:
+      properties:
+        ruleId:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Ruleid
+          description: Stable rule identifier from the producing scanner's catalog.
+        message:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Message
+          description: Human-readable finding text.
+        severity:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Severity
+          description: Severity as reported (error/warning/info).
+        confidence:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Confidence
+          description: How certain the source is (native deterministic lint is 'high').
+        category:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Category
+          description: Rule group (naming, documentation, structure, ...).
+        location:
+          additionalProperties: true
+          type: object
+          title: Location
+          description: 'Structured location within the scanned input (e.g. {''path'':
+            ...}).'
+        remediation:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Remediation
+          description: Remediation metadata from the source (fix hint, docs URL),
+            when provided.
+        sourceFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence finding.
+          - type: 'null'
+            description: Response payload for lint evidence finding.
+          title: Sourcefingerprint
+          description: Source-local stable identity of the finding, for tracking across
+            runs.
+      type: object
+      title: LintEvidenceFindingOut
+      description: 'One normalized finding in the source-neutral evidence envelope
+        (CLX-1.1, #4848).
+
+
+        Every scanner — native or external — is normalized to this shape, so findings
+        from
+
+        different tools can be compared, tracked, and (later) waived uniformly. All
+        fields are
+
+        optional-by-tolerance: an adapter records what its source can provide, and
+
+        ``source_fingerprint`` preserves a source-local identity when a tool cannot
+        supply a
+
+        durable rule/location pair.'
+    LintEvidenceResponse:
+      properties:
+        subjectType:
+          type: string
+          title: Subjecttype
+          description: 'Subject kind: catalog_revision or mcp_endpoint_version.'
+          example: example
+        subjectId:
+          type: string
+          title: Subjectid
+          description: The revision (versions.id) or snapshot (mcp_endpoint_versions.id).
+          example: example
+        runs:
+          items:
+            $ref: '#/components/schemas/LintEvidenceRunOut'
+          type: array
+          title: Runs
+          description: Immutable evidence runs, most recent first.
+          maxItems: 1000
+        coverage:
+          items:
+            $ref: '#/components/schemas/LintEvidenceCoverageOut'
+          type: array
+          title: Coverage
+          description: 'Per-scanner coverage: expected scanners first, then any additional
+            scanners with historical runs. Never-run scanners appear as not_run —
+            never as clean.'
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: Number of evidence runs (== len(runs)).
+          example: 1
+      type: object
+      required:
+      - subjectType
+      - subjectId
+      - count
+      title: LintEvidenceResponse
+      description: 'All lint evidence for one catalog revision or MCP endpoint version
+        (CLX-1.1, #4848).'
+    LintEvidenceRunOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Evidence run id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        subjectType:
+          type: string
+          title: Subjecttype
+          description: 'Subject kind: catalog_revision or mcp_endpoint_version.'
+          example: example
+        scannerId:
+          type: string
+          title: Scannerid
+          description: Stable id of the evidence source (e.g. apiome.native-lint).
+          example: example
+        scannerVersion:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Scannerversion
+          description: Version of the scanner engine/binary, when known.
+        adapterVersion:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Adapterversion
+          description: Version of the adapter that normalized raw output into the
+            envelope.
+        profile:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Profile
+          description: Execution profile the run used (import-capture, discovery-capture,
+            ...).
+        startedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Startedat
+          description: When scanner execution started, when known.
+        finishedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Finishedat
+          description: When scanner execution finished, when known.
+        outcome:
+          type: string
+          title: Outcome
+          description: 'Run conclusion: passed, findings, not_run, unavailable, failed,
+            or blocked_by_policy.'
+          example: example
+        inputFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Inputfingerprint
+          description: Fingerprint of the exact input the scanner consumed.
+        sourceFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Sourcefingerprint
+          description: Fingerprint of the upstream source, when distinct from the
+            input.
+        configFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Configfingerprint
+          description: Hash of the redacted (non-secret) scanner configuration.
+        rawArtifactAvailable:
+          type: boolean
+          title: Rawartifactavailable
+          description: Whether a raw output artifact is retained for this run. The
+            storage reference itself is access-controlled and never exposed here.
+          default: false
+          example: false
+        reportFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Reportfingerprint
+          description: Fingerprint of the normalized report (preserved from legacy
+            captures).
+        findings:
+          items:
+            $ref: '#/components/schemas/LintEvidenceFindingOut'
+          type: array
+          title: Findings
+          description: Normalized findings in the source-neutral envelope.
+          maxItems: 1000
+        coverage:
+          additionalProperties: true
+          type: object
+          title: Coverage
+          description: 'Coverage of the run over its subject ({''state'': full|partial|none|unknown}).'
+        envelopeVersion:
+          type: integer
+          title: Envelopeversion
+          description: Version of the finding-envelope contract the findings conform
+            to.
+          example: 1
+        recordedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint evidence run.
+          - type: 'null'
+            description: Response payload for lint evidence run.
+          title: Recordedat
+          description: When the evidence row was recorded (rows are write-once).
+      type: object
+      required:
+      - id
+      - subjectType
+      - scannerId
+      - outcome
+      - envelopeVersion
+      title: LintEvidenceRunOut
+      description: 'One immutable lint evidence run for a revision/snapshot (CLX-1.1,
+        #4848).
+
+
+        The provenance record of a single scanner execution: who ran, under which
+        profile and
+
+        configuration fingerprint, when, with what outcome, over how much of the subject.
+        The raw
+
+        output artifact is access-controlled — the API exposes only its availability,
+        never the
+
+        storage reference or command line.'
     LintFindingOut:
       properties:
         id:

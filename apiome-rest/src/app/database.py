@@ -12,6 +12,7 @@ from psycopg2.extras import Json, RealDictCursor
 
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .jsonschema_generator import generate_class_jsonschema_spec
+from .lint_evidence import mcp_evidence_run, native_evidence_run
 from .mcp_facets import (
     COMPLEXITY_MODERATE_MAX_PROPERTIES,
     COMPLEXITY_SIMPLE_MAX_PROPERTIES,
@@ -2341,7 +2342,141 @@ class Database:
             query,
             (score, grade, report_fingerprint, report_json, version_record_id, tenant_id),
         )
+        if rows and quality_report and quality_report.get("report_fingerprint"):
+            # CLX-1.1 (#4848): every persisted native report is also represented in the
+            # immutable evidence substrate. Best-effort: evidence must never break scoring.
+            try:
+                self.record_lint_evidence_run(native_evidence_run(version_record_id, quality_report))
+            except Exception:  # noqa: BLE001 - evidence capture is strictly additive
+                _logger.warning(
+                    "Failed to record lint evidence for revision %s",
+                    version_record_id,
+                    exc_info=True,
+                )
         return bool(rows)
+
+    def record_lint_evidence_run(self, run: Dict[str, Any]) -> Optional[str]:
+        """Insert one write-once lint evidence run (CLX-1.1, #4848).
+
+        Evidence rows are immutable and append-only (``lint_evidence_runs``, V167): a re-scan
+        inserts a NEW row rather than updating an old one. To keep unchanged re-scores from
+        appending duplicate rows, the insert is skipped when the same subject + scanner already
+        has a run with the same ``report_fingerprint`` (a fingerprint identifies report content).
+
+        Args:
+            run: Column-name -> value dict built by :func:`app.lint_evidence.native_evidence_run`
+                or :func:`app.lint_evidence.mcp_evidence_run`. ``findings`` / ``coverage`` are
+                plain Python structures and are JSONB-wrapped here.
+
+        Returns:
+            The new run's id, or ``None`` when an identical report was already evidenced.
+        """
+        query = """
+            INSERT INTO apiome.lint_evidence_runs (
+                subject_type, version_record_id, mcp_version_id, scanner_id, scanner_version,
+                adapter_version, profile, started_at, finished_at, outcome, input_fingerprint,
+                source_fingerprint, config_fingerprint, raw_artifact_ref, report_fingerprint,
+                findings, coverage, envelope_version
+            )
+            SELECT %s, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                   %s::jsonb, %s::jsonb, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM apiome.lint_evidence_runs r
+                WHERE r.scanner_id = %s
+                  AND r.report_fingerprint = %s
+                  AND (
+                        (%s::uuid IS NOT NULL AND r.version_record_id = %s::uuid)
+                        OR (%s::uuid IS NOT NULL AND r.mcp_version_id = %s::uuid)
+                      )
+            )
+            RETURNING id
+        """
+        version_record_id = run.get("version_record_id")
+        mcp_version_id = run.get("mcp_version_id")
+        rows = self.execute_query(
+            query,
+            (
+                run["subject_type"],
+                version_record_id,
+                mcp_version_id,
+                run["scanner_id"],
+                run.get("scanner_version"),
+                run.get("adapter_version"),
+                run.get("profile"),
+                run.get("started_at"),
+                run.get("finished_at"),
+                run["outcome"],
+                run.get("input_fingerprint"),
+                run.get("source_fingerprint"),
+                run.get("config_fingerprint"),
+                run.get("raw_artifact_ref"),
+                run.get("report_fingerprint"),
+                Json(run.get("findings") or []),
+                Json(run.get("coverage") or {"state": "unknown"}),
+                run.get("envelope_version", 1),
+                run["scanner_id"],
+                run.get("report_fingerprint"),
+                version_record_id,
+                version_record_id,
+                mcp_version_id,
+                mcp_version_id,
+            ),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    _LINT_EVIDENCE_COLUMNS = """
+            r.id, r.subject_type, r.version_record_id, r.mcp_version_id, r.scanner_id,
+            r.scanner_version, r.adapter_version, r.profile, r.started_at, r.finished_at,
+            r.outcome, r.input_fingerprint, r.source_fingerprint, r.config_fingerprint,
+            r.raw_artifact_ref, r.report_fingerprint, r.findings, r.coverage,
+            r.envelope_version, r.created_at
+    """
+
+    def list_lint_evidence_runs_for_version(
+        self, version_record_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """List evidence runs for one catalog revision, most recent first (CLX-1.1, #4848).
+
+        Tenant-scoped through the owning project (like :meth:`set_version_quality_score`), so a
+        caller can never read another tenant's evidence. The raw artifact reference IS included
+        in the rows for server-side use; API responses must redact it to an availability flag.
+
+        Args:
+            version_record_id: The revision (``versions.id``) whose evidence to list.
+            tenant_id: The caller's tenant; rows outside it are invisible.
+
+        Returns:
+            Evidence-run rows ordered ``created_at DESC, id`` (deterministic).
+        """
+        query = f"""
+            SELECT {self._LINT_EVIDENCE_COLUMNS}
+            FROM apiome.lint_evidence_runs r
+            JOIN apiome.versions v ON v.id = r.version_record_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE r.version_record_id = %s AND p.tenant_id = %s
+            ORDER BY r.created_at DESC, r.id
+        """
+        return self.execute_query(query, (version_record_id, tenant_id))
+
+    def list_lint_evidence_runs_for_mcp_version(self, version_id: str) -> List[Dict[str, Any]]:
+        """List evidence runs for one MCP discovery snapshot, most recent first (CLX-1.1, #4848).
+
+        Tenant scoping is the caller's job (mirroring :meth:`get_mcp_version_score`): MCP
+        routes re-validate the owning endpoint against the token tenant before reading.
+
+        Args:
+            version_id: The snapshot (``mcp_endpoint_versions.id``) whose evidence to list.
+
+        Returns:
+            Evidence-run rows ordered ``created_at DESC, id`` (deterministic).
+        """
+        query = f"""
+            SELECT {self._LINT_EVIDENCE_COLUMNS}
+            FROM apiome.lint_evidence_runs r
+            WHERE r.mcp_version_id = %s
+            ORDER BY r.created_at DESC, r.id
+        """
+        return self.execute_query(query, (version_id,))
 
     def set_version_source_format(
         self,
@@ -13626,6 +13761,30 @@ class Database:
                 report_fingerprint,
             ),
         )
+        if rows and report and report.get("report_fingerprint"):
+            # CLX-1.1 (#4848): mirror the persisted report into the immutable evidence
+            # substrate. The score row upserts in place; evidence appends a new run instead
+            # (skipped when the fingerprint is already evidenced). Best-effort by design.
+            try:
+                surface_rows = self.execute_query(
+                    "SELECT surface_fingerprint FROM apiome.mcp_endpoint_versions WHERE id = %s::uuid",
+                    (version_id,),
+                )
+                self.record_lint_evidence_run(
+                    mcp_evidence_run(
+                        version_id,
+                        report,
+                        input_fingerprint=(
+                            surface_rows[0].get("surface_fingerprint") if surface_rows else None
+                        ),
+                    )
+                )
+            except Exception:  # noqa: BLE001 - evidence capture is strictly additive
+                _logger.warning(
+                    "Failed to record lint evidence for MCP version %s",
+                    version_id,
+                    exc_info=True,
+                )
         return bool(rows)
 
     def insert_mcp_test_invocation(

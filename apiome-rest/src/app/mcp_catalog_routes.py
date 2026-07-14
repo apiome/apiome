@@ -85,9 +85,11 @@ from .mcp_report_card import (
     render_report_html,
     render_report_markdown,
 )
+from .lint_evidence import SUBJECT_MCP_ENDPOINT_VERSION
 from .mcp_score import score_mcp_surface
 from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
+    LintEvidenceResponse,
     McpBrowseResponse,
     McpCredentialDeleteResponse,
     McpCredentialStatusResponse,
@@ -159,6 +161,7 @@ from .models import (
     mcp_endpoint_view_response,
     mcp_evolution_point_from_row,
     mcp_faceted_search_response_from_bundle,
+    lint_evidence_response_from_rows,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
     mcp_surface_metrics_out,
@@ -1303,6 +1306,37 @@ async def recompute_mcp_endpoint_version_lint(
         result.report_dict(),
         source="computed",
         scored_at=stored.get("scored_at") if stored else None,
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/evidence",
+    response_model=LintEvidenceResponse,
+)
+async def get_mcp_endpoint_version_lint_evidence(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintEvidenceResponse:
+    """Return the immutable lint evidence recorded for a version snapshot (CLX-1.1, #4848).
+
+    Lists every evidence run captured for the snapshot — provenance (scanner, adapter,
+    profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
+    coverage summary in which a scanner that never ran reads as ``not_run`` (never as clean).
+    Raw output artifacts are access-controlled: responses expose only their availability,
+    never the storage reference or command metadata. 404 when the endpoint — or the version
+    under it — is not the caller's tenant's.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    rows = db.list_lint_evidence_runs_for_mcp_version(str(version_id))
+    return lint_evidence_response_from_rows(
+        SUBJECT_MCP_ENDPOINT_VERSION, str(version_id), rows
     )
 
 

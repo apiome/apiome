@@ -6,6 +6,7 @@ from urllib.parse import urlsplit, urlunsplit
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
+from .lint_evidence import coverage_entries, expected_scanners_for_subject
 from .mcp_catalog_inventory import derive_health as derive_mcp_endpoint_health
 from .mcp_change_severity import (
     SEVERITY_ADDITIVE,
@@ -3087,6 +3088,295 @@ class LintRuleCatalogResponse(BaseModel):
     docs_page: str = Field(
         serialization_alias="docsPage",
         description="Repository-relative path of the rule reference page docsAnchor points into.",
+    )
+
+
+class LintEvidenceFindingOut(BaseModel):
+    """One normalized finding in the source-neutral evidence envelope (CLX-1.1, #4848).
+
+    Every scanner — native or external — is normalized to this shape, so findings from
+    different tools can be compared, tracked, and (later) waived uniformly. All fields are
+    optional-by-tolerance: an adapter records what its source can provide, and
+    ``source_fingerprint`` preserves a source-local identity when a tool cannot supply a
+    durable rule/location pair.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="ruleId",
+        description="Stable rule identifier from the producing scanner's catalog.",
+    )
+    message: Optional[str] = Field(default=None, description="Human-readable finding text.")
+    severity: Optional[str] = Field(
+        default=None, description="Severity as reported (error/warning/info)."
+    )
+    confidence: Optional[str] = Field(
+        default=None,
+        description="How certain the source is (native deterministic lint is 'high').",
+    )
+    category: Optional[str] = Field(
+        default=None, description="Rule group (naming, documentation, structure, ...)."
+    )
+    location: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured location within the scanned input (e.g. {'path': ...}).",
+    )
+    remediation: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Remediation metadata from the source (fix hint, docs URL), when provided.",
+    )
+    source_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="sourceFingerprint",
+        description="Source-local stable identity of the finding, for tracking across runs.",
+    )
+
+
+class LintEvidenceRunOut(BaseModel):
+    """One immutable lint evidence run for a revision/snapshot (CLX-1.1, #4848).
+
+    The provenance record of a single scanner execution: who ran, under which profile and
+    configuration fingerprint, when, with what outcome, over how much of the subject. The raw
+    output artifact is access-controlled — the API exposes only its availability, never the
+    storage reference or command line.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str = Field(description="Evidence run id.")
+    subject_type: str = Field(
+        serialization_alias="subjectType",
+        description="Subject kind: catalog_revision or mcp_endpoint_version.",
+    )
+    scanner_id: str = Field(
+        serialization_alias="scannerId",
+        description="Stable id of the evidence source (e.g. apiome.native-lint).",
+    )
+    scanner_version: Optional[str] = Field(
+        default=None,
+        serialization_alias="scannerVersion",
+        description="Version of the scanner engine/binary, when known.",
+    )
+    adapter_version: Optional[str] = Field(
+        default=None,
+        serialization_alias="adapterVersion",
+        description="Version of the adapter that normalized raw output into the envelope.",
+    )
+    profile: Optional[str] = Field(
+        default=None,
+        description="Execution profile the run used (import-capture, discovery-capture, ...).",
+    )
+    started_at: Optional[str] = Field(
+        default=None,
+        serialization_alias="startedAt",
+        description="When scanner execution started, when known.",
+    )
+    finished_at: Optional[str] = Field(
+        default=None,
+        serialization_alias="finishedAt",
+        description="When scanner execution finished, when known.",
+    )
+    outcome: str = Field(
+        description=(
+            "Run conclusion: passed, findings, not_run, unavailable, failed, or "
+            "blocked_by_policy."
+        ),
+    )
+    input_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="inputFingerprint",
+        description="Fingerprint of the exact input the scanner consumed.",
+    )
+    source_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="sourceFingerprint",
+        description="Fingerprint of the upstream source, when distinct from the input.",
+    )
+    config_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="configFingerprint",
+        description="Hash of the redacted (non-secret) scanner configuration.",
+    )
+    raw_artifact_available: bool = Field(
+        default=False,
+        serialization_alias="rawArtifactAvailable",
+        description=(
+            "Whether a raw output artifact is retained for this run. The storage reference "
+            "itself is access-controlled and never exposed here."
+        ),
+    )
+    report_fingerprint: Optional[str] = Field(
+        default=None,
+        serialization_alias="reportFingerprint",
+        description="Fingerprint of the normalized report (preserved from legacy captures).",
+    )
+    findings: List[LintEvidenceFindingOut] = Field(
+        default_factory=list,
+        description="Normalized findings in the source-neutral envelope.",
+    )
+    coverage: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Coverage of the run over its subject ({'state': full|partial|none|unknown}).",
+    )
+    envelope_version: int = Field(
+        serialization_alias="envelopeVersion",
+        description="Version of the finding-envelope contract the findings conform to.",
+    )
+    recorded_at: Optional[str] = Field(
+        default=None,
+        serialization_alias="recordedAt",
+        description="When the evidence row was recorded (rows are write-once).",
+    )
+
+
+class LintEvidenceCoverageOut(BaseModel):
+    """Per-scanner coverage entry for a subject (CLX-1.1, #4848).
+
+    Every scanner expected for the subject appears exactly once. A scanner that never ran
+    reads as ``outcome='not_run'`` with ``coverage.state='none'`` — an absent scan is a
+    visible state and is never displayed as clean.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    scanner_id: str = Field(
+        serialization_alias="scannerId", description="The scanner this entry covers."
+    )
+    outcome: str = Field(
+        description="Latest run outcome for the scanner, or not_run when it never ran."
+    )
+    coverage: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Latest run's coverage state ({'state': none} when the scanner never ran).",
+    )
+    run_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="runId",
+        description="Evidence run backing this entry; null for synthetic not_run entries.",
+    )
+    recorded_at: Optional[str] = Field(
+        default=None,
+        serialization_alias="recordedAt",
+        description="When the backing run was recorded; null for synthetic not_run entries.",
+    )
+
+
+class LintEvidenceResponse(BaseModel):
+    """All lint evidence for one catalog revision or MCP endpoint version (CLX-1.1, #4848)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    subject_type: str = Field(
+        serialization_alias="subjectType",
+        description="Subject kind: catalog_revision or mcp_endpoint_version.",
+    )
+    subject_id: str = Field(
+        serialization_alias="subjectId",
+        description="The revision (versions.id) or snapshot (mcp_endpoint_versions.id).",
+    )
+    runs: List[LintEvidenceRunOut] = Field(
+        default_factory=list,
+        description="Immutable evidence runs, most recent first.",
+    )
+    coverage: List[LintEvidenceCoverageOut] = Field(
+        default_factory=list,
+        description=(
+            "Per-scanner coverage: expected scanners first, then any additional scanners with "
+            "historical runs. Never-run scanners appear as not_run — never as clean."
+        ),
+    )
+    count: int = Field(description="Number of evidence runs (== len(runs)).")
+
+
+def _iso_or_none(value: Any) -> Optional[str]:
+    """Render a timestamp column value as an ISO-8601 string, passing strings through."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
+def lint_evidence_run_out_from_row(row: Mapping[str, Any]) -> LintEvidenceRunOut:
+    """Shape one ``lint_evidence_runs`` row into its redacted API projection.
+
+    Redaction happens here: ``raw_artifact_ref`` collapses to the boolean
+    ``raw_artifact_available`` so the storage reference/command metadata never leave the
+    server.
+
+    Args:
+        row: One row from the evidence list queries (RealDict shape).
+
+    Returns:
+        The API-ready run model.
+    """
+    findings = [
+        LintEvidenceFindingOut(**f) if isinstance(f, dict) else LintEvidenceFindingOut()
+        for f in (row.get("findings") or [])
+    ]
+    coverage = row.get("coverage")
+    return LintEvidenceRunOut(
+        id=str(row["id"]),
+        subject_type=str(row["subject_type"]),
+        scanner_id=str(row["scanner_id"]),
+        scanner_version=row.get("scanner_version"),
+        adapter_version=row.get("adapter_version"),
+        profile=row.get("profile"),
+        started_at=_iso_or_none(row.get("started_at")),
+        finished_at=_iso_or_none(row.get("finished_at")),
+        outcome=str(row["outcome"]),
+        input_fingerprint=row.get("input_fingerprint"),
+        source_fingerprint=row.get("source_fingerprint"),
+        config_fingerprint=row.get("config_fingerprint"),
+        raw_artifact_available=bool(row.get("raw_artifact_ref")),
+        report_fingerprint=row.get("report_fingerprint"),
+        findings=findings,
+        coverage=coverage if isinstance(coverage, dict) else {},
+        envelope_version=int(row.get("envelope_version") or 1),
+        recorded_at=_iso_or_none(row.get("created_at")),
+    )
+
+
+def lint_evidence_response_from_rows(
+    subject_type: str,
+    subject_id: str,
+    rows: Sequence[Mapping[str, Any]],
+) -> LintEvidenceResponse:
+    """Build the full evidence response for one subject from its stored runs.
+
+    The single shaping path for both subjects (revision and MCP snapshot): runs are projected
+    through :func:`lint_evidence_run_out_from_row` (which redacts raw-artifact references) and
+    coverage is derived via :func:`app.lint_evidence.coverage_entries`, so scanners expected
+    for the subject but never run surface as ``not_run`` instead of silently missing.
+
+    Args:
+        subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.
+        subject_id: The revision or snapshot id the evidence belongs to.
+        rows: Evidence rows, most recent first (as the list queries return them).
+
+    Returns:
+        The API-ready evidence response.
+    """
+    runs = [lint_evidence_run_out_from_row(row) for row in rows]
+    entries = coverage_entries(rows, expected_scanners_for_subject(subject_type))
+    coverage = [
+        LintEvidenceCoverageOut(
+            scanner_id=str(e["scanner_id"]),
+            outcome=str(e["outcome"]),
+            coverage=e.get("coverage") or {},
+            run_id=e.get("run_id"),
+            recorded_at=_iso_or_none(e.get("recorded_at")),
+        )
+        for e in entries
+    ]
+    return LintEvidenceResponse(
+        subject_type=subject_type,
+        subject_id=str(subject_id),
+        runs=runs,
+        coverage=coverage,
+        count=len(runs),
     )
 
 
