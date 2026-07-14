@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from structlog.contextvars import bound_contextvars
 
+from apiome_mcp.capability_middleware import CapabilityCallGateMiddleware
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
@@ -58,8 +59,11 @@ async def database_lifespan(server: Any) -> Any:
 
 
 mcp = FastMCP("Apiome", lifespan=database_lifespan)
-# MTG-2.1 (#4770): middleware must never strip tools from tools/list by enable-set
-# (contrast AGX-3.1). Registry gate + call-time capability (MTG-2.2) act on tools/call only.
+# Middleware run order is reversed on the way in (last added runs first).
+# Inbound: Stash Bearer → registry fail-closed → capability gate → tool.
+# MTG-2.1 (#4770): never strip tools from tools/list by enable-set (contrast AGX-3.1).
+# MTG-2.2 (#4771): call-time enable-set gate after auth resolve.
+mcp.add_middleware(CapabilityCallGateMiddleware())
 mcp.add_middleware(RegistryFailClosedMiddleware())
 mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
 

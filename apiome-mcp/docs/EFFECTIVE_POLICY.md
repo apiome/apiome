@@ -4,7 +4,7 @@ Ceiling, tenant defaults, and per-key grants resolve to **one boolean per
 tool** via a shared pure function in `apiome-rest`
 (`app.mcp_effective_policy`). `apiome-mcp` re-exports the same helpers
 from `apiome_mcp.effective_policy` so REST “preview effective” and the
-future `tools/call` gate (MTG-2.2) cannot disagree.
+`tools/call` gate (MTG-2.2 / `CapabilityCallGateMiddleware`) cannot disagree.
 
 ## Formula
 
@@ -42,12 +42,14 @@ flowchart TD
   AUTH -->|yes| LOAD[Load tenant policy + key grants]
   LOAD --> RES[MTG-1.4 effective resolver]
   RES -->|T enabled| RUN[Execute tool handler]
-  RES -->|T disabled| DENY[MCP error + MTG-2.4 audit]
+  RES -->|T disabled| DENY[MCP ToolError capability_disabled + MTG-2.4 audit]
   LIST[tools/list] --> FULL[Return full registry — MTG-2.1]
 ```
 
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
 Anonymous callers are out of scope for this resolver (MTG-2.3).
+Authenticated denials use stable message token `capability_disabled` (tool name +
+tenant-admin guidance; no secret key material).
 
 ## API surface
 

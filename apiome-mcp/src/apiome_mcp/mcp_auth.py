@@ -32,9 +32,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import re
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 import bcrypt
 import structlog
@@ -46,6 +47,7 @@ from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, ConfigDict, Field
 
 from apiome_mcp.database_pool import get_db_pool
+from apiome_mcp.effective_policy import KeyCapabilitySnapshot
 from apiome_mcp.http_credential_middleware import get_http_bearer_from_context
 from apiome_mcp.scope import Scope, parse_scope_json
 
@@ -55,6 +57,8 @@ MIN_SECRET_LEN = 12
 _PREFIX_CHARS = 12
 
 _BEARER_PREFIX = re.compile(r"(?i)^Bearer\s+")
+
+CapabilityMode = Literal["inherit", "explicit"]
 
 
 class McpAuthContext(BaseModel):
@@ -66,6 +70,15 @@ class McpAuthContext(BaseModel):
     tenant_id: str
     label: str
     scope: Scope = Field(default_factory=Scope)
+    capability_mode: CapabilityMode = "inherit"
+    enabled_tools: frozenset[str] = Field(default_factory=frozenset)
+
+    def key_capability_snapshot(self) -> KeyCapabilitySnapshot:
+        """Return MTG-1.3 grants as the MTG-1.4 resolver snapshot."""
+        return KeyCapabilitySnapshot(
+            capability_mode=self.capability_mode,
+            enabled_tools=self.enabled_tools,
+        )
 
 
 def mcp_key_prefix(secret: str) -> str:
@@ -168,6 +181,25 @@ def _as_utc_aware(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
+def _parse_capability_mode(raw: Any) -> CapabilityMode:
+    if raw == "explicit":
+        return "explicit"
+    return "inherit"
+
+
+def _parse_enabled_tools(raw: Any) -> frozenset[str]:
+    if raw is None:
+        return frozenset()
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except json.JSONDecodeError:
+            return frozenset()
+    if isinstance(raw, (list, tuple, set, frozenset)):
+        return frozenset(str(item).strip() for item in raw if str(item).strip())
+    return frozenset()
+
+
 async def validate_mcp_api_key(pool: AsyncConnectionPool, raw_secret: str) -> McpAuthContext:
     """Load key row by prefix, enforce lifecycle, verify bcrypt(SHA256(secret))."""
     if not raw_secret or len(raw_secret) < MIN_SECRET_LEN:
@@ -175,7 +207,8 @@ async def validate_mcp_api_key(pool: AsyncConnectionPool, raw_secret: str) -> Mc
 
     prefix = mcp_key_prefix(raw_secret)
     query = """
-        SELECT id, tenant_id, scope_json, label, key_hash, expires_at, revoked_at
+        SELECT id, tenant_id, scope_json, label, key_hash, expires_at, revoked_at,
+               capability_mode, enabled_tools
         FROM apiome.mcp_api_keys
         WHERE prefix = %s
     """
@@ -207,6 +240,8 @@ async def validate_mcp_api_key(pool: AsyncConnectionPool, raw_secret: str) -> Mc
                 tenant_id=str(row["tenant_id"]),
                 label=str(row["label"]),
                 scope=parse_scope_json(row.get("scope_json")),
+                capability_mode=_parse_capability_mode(row.get("capability_mode")),
+                enabled_tools=_parse_enabled_tools(row.get("enabled_tools")),
             )
 
     if not eligible:
