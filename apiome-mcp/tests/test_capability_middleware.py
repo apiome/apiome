@@ -140,8 +140,26 @@ def test_disabled_tool_raises_capability_disabled() -> None:
                 new_callable=AsyncMock,
                 return_value=tenant,
             ),
+            patch(
+                "apiome_mcp.capability_middleware.detect_mcp_transport",
+                return_value="http",
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.schedule_mcp_capability_denial",
+            ) as schedule,
         ):
-            await mw.on_call_tool(ctx, call_next)
+            try:
+                await mw.on_call_tool(ctx, call_next)
+            finally:
+                schedule.assert_called_once()
+                kwargs = schedule.call_args.kwargs
+                assert kwargs["key_id"] == auth.key_id
+                assert kwargs["tenant_id"] == auth.tenant_id
+                assert kwargs["tool_id"] == "spec.search"
+                assert kwargs["transport"] == "http"
+                assert kwargs["reason"] == "not_in_key_enable_set"
+                assert "arguments" not in kwargs
+                assert "fake-secret" not in str(kwargs)
 
     with pytest.raises(ToolError, match=CAPABILITY_DISABLED_CODE) as exc_info:
         asyncio.run(run())
@@ -150,7 +168,7 @@ def test_disabled_tool_raises_capability_disabled() -> None:
     call_next.assert_not_awaited()
 
 
-def test_enabled_tool_allows_call() -> None:
+def test_enabled_tool_allows_call_without_denial_audit() -> None:
     mw = CapabilityCallGateMiddleware()
     pool = MagicMock()
     fc = _fc_with_pool(pool)
@@ -178,8 +196,13 @@ def test_enabled_tool_allows_call() -> None:
                 new_callable=AsyncMock,
                 return_value=tenant,
             ),
+            patch(
+                "apiome_mcp.capability_middleware.schedule_mcp_capability_denial",
+            ) as schedule,
         ):
-            return await mw.on_call_tool(ctx, call_next)
+            result = await mw.on_call_tool(ctx, call_next)
+            schedule.assert_not_called()
+            return result
 
     assert asyncio.run(run()) == {"pong": True}
     call_next.assert_awaited_once()
@@ -267,6 +290,9 @@ def test_concurrent_two_keys_same_tenant_different_enable_sets() -> None:
                 new_callable=AsyncMock,
                 return_value=tenant,
             ),
+            patch(
+                "apiome_mcp.capability_middleware.schedule_mcp_capability_denial",
+            ),
         ):
             try:
                 result = await mw.on_call_tool(ctx, call_next)
@@ -326,8 +352,20 @@ def test_ceiling_denies_even_with_explicit_grant() -> None:
                 new_callable=AsyncMock,
                 return_value=tenant,
             ),
+            patch(
+                "apiome_mcp.capability_middleware.detect_mcp_transport",
+                return_value="stdio",
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.schedule_mcp_capability_denial",
+            ) as schedule,
         ):
-            await mw.on_call_tool(ctx, call_next)
+            try:
+                await mw.on_call_tool(ctx, call_next)
+            finally:
+                schedule.assert_called_once()
+                assert schedule.call_args.kwargs["reason"] == "not_in_ceiling"
+                assert schedule.call_args.kwargs["transport"] == "stdio"
 
     with pytest.raises(ToolError, match=CAPABILITY_DISABLED_CODE):
         asyncio.run(run())
