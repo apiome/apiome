@@ -3,6 +3,12 @@
 Key grants come from :class:`~apiome_mcp.mcp_auth.McpAuthContext` (MTG-1.3
 columns on ``mcp_api_keys``). Tenant ceiling / defaults come from
 ``tenant_mcp_policies`` + ``tenant_mcp_policy_tools`` (MTG-1.2).
+
+**Policy freshness (MTG-2.5 / #4774):** MVP resolves policy from Postgres on
+**every** authenticated ``tools/call``. There is no in-process policy cache.
+Callers may rely on :data:`POLICY_FRESHNESS_LAG_BUDGET_SECONDS` (``0``): any
+call that starts after a policy row's commit must see the new value without
+redeploying or restarting the MCP process. See ``docs/POLICY_FRESHNESS.md``.
 """
 
 from __future__ import annotations
@@ -20,6 +26,11 @@ from apiome_mcp.effective_policy import (
 
 # Stable client-facing token embedded in ToolError / CallToolResult text.
 CAPABILITY_DISABLED_CODE = "capability_disabled"
+
+# MTG-2.5 (#4774): max seconds after a committed policy write before a new
+# tools/call must observe it. MVP = per-call DB load → 0. A future TTL cache
+# must keep this ≤ 30 and document the chosen budget.
+POLICY_FRESHNESS_LAG_BUDGET_SECONDS = 0
 
 
 def capability_disabled_message(tool_name: str) -> str:
@@ -46,6 +57,10 @@ async def load_tenant_mcp_policy_snapshot(
 
     A missing policy row is treated as ``default_mode=all`` by the resolver
     (legacy-safe). Present rows may still have an empty tools map.
+
+    **Freshness (MTG-2.5):** must query the database on every call. Do not
+    memoize or process-cache results across ``tools/call`` invocations —
+    callers rely on :data:`POLICY_FRESHNESS_LAG_BUDGET_SECONDS` (``0``).
     """
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:

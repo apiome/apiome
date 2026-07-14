@@ -82,6 +82,11 @@ stable code ``capability_disabled`` (tool name + tenant-admin enable guidance; n
 secrets). Every authenticated denial also appends a row to ``mcp_capability_denials``
 (MTG-2.4 / #4773; no tool arguments). Anonymous callers are deferred to MTG-2.3.
 
+**Policy freshness (MTG-2.5):** Tenant policy and key grants are loaded from Postgres
+on **every** authenticated ``tools/call`` (lag budget ``0``) — an admin disable takes
+effect on the next call without restarting the MCP process. See
+**[docs/POLICY_FRESHNESS.md](docs/POLICY_FRESHNESS.md)**.
+
 **List-always (MTG-2.1):** ``tools/list`` always returns the full live registry —
 never filtered by tenant/key enable-set (contrast AGX-3.1). See
 **[docs/LIST_ALWAYS.md](docs/LIST_ALWAYS.md)**.
