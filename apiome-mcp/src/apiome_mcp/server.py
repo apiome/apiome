@@ -58,6 +58,8 @@ async def database_lifespan(server: Any) -> Any:
 
 
 mcp = FastMCP("Apiome", lifespan=database_lifespan)
+# MTG-2.1 (#4770): middleware must never strip tools from tools/list by enable-set
+# (contrast AGX-3.1). Registry gate + call-time capability (MTG-2.2) act on tools/call only.
 mcp.add_middleware(RegistryFailClosedMiddleware())
 mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
 

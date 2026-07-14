@@ -26,3 +26,5 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 
 - **[`../.env.example`](../.env.example)** — copy/paste template for local development.
 - **Repository root [`docker-compose.env.example`](../../docker-compose.env.example)** — overrides for **`docker compose`** (Postgres + MCP port + secret).
+- **[`LIST_ALWAYS.md`](LIST_ALWAYS.md)** — MTG-2.1 ADR: `tools/list` is never filtered by enable-set (contrast AGX-3.1).
+- **[`EFFECTIVE_POLICY.md`](EFFECTIVE_POLICY.md)** — MTG-1.4 effective resolver used by the future `tools/call` gate.
