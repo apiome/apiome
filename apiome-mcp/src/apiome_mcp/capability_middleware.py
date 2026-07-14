@@ -3,7 +3,8 @@
 After optional auth resolve (HTTP Bearer + stdio ``_meta``, same path as
 ``resolve_optional_mcp_auth``), applies the MTG-1.4 effective policy resolver.
 Disabled tools raise :class:`~fastmcp.exceptions.ToolError` with stable code
-``capability_disabled``. Does **not** filter ``tools/list`` (MTG-2.1).
+``capability_disabled``, and schedule a denial audit row (MTG-2.4 / #4773).
+Does **not** filter ``tools/list`` (MTG-2.1).
 
 Anonymous callers (no credential) pass through; policy for that path is MTG-2.3.
 """
@@ -28,6 +29,10 @@ from apiome_mcp.capability_policy import (
 from apiome_mcp.database_pool import get_db_pool
 from apiome_mcp.effective_policy import resolve_tool_effective
 from apiome_mcp.mcp_auth import resolve_optional_mcp_auth
+from apiome_mcp.mcp_capability_denial_audit import (
+    detect_mcp_transport,
+    schedule_mcp_capability_denial,
+)
 
 _log = structlog.get_logger(__name__)
 
@@ -81,5 +86,13 @@ class CapabilityCallGateMiddleware(Middleware):
             key_id=auth.key_id,
             tenant_id=auth.tenant_id,
             deny_reason=deny_reason.value if deny_reason else None,
+        )
+        schedule_mcp_capability_denial(
+            pool,
+            key_id=auth.key_id,
+            tenant_id=auth.tenant_id,
+            tool_id=name,
+            transport=detect_mcp_transport(),
+            reason=deny_reason.value if deny_reason else None,
         )
         raise ToolError(capability_disabled_message(name))

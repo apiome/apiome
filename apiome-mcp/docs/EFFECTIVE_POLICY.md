@@ -49,7 +49,9 @@ flowchart TD
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
 Anonymous callers are out of scope for this resolver (MTG-2.3).
 Authenticated denials use stable message token `capability_disabled` (tool name +
-tenant-admin guidance; no secret key material).
+tenant-admin guidance; no secret key material). Each authenticated denial also
+schedules an append-only row in `apiome.mcp_capability_denials` (MTG-2.4 / #4773:
+key_id, tenant_id, tool_id, at, transport, DenyReason — never tool arguments).
 
 ## API surface
 

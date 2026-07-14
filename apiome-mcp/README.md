@@ -79,7 +79,8 @@ to one boolean per tool via ``app.mcp_effective_policy`` (re-exported as
 **Call gate (MTG-2.2):** Authenticated ``tools/call`` runs the MTG-1.4 resolver after
 auth resolve; disabled tools raise a FastMCP ``ToolError`` whose message starts with
 stable code ``capability_disabled`` (tool name + tenant-admin enable guidance; no key
-secrets). Anonymous callers are deferred to MTG-2.3.
+secrets). Every authenticated denial also appends a row to ``mcp_capability_denials``
+(MTG-2.4 / #4773; no tool arguments). Anonymous callers are deferred to MTG-2.3.
 
 **List-always (MTG-2.1):** ``tools/list`` always returns the full live registry —
 never filtered by tenant/key enable-set (contrast AGX-3.1). See
