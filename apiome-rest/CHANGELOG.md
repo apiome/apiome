@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.20] - 2026-07-14
+
+### Added
+- **MCP effective policy resolver (MTG-1.4, #4768)** — pure
+  `app.mcp_effective_policy` shared by MCP call gates and REST “preview
+  effective”: `registry ∩ ceiling ∩ (inherit defaults | explicit key tools)`.
+  Documents tenant `default_mode` / legacy unseeded semantics; mcp package
+  re-exports the same helpers.
+
 ## [1.117.19] - 2026-07-13
 
 ### Added
