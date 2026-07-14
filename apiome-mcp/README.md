@@ -95,7 +95,9 @@ effect on the next call without restarting the MCP process. See
 
 **List-always (MTG-2.1):** ``tools/list`` always returns the full live registry —
 never filtered by tenant/key enable-set (contrast AGX-3.1). See
-**[docs/LIST_ALWAYS.md](docs/LIST_ALWAYS.md)**.
+**[docs/LIST_ALWAYS.md](docs/LIST_ALWAYS.md)**. Catalog vs agent-invocation contracts
+and shared-code guards: **[docs/AGX_COORDINATION.md](docs/AGX_COORDINATION.md)**
+(MTG-5.5 / #4789).
 
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 

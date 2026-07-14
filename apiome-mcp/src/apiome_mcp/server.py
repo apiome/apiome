@@ -62,6 +62,7 @@ mcp = FastMCP("Apiome", lifespan=database_lifespan)
 # Middleware run order is reversed on the way in (last added runs first).
 # Inbound: Stash Bearer → registry fail-closed → capability gate → tool.
 # MTG-2.1 (#4770): never strip tools from tools/list by enable-set (contrast AGX-3.1).
+# MTG-5.5 (#4789): do not merge AGX list-filtering into catalog middleware — AGX_COORDINATION.md.
 # MTG-2.2 (#4771): call-time enable-set gate after auth resolve.
 mcp.add_middleware(CapabilityCallGateMiddleware())
 mcp.add_middleware(RegistryFailClosedMiddleware())

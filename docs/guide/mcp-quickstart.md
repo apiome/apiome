@@ -116,7 +116,8 @@ break-glass flows, use `apiome mcp policy` / `apiome mcp key capabilities` (see
 [`apiome-cli/README.md`](../../apiome-cli/README.md)).
 
 Operator-depth ADRs: [`LIST_ALWAYS.md`](../../apiome-mcp/docs/LIST_ALWAYS.md),
-[`EFFECTIVE_POLICY.md`](../../apiome-mcp/docs/EFFECTIVE_POLICY.md).
+[`EFFECTIVE_POLICY.md`](../../apiome-mcp/docs/EFFECTIVE_POLICY.md),
+[`AGX_COORDINATION.md`](../../apiome-mcp/docs/AGX_COORDINATION.md) (catalog MCP vs agent tools).
 
 ## Verify
 

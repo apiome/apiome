@@ -12,7 +12,8 @@ This middleware must **not** filter ``tools/list``. Catalog MCP always
 exposes every registered live tool for discovery, even when the caller's
 enable-set is empty or a subset. Call-time denial belongs on ``tools/call``
 only. **Contrast AGX-3.1 (#4537)**, which filters ``tools/list`` to permitted
-agent tools — do not reuse that pattern here. See ``docs/LIST_ALWAYS.md``.
+agent tools — do not reuse that pattern here. See ``docs/LIST_ALWAYS.md`` and
+``docs/AGX_COORDINATION.md`` (MTG-5.5 / #4789).
 """
 
 from __future__ import annotations
