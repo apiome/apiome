@@ -39,12 +39,15 @@ with `default_mode=all`; missing-policy handling remains for safety.
 flowchart TD
   REQ[tools/call tool=T] --> AUTH{MCP API key?}
   AUTH -->|no| ANON[MTG-2.3 anonymous policy]
-  AUTH -->|yes| LOAD[Load tenant policy + key grants]
+  AUTH -->|yes| LOAD[Load tenant policy + key grants from DB]
   LOAD --> RES[MTG-1.4 effective resolver]
   RES -->|T enabled| RUN[Execute tool handler]
   RES -->|T disabled| DENY[MCP ToolError capability_disabled + MTG-2.4 audit]
   LIST[tools/list] --> FULL[Return full registry — MTG-2.1]
 ```
+
+`LOAD` is **per call** (MTG-2.5): lag budget `0` — no process cache. See
+**[POLICY_FRESHNESS.md](POLICY_FRESHNESS.md)**.
 
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
 Anonymous callers are out of scope for this resolver (MTG-2.3).
