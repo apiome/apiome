@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.72",
+    "version": "1.0.73",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -20228,7 +20228,7 @@
           "mcp-policy"
         ],
         "summary": "Replace tenant MCP policy",
-        "description": "Replace the tenant MCP policy (default_mode, anonymous kill switch, and full per-tool flag list). Tenant administrators only; unknown tool ids and default_enabled without in_ceiling yield 422 (MTG-3.1, #4775).",
+        "description": "Replace the tenant MCP policy (default_mode, anonymous kill switch, and full per-tool flag list). Tenant administrators with a signed-in session only; API keys cannot mutate governance. Unknown tool ids and default_enabled without in_ceiling yield 422 (MTG-3.1, #4775; MTG-3.4, #4778).",
         "operationId": "put_tenant_mcp_policy_v1_tenants__tenant_slug__mcp_policy_put",
         "parameters": [
           {

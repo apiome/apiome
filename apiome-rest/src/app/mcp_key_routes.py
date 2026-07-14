@@ -10,6 +10,9 @@ Exposes tenant-admin CRUD over ``apiome.mcp_api_keys``:
 Create returns the plaintext secret **once**. List/get/patch never include
 ``secret`` or ``key_hash``. Capability PUT enforces enable-set ⊆ tenant
 ceiling; preview uses the shared MTG-1.4 resolver.
+
+All operations require a **tenant administrator** user session; API keys
+cannot mutate this governance surface (MTG-3.4, #4778).
 """
 
 from __future__ import annotations
@@ -21,7 +24,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .auth import get_authenticated_user_id, validate_authentication
+from .auth import (
+    get_authenticated_user_id,
+    require_tenant_admin_session,
+    validate_authentication,
+)
 from .database import db
 from .mcp_effective_policy import (
     KeyCapabilitySnapshot,
@@ -191,15 +198,12 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 
 
 def _require_tenant_admin(auth_data: Dict[str, Any]) -> str:
-    """Gate MCP key lifecycle to tenant administrators; returns the tenant id."""
-    tenant_id = _tenant_id(auth_data)
-    user_id = get_authenticated_user_id(auth_data)
-    if not user_id or not db.is_user_tenant_admin(tenant_id, user_id):
-        raise HTTPException(
-            status_code=403,
-            detail="Only tenant administrators can manage MCP API keys",
-        )
-    return tenant_id
+    """Gate MCP key lifecycle to a JWT tenant-admin session; reject API-key auth."""
+    return require_tenant_admin_session(
+        db,
+        auth_data,
+        detail="Only tenant administrators can manage MCP API keys",
+    )
 
 
 def _to_metadata(row: Dict[str, Any]) -> McpApiKeyMetadata:
