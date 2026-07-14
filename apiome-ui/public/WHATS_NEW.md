@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Tenants: confirm before disabling MCP toolsets used by active keys (shows key count + prefixes)
 - Tenants: per-key MCP capability editor (inherit vs custom enable-set, ceiling locks, effective preview)
 - Tenants: MCP Settings toolset toggles with master switches, advanced per-tool view, and dirty-state save bar
 - Tenants: MCP Settings panel for tenant admins (ceiling, defaults, anonymous kill switch)

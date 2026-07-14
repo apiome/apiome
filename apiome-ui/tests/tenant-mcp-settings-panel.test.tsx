@@ -1,5 +1,5 @@
 /**
- * Tenant MCP Settings panel — MTG-4.1 (#4780) / MTG-4.2 (#4781).
+ * Tenant MCP Settings panel — MTG-4.1 (#4780) / MTG-4.2 (#4781) / MTG-4.5 (#4784).
  */
 
 import React from 'react';
@@ -12,6 +12,12 @@ jest.mock('sonner', () => ({
     success: jest.fn(),
     error: jest.fn(),
   },
+}));
+
+const confirmDialog = jest.fn<(opts: unknown) => Promise<boolean>>().mockResolvedValue(true);
+
+jest.mock('@/app/components/providers/DialogProvider', () => ({
+  useDialog: () => ({ confirm: confirmDialog, alert: jest.fn() }),
 }));
 
 import TenantMcpSettingsPanel from '../src/app/ade/dashboard/tenants/TenantMcpSettingsPanel';
@@ -38,7 +44,21 @@ const CATALOG = {
   ],
 };
 
+const ACTIVE_KEYS = {
+  keys: [
+    {
+      id: 'key-1',
+      prefix: 'mcp_aa',
+      label: 'Prod agent',
+      scope_json: { tenants: [], projects: [] },
+      capability_mode: 'inherit',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+  ],
+};
+
 let calls: { url: string; method: string; body: unknown }[] = [];
+let keysPayload: { keys: unknown[] } = { keys: [] };
 
 function jsonResponse(payload: unknown) {
   return Promise.resolve({
@@ -71,7 +91,7 @@ function mockFetch() {
       });
     }
     if (url.includes('/api/tenants/mcp-keys') && method === 'GET' && !url.includes('/capabilities')) {
-      return jsonResponse({ success: true, data: { keys: [] } });
+      return jsonResponse({ success: true, data: keysPayload });
     }
     if (url.includes('/capabilities/preview') && method === 'POST') {
       return jsonResponse({ success: true, data: { tools: [] } });
@@ -91,6 +111,9 @@ function mockFetch() {
 
 beforeEach(() => {
   calls = [];
+  keysPayload = { keys: [] };
+  confirmDialog.mockReset();
+  confirmDialog.mockResolvedValue(true);
   mockFetch();
 });
 
@@ -140,7 +163,9 @@ describe('TenantMcpSettingsPanel', () => {
     expect(health).toBeChecked();
 
     fireEvent.click(health);
-    expect(health).not.toBeChecked();
+    await waitFor(() => {
+      expect(health).not.toBeChecked();
+    });
 
     const save = await screen.findByRole('button', { name: /Save changes/i });
     fireEvent.click(save);
@@ -158,6 +183,78 @@ describe('TenantMcpSettingsPanel', () => {
         in_ceiling: true,
       });
     });
+  });
+
+  it('confirms before disabling a toolset used by active keys', async () => {
+    keysPayload = ACTIVE_KEYS;
+    render(<TenantMcpSettingsPanel editable />);
+
+    fireEvent.click(screen.getByRole('button', { name: /MCP Settings/i }));
+    const health = await screen.findByRole('switch', { name: /Enable health toolset/i });
+    fireEvent.click(health);
+
+    await waitFor(() => {
+      expect(confirmDialog).toHaveBeenCalled();
+    });
+    const opts = confirmDialog.mock.calls[0][0] as {
+      title: string;
+      message: string;
+      confirmLabel: string;
+    };
+    expect(opts).toMatchObject({
+      title: 'Disable Health toolset?',
+      confirmLabel: 'Disable toolset',
+    });
+    expect(String(opts.message)).toContain('mcp_aa…');
+    expect(String(opts.message)).toContain('1 active MCP key');
+
+    await waitFor(() => {
+      expect(health).not.toBeChecked();
+    });
+  });
+
+  it('cancel on impactful disable leaves policy unchanged', async () => {
+    keysPayload = ACTIVE_KEYS;
+    confirmDialog.mockResolvedValue(false);
+    render(<TenantMcpSettingsPanel editable />);
+
+    fireEvent.click(screen.getByRole('button', { name: /MCP Settings/i }));
+    const health = await screen.findByRole('switch', { name: /Enable health toolset/i });
+    fireEvent.click(health);
+
+    await waitFor(() => {
+      expect(confirmDialog).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(health).toBeChecked();
+    });
+    expect(screen.queryByText(/Unsaved MCP settings changes/i)).not.toBeInTheDocument();
+  });
+
+  it('skips confirm when no active key effective-enables the toolset', async () => {
+    keysPayload = {
+      keys: [
+        {
+          id: 'key-1',
+          prefix: 'mcp_zz',
+          label: 'Explicit none',
+          scope_json: { tenants: [], projects: [] },
+          capability_mode: 'explicit',
+          enabled_tools: [],
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    };
+    render(<TenantMcpSettingsPanel editable />);
+
+    fireEvent.click(screen.getByRole('button', { name: /MCP Settings/i }));
+    const health = await screen.findByRole('switch', { name: /Enable health toolset/i });
+    fireEvent.click(health);
+
+    await waitFor(() => {
+      expect(health).not.toBeChecked();
+    });
+    expect(confirmDialog).not.toHaveBeenCalled();
   });
 
   it('shows individual tools in advanced view', async () => {
