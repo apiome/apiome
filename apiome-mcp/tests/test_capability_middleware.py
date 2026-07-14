@@ -14,6 +14,7 @@ from fastmcp.server.middleware import MiddlewareContext
 from apiome_mcp.capability_middleware import CapabilityCallGateMiddleware
 from apiome_mcp.capability_policy import (
     CAPABILITY_DISABLED_CODE,
+    capability_disabled_anonymous_message,
     capability_disabled_message,
     load_tenant_mcp_policy_snapshot,
 )
@@ -57,6 +58,17 @@ def test_capability_disabled_message_stable_and_secret_free() -> None:
     assert "secret" not in msg.lower()
 
 
+def test_capability_disabled_anonymous_message_no_api_key_wording() -> None:
+    msg = capability_disabled_anonymous_message("spec.search")
+    assert msg.startswith(f"{CAPABILITY_DISABLED_CODE}:")
+    assert "spec.search" in msg
+    assert "anonymous" in msg.lower()
+    assert "this API key" not in msg
+    assert "disabled for this API key" not in msg
+    assert "Bearer" not in msg
+    assert "secret" not in msg.lower()
+
+
 def test_middleware_list_tools_passthrough() -> None:
     mw = CapabilityCallGateMiddleware()
     sentinel = [SimpleNamespace(name="ping")]
@@ -70,7 +82,7 @@ def test_middleware_list_tools_passthrough() -> None:
     call_next.assert_awaited_once_with(ctx)
 
 
-def test_anonymous_call_passes_through() -> None:
+def test_anonymous_call_passes_through_when_host_tenant_unset() -> None:
     mw = CapabilityCallGateMiddleware()
     pool = MagicMock()
     fc = _fc_with_pool(pool)
@@ -79,6 +91,7 @@ def test_anonymous_call_passes_through() -> None:
         message=SimpleNamespace(name="ping"),
         fastmcp_context=fc,
     )
+    settings = SimpleNamespace(anonymous_policy_tenant_id=None)
 
     async def run() -> object:
         with (
@@ -91,9 +104,205 @@ def test_anonymous_call_passes_through() -> None:
                 new_callable=AsyncMock,
                 return_value=None,
             ) as resolve,
+            patch(
+                "apiome_mcp.capability_middleware.get_settings",
+                return_value=settings,
+            ),
         ):
             result = await mw.on_call_tool(ctx, call_next)
             resolve.assert_awaited_once()
+            return result
+
+    assert asyncio.run(run()) == {"ok": True}
+    call_next.assert_awaited_once()
+
+
+def test_anonymous_denied_when_allow_anonymous_mcp_false() -> None:
+    mw = CapabilityCallGateMiddleware()
+    pool = MagicMock()
+    fc = _fc_with_pool(pool)
+    host = uuid.uuid4()
+    call_next = AsyncMock(return_value={"ok": True})
+    ctx = MiddlewareContext(
+        message=SimpleNamespace(name="ping"),
+        fastmcp_context=fc,
+    )
+    settings = SimpleNamespace(anonymous_policy_tenant_id=host)
+    tenant = TenantMcpPolicySnapshot(
+        default_mode="all",
+        tools={},
+        allow_anonymous_mcp=False,
+    )
+
+    async def run() -> None:
+        with (
+            patch(
+                "apiome_mcp.capability_middleware.get_http_headers",
+                return_value={},
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.resolve_optional_mcp_auth",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.get_settings",
+                return_value=settings,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.load_tenant_mcp_policy_snapshot",
+                new_callable=AsyncMock,
+                return_value=tenant,
+            ) as load,
+        ):
+            with pytest.raises(ToolError, match=CAPABILITY_DISABLED_CODE) as exc_info:
+                await mw.on_call_tool(ctx, call_next)
+            assert "anonymous" in str(exc_info.value).lower()
+            load.assert_awaited_once_with(pool, str(host))
+
+    asyncio.run(run())
+    call_next.assert_not_awaited()
+
+
+def test_anonymous_denied_when_tool_not_in_anonymous_set() -> None:
+    mw = CapabilityCallGateMiddleware()
+    pool = MagicMock()
+    fc = _fc_with_pool(pool)
+    host = uuid.uuid4()
+    call_next = AsyncMock(return_value={"ok": True})
+    ctx = MiddlewareContext(
+        message=SimpleNamespace(name="spec.search"),
+        fastmcp_context=fc,
+    )
+    settings = SimpleNamespace(anonymous_policy_tenant_id=host)
+    tenant = TenantMcpPolicySnapshot(
+        default_mode="explicit",
+        tools={
+            "ping": TenantToolFlags(in_ceiling=True, default_enabled=True, anonymous_enabled=True),
+            "spec.search": TenantToolFlags(in_ceiling=True, default_enabled=True, anonymous_enabled=False),
+        },
+        allow_anonymous_mcp=True,
+    )
+
+    async def run() -> None:
+        with (
+            patch(
+                "apiome_mcp.capability_middleware.get_http_headers",
+                return_value={},
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.resolve_optional_mcp_auth",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.get_settings",
+                return_value=settings,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.load_tenant_mcp_policy_snapshot",
+                new_callable=AsyncMock,
+                return_value=tenant,
+            ),
+        ):
+            with pytest.raises(ToolError, match=CAPABILITY_DISABLED_CODE):
+                await mw.on_call_tool(ctx, call_next)
+
+    asyncio.run(run())
+    call_next.assert_not_awaited()
+
+
+def test_anonymous_allowed_when_tool_in_anonymous_set() -> None:
+    mw = CapabilityCallGateMiddleware()
+    pool = MagicMock()
+    fc = _fc_with_pool(pool)
+    host = uuid.uuid4()
+    call_next = AsyncMock(return_value={"ok": True})
+    ctx = MiddlewareContext(
+        message=SimpleNamespace(name="ping"),
+        fastmcp_context=fc,
+    )
+    settings = SimpleNamespace(anonymous_policy_tenant_id=host)
+    tenant = TenantMcpPolicySnapshot(
+        default_mode="explicit",
+        tools={
+            "ping": TenantToolFlags(in_ceiling=True, default_enabled=True, anonymous_enabled=True),
+        },
+        allow_anonymous_mcp=True,
+    )
+
+    async def run() -> object:
+        with (
+            patch(
+                "apiome_mcp.capability_middleware.get_http_headers",
+                return_value={},
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.resolve_optional_mcp_auth",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.get_settings",
+                return_value=settings,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.load_tenant_mcp_policy_snapshot",
+                new_callable=AsyncMock,
+                return_value=tenant,
+            ),
+        ):
+            return await mw.on_call_tool(ctx, call_next)
+
+    assert asyncio.run(run()) == {"ok": True}
+    call_next.assert_awaited_once()
+
+
+def test_authenticated_ignores_anonymous_kill_switch() -> None:
+    """Authenticated keys use MTG-1.4 only; anonymous fields must not apply."""
+    mw = CapabilityCallGateMiddleware()
+    pool = MagicMock()
+    fc = _fc_with_pool(pool)
+    auth = _auth(enabled_tools=frozenset({"ping"}))
+    call_next = AsyncMock(return_value={"ok": True})
+    ctx = MiddlewareContext(
+        message=SimpleNamespace(name="ping"),
+        fastmcp_context=fc,
+    )
+    # Host tenant would deny anonymous, but caller is authenticated.
+    settings = SimpleNamespace(anonymous_policy_tenant_id=uuid.uuid4())
+    tenant = TenantMcpPolicySnapshot(
+        default_mode="all",
+        tools={},
+        allow_anonymous_mcp=False,
+    )
+
+    async def run() -> object:
+        with (
+            patch(
+                "apiome_mcp.capability_middleware.get_http_headers",
+                return_value={"authorization": "Bearer x"},
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.resolve_optional_mcp_auth",
+                new_callable=AsyncMock,
+                return_value=auth,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.get_settings",
+                return_value=settings,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.load_tenant_mcp_policy_snapshot",
+                new_callable=AsyncMock,
+                return_value=tenant,
+            ),
+            patch(
+                "apiome_mcp.capability_middleware.schedule_mcp_capability_denial",
+            ) as schedule,
+        ):
+            result = await mw.on_call_tool(ctx, call_next)
+            schedule.assert_not_called()
             return result
 
     assert asyncio.run(run()) == {"ok": True}
@@ -396,11 +605,21 @@ def test_load_tenant_mcp_policy_snapshot_none_when_missing() -> None:
 def test_load_tenant_mcp_policy_snapshot_builds_flags() -> None:
     tid = str(uuid.uuid4())
     cur = AsyncMock()
-    cur.fetchone = AsyncMock(return_value={"default_mode": "explicit"})
+    cur.fetchone = AsyncMock(return_value={"default_mode": "explicit", "allow_anonymous_mcp": False})
     cur.fetchall = AsyncMock(
         return_value=[
-            {"tool_id": "ping", "in_ceiling": True, "default_enabled": False},
-            {"tool_id": "spec.list", "in_ceiling": True, "default_enabled": True},
+            {
+                "tool_id": "ping",
+                "in_ceiling": True,
+                "default_enabled": False,
+                "anonymous_enabled": True,
+            },
+            {
+                "tool_id": "spec.list",
+                "in_ceiling": True,
+                "default_enabled": True,
+                "anonymous_enabled": False,
+            },
         ]
     )
     cur.execute = AsyncMock()
@@ -421,8 +640,10 @@ def test_load_tenant_mcp_policy_snapshot_builds_flags() -> None:
     snap = asyncio.run(run())
     assert snap is not None
     assert snap.default_mode == "explicit"
-    assert snap.tools["ping"] == TenantToolFlags(in_ceiling=True, default_enabled=False)
+    assert snap.allow_anonymous_mcp is False
+    assert snap.tools["ping"] == TenantToolFlags(in_ceiling=True, default_enabled=False, anonymous_enabled=True)
     assert snap.tools["spec.list"].default_enabled is True
+    assert snap.tools["spec.list"].anonymous_enabled is False
 
 
 def test_auth_context_key_capability_snapshot() -> None:

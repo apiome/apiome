@@ -50,7 +50,9 @@ flowchart TD
 **[POLICY_FRESHNESS.md](POLICY_FRESHNESS.md)**.
 
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
-Anonymous callers are out of scope for this resolver (MTG-2.3).
+Anonymous callers use **[ANONYMOUS_CALL_POLICY.md](ANONYMOUS_CALL_POLICY.md)**
+(MTG-2.3 / #4772): optional host-tenant `allow_anonymous_mcp` + anonymous
+enable-set via `APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`.
 Authenticated denials use stable message token `capability_disabled` (tool name +
 tenant-admin guidance; no secret key material). Each authenticated denial also
 schedules an append-only row in `apiome.mcp_capability_denials` (MTG-2.4 / #4773:
@@ -60,10 +62,11 @@ key_id, tenant_id, tool_id, at, transport, DenyReason — never tool arguments).
 
 | Helper | Use |
 |--------|-----|
-| `is_tool_effectively_enabled` | MCP call gate |
+| `is_tool_effectively_enabled` | MCP call gate (authenticated) |
+| `resolve_tool_anonymous` / `is_tool_anonymously_allowed` | MCP call gate (anonymous, MTG-2.3) |
 | `preview_effective_tools` | REST/admin effective table |
 | `resolve_tool_effective` | Same decision + first `DenyReason` |
-| `tool_in_ceiling` / `tool_in_default_enable_set` | Building / debugging sets |
+| `tool_in_ceiling` / `tool_in_default_enable_set` / `tool_in_anonymous_enable_set` | Building / debugging sets |
 
-Snapshots: `TenantMcpPolicySnapshot`, `KeyCapabilitySnapshot`,
-`TenantToolFlags`.
+Snapshots: `TenantMcpPolicySnapshot` (includes `allow_anonymous_mcp`),
+`KeyCapabilitySnapshot`, `TenantToolFlags` (includes `anonymous_enabled`).

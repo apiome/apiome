@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal, Self
+from uuid import UUID
 
 from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -72,7 +73,14 @@ class Settings(BaseSettings):
         default=60.0,
         gt=0,
         le=600.0,
-        description="HTTP client timeout for embedding requests.",
+        description="HTTP timeout for embedding requests.",
+    )
+    anonymous_policy_tenant_id: UUID | None = Field(
+        default=None,
+        description=(
+            "Host tenant whose MCP policy governs anonymous tools/call (MTG-2.3). "
+            "When unset, anonymous callers are not gated (legacy passthrough)."
+        ),
     )
 
     @model_validator(mode="after")

@@ -53,6 +53,16 @@ Call flow
       RES -->|T enabled| RUN[Execute tool handler]
       RES -->|T disabled| DENY[MCP error + MTG-2.4 audit]
       LIST[tools/list] --> FULL[Return full registry — MTG-2.1]
+
+Anonymous callers (MTG-2.3 / #4772)
+-----------------------------------
+
+When ``APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`` is set, anonymous
+``tools/call`` uses :func:`resolve_tool_anonymous` against that host
+tenant's snapshot (``allow_anonymous_mcp`` + anonymous enable-set).
+Authenticated key resolution ignores those fields. Unseeded snapshots
+(``tenant is None``) treat anonymous as allowed for the full registry
+(legacy-safe).
 """
 
 from __future__ import annotations
@@ -71,9 +81,12 @@ __all__ = [
     "TenantDefaultMode",
     "TenantMcpPolicySnapshot",
     "TenantToolFlags",
+    "is_tool_anonymously_allowed",
     "is_tool_effectively_enabled",
     "preview_effective_tools",
+    "resolve_tool_anonymous",
     "resolve_tool_effective",
+    "tool_in_anonymous_enable_set",
     "tool_in_ceiling",
     "tool_in_default_enable_set",
 ]
@@ -90,14 +103,17 @@ class DenyReason(str, Enum):
     NOT_IN_DEFAULT_ENABLE_SET = "not_in_default_enable_set"
     NOT_IN_KEY_ENABLE_SET = "not_in_key_enable_set"
     INVALID_KEY_MODE = "invalid_key_mode"
+    ANONYMOUS_MCP_DISABLED = "anonymous_mcp_disabled"
+    NOT_IN_ANONYMOUS_ENABLE_SET = "not_in_anonymous_enable_set"
 
 
 @dataclass(frozen=True)
 class TenantToolFlags:
-    """Per-tool ceiling / default flags from ``tenant_mcp_policy_tools``."""
+    """Per-tool ceiling / default / anonymous flags from ``tenant_mcp_policy_tools``."""
 
     in_ceiling: bool
     default_enabled: bool
+    anonymous_enabled: bool = True
 
 
 @dataclass(frozen=True)
@@ -106,10 +122,13 @@ class TenantMcpPolicySnapshot:
 
     :param default_mode: ``tenant_mcp_policies.default_mode``.
     :param tools: Map of tool_id → flags; may be empty under ``all``.
+    :param allow_anonymous_mcp: Host-tenant kill switch for anonymous
+        ``tools/call`` (MTG-2.3). Ignored for authenticated keys.
     """
 
     default_mode: TenantDefaultMode
     tools: Mapping[str, TenantToolFlags]
+    allow_anonymous_mcp: bool = True
 
 
 @dataclass(frozen=True)
@@ -203,6 +222,80 @@ def tool_in_default_enable_set(
     if flags is None:
         return False
     return bool(flags.default_enabled)
+
+
+def tool_in_anonymous_enable_set(
+    tool_id: str,
+    tenant: Optional[TenantMcpPolicySnapshot],
+    *,
+    registry: Optional[AbstractSet[str]] = None,
+) -> bool:
+    """Return True when ``tool_id`` is in the tenant anonymous enable-set (MTG-2.3).
+
+    Uses the same ``default_mode`` missing-row rules as ceiling / defaults.
+    Independent of ``in_ceiling`` for MVP. Does not consult
+    ``allow_anonymous_mcp`` — callers AND that separately.
+    """
+    ids = _registry_set(registry)
+    if tool_id not in ids:
+        return False
+
+    mode = _effective_default_mode(tenant)
+    if mode == "all":
+        return True
+
+    flags = None if tenant is None else tenant.tools.get(tool_id)
+    if mode == "inherit_registry":
+        if flags is None:
+            return True
+        return bool(flags.anonymous_enabled)
+
+    if flags is None:
+        return False
+    return bool(flags.anonymous_enabled)
+
+
+def resolve_tool_anonymous(
+    tool_id: str,
+    *,
+    tenant: Optional[TenantMcpPolicySnapshot] = None,
+    registry: Optional[AbstractSet[str]] = None,
+) -> tuple[bool, Optional[DenyReason]]:
+    """Resolve whether an anonymous caller may ``tools/call`` ``tool_id`` (MTG-2.3).
+
+    Formula::
+
+        allowed =
+            tool ∈ registry
+            AND (tenant is None OR tenant.allow_anonymous_mcp)
+            AND tool ∈ anonymous_enable_set
+
+    Unseeded / missing policy (``tenant is None``) is legacy-safe: full
+    registry allowed. Private-spec tools may still reject at the tool
+    layer via ``require_mcp_auth``.
+    """
+    ids = _registry_set(registry)
+    if tool_id not in ids:
+        return False, DenyReason.NOT_IN_REGISTRY
+
+    if tenant is not None and not tenant.allow_anonymous_mcp:
+        return False, DenyReason.ANONYMOUS_MCP_DISABLED
+
+    if not tool_in_anonymous_enable_set(tool_id, tenant, registry=ids):
+        return False, DenyReason.NOT_IN_ANONYMOUS_ENABLE_SET
+
+    return True, None
+
+
+def is_tool_anonymously_allowed(
+    tool_id: str,
+    *,
+    tenant: Optional[TenantMcpPolicySnapshot] = None,
+    registry: Optional[AbstractSet[str]] = None,
+) -> bool:
+    """Boolean anonymous gate used by MCP ``tools/call`` middleware (MTG-2.3)."""
+    enabled, _ = resolve_tool_anonymous(tool_id, tenant=tenant, registry=registry)
+    return enabled
 
 
 def resolve_tool_effective(
