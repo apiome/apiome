@@ -11,7 +11,8 @@ After optional auth resolve (HTTP Bearer + stdio ``_meta``, same path as
   When unset, anonymous ``tools/call`` remains legacy passthrough. Anonymous denials
   are structlog-only (no audit rows).
 
-Does **not** filter ``tools/list`` (MTG-2.1).
+Does **not** filter ``tools/list`` (MTG-2.1). Do not apply AGX-3.1 list
+filtering here — see ``docs/AGX_COORDINATION.md`` (MTG-5.5 / #4789).
 """
 
 from __future__ import annotations

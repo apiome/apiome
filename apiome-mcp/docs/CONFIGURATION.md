@@ -28,6 +28,7 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 - **[`../.env.example`](../.env.example)** — copy/paste template for local development.
 - **Repository root [`docker-compose.env.example`](../../docker-compose.env.example)** — overrides for **`docker compose`** (Postgres + MCP port + secret).
 - **[`LIST_ALWAYS.md`](LIST_ALWAYS.md)** — MTG-2.1 ADR: `tools/list` is never filtered by enable-set (contrast AGX-3.1).
+- **[`AGX_COORDINATION.md`](AGX_COORDINATION.md)** — MTG-5.5: catalog MCP vs AGX agent tools; shared code must not merge list contracts.
 - **[`EFFECTIVE_POLICY.md`](EFFECTIVE_POLICY.md)** — MTG-1.4 effective resolver used by the `tools/call` gate (MTG-2.2).
 - **[`ANONYMOUS_CALL_POLICY.md`](ANONYMOUS_CALL_POLICY.md)** — MTG-2.3 ADR: host-tenant anonymous enable-set + matrix.
 - **[`POLICY_FRESHNESS.md`](POLICY_FRESHNESS.md)** — MTG-2.5 ADR: per-call DB policy resolve; lag budget `0` (no restart).

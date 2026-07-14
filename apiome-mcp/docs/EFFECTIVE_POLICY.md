@@ -50,6 +50,7 @@ flowchart TD
 **[POLICY_FRESHNESS.md](POLICY_FRESHNESS.md)**.
 
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
+Do not reuse AGX-3.1 list-filtering on this path — **[AGX_COORDINATION.md](AGX_COORDINATION.md)**.
 Anonymous callers use **[ANONYMOUS_CALL_POLICY.md](ANONYMOUS_CALL_POLICY.md)**
 (MTG-2.3 / #4772): optional host-tenant `allow_anonymous_mcp` + anonymous
 enable-set via `APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`.
