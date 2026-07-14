@@ -16,6 +16,10 @@ Create an MCP-type key in the UI under **Dashboard → API keys** (`/ade/dashboa
 stored hashed and can be scoped to specific tenants/projects. You can skip this if you only need
 public specs.
 
+Tenant admins also govern **which tools that key may call** (ceiling, defaults, and per-key
+capabilities). Listing the catalog is never filtered by those settings — see
+[Governed keys: list vs call](#governed-keys-list-vs-call).
+
 ## 2. Connect a host
 
 The server speaks two transports. For connecting to an already-running Apiome, **streamable
@@ -87,13 +91,44 @@ brings the MCP server up on `:8765`.
 | `spec.search_semantic` | Semantic search (needs `APIOME_MCP_OPENAI_API_KEY`) |
 | `spec.list_tags` | Distinct public tags with counts |
 
+## Governed keys: list vs call
+
+Catalog MCP separates **discovery** from **invocation**:
+
+| Operation | Behavior |
+|---|---|
+| `tools/list` | **Always** returns the full live registry. Tenant ceiling, defaults, anonymous flags, and per-key enable-sets **never** hide tools from the list. |
+| `tools/call` | Allowed only when the tool is enabled for the caller. For an authenticated MCP key that means: tool ∈ tenant ceiling **and** (key inherits tenant defaults **or** tool ∈ the key’s explicit enable-set). |
+
+Seeing a tool in the host’s tool picker does **not** mean the key can invoke it. A denied call returns a
+stable `capability_disabled` error (for example: *Tool 'spec.search' is disabled for this API key.
+A tenant admin must enable it before it can be called.*) — never secret key material.
+
+### How to request enablement
+
+1. Ask a **tenant administrator** for the tenant that owns the MCP key.
+2. The admin opens **Dashboard → Tenants** (`/ade/dashboard/tenants`) and expands **MCP Settings**.
+3. There they can raise the tenant **ceiling / defaults** (toolset or per-tool toggles) and, when
+   needed, set the key’s capabilities to **inherit** those defaults or an **explicit** enable-set.
+
+Non-admins can browse the same panel read-only; only tenant admins can save changes. For scripted
+break-glass flows, use `apiome mcp policy` / `apiome mcp key capabilities` (see
+[`apiome-cli/README.md`](../../apiome-cli/README.md)).
+
+Operator-depth ADRs: [`LIST_ALWAYS.md`](../../apiome-mcp/docs/LIST_ALWAYS.md),
+[`EFFECTIVE_POLICY.md`](../../apiome-mcp/docs/EFFECTIVE_POLICY.md).
+
 ## Verify
 
 Call `ping` from your host — it returns the service version and confirms Postgres reachability. Then
 `spec.list` should return the published specs (including the seeded `petstore-sample` if you loaded
 the dev seed). This is the same query the [Golden Path](../GOLDEN_PATH.md) runs as its final step.
 
+If a later tool call fails with `capability_disabled`, use
+[Governed keys: list vs call](#governed-keys-list-vs-call) and **Tenants → MCP Settings** to enable it.
+
 ## Related
 
 - [publish-a-version.md](publish-a-version.md) — only published specs are visible over MCP
 - [browse-published-specs.md](browse-published-specs.md) — the same catalog, in the UI
+- **Tenants → MCP Settings** (`/ade/dashboard/tenants`) — tenant ceiling, defaults, and per-key call grants
