@@ -1,15 +1,18 @@
 /**
- * Tenant MCP policy form helpers — MTG-4.1 (#4780).
+ * Tenant MCP policy form helpers — MTG-4.1 (#4780) / MTG-4.2 (#4781).
  */
 
 import {
   buildMcpPolicyPutBody,
   defaultFlagsForMode,
+  groupToolsByToolset,
   hasMcpPolicyChanges,
   mcpPolicyFormFromSources,
   patchToolFlag,
+  patchToolsetCeiling,
   validateMcpPolicyForm,
   type McpPolicyFormState,
+  type McpPolicyToolRow,
 } from '../src/app/ade/dashboard/tenants/mcpPolicyForm';
 import type {
   McpToolCatalogItem,
@@ -191,5 +194,71 @@ describe('buildMcpPolicyPutBody / hasMcpPolicyChanges / patchToolFlag', () => {
     });
     const next = patchToolFlag(baseline, 'ping', 'in_ceiling', false);
     expect(next.tools[0]).toMatchObject({ in_ceiling: false, default_enabled: false });
+  });
+});
+
+describe('groupToolsByToolset / patchToolsetCeiling', () => {
+  const rows: McpPolicyToolRow[] = [
+    {
+      tool_id: 'spec.list',
+      description: 'List specs',
+      toolset: 'catalog',
+      in_ceiling: true,
+      default_enabled: true,
+      anonymous_enabled: true,
+    },
+    {
+      tool_id: 'ping',
+      description: 'Health check',
+      toolset: 'health',
+      in_ceiling: true,
+      default_enabled: true,
+      anonymous_enabled: false,
+    },
+    {
+      tool_id: 'spec.search',
+      description: 'Search',
+      toolset: 'search',
+      in_ceiling: false,
+      default_enabled: false,
+      anonymous_enabled: true,
+    },
+  ];
+
+  it('orders known toolsets and reports ceiling state', () => {
+    const groups = groupToolsByToolset(rows);
+    expect(groups.map((g) => g.toolset)).toEqual(['health', 'catalog', 'search']);
+    expect(groups[0].ceilingState).toBe('all');
+    expect(groups[2].ceilingState).toBe('none');
+  });
+
+  it('reports mixed when only some tools are in ceiling', () => {
+    const mixed = groupToolsByToolset([
+      { ...rows[1], in_ceiling: true },
+      { ...rows[1], tool_id: 'ping2', in_ceiling: false },
+    ]);
+    expect(mixed[0].ceilingState).toBe('mixed');
+    expect(mixed[0].inCeilingCount).toBe(1);
+  });
+
+  it('enables or disables every tool in a toolset without touching anonymous', () => {
+    const baseline = form({ tools: rows });
+    const off = patchToolsetCeiling(baseline, 'catalog', false);
+    expect(off.tools.find((t) => t.tool_id === 'spec.list')).toMatchObject({
+      in_ceiling: false,
+      default_enabled: false,
+      anonymous_enabled: true,
+    });
+    expect(off.tools.find((t) => t.tool_id === 'ping')).toMatchObject({
+      in_ceiling: true,
+      anonymous_enabled: false,
+    });
+
+    const on = patchToolsetCeiling(off, 'search', true);
+    expect(on.tools.find((t) => t.tool_id === 'spec.search')).toMatchObject({
+      in_ceiling: true,
+      default_enabled: true,
+      anonymous_enabled: true,
+    });
   });
 });

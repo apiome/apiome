@@ -1,9 +1,10 @@
 /**
- * Pure helpers for the Tenants MCP Settings form (MTG-4.1 / #4780).
+ * Pure helpers for the Tenants MCP Settings form (MTG-4.1 / #4780, MTG-4.2 / #4781).
  *
  * Merges the MTG-1.1 catalog with the stored MTG-3.1 policy so every registry
  * tool appears as a row. Missing policy rows get display defaults from
- * `default_mode` (see EFFECTIVE_POLICY.md).
+ * `default_mode` (see EFFECTIVE_POLICY.md). Toolset grouping powers the
+ * master-switch UX.
  */
 
 import type {
@@ -149,6 +150,84 @@ export function patchToolFlag(
         return row;
       }
       return { ...row, [flag]: value };
+    }),
+  };
+}
+
+/** Canonical MTG-1.1 toolset order for grouped toggles. */
+export const MCP_TOOLSET_ORDER = [
+  'health',
+  'catalog',
+  'search',
+  'document',
+  'structure',
+] as const;
+
+export type ToolsetToggleState = 'all' | 'none' | 'mixed';
+
+export interface McpToolsetGroup {
+  toolset: string;
+  tools: McpPolicyToolRow[];
+  ceilingState: ToolsetToggleState;
+  inCeilingCount: number;
+}
+
+function ceilingStateForTools(tools: McpPolicyToolRow[]): ToolsetToggleState {
+  if (tools.length === 0) return 'none';
+  const enabled = tools.filter((t) => t.in_ceiling).length;
+  if (enabled === 0) return 'none';
+  if (enabled === tools.length) return 'all';
+  return 'mixed';
+}
+
+/**
+ * Group form rows by toolset for the MTG-4.2 toggle UX.
+ * Known toolsets follow `MCP_TOOLSET_ORDER`; any others sort alphabetically after.
+ */
+export function groupToolsByToolset(tools: McpPolicyToolRow[]): McpToolsetGroup[] {
+  const bySet = new Map<string, McpPolicyToolRow[]>();
+  for (const tool of tools) {
+    const key = tool.toolset || 'other';
+    const list = bySet.get(key);
+    if (list) list.push(tool);
+    else bySet.set(key, [tool]);
+  }
+
+  const known = new Set<string>(MCP_TOOLSET_ORDER);
+  const ordered: string[] = [
+    ...MCP_TOOLSET_ORDER.filter((name) => bySet.has(name)),
+    ...[...bySet.keys()].filter((name) => !known.has(name)).sort(),
+  ];
+
+  return ordered.map((toolset) => {
+    const groupTools = bySet.get(toolset) ?? [];
+    return {
+      toolset,
+      tools: groupTools,
+      ceilingState: ceilingStateForTools(groupTools),
+      inCeilingCount: groupTools.filter((t) => t.in_ceiling).length,
+    };
+  });
+}
+
+/**
+ * Master toolset switch: set ceiling (and defaults) for every tool in the set.
+ * ON → in_ceiling + default_enabled; OFF → both false. Leaves anonymous flags alone.
+ */
+export function patchToolsetCeiling(
+  form: McpPolicyFormState,
+  toolset: string,
+  enabled: boolean,
+): McpPolicyFormState {
+  return {
+    ...form,
+    tools: form.tools.map((row) => {
+      if (row.toolset !== toolset) return row;
+      return {
+        ...row,
+        in_ceiling: enabled,
+        default_enabled: enabled,
+      };
     }),
   };
 }
