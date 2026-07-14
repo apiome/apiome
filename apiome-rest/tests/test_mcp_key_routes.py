@@ -49,6 +49,7 @@ def _key_row(**over):
         "label": "CI key",
         "scope_json": {"tenants": [_TENANT], "projects": []},
         "capability_mode": "inherit",
+        "enabled_tools": [],
         "created_at": NOW,
         "expires_at": None,
         "revoked_at": None,
@@ -73,6 +74,7 @@ def test_list_returns_metadata_without_secret():
     assert key["prefix"] == "abcdefghijkl..."
     assert key["label"] == "CI key"
     assert key["capability_mode"] == "inherit"
+    assert key["enabled_tools"] == []
     assert key["scope_json"] == {"tenants": [_TENANT], "projects": []}
     assert "secret" not in key
     assert "key_hash" not in key

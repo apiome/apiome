@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.25] - 2026-07-14
+
+### Added
+- **Per-key MCP capability update API (MTG-3.3, #4777)** — tenant-admin
+  `PUT /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities` with
+  `{ mode: inherit|explicit, enabled_tools?: string[] }` (inherit clears the
+  explicit list; explicit must be ⊆ tenant ceiling → 422 with
+  `offending_tool_ids`) plus `POST …/capabilities/preview` that returns the
+  effective enable-set via the shared MTG-1.4 resolver. Key metadata responses
+  now include `enabled_tools`. OpenAPI **1.0.72**.
+
 ## [1.117.24] - 2026-07-14
 
 ### Added

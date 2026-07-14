@@ -1,12 +1,15 @@
-"""MCP API key lifecycle — MTG-3.2 (#4776).
+"""MCP API key lifecycle — MTG-3.2 (#4776) and capability grants — MTG-3.3 (#4777).
 
 Exposes tenant-admin CRUD over ``apiome.mcp_api_keys``:
 
 * ``GET`` / ``POST /v1/tenants/{tenant_slug}/mcp-keys``
 * ``GET`` / ``PATCH`` / ``DELETE /v1/tenants/{tenant_slug}/mcp-keys/{key_id}``
+* ``PUT /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities``
+* ``POST /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities/preview``
 
 Create returns the plaintext secret **once**. List/get/patch never include
-``secret`` or ``key_hash``. Capability grant writes live in MTG-3.3 (#4777).
+``secret`` or ``key_hash``. Capability PUT enforces enable-set ⊆ tenant
+ceiling; preview uses the shared MTG-1.4 resolver.
 """
 
 from __future__ import annotations
@@ -20,6 +23,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .mcp_effective_policy import (
+    KeyCapabilitySnapshot,
+    TenantMcpPolicySnapshot,
+    TenantToolFlags,
+    preview_effective_tools,
+    tool_in_ceiling,
+)
+from .mcp_tool_registry import is_registered_mcp_tool
 
 router = APIRouter(prefix="/v1/tenants", tags=["mcp-keys"])
 
@@ -59,6 +70,10 @@ class McpApiKeyMetadata(BaseModel):
     label: str
     scope_json: McpKeyScopeJson
     capability_mode: CapabilityMode
+    enabled_tools: List[str] = Field(
+        default_factory=list,
+        description="Explicit enable-set when capability_mode=explicit; empty under inherit.",
+    )
     created_at: datetime
     expires_at: Optional[datetime] = None
     revoked_at: Optional[datetime] = None
@@ -118,6 +133,55 @@ class McpApiKeyPatchRequest(BaseModel):
     )
 
 
+class McpKeyCapabilitiesRequest(BaseModel):
+    """Writable per-key capability grants (MTG-3.3)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: CapabilityMode = Field(
+        description=(
+            "inherit = clear enabled_tools and follow tenant defaults; "
+            "explicit = enabled_tools is authoritative (must be ⊆ ceiling)."
+        ),
+    )
+    enabled_tools: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Tool ids when mode=explicit. Ignored (cleared) when mode=inherit."
+        ),
+    )
+
+
+class McpKeyCapabilitiesResponse(BaseModel):
+    """Stored per-key capability grants."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: CapabilityMode
+    enabled_tools: List[str]
+
+
+class McpKeyEffectiveToolRow(BaseModel):
+    """One registry tool's effective enablement for a key (MTG-1.4 preview)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tool_id: str
+    enabled: bool
+    deny_reason: Optional[str] = Field(
+        default=None,
+        description="First failing check when enabled is false; null when enabled.",
+    )
+
+
+class McpKeyCapabilitiesPreviewResponse(BaseModel):
+    """Effective enable-set table for a key (matches MCP call gate)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    tools: List[McpKeyEffectiveToolRow]
+
+
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
     """Return the authenticated tenant id or fail loudly when the context is missing."""
     tid = auth_data.get("tenant_id")
@@ -150,11 +214,98 @@ def _to_metadata(row: Dict[str, Any]) -> McpApiKeyMetadata:
             projects=list(scope.get("projects") or []),
         ),
         capability_mode=row.get("capability_mode") or "inherit",
+        enabled_tools=list(row.get("enabled_tools") or []),
         created_at=row["created_at"],
         expires_at=row.get("expires_at"),
         revoked_at=row.get("revoked_at"),
         last_used_at=row.get("last_used_at"),
         created_by=row.get("created_by"),
+    )
+
+
+def _normalized_enabled_tools(
+    mode: CapabilityMode, enabled_tools: Optional[List[str]]
+) -> List[str]:
+    """Apply inherit-clears-list and dedupe explicit tool ids (order preserved)."""
+    if mode == "inherit":
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+    for raw in enabled_tools or []:
+        tid = (raw or "").strip()
+        if not tid or tid in seen:
+            continue
+        seen.add(tid)
+        out.append(tid)
+    return out
+
+
+def _policy_snapshot(
+    row: Optional[Dict[str, Any]],
+) -> Optional[TenantMcpPolicySnapshot]:
+    """Map a ``get_tenant_mcp_policy`` row onto the resolver snapshot."""
+    if row is None:
+        return None
+    return TenantMcpPolicySnapshot(
+        default_mode=row["default_mode"],
+        allow_anonymous_mcp=bool(row.get("allow_anonymous_mcp", True)),
+        tools={
+            str(t["tool_id"]): TenantToolFlags(
+                in_ceiling=bool(t["in_ceiling"]),
+                default_enabled=bool(t["default_enabled"]),
+                anonymous_enabled=bool(t.get("anonymous_enabled", True)),
+            )
+            for t in row.get("tools") or []
+        },
+    )
+
+
+def _reject_outside_ceiling(tenant_id: str, tool_ids: List[str]) -> None:
+    """Raise 422 listing tool ids that are unknown or outside the tenant ceiling."""
+    if not tool_ids:
+        return
+    snap = _policy_snapshot(db.get_tenant_mcp_policy(tenant_id))
+    offending: List[str] = []
+    for tid in tool_ids:
+        if not is_registered_mcp_tool(tid) or not tool_in_ceiling(tid, snap):
+            offending.append(tid)
+    if offending:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "MCP key enable-set exceeds tenant ceiling",
+                "offending_tool_ids": offending,
+            },
+        )
+
+
+def _capabilities_response(row: Dict[str, Any]) -> McpKeyCapabilitiesResponse:
+    """Project stored capability columns onto the capabilities response model."""
+    return McpKeyCapabilitiesResponse(
+        mode=row.get("capability_mode") or "inherit",
+        enabled_tools=list(row.get("enabled_tools") or []),
+    )
+
+
+def _preview_for(
+    tenant_id: str, mode: CapabilityMode, enabled_tools: List[str]
+) -> McpKeyCapabilitiesPreviewResponse:
+    """Build an effective enable-set table via the shared MTG-1.4 resolver."""
+    snap = _policy_snapshot(db.get_tenant_mcp_policy(tenant_id))
+    key = KeyCapabilitySnapshot(
+        capability_mode=mode,
+        enabled_tools=frozenset(enabled_tools),
+    )
+    rows = preview_effective_tools(key=key, tenant=snap)
+    return McpKeyCapabilitiesPreviewResponse(
+        tools=[
+            McpKeyEffectiveToolRow(
+                tool_id=r.tool_id,
+                enabled=r.enabled,
+                deny_reason=r.deny_reason.value if r.deny_reason else None,
+            )
+            for r in rows
+        ]
     )
 
 
@@ -164,8 +315,9 @@ def _to_metadata(row: Dict[str, Any]) -> McpApiKeyMetadata:
     summary="List MCP API keys",
     description=(
         "List MCP API key metadata for the tenant (prefix, label, scope, "
-        "capability_mode, timestamps). Includes revoked keys for audit. Never "
-        "returns secret or hash. Tenant administrators only (MTG-3.2, #4776)."
+        "capability_mode, enabled_tools, timestamps). Includes revoked keys for "
+        "audit. Never returns secret or hash. Tenant administrators only "
+        "(MTG-3.2, #4776)."
     ),
 )
 async def list_mcp_api_keys(
@@ -242,8 +394,8 @@ async def get_mcp_api_key(
     summary="Update MCP API key",
     description=(
         "Update label, expires_at, and/or scope_json on an active (non-revoked) "
-        "MCP API key. Capability grants are MTG-3.3. Tenant administrators only "
-        "(MTG-3.2, #4776)."
+        "MCP API key. Capability grants use PUT …/capabilities (MTG-3.3). Tenant "
+        "administrators only (MTG-3.2, #4776)."
     ),
 )
 async def patch_mcp_api_key(
@@ -305,3 +457,70 @@ async def revoke_mcp_api_key(
     if row is None:
         raise HTTPException(status_code=404, detail="MCP API key not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.put(
+    "/{tenant_slug}/mcp-keys/{key_id}/capabilities",
+    response_model=McpKeyCapabilitiesResponse,
+    summary="Update MCP API key capabilities",
+    description=(
+        "Set per-key capability grants: mode inherit|explicit and optional "
+        "enabled_tools. inherit clears the explicit list; explicit lists must be "
+        "⊆ the tenant ceiling (422 with offending_tool_ids otherwise). Tenant "
+        "administrators only (MTG-3.3, #4777)."
+    ),
+)
+async def put_mcp_api_key_capabilities(
+    tenant_slug: str,
+    key_id: UUID,
+    body: McpKeyCapabilitiesRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpKeyCapabilitiesResponse:
+    """Replace capability_mode / enabled_tools on an active MCP API key."""
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    tools = _normalized_enabled_tools(body.mode, body.enabled_tools)
+    _reject_outside_ceiling(tenant_id, tools)
+    try:
+        row = db.update_mcp_api_key_capabilities(
+            tenant_id,
+            str(key_id),
+            capability_mode=body.mode,
+            enabled_tools=tools,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail="MCP API key not found or already revoked",
+        )
+    return _capabilities_response(row)
+
+
+@router.post(
+    "/{tenant_slug}/mcp-keys/{key_id}/capabilities/preview",
+    response_model=McpKeyCapabilitiesPreviewResponse,
+    summary="Preview MCP API key effective capabilities",
+    description=(
+        "Dry-run effective enable-set for the given mode/enabled_tools against the "
+        "tenant policy, using the same MTG-1.4 resolver as MCP tools/call. Does not "
+        "persist. Ceiling violations yield 422 with offending_tool_ids. Tenant "
+        "administrators only (MTG-3.3, #4777)."
+    ),
+)
+async def preview_mcp_api_key_capabilities(
+    tenant_slug: str,
+    key_id: UUID,
+    body: McpKeyCapabilitiesRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpKeyCapabilitiesPreviewResponse:
+    """Preview effective tools for proposed grants without writing the key."""
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    existing = db.get_mcp_api_key(tenant_id, str(key_id))
+    if existing is None:
+        raise HTTPException(status_code=404, detail="MCP API key not found")
+    tools = _normalized_enabled_tools(body.mode, body.enabled_tools)
+    _reject_outside_ceiling(tenant_id, tools)
+    return _preview_for(tenant_id, body.mode, tools)
