@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781).
+ * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781)
+ * + MTG-4.3 (#4782) per-key capability editor.
  *
  * Loads MTG-3.1 policy + MTG-1.1 catalog for the session's current tenant.
  * Toolsets use master switches; optional advanced view exposes per-tool flags.
@@ -47,6 +48,7 @@ import {
   validateMcpPolicyForm,
   type McpPolicyFormState,
 } from './mcpPolicyForm';
+import TenantMcpKeyCapabilitiesEditor from './TenantMcpKeyCapabilitiesEditor';
 
 export interface TenantMcpSettingsPanelProps {
   /** When false, show a disabled note instead of the editable form. */
@@ -84,6 +86,8 @@ export default function TenantMcpSettingsPanel({
   const [baseline, setBaseline] = useState<McpPolicyFormState | null>(null);
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  /** Bumped after successful policy save so inherit key previews refresh. */
+  const [policyRevision, setPolicyRevision] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,6 +116,19 @@ export default function TenantMcpSettingsPanel({
     () => (form ? groupToolsByToolset(form.tools) : []),
     [form],
   );
+  const catalogItems = useMemo(
+    () =>
+      (form?.tools ?? []).map(({ tool_id, description, toolset }) => ({
+        id: tool_id,
+        description,
+        toolset,
+      })),
+    [form],
+  );
+  const ceilingToolIds = useMemo(
+    () => (baseline?.tools ?? []).filter((t) => t.in_ceiling).map((t) => t.tool_id),
+    [baseline],
+  );
 
   const handleDiscard = () => {
     if (baseline) setForm(baseline);
@@ -137,6 +154,7 @@ export default function TenantMcpSettingsPanel({
       const next = mcpPolicyFormFromSources(saved, catalogTools);
       setForm(next);
       setBaseline(next);
+      setPolicyRevision((n) => n + 1);
       toast.success('MCP settings saved');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save MCP settings';
@@ -406,6 +424,12 @@ export default function TenantMcpSettingsPanel({
                       </div>
                     </div>
                   )}
+
+                  <TenantMcpKeyCapabilitiesEditor
+                    catalog={catalogItems}
+                    ceilingToolIds={ceilingToolIds}
+                    policyRevision={policyRevision}
+                  />
                 </>
               ) : null}
             </>

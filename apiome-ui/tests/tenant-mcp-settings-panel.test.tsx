@@ -70,6 +70,18 @@ function mockFetch() {
         data: { ...POLICY, ...(init?.body ? JSON.parse(init.body as string) : {}) },
       });
     }
+    if (url.includes('/api/tenants/mcp-keys') && method === 'GET' && !url.includes('/capabilities')) {
+      return jsonResponse({ success: true, data: { keys: [] } });
+    }
+    if (url.includes('/capabilities/preview') && method === 'POST') {
+      return jsonResponse({ success: true, data: { tools: [] } });
+    }
+    if (url.includes('/capabilities') && method === 'PUT') {
+      return jsonResponse({
+        success: true,
+        data: { mode: 'inherit', enabled_tools: [] },
+      });
+    }
     return jsonResponse({ success: false, error: `Unhandled ${method} ${url}` });
   });
   // @ts-expect-error test double
