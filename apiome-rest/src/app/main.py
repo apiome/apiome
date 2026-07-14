@@ -82,7 +82,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.0.74",
+    version="1.0.75",
 )
 
 
@@ -265,7 +265,8 @@ app.include_router(mcp_catalog_digest_router)
 app.include_router(mcp_saved_search_router)
 app.include_router(mcp_endpoint_note_router)
 app.include_router(mcp_collection_router)
-# MCP tool catalog (MTG-1.1, #4765): GET /api-keys/mcp-tools for CLI + admin UX.
+# MCP tool catalog + capability presets (MTG-1.1 / MTG-5.1): GET /api-keys/mcp-tools,
+# GET /api-keys/mcp-capability-presets for CLI + admin UX.
 app.include_router(mcp_tool_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)

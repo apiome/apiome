@@ -1,10 +1,11 @@
 /**
- * Pure helpers for the Tenants MCP Settings form (MTG-4.1 / #4780, MTG-4.2 / #4781).
+ * Pure helpers for the Tenants MCP Settings form (MTG-4.1 / #4780, MTG-4.2 / #4781,
+ * MTG-5.1 / #4785 capability presets).
  *
  * Merges the MTG-1.1 catalog with the stored MTG-3.1 policy so every registry
  * tool appears as a row. Missing policy rows get display defaults from
  * `default_mode` (see EFFECTIVE_POLICY.md). Toolset grouping powers the
- * master-switch UX.
+ * master-switch UX. Named capability presets apply a toolset enable matrix.
  */
 
 import type {
@@ -230,4 +231,59 @@ export function patchToolsetCeiling(
       };
     }),
   };
+}
+
+/** UI sentinel when the draft does not match a named capability pack. */
+export const MCP_CUSTOM_PRESET_ID = 'custom';
+
+export interface McpCapabilityPresetDef {
+  id: string;
+  label: string;
+  toolsets: readonly string[];
+}
+
+/**
+ * Apply a named capability preset matrix to the draft form.
+ * Tools in `enabledToolsets` get in_ceiling + default_enabled; others clear both.
+ * Leaves anonymous_enabled, default_mode, and allow_anonymous_mcp unchanged.
+ */
+export function applyCapabilityPreset(
+  form: McpPolicyFormState,
+  enabledToolsets: readonly string[],
+): McpPolicyFormState {
+  const enabled = new Set(enabledToolsets);
+  return {
+    ...form,
+    tools: form.tools.map((row) => {
+      const on = enabled.has(row.toolset);
+      return {
+        ...row,
+        in_ceiling: on,
+        default_enabled: on,
+      };
+    }),
+  };
+}
+
+/**
+ * Match the draft to a named preset, or `custom` when mixed / non-matching.
+ * Empty tool list or any toolset with mixed ceiling → custom.
+ */
+export function matchCapabilityPreset(
+  form: McpPolicyFormState,
+  presets: readonly McpCapabilityPresetDef[],
+): string {
+  const groups = groupToolsByToolset(form.tools);
+  if (groups.length === 0) return MCP_CUSTOM_PRESET_ID;
+  if (groups.some((g) => g.ceilingState === 'mixed')) return MCP_CUSTOM_PRESET_ID;
+
+  const enabled = new Set(
+    groups.filter((g) => g.ceilingState === 'all').map((g) => g.toolset),
+  );
+
+  for (const preset of presets) {
+    if (preset.toolsets.length !== enabled.size) continue;
+    if (preset.toolsets.every((t) => enabled.has(t))) return preset.id;
+  }
+  return MCP_CUSTOM_PRESET_ID;
 }

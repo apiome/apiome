@@ -1,8 +1,9 @@
 /**
- * Client helpers for tenant MCP policy (MTG-4.1 / #4780).
+ * Client helpers for tenant MCP policy (MTG-4.1 / #4780, MTG-5.1 / #4785).
  *
- * Talks to the `/api/tenants/mcp-policy` and `/api/api-keys/mcp-tools` proxies,
- * which forward to MTG-3.1 / MTG-1.1 REST endpoints. Types mirror REST snake_case.
+ * Talks to the `/api/tenants/mcp-policy`, `/api/api-keys/mcp-tools`, and
+ * `/api/api-keys/mcp-capability-presets` proxies, which forward to MTG-3.1 /
+ * MTG-1.1 / MTG-5.1 REST endpoints. Types mirror REST snake_case.
  */
 
 export type TenantDefaultMode = 'all' | 'inherit_registry' | 'explicit';
@@ -73,4 +74,20 @@ export async function putMcpPolicy(
 export async function fetchMcpToolCatalog(): Promise<McpToolCatalogResponse> {
   const res = await fetch('/api/api-keys/mcp-tools', { cache: 'no-store' });
   return readProxyJson<McpToolCatalogResponse>(res);
+}
+
+export interface McpCapabilityPresetItem {
+  id: string;
+  label: string;
+  toolsets: string[];
+}
+
+export interface McpCapabilityPresetsResponse {
+  presets: McpCapabilityPresetItem[];
+}
+
+/** Load named MCP capability presets (MTG-5.1 documented matrix). */
+export async function fetchMcpCapabilityPresets(): Promise<McpCapabilityPresetsResponse> {
+  const res = await fetch('/api/api-keys/mcp-capability-presets', { cache: 'no-store' });
+  return readProxyJson<McpCapabilityPresetsResponse>(res);
 }

@@ -3,13 +3,15 @@
 /**
  * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781)
  * + MTG-4.3 (#4782) per-key capability editor + MTG-4.4 (#4783) non-admin
- * read-only + MTG-4.5 (#4784) disable confirm.
+ * read-only + MTG-4.5 (#4784) disable confirm + MTG-5.1 (#4785) capability
+ * presets.
  *
- * Loads MTG-3.1 policy + MTG-1.1 catalog for the session's current tenant.
- * Toolsets use master switches; optional advanced view exposes per-tool flags.
- * Non-admins browse the same controls disabled (GuideEditorClient pattern).
- * When this row is not the current tenant, shows a switch-tenant note (proxy
- * is always current-tenant scoped).
+ * Loads MTG-3.1 policy + MTG-1.1 catalog + MTG-5.1 presets for the session's
+ * current tenant. Toolsets use master switches; named packs apply a draft
+ * matrix; optional advanced view exposes per-tool flags. Non-admins browse
+ * the same controls disabled (GuideEditorClient pattern). When this row is
+ * not the current tenant, shows a switch-tenant note (proxy is always
+ * current-tenant scoped).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -36,17 +38,22 @@ import {
 } from '@/app/components/ui/Select';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import {
+  fetchMcpCapabilityPresets,
   fetchMcpPolicy,
   fetchMcpToolCatalog,
   putMcpPolicy,
+  type McpCapabilityPresetItem,
   type TenantDefaultMode,
 } from './mcpPolicyApi';
 import { fetchMcpKeys } from './mcpKeysApi';
 import {
+  applyCapabilityPreset,
   buildMcpPolicyPutBody,
   groupToolsByToolset,
   hasMcpPolicyChanges,
+  matchCapabilityPreset,
   mcpPolicyFormFromSources,
+  MCP_CUSTOM_PRESET_ID,
   patchToolFlag,
   patchToolsetCeiling,
   validateMcpPolicyForm,
@@ -99,6 +106,7 @@ export default function TenantMcpSettingsPanel({
   const [advanced, setAdvanced] = useState(false);
   /** Bumped after successful policy save so inherit key previews refresh. */
   const [policyRevision, setPolicyRevision] = useState(0);
+  const [presets, setPresets] = useState<McpCapabilityPresetItem[]>([]);
 
   const readOnly = !isAdmin;
   const controlsDisabled = readOnly || saving;
@@ -107,10 +115,15 @@ export default function TenantMcpSettingsPanel({
     setLoading(true);
     setError(null);
     try {
-      const [policy, catalog] = await Promise.all([fetchMcpPolicy(), fetchMcpToolCatalog()]);
+      const [policy, catalog, presetBody] = await Promise.all([
+        fetchMcpPolicy(),
+        fetchMcpToolCatalog(),
+        fetchMcpCapabilityPresets(),
+      ]);
       const next = mcpPolicyFormFromSources(policy, catalog.tools ?? []);
       setForm(next);
       setBaseline(next);
+      setPresets(presetBody.presets ?? []);
       setLoadedOnce(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load MCP settings';
@@ -143,10 +156,22 @@ export default function TenantMcpSettingsPanel({
     () => (baseline?.tools ?? []).filter((t) => t.in_ceiling).map((t) => t.tool_id),
     [baseline],
   );
+  const activePresetId = useMemo(
+    () => (form ? matchCapabilityPreset(form, presets) : MCP_CUSTOM_PRESET_ID),
+    [form, presets],
+  );
 
   const handleDiscard = () => {
     if (baseline) setForm(baseline);
     setError(null);
+  };
+
+  /** Apply a named pack to the draft, or no-op when Custom is chosen. */
+  const handlePresetChange = (presetId: string) => {
+    if (readOnly || presetId === MCP_CUSTOM_PRESET_ID) return;
+    const pack = presets.find((p) => p.id === presetId);
+    if (!pack) return;
+    setForm((prev) => (prev ? applyCapabilityPreset(prev, pack.toolsets) : prev));
   };
 
   /**
@@ -316,6 +341,36 @@ export default function TenantMcpSettingsPanel({
                       </Label>
                     </div>
                   </div>
+
+                  {presets.length > 0 && (
+                    <div className="space-y-2 max-w-md">
+                      <Label htmlFor="mcp-capability-preset">Capability profile</Label>
+                      <Select
+                        value={activePresetId}
+                        onValueChange={handlePresetChange}
+                        disabled={controlsDisabled}
+                      >
+                        <SelectTrigger
+                          id="mcp-capability-preset"
+                          aria-label="Capability profile"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {presets.map((preset) => (
+                            <SelectItem key={preset.id} value={preset.id}>
+                              {preset.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={MCP_CUSTOM_PRESET_ID}>Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Named packs set toolset ceilings in one click; Custom stays
+                        editable after apply.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
