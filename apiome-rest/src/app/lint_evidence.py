@@ -50,6 +50,12 @@ NATIVE_SCANNER_ID = "apiome.native-lint"
 #: Scanner id for the native MCP surface lint engine (mcp_lint / mcp_score).
 MCP_SCANNER_ID = "apiome.mcp-lint"
 
+#: Scanner id for the MCP protocol-conformance & agent-readiness engine (CLX-3.1, mcp_conformance).
+#: A *separate* scanner from ``apiome.mcp-lint`` on purpose: it answers a different question (how
+#: the server behaved, and whether its tools are usable by an agent) against a different rule set,
+#: and it carries its own score and fingerprint so the surface lint's persisted scores never move.
+MCP_CONFORMANCE_SCANNER_ID = "apiome.mcp-conformance"
+
 #: Subject discriminators, mirroring the V167 CHECK constraint.
 SUBJECT_CATALOG_REVISION = "catalog_revision"
 SUBJECT_MCP_ENDPOINT_VERSION = "mcp_endpoint_version"
@@ -265,6 +271,64 @@ def mcp_evidence_run(
     )
 
 
+def mcp_conformance_evidence_run(
+    mcp_version_id: str,
+    report: Mapping[str, Any],
+    *,
+    profile: str = PROFILE_DISCOVERY_CAPTURE,
+    input_fingerprint: Optional[str] = None,
+    source_fingerprint: Optional[str] = None,
+    config: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build the evidence-run row for an MCP protocol-conformance report (CLX-3.1, #4855).
+
+    The conformance report (:meth:`app.mcp_conformance.ConformanceReport.report_dict`) is
+    deliberately a superset of the native lint report's key set, so it normalizes into the same
+    finding envelope through the same code path with no special-casing.
+
+    Coverage is the one place the two differ, and it matters. A conformance run over a snapshot
+    with **no protocol transcript** cannot evaluate the transcript-backed rules — it *skips*
+    them — so it has not covered its subject completely. Such a run is recorded as
+    :data:`COVERAGE_PARTIAL`, carrying the skipped rule ids, rather than :data:`COVERAGE_FULL`.
+    Without that distinction a recompute-from-database run would look exactly like a run that
+    had actually observed the server's protocol behaviour and found it clean — which is the
+    precise failure mode (an unobserved behaviour reading as a pass) that the whole evidence
+    contract exists to prevent.
+
+    Args:
+        mcp_version_id: The scanned discovery snapshot (``mcp_endpoint_versions.id``).
+        report: The computed report (``ConformanceReport.report_dict()`` shape).
+        profile: Execution profile to stamp (discovery-capture, or recompute for an API re-run).
+        input_fingerprint: Fingerprint of the surface consumed (e.g. ``surface_fingerprint``).
+        source_fingerprint: Fingerprint of the upstream source, when distinct from the input.
+        config: Non-persisted scanner configuration; only its redacted fingerprint is stored.
+
+    Returns:
+        A column-name -> value dict ready for the persistence layer.
+    """
+    run = _evidence_run(
+        subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+        subject_id=mcp_version_id,
+        scanner_id=MCP_CONFORMANCE_SCANNER_ID,
+        report=report,
+        profile=profile,
+        input_fingerprint=input_fingerprint,
+        source_fingerprint=source_fingerprint,
+        config=config,
+    )
+    skipped = list(report.get("skipped_rules") or [])
+    if skipped:
+        run["coverage"] = {
+            "state": COVERAGE_PARTIAL,
+            "skipped_rules": skipped,
+            "reason": (
+                "No protocol transcript was captured for this snapshot, so the "
+                "transcript-backed conformance rules could not be evaluated."
+            ),
+        }
+    return run
+
+
 def _evidence_run(
     *,
     subject_type: str,
@@ -319,7 +383,11 @@ def expected_scanners_for_subject(subject_type: str) -> List[str]:
         The expected scanner ids, deterministic order.
     """
     if subject_type == SUBJECT_MCP_ENDPOINT_VERSION:
-        return [MCP_SCANNER_ID]
+        # Both native MCP engines are expected: the surface lint and the protocol-conformance /
+        # agent-readiness scanner (CLX-3.1). Listing conformance here is what makes a snapshot
+        # that has never been conformance-scanned render as `not_run` / coverage `none` rather
+        # than silently as clean — which is the whole point of the expected-scanner set.
+        return [MCP_SCANNER_ID, MCP_CONFORMANCE_SCANNER_ID]
     return [NATIVE_SCANNER_ID]
 
 

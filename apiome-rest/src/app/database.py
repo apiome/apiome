@@ -14496,6 +14496,92 @@ class Database:
         rows = self.execute_query(query, (version_id,))
         return dict(rows[0]) if rows else None
 
+    def set_mcp_protocol_transcript(
+        self,
+        version_id: str,
+        *,
+        transcript: Dict[str, Any],
+        requested_version: Optional[str] = None,
+        negotiated_version: Optional[str] = None,
+        transcript_fingerprint: Optional[str] = None,
+    ) -> bool:
+        """Record the redacted protocol transcript for a discovery snapshot (CLX-3.1, #4855).
+
+        Persists an :meth:`app.mcp_protocol_transcript.ProtocolTranscript.as_dict` payload into
+        ``mcp_protocol_transcripts``: the reduced, redacted record of the passive JSON-RPC
+        exchanges performed while the snapshot was being discovered. It stores shapes, counts
+        and cursor digests only — never wire data, tool arguments, tool results, or credentials
+        (redaction happens at capture, in :mod:`app.mcp_protocol_transcript`, not here).
+
+        **Write-once.** There is one transcript per snapshot, and the row is guarded by the
+        shared immutability trigger, so this is an ``ON CONFLICT DO NOTHING`` insert rather than
+        an upsert: an ``ON CONFLICT DO UPDATE`` would trip the trigger and raise. A snapshot is
+        immutable, so the discovery that produced it is a fact about it that never changes —
+        a second write for the same version is a no-op, not an error.
+
+        Tenant scoping is implicit: ``version_id`` is opaque, the caller has already validated
+        the owning endpoint/tenant, and the row cascade-deletes with its version.
+
+        Args:
+            version_id: The ``mcp_endpoint_versions`` snapshot the transcript was captured for.
+            transcript: The redacted transcript payload; stored as JSONB.
+            requested_version: Protocol version the client offered first, when known.
+            negotiated_version: Protocol version the server settled on, when known.
+            transcript_fingerprint: Stable hash over the redacted transcript.
+
+        Returns:
+            ``True`` when a row was inserted; ``False`` when the snapshot already had one.
+        """
+        query = """
+            INSERT INTO apiome.mcp_protocol_transcripts (
+                version_id, transcript, requested_version, negotiated_version,
+                transcript_fingerprint, redacted, captured_at
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP
+            )
+            ON CONFLICT (version_id) DO NOTHING
+            RETURNING id
+        """
+        rows = self.execute_query(
+            query,
+            (
+                version_id,
+                Json(transcript or {}),
+                requested_version,
+                negotiated_version,
+                transcript_fingerprint,
+            ),
+        )
+        return bool(rows)
+
+    def get_mcp_protocol_transcript(self, version_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch the redacted protocol transcript for a discovery snapshot, if one was captured.
+
+        The read counterpart of :meth:`set_mcp_protocol_transcript`. It is what lets the
+        conformance API evaluate the transcript-backed protocol rules on a *recompute*, long
+        after the session that observed them closed.
+
+        A snapshot discovered before CLX-3.1 — or restored from a store rather than a live
+        handshake — has no row, and this returns ``None``. Callers MUST treat that as "not
+        observed" and report the transcript-backed rules as skipped: an absent transcript is a
+        visible gap, never a clean result.
+
+        Args:
+            version_id: The ``mcp_endpoint_versions`` snapshot whose transcript to read.
+
+        Returns:
+            ``{"transcript", "requested_version", "negotiated_version", "transcript_fingerprint",
+            "redacted", "captured_at"}``, or ``None`` when no transcript was captured.
+        """
+        query = """
+            SELECT transcript, requested_version, negotiated_version,
+                   transcript_fingerprint, redacted, captured_at
+            FROM apiome.mcp_protocol_transcripts
+            WHERE version_id = %s::uuid
+        """
+        rows = self.execute_query(query, (version_id,))
+        return dict(rows[0]) if rows else None
+
     def touch_mcp_endpoint_discovery(
         self,
         endpoint_id: str,

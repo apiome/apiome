@@ -708,6 +708,37 @@ version is scored — the CLI exits with guidance when the endpoint has never be
 `--min-grade` turns the report into a CI gate, exiting non-zero when the grade is worse than the
 floor (A best, F worst). `--output json` (or the global `--json`) prints the raw report.
 
+Gate a discovered surface on MCP **protocol conformance and agent-readiness**
+(`GET …/versions/{version_id}/conformance`). The server evaluates a rule profile against the
+snapshot, scores it, and computes the CI gate; the CLI exits non-zero when the gate fails:
+
+```bash
+apiome mcp conformance <endpoint-uuid>
+apiome mcp conformance <endpoint-uuid> --version <version-uuid>
+apiome mcp conformance <endpoint-uuid> --profile mcp-agent-readiness
+apiome mcp conformance <endpoint-uuid> --fail-on warning --min-score 80
+apiome mcp conformance <endpoint-uuid> --format sarif
+apiome mcp conformance <endpoint-uuid> --format junit
+```
+
+`--profile` selects the rule set: `mcp-conformance` (default, all rules), `mcp-protocol`, or
+`mcp-agent-readiness`. `--fail-on error|warning|info|none` (default `error`) and `--min-score
+0..100` are passed through so the server computes the gate. `--format sarif|junit` echoes the raw
+gate artifact for CI ingestion **and still exits non-zero on a failing gate** (the gate is always
+read from the JSON report, never inferred from the artifact); `--output json` (or the global
+`--json`) prints the report.
+Rules that require a captured protocol transcript are reported as **skipped, not passing** — the
+human report prints an explicit "NOT EVALUATED" note listing them.
+
+List the rule catalog, including the MCP specification version and source reference each rule
+cites (`GET /v1/mcp/conformance/rules`):
+
+```bash
+apiome mcp conformance-rules
+apiome mcp conformance-rules --profile mcp-protocol
+apiome mcp conformance-rules --output json
+```
+
 ### MCP governance (policy & key capabilities)
 
 Tenant MCP policy and per-key capability grants are managed with a **session bearer**

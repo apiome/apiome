@@ -25,14 +25,29 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from psycopg2 import errors as pg_errors
 
-from .auth import get_authenticated_user_id, validate_authentication
+from .auth import (
+    get_authenticated_user_id,
+    validate_authentication,
+    validate_session_credentials,
+)
 from .config import settings
 from .database import db
 from .embedding import get_embedding
+from .gate_report_emit import (
+    GATE_FORMAT_JSON,
+    normalize_gate_format,
+    serialize_gate,
+)
+from .lint_evidence import (
+    MCP_CONFORMANCE_SCANNER_ID,
+    SUBJECT_MCP_ENDPOINT_VERSION,
+    normalize_native_findings,
+    outcome_for_report,
+)
 from .mcp_auth import (
     CredentialPayloadError,
     build_auth_headers,
@@ -46,6 +61,14 @@ from .mcp_client.normalize import (
     ITEM_TYPE_RESOURCE,
     ITEM_TYPE_TOOL,
 )
+from .mcp_conformance import (
+    MCP_SPEC_VERSION,
+    PROFILES,
+    ConformanceContext,
+    UnknownProfileError,
+    rule_catalog,
+    run_conformance,
+)
 from .mcp_credential_crypto import CredentialEncryptionError, seal_credential_payload
 from .mcp_credentials import load_endpoint_auth_headers
 from .mcp_digest_service import generate_server_digest
@@ -55,8 +78,8 @@ from .mcp_discovery_engine import (
     trigger_discovery,
 )
 from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
-from .mcp_freshness_report import mcp_freshness_report_from_rows
 from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
+from .mcp_freshness_report import mcp_freshness_report_from_rows
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
     TOOL_LATENCY_WINDOW_DAYS,
@@ -79,13 +102,13 @@ from .mcp_insight_aggregation import (
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
 from .mcp_lifecycle_signals import detect_lifecycle_signals
+from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_provenance import build_endpoint_provenance
 from .mcp_report_card import (
     build_report_card,
     render_report_html,
     render_report_markdown,
 )
-from .lint_evidence import SUBJECT_MCP_ENDPOINT_VERSION
 from .mcp_score import score_mcp_surface
 from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
@@ -93,14 +116,23 @@ from .models import (
     LintEvidenceResponse,
     LintPolicyResponse,
     McpBrowseResponse,
+    McpCapabilityDirectoryDirection,
+    McpCapabilityDirectoryResponse,
+    McpCapabilityDirectorySort,
+    McpCapabilityDirectoryType,
+    McpConformanceProfileOut,
+    McpConformanceRuleOut,
+    McpConformanceRulesResponse,
     McpCredentialDeleteResponse,
     McpCredentialStatusResponse,
     McpCredentialUpsert,
+    McpCrossServerCapabilitySearchResponse,
     McpDiscoveryJobListResponse,
     McpDiscoveryJobResponse,
     McpDiscoveryJobStatusListResponse,
     McpDiscoveryJobStatusResponse,
     McpDiscoveryReliabilityOut,
+    McpDuplicateReportResponse,
     McpEndpointCreate,
     McpEndpointDeleteResponse,
     McpEndpointDigestResponse,
@@ -114,6 +146,7 @@ from .models import (
     McpEndpointViewMarkRequest,
     McpEndpointViewResponse,
     McpFacetedSearchResponse,
+    McpFreshnessReportResponse,
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
     McpInsightGraphResponse,
@@ -124,13 +157,6 @@ from .models import (
     McpInvocationReliabilityOut,
     McpLintReportResponse,
     McpPeerPercentileOut,
-    McpCrossServerCapabilitySearchResponse,
-    McpCapabilityDirectoryResponse,
-    McpCapabilityDirectorySort,
-    McpCapabilityDirectoryDirection,
-    McpCapabilityDirectoryType,
-    McpDuplicateReportResponse,
-    McpFreshnessReportResponse,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -148,12 +174,15 @@ from .models import (
     McpVersionCompareResponse,
     McpVersionRef,
     group_mcp_browse_endpoints,
+    lint_axis_evaluation_out_from_row,
+    lint_evidence_response_from_rows,
+    mcp_capability_directory_response_from_rows,
     mcp_capability_graph_out,
     mcp_catalog_insight_from_row,
     mcp_change_counts,
-    mcp_cross_server_capability_search_response_from_groups,
-    mcp_capability_directory_response_from_rows,
+    mcp_conformance_report_from_report,
     mcp_credential_status_from_row,
+    mcp_cross_server_capability_search_response_from_groups,
     mcp_discovery_health_out,
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
@@ -163,8 +192,6 @@ from .models import (
     mcp_endpoint_view_response,
     mcp_evolution_point_from_row,
     mcp_faceted_search_response_from_bundle,
-    lint_evidence_response_from_rows,
-    lint_axis_evaluation_out_from_row,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
     mcp_surface_metrics_out,
@@ -1223,6 +1250,167 @@ def _recompute_mcp_version_lint(version: Dict[str, Any]):
     items = db.get_mcp_capability_items(str(version["id"]))
     surface = reconstruct_surface(version, items)
     return score_mcp_surface(surface)
+
+
+def _recompute_mcp_conformance(
+    version: Dict[str, Any],
+    *,
+    profile: Optional[str],
+    fail_on: str,
+    min_score: Optional[int],
+):
+    """Reconstruct a snapshot's surface (+ its stored transcript) and run a conformance profile.
+
+    The surface half is deterministic: the same stored snapshot always yields the same findings,
+    so a conformance report can be recomputed offline from the database with no network access.
+
+    The transcript half is *evidence*: if a redacted protocol transcript was captured when this
+    snapshot was discovered, it is loaded and the transcript-backed rules run against it, so a
+    recompute is just as complete as the original discovery-time run. When no transcript exists
+    (a snapshot discovered before CLX-3.1), those rules are **skipped** and reported in
+    ``skipped_rules`` — never silently treated as passing.
+
+    Args:
+        version: The ``mcp_endpoint_versions`` row to assess.
+        profile: The conformance profile id, or ``None`` for the default.
+        fail_on: Severity threshold for the gate.
+        min_score: Optional score floor for the gate.
+
+    Returns:
+        The rolled-up :class:`~app.mcp_conformance.ConformanceReport`.
+
+    Raises:
+        UnknownProfileError: If ``profile`` names no known profile.
+        ValueError: If ``fail_on`` is not a recognized threshold.
+    """
+    version_id = str(version["id"])
+    items = db.get_mcp_capability_items(version_id)
+    surface = reconstruct_surface(version, items)
+
+    stored = db.get_mcp_protocol_transcript(version_id)
+    transcript = (
+        ProtocolTranscript.from_dict(stored["transcript"])
+        if stored and isinstance(stored.get("transcript"), dict)
+        else None
+    )
+    return run_conformance(
+        ConformanceContext(surface=surface, transcript=transcript),
+        profile=profile,
+        fail_on=fail_on,
+        min_score=min_score,
+    )
+
+
+@mcp_endpoints_router.get("/conformance/rules", response_model=McpConformanceRulesResponse)
+async def get_mcp_conformance_rules(
+    profile: Optional[str] = Query(
+        default=None,
+        description="Restrict the catalog to the rules this profile evaluates.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> McpConformanceRulesResponse:
+    """Return the MCP conformance rule catalog and the profiles that select from it.
+
+    Every rule cites the MCP specification revision it derives from and a resolvable source
+    reference, so any finding can be traced back to a normative statement (CLX-3.1 AC-1).
+
+    The catalog is **registry-level** — it describes the engine, not any one endpoint — so it
+    authenticates with :func:`validate_session_credentials` rather than
+    :func:`validate_authentication`. That is not interchangeable: ``validate_authentication``
+    takes ``tenant_slug`` as its first parameter, which FastAPI resolves from the *path* on every
+    tenant-scoped route. This route has no ``{tenant_slug}`` segment, so it would instead be
+    resolved as a **required query parameter** — making the catalog return 422 unless the caller
+    invented a slug, and then authenticating against whatever they invented. The same reasoning is
+    why ``GET /v1/lint/rules`` uses ``validate_session_credentials``.
+    """
+    _ = auth_data
+    try:
+        rules = rule_catalog(profile)
+    except UnknownProfileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return McpConformanceRulesResponse(
+        spec_version=MCP_SPEC_VERSION,
+        profiles=[
+            McpConformanceProfileOut(**PROFILES[key].as_dict()) for key in sorted(PROFILES)
+        ],
+        rules=[McpConformanceRuleOut(**rule) for rule in rules],
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/conformance",
+    response_model=None,
+)
+async def get_mcp_endpoint_version_conformance(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    request: Request,
+    profile: Optional[str] = Query(
+        default=None,
+        description="Conformance profile to run (default: mcp-conformance).",
+    ),
+    fail_on: str = Query(
+        default="error",
+        alias="failOn",
+        description="Fail the gate on findings of this severity or worse; 'none' to disable.",
+    ),
+    min_score: Optional[int] = Query(
+        default=None,
+        alias="minScore",
+        ge=0,
+        le=100,
+        description="Optional score floor; a lower score fails the gate.",
+    ),
+    format: Optional[str] = Query(
+        default=None,
+        description="Response format: json (default), sarif, or junit.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+):
+    """Run and gate a conformance profile over one MCP version snapshot.
+
+    Assesses the snapshot's protocol behaviour and its tools' agent-readiness, then gates the
+    result: the response's ``gate`` says whether the run cleared ``failOn`` / ``minScore``, so a
+    CI job can act on this single call.
+
+    Read-only and side-effect free: the report is recomputed on each request from the persisted
+    surface and the snapshot's stored (redacted) protocol transcript, and nothing is written back.
+    Any rule that needs a transcript this snapshot never captured is reported in ``skippedRules``
+    rather than assumed to pass.
+
+    ``format=sarif`` / ``format=junit`` return the CI artifact directly, through the same
+    serializer the compatibility gate uses. 404 when the endpoint — or the version under it — is
+    not the caller's tenant's; 400 on an unknown profile or threshold.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    try:
+        result = _recompute_mcp_conformance(
+            version, profile=profile, fail_on=fail_on, min_score=min_score
+        )
+    except (UnknownProfileError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    report = result.report_dict()
+
+    requested_format = normalize_gate_format(format or request.headers.get("accept"))
+    if requested_format != GATE_FORMAT_JSON:
+        body, media_type = serialize_gate(
+            requested_format,
+            findings=normalize_native_findings(report["findings"]),
+            scanner_id=MCP_CONFORMANCE_SCANNER_ID,
+            head_revision_id=str(version_id),
+            outcome=outcome_for_report(report),
+        )
+        return Response(content=body, media_type=media_type)
+
+    return mcp_conformance_report_from_report(str(endpoint_id), version, report)
 
 
 @mcp_endpoints_router.get(

@@ -32,6 +32,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from .lint_evidence import (
     COVERAGE_FULL,
     COVERAGE_NONE,
+    COVERAGE_PARTIAL,
     SUBJECT_CATALOG_REVISION,
     SUBJECT_MCP_ENDPOINT_VERSION,
 )
@@ -245,6 +246,59 @@ def _quality_axis(
     return axis
 
 
+def _protocol_axis(
+    subject_type: str, conformance_report: Optional[Mapping[str, Any]]
+) -> Dict[str, Any]:
+    """Assess the protocol axis from an MCP conformance report (CLX-3.1, #4855).
+
+    This axis was declared by CLX-1.2 but has always read *not assessed* — there was no scanner
+    that could speak to a server's protocol behaviour. :mod:`app.mcp_conformance` is that
+    scanner, and its report is what fills the axis in.
+
+    The axis takes the conformance report's own score and grade rather than recomputing from its
+    findings, so the axis and the conformance report can never disagree about the same run.
+
+    Two states never collapse into "clean":
+
+    * **No conformance report** (``None``) — the snapshot has not been conformance-scanned, so
+      the axis stays *not assessed* with :data:`REASON_PROTOCOL`. It contributes nothing to the
+      composite, which is exactly right: an unscanned axis is not a passing one.
+    * **A report with skipped rules** — the transcript-backed rules could not be evaluated
+      because no protocol transcript was captured for the snapshot. The axis is assessed (the
+      surface-derived rules genuinely did run) but its coverage is :data:`COVERAGE_PARTIAL`, so
+      a consumer can tell a fully-observed pass from a partially-observed one.
+
+    Args:
+        subject_type: Only MCP snapshots have a protocol surface; a catalog revision is a
+            document and has none.
+        conformance_report: A ``ConformanceReport.report_dict()`` payload, or ``None``.
+
+    Returns:
+        The axis payload.
+    """
+    if subject_type != SUBJECT_MCP_ENDPOINT_VERSION or not conformance_report:
+        return _not_assessed(AXIS_PROTOCOL, REASON_PROTOCOL)
+
+    score = conformance_report.get("score")
+    if score is None:
+        return _not_assessed(AXIS_PROTOCOL, REASON_PROTOCOL)
+
+    grade = conformance_report.get("grade")
+    findings = [
+        f for f in (conformance_report.get("findings") or []) if isinstance(f, Mapping)
+    ]
+    coverage_state = (
+        COVERAGE_PARTIAL if conformance_report.get("skipped_rules") else COVERAGE_FULL
+    )
+    return _assessed(
+        AXIS_PROTOCOL,
+        int(score),
+        str(grade) if grade else None,
+        findings=findings,
+        coverage_state=coverage_state,
+    )
+
+
 def _security_axis(
     subject_type: str, findings: Sequence[Mapping[str, Any]]
 ) -> Dict[str, Any]:
@@ -310,6 +364,7 @@ def evaluate_axes(
     *,
     subject_type: str,
     compatibility_compared: Optional[bool] = None,
+    conformance_report: Optional[Mapping[str, Any]] = None,
 ) -> AxisEvaluation:
     """Evaluate the CLX-1.2 axis model for one native lint/score report.
 
@@ -321,6 +376,14 @@ def evaluate_axes(
         compatibility_compared: When set, overrides whether the compatibility axis is
             considered assessed for catalog subjects. Defaults to True when the report
             carries ``base_revision_id`` or ``compatibility_overall``.
+        conformance_report: An MCP conformance report
+            (:meth:`app.mcp_conformance.ConformanceReport.report_dict`), when the subject has
+            been conformance-scanned (CLX-3.1). It is passed *separately* from ``report``
+            rather than merged into it because the two are distinct scans with distinct scores
+            and fingerprints — folding conformance findings into the surface lint report would
+            change that report's persisted score. Omitting it leaves the protocol axis *not
+            assessed*, which is the pre-CLX-3.1 behaviour and the correct reading for a snapshot
+            nothing has conformance-scanned.
 
     Returns:
         A frozen :class:`AxisEvaluation` ready to persist or serialize.
@@ -334,7 +397,7 @@ def evaluate_axes(
 
     axes: List[Dict[str, Any]] = [
         _quality_axis(report, findings=findings),
-        _not_assessed(AXIS_PROTOCOL, REASON_PROTOCOL),
+        _protocol_axis(subject_type, conformance_report),
         _security_axis(subject_type, findings),
         _not_assessed(AXIS_SUPPLY_CHAIN, REASON_SUPPLY_CHAIN),
         _not_assessed(AXIS_SUPPORTABILITY, REASON_SUPPORTABILITY),

@@ -247,11 +247,17 @@ class JsonRpcResponse:
         id: The request id this response answers.
         result: The success payload (``None`` when ``error`` is set).
         error: The :class:`JsonRpcError` (``None`` on success).
+        raw: The complete response envelope as received, unmodified. The parsed fields above
+            drop the envelope's ``jsonrpc`` member and its literal ``id`` type, both of which
+            the protocol-conformance transcript (CLX-3.1) must inspect to tell a well-formed
+            envelope from a malformed one — so the envelope is kept verbatim here rather than
+            re-parsed downstream. Empty when the response could not be parsed as an object.
     """
 
     id: Union[str, int, None]
     result: Any = None
     error: Optional[JsonRpcError] = None
+    raw: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_error(self) -> bool:
@@ -278,6 +284,7 @@ class JsonRpcResponse:
             id=payload.get("id"),
             result=payload.get("result"),
             error=JsonRpcError.from_dict(error) if isinstance(error, dict) else None,
+            raw=dict(payload),
         )
 
 
@@ -324,6 +331,14 @@ class StreamableHttpTransport:
     allow_insecure_http: bool = False
     allow_private_network: bool = False
     headers: Dict[str, str] = field(default_factory=dict)
+
+    # Optional protocol-transcript recorder (CLX-3.1, #4855). When set, every JSON-RPC request
+    # this transport performs is reduced to a redacted :class:`ProtocolExchange` and retained,
+    # giving the conformance engine evidence of how the server *behaved* during the handshake
+    # and listings. Purely observational: the recorder issues no requests and only sees the
+    # exchanges discovery was already going to make, so capture adds no network traffic. Typed
+    # loosely to keep this transport module free of an app-level import.
+    transcript: Optional[Any] = None
 
     # --- internal state (not constructor arguments) ------------------------
     _session_id: Optional[str] = field(default=None, init=False)
@@ -429,6 +444,20 @@ class StreamableHttpTransport:
             result = await self._read_response(response, rpc_id, on_server_message)
         finally:
             await response.aclose()
+
+        # Reduce the exchange to redacted conformance evidence, if a recorder is attached. A
+        # JSON-RPC *error* envelope (a 200 carrying `error`) reaches here and is recorded — it
+        # is exactly the behaviour the envelope/error rules exist to judge. A transport-level
+        # failure raised above never reaches here; discovery fails outright in that case, so
+        # there is no surface to lint anyway.
+        if self.transcript is not None:
+            self.transcript.record(
+                method,
+                request_id=rpc_id,
+                params=params,
+                http_status=response.status_code,
+                envelope=result.raw,
+            )
 
         # A successful initialize unlocks protocol-version pinning for later calls.
         if method == "initialize" and not result.is_error:

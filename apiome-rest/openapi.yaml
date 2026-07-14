@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.0.83
+  version: 1.1.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -22253,6 +22253,249 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get mcp endpoint version changesresponse422.
+  /v1/mcp/conformance/rules:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Get Mcp Conformance Rules
+      description: 'Return the MCP conformance rule catalog and the profiles that
+        select from it.
+
+
+        Every rule cites the MCP specification revision it derives from and a resolvable
+        source
+
+        reference, so any finding can be traced back to a normative statement (CLX-3.1
+        AC-1).
+
+
+        The catalog is **registry-level** — it describes the engine, not any one endpoint
+        — so it
+
+        authenticates with :func:`validate_session_credentials` rather than
+
+        :func:`validate_authentication`. That is not interchangeable: ``validate_authentication``
+
+        takes ``tenant_slug`` as its first parameter, which FastAPI resolves from
+        the *path* on every
+
+        tenant-scoped route. This route has no ``{tenant_slug}`` segment, so it would
+        instead be
+
+        resolved as a **required query parameter** — making the catalog return 422
+        unless the caller
+
+        invented a slug, and then authenticating against whatever they invented. The
+        same reasoning is
+
+        why ``GET /v1/lint/rules`` uses ``validate_session_credentials``.'
+      operationId: get_mcp_conformance_rules_v1_mcp_conformance_rules_get
+      parameters:
+      - name: profile
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Conformance Rulesprofile schema.
+          - type: 'null'
+            description: Get MCP Conformance Rulesprofile schema.
+          description: Restrict the catalog to the rules this profile evaluates.
+          title: Profile
+        description: Restrict the catalog to the rules this profile evaluates.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Conformance Rulesauthorization schema.
+          - type: 'null'
+            description: Get MCP Conformance Rulesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Conformance Rules Xapikey schema.
+          - type: 'null'
+            description: Get MCP Conformance Rules Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get mcp conformance rules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpConformanceRulesResponse'
+                description: Response payload for get mcp conformance rulesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get mcp conformance rulesresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/conformance:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Get Mcp Endpoint Version Conformance
+      description: 'Run and gate a conformance profile over one MCP version snapshot.
+
+
+        Assesses the snapshot''s protocol behaviour and its tools'' agent-readiness,
+        then gates the
+
+        result: the response''s ``gate`` says whether the run cleared ``failOn`` /
+        ``minScore``, so a
+
+        CI job can act on this single call.
+
+
+        Read-only and side-effect free: the report is recomputed on each request from
+        the persisted
+
+        surface and the snapshot''s stored (redacted) protocol transcript, and nothing
+        is written back.
+
+        Any rule that needs a transcript this snapshot never captured is reported
+        in ``skippedRules``
+
+        rather than assumed to pass.
+
+
+        ``format=sarif`` / ``format=junit`` return the CI artifact directly, through
+        the same
+
+        serializer the compatibility gate uses. 404 when the endpoint — or the version
+        under it — is
+
+        not the caller''s tenant''s; 400 on an unknown profile or threshold.'
+      operationId: get_mcp_endpoint_version_conformance_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__conformance_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: profile
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Conformanceprofile schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Conformanceprofile schema.
+          description: 'Conformance profile to run (default: mcp-conformance).'
+          title: Profile
+        description: 'Conformance profile to run (default: mcp-conformance).'
+      - name: failOn
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Fail the gate on findings of this severity or worse; 'none'
+            to disable.
+          default: error
+          title: Failon
+        description: Fail the gate on findings of this severity or worse; 'none' to
+          disable.
+      - name: minScore
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 100
+            minimum: 0
+            description: Get MCP Endpoint Version Conformancemin Score schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Conformancemin Score schema.
+          description: Optional score floor; a lower score fails the gate.
+          title: Minscore
+        description: Optional score floor; a lower score fails the gate.
+      - name: format
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Conformanceformat schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Conformanceformat schema.
+          description: 'Response format: json (default), sarif, or junit.'
+          title: Format
+        description: 'Response format: json (default), sarif, or junit.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Conformanceauthorization schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Conformanceauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Conformance Xapikey schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Conformance Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get mcp endpoint version conformance.
+          content:
+            application/json:
+              schema:
+                description: Response payload for get mcp endpoint version conformanceresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get mcp endpoint version conformanceresponse422.
   /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint:
     get:
       tags:
@@ -34045,6 +34288,130 @@ components:
       type: object
       title: McpCollectionUpdate
       description: Patch body for updating a curated collection.
+    McpConformanceProfileOut:
+      properties:
+        profileId:
+          type: string
+          title: Profileid
+          description: Profile ID.
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+          description: Categories.
+          maxItems: 1000
+        description:
+          type: string
+          title: Description
+          description: Free-text description.
+          example: A pet available for adoption in the store.
+      type: object
+      required:
+      - profileId
+      - label
+      - categories
+      - description
+      title: McpConformanceProfileOut
+      description: 'One runnable, gateable conformance profile (CLX-3.1, #4855).'
+    McpConformanceRuleOut:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: Rule ID.
+          example: documentation.schema-missing-description
+        category:
+          type: string
+          title: Category
+          description: '''protocol'' or ''readiness''.'
+          example: domain
+        severity:
+          type: string
+          title: Severity
+          description: error / warning / info.
+          example: warning
+        specVersion:
+          type: string
+          title: Specversion
+          description: The MCP specification revision this rule is derived from.
+          example: 1.0.0
+        specReference:
+          type: string
+          title: Specreference
+          description: Resolvable URL for the normative statement (or published guidance).
+          example: example
+        rationale:
+          type: string
+          title: Rationale
+          description: Why the rule exists — what breaks when it is violated.
+          example: example
+        requiresTranscript:
+          type: boolean
+          title: Requirestranscript
+          description: Whether the rule needs live protocol evidence. Such a rule
+            is skipped — never assumed to pass — when no transcript was captured.
+          example: false
+      type: object
+      required:
+      - ruleId
+      - category
+      - severity
+      - specVersion
+      - specReference
+      - rationale
+      - requiresTranscript
+      title: McpConformanceRuleOut
+      description: 'One conformance rule descriptor, citing its specification source
+        (CLX-3.1, #4855).'
+    McpConformanceRulesResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        specVersion:
+          type: string
+          title: Specversion
+          description: The MCP specification revision this rule set is written against.
+          example: 1.0.0
+        profiles:
+          items:
+            $ref: '#/components/schemas/McpConformanceProfileOut'
+          type: array
+          title: Profiles
+          description: Profiles.
+          maxItems: 1000
+        rules:
+          items:
+            $ref: '#/components/schemas/McpConformanceRuleOut'
+          type: array
+          title: Rules
+          description: Rules.
+          maxItems: 1000
+      type: object
+      required:
+      - specVersion
+      - profiles
+      - rules
+      title: McpConformanceRulesResponse
+      description: 'The conformance rule catalog and the profiles that select from
+        it (CLX-3.1, #4855).
+
+
+        Every rule cites the MCP specification version it derives from and a resolvable
+        source
+
+        reference, so a finding is always traceable to a normative statement rather
+        than an opinion.'
     McpCredentialDeleteResponse:
       properties:
         success:

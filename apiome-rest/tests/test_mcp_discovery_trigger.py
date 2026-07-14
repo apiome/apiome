@@ -28,6 +28,7 @@ from app.mcp_client import (
     ServerInfo,
     TransportMetadata,
 )
+from app.mcp_protocol_transcript import TranscriptRecorder
 
 client = TestClient(app)
 
@@ -582,20 +583,29 @@ def test_transport_metadata_persist_is_best_effort():
 
 
 async def test_invoke_discovery_normalizes_bare_surface_runner(monkeypatch):
-    """A legacy runner returning just a surface is paired with ``None`` transport metadata."""
+    """A legacy runner returning just a surface gets ``None`` transport metadata and transcript."""
     surface = _surface([_tool("alpha")])
 
     async def _runner(_endpoint, _headers):
         return surface
 
     monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
-    out_surface, out_meta = await mcp_discovery_engine._invoke_discovery(_ENDPOINT_ROW, {})
+    out_surface, out_meta, out_transcript = await mcp_discovery_engine._invoke_discovery(
+        _ENDPOINT_ROW, {}
+    )
     assert out_surface is surface
     assert out_meta is None
+    assert out_transcript is None
 
 
-async def test_invoke_discovery_passes_through_outcome_tuple(monkeypatch):
-    """A runner returning an ``(surface, transport_meta)`` pair is returned unchanged."""
+async def test_invoke_discovery_normalizes_legacy_pair_runner(monkeypatch):
+    """A runner predating transcripts returns a pair; it is widened with a ``None`` transcript.
+
+    Guards the backwards compatibility CLX-3.1 (#4855) promised when it extended
+    ``DiscoveryOutcome`` from a pair to a triple: a runner written against the old contract must
+    keep working, and its unobserved session must surface as ``None`` — never as an empty
+    transcript, which would let the transcript-backed rules read as passing.
+    """
     surface = _surface([_tool("alpha")])
     meta = _transport_meta()
 
@@ -603,9 +613,30 @@ async def test_invoke_discovery_passes_through_outcome_tuple(monkeypatch):
         return surface, meta
 
     monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
-    out_surface, out_meta = await mcp_discovery_engine._invoke_discovery(_ENDPOINT_ROW, {})
+    out_surface, out_meta, out_transcript = await mcp_discovery_engine._invoke_discovery(
+        _ENDPOINT_ROW, {}
+    )
     assert out_surface is surface
     assert out_meta is meta
+    assert out_transcript is None
+
+
+async def test_invoke_discovery_passes_through_full_outcome_triple(monkeypatch):
+    """A runner returning ``(surface, transport_meta, transcript)`` is returned unchanged."""
+    surface = _surface([_tool("alpha")])
+    meta = _transport_meta()
+    transcript = TranscriptRecorder().transcript()
+
+    async def _runner(_endpoint, _headers):
+        return surface, meta, transcript
+
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    out_surface, out_meta, out_transcript = await mcp_discovery_engine._invoke_discovery(
+        _ENDPOINT_ROW, {}
+    )
+    assert out_surface is surface
+    assert out_meta is meta
+    assert out_transcript is transcript
 
 
 async def test_drive_job_persists_transport_metadata_end_to_end(monkeypatch):
