@@ -19,6 +19,7 @@ from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
 from .import_routing import PUBLISHABLE_FORMATS
+from .lint_evidence import SUBJECT_CATALOG_REVISION
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
     CustomRuleOut,
@@ -26,10 +27,12 @@ from .models import (
     CustomRulesValidateResponse,
     CustomRuleThenOut,
     LintCategoryScoreOut,
+    LintEvidenceResponse,
     LintFindingOut,
     LintReportResponse,
     LintRuleCatalogResponse,
     LintRuleOut,
+    lint_evidence_response_from_rows,
 )
 from .schema_lint import merge_compatibility_findings
 from .style_guide_engine import guided_lint_openapi_spec
@@ -435,4 +438,46 @@ async def lint_revision(
         tenant_id,
         base_version=base_version,
         resolved_base_id=resolved_base_id,
+    )
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/lint/evidence",
+    response_model=LintEvidenceResponse,
+)
+async def lint_revision_evidence(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintEvidenceResponse:
+    """
+    Return the immutable lint evidence recorded for a schema revision (CLX-1.1, #4848).
+
+    Lists every evidence run captured for the revision — provenance (scanner, adapter,
+    profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
+    coverage summary in which a scanner that never ran reads as ``not_run`` (never as clean).
+    Raw output artifacts are access-controlled: responses expose only their availability,
+    never the storage reference or command metadata. Evidence is read-only by design; rows
+    are written at score-capture time and are immutable.
+    """
+    _ = tenant_slug
+    tenant_id = auth_data["tenant_id"]
+
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
+    if version["project_id"] != project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Revision does not belong to the specified project",
+        )
+
+    rows = db.list_lint_evidence_runs_for_version(version_record_id, tenant_id)
+    return lint_evidence_response_from_rows(
+        SUBJECT_CATALOG_REVISION, version_record_id, rows
     )

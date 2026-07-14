@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.30] - 2026-07-14
+
+### Added
+- **Revision-scoped lint evidence contract (CLX-1.1, #4848)** — immutable,
+  append-only `lint_evidence_runs` substrate (V167) shared by catalog revisions
+  and MCP endpoint versions: scanner/adapter provenance, execution profile,
+  outcome (`passed`/`findings`/`not_run`/`unavailable`/`failed`/`blocked_by_policy`),
+  input/source and redacted-config fingerprints, raw-artifact reference,
+  source-neutral normalized finding envelope, and coverage. Native reports are
+  mirrored into evidence at score-capture time without changing existing lint
+  responses; the migration backfill preserves existing report fingerprints.
+  New `GET …/lint/evidence` routes for schema revisions and MCP endpoint
+  versions expose provenance and per-scanner coverage where a never-run scanner
+  reads `not_run`, never clean. OpenAPI **1.0.77**.
+
 ## [1.117.29] - 2026-07-14
 
 ### Added
