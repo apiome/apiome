@@ -1,0 +1,15 @@
+# Apiome OpenAPI strict Redocly config (CLX-2.2 / #4852).
+extends:
+  - recommended
+rules:
+  no-unused-components: error
+  operation-operationId: error
+  info-contact: error
+  info-license: warn
+  tag-description: warn
+  operation-description: warn
+  operation-4xx-response: error
+  operation-2xx-response: error
+  path-parameters-defined: error
+  no-identical-paths: error
+  no-ambiguous-paths: error

@@ -1,0 +1,19 @@
+# Apiome OpenAPI strict profile (CLX-2.2 / #4852).
+# Broader enabled set with error-forward severities for CI gates.
+extends:
+  - spectral:oas
+rules:
+  oas3-unused-component: error
+  operation-operationId: error
+  operation-tags: error
+  info-contact: error
+  info-description: error
+  info-license: warn
+  tag-description: warn
+  operation-description: warn
+  operation-tag-defined: error
+  operation-success-response: error
+  path-params: error
+  typed-enum: error
+  oas3-schema: error
+  openapi-tags: warn

@@ -1,0 +1,15 @@
+# Apiome OpenAPI baseline profile (CLX-2.2 / #4852).
+# Spectral-compatible; vacuum accepts the same ruleset via --ruleset.
+extends:
+  - spectral:oas
+rules:
+  # Keep structural / documentation baseline rules on; hide stylistic noise.
+  oas3-unused-component: warn
+  operation-operationId: warn
+  operation-tags: off
+  info-contact: warn
+  info-description: warn
+  info-license: off
+  tag-description: off
+  operation-description: off
+  operation-tag-defined: off

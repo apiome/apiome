@@ -132,14 +132,15 @@ class AdapterInput:
 
     Attributes:
         files: Mapping of relative path → text content (multi-file tools).
-        document: Single-document text when the tool accepts stdin / one file.
+        document: Single-document payload (text or mapping) when the tool accepts
+            stdin / one file.
         format: Declared input format for this run.
         scan_mode: Declared scan mode for this run.
         metadata: Adapter-specific extras (not logged).
     """
 
     files: Dict[str, str] = field(default_factory=dict)
-    document: Optional[str] = None
+    document: Optional[Any] = None
     format: str = InputFormat.GENERIC
     scan_mode: str = ScanMode.LINT
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -266,6 +267,14 @@ def load_builtin_adapters() -> None:
     # BufLintAdapter is defined in this module; importing this function after the
     # class body has executed is enough. Touching the registry force-loads it.
     _ = BufLintAdapter
+    # CLX-2.2 (#4852): Spectral / Vacuum / Redocly OAS packs register on import.
+    from . import openapi_validation_adapters as _oas_packs  # noqa: F401
+
+    _ = (
+        _oas_packs.SpectralOasAdapter,
+        _oas_packs.VacuumOasAdapter,
+        _oas_packs.RedoclyOasAdapter,
+    )
     _builtin_adapters_loaded = True
 
 

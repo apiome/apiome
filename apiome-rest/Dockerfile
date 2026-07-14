@@ -51,6 +51,9 @@ ARG ASYNCAPI_DIFF_VERSION=0.5.0
 ARG ROVER_VERSION=0.27.0
 ARG GRAPHQL_INSPECTOR_VERSION=6.2.0
 ARG GRAPHQL_JS_VERSION=16.9.0
+ARG SPECTRAL_VERSION=6.16.1
+ARG VACUUM_VERSION=0.29.9
+ARG REDOCLY_VERSION=2.39.0
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -79,6 +82,18 @@ RUN ARCH="$(cat /tmp/arch_gnu)"; \
     curl -fsSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${ARCH}" \
       -o ${TOOLS_PREFIX}/bin/buf \
     && chmod +x ${TOOLS_PREFIX}/bin/buf
+
+# vacuum — OpenAPI linter static binary (CLX-2.2 / #4852).
+# Release assets use linux_x86_64 / linux_arm64 (not aarch64).
+RUN case "${TARGETARCH}" in \
+      amd64) VACUUM_ARCH=x86_64 ;; \
+      arm64) VACUUM_ARCH=arm64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/daveshanley/vacuum/releases/download/v${VACUUM_VERSION}/vacuum_${VACUUM_VERSION}_linux_${VACUUM_ARCH}.tar.gz" \
+      | tar -xz -C /tmp \
+    && mv /tmp/vacuum ${TOOLS_PREFIX}/bin/vacuum \
+    && chmod +x ${TOOLS_PREFIX}/bin/vacuum
 
 # rover — Apollo GraphQL CLI, prebuilt tarball per Rust target triple.
 RUN TRIPLE="$(cat /tmp/arch_rust)"; \
@@ -114,9 +129,13 @@ RUN npm install --prefix ${TOOLS_PREFIX}/lib/node --no-audit --no-fund \
       "@typespec/compiler@${TSP_VERSION}" "@asyncapi/cli@${ASYNCAPI_VERSION}" \
       "@asyncapi/parser@${ASYNCAPI_PARSER_VERSION}" "@asyncapi/diff@${ASYNCAPI_DIFF_VERSION}" \
       "graphql@${GRAPHQL_JS_VERSION}" "@graphql-inspector/core@${GRAPHQL_INSPECTOR_VERSION}" \
+      "@stoplight/spectral-cli@${SPECTRAL_VERSION}" "@redocly/cli@${REDOCLY_VERSION}" \
     && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@typespec/compiler/cmd/tsp.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/tsp \
     && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@asyncapi/cli/bin/run.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi \
-    && chmod +x ${TOOLS_PREFIX}/bin/tsp ${TOOLS_PREFIX}/bin/asyncapi
+    && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@stoplight/spectral-cli/dist/index.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/spectral \
+    && printf '#!/bin/sh\nexec node %s/lib/node/node_modules/@redocly/cli/bin/cli.js "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/redocly \
+    && chmod +x ${TOOLS_PREFIX}/bin/tsp ${TOOLS_PREFIX}/bin/asyncapi \
+       ${TOOLS_PREFIX}/bin/spectral ${TOOLS_PREFIX}/bin/redocly
 
 # AsyncAPI parse/validate/dereference wrapper (MFI-8.1, #3759), diff/breaking wrapper (MFI-8.4,
 # #3762), and the GraphQL breaking-change wrapper (MFI-10.5, #3774). Each Node script lives
@@ -181,8 +200,9 @@ COPY --from=uideps --chown=appuser:appuser /repo/apiome-ui /apiome-ui
 
 # Polyglot toolchain binaries (MFI-5.2, #3751). Copy the whole bundled-tools tree and put its
 # bin/ on PATH so the toolchain runner resolves
-# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/asyncapi-diff/rover/graphql-inspector-diff by
-# name. The tree is read-only to the app user (owned by root); the runner never writes to it.
+# buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/asyncapi-diff/rover/graphql-inspector-diff/
+# spectral/vacuum/redocly by name. The tree is read-only to the app user (owned by root); the
+# runner never writes to it.
 COPY --from=tools /opt/apiome-tools /opt/apiome-tools
 
 # Application
@@ -194,8 +214,8 @@ ENV PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     NODE_ENV=production \
     # Put the bundled toolchain (MFI-5.2) ahead of the system path so the runner resolves
-    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/asyncapi-diff/rover/graphql-inspector-diff
-    # by bare name. A deployment can still point any
+    # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/asyncapi-diff/rover/graphql-inspector-diff/
+    # spectral/vacuum/redocly by bare name. A deployment can still point any
     # APIOME_<TOOL>_BIN at a custom binary; an absent tool degrades that format to
     # "unavailable" (surfaced by GET /v1/ops/toolchain) rather than failing the service.
     PATH=/opt/apiome-tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \

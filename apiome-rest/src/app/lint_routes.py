@@ -28,6 +28,8 @@ from .models import (
     CustomRulesValidateRequest,
     CustomRulesValidateResponse,
     CustomRuleThenOut,
+    ExternalLintAdapterOut,
+    ExternalLintAdaptersResponse,
     LintAxesResponse,
     LintCategoryScoreOut,
     LintEvidenceResponse,
@@ -82,6 +84,30 @@ async def list_lint_rules(
         for d in descriptors
     ]
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)
+
+
+@rules_router.get("/external-adapters", response_model=ExternalLintAdaptersResponse)
+async def list_external_lint_adapters(
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> ExternalLintAdaptersResponse:
+    """Discover Spectral / Vacuum / Redocly OpenAPI validation packs (CLX-2.2 / #4852)."""
+    _ = auth_data
+    from .openapi_validation_pack import (
+        DEFAULT_BULK_RUNNER,
+        list_openapi_validation_adapters,
+        parity_default_runner_rationale,
+    )
+    from .openapi_validation_profiles import VALIDATION_PROFILES
+
+    adapters_raw = list_openapi_validation_adapters()
+    adapters = [ExternalLintAdapterOut(**a) for a in adapters_raw]
+    return ExternalLintAdaptersResponse(
+        adapters=adapters,
+        count=len(adapters),
+        default_bulk_runner=DEFAULT_BULK_RUNNER,
+        profiles=list(VALIDATION_PROFILES),
+        rationale=parity_default_runner_rationale(),
+    )
 
 
 @rules_router.post(
@@ -272,7 +298,7 @@ def _try_relint_canonical_source(
     return lint_report.to_persisted_dict()
 
 
-def build_lint_report(
+async def build_lint_report(
     version: Dict[str, Any],
     project_id: str,
     tenant_slug: str,
@@ -346,6 +372,19 @@ def build_lint_report(
     result, guide = guided_lint_openapi_spec(
         head_spec, tenant_id, project_id=project_id, extra_findings=extra_findings
     )
+
+    # CLX-2.2: run default bulk external validation pack → evidence (native score unchanged).
+    try:
+        from .openapi_validation_evidence import capture_openapi_external_validation_evidence
+
+        await capture_openapi_external_validation_evidence(
+            head_spec,
+            version_record_id=str(version["id"]),
+            tenant_id=tenant_id,
+            project_id=project_id,
+        )
+    except Exception:  # noqa: BLE001 — evidence must never break lint
+        pass
 
     findings_out = [
         LintFindingOut(
@@ -460,7 +499,7 @@ async def lint_revision(
             )
         resolved_base_id = base_id
 
-    return build_lint_report(
+    return await build_lint_report(
         version,
         project_id,
         tenant_slug,

@@ -51,6 +51,8 @@ def test_canonical_relint_fallback_reconstructs_capnproto_source():
 
 def test_stored_report_skips_openapi_recompute_in_build_lint_report():
     """build_lint_report serves persisted findings without calling openapi_for_revision."""
+    import asyncio
+
     from app.lint_routes import build_lint_report
 
     adapter = CapnpImportSource()
@@ -67,8 +69,10 @@ def test_stored_report_skips_openapi_recompute_in_build_lint_report():
     with patch("app.lint_routes.openapi_for_revision") as m_recon, patch(
         "app.lint_routes.db.get_version_quality_score", return_value=captured
     ):
-        response = build_lint_report(
-            version, "cat-1", "acme", "tenant-1", catalog_item={"source_format": "capnproto"}
+        response = asyncio.run(
+            build_lint_report(
+                version, "cat-1", "acme", "tenant-1", catalog_item={"source_format": "capnproto"}
+            )
         )
     m_recon.assert_not_called()
     assert response.findings

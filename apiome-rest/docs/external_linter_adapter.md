@@ -84,14 +84,23 @@ dicts. Timeout, unavailable tool, malformed output, and crash become `outcome=fa
 `BufLintAdapter` is the real-tool conformance target. `proto_lint.run_buf_lint` delegates to
 it so existing merge / score callers keep working.
 
+## Built-in: OpenAPI validation packs (CLX-2.2 / #4852)
+
+Spectral, Vacuum, and Redocly adapters live in `openapi_validation_adapters.py` and are
+orchestrated by `openapi_validation_pack.py`. See
+[`openapi_validation_packs.md`](./openapi_validation_packs.md).
+
 ## Conformance
 
 - Fixture corpus: `tests/fixtures/external_linter/`
 - Unit tests: `tests/test_external_linter_adapter.py`
 - Conformance: `tests/test_external_linter_conformance.py` (fake tool always; real `buf` gated)
+- OpenAPI packs: `tests/test_openapi_validation_packs.py` +
+  `tests/fixtures/openapi_validation_parity/`
 
 ## Relationship
 
 - **CLX-1.1 (#4848)** — evidence outcomes / envelope / coverage.
 - **MFI-5.1–5.3** — toolchain runner, packaging, sandbox.
 - **MFI-4.3 (#3748)** — refined by this SPI; Spectral/Vacuum/Redocly packs are CLX-2.2 (#4852).
+- **CLX-2.2 (#4852)** — OpenAPI validation packs and evidence capture at score time.

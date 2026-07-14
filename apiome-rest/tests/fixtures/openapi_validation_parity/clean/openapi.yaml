@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Parity Clean API
+  version: 1.0.0
+  contact:
+    name: Apiome
+    email: parity@example.com
+  description: Clean fixture for OpenAPI validation parity (CLX-2.2).
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      tags: [pets]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./components.yaml#/components/schemas/Pet"
+components:
+  schemas: {}

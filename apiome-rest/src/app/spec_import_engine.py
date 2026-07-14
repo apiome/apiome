@@ -137,6 +137,23 @@ def _capture_version_quality_score(
             result.report_fingerprint,
             quality_report=result.report_dict(),
         )
+        try:
+            from .openapi_validation_evidence import (
+                capture_openapi_external_validation_evidence_sync,
+            )
+
+            capture_openapi_external_validation_evidence_sync(
+                spec,
+                version_record_id=version_record_id,
+                tenant_id=tenant_id,
+                project_id=str(version.get("project_id") or "") or None,
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Failed to capture external OpenAPI validation evidence for %s",
+                version_record_id,
+                exc_info=True,
+            )
     except Exception:  # noqa: BLE001 - capture is strictly best-effort
         logger.warning(
             "Failed to capture quality score for revision %s",

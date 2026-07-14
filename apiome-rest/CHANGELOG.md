@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.34] - 2026-07-14
+
+### Added
+- **Spectral, Vacuum, and Redocly OpenAPI validation packs (CLX-2.2, #4852)** —
+  curated `baseline` / `tenant_guide` / `strict` profiles on the CLX-2.1 adapter SPI;
+  Spectral is the parity-selected default bulk runner (compatibility reference); Vacuum
+  and Redocly run as secondary adapters with source rule IDs, locations, tool/version, and
+  remediation links preserved in CLX-1.1 evidence. Multi-file local `$ref` resolution is
+  tested under the no-network sandbox. Style guides gain `externalLintProfile`; discover
+  packs via `GET /v1/lint/external-adapters`. OpenAPI **1.0.81**.
+
 ## [1.117.33] - 2026-07-14
 
 ### Added

@@ -3115,6 +3115,41 @@ class LintRuleCatalogResponse(BaseModel):
     )
 
 
+class ExternalLintAdapterOut(BaseModel):
+    """One OpenAPI external validation adapter (CLX-2.2 / #4852)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    adapter_id: str = Field(serialization_alias="adapterId")
+    scanner_id: str = Field(serialization_alias="scannerId")
+    formats: List[str]
+    scan_modes: List[str] = Field(serialization_alias="scanModes")
+    tool_key: str = Field(serialization_alias="toolKey")
+    output_format: str = Field(serialization_alias="outputFormat")
+    adapter_version: str = Field(serialization_alias="adapterVersion")
+    description: str = ""
+    profiles: List[str] = Field(default_factory=list)
+    is_default_bulk_runner: bool = Field(
+        default=False, serialization_alias="isDefaultBulkRunner"
+    )
+    tool_available: bool = Field(default=False, serialization_alias="toolAvailable")
+    pinned_version: Optional[str] = Field(default=None, serialization_alias="pinnedVersion")
+
+
+class ExternalLintAdaptersResponse(BaseModel):
+    """Discovery for Spectral / Vacuum / Redocly validation packs (CLX-2.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    adapters: List[ExternalLintAdapterOut]
+    count: int
+    default_bulk_runner: str = Field(serialization_alias="defaultBulkRunner")
+    profiles: List[str]
+    rationale: str = Field(
+        description="Why the default bulk runner was selected (parity, not speed)."
+    )
+
+
 class LintEvidenceFindingOut(BaseModel):
     """One normalized finding in the source-neutral evidence envelope (CLX-1.1, #4848).
 
@@ -3985,6 +4020,14 @@ class StyleGuideOut(BaseModel):
         serialization_alias="projectAssignments",
         description="Projects explicitly assigned to this guide, sorted by project name.",
     )
+    external_lint_profile: str = Field(
+        default="baseline",
+        serialization_alias="externalLintProfile",
+        description=(
+            "CLX-2.2 OpenAPI external validation pack profile: "
+            "baseline | tenant_guide | strict."
+        ),
+    )
     created_at: Optional[datetime] = Field(default=None, serialization_alias="createdAt")
     updated_at: Optional[datetime] = Field(default=None, serialization_alias="updatedAt")
 
@@ -4019,6 +4062,12 @@ class StyleGuideCreateRequest(BaseModel):
         serialization_alias="sourceGuideId",
         description="Guide (same tenant) whose rule rows are copied into the new guide.",
     )
+    external_lint_profile: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("externalLintProfile", "external_lint_profile"),
+        serialization_alias="externalLintProfile",
+        description="CLX-2.2 profile: baseline | tenant_guide | strict (default baseline).",
+    )
 
 
 class StyleGuideUpdateRequest(BaseModel):
@@ -4031,6 +4080,12 @@ class StyleGuideUpdateRequest(BaseModel):
     )
     description: Optional[str] = Field(
         default=None, max_length=4000, description="New description; empty string clears it."
+    )
+    external_lint_profile: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("externalLintProfile", "external_lint_profile"),
+        serialization_alias="externalLintProfile",
+        description="CLX-2.2 profile: baseline | tenant_guide | strict.",
     )
 
 

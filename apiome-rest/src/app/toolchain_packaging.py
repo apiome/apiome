@@ -17,7 +17,7 @@ What lives here:
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``asyncapi-diff``, ``rover``,
-  ``graphql-inspector-diff``.
+  ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -217,6 +217,33 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         description="GraphQL schema diff → breaking/dangerous/non-breaking "
         "(@graphql-inspector/core, MFI-10.5).",
         env_override_key="APIOME_GRAPHQL_INSPECTOR_DIFF_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="spectral",
+        executable="spectral",
+        version="6.16.1",
+        description="OpenAPI/AsyncAPI lint CLI (@stoplight/spectral-cli, CLX-2.2).",
+        env_override_key="APIOME_SPECTRAL_BIN",
+        parses_json=False,
+        runtime="node",
+    ),
+    BundledTool(
+        key="vacuum",
+        executable="vacuum",
+        version="0.29.9",
+        description="OpenAPI lint CLI (daveshanley/vacuum, CLX-2.2).",
+        env_override_key="APIOME_VACUUM_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="redocly",
+        executable="redocly",
+        version="2.39.0",
+        description="OpenAPI lint/resolve CLI (@redocly/cli, CLX-2.2).",
+        env_override_key="APIOME_REDOCLY_BIN",
+        parses_json=False,
         runtime="node",
     ),
 )

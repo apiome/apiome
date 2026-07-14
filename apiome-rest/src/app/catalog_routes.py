@@ -237,7 +237,7 @@ async def lint_catalog_item(
             detail=f"Revision not found: {revision_id}",
         )
 
-    return build_lint_report(version, item_id, tenant_slug, tenant_id, catalog_item=item)
+    return await build_lint_report(version, item_id, tenant_slug, tenant_id, catalog_item=item)
 
 
 def _conversion_defaults(request: ConvertCatalogItemRequest) -> Optional[ConversionDefaults]:

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.80",
+    "version": "1.0.81",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -7142,6 +7142,82 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for list lint rulesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lint/external-adapters": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "List External Lint Adapters",
+        "description": "Discover Spectral / Vacuum / Redocly OpenAPI validation packs (CLX-2.2 / #4852).",
+        "operationId": "list_external_lint_adapters_v1_lint_external_adapters_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List External Lint Adaptersauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List External Lint Adaptersauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List External Lint Adapters Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List External Lint Adapters Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list external lint adapters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalLintAdaptersResponse",
+                  "description": "Response payload for list external lint adaptersresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list external lint adaptersresponse422."
                 }
               }
             }
@@ -41818,6 +41894,164 @@
         "title": "ExportVerifyVerdict",
         "description": "The overall go/no-go verdict for a one-call verify (MFX-42.1/42.5).\n\nThe single band the Verify workbench's banner and Generate gate read, derived from the\nvalidation gate (MFX-5.3) and the fidelity tier (MFX-2.5) per the MFX-3.3 severity classes:\n\n* ``clean`` \u2014 a lossless conversion whose emitted artifact validated (or had nothing to\n  validate); the green path.\n* ``lossy`` \u2014 a valid artifact, but the conversion is not lossless; the user may proceed only\n  after acknowledging the loss.\n* ``invalid`` \u2014 a validator ran and rejected the emitted artifact; the export is blocked and no\n  acknowledgement can override it."
       },
+      "ExternalLintAdapterOut": {
+        "properties": {
+          "adapterId": {
+            "type": "string",
+            "title": "Adapterid",
+            "description": "Adapter ID.",
+            "example": "example"
+          },
+          "scannerId": {
+            "type": "string",
+            "title": "Scannerid",
+            "description": "Scanner ID.",
+            "example": "example"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Formats",
+            "description": "Formats.",
+            "maxItems": 1000
+          },
+          "scanModes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scanmodes",
+            "description": "Scan Modes.",
+            "maxItems": 1000
+          },
+          "toolKey": {
+            "type": "string",
+            "title": "Toolkey",
+            "description": "Tool Key.",
+            "example": "example"
+          },
+          "outputFormat": {
+            "type": "string",
+            "title": "Outputformat",
+            "description": "Output Format.",
+            "example": "openapi"
+          },
+          "adapterVersion": {
+            "type": "string",
+            "title": "Adapterversion",
+            "description": "Adapter Version.",
+            "example": "1.0.0"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": "",
+            "description": "Free-text description.",
+            "example": "A pet available for adoption in the store."
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profiles",
+            "description": "Profiles.",
+            "maxItems": 1000
+          },
+          "isDefaultBulkRunner": {
+            "type": "boolean",
+            "title": "Isdefaultbulkrunner",
+            "default": false,
+            "description": "Is Default Bulk Runner.",
+            "example": false
+          },
+          "toolAvailable": {
+            "type": "boolean",
+            "title": "Toolavailable",
+            "default": false,
+            "description": "Tool Available.",
+            "example": false
+          },
+          "pinnedVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for external lint adapter."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for external lint adapter."
+              }
+            ],
+            "title": "Pinnedversion",
+            "description": "Pinned Version."
+          }
+        },
+        "type": "object",
+        "required": [
+          "adapterId",
+          "scannerId",
+          "formats",
+          "scanModes",
+          "toolKey",
+          "outputFormat",
+          "adapterVersion"
+        ],
+        "title": "ExternalLintAdapterOut",
+        "description": "One OpenAPI external validation adapter (CLX-2.2 / #4852)."
+      },
+      "ExternalLintAdaptersResponse": {
+        "properties": {
+          "adapters": {
+            "items": {
+              "$ref": "#/components/schemas/ExternalLintAdapterOut"
+            },
+            "type": "array",
+            "title": "Adapters",
+            "description": "Adapters.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of count.",
+            "example": 1
+          },
+          "defaultBulkRunner": {
+            "type": "string",
+            "title": "Defaultbulkrunner",
+            "description": "Default Bulk Runner.",
+            "example": "example"
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Profiles",
+            "description": "Profiles.",
+            "maxItems": 1000
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Why the default bulk runner was selected (parity, not speed).",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "adapters",
+          "count",
+          "defaultBulkRunner",
+          "profiles",
+          "rationale"
+        ],
+        "title": "ExternalLintAdaptersResponse",
+        "description": "Discovery for Spectral / Vacuum / Redocly validation packs (CLX-2.2)."
+      },
       "FormatCandidateModel": {
         "properties": {
           "format": {
@@ -59078,6 +59312,20 @@
             ],
             "title": "Sourceguideid",
             "description": "Guide (same tenant) whose rule rows are copied into the new guide."
+          },
+          "externalLintProfile": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for style guide create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide create."
+              }
+            ],
+            "title": "Externallintprofile",
+            "description": "CLX-2.2 profile: baseline | tenant_guide | strict (default baseline)."
           }
         },
         "type": "object",
@@ -59328,6 +59576,13 @@
             "title": "Projectassignments",
             "description": "Projects explicitly assigned to this guide, sorted by project name.",
             "maxItems": 1000
+          },
+          "externalLintProfile": {
+            "type": "string",
+            "title": "Externallintprofile",
+            "description": "CLX-2.2 OpenAPI external validation pack profile: baseline | tenant_guide | strict.",
+            "default": "baseline",
+            "example": "example"
           },
           "createdAt": {
             "anyOf": [
@@ -59820,6 +60075,20 @@
             ],
             "title": "Description",
             "description": "New description; empty string clears it."
+          },
+          "externalLintProfile": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for style guide update."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide update."
+              }
+            ],
+            "title": "Externallintprofile",
+            "description": "CLX-2.2 profile: baseline | tenant_guide | strict."
           }
         },
         "type": "object",
