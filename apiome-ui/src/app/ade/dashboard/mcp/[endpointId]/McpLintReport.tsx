@@ -25,6 +25,8 @@ import {
   type McpLintReport,
   type McpLintTier,
 } from "@/app/components/ade/dashboard/mcp/mcpLintUi";
+import { lintAxisEvaluationFromLintReport } from "@/app/utils/lint-axis-ui";
+import { LintAxisCoveragePanel } from "@/app/components/ade/dashboard/lint/LintAxisCoveragePanel";
 
 /** Invoked when a finding links to its offending capability item (deep-link to the Capabilities tab). */
 export type NavigateToItem = (itemType: string, name: string) => void;
@@ -327,11 +329,20 @@ export default function McpLintReport({ report, loading, error, onNavigateToItem
 
   const tierGroups = mcpLintGroupByTier(report.findings);
   const clean = report.findings.length === 0;
+  const axisEvaluation = lintAxisEvaluationFromLintReport({
+    algorithmId: report.algorithm_id,
+    axes: report.axes ?? undefined,
+    compositeScore: report.composite_score,
+    compositeGrade: report.composite_grade,
+    requiredCoverageMet: report.required_coverage_met,
+    reportFingerprint: report.report_fingerprint,
+  });
 
   return (
     <div className="space-y-6">
       <ReportHeader report={report} />
       <SummaryTiles report={report} />
+      {axisEvaluation ? <LintAxisCoveragePanel evaluation={axisEvaluation} /> : null}
 
       {clean ? (
         <section className={dashboardPanelPaddedClass}>

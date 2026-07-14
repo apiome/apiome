@@ -89,6 +89,7 @@ from .lint_evidence import SUBJECT_MCP_ENDPOINT_VERSION
 from .mcp_score import score_mcp_surface
 from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
+    LintAxesResponse,
     LintEvidenceResponse,
     McpBrowseResponse,
     McpCredentialDeleteResponse,
@@ -162,6 +163,7 @@ from .models import (
     mcp_evolution_point_from_row,
     mcp_faceted_search_response_from_bundle,
     lint_evidence_response_from_rows,
+    lint_axis_evaluation_out_from_row,
     mcp_lint_report_from_report,
     mcp_search_hit_from_row,
     mcp_surface_metrics_out,
@@ -1337,6 +1339,75 @@ async def get_mcp_endpoint_version_lint_evidence(
     rows = db.list_lint_evidence_runs_for_mcp_version(str(version_id))
     return lint_evidence_response_from_rows(
         SUBJECT_MCP_ENDPOINT_VERSION, str(version_id), rows
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/axes",
+    response_model=LintAxesResponse,
+)
+async def get_mcp_endpoint_version_lint_axes(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintAxesResponse:
+    """Return the multi-axis score and coverage evaluation for a version snapshot (CLX-1.2, #4849).
+
+    Prefers the latest stored ``lint_axis_evaluations`` row for algorithm ``clx-axis-v1``.
+    When none is stored, computes one from the persisted MCP score report. Legacy list
+    ``score`` / ``grade`` fields are unchanged. 404 when the endpoint or version is not
+    the caller's tenant's.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    stored = db.get_latest_axis_evaluation_for_mcp_version(str(version_id))
+    if stored:
+        return LintAxesResponse(
+            evaluation=lint_axis_evaluation_out_from_row(
+                stored,
+                subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+                subject_id=str(version_id),
+            )
+        )
+
+    from .axis_score import evaluation_row, mcp_axis_evaluation
+
+    score_row = db.get_mcp_version_score(str(version_id)) or {}
+    report = score_row.get("report") if isinstance(score_row.get("report"), dict) else {}
+    if not report and score_row.get("score") is not None:
+        report = {
+            "score": score_row.get("score"),
+            "grade": score_row.get("grade"),
+            "findings": [],
+            "severity_counts": {"error": 0, "warning": 0, "info": 0},
+            "report_fingerprint": score_row.get("report_fingerprint"),
+        }
+    evaluation = mcp_axis_evaluation(report or {})
+    try:
+        db.record_axis_evaluation(
+            evaluation_row(
+                evaluation,
+                subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+                subject_id=str(version_id),
+            )
+        )
+    except Exception:  # noqa: BLE001 - persistence is best-effort on read path
+        pass
+
+    payload = evaluation.as_dict()
+    payload["subject_type"] = SUBJECT_MCP_ENDPOINT_VERSION
+    payload["mcp_version_id"] = str(version_id)
+    return LintAxesResponse(
+        evaluation=lint_axis_evaluation_out_from_row(
+            payload,
+            subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+            subject_id=str(version_id),
+        )
     )
 
 

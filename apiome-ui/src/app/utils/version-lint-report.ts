@@ -56,6 +56,13 @@ export interface VersionLintReport {
   guideId?: string | null;
   guideName?: string | null;
   guideSource?: LintGuideSource | null;
+  /** Multi-axis scoring algorithm id (CLX-1.2). */
+  algorithmId?: string | null;
+  /** Per-axis scores and coverage (CLX-1.2); absent when not evaluated. */
+  axes?: unknown[] | null;
+  compositeScore?: number | null;
+  compositeGrade?: string | null;
+  requiredCoverageMet?: boolean | null;
 }
 
 /** CSS utility classes for the grade chip, keyed by letter grade. */

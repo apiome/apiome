@@ -64,6 +64,8 @@ import {
   type CatalogLintTierMeta,
   type CategorySeverityBreakdown,
 } from '@/app/utils/catalog-lint-panel';
+import { lintAxisEvaluationFromLintReport } from '@/app/utils/lint-axis-ui';
+import { LintAxisCoveragePanel } from '@/app/components/ade/dashboard/lint/LintAxisCoveragePanel';
 
 /** SVG progress-ring geometry (viewBox 0 0 40 40, radius 16 like `SchemaVersionScoringPanel`). */
 const GAUGE_R = 16;
@@ -510,6 +512,13 @@ export function CatalogLintPanel({
   );
   const categoryScores = resolveCategoryScores(report);
   const breakdown = report ? deriveCategorySeverityBreakdown(report.findings) : [];
+  const axisEvaluation = useMemo(
+    () =>
+      report
+        ? lintAxisEvaluationFromLintReport(report as unknown as Record<string, unknown>)
+        : null,
+    [report],
+  );
   // Severity tallies for the summary strip (error → MUST, warning → SHOULD, info → advisory).
   const mustCount = findings.filter((f) => f.severity === 'error').length;
   const shouldCount = findings.filter((f) => f.severity === 'warning').length;
@@ -637,6 +646,12 @@ export function CatalogLintPanel({
         <>
         {/* Report provenance (MFI-28.2): version, scored-at, stored-vs-computed, fingerprint. */}
         <ProvenanceStrip report={report} scoredAt={scoredAt} />
+
+        {axisEvaluation ? (
+          <div className="mt-4">
+            <LintAxisCoveragePanel evaluation={axisEvaluation} />
+          </div>
+        ) : null}
 
         {/* Severity summary strip: MUST / SHOULD / advisory tallies + distinct rules triggered, so
             the report's weight is readable at a glance before the gauge/category/finding detail. */}

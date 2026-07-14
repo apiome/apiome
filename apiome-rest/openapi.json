@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.77",
+    "version": "1.0.78",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6828,6 +6828,115 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for lint revision evidenceresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/axes": {
+      "get": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Lint Revision Axes",
+        "description": "Return the multi-axis score and coverage evaluation for a schema revision (CLX-1.2, #4849).\n\nPrefers the latest stored ``lint_axis_evaluations`` row for algorithm ``clx-axis-v1``.\nWhen no evaluation has been persisted yet, computes one from the revision's captured\nquality report (and optionally records it). Legacy ``qualityScore`` / ``qualityGrade``\nlist fields are unchanged \u2014 quality remains the backwards-compatible axis.",
+        "operationId": "lint_revision_axes_v1_versions__tenant_slug___project_id___version_record_id__lint_axes_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Axesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Axesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Revision Axes Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Revision Axes Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for lint revision axes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintAxesResponse",
+                  "description": "Response payload for lint revision axesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for lint revision axesresponse422."
                 }
               }
             }
@@ -30206,6 +30315,117 @@
         }
       }
     },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/axes": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Endpoint Version Lint Axes",
+        "description": "Return the multi-axis score and coverage evaluation for a version snapshot (CLX-1.2, #4849).\n\nPrefers the latest stored ``lint_axis_evaluations`` row for algorithm ``clx-axis-v1``.\nWhen none is stored, computes one from the persisted MCP score report. Legacy list\n``score`` / ``grade`` fields are unchanged. 404 when the endpoint or version is not\nthe caller's tenant's.",
+        "operationId": "get_mcp_endpoint_version_lint_axes_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_axes_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Axesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Axesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Lint Axes Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Lint Axes Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp endpoint version lint axes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LintAxesResponse",
+                  "description": "Response payload for get mcp endpoint version lint axesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp endpoint version lint axesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/credentials": {
       "get": {
         "tags": [
@@ -40806,6 +41026,236 @@
         "title": "LinkOperationRequest",
         "description": "Request model for linking entities to operations."
       },
+      "LintAxesResponse": {
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/LintAxisEvaluationOut",
+            "description": "Evaluation."
+          }
+        },
+        "type": "object",
+        "required": [
+          "evaluation"
+        ],
+        "title": "LintAxesResponse",
+        "description": "Response envelope for GET \u2026/lint/axes (CLX-1.2, #4849)."
+      },
+      "LintAxisEvaluationOut": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis evaluation."
+              }
+            ],
+            "title": "Id",
+            "description": "Persisted evaluation id when stored."
+          },
+          "subjectType": {
+            "type": "string",
+            "title": "Subjecttype",
+            "description": "Subject kind: catalog_revision or mcp_endpoint_version.",
+            "example": "example"
+          },
+          "subjectId": {
+            "type": "string",
+            "title": "Subjectid",
+            "description": "The revision (versions.id) or snapshot (mcp_endpoint_versions.id).",
+            "example": "example"
+          },
+          "algorithmId": {
+            "type": "string",
+            "title": "Algorithmid",
+            "description": "Scoring algorithm id (clx-axis-v1).",
+            "example": "example"
+          },
+          "algorithmVersion": {
+            "type": "string",
+            "title": "Algorithmversion",
+            "description": "Implementation revision of the algorithm.",
+            "example": "1.0.0"
+          },
+          "axes": {
+            "items": {
+              "$ref": "#/components/schemas/LintAxisOut"
+            },
+            "type": "array",
+            "title": "Axes",
+            "description": "Axes.",
+            "maxItems": 1000
+          },
+          "compositeScore": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for lint axis evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis evaluation."
+              }
+            ],
+            "title": "Compositescore",
+            "description": "Composite Score."
+          },
+          "compositeGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis evaluation."
+              }
+            ],
+            "title": "Compositegrade",
+            "description": "Composite Grade."
+          },
+          "requiredCoverageMet": {
+            "type": "boolean",
+            "title": "Requiredcoveragemet",
+            "default": false,
+            "description": "Required Coverage Met.",
+            "example": false
+          },
+          "sourceReportFingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis evaluation."
+              }
+            ],
+            "title": "Sourcereportfingerprint",
+            "description": "Source Report Fingerprint."
+          },
+          "evaluatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis evaluation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis evaluation."
+              }
+            ],
+            "title": "Evaluatedat",
+            "description": "Evaluated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "subjectType",
+          "subjectId",
+          "algorithmId",
+          "algorithmVersion"
+        ],
+        "title": "LintAxisEvaluationOut",
+        "description": "One versioned multi-axis evaluation (CLX-1.2, #4849)."
+      },
+      "LintAxisOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Stable axis key (quality, protocol, security, \u2026).",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Human-readable axis label.",
+            "example": "example"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight",
+            "description": "Relative weight used in the composite (v1: 1.0).",
+            "example": 1.0
+          },
+          "assessed": {
+            "type": "boolean",
+            "title": "Assessed",
+            "description": "False when the axis was not assessed.",
+            "example": false
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for lint axis."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis."
+              }
+            ],
+            "title": "Score",
+            "description": "0-100 axis score; null when not assessed."
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis."
+              }
+            ],
+            "title": "Grade",
+            "description": "A-F letter grade; null when not assessed."
+          },
+          "severityCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Severitycounts",
+            "description": "Finding counts by severity attributed to this axis."
+          },
+          "coverage": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Coverage",
+            "description": "Coverage state for this axis ({'state': full|partial|none|unknown})."
+          },
+          "notAssessedReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint axis."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint axis."
+              }
+            ],
+            "title": "Notassessedreason",
+            "description": "Why the axis was not assessed; required when assessed is false."
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "weight",
+          "assessed"
+        ],
+        "title": "LintAxisOut",
+        "description": "One scoring axis with coverage and not-assessed semantics (CLX-1.2, #4849).\n\n``assessed=false`` means the axis was not evaluated \u2014 never conflate that with a clean\nscore of 100 / zero findings. When assessed, empty findings legitimately score 100."
+      },
       "LintCategoryScoreOut": {
         "properties": {
           "name": {
@@ -41495,6 +41945,79 @@
             ],
             "title": "Guidesource",
             "description": "Origin of the applied guide: builtin | custom | fallback (in-code defaults)."
+          },
+          "algorithmId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint report."
+              }
+            ],
+            "title": "Algorithmid",
+            "description": "Multi-axis scoring algorithm id (CLX-1.2), e.g. clx-axis-v1."
+          },
+          "axes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/LintAxisOut"
+                },
+                "type": "array",
+                "description": "Response payload for lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint report."
+              }
+            ],
+            "title": "Axes",
+            "description": "Per-axis scores and coverage (CLX-1.2). Null when not evaluated."
+          },
+          "compositeScore": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint report."
+              }
+            ],
+            "title": "Compositescore",
+            "description": "Weighted composite when required coverage is met; null otherwise."
+          },
+          "compositeGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint report."
+              }
+            ],
+            "title": "Compositegrade",
+            "description": "A-F grade of the composite; null when compositeScore is null."
+          },
+          "requiredCoverageMet": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Response payload for lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for lint report."
+              }
+            ],
+            "title": "Requiredcoveragemet",
+            "description": "True when required axes (v1: quality) are assessed."
           }
         },
         "type": "object",
@@ -48330,6 +48853,79 @@
             ],
             "title": "Scoredat",
             "description": "When the persisted score was last (re)computed, when applicable."
+          },
+          "algorithmId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp lint report."
+              }
+            ],
+            "title": "Algorithmid",
+            "description": "Multi-axis scoring algorithm id (CLX-1.2), e.g. clx-axis-v1."
+          },
+          "axes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/LintAxisOut"
+                },
+                "type": "array",
+                "description": "Response payload for mcp lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp lint report."
+              }
+            ],
+            "title": "Axes",
+            "description": "Per-axis scores and coverage (CLX-1.2). Null when not evaluated."
+          },
+          "compositeScore": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for mcp lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp lint report."
+              }
+            ],
+            "title": "Compositescore",
+            "description": "Weighted composite when required coverage is met; null otherwise."
+          },
+          "compositeGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp lint report."
+              }
+            ],
+            "title": "Compositegrade",
+            "description": "A-F grade of the composite; null when compositeScore is null."
+          },
+          "requiredCoverageMet": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Response payload for mcp lint report."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp lint report."
+              }
+            ],
+            "title": "Requiredcoveragemet",
+            "description": "True when required axes (v1: quality) are assessed."
           }
         },
         "type": "object",
