@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.0.74
+  version: 1.0.75
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -24563,6 +24563,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list mcptoolsandtoolsetsresponse422.
+  /api-keys/mcp-capability-presets:
+    get:
+      tags:
+      - api-keys
+      summary: List MCP capability presets
+      description: 'Enumerate named capability profiles (Catalog only, Search + catalog,
+        Full read) with the documented toolset enable matrix for tenant MCP policy
+        drafts (MTG-5.1, #4785). Custom is not listed — it is a UI sentinel for non-matching
+        drafts.'
+      operationId: list_mcp_capability_presets_api_keys_mcp_capability_presets_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Mcpcapabilitypresetsauthorization schema.
+          - type: 'null'
+            description: List Mcpcapabilitypresetsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Mcpcapabilitypresets Xapikey schema.
+          - type: 'null'
+            description: List Mcpcapabilitypresets Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list mcp capability presets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpCapabilityPresetsResponse'
+                description: Response payload for list mcpcapabilitypresetsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list mcpcapabilitypresetsresponse422.
   /livez:
     get:
       tags:
@@ -30801,6 +30852,48 @@ components:
 
         server said nothing — deliberately never presented as "stable" (V2-MCP-34.4
         AC).'
+    McpCapabilityPresetItem:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable preset identifier (e.g. catalog_only).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        label:
+          type: string
+          title: Label
+          description: Human label for admin UX.
+          example: example
+        toolsets:
+          items:
+            type: string
+          type: array
+          title: Toolsets
+          description: Toolsets enabled (in_ceiling + default_enabled) when the preset
+            is applied.
+          maxItems: 1000
+      type: object
+      required:
+      - id
+      - label
+      - toolsets
+      title: McpCapabilityPresetItem
+      description: One named capability profile / preset (MTG-5.1).
+    McpCapabilityPresetsResponse:
+      properties:
+        presets:
+          items:
+            $ref: '#/components/schemas/McpCapabilityPresetItem'
+          type: array
+          title: Presets
+          description: Named packs in display order; see docs/MCP_CAPABILITY_PRESETS.md.
+          maxItems: 1000
+      type: object
+      required:
+      - presets
+      title: McpCapabilityPresetsResponse
+      description: Named MCP capability presets (MTG-5.1). Custom is a UI sentinel
+        only.
     McpCatalogBucketOut:
       properties:
         label:

@@ -1,16 +1,20 @@
 /**
- * Tenant MCP policy form helpers — MTG-4.1 (#4780) / MTG-4.2 (#4781).
+ * Tenant MCP policy form helpers — MTG-4.1 (#4780) / MTG-4.2 (#4781) / MTG-5.1 (#4785).
  */
 
 import {
+  applyCapabilityPreset,
   buildMcpPolicyPutBody,
   defaultFlagsForMode,
   groupToolsByToolset,
   hasMcpPolicyChanges,
+  matchCapabilityPreset,
   mcpPolicyFormFromSources,
+  MCP_CUSTOM_PRESET_ID,
   patchToolFlag,
   patchToolsetCeiling,
   validateMcpPolicyForm,
+  type McpCapabilityPresetDef,
   type McpPolicyFormState,
   type McpPolicyToolRow,
 } from '../src/app/ade/dashboard/tenants/mcpPolicyForm';
@@ -22,6 +26,28 @@ import type {
 const CATALOG: McpToolCatalogItem[] = [
   { id: 'ping', description: 'Health check', toolset: 'health' },
   { id: 'spec.list', description: 'List specs', toolset: 'catalog' },
+];
+
+const PRESETS: McpCapabilityPresetDef[] = [
+  { id: 'catalog_only', label: 'Catalog only', toolsets: ['health', 'catalog'] },
+  {
+    id: 'search_catalog',
+    label: 'Search + catalog',
+    toolsets: ['health', 'catalog', 'search'],
+  },
+  {
+    id: 'full_read',
+    label: 'Full read',
+    toolsets: ['health', 'catalog', 'search', 'document', 'structure'],
+  },
+];
+
+const WIDE_CATALOG: McpToolCatalogItem[] = [
+  { id: 'ping', description: 'Health', toolset: 'health' },
+  { id: 'spec.list', description: 'List', toolset: 'catalog' },
+  { id: 'spec.search', description: 'Search', toolset: 'search' },
+  { id: 'spec.get_openapi', description: 'OpenAPI', toolset: 'document' },
+  { id: 'spec.list_operations', description: 'Ops', toolset: 'structure' },
 ];
 
 function policy(overrides: Partial<TenantMcpPolicyResponse> = {}): TenantMcpPolicyResponse {
@@ -260,5 +286,76 @@ describe('groupToolsByToolset / patchToolsetCeiling', () => {
       default_enabled: true,
       anonymous_enabled: true,
     });
+  });
+});
+
+describe('applyCapabilityPreset / matchCapabilityPreset', () => {
+  function wideForm(enabled: string[]): McpPolicyFormState {
+    return applyCapabilityPreset(
+      mcpPolicyFormFromSources(
+        {
+          default_mode: 'explicit',
+          allow_anonymous_mcp: true,
+          tools: [],
+          updated_at: null,
+          updated_by: null,
+        },
+        WIDE_CATALOG,
+      ),
+      enabled,
+    );
+  }
+
+  it('applies the catalog_only matrix without touching anonymous flags', () => {
+    const baseline = wideForm(['health', 'catalog', 'search', 'document', 'structure']);
+    const withAnon = {
+      ...baseline,
+      tools: baseline.tools.map((t) =>
+        t.tool_id === 'ping' ? { ...t, anonymous_enabled: false } : t,
+      ),
+    };
+    const next = applyCapabilityPreset(withAnon, ['health', 'catalog']);
+    expect(next.default_mode).toBe('explicit');
+    expect(next.allow_anonymous_mcp).toBe(true);
+    expect(next.tools.find((t) => t.tool_id === 'ping')).toMatchObject({
+      in_ceiling: true,
+      default_enabled: true,
+      anonymous_enabled: false,
+    });
+    expect(next.tools.find((t) => t.tool_id === 'spec.list')).toMatchObject({
+      in_ceiling: true,
+      default_enabled: true,
+    });
+    expect(next.tools.find((t) => t.tool_id === 'spec.search')).toMatchObject({
+      in_ceiling: false,
+      default_enabled: false,
+    });
+    expect(next.tools.find((t) => t.tool_id === 'spec.get_openapi')).toMatchObject({
+      in_ceiling: false,
+    });
+  });
+
+  it('matches named packs and falls back to custom', () => {
+    expect(matchCapabilityPreset(wideForm(['health', 'catalog']), PRESETS)).toBe(
+      'catalog_only',
+    );
+    expect(
+      matchCapabilityPreset(wideForm(['health', 'catalog', 'search']), PRESETS),
+    ).toBe('search_catalog');
+    expect(
+      matchCapabilityPreset(
+        wideForm(['health', 'catalog', 'search', 'document', 'structure']),
+        PRESETS,
+      ),
+    ).toBe('full_read');
+    expect(matchCapabilityPreset(wideForm(['catalog']), PRESETS)).toBe(
+      MCP_CUSTOM_PRESET_ID,
+    );
+
+    const mixed = wideForm(['health', 'catalog']);
+    mixed.tools = mixed.tools.map((t) =>
+      t.tool_id === 'ping' ? { ...t, in_ceiling: false, default_enabled: false } : t,
+    );
+    expect(matchCapabilityPreset(mixed, PRESETS)).toBe(MCP_CUSTOM_PRESET_ID);
   });
 });

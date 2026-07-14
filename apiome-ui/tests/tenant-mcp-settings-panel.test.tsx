@@ -1,10 +1,11 @@
 /**
  * Tenant MCP Settings panel — MTG-4.1 (#4780) / MTG-4.2 (#4781) / MTG-4.4 (#4783)
- * / MTG-4.5 (#4784).
+ * / MTG-4.5 (#4784) / MTG-5.1 (#4785).
  */
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -42,6 +43,25 @@ const CATALOG = {
   tools: [
     { id: 'ping', description: 'Health check', toolset: 'health' },
     { id: 'spec.list', description: 'List specs', toolset: 'catalog' },
+    { id: 'spec.search', description: 'Search specs', toolset: 'search' },
+    { id: 'spec.get_openapi', description: 'Get OpenAPI', toolset: 'document' },
+    { id: 'spec.list_operations', description: 'List operations', toolset: 'structure' },
+  ],
+};
+
+const PRESETS = {
+  presets: [
+    { id: 'catalog_only', label: 'Catalog only', toolsets: ['health', 'catalog'] },
+    {
+      id: 'search_catalog',
+      label: 'Search + catalog',
+      toolsets: ['health', 'catalog', 'search'],
+    },
+    {
+      id: 'full_read',
+      label: 'Full read',
+      toolsets: ['health', 'catalog', 'search', 'document', 'structure'],
+    },
   ],
 };
 
@@ -85,6 +105,9 @@ function mockFetch() {
     if (url.includes('/api/api-keys/mcp-tools') && method === 'GET') {
       return jsonResponse({ success: true, data: CATALOG });
     }
+    if (url.includes('/api/api-keys/mcp-capability-presets') && method === 'GET') {
+      return jsonResponse({ success: true, data: PRESETS });
+    }
     if (url.includes('/api/tenants/mcp-policy') && method === 'PUT') {
       return jsonResponse({
         success: true,
@@ -116,6 +139,15 @@ beforeEach(() => {
   confirmDialog.mockReset();
   confirmDialog.mockResolvedValue(true);
   mockFetch();
+  // Radix Select needs these in jsdom.
+  // @ts-expect-error jsdom stub
+  Element.prototype.hasPointerCapture ??= () => false;
+  // @ts-expect-error jsdom stub
+  Element.prototype.setPointerCapture ??= () => {};
+  // @ts-expect-error jsdom stub
+  Element.prototype.releasePointerCapture ??= () => {};
+  // @ts-expect-error jsdom stub
+  window.HTMLElement.prototype.scrollIntoView ??= () => {};
 });
 
 afterEach(() => {
@@ -180,7 +212,52 @@ describe('TenantMcpSettingsPanel', () => {
       expect(calls.some((c) => c.url.includes('/api/api-keys/mcp-tools') && c.method === 'GET')).toBe(
         true,
       );
+      expect(
+        calls.some(
+          (c) => c.url.includes('/api/api-keys/mcp-capability-presets') && c.method === 'GET',
+        ),
+      ).toBe(true);
     });
+  });
+
+  it('capability profile select applies a named pack to the draft', async () => {
+    const user = userEvent.setup();
+    render(<TenantMcpSettingsPanel isCurrentTenant isAdmin />);
+
+    fireEvent.click(screen.getByRole('button', { name: /MCP Settings/i }));
+    expect(await screen.findByRole('switch', { name: /Enable search toolset/i })).toBeChecked();
+
+    await user.click(screen.getByRole('combobox', { name: /Capability profile/i }));
+    await user.click(await screen.findByRole('option', { name: /^Catalog only$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Unsaved MCP settings changes/i)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('switch', { name: /Enable health toolset/i })).toBeChecked();
+    expect(screen.getByRole('switch', { name: /Enable catalog toolset/i })).toBeChecked();
+    expect(screen.getByRole('switch', { name: /Enable search toolset/i })).not.toBeChecked();
+    expect(screen.getByRole('switch', { name: /Enable document toolset/i })).not.toBeChecked();
+  });
+
+  it('manual toolset edit leaves Custom selectable after a named pack', async () => {
+    const user = userEvent.setup();
+    render(<TenantMcpSettingsPanel isCurrentTenant isAdmin />);
+
+    fireEvent.click(screen.getByRole('button', { name: /MCP Settings/i }));
+    expect(await screen.findByRole('switch', { name: /Enable health toolset/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('combobox', { name: /Capability profile/i }));
+    await user.click(await screen.findByRole('option', { name: /^Catalog only$/i }));
+
+    const catalog = await screen.findByRole('switch', { name: /Enable catalog toolset/i });
+    await user.click(catalog);
+
+    await waitFor(() => {
+      expect(catalog).not.toBeChecked();
+    });
+
+    await user.click(screen.getByRole('combobox', { name: /Capability profile/i }));
+    expect(await screen.findByRole('option', { name: /^Custom$/i })).toBeInTheDocument();
   });
 
   it('master toolset switch toggles children and save persists via PUT', async () => {
