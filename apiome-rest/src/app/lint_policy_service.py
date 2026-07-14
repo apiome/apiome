@@ -107,18 +107,41 @@ def _findings_from_evidence_or_report(
     evidence_rows: Sequence[Mapping[str, Any]],
     report: Optional[Mapping[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], Optional[str], Optional[str]]:
-    """Prefer the latest evidence run's findings; fall back to a native report.
+    """Gather the findings policy is evaluated against: latest evidence run **per scanner**.
+
+    A subject can be scanned by several scanners — an MCP snapshot is covered by both the
+    surface lint (``apiome.mcp-lint``) and the protocol-conformance engine
+    (``apiome.mcp-conformance``, CLX-3.1); a catalog revision may add Buf or GraphQL ESLint on
+    top of the native lint. Each writes its own evidence run.
+
+    Taking only ``evidence_rows[0]`` — the single newest run — would therefore evaluate policy
+    against whichever scanner happened to run *last* and silently discard every other scanner's
+    findings, so an unwaived error could pass the gate simply because a different scanner ran
+    after the one that found it. Instead, the newest run of *each* scanner contributes, which is
+    what "the current evidence for this subject" actually means.
+
+    Rows arrive newest-first (``ORDER BY created_at DESC``), so the first row seen for a scanner
+    is that scanner's latest run. Scanners are merged in sorted id order for a deterministic
+    finding sequence. The run id and fingerprint reported alongside remain those of the newest
+    run overall, preserving the existing single-scanner behaviour.
+
+    Falls back to the native report when no evidence exists at all.
 
     Returns:
         (findings, evidence_run_id, evidence_fingerprint)
     """
     if evidence_rows:
-        row = evidence_rows[0]
-        findings = [
-            f if isinstance(f, dict) else {}
-            for f in (row.get("findings") or [])
-        ]
-        return findings, str(row["id"]), row.get("report_fingerprint")
+        latest_by_scanner: Dict[str, Mapping[str, Any]] = {}
+        for row in evidence_rows:
+            latest_by_scanner.setdefault(str(row.get("scanner_id") or ""), row)
+        findings: List[Dict[str, Any]] = []
+        for scanner_id in sorted(latest_by_scanner):
+            run = latest_by_scanner[scanner_id]
+            findings.extend(
+                f if isinstance(f, dict) else {} for f in (run.get("findings") or [])
+            )
+        newest = evidence_rows[0]
+        return findings, str(newest["id"]), newest.get("report_fingerprint")
     if report and isinstance(report.get("findings"), list):
         findings = [
             normalize_native_finding(f) if isinstance(f, Mapping) else {}

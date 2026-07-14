@@ -25,7 +25,9 @@ from app.auth import validate_authentication
 from app.database import Database
 from app.lint_evidence import (
     COVERAGE_FULL,
+    COVERAGE_PARTIAL,
     ENVELOPE_VERSION,
+    MCP_CONFORMANCE_SCANNER_ID,
     MCP_SCANNER_ID,
     NATIVE_ADAPTER_VERSION,
     NATIVE_SCANNER_ID,
@@ -36,6 +38,7 @@ from app.lint_evidence import (
     SUBJECT_MCP_ENDPOINT_VERSION,
     coverage_entries,
     expected_scanners_for_subject,
+    mcp_conformance_evidence_run,
     mcp_evidence_run,
     native_evidence_run,
     normalize_native_finding,
@@ -228,6 +231,87 @@ def test_mcp_evidence_run_shape():
     assert run["findings"] == []
 
 
+def _conformance_report(*, findings=None, skipped_rules=(), fingerprint="conf-fp"):
+    """A conformance report in the ``ConformanceReport.report_dict()`` shape (CLX-3.1)."""
+    findings = list(findings) if findings is not None else [_MCP_CONFORMANCE_FINDING]
+    return {
+        "profile": "mcp-conformance",
+        "spec_version": "2025-06-18",
+        "score": 88,
+        "grade": "B",
+        "report_fingerprint": fingerprint,
+        "rule_hits": {},
+        "severity_counts": {"error": 0, "warning": 0, "info": len(findings)},
+        "findings": findings,
+        "evaluated_rules": ["protocol.declared-capability-empty"],
+        "skipped_rules": list(skipped_rules),
+        "transcript_captured": not skipped_rules,
+        "gate": {"passed": True, "fail_on": "error", "min_score": None, "reasons": []},
+    }
+
+
+_MCP_CONFORMANCE_FINDING = {
+    "id": "mcp-conf-abc123",
+    "path": "surface.capabilities.prompts",
+    "category": "protocol",
+    "rule": "protocol.declared-capability-empty",
+    "severity": "info",
+    "message": "Server declared the 'prompts' capability but listed no prompts.",
+}
+
+
+def test_mcp_conformance_evidence_run_is_stamped_with_its_own_scanner():
+    """The conformance run is a distinct scanner, normalized into the shared envelope."""
+    run = mcp_conformance_evidence_run(_V1, _conformance_report(), input_fingerprint="surface-fp")
+    assert run["subject_type"] == SUBJECT_MCP_ENDPOINT_VERSION
+    assert run["mcp_version_id"] == _V1
+    assert "version_record_id" not in run
+    # Not the surface-lint scanner: the two engines must never be conflated in evidence.
+    assert run["scanner_id"] == MCP_CONFORMANCE_SCANNER_ID
+    assert run["scanner_id"] != MCP_SCANNER_ID
+    assert run["adapter_version"] == NATIVE_ADAPTER_VERSION
+    assert run["envelope_version"] == ENVELOPE_VERSION
+    assert run["outcome"] == OUTCOME_FINDINGS
+    assert run["report_fingerprint"] == "conf-fp"
+    assert run["input_fingerprint"] == "surface-fp"
+
+    envelope = run["findings"][0]
+    assert set(envelope) == _ENVELOPE_KEYS
+    assert envelope["rule_id"] == "protocol.declared-capability-empty"
+    assert envelope["category"] == "protocol"
+    assert envelope["severity"] == "info"
+    assert envelope["location"] == {"path": "surface.capabilities.prompts"}
+    assert envelope["source_fingerprint"] == "mcp-conf-abc123"
+
+
+def test_mcp_conformance_evidence_run_coverage_is_full_when_nothing_was_skipped():
+    """A transcript-backed run covered its subject completely."""
+    run = mcp_conformance_evidence_run(_V1, _conformance_report(findings=[]))
+    assert run["outcome"] == OUTCOME_PASSED
+    assert run["coverage"] == {"state": COVERAGE_FULL}
+
+
+def test_mcp_conformance_evidence_run_coverage_is_partial_when_rules_were_skipped():
+    """A run with no transcript is PARTIAL coverage carrying the skipped ids — never clean.
+
+    Without this, a recompute-from-database run (which cannot evaluate the transcript-backed
+    rules at all) would be indistinguishable from a run that observed the server's protocol
+    behaviour and found it conformant.
+    """
+    skipped = ["protocol.list-result-missing-items", "protocol.response-id-not-echoed"]
+    run = mcp_conformance_evidence_run(
+        _V1, _conformance_report(findings=[], skipped_rules=skipped)
+    )
+    coverage = run["coverage"]
+    assert coverage["state"] == COVERAGE_PARTIAL
+    assert coverage["state"] != COVERAGE_FULL
+    assert coverage["skipped_rules"] == skipped
+    assert "transcript" in coverage["reason"]
+    # A clean-but-partial run still reports "passed" for what it *did* evaluate; coverage is the
+    # field that keeps the unevaluated half honest.
+    assert run["outcome"] == OUTCOME_PASSED
+
+
 # ===========================================================================
 # Coverage view — absent scans are visible, never clean
 # ===========================================================================
@@ -235,7 +319,13 @@ def test_mcp_evidence_run_shape():
 
 def test_expected_scanners_per_subject():
     assert expected_scanners_for_subject(SUBJECT_CATALOG_REVISION) == [NATIVE_SCANNER_ID]
-    assert expected_scanners_for_subject(SUBJECT_MCP_ENDPOINT_VERSION) == [MCP_SCANNER_ID]
+    # An MCP snapshot is covered by two native engines (CLX-3.1, #4855): the surface lint and
+    # the protocol-conformance / agent-readiness scanner. Both are *expected*, so a snapshot
+    # that has never been conformance-scanned renders as not_run rather than silently clean.
+    assert expected_scanners_for_subject(SUBJECT_MCP_ENDPOINT_VERSION) == [
+        MCP_SCANNER_ID,
+        MCP_CONFORMANCE_SCANNER_ID,
+    ]
 
 
 def test_coverage_synthesizes_not_run_for_missing_scanner():

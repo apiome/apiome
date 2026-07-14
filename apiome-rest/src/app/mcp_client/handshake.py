@@ -229,11 +229,22 @@ async def initialize_session(
     params_capabilities = dict(capabilities if capabilities is not None else DEFAULT_CLIENT_CAPABILITIES)
     params_client_info = dict(client_info if client_info is not None else DEFAULT_CLIENT_INFO)
 
+    # The version the client *offers* is known only here — the transport sees only what comes
+    # back — so it is handed to the conformance transcript recorder (CLX-3.1) up front, before
+    # the exchange. Recording the offer separately is what lets the version rules tell an
+    # honest negotiation from a server that echoed a version it was never offered.
+    if transport.transcript is not None:
+        transport.transcript.note_versions(requested=first_version)
+
     result_obj = await _negotiate_initialize(
         transport, first_version, supported, params_capabilities, params_client_info
     )
 
     negotiated = result_obj.get("protocolVersion")
+    if transport.transcript is not None and isinstance(negotiated, str):
+        # Recorded verbatim — including a version this client does not speak, which the
+        # negotiation guard below rejects but the conformance rules still need to see.
+        transport.transcript.note_versions(negotiated=negotiated)
     if not isinstance(negotiated, str) or not negotiated:
         raise McpProtocolError("initialize result is missing a 'protocolVersion'")
     if negotiated not in supported:

@@ -17,6 +17,7 @@ from app.axis_score import (
     AXIS_SUPPLY_CHAIN,
     AXIS_SUPPORTABILITY,
     REASON_COMPAT_NO_BASE,
+    REASON_PROTOCOL,
     REASON_SECURITY_CATALOG,
     catalog_axis_evaluation,
     evaluate_axes,
@@ -215,3 +216,118 @@ def test_grade_for_score_bands():
 
 def test_empty_finding_set_scores_clean_not_gap():
     assert score_from_finding_dicts([]) == 100
+
+
+# ===========================================================================
+# Protocol axis — fed by the MCP conformance report (CLX-3.1, #4855)
+# ===========================================================================
+
+
+def _conformance_report(**overrides):
+    """A conformance report in the ``ConformanceReport.report_dict()`` shape."""
+    base = {
+        "profile": "mcp-conformance",
+        "spec_version": "2025-06-18",
+        "score": 78,
+        "grade": "C",
+        "report_fingerprint": "conf-fp",
+        "rule_hits": {"protocol.declared-capability-empty": 1},
+        "severity_counts": {"error": 0, "warning": 0, "info": 1},
+        "findings": [
+            {
+                "id": "mcp-conf-1",
+                "path": "surface.capabilities.prompts",
+                "category": "protocol",
+                "rule": "protocol.declared-capability-empty",
+                "severity": "info",
+                "message": "Server declared the 'prompts' capability but listed no prompts.",
+            }
+        ],
+        "evaluated_rules": ["protocol.declared-capability-empty"],
+        "skipped_rules": [],
+        "transcript_captured": True,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_protocol_axis_not_assessed_without_a_conformance_report():
+    """Pre-CLX-3.1 behaviour is preserved: no conformance scan ⇒ the axis is a visible gap."""
+    protocol = _by_key(mcp_axis_evaluation(_report()))[AXIS_PROTOCOL]
+    assert protocol["assessed"] is False
+    assert protocol["score"] is None and protocol["grade"] is None
+    assert protocol["coverage"]["state"] == "none"
+    assert protocol["not_assessed_reason"] == REASON_PROTOCOL
+
+
+def test_protocol_axis_takes_the_conformance_score_and_grade():
+    """A fully-evidenced conformance run assesses the axis with the report's own score/grade."""
+    report = _conformance_report()
+    ev = mcp_axis_evaluation(_report(), conformance_report=report)
+    protocol = _by_key(ev)[AXIS_PROTOCOL]
+
+    assert protocol["assessed"] is True
+    # Taken from the report, not recomputed — the axis can never disagree with the run.
+    assert protocol["score"] == 78
+    assert protocol["grade"] == "C"
+    assert protocol["coverage"]["state"] == "full"
+    assert protocol["not_assessed_reason"] is None
+    assert protocol["severity_counts"] == {"error": 0, "warning": 0, "info": 1}
+    # The axis is now assessed, so it contributes its own weight to the composite.
+    assert ev.composite_score is not None
+    assert ev.composite_score < mcp_axis_evaluation(_report()).composite_score
+
+
+def test_protocol_axis_is_partial_when_rules_were_skipped():
+    """Skipped (transcript-backed) rules make the axis assessed but only *partially* covered.
+
+    The surface-derived rules genuinely ran, so the axis is not a gap — but a consumer must be
+    able to tell a fully-observed pass from one where the wire was never seen.
+    """
+    report = _conformance_report(
+        score=100,
+        grade="A",
+        findings=[],
+        severity_counts={"error": 0, "warning": 0, "info": 0},
+        skipped_rules=["protocol.response-id-not-echoed"],
+        transcript_captured=False,
+    )
+    protocol = _by_key(mcp_axis_evaluation(_report(), conformance_report=report))[AXIS_PROTOCOL]
+
+    assert protocol["assessed"] is True
+    assert protocol["score"] == 100 and protocol["grade"] == "A"
+    assert protocol["coverage"]["state"] == "partial"
+    assert protocol["not_assessed_reason"] is None
+
+
+def test_protocol_axis_ignores_conformance_report_for_catalog_subjects():
+    """A catalog revision is a document, not a server: it has no protocol surface to assess."""
+    protocol = _by_key(
+        catalog_axis_evaluation(_report(), conformance_report=_conformance_report())
+    )[AXIS_PROTOCOL]
+    assert protocol["assessed"] is False
+    assert protocol["not_assessed_reason"] == REASON_PROTOCOL
+
+
+def test_protocol_axis_does_not_leak_conformance_findings_into_other_axes():
+    """Conformance findings feed only the protocol axis — the lint report's score is untouched."""
+    conformance = _conformance_report(
+        findings=[
+            {
+                "id": "mcp-conf-2",
+                "path": "tools.wipe",
+                "category": "security",
+                "rule": "readiness.tool-destructive-not-declared",
+                "severity": "error",
+                "message": "destructive",
+            }
+        ],
+        score=90,
+        grade="A",
+    )
+    ev = mcp_axis_evaluation(_report(score=100, grade="A"), conformance_report=conformance)
+    axes = _by_key(ev)
+    # The quality and security axes are computed from the *lint* report only.
+    assert axes[AXIS_QUALITY]["score"] == 100
+    assert axes[AXIS_SECURITY]["score"] == 100
+    assert axes[AXIS_PROTOCOL]["score"] == 90

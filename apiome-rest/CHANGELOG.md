@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.118.0] - 2026-07-14
+
+### Added
+- **MCP protocol conformance and agent-readiness rules (CLX-3.1, #4855)** — a new conformance
+  engine (`app.mcp_conformance`) that asks the two questions the surface lint cannot: did the
+  server *behave* like an MCP server, and can an agent actually use its tools safely?
+  - Two rule packs, 22 rules: `app.mcp_conformance_rules` (version negotiation, server identity,
+    declared-vs-listed capability cross-check, JSON-RPC id echo, error-code discipline,
+    pagination) and `app.mcp_agent_readiness` (descriptions, constrained parameters, output
+    schemas, recovery guidance, bounded lists, destructive-operation declaration, annotations,
+    naming). Every rule cites the MCP specification revision (`2025-06-18`) it derives from and a
+    resolvable source reference.
+  - `GET /v1/mcp/{tenant}/endpoints/{id}/versions/{vid}/conformance` runs and **gates** a named
+    profile (`mcp-conformance` / `mcp-protocol` / `mcp-agent-readiness`) with `failOn` / `minScore`,
+    and can emit SARIF or JUnit through the existing gate serializer. `GET /v1/mcp/conformance/rules`
+    publishes the rule catalog with its specification citations.
+  - `app.mcp_protocol_transcript` records the JSON-RPC exchanges discovery *already performs* as
+    redacted evidence — parameter key names, result shapes and counts, cursor digests, scrubbed
+    error text; never wire data, tool arguments, or credentials. Its passive-method allow-list makes
+    it structurally impossible to record (and therefore to invoke) a business tool. Transcripts
+    persist to `apiome.mcp_protocol_transcripts` (migration **V171**), one immutable row per snapshot.
+  - Rules based on the persisted surface are deterministic and recomputable offline; rules needing
+    live protocol evidence are **skipped and reported** (`skippedRules`, evidence coverage
+    `partial`) when no transcript was captured — an unobserved behaviour never reads as a pass.
+  - Conformance writes its own evidence run under scanner id `apiome.mcp-conformance` and fills the
+    `protocol` axis, which previously always read "No protocol-conformance scanner evidence yet" —
+    so it is gateable via the existing policy `axis_gates` with no new gate code.
+
+### Fixed
+- **Policy gates evaluated only the newest scanner's findings** — `_findings_from_evidence_or_report`
+  took the single most recent evidence run for a subject, so when several scanners covered it (an
+  MCP snapshot is now scanned by both the surface lint and the conformance engine; a catalog
+  revision may add Buf or GraphQL ESLint), every other scanner's findings were silently discarded
+  and an unwaived error could pass the gate merely because a different scanner ran after the one
+  that found it. Policy now evaluates the latest run of *each* scanner.
+
 ## [1.117.36] - 2026-07-14
 
 ### Added

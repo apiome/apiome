@@ -179,6 +179,20 @@ def mcp_version_lint_policy(
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/lint/policy"
 
 
+def mcp_endpoint_version_conformance(
+    tenant_slug: str,
+    endpoint_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """MCP protocol conformance + agent-readiness report for one version snapshot."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/conformance"
+
+
+def mcp_conformance_rules() -> str:
+    """Registry-level MCP conformance rule catalog (no tenant scope)."""
+    return f"{V1}/mcp/conformance/rules"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 

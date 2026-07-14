@@ -6870,6 +6870,202 @@ class McpEndpointVersionResponse(BaseModel):
     version: McpEndpointVersionDetail
 
 
+class McpConformanceGateOut(BaseModel):
+    """The pass/fail decision for one conformance run, and why (CLX-3.1, #4855)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    passed: bool = Field(description="Whether the run satisfied every configured threshold.")
+    fail_on: str = Field(
+        serialization_alias="failOn",
+        description=(
+            "Severity threshold applied: a finding of this severity or worse fails the gate. "
+            "'none' disables severity gating."
+        ),
+    )
+    min_score: Optional[int] = Field(
+        default=None,
+        serialization_alias="minScore",
+        description="Score floor, when one was requested; a lower score fails the gate.",
+    )
+    reasons: List[str] = Field(
+        default_factory=list,
+        description="Human-readable reason per failed threshold; empty when the gate passed.",
+    )
+
+
+class McpConformanceReportResponse(BaseModel):
+    """Protocol-conformance & agent-readiness report for one MCP snapshot (CLX-3.1, #4855).
+
+    Distinct from :class:`McpLintReportResponse`, which scores the *surface* a server advertises.
+    This scores how the server **behaved** (protocol negotiation, envelopes, pagination) and how
+    usable its tools are **to an agent** — under a named, gateable ``profile``, against a cited
+    MCP specification revision.
+
+    Two fields carry the honesty guarantee and should never be ignored by a consumer:
+
+    * ``skipped_rules`` — rules the profile selected but could **not** evaluate, because they
+      need a protocol transcript and none was captured for this snapshot. They are *not*
+      passing; they are unverified.
+    * ``transcript_captured`` — whether live protocol evidence backed the run at all.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str = Field(serialization_alias="endpointId")
+    version_id: str = Field(
+        serialization_alias="versionId",
+        description="The version snapshot's id (mcp_endpoint_versions.id).",
+    )
+    version_seq: int = Field(
+        serialization_alias="versionSeq",
+        description="The snapshot's monotonic sequence number under its endpoint.",
+    )
+    version_tag: Optional[str] = Field(
+        default=None,
+        serialization_alias="versionTag",
+        description="Human-readable date/time tag for the snapshot, when present.",
+    )
+    profile: str = Field(description="The conformance profile that was run.")
+    spec_version: str = Field(
+        serialization_alias="specVersion",
+        description="The MCP specification revision the rules are derived from.",
+    )
+    score: int = Field(description="Deterministic 0-100 conformance score.")
+    grade: str = Field(description="A-F letter grade derived from the score.")
+    findings: List[LintFindingOut]
+    rule_hits: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="ruleHits",
+        description="Count of findings per rule id.",
+    )
+    severity_counts: Dict[str, int] = Field(
+        default_factory=dict,
+        serialization_alias="severityCounts",
+        description="Count of findings per severity (error/warning/info).",
+    )
+    report_fingerprint: str = Field(
+        serialization_alias="reportFingerprint",
+        description="Stable hash over the profile, score, grade, and sorted findings.",
+    )
+    evaluated_rules: List[str] = Field(
+        default_factory=list,
+        serialization_alias="evaluatedRules",
+        description="Rule ids the profile actually evaluated.",
+    )
+    skipped_rules: List[str] = Field(
+        default_factory=list,
+        serialization_alias="skippedRules",
+        description=(
+            "Rule ids that could NOT be evaluated because no protocol transcript was captured "
+            "for this snapshot. These are unverified, not passing."
+        ),
+    )
+    transcript_captured: bool = Field(
+        default=False,
+        serialization_alias="transcriptCaptured",
+        description="Whether live, redacted protocol evidence backed this run.",
+    )
+    gate: McpConformanceGateOut
+
+
+class McpConformanceRuleOut(BaseModel):
+    """One conformance rule descriptor, citing its specification source (CLX-3.1, #4855)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId")
+    category: str = Field(description="'protocol' or 'readiness'.")
+    severity: str = Field(description="error / warning / info.")
+    spec_version: str = Field(
+        serialization_alias="specVersion",
+        description="The MCP specification revision this rule is derived from.",
+    )
+    spec_reference: str = Field(
+        serialization_alias="specReference",
+        description="Resolvable URL for the normative statement (or published guidance).",
+    )
+    rationale: str = Field(description="Why the rule exists — what breaks when it is violated.")
+    requires_transcript: bool = Field(
+        serialization_alias="requiresTranscript",
+        description=(
+            "Whether the rule needs live protocol evidence. Such a rule is skipped — never "
+            "assumed to pass — when no transcript was captured."
+        ),
+    )
+
+
+class McpConformanceProfileOut(BaseModel):
+    """One runnable, gateable conformance profile (CLX-3.1, #4855)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    profile_id: str = Field(serialization_alias="profileId")
+    label: str
+    categories: List[str]
+    description: str
+
+
+class McpConformanceRulesResponse(BaseModel):
+    """The conformance rule catalog and the profiles that select from it (CLX-3.1, #4855).
+
+    Every rule cites the MCP specification version it derives from and a resolvable source
+    reference, so a finding is always traceable to a normative statement rather than an opinion.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    spec_version: str = Field(
+        serialization_alias="specVersion",
+        description="The MCP specification revision this rule set is written against.",
+    )
+    profiles: List[McpConformanceProfileOut]
+    rules: List[McpConformanceRuleOut]
+
+
+def mcp_conformance_report_from_report(
+    endpoint_id: str,
+    version: Dict[str, Any],
+    report: Dict[str, Any],
+) -> McpConformanceReportResponse:
+    """Shape a conformance report dict + its version row into the API response.
+
+    Args:
+        endpoint_id: The owning MCP endpoint.
+        version: The ``mcp_endpoint_versions`` row (supplies snapshot identity).
+        report: An :meth:`app.mcp_conformance.ConformanceReport.report_dict` payload.
+
+    Returns:
+        The populated :class:`McpConformanceReportResponse`.
+    """
+    gate = report.get("gate") or {}
+    return McpConformanceReportResponse(
+        endpoint_id=endpoint_id,
+        version_id=str(version["id"]),
+        version_seq=int(version["version_seq"]),
+        version_tag=version.get("version_tag"),
+        profile=str(report.get("profile") or ""),
+        spec_version=str(report.get("spec_version") or ""),
+        score=int(report.get("score") or 0),
+        grade=str(report.get("grade") or ""),
+        findings=[LintFindingOut(**f) for f in (report.get("findings") or [])],
+        rule_hits=dict(report.get("rule_hits") or {}),
+        severity_counts=dict(report.get("severity_counts") or {}),
+        report_fingerprint=str(report.get("report_fingerprint") or ""),
+        evaluated_rules=list(report.get("evaluated_rules") or []),
+        skipped_rules=list(report.get("skipped_rules") or []),
+        transcript_captured=bool(report.get("transcript_captured")),
+        gate=McpConformanceGateOut(
+            passed=bool(gate.get("passed")),
+            fail_on=str(gate.get("fail_on") or ""),
+            min_score=gate.get("min_score"),
+            reasons=list(gate.get("reasons") or []),
+        ),
+    )
+
+
 class McpLintReportResponse(BaseModel):
     """Server-computed lint score + itemized findings for one MCP version snapshot (#3686).
 

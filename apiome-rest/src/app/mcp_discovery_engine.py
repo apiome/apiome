@@ -55,6 +55,7 @@ from .mcp_client.diff import ITEM_TYPE_SERVER, SurfaceDiff
 from .mcp_client.resilience import BudgetExceededError, TimeBudget
 from .mcp_client.transport_meta import TransportMetadata
 from .mcp_credentials import load_endpoint_auth_headers
+from .mcp_protocol_transcript import ProtocolTranscript, TranscriptRecorder
 
 logger = logging.getLogger(__name__)
 
@@ -62,16 +63,21 @@ logger = logging.getLogger(__name__)
 # bounded so a slow/hostile server cannot pin the task forever.
 _DISCOVERY_BUDGET_SECONDS = 120.0
 
-# The result of one discovery run: the normalized surface plus the host/transport metadata observed
-# from the handshake connection (``None`` when unavailable — e.g. a legacy test runner). Kept as a
-# pair rather than folded into the surface because transport facts are volatile (they must not feed
-# the surface fingerprint) and persist to the *endpoint*, not the immutable version snapshot.
-DiscoveryOutcome = Tuple[DiscoverySurface, Optional[TransportMetadata]]
+# The result of one discovery run: the normalized surface, the host/transport metadata observed
+# from the handshake connection, and the redacted protocol transcript of the session (either may be
+# ``None`` — e.g. a legacy test runner). Kept as a tuple rather than folded into the surface because
+# neither is part of the server's *offering*: transport facts are volatile and persist to the
+# *endpoint*, and the transcript describes the session rather than the surface — so neither may feed
+# the surface fingerprint.
+DiscoveryOutcome = Tuple[
+    DiscoverySurface, Optional[TransportMetadata], Optional[ProtocolTranscript]
+]
 
 # Test seam: monkeypatch to an async callable(endpoint_row, headers) -> DiscoverySurface | outcome
 # to bypass the real network. When None, :func:`_run_mcp_client` performs the live discovery. A
-# runner may return either a bare :class:`DiscoverySurface` (legacy) or a ``DiscoveryOutcome`` pair;
-# :func:`_invoke_discovery` normalizes both.
+# runner may return a bare :class:`DiscoverySurface` (legacy), a ``(surface, transport_meta)`` pair
+# (also legacy), or a full ``DiscoveryOutcome`` triple; :func:`_invoke_discovery` normalizes all
+# three, so existing runners keep working without change.
 _discovery_runner: Optional[
     Callable[[Dict[str, Any], Dict[str, str]], Awaitable[Any]]
 ] = None
@@ -92,25 +98,38 @@ async def _run_mcp_client(
     transport (:attr:`StreamableHttpTransport.observed_transport`, V2-MCP-34.1) without any extra
     network call, and returned for the caller to persist on the endpoint.
 
+    A :class:`~app.mcp_protocol_transcript.TranscriptRecorder` is attached to the transport so the
+    JSON-RPC exchanges this discovery *already performs* are reduced to redacted conformance
+    evidence (CLX-3.1, #4855). It is purely observational — it issues no requests of its own and
+    can only record the passive discovery methods (its allow-list structurally excludes
+    ``tools/call``), so capturing it costs no extra network traffic and cannot invoke a business
+    tool.
+
     Args:
         endpoint: The ``mcp_endpoints`` row (``endpoint_url`` is used as the target).
         headers: Auth headers to attach to every request (empty when the endpoint has
             no usable credentials).
 
     Returns:
-        ``(surface, transport_metadata)``: the canonical :class:`DiscoverySurface` and the observed
-        :class:`TransportMetadata` (``None`` when the transport captured nothing).
+        ``(surface, transport_metadata, transcript)``: the canonical :class:`DiscoverySurface`, the
+        observed :class:`TransportMetadata` (``None`` when the transport captured nothing), and the
+        redacted :class:`ProtocolTranscript` of the session.
     """
     url = str(endpoint["endpoint_url"])
     budget = TimeBudget(total_seconds=_DISCOVERY_BUDGET_SECONDS)
-    transport = StreamableHttpTransport(url, headers=dict(headers))
+    recorder = TranscriptRecorder()
+    transport = StreamableHttpTransport(url, headers=dict(headers), transcript=recorder)
     try:
         initialize = await initialize_session(transport)
         listings = await discover_listings(transport, initialize.capabilities, budget=budget)
         transport_meta = transport.observed_transport
     finally:
         await transport.aclose()
-    return DiscoverySurface.from_discovery(initialize, listings), transport_meta
+    return (
+        DiscoverySurface.from_discovery(initialize, listings),
+        transport_meta,
+        recorder.transcript(),
+    )
 
 
 async def _invoke_discovery(
@@ -118,16 +137,26 @@ async def _invoke_discovery(
 ) -> DiscoveryOutcome:
     """Dispatch to the test runner when installed, else the live MCP client.
 
-    Normalizes both runner shapes: a live/tuple result is returned as-is, while a legacy runner
-    that yields a bare :class:`DiscoverySurface` is paired with ``None`` transport metadata.
+    Normalizes every runner shape onto the full :data:`DiscoveryOutcome` triple, so a runner
+    written before transport metadata or protocol transcripts existed keeps working unchanged:
+
+    * a bare :class:`DiscoverySurface`      -> ``(surface, None, None)``
+    * ``(surface, transport_meta)``          -> ``(surface, transport_meta, None)``
+    * ``(surface, transport_meta, transcript)`` -> returned as-is
+
+    A ``None`` transcript means the session was not observed, which the conformance engine reports
+    as *skipped* transcript rules — never as a pass.
     """
     if _discovery_runner is not None:
         outcome = await _discovery_runner(endpoint, headers)
     else:
         outcome = await _run_mcp_client(endpoint, headers)
     if isinstance(outcome, tuple):
-        return outcome
-    return outcome, None
+        surface, *rest = outcome
+        transport_meta = rest[0] if len(rest) > 0 else None
+        transcript = rest[1] if len(rest) > 1 else None
+        return surface, transport_meta, transcript
+    return outcome, None, None
 
 
 # ---------------------------------------------------------------------------
@@ -274,6 +303,74 @@ def _capture_mcp_version_score(version_id: str, surface: DiscoverySurface) -> No
         )
 
 
+def _capture_mcp_conformance(
+    version_id: str,
+    surface: DiscoverySurface,
+    transcript: Optional[ProtocolTranscript],
+) -> None:
+    """Best-effort: record the redacted transcript and the conformance report for a new snapshot.
+
+    Runs immediately after a new ``mcp_endpoint_versions`` snapshot is committed, alongside
+    :func:`_capture_mcp_version_score`, and does two things (CLX-3.1, #4855):
+
+    1. **Persists the redacted transcript** for the snapshot. This is the *only* moment it can be
+       done — the transcript describes the live session that produced this snapshot, and that
+       session is gone once discovery returns. Storing it is what lets the transcript-backed
+       protocol rules be re-evaluated, re-gated, and audited later from the database, long after
+       the connection closed.
+    2. **Runs and stores the conformance report** as its own evidence run, under its own scanner
+       id. It is deliberately *not* folded into the surface lint score: that score is persisted
+       and fingerprinted, and adding findings to it would retroactively regrade every snapshot
+       already in the catalog.
+
+    The report is computed with the transcript in hand, so it covers the full rule set — including
+    the protocol behaviours that are invisible in the stored surface. A snapshot discovered without
+    a transcript (a legacy test runner) still gets a report, but one whose transcript-backed rules
+    are recorded as *skipped* and whose evidence coverage is therefore ``partial``, never a
+    misleading clean pass.
+
+    Strictly best-effort, mirroring :func:`_capture_mcp_version_score`: the version row is already
+    committed, so any failure here leaves conformance to an on-demand re-run and never turns a
+    completed discovery into a failed one. Imported lazily to keep the conformance engine off the
+    discovery import path.
+
+    Args:
+        version_id: The just-persisted snapshot.
+        surface: The normalized surface that snapshot was built from.
+        transcript: The redacted transcript of the discovery session, when it was observed.
+    """
+    try:
+        from .lint_evidence import PROFILE_DISCOVERY_CAPTURE, mcp_conformance_evidence_run
+        from .mcp_conformance import ConformanceContext, run_conformance
+
+        if transcript is not None:
+            db.set_mcp_protocol_transcript(
+                version_id,
+                transcript=transcript.as_dict(),
+                requested_version=transcript.requested_version,
+                negotiated_version=transcript.negotiated_version,
+                transcript_fingerprint=transcript.fingerprint(),
+            )
+
+        report = run_conformance(
+            ConformanceContext(surface=surface, transcript=transcript)
+        ).report_dict()
+        db.record_lint_evidence_run(
+            mcp_conformance_evidence_run(
+                version_id,
+                report,
+                profile=PROFILE_DISCOVERY_CAPTURE,
+                input_fingerprint=surface.fingerprint(),
+            )
+        )
+    except Exception:  # noqa: BLE001 - capture is strictly best-effort
+        logger.warning(
+            "Failed to capture MCP conformance evidence for version %s",
+            version_id,
+            exc_info=True,
+        )
+
+
 def _persist_transport_metadata(
     endpoint_id: str,
     transport_meta: Optional[TransportMetadata],
@@ -332,6 +429,7 @@ def _persist_outcome(
     discovered_at: datetime,
     transport_meta: Optional[TransportMetadata] = None,
     trigger: Optional[str] = None,
+    transcript: Optional[ProtocolTranscript] = None,
 ) -> Dict[str, Any]:
     """Fingerprint/diff the surface, persist a version when changed, and finish the job.
 
@@ -387,6 +485,10 @@ def _persist_outcome(
     )
     # Auto-capture the lint score for the new snapshot (best-effort; never blocks the job).
     _capture_mcp_version_score(persisted["version_id"], surface)
+    # …and the redacted protocol transcript + conformance evidence (CLX-3.1). Only on the changed
+    # path: a transcript records the discovery that produced *this* snapshot, and the unchanged
+    # path creates no snapshot to attach one to.
+    _capture_mcp_conformance(persisted["version_id"], surface, transcript)
     result = {
         "version_id": persisted["version_id"],
         "version_seq": persisted["version_seq"],
@@ -507,7 +609,7 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
     try:
         headers = await asyncio.to_thread(load_endpoint_auth_headers, endpoint_id)
-        surface, transport_meta = await _invoke_discovery(endpoint, headers)
+        surface, transport_meta, transcript = await _invoke_discovery(endpoint, headers)
     except Exception as exc:  # noqa: BLE001 - mapped to the stable error taxonomy below
         error = classify_exception(exc)
         logger.warning(
@@ -532,6 +634,7 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
             # The job row is the provenance source of truth; its trigger is stamped
             # onto any snapshot this run produces (V2-MCP-34.5).
             running.get("trigger"),
+            transcript,
         )
         logger.info(
             "discovery job=%s endpoint=%s completed: %s",

@@ -8,7 +8,9 @@ against ``/v1/tenants/{tenant_slug}/mcp-policy`` and ``…/mcp-keys/…`` (MTG-5
 
 from __future__ import annotations
 
+import json
 from typing import Any
+from urllib.parse import urlencode
 from uuid import UUID
 
 import typer
@@ -45,6 +47,12 @@ from apiome_cli.output_lint import emit_lint_command_output, lint_command_should
 
 # Letter grades accepted by ``--min-grade`` (mirrors the project ``lint`` command).
 _LINT_GRADES = frozenset({"A", "B", "C", "D", "F"})
+
+# MCP conformance gate vocabulary (mirrors the REST query-param enums; validated
+# locally so a typo is a usage error rather than a 422 round-trip).
+_CONFORMANCE_PROFILES = ("mcp-conformance", "mcp-protocol", "mcp-agent-readiness")
+_CONFORMANCE_FORMATS = ("json", "sarif", "junit")
+_CONFORMANCE_FAIL_ON = ("error", "warning", "info", "none")
 
 app = typer.Typer(
     name="mcp",
@@ -560,3 +568,229 @@ def lint_endpoint(
         fail_on_policy=fail_on_policy,
     ):
         raise typer.Exit(EXIT_ERROR)
+
+
+def _registry_client(ctx: typer.Context) -> RestClient:
+    """Build an API-key REST client for registry-level (untenanted) MCP reads."""
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    return RestClient(
+        settings,
+        timeout=timeout_from_context(ctx),
+        verify=not insecure_from_context(ctx),
+    )
+
+
+def _normalize_choice(value: str, choices: tuple[str, ...], param_hint: str) -> str:
+    """Validate one enum-ish option locally, raising a usage error on a bad value."""
+    normalized = (value or choices[0]).strip().lower()
+    if normalized not in choices:
+        raise typer.BadParameter(
+            f"must be one of {', '.join(choices)}",
+            param_hint=param_hint,
+        )
+    return normalized
+
+
+def _emit_conformance_human(report: dict[str, Any]) -> None:
+    """Print a readable conformance summary: score, gate, findings, skipped rules."""
+    profile = report.get("profile") or "?"
+    spec_version = report.get("specVersion") or report.get("spec_version") or "?"
+    typer.echo(f"MCP conformance profile: {profile}  (spec {spec_version})")
+    typer.echo(f"Score: {report.get('score', '?')}/100  (grade {report.get('grade', '?')})")
+
+    counts = report.get("severityCounts") or report.get("severity_counts") or {}
+    typer.echo(
+        "Findings — errors: {e}, warnings: {w}, info: {i}".format(
+            e=counts.get("error", 0),
+            w=counts.get("warning", 0),
+            i=counts.get("info", 0),
+        )
+    )
+
+    gate = report.get("gate") or {}
+    passed = bool(gate.get("passed"))
+    typer.echo(f"Gate: {'PASSED' if passed else 'FAILED'} (fail-on {gate.get('failOn', 'error')})")
+    for reason in gate.get("reasons") or []:
+        typer.echo(f"  - {reason}")
+
+    for finding in report.get("findings") or []:
+        severity = finding.get("severity") or "?"
+        rule = finding.get("rule") or finding.get("id") or "?"
+        path_hint = finding.get("path") or ""
+        message = finding.get("message") or ""
+        typer.echo(f"  {severity:<8} {rule}  {path_hint}  {message}")
+
+    skipped = report.get("skippedRules") or report.get("skipped_rules") or []
+    if skipped:
+        typer.echo(
+            "NOT EVALUATED: the following rules were skipped because no protocol "
+            "transcript was captured — they are not passing, they are unverified:"
+        )
+        for rule_id in skipped:
+            typer.echo(f"  - {rule_id}")
+
+
+@app.command("conformance")
+def conformance_endpoint(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    version: UUID | None = typer.Option(
+        None,
+        "--version",
+        help="Version snapshot UUID to evaluate (default: the endpoint's current version).",
+    ),
+    profile: str = typer.Option(
+        "mcp-conformance",
+        "--profile",
+        help=(
+            "Rule profile: mcp-conformance (default), mcp-protocol, or "
+            "mcp-agent-readiness."
+        ),
+    ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        help="Gate output format: json (default), sarif, or junit.",
+    ),
+    fail_on: str = typer.Option(
+        "error",
+        "--fail-on",
+        help=(
+            "Exit non-zero when findings at this severity or higher are present: "
+            "error (default), warning, info, or none."
+        ),
+    ),
+    min_score: int | None = typer.Option(
+        None,
+        "--min-score",
+        min=0,
+        max=100,
+        help="Exit non-zero when the conformance score is below this floor (0-100).",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        help="Output format: table (default) or json.",
+    ),
+) -> None:
+    """Evaluate MCP protocol conformance + agent-readiness (GET .../versions/{id}/conformance).
+
+    The server evaluates the selected rule profile against a discovered surface snapshot
+    and computes the CI gate from ``--fail-on`` / ``--min-score``; this command exits
+    non-zero whenever that gate fails — including under ``--format sarif|junit``, which
+    echo the raw gate artifact for CI ingestion (the gate is always read from the JSON
+    report, never inferred from the artifact). Rules that need a protocol transcript are
+    reported as *skipped* (not passing) when no transcript was captured.
+    """
+    profile_id = _normalize_choice(profile, _CONFORMANCE_PROFILES, "--profile")
+    fmt = _normalize_choice(output_format, _CONFORMANCE_FORMATS, "--format")
+    fail_level = _normalize_choice(fail_on, _CONFORMANCE_FAIL_ON, "--fail-on")
+
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+
+    endpoint_str = str(endpoint_id)
+    version_id = _resolve_lint_version_id(client, tenant_slug, endpoint_str, version)
+
+    base_path = api_paths.mcp_endpoint_version_conformance(
+        tenant_slug, endpoint_str, version_id
+    )
+    query: dict[str, str] = {"profile": profile_id, "failOn": fail_level}
+    if min_score is not None:
+        query["minScore"] = str(min_score)
+
+    # Always read the JSON report first: it carries the server-computed gate, which must
+    # decide the exit code regardless of --format (mirrors the ``compat`` command). A
+    # SARIF/JUnit run that skipped this would upload an artifact and exit 0 on a failing
+    # gate — a silently green CI build.
+    payload = client.get(f"{base_path}?{urlencode({**query, 'format': 'json'})}").json()
+    report = payload if isinstance(payload, dict) else {}
+
+    if fmt == "json":
+        if json_mode:
+            typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            _emit_conformance_human(report)
+    else:
+        # SARIF / JUnit bodies are raw artifacts, echoed verbatim for CI ingestion.
+        artifact = client.get(f"{base_path}?{urlencode({**query, 'format': fmt})}").text
+        typer.echo(artifact)
+
+    gate = report.get("gate") or {}
+    if not gate.get("passed", True):
+        raise typer.Exit(EXIT_ERROR)
+
+
+_CONFORMANCE_RULE_COLUMNS: tuple[ListColumn, ...] = (
+    ("Rule", "ruleId", None),
+    ("Severity", "severity", None),
+    ("Category", "category", None),
+    ("Spec", "specVersion", _format_optional),
+    ("Reference", "specReference", _format_optional),
+    ("Transcript", "requiresTranscript", _format_optional),
+)
+
+
+@app.command("conformance-rules")
+def conformance_rules(
+    ctx: typer.Context,
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help=(
+            "Only list rules in this profile: mcp-conformance, mcp-protocol, or "
+            "mcp-agent-readiness (default: all)."
+        ),
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        help="Output format: table (default) or json.",
+    ),
+) -> None:
+    """List the MCP conformance rule catalog (GET /v1/mcp/conformance/rules).
+
+    Each rule cites the MCP specification version it was written against and a source
+    reference, so a failing gate can be traced back to the spec text that motivated it.
+    """
+    profile_id = (
+        _normalize_choice(profile, _CONFORMANCE_PROFILES, "--profile")
+        if profile is not None
+        else None
+    )
+
+    json_mode = _json_output(ctx, output)
+    client = _registry_client(ctx)
+
+    path = api_paths.mcp_conformance_rules()
+    if profile_id is not None:
+        path = f"{path}?{urlencode({'profile': profile_id})}"
+    payload = client.get(path).json()
+
+    if json_mode:
+        emit_json(payload)
+        return
+
+    if not isinstance(payload, dict):
+        emit_json(payload)
+        return
+
+    spec_version = payload.get("specVersion") or payload.get("spec_version") or "?"
+    typer.echo(f"MCP conformance rules (spec {spec_version})")
+    for entry in payload.get("profiles") or []:
+        if not isinstance(entry, dict):
+            continue
+        label = entry.get("label") or entry.get("profileId") or "?"
+        typer.echo(f"  profile {entry.get('profileId', '?')}: {label}")
+
+    rules = payload.get("rules")
+    if not isinstance(rules, list):
+        emit_json(payload)
+        return
+    emit_list_table(
+        rules,
+        _CONFORMANCE_RULE_COLUMNS,
+        empty_message="No conformance rules.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
