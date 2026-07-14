@@ -44,6 +44,7 @@ from .gate_report_emit import (
 )
 from .lint_evidence import (
     MCP_CONFORMANCE_SCANNER_ID,
+    MCP_POSTURE_SCANNER_ID,
     SUBJECT_MCP_ENDPOINT_VERSION,
     normalize_native_findings,
     outcome_for_report,
@@ -102,6 +103,7 @@ from .mcp_insight_aggregation import (
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
 from .mcp_lifecycle_signals import detect_lifecycle_signals
+from .mcp_owasp import catalog as owasp_catalog
 from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_provenance import build_endpoint_provenance
 from .mcp_report_card import (
@@ -109,8 +111,23 @@ from .mcp_report_card import (
     render_report_html,
     render_report_markdown,
 )
+from .mcp_sbom import SbomFormatError, inventory_row, parse_sbom
 from .mcp_score import score_mcp_surface
+from .mcp_source_link import SourceReferenceError, link_from_row, parse_source_reference
 from .mcp_surface_metrics import compute_surface_metrics
+from .mcp_trust_posture import (
+    PROFILES as POSTURE_PROFILES,
+)
+from .mcp_trust_posture import (
+    PostureContext,
+    run_trust_posture,
+)
+from .mcp_trust_posture import (
+    UnknownProfileError as PostureUnknownProfileError,
+)
+from .mcp_trust_posture import (
+    rule_catalog as posture_rule_catalog,
+)
 from .models import (
     LintAxesResponse,
     LintEvidenceResponse,
@@ -156,7 +173,13 @@ from .models import (
     McpInsightTrustResponse,
     McpInvocationReliabilityOut,
     McpLintReportResponse,
+    McpOwaspRiskOut,
     McpPeerPercentileOut,
+    McpPostureProfileOut,
+    McpPostureRuleOut,
+    McpPostureRulesResponse,
+    McpSbomAttachRequest,
+    McpSbomOut,
     McpSearchResponse,
     McpSearchScope,
     McpSearchVisibility,
@@ -166,6 +189,9 @@ from .models import (
     McpSimilarOverlapNeighborOut,
     McpSimilarReindexResponse,
     McpSimilarServersResponse,
+    McpSourceLinkRequest,
+    McpSourceListResponse,
+    McpSourceResponse,
     McpToolExampleOut,
     McpToolInvocationReliabilityOut,
     McpTrustProfileOut,
@@ -193,7 +219,9 @@ from .models import (
     mcp_evolution_point_from_row,
     mcp_faceted_search_response_from_bundle,
     mcp_lint_report_from_report,
+    mcp_posture_report_from_report,
     mcp_search_hit_from_row,
+    mcp_source_out_from_row,
     mcp_surface_metrics_out,
     mcp_version_change_out_from_row,
     mcp_version_detail_from_row,
@@ -1413,6 +1441,343 @@ async def get_mcp_endpoint_version_conformance(
     return mcp_conformance_report_from_report(str(endpoint_id), version, report)
 
 
+# --- MCP trust posture: source links, SBOMs, and the supply-chain scan (CLX-3.2, #4856) --------
+
+
+def _active_source_link(endpoint_id: str):
+    """Return the endpoint's most-recent live source as a :class:`SourceLink`, or ``None``.
+
+    An endpoint may have several linked sources (a repo and its published image, say); the newest
+    live one drives the scan. Retired links are excluded — they no longer back new scans.
+    """
+    rows = db.list_mcp_endpoint_sources(endpoint_id, include_retired=False)
+    if not rows:
+        return None, None
+    row = rows[0]
+    return link_from_row(row), row
+
+
+async def _build_posture_context(
+    endpoint_id: str,
+    version: Dict[str, Any],
+) -> PostureContext:
+    """Assemble a :class:`PostureContext` for one snapshot from what the database holds.
+
+    Deterministic and offline for the metadata lane: the surface is reconstructed from the stored
+    snapshot, so metadata rules always run and always reproduce. The source and dependency lanes are
+    filled from the endpoint's linked source and its stored SBOM when they exist; a lane with no
+    evidence is simply absent, and the engine reports its rules as skipped rather than assumed clean.
+
+    Vulnerability lookup runs only when ``mcp_vulnerability_scan_enabled`` is set (default off), and
+    even then transmits nothing but purls (:mod:`app.mcp_vulnerability`). When disabled or
+    unreachable it yields a labelled non-result, so the dependency rules skip rather than read as a
+    clean bill of health.
+
+    Static source-file scanning (secrets, unsafe config) needs the artifact's file *contents*, which
+    the offline catalog does not retain — so ``static_scan`` is ``None`` here and the source-file
+    rules are reported as skipped. A CI runner that has the checked-out source can obtain those
+    findings through the pure :mod:`app.mcp_static_checks` scanner without the contents ever being
+    persisted.
+    """
+    items = db.get_mcp_capability_items(str(version["id"]))
+    surface = reconstruct_surface(version, items)
+
+    source, source_row = _active_source_link(endpoint_id)
+
+    inventory = None
+    vulnerabilities = None
+    if source_row is not None:
+        sbom_row = db.get_latest_mcp_source_sbom(str(source_row["id"]))
+        if sbom_row is not None:
+            from .mcp_sbom import inventory_from_row
+
+            inventory = inventory_from_row(sbom_row)
+            if settings.mcp_vulnerability_scan_enabled and inventory is not None:
+                from .mcp_vulnerability import scan_inventory
+
+                vulnerabilities = await scan_inventory(inventory)
+
+    return PostureContext(
+        surface=surface,
+        source=source,
+        inventory=inventory,
+        vulnerabilities=vulnerabilities,
+    )
+
+
+@mcp_endpoints_router.get("/trust-posture/rules", response_model=McpPostureRulesResponse)
+async def get_mcp_trust_posture_rules(
+    profile: Optional[str] = Query(
+        default=None,
+        description="Restrict the catalog to the rules this profile evaluates.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> McpPostureRulesResponse:
+    """Return the trust-posture rule catalog, the profiles, and the OWASP MCP risk catalog.
+
+    Every rule declares which evidence lane it reads, which OWASP MCP risk it maps to, and what it
+    needs to run at all — so a consumer can see, before running anything, exactly what the scan can
+    and cannot tell them.
+
+    Registry-level (describes the engine, not any endpoint), so it authenticates with
+    :func:`validate_session_credentials` for the same reason ``/conformance/rules`` and
+    ``/v1/lint/rules`` do: it has no ``{tenant_slug}`` path segment.
+    """
+    _ = auth_data
+    try:
+        rules = posture_rule_catalog(profile)
+    except PostureUnknownProfileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    from .mcp_owasp import CATALOG_REVISION as OWASP_REVISION
+
+    return McpPostureRulesResponse(
+        owasp_revision=OWASP_REVISION,
+        profiles=[
+            McpPostureProfileOut(**POSTURE_PROFILES[key].as_dict())
+            for key in sorted(POSTURE_PROFILES)
+        ],
+        rules=[McpPostureRuleOut(**rule) for rule in rules],
+        owasp_risks=[McpOwaspRiskOut(**risk) for risk in owasp_catalog()],
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/sources",
+    response_model=McpSourceResponse,
+    status_code=201,
+)
+async def link_mcp_endpoint_source(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    body: McpSourceLinkRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSourceResponse:
+    """Link a source artifact (git repo / package / image / registry identity) to an endpoint.
+
+    The reference is parsed and canonicalized by :mod:`app.mcp_source_link`; the pin strength is
+    *derived* from whether the reference actually carries an immutable digest, never from what the
+    caller asserts. Idempotent: re-linking the same live artifact returns the existing row.
+
+    404 when the endpoint is not the caller's tenant's; 400 on an unparseable reference.
+    """
+    _ = tenant_slug
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    try:
+        link = parse_source_reference(
+            body.source_kind,
+            body.reference,
+            revision=body.revision,
+            provenance=body.provenance,
+        )
+    except SourceReferenceError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    row = db.create_mcp_endpoint_source(
+        tenant_id=str(endpoint["tenant_id"]),
+        endpoint_id=str(endpoint_id),
+        source=link.as_dict(),
+        linked_by=get_authenticated_user_id(auth_data),
+    )
+    if row is None:
+        raise HTTPException(status_code=500, detail="failed to link source")
+    return McpSourceResponse(source=mcp_source_out_from_row(row))
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/sources",
+    response_model=McpSourceListResponse,
+)
+async def list_mcp_endpoint_sources(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    include_retired: bool = Query(
+        default=False,
+        alias="includeRetired",
+        description="Include retired source links (kept for historical evidence).",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSourceListResponse:
+    """List an endpoint's linked sources, newest first. 404 when the endpoint is not the caller's."""
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    rows = db.list_mcp_endpoint_sources(str(endpoint_id), include_retired=include_retired)
+    return McpSourceListResponse(
+        endpoint_id=str(endpoint_id),
+        sources=[mcp_source_out_from_row(r) for r in rows],
+    )
+
+
+@mcp_endpoints_router.delete(
+    "/{tenant_slug}/endpoints/{endpoint_id}/sources/{source_id}",
+    response_model=McpSourceResponse,
+)
+async def retire_mcp_endpoint_source(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    source_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSourceResponse:
+    """Retire a linked source (soft delete). It stops backing new scans but stays readable.
+
+    404 when the source is not this endpoint's, or is already retired.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    if not db.retire_mcp_endpoint_source(str(endpoint_id), str(source_id)):
+        raise HTTPException(status_code=404, detail="source not found or already retired")
+    row = db.get_mcp_endpoint_source(str(endpoint_id), str(source_id))
+    if row is None:
+        raise HTTPException(status_code=404, detail="source not found")
+    return McpSourceResponse(source=mcp_source_out_from_row(row))
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/sources/{source_id}/sbom",
+    response_model=McpSbomOut,
+    status_code=201,
+)
+async def attach_mcp_source_sbom(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    source_id: uuid.UUID,
+    body: McpSbomAttachRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpSbomOut:
+    """Attach a CycloneDX/SPDX SBOM to a linked source. Coordinates only — no source is stored.
+
+    The document is parsed for component coordinates (name / version / purl / license) and nothing
+    else; :mod:`app.mcp_sbom` has no field that could hold source or file content. The inventory is
+    keyed by the artifact digest it describes, defaulting to the source's own pinned digest.
+
+    400 when the source is not pinned and no ``subject_digest`` is given (an inventory must name the
+    artifact it inventories); 400 on an unrecognized SBOM; 404 when the source is not the caller's.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    source_row = db.get_mcp_endpoint_source(str(endpoint_id), str(source_id))
+    if source_row is None:
+        raise HTTPException(status_code=404, detail="source not found")
+
+    subject_digest = body.subject_digest or source_row.get("digest")
+    if not subject_digest:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "the source is not pinned to a digest, so an SBOM must name the artifact it "
+                "describes via subject_digest"
+            ),
+        )
+
+    try:
+        inventory = parse_sbom(body.document)
+    except SbomFormatError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    row = inventory_row(
+        inventory, source_id=str(source_id), subject_digest=str(subject_digest)
+    )
+    db.record_mcp_source_sbom(row)
+    return McpSbomOut(
+        source_id=str(source_id),
+        subject_digest=str(subject_digest),
+        sbom_format=inventory.sbom_format,
+        origin=inventory.origin,
+        component_count=inventory.component_count,
+        sbom_fingerprint=inventory.fingerprint(),
+        authoritative=inventory.is_authoritative,
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/trust-posture",
+    response_model=None,
+)
+async def get_mcp_endpoint_version_trust_posture(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    request: Request,
+    profile: Optional[str] = Query(
+        default=None,
+        description="Trust-posture profile to run (default: mcp-trust-posture).",
+    ),
+    fail_on: str = Query(
+        default="error",
+        alias="failOn",
+        description="Fail the gate on findings of this severity or worse; 'none' to disable.",
+    ),
+    min_score: Optional[int] = Query(
+        default=None,
+        alias="minScore",
+        ge=0,
+        le=100,
+        description="Optional score floor; a lower score fails the gate.",
+    ),
+    require_full_coverage: bool = Query(
+        default=False,
+        alias="requireFullCoverage",
+        description="Fail the gate when any rule was skipped for lack of evidence.",
+    ),
+    format: Optional[str] = Query(
+        default=None,
+        description="Response format: json (default), sarif, or junit.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+):
+    """Run and gate a trust-posture profile over one MCP version snapshot.
+
+    Assesses what the server is built from — its advertised metadata, its linked source, and its
+    dependencies — mapped to the OWASP MCP Top 10, then gates the result.
+
+    Two honesty guarantees are visible in every response and must not be ignored by a consumer:
+
+    * Every finding carries ``exploitability`` — always ``static_signal`` today, because no dynamic
+      probe exists yet (CLX-3.3, #4857). ``proven_count`` is 0. Nothing here is a demonstrated
+      exploit; each is a signal a reviewer should confirm.
+    * Rules whose evidence is absent (no linked source, no SBOM, no vulnerability lookup) appear in
+      ``skipped_rules`` with a reason, never as passes. Use ``requireFullCoverage`` to fail the gate
+      when the scan could not look at everything.
+
+    Read-only and side-effect free: recomputed on each request from persisted evidence. The metadata
+    lane is fully offline; the dependency lane transmits only package coordinates, and only when
+    vulnerability lookup is explicitly enabled. ``format=sarif`` / ``junit`` return the CI artifact.
+    404 when the endpoint or version is not the caller's tenant's; 400 on an unknown profile.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    context = await _build_posture_context(str(endpoint_id), version)
+    try:
+        result = run_trust_posture(
+            context,
+            profile=profile,
+            fail_on=fail_on,
+            min_score=min_score,
+            require_full_coverage=require_full_coverage,
+        )
+    except (PostureUnknownProfileError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    report = result.report_dict()
+
+    requested_format = normalize_gate_format(format or request.headers.get("accept"))
+    if requested_format != GATE_FORMAT_JSON:
+        body, media_type = serialize_gate(
+            requested_format,
+            findings=normalize_native_findings(report["findings"]),
+            scanner_id=MCP_POSTURE_SCANNER_ID,
+            head_revision_id=str(version_id),
+            outcome=outcome_for_report(report),
+        )
+        return Response(content=body, media_type=media_type)
+
+    return mcp_posture_report_from_report(str(endpoint_id), version, report)
+
+
 @mcp_endpoints_router.get(
     "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint",
     response_model=McpLintReportResponse,
@@ -1576,7 +1941,32 @@ async def get_mcp_endpoint_version_lint_axes(
             "severity_counts": {"error": 0, "warning": 0, "info": 0},
             "report_fingerprint": score_row.get("report_fingerprint"),
         }
-    evaluation = mcp_axis_evaluation(report or {})
+
+    # Recompute the two behavioural scans so their axes fill from live evidence rather than reading
+    # *not assessed*: protocol from the conformance engine (CLX-3.1) and supply_chain from the
+    # trust-posture engine (CLX-3.2). Both are recomputed offline from persisted evidence — the
+    # conformance transcript and the linked source/SBOM — so this stays a read-only path. Each is
+    # best-effort: a snapshot that cannot be conformance- or posture-scanned simply leaves that axis
+    # a visible gap, exactly as before.
+    conformance_report = None
+    posture_report = None
+    try:
+        conformance_report = _recompute_mcp_conformance(
+            version, profile=None, fail_on="error", min_score=None
+        ).report_dict()
+    except Exception:  # noqa: BLE001 - an unscannable snapshot leaves the protocol axis a gap
+        pass
+    try:
+        posture_context = await _build_posture_context(str(endpoint_id), version)
+        posture_report = run_trust_posture(posture_context).report_dict()
+    except Exception:  # noqa: BLE001 - an unscannable snapshot leaves the supply_chain axis a gap
+        pass
+
+    evaluation = mcp_axis_evaluation(
+        report or {},
+        conformance_report=conformance_report,
+        posture_report=posture_report,
+    )
     try:
         db.record_axis_evaluation(
             evaluation_row(

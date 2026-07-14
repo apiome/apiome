@@ -193,6 +193,39 @@ def mcp_conformance_rules() -> str:
     return f"{V1}/mcp/conformance/rules"
 
 
+def mcp_endpoint_sources(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """An MCP endpoint's linked source associations (CLX-3.2, #4856)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/sources"
+
+
+def mcp_endpoint_source(
+    tenant_slug: str, endpoint_id: str | UUID, source_id: str | UUID
+) -> str:
+    """One linked source association."""
+    return f"{mcp_endpoint_sources(tenant_slug, endpoint_id)}/{source_id}"
+
+
+def mcp_endpoint_source_sbom(
+    tenant_slug: str, endpoint_id: str | UUID, source_id: str | UUID
+) -> str:
+    """Attach an SBOM to a linked source."""
+    return f"{mcp_endpoint_source(tenant_slug, endpoint_id, source_id)}/sbom"
+
+
+def mcp_endpoint_version_trust_posture(
+    tenant_slug: str,
+    endpoint_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """MCP source / supply-chain / trust-posture report for one version snapshot (CLX-3.2)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/trust-posture"
+
+
+def mcp_trust_posture_rules() -> str:
+    """Registry-level MCP trust-posture rule catalog (no tenant scope)."""
+    return f"{V1}/mcp/trust-posture/rules"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 

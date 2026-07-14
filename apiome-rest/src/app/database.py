@@ -12448,7 +12448,7 @@ class Database:
         body: str,
     ) -> Dict[str, Any]:
         """Insert a cataloger note on an endpoint (MCAT-22.3)."""
-        q = f"""
+        q = """
             INSERT INTO apiome.mcp_endpoint_notes
                 (tenant_id, endpoint_id, body, created_by)
             VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
@@ -14580,6 +14580,228 @@ class Database:
             WHERE version_id = %s::uuid
         """
         rows = self.execute_query(query, (version_id,))
+        return dict(rows[0]) if rows else None
+
+    # --- MCP source associations & SBOMs (CLX-3.2, #4856) ------------------------------------
+
+    _MCP_SOURCE_COLUMNS = """
+        id, tenant_id, endpoint_id, source_kind, locator, purl, revision, digest,
+        digest_algorithm, provenance, provenance_detail, verification_state, linked_by,
+        retired_at, created_at, updated_at
+    """
+
+    def create_mcp_endpoint_source(
+        self,
+        *,
+        tenant_id: str,
+        endpoint_id: str,
+        source: Dict[str, Any],
+        linked_by: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Link a source artifact to an MCP endpoint (``mcp_endpoint_sources``, V172).
+
+        The ``source`` dict is exactly what :meth:`app.mcp_source_link.SourceLink.as_dict` emits, so
+        the parsing/canonicalization/pin-strength logic lives in one pure module and this method only
+        persists its result. Provenance and verification_state are stored as given — this method
+        never upgrades a link's trust, because it has no basis to.
+
+        The unique index ``mcp_endpoint_sources_live_unique`` makes a duplicate live link a no-op
+        rather than an error (``ON CONFLICT DO NOTHING``): re-linking the same artifact returns the
+        existing row instead of a 500, which is the behaviour a retrying client expects.
+
+        Args:
+            tenant_id: The owning tenant (denormalized onto the row for scoped listing).
+            endpoint_id: The endpoint being linked.
+            source: The canonical link (``SourceLink.as_dict()`` shape).
+            linked_by: The acting user id, or ``None`` when unattributable.
+
+        Returns:
+            The created (or already-existing) row, or ``None`` if the insert both conflicted and no
+            live row was found (should not happen; guarded by the follow-up read).
+        """
+        query = f"""
+            INSERT INTO apiome.mcp_endpoint_sources (
+                tenant_id, endpoint_id, source_kind, locator, purl, revision, digest,
+                digest_algorithm, provenance, provenance_detail, verification_state, linked_by
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s::uuid
+            )
+            ON CONFLICT (endpoint_id, source_kind, locator) WHERE retired_at IS NULL
+            DO NOTHING
+            RETURNING {self._MCP_SOURCE_COLUMNS}
+        """
+        rows = self.execute_query(
+            query,
+            (
+                tenant_id,
+                endpoint_id,
+                source["source_kind"],
+                source["locator"],
+                source.get("purl"),
+                source.get("revision"),
+                source.get("digest"),
+                source.get("digest_algorithm"),
+                source.get("provenance", "operator_declared"),
+                Json(source.get("provenance_detail") or {}),
+                source.get("verification_state", "unverified"),
+                linked_by,
+            ),
+        )
+        if rows:
+            return dict(rows[0])
+        # Conflict: a live link for this (endpoint, kind, locator) already exists. Return it, so the
+        # call is idempotent.
+        existing = self.execute_query(
+            f"""
+            SELECT {self._MCP_SOURCE_COLUMNS}
+            FROM apiome.mcp_endpoint_sources
+            WHERE endpoint_id = %s::uuid AND source_kind = %s AND locator = %s
+              AND retired_at IS NULL
+            """,
+            (endpoint_id, source["source_kind"], source["locator"]),
+        )
+        return dict(existing[0]) if existing else None
+
+    def list_mcp_endpoint_sources(
+        self, endpoint_id: str, *, include_retired: bool = False
+    ) -> List[Dict[str, Any]]:
+        """List an endpoint's source associations, newest first.
+
+        Args:
+            endpoint_id: The endpoint whose sources to list.
+            include_retired: When ``False`` (default), retired links are excluded — they stay in the
+                table so historical evidence citing them remains interpretable, but they no longer
+                back new scans, so the default listing hides them.
+
+        Returns:
+            The source rows.
+        """
+        clause = "" if include_retired else "AND retired_at IS NULL"
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_SOURCE_COLUMNS}
+            FROM apiome.mcp_endpoint_sources
+            WHERE endpoint_id = %s::uuid {clause}
+            ORDER BY created_at DESC
+            """,
+            (endpoint_id,),
+        )
+        return [dict(r) for r in rows]
+
+    def get_mcp_endpoint_source(
+        self, endpoint_id: str, source_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one source association scoped to its endpoint (so a cross-endpoint id 404s).
+
+        Args:
+            endpoint_id: The owning endpoint.
+            source_id: The source row id.
+
+        Returns:
+            The row, or ``None`` when it is not this endpoint's.
+        """
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_SOURCE_COLUMNS}
+            FROM apiome.mcp_endpoint_sources
+            WHERE id = %s::uuid AND endpoint_id = %s::uuid
+            """,
+            (source_id, endpoint_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def retire_mcp_endpoint_source(self, endpoint_id: str, source_id: str) -> bool:
+        """Soft-retire a source association (sets ``retired_at``), scoped to its endpoint.
+
+        Soft, not hard: a hard delete would orphan the provenance of every finding already derived
+        from the source. A retired link stops backing new scans but stays readable.
+
+        Args:
+            endpoint_id: The owning endpoint.
+            source_id: The source to retire.
+
+        Returns:
+            ``True`` when a live row was retired, ``False`` when none matched (already retired, or
+            not this endpoint's).
+        """
+        rows = self.execute_query(
+            """
+            UPDATE apiome.mcp_endpoint_sources
+            SET retired_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND endpoint_id = %s::uuid AND retired_at IS NULL
+            RETURNING id
+            """,
+            (source_id, endpoint_id),
+        )
+        return bool(rows)
+
+    def record_mcp_source_sbom(self, sbom: Dict[str, Any]) -> Optional[str]:
+        """Insert a write-once SBOM for a source artifact (``mcp_source_sboms``, V172).
+
+        Like the evidence runs, SBOM rows are immutable and keyed by ``(source, digest, origin)``: a
+        re-scan at a new commit inserts a new row rather than mutating one that is still the true
+        inventory of the old commit. An identical re-ingest is a no-op via ``ON CONFLICT DO NOTHING``.
+
+        Args:
+            sbom: Column-name -> value dict from :func:`app.mcp_sbom.inventory_row`. ``components`` /
+                ``scanned_manifests`` are plain structures, JSONB-wrapped here.
+
+        Returns:
+            The new row's id, or ``None`` when an identical inventory was already stored.
+        """
+        rows = self.execute_query(
+            """
+            INSERT INTO apiome.mcp_source_sboms (
+                source_id, subject_digest, sbom_format, sbom_spec_version, origin,
+                components, component_count, sbom_fingerprint, scanned_manifests
+            )
+            VALUES (%s::uuid, %s, %s, %s, %s, %s::jsonb, %s, %s, %s::jsonb)
+            ON CONFLICT (source_id, subject_digest, origin) DO NOTHING
+            RETURNING id
+            """,
+            (
+                sbom["source_id"],
+                sbom["subject_digest"],
+                sbom["sbom_format"],
+                sbom.get("sbom_spec_version"),
+                sbom["origin"],
+                Json(sbom.get("components") or []),
+                sbom.get("component_count", 0),
+                sbom.get("sbom_fingerprint"),
+                Json(sbom.get("scanned_manifests") or []),
+            ),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    def get_latest_mcp_source_sbom(
+        self, source_id: str, *, subject_digest: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch the most recent SBOM for a source, optionally for a specific artifact digest.
+
+        A supplied SBOM (``operator_supplied``) is preferred over a derived one for the same
+        artifact, since it is authoritative; within an origin, the newest wins.
+
+        Args:
+            source_id: The source whose inventory to read.
+            subject_digest: When given, restrict to the SBOM of that exact artifact digest.
+
+        Returns:
+            The SBOM row, or ``None`` when the source has no inventory.
+        """
+        clause = "AND subject_digest = %s" if subject_digest else ""
+        params: tuple = (source_id, subject_digest) if subject_digest else (source_id,)
+        rows = self.execute_query(
+            f"""
+            SELECT id, source_id, subject_digest, sbom_format, sbom_spec_version, origin,
+                   components, component_count, sbom_fingerprint, scanned_manifests, created_at
+            FROM apiome.mcp_source_sboms
+            WHERE source_id = %s::uuid {clause}
+            ORDER BY (origin = 'operator_supplied') DESC, created_at DESC
+            LIMIT 1
+            """,
+            params,
+        )
         return dict(rows[0]) if rows else None
 
     def touch_mcp_endpoint_discovery(

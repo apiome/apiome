@@ -19,13 +19,14 @@ from app.axis_score import (
     REASON_COMPAT_NO_BASE,
     REASON_PROTOCOL,
     REASON_SECURITY_CATALOG,
+    REASON_SUPPLY_CHAIN,
     catalog_axis_evaluation,
     evaluate_axes,
     grade_for_score,
     mcp_axis_evaluation,
     score_from_finding_dicts,
 )
-from app.lint_evidence import SUBJECT_CATALOG_REVISION, SUBJECT_MCP_ENDPOINT_VERSION
+from app.lint_evidence import SUBJECT_CATALOG_REVISION
 
 
 def _report(**overrides):
@@ -331,3 +332,88 @@ def test_protocol_axis_does_not_leak_conformance_findings_into_other_axes():
     assert axes[AXIS_QUALITY]["score"] == 100
     assert axes[AXIS_SECURITY]["score"] == 100
     assert axes[AXIS_PROTOCOL]["score"] == 90
+
+# --- Supply-chain axis (CLX-3.2, #4856) -------------------------------------------------------
+
+
+def _posture_report(**overrides):
+    """A trust-posture report in the ``PostureReport.report_dict()`` shape."""
+    base = {
+        "profile": "mcp-trust-posture",
+        "owasp_revision": "2025",
+        "score": 64,
+        "grade": "D",
+        "report_fingerprint": "posture-fp",
+        "rule_hits": {"metadata.hidden-instruction": 1},
+        "severity_counts": {"error": 1, "warning": 0, "info": 0},
+        "findings": [
+            {
+                "id": "mcp-posture-1",
+                "path": "tools.read_file",
+                "category": "metadata",
+                "rule": "metadata.hidden-instruction",
+                "severity": "error",
+                "message": "hidden instruction",
+                "origin": "metadata",
+                "owasp_ids": ["MCP01", "MCP02"],
+                "exploitability": "static_signal",
+            }
+        ],
+        "evaluated_rules": ["metadata.hidden-instruction"],
+        "skipped_rules": [],
+        "skip_reasons": {},
+        "proven_count": 0,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_supply_chain_axis_not_assessed_without_a_posture_report():
+    """No posture scan ⇒ the axis stays a visible gap, exactly as it was pre-CLX-3.2."""
+    axis = _by_key(mcp_axis_evaluation(_report()))[AXIS_SUPPLY_CHAIN]
+    assert axis["assessed"] is False
+    assert axis["score"] is None
+    assert axis["coverage"]["state"] == "none"
+    assert axis["not_assessed_reason"] == REASON_SUPPLY_CHAIN
+
+
+def test_supply_chain_axis_takes_the_posture_score_and_grade():
+    ev = mcp_axis_evaluation(_report(), posture_report=_posture_report())
+    axis = _by_key(ev)[AXIS_SUPPLY_CHAIN]
+    assert axis["assessed"] is True
+    assert axis["score"] == 64
+    assert axis["grade"] == "D"
+    assert axis["coverage"]["state"] == "full"
+    assert axis["not_assessed_reason"] is None
+
+
+def test_supply_chain_axis_is_partial_when_rules_were_skipped():
+    """Skipped source/dependency rules make the axis assessed but only partially covered."""
+    report = _posture_report(
+        score=100,
+        grade="A",
+        findings=[],
+        severity_counts={"error": 0, "warning": 0, "info": 0},
+        skipped_rules=["source.hardcoded-provider-credential"],
+    )
+    axis = _by_key(mcp_axis_evaluation(_report(), posture_report=report))[AXIS_SUPPLY_CHAIN]
+    assert axis["assessed"] is True
+    assert axis["coverage"]["state"] == "partial"
+
+
+def test_supply_chain_axis_ignores_posture_report_for_catalog_subjects():
+    axis = _by_key(
+        catalog_axis_evaluation(_report(), posture_report=_posture_report())
+    )[AXIS_SUPPLY_CHAIN]
+    assert axis["assessed"] is False
+    assert axis["not_assessed_reason"] == REASON_SUPPLY_CHAIN
+
+
+def test_protocol_and_supply_chain_axes_are_independent():
+    """The two reserved axes fill from their own reports and do not affect each other."""
+    ev = mcp_axis_evaluation(
+        _report(), conformance_report=_conformance_report(), posture_report=_posture_report()
+    )
+    axes = _by_key(ev)
+    assert axes[AXIS_PROTOCOL]["score"] == 78
+    assert axes[AXIS_SUPPLY_CHAIN]["score"] == 64

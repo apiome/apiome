@@ -299,6 +299,62 @@ def _protocol_axis(
     )
 
 
+def _supply_chain_axis(
+    subject_type: str, posture_report: Optional[Mapping[str, Any]]
+) -> Dict[str, Any]:
+    """Assess the supply-chain axis from an MCP trust-posture report (CLX-3.2, #4856).
+
+    This axis was declared by CLX-1.2 and, like the protocol axis before CLX-3.1, has always read
+    *not assessed* — there was no scanner that could speak to a server's source, dependencies, or
+    configuration. :mod:`app.mcp_trust_posture` is that scanner, and its report is what fills the
+    axis in. It mirrors :func:`_protocol_axis` deliberately, so the two reserved axes are filled the
+    same way and a reader who understands one understands the other.
+
+    The axis takes the posture report's own score and grade rather than recomputing from its
+    findings, so the axis and the posture report can never disagree about the same run.
+
+    Two states never collapse into "clean", which matters more here than for any other axis because
+    most endpoints will have no linked source:
+
+    * **No posture report** (``None``) — the snapshot has not been posture-scanned at all, so the
+      axis stays *not assessed* with :data:`REASON_SUPPLY_CHAIN`. It contributes nothing to the
+      composite: an unscanned axis is not a passing one.
+    * **A report with skipped rules** — source- or dependency-derived rules could not be evaluated
+      because no source was linked (or no SBOM / vulnerability lookup was available). The axis is
+      assessed (the metadata-derived rules genuinely did run) but its coverage is
+      :data:`COVERAGE_PARTIAL`, so a consumer can tell a server whose *supply chain* was actually
+      reviewed from one where only its advertised metadata was.
+
+    Args:
+        subject_type: Only MCP snapshots have a source lane; a catalog revision is a document.
+        posture_report: A ``PostureReport.report_dict()`` payload, or ``None``.
+
+    Returns:
+        The axis payload.
+    """
+    if subject_type != SUBJECT_MCP_ENDPOINT_VERSION or not posture_report:
+        return _not_assessed(AXIS_SUPPLY_CHAIN, REASON_SUPPLY_CHAIN)
+
+    score = posture_report.get("score")
+    if score is None:
+        return _not_assessed(AXIS_SUPPLY_CHAIN, REASON_SUPPLY_CHAIN)
+
+    grade = posture_report.get("grade")
+    findings = [
+        f for f in (posture_report.get("findings") or []) if isinstance(f, Mapping)
+    ]
+    coverage_state = (
+        COVERAGE_PARTIAL if posture_report.get("skipped_rules") else COVERAGE_FULL
+    )
+    return _assessed(
+        AXIS_SUPPLY_CHAIN,
+        int(score),
+        str(grade) if grade else None,
+        findings=findings,
+        coverage_state=coverage_state,
+    )
+
+
 def _security_axis(
     subject_type: str, findings: Sequence[Mapping[str, Any]]
 ) -> Dict[str, Any]:
@@ -365,6 +421,7 @@ def evaluate_axes(
     subject_type: str,
     compatibility_compared: Optional[bool] = None,
     conformance_report: Optional[Mapping[str, Any]] = None,
+    posture_report: Optional[Mapping[str, Any]] = None,
 ) -> AxisEvaluation:
     """Evaluate the CLX-1.2 axis model for one native lint/score report.
 
@@ -384,6 +441,13 @@ def evaluate_axes(
             change that report's persisted score. Omitting it leaves the protocol axis *not
             assessed*, which is the pre-CLX-3.1 behaviour and the correct reading for a snapshot
             nothing has conformance-scanned.
+        posture_report: An MCP trust-posture report
+            (:meth:`app.mcp_trust_posture.PostureReport.report_dict`), when the subject has been
+            source / supply-chain scanned (CLX-3.2). Passed *separately* from ``report`` for the same
+            reason ``conformance_report`` is: it is a distinct scan with its own score and
+            fingerprint, and folding its findings into the surface lint report would change that
+            report's persisted score. Omitting it leaves the supply-chain axis *not assessed*, the
+            correct reading for a snapshot nothing has posture-scanned.
 
     Returns:
         A frozen :class:`AxisEvaluation` ready to persist or serialize.
@@ -399,7 +463,7 @@ def evaluate_axes(
         _quality_axis(report, findings=findings),
         _protocol_axis(subject_type, conformance_report),
         _security_axis(subject_type, findings),
-        _not_assessed(AXIS_SUPPLY_CHAIN, REASON_SUPPLY_CHAIN),
+        _supply_chain_axis(subject_type, posture_report),
         _not_assessed(AXIS_SUPPORTABILITY, REASON_SUPPORTABILITY),
         _compatibility_axis(
             subject_type, findings, compatibility_compared=compatibility_compared

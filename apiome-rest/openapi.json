@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -31715,6 +31715,752 @@
         }
       }
     },
+    "/v1/mcp/trust-posture/rules": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Trust Posture Rules",
+        "description": "Return the trust-posture rule catalog, the profiles, and the OWASP MCP risk catalog.\n\nEvery rule declares which evidence lane it reads, which OWASP MCP risk it maps to, and what it\nneeds to run at all \u2014 so a consumer can see, before running anything, exactly what the scan can\nand cannot tell them.\n\nRegistry-level (describes the engine, not any endpoint), so it authenticates with\n:func:`validate_session_credentials` for the same reason ``/conformance/rules`` and\n``/v1/lint/rules`` do: it has no ``{tenant_slug}`` path segment.",
+        "operationId": "get_mcp_trust_posture_rules_v1_mcp_trust_posture_rules_get",
+        "parameters": [
+          {
+            "name": "profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Trust Posture Rulesprofile schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Trust Posture Rulesprofile schema."
+                }
+              ],
+              "description": "Restrict the catalog to the rules this profile evaluates.",
+              "title": "Profile"
+            },
+            "description": "Restrict the catalog to the rules this profile evaluates."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Trust Posture Rulesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Trust Posture Rulesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Trust Posture Rules Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Trust Posture Rules Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp trust posture rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpPostureRulesResponse",
+                  "description": "Response payload for get mcp trust posture rulesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp trust posture rulesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/sources": {
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Link Mcp Endpoint Source",
+        "description": "Link a source artifact (git repo / package / image / registry identity) to an endpoint.\n\nThe reference is parsed and canonicalized by :mod:`app.mcp_source_link`; the pin strength is\n*derived* from whether the reference actually carries an immutable digest, never from what the\ncaller asserts. Idempotent: re-linking the same live artifact returns the existing row.\n\n404 when the endpoint is not the caller's tenant's; 400 on an unparseable reference.",
+        "operationId": "link_mcp_endpoint_source_v1_mcp__tenant_slug__endpoints__endpoint_id__sources_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Link MCP Endpoint Sourceauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Link MCP Endpoint Sourceauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Link MCP Endpoint Source Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Link MCP Endpoint Source Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpSourceLinkRequest",
+                "description": "Request body for link mcp endpoint sourcerequest."
+              }
+            }
+          },
+          "description": "Request body for link mcp endpoint source."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for link mcp endpoint source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpSourceResponse",
+                  "description": "Response payload for link mcp endpoint sourceresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for link mcp endpoint sourceresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "List Mcp Endpoint Sources",
+        "description": "List an endpoint's linked sources, newest first. 404 when the endpoint is not the caller's.",
+        "operationId": "list_mcp_endpoint_sources_v1_mcp__tenant_slug__endpoints__endpoint_id__sources_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "includeRetired",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include retired source links (kept for historical evidence).",
+              "default": false,
+              "title": "Includeretired"
+            },
+            "description": "Include retired source links (kept for historical evidence)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Endpoint Sourcesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Endpoint Sourcesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Endpoint Sources Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Endpoint Sources Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp endpoint sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpSourceListResponse",
+                  "description": "Response payload for list mcp endpoint sourcesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcp endpoint sourcesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/sources/{source_id}": {
+      "delete": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Retire Mcp Endpoint Source",
+        "description": "Retire a linked source (soft delete). It stops backing new scans but stays readable.\n\n404 when the source is not this endpoint's, or is already retired.",
+        "operationId": "retire_mcp_endpoint_source_v1_mcp__tenant_slug__endpoints__endpoint_id__sources__source_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id",
+              "description": "Source Id schema."
+            },
+            "description": "Path parameter identifying the source id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retire MCP Endpoint Sourceauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retire MCP Endpoint Sourceauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retire MCP Endpoint Source Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retire MCP Endpoint Source Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for retire mcp endpoint source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpSourceResponse",
+                  "description": "Response payload for retire mcp endpoint sourceresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for retire mcp endpoint sourceresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/sources/{source_id}/sbom": {
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Attach Mcp Source Sbom",
+        "description": "Attach a CycloneDX/SPDX SBOM to a linked source. Coordinates only \u2014 no source is stored.\n\nThe document is parsed for component coordinates (name / version / purl / license) and nothing\nelse; :mod:`app.mcp_sbom` has no field that could hold source or file content. The inventory is\nkeyed by the artifact digest it describes, defaulting to the source's own pinned digest.\n\n400 when the source is not pinned and no ``subject_digest`` is given (an inventory must name the\nartifact it inventories); 400 on an unrecognized SBOM; 404 when the source is not the caller's.",
+        "operationId": "attach_mcp_source_sbom_v1_mcp__tenant_slug__endpoints__endpoint_id__sources__source_id__sbom_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id",
+              "description": "Source Id schema."
+            },
+            "description": "Path parameter identifying the source id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Attach MCP Source Sbomauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Attach MCP Source Sbomauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Attach MCP Source Sbom Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Attach MCP Source Sbom Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpSbomAttachRequest",
+                "description": "Request body for attach mcp source sbomrequest."
+              }
+            }
+          },
+          "description": "Request body for attach mcp source sbom."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for attach mcp source sbom.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpSbomOut",
+                  "description": "Response payload for attach mcp source sbomresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for attach mcp source sbomresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/trust-posture": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Endpoint Version Trust Posture",
+        "description": "Run and gate a trust-posture profile over one MCP version snapshot.\n\nAssesses what the server is built from \u2014 its advertised metadata, its linked source, and its\ndependencies \u2014 mapped to the OWASP MCP Top 10, then gates the result.\n\nTwo honesty guarantees are visible in every response and must not be ignored by a consumer:\n\n* Every finding carries ``exploitability`` \u2014 always ``static_signal`` today, because no dynamic\n  probe exists yet (CLX-3.3, #4857). ``proven_count`` is 0. Nothing here is a demonstrated\n  exploit; each is a signal a reviewer should confirm.\n* Rules whose evidence is absent (no linked source, no SBOM, no vulnerability lookup) appear in\n  ``skipped_rules`` with a reason, never as passes. Use ``requireFullCoverage`` to fail the gate\n  when the scan could not look at everything.\n\nRead-only and side-effect free: recomputed on each request from persisted evidence. The metadata\nlane is fully offline; the dependency lane transmits only package coordinates, and only when\nvulnerability lookup is explicitly enabled. ``format=sarif`` / ``junit`` return the CI artifact.\n404 when the endpoint or version is not the caller's tenant's; 400 on an unknown profile.",
+        "operationId": "get_mcp_endpoint_version_trust_posture_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__trust_posture_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Trust Postureprofile schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Trust Postureprofile schema."
+                }
+              ],
+              "description": "Trust-posture profile to run (default: mcp-trust-posture).",
+              "title": "Profile"
+            },
+            "description": "Trust-posture profile to run (default: mcp-trust-posture)."
+          },
+          {
+            "name": "failOn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Fail the gate on findings of this severity or worse; 'none' to disable.",
+              "default": "error",
+              "title": "Failon"
+            },
+            "description": "Fail the gate on findings of this severity or worse; 'none' to disable."
+          },
+          {
+            "name": "minScore",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 100,
+                  "minimum": 0,
+                  "description": "Get MCP Endpoint Version Trust Posturemin Score schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Trust Posturemin Score schema."
+                }
+              ],
+              "description": "Optional score floor; a lower score fails the gate.",
+              "title": "Minscore"
+            },
+            "description": "Optional score floor; a lower score fails the gate."
+          },
+          {
+            "name": "requireFullCoverage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Fail the gate when any rule was skipped for lack of evidence.",
+              "default": false,
+              "title": "Requirefullcoverage"
+            },
+            "description": "Fail the gate when any rule was skipped for lack of evidence."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Trust Postureformat schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Trust Postureformat schema."
+                }
+              ],
+              "description": "Response format: json (default), sarif, or junit.",
+              "title": "Format"
+            },
+            "description": "Response format: json (default), sarif, or junit."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Trust Postureauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Trust Postureauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Version Trust Posture Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Version Trust Posture Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp endpoint version trust posture.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for get mcp endpoint version trust postureresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp endpoint version trust postureresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint": {
       "get": {
         "tags": [
@@ -51888,6 +52634,43 @@
         "title": "McpLintReportResponse",
         "description": "Server-computed lint score + itemized findings for one MCP version snapshot (#3686).\n\nThe MCP catalog analogue of :class:`LintReportResponse`: the deterministic 0-100 ``score``,\nits A-F ``grade``, the per-rule/per-severity tallies, the stable ``report_fingerprint``, and\nevery itemized finding for a discovery snapshot's normalized surface. ``source`` records\nwhether the report was served from the persisted ``mcp_version_scores`` row (``stored``) or\ncomputed live for this request (``computed``); ``scored_at`` is the persisted timestamp (only\npresent when the report came from / was written to storage)."
       },
+      "McpOwaspRiskOut": {
+        "properties": {
+          "riskId": {
+            "type": "string",
+            "title": "Riskid",
+            "description": "Risk ID.",
+            "example": "example"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Title.",
+            "example": "example"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Free-text description.",
+            "example": "A pet available for adoption in the store."
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "Reference.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "riskId",
+          "title",
+          "description",
+          "reference"
+        ],
+        "title": "McpOwaspRiskOut",
+        "description": "One OWASP MCP Top 10 risk in the catalog (CLX-3.2, #4856)."
+      },
       "McpPeerAxisPercentileOut": {
         "properties": {
           "key": {
@@ -52024,6 +52807,166 @@
         "type": "object",
         "title": "McpPeerPercentileOut",
         "description": "A server's peer ranking across the four axes within its catalog category (MCAT-18.3).\n\n``category`` is the cohort's category (``None`` for the uncategorized cohort); ``cohort_size`` is\nthe total number of live endpoints in the category (including this one). ``axes`` are the four\nrankings \u2014 grade, safety, documentation, latency \u2014 some of which may be gaps."
+      },
+      "McpPostureProfileOut": {
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "title": "Profileid",
+            "description": "Profile ID.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Label.",
+            "example": "example"
+          },
+          "origins": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Origins",
+            "description": "Origins.",
+            "maxItems": 1000
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Free-text description.",
+            "example": "A pet available for adoption in the store."
+          }
+        },
+        "type": "object",
+        "required": [
+          "profileId",
+          "label",
+          "origins",
+          "description"
+        ],
+        "title": "McpPostureProfileOut",
+        "description": "One runnable, gateable trust-posture profile (CLX-3.2, #4856)."
+      },
+      "McpPostureRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin",
+            "description": "metadata | source | dependency | protocol.",
+            "example": "example"
+          },
+          "originLabel": {
+            "type": "string",
+            "title": "Originlabel",
+            "description": "Origin Label.",
+            "example": "example"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "warning"
+          },
+          "owaspIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Owaspids",
+            "description": "Owasp IDs.",
+            "maxItems": 1000
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "description": "Rationale.",
+            "example": "example"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "Reference.",
+            "example": "example"
+          },
+          "requires": {
+            "type": "string",
+            "title": "Requires",
+            "description": "The evidence the rule needs: surface | source | sbom | vulnerabilities | probe.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "origin",
+          "originLabel",
+          "severity",
+          "rationale",
+          "reference",
+          "requires"
+        ],
+        "title": "McpPostureRuleOut",
+        "description": "One trust-posture rule descriptor (CLX-3.2, #4856)."
+      },
+      "McpPostureRulesResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "owaspRevision": {
+            "type": "string",
+            "title": "Owasprevision",
+            "description": "The OWASP MCP Top 10 revision this rule set's mapping tracks.",
+            "example": "example"
+          },
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/McpPostureProfileOut"
+            },
+            "type": "array",
+            "title": "Profiles",
+            "description": "Profiles.",
+            "maxItems": 1000
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/McpPostureRuleOut"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "Rules.",
+            "maxItems": 1000
+          },
+          "owaspRisks": {
+            "items": {
+              "$ref": "#/components/schemas/McpOwaspRiskOut"
+            },
+            "type": "array",
+            "title": "Owasprisks",
+            "description": "Owasp Risks.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "owaspRevision",
+          "profiles",
+          "rules",
+          "owaspRisks"
+        ],
+        "title": "McpPostureRulesResponse",
+        "description": "The trust-posture rule catalog, profiles, and OWASP risk catalog (CLX-3.2, #4856)."
       },
       "McpSavedSearchCreate": {
         "properties": {
@@ -52353,6 +53296,108 @@
         "type": "object",
         "title": "McpSavedSearchUpdate",
         "description": "Request body for patching a saved search (all fields optional)."
+      },
+      "McpSbomAttachRequest": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document",
+            "description": "A parsed CycloneDX (with 'bomFormat') or SPDX (with 'spdxVersion') document."
+          },
+          "subject_digest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp sbom attach."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp sbom attach."
+              }
+            ],
+            "title": "Subject Digest",
+            "description": "The artifact digest this inventory describes. Defaults to the source's own pinned digest; required when the source is not pinned, since an inventory must name the specific artifact it inventories."
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "McpSbomAttachRequest",
+        "description": "Request to attach a CycloneDX/SPDX SBOM to a linked source (CLX-3.2, #4856).\n\nThe document is read for component **coordinates only** \u2014 name / version / purl / license.\nSource and file contents are never extracted or stored; the SBOM model has no field for them."
+      },
+      "McpSbomOut": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "sourceId": {
+            "type": "string",
+            "title": "Sourceid",
+            "description": "Source ID.",
+            "example": "example"
+          },
+          "subjectDigest": {
+            "type": "string",
+            "title": "Subjectdigest",
+            "description": "Subject Digest.",
+            "example": "example"
+          },
+          "sbomFormat": {
+            "type": "string",
+            "title": "Sbomformat",
+            "description": "Sbom Format.",
+            "example": "openapi"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin",
+            "description": "operator_supplied (authoritative) | manifest_derived (best-effort).",
+            "example": "example"
+          },
+          "componentCount": {
+            "type": "integer",
+            "title": "Componentcount",
+            "description": "Number of component.",
+            "example": 1
+          },
+          "sbomFingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp sbom."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp sbom."
+              }
+            ],
+            "title": "Sbomfingerprint",
+            "description": "Sbom Fingerprint."
+          },
+          "authoritative": {
+            "type": "boolean",
+            "title": "Authoritative",
+            "description": "Whether this inventory came from a real SBOM rather than lockfile derivation.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "sourceId",
+          "subjectDigest",
+          "sbomFormat",
+          "origin",
+          "componentCount",
+          "authoritative"
+        ],
+        "title": "McpSbomOut",
+        "description": "The dependency inventory of a source artifact \u2014 coordinates only (CLX-3.2, #4856)."
       },
       "McpSearchHit": {
         "properties": {
@@ -53173,6 +54218,232 @@
         ],
         "title": "McpSimilarServersResponse",
         "description": "Response envelope for an endpoint's \"similar servers\" discovery (MCAT-18.4).\n\nSurfaces \"servers like this one\" from two independent signals, each ranked against the caller's own\nlive catalog: ``overlap`` \u2014 always present \u2014 ranks peers by capability-name Jaccard overlap;\n``semantic`` ranks peers by cosine nearest-neighbour over a capability embedding, and is only\npopulated when ``embeddings_enabled`` is true (the flag is on and both this endpoint and at least one\npeer have a backfilled embedding). When embeddings are disabled or unbackfilled, ``embeddings_enabled``\nis false and ``semantic`` is empty \u2014 the feature gracefully falls back to overlap-only, never a\n``500``. ``target_capability_count`` is this endpoint's own distinct capability-name count (``0`` when\nit was never discovered, in which case ``overlap`` is empty too)."
+      },
+      "McpSourceLinkRequest": {
+        "properties": {
+          "source_kind": {
+            "type": "string",
+            "title": "Source Kind",
+            "description": "git | package | image | registry.",
+            "example": "example"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "The source reference. A git remote URL, a Package URL, an OCI image reference, or an MCP registry server id \u2014 meaning depends on source_kind.",
+            "example": "example"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp source link."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp source link."
+              }
+            ],
+            "title": "Revision",
+            "description": "For git, the branch / tag / commit sha. A full 40-hex commit pins the source; a branch or tag leaves it a moving reference (verification_state 'unverified')."
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance",
+            "description": "How this association is known: operator_declared | registry_published | discovery_advertised | attested. Never inferred.",
+            "default": "operator_declared",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_kind",
+          "reference"
+        ],
+        "title": "McpSourceLinkRequest",
+        "description": "Request to link a source artifact to an MCP endpoint (CLX-3.2, #4856)."
+      },
+      "McpSourceListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "endpointId": {
+            "type": "string",
+            "title": "Endpointid",
+            "description": "Endpoint ID.",
+            "example": "example"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/McpSourceOut"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Sources.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpointId",
+          "sources"
+        ],
+        "title": "McpSourceListResponse",
+        "description": "An endpoint's linked source associations (CLX-3.2, #4856)."
+      },
+      "McpSourceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "sourceKind": {
+            "type": "string",
+            "title": "Sourcekind",
+            "description": "Source Kind.",
+            "example": "example"
+          },
+          "locator": {
+            "type": "string",
+            "title": "Locator",
+            "description": "The canonical, normalized reference.",
+            "example": "example"
+          },
+          "purl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Purl",
+            "description": "Purl."
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Revision",
+            "description": "Revision."
+          },
+          "digest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Digest",
+            "description": "Immutable content identity, when the reference carried one. Never invented."
+          },
+          "digestAlgorithm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Digestalgorithm",
+            "description": "Digest Algorithm."
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance",
+            "description": "How the association is known.",
+            "example": "example"
+          },
+          "verificationState": {
+            "type": "string",
+            "title": "Verificationstate",
+            "description": "unverified (moving reference; findings not reproducible) | digest_pinned | attested.",
+            "example": "example"
+          },
+          "retiredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Retiredat",
+            "description": "Retired At."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp source."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp source."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sourceKind",
+          "locator",
+          "provenance",
+          "verificationState"
+        ],
+        "title": "McpSourceOut",
+        "description": "One linked MCP source association (CLX-3.2, #4856)."
+      },
+      "McpSourceResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/McpSourceOut",
+            "description": "Provenance source for the record (for example human or imported)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "McpSourceResponse",
+        "description": "A single linked source association (CLX-3.2, #4856)."
       },
       "McpSurfaceMetricsOut": {
         "properties": {

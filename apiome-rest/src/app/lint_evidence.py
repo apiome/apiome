@@ -56,6 +56,12 @@ MCP_SCANNER_ID = "apiome.mcp-lint"
 #: and it carries its own score and fingerprint so the surface lint's persisted scores never move.
 MCP_CONFORMANCE_SCANNER_ID = "apiome.mcp-conformance"
 
+#: Scanner id for the MCP source / supply-chain / trust-posture engine (CLX-3.2, mcp_trust_posture).
+#: A third scanner, separate from both MCP engines above, for the same reason they are separate from
+#: each other: it answers a different question (what is this server *made of*?) against a different
+#: rule set, and carries its own score and fingerprint so neither of the others' persisted scores move.
+MCP_POSTURE_SCANNER_ID = "apiome.mcp-trust-posture"
+
 #: Subject discriminators, mirroring the V167 CHECK constraint.
 SUBJECT_CATALOG_REVISION = "catalog_revision"
 SUBJECT_MCP_ENDPOINT_VERSION = "mcp_endpoint_version"
@@ -103,28 +109,46 @@ def normalize_native_finding(finding: Mapping[str, Any]) -> Dict[str, Any]:
     :mod:`app.mcp_lint`) all emit ``{id, path, category, rule, severity, message}`` dicts.
     The envelope renames ``rule`` -> ``rule_id``, wraps ``path`` in a structured ``location``,
     and keeps the engine's stable finding ``id`` as the ``source_fingerprint`` so a finding can
-    be tracked across runs. Native lint is deterministic, so ``confidence`` is always ``high``.
+    be tracked across runs. Native lint is deterministic, so ``confidence`` defaults to ``high``.
 
-    MUST stay in lock-step with the V167 backfill projection so backfilled and runtime rows
-    are indistinguishable.
+    Richer engines may state more than the native ones can. A finding that carries its own
+    ``confidence``, ``remediation``, or trust-posture fields (``origin`` / ``owasp_ids`` /
+    ``exploitability``, CLX-3.2) has them preserved rather than flattened away. The native engines
+    emit none of those keys, so their envelopes are byte-identical to what this function produced
+    before those fields existed — which is what keeps this in lock-step with the V167 backfill
+    projection, and what keeps every already-stored row still interpretable.
+
+    Preserving ``exploitability`` in particular is load-bearing: it is the field that says a finding
+    is a *signal* rather than a demonstrated exploit, and an evidence row that dropped it would let a
+    consumer reading straight from the evidence table lose the one qualifier the finding depends on.
 
     Args:
         finding: One native finding as a JSON-ready mapping.
 
     Returns:
         The envelope dict with keys ``rule_id``, ``message``, ``severity``, ``confidence``,
-        ``category``, ``location``, ``remediation``, ``source_fingerprint``.
+        ``category``, ``location``, ``remediation``, ``source_fingerprint``, plus the trust-posture
+        fields when the finding carried them.
     """
-    return {
+    envelope: Dict[str, Any] = {
         "rule_id": finding.get("rule"),
         "message": finding.get("message"),
         "severity": finding.get("severity"),
-        "confidence": "high",
+        "confidence": finding.get("confidence") or "high",
         "category": finding.get("category"),
         "location": {"path": finding.get("path")},
-        "remediation": None,
+        "remediation": finding.get("remediation"),
         "source_fingerprint": finding.get("id"),
     }
+
+    # Trust-posture findings (CLX-3.2) state which evidence lane they came from, which OWASP risk
+    # they instantiate, and — critically — that they are not proven exploitable. Carried through so
+    # the evidence row is as honest as the report it was built from.
+    for key in ("origin", "owasp_ids", "exploitability"):
+        if finding.get(key) is not None:
+            envelope[key] = finding[key]
+
+    return envelope
 
 
 def normalize_native_findings(findings: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
@@ -329,6 +353,73 @@ def mcp_conformance_evidence_run(
     return run
 
 
+def mcp_posture_evidence_run(
+    mcp_version_id: str,
+    report: Mapping[str, Any],
+    *,
+    profile: str = PROFILE_DISCOVERY_CAPTURE,
+    input_fingerprint: Optional[str] = None,
+    source_fingerprint: Optional[str] = None,
+    config: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build the evidence-run row for an MCP trust-posture report (CLX-3.2, #4856).
+
+    The posture report (:meth:`app.mcp_trust_posture.PostureReport.report_dict`) is deliberately a
+    superset of the native lint report's key set, so it normalizes into the same finding envelope
+    through the same code path with no special-casing — exactly as the conformance report does.
+
+    Coverage is where posture differs, and it differs *more* than conformance does. A posture run
+    over an endpoint with **no linked source** cannot evaluate any source- or dependency-derived rule
+    — it skips them — so it has not covered its subject. Such a run is recorded as
+    :data:`COVERAGE_PARTIAL`, carrying the skipped rule ids, rather than :data:`COVERAGE_FULL`.
+
+    This matters more here than anywhere else in the evidence layer. Most catalogued endpoints will
+    have no linked source, and a posture run over one of them finds *nothing wrong with the source*
+    for the entirely uninteresting reason that it never saw a source. Recorded as ``full`` coverage,
+    that is indistinguishable from a repository that was scanned and came back clean — and it is the
+    difference between "this server's supply chain was reviewed" and "this server's supply chain has
+    never been looked at". The whole evidence contract exists to keep those two apart.
+
+    Args:
+        mcp_version_id: The scanned discovery snapshot (``mcp_endpoint_versions.id``).
+        report: The computed report (``PostureReport.report_dict()`` shape).
+        profile: Execution profile to stamp (discovery-capture, or recompute for an API re-run).
+        input_fingerprint: Fingerprint of the surface consumed (e.g. ``surface_fingerprint``).
+        source_fingerprint: Fingerprint of the linked source artifact, when one was scanned — the
+            digest of the exact commit/image the findings describe.
+        config: Non-persisted scanner configuration; only its redacted fingerprint is stored.
+
+    Returns:
+        A column-name -> value dict ready for the persistence layer.
+    """
+    run = _evidence_run(
+        subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+        subject_id=mcp_version_id,
+        scanner_id=MCP_POSTURE_SCANNER_ID,
+        report=report,
+        profile=profile,
+        input_fingerprint=input_fingerprint,
+        source_fingerprint=source_fingerprint,
+        config=config,
+    )
+    skipped = list(report.get("skipped_rules") or [])
+    if skipped:
+        reasons = report.get("skip_reasons") or {}
+        run["coverage"] = {
+            "state": COVERAGE_PARTIAL,
+            "skipped_rules": skipped,
+            # The per-rule reasons come straight from the engine, so the evidence row explains its
+            # own gap without a reader having to re-derive why from the rule ids.
+            "skipped_reasons": dict(reasons) if isinstance(reasons, Mapping) else {},
+            "reason": (
+                "Some trust-posture rules could not be evaluated because the evidence they need "
+                "(a linked source, a component inventory, or a vulnerability lookup) was not "
+                "available for this snapshot."
+            ),
+        }
+    return run
+
+
 def _evidence_run(
     *,
     subject_type: str,
@@ -383,11 +474,12 @@ def expected_scanners_for_subject(subject_type: str) -> List[str]:
         The expected scanner ids, deterministic order.
     """
     if subject_type == SUBJECT_MCP_ENDPOINT_VERSION:
-        # Both native MCP engines are expected: the surface lint and the protocol-conformance /
-        # agent-readiness scanner (CLX-3.1). Listing conformance here is what makes a snapshot
-        # that has never been conformance-scanned render as `not_run` / coverage `none` rather
-        # than silently as clean — which is the whole point of the expected-scanner set.
-        return [MCP_SCANNER_ID, MCP_CONFORMANCE_SCANNER_ID]
+        # All three native MCP engines are expected: the surface lint, the protocol-conformance /
+        # agent-readiness scanner (CLX-3.1), and the source / supply-chain / trust-posture scanner
+        # (CLX-3.2). Listing them here is what makes a snapshot that has never been scanned by one
+        # of them render as `not_run` / coverage `none` rather than silently as clean — which is
+        # the whole point of the expected-scanner set.
+        return [MCP_SCANNER_ID, MCP_CONFORMANCE_SCANNER_ID, MCP_POSTURE_SCANNER_ID]
     return [NATIVE_SCANNER_ID]
 
 

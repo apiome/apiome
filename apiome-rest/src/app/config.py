@@ -614,6 +614,27 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Dependency-vulnerability lookup for the MCP supply-chain scan (CLX-3.2, #4856). OFF by default:
+    # the trust-posture scan is fully offline unless an operator turns this on, which is what the
+    # roadmap asks for ("start with local/offline tools; third-party scanning APIs are optional
+    # adapters").
+    #
+    # When enabled, app.mcp_vulnerability queries the OSV database with PACKAGE COORDINATES ONLY —
+    # a list of purls, nothing else. No source, manifest text, file path, repository URL, tenant, or
+    # endpoint identity is ever transmitted; app.mcp_vulnerability.query_payload_for_audit exposes the
+    # exact request body so that guarantee is testable rather than merely asserted.
+    #
+    # When disabled (or when OSV cannot be reached), the scan records outcome `not_run` /
+    # `unavailable` with a stated reason — never an empty vulnerability list. "We never asked" and
+    # "we asked and the answer was zero" must not render the same way.
+    mcp_vulnerability_scan_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_VULNERABILITY_SCAN_ENABLED",
+            "mcp_vulnerability_scan_enabled",
+        ),
+    )
+
     # Observability & error handling (RC1-3.2, #3617). Structured JSON logs, request-id
     # propagation, in-process request metrics, and an ops dashboard that surfaces backup status.
     #

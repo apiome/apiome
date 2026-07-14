@@ -5,6 +5,52 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.119.0] - 2026-07-14
+
+### Added
+- **MCP source, supply-chain, and trust-posture scans (CLX-3.2, #4856)** — a third MCP scan
+  engine (`app.mcp_trust_posture`), separate from the surface lint and the conformance engine for
+  the same reason those are separate: it carries its own score and fingerprint, so adding it moves
+  neither of the others' persisted scores. It assesses what a server is *built from*.
+  - **Explicit source lane.** `apiome.mcp_endpoint_sources` (V172) links an endpoint to the git
+    repo / package / image / registry identity it comes from, recording *how the link is known*
+    (`provenance`) and *how strongly the artifact is pinned* (`verification_state`) as two
+    independent axes. Pin strength is derived from whether the reference actually carries an
+    immutable digest — never asserted — and a source with no digest is `unverified`, with its
+    findings confidence-downgraded to `medium`. `POST|GET|DELETE .../endpoints/{id}/sources`.
+  - **Coordinates-only SBOM.** `apiome.mcp_source_sboms` (V172, write-once) stores a dependency
+    inventory as component coordinates only (name / purl / version / license) — never source or
+    file content. `app.mcp_sbom` ingests CycloneDX/SPDX and derives from lockfiles.
+    `POST .../sources/{sid}/sbom`.
+  - **Static inspection with locations** (`app.mcp_static_checks`): unsafe command execution,
+    dynamic eval, disabled TLS, permissive CORS, privileged containers, unpinned base images,
+    broad OAuth scopes, and Gitleaks-style secret detection that emits a **redacted preview and
+    entropy, never the secret**.
+  - **Metadata poisoning rules** (`app.mcp_trust_posture_rules`): hidden instructions, invisible
+    /bidi characters, exfiltration directives, credential-in-description, unconstrained execution
+    parameters, tool-name shadowing, filesystem-root templates, unauthenticated writes, and
+    undeclared destructive tools.
+  - **Dependency vulnerabilities** (`app.mcp_vulnerability`): OSV lookup **by package coordinate
+    only** — no source, manifest, or repository identity ever leaves the process
+    (`query_payload_for_audit` makes this checkable). **Off by default**
+    (`mcp_vulnerability_scan_enabled`); a disabled or unreachable lookup records `not_run` /
+    `unavailable`, never an empty pass.
+  - Every rule maps to the **OWASP MCP Top 10** (`app.mcp_owasp`), and the report names the risks
+    its evaluated rules do *not* cover so an unmentioned risk never reads as an absent one.
+  - **Two honesty guarantees, enforced structurally.** (1) Every finding carries an
+    `exploitability`; `make_finding` can only ever produce `static_signal`, and `proven` requires
+    probe evidence no rule has — so `proven_count` is 0 until CLX-3.3 (#4857) and the UI cannot
+    label a static signal exploitable. (2) A rule whose evidence is absent is *skipped and
+    reported*, never a pass; the evidence run is recorded as `partial` coverage.
+  - `GET .../versions/{vid}/trust-posture?profile=&failOn=&minScore=&requireFullCoverage=&format=`
+    runs and gates a named profile (`mcp-trust-posture` / `mcp-metadata-posture` /
+    `mcp-supply-chain`), with SARIF/JUnit output. `GET /v1/mcp/trust-posture/rules` publishes the
+    catalog. CLI: `apiome mcp trust-posture`, `apiome mcp trust-posture-rules`,
+    `apiome mcp source link|list|retire`.
+  - Fills the previously-unassessed `supply_chain` axis (`app.axis_score`), making it gateable
+    through the existing policy `axis_gates` with no new gate code — exactly as CLX-3.1 filled
+    `protocol`. See `docs/mcp_trust_posture.md`.
+
 ## [1.118.0] - 2026-07-14
 
 ### Added
