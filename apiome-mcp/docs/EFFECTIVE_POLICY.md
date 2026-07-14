@@ -30,7 +30,8 @@ key grant.
 | `explicit` | Out of both sets | Use flags |
 
 Unseeded tenants (`tenant is None`) behave as `default_mode=all`
-(legacy default until MTG-1.5 backfill).
+(legacy default). After MTG-1.5 (V163), every existing tenant is seeded
+with `default_mode=all`; missing-policy handling remains for safety.
 
 ## Call flow
 

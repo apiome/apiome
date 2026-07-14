@@ -5,6 +5,14 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.21] - 2026-07-14
+
+### Added
+- **MCP governance upgrade regression (MTG-1.5, #4769)** — pytest proving a
+  pre-migration shaped key (`capability_mode=inherit`) plus post-seed tenant
+  (`default_mode=all`, empty tool rows) enables every MTG-1.1 registry tool.
+  Pair with apiome-db V163 tenant/key backfill; no OpenAPI surface change.
+
 ## [1.117.20] - 2026-07-14
 
 ### Added
