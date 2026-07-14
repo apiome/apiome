@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features
 
+- Tenants: MCP Settings panel for tenant admins (ceiling, defaults, anonymous kill switch)
 - REST: Adding governance for tenants to allow for MCP services to be enabled/disabled
 
 ## Bug Fixes
