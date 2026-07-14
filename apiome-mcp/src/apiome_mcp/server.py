@@ -19,6 +19,7 @@ from apiome_mcp.logging_config import configure_logging
 from apiome_mcp.mcp_auth import McpAuthContext, require_mcp_auth, resolve_optional_mcp_auth
 from apiome_mcp.ping_tool import build_ping_response
 from apiome_mcp.project_list_tool import build_project_list_response
+from apiome_mcp.registry_middleware import RegistryFailClosedMiddleware
 from apiome_mcp.settings import get_settings
 from apiome_mcp.spec_describe_component_tool import build_spec_describe_component_response
 from apiome_mcp.spec_describe_operation_tool import build_spec_describe_operation_response
@@ -57,6 +58,7 @@ async def database_lifespan(server: Any) -> Any:
 
 
 mcp = FastMCP("Apiome", lifespan=database_lifespan)
+mcp.add_middleware(RegistryFailClosedMiddleware())
 mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
 
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.0.67",
+    "version": "1.0.68",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -33277,6 +33277,82 @@
         }
       }
     },
+    "/api-keys/mcp-tools": {
+      "get": {
+        "tags": [
+          "api-keys"
+        ],
+        "summary": "List MCP tools and toolsets",
+        "description": "Enumerate every registered Apiome MCP tool id (and planned capability ids such as spec.mcp / spec.catalog), with description and toolset membership for admin enable/disable UX (MTG-1.1, #4765). Same source of truth as apiome-mcp call-time fail-closed checks.",
+        "operationId": "list_mcp_tools_api_keys_mcp_tools_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Mcptoolsandtoolsetsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Mcptoolsandtoolsetsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Mcptoolsandtoolsets Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Mcptoolsandtoolsets Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp tools and toolsets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpToolCatalogResponse",
+                  "description": "Response payload for list mcptoolsandtoolsetsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcptoolsandtoolsetsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/livez": {
       "get": {
         "tags": [
@@ -47330,6 +47406,55 @@
         ],
         "title": "McpSurfaceMetricsOut",
         "description": "The full :class:`app.mcp_surface_metrics.SurfaceMetrics` roll-up as a typed response body."
+      },
+      "McpToolCatalogItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable MCP tool / capability identifier (e.g. spec.list).",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Short human summary for admin UX.",
+            "example": "A pet available for adoption in the store."
+          },
+          "toolset": {
+            "type": "string",
+            "title": "Toolset",
+            "description": "MVP toolset grouping: health, catalog, search, document, or structure.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "toolset"
+        ],
+        "title": "McpToolCatalogItem",
+        "description": "One MCP tool or governance capability from the registry."
+      },
+      "McpToolCatalogResponse": {
+        "properties": {
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/McpToolCatalogItem"
+            },
+            "type": "array",
+            "title": "Tools",
+            "description": "Every registered tool / capability id, in registry order.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "tools"
+        ],
+        "title": "McpToolCatalogResponse",
+        "description": "Full MCP tool & capability catalog (MTG-1.1)."
       },
       "McpToolComplexityOut": {
         "properties": {
