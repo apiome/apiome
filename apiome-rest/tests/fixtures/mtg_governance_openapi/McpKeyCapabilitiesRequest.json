@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "enabled_tools": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "mode": {
+      "enum": [
+        "inherit",
+        "explicit"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "mode"
+  ],
+  "type": "object"
+}

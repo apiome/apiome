@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "anonymous_enabled": {
+      "type": "boolean"
+    },
+    "default_enabled": {
+      "type": "boolean"
+    },
+    "in_ceiling": {
+      "type": "boolean"
+    },
+    "tool_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tool_id",
+    "in_ceiling",
+    "default_enabled"
+  ],
+  "type": "object"
+}
