@@ -1,5 +1,6 @@
 /**
- * Client helpers for tenant MCP API keys + capabilities (MTG-4.3 / #4782).
+ * Client helpers for tenant MCP API keys + capabilities (MTG-4.3 / #4782,
+ * MTG-4.4 / #4783 create).
  *
  * Talks to `/api/tenants/mcp-keys` proxies, which forward to MTG-3.2 / MTG-3.3
  * REST. Types mirror REST snake_case. List metadata uses `capability_mode`;
@@ -64,10 +65,33 @@ async function readProxyJson<T>(res: Response): Promise<T> {
   return json.data as T;
 }
 
+export interface McpApiKeyCreateRequest {
+  label: string;
+  expires_at?: string | null;
+  scope_json?: McpKeyScopeJson;
+}
+
+export interface McpApiKeyCreateResponse extends McpApiKeyMetadata {
+  /** Plaintext secret; shown only in the create response. */
+  secret: string;
+}
+
 /** List MCP API keys for the current tenant (includes revoked for audit). */
 export async function fetchMcpKeys(): Promise<McpApiKeyListResponse> {
   const res = await fetch('/api/tenants/mcp-keys', { cache: 'no-store' });
   return readProxyJson<McpApiKeyListResponse>(res);
+}
+
+/** Issue a new MCP API key (admin only). Returns plaintext secret once. */
+export async function createMcpKey(
+  body: McpApiKeyCreateRequest,
+): Promise<McpApiKeyCreateResponse> {
+  const res = await fetch('/api/tenants/mcp-keys', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return readProxyJson<McpApiKeyCreateResponse>(res);
 }
 
 /** Persist inherit/explicit capabilities for one MCP key. */

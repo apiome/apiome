@@ -2,12 +2,14 @@
 
 /**
  * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781)
- * + MTG-4.3 (#4782) per-key capability editor + MTG-4.5 (#4784) disable confirm.
+ * + MTG-4.3 (#4782) per-key capability editor + MTG-4.4 (#4783) non-admin
+ * read-only + MTG-4.5 (#4784) disable confirm.
  *
  * Loads MTG-3.1 policy + MTG-1.1 catalog for the session's current tenant.
  * Toolsets use master switches; optional advanced view exposes per-tool flags.
- * When `editable` is false (non-current tenant admin panel), shows a Style
- * Guides–style read-only note instead of the form.
+ * Non-admins browse the same controls disabled (GuideEditorClient pattern).
+ * When this row is not the current tenant, shows a switch-tenant note (proxy
+ * is always current-tenant scoped).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -55,18 +57,20 @@ import {
   formatToolsetDisableImpactMessage,
 } from './mcpToolsetDisableImpact';
 import TenantMcpKeyCapabilitiesEditor from './TenantMcpKeyCapabilitiesEditor';
+
 export interface TenantMcpSettingsPanelProps {
-  /** When false, show a disabled note instead of the editable form. */
-  editable: boolean;
-  /** Tenant display name for the disabled helper (optional). */
+  /** True when this row is the session's current tenant (loads live policy). */
+  isCurrentTenant: boolean;
+  /** True when the viewer is a tenant admin for this tenant. */
+  isAdmin: boolean;
+  /** Tenant display name for the non-current-tenant helper. */
   tenantName?: string;
 }
 
 const LIST_VS_CALL_HELP =
   'tools/list always returns the full catalog; ceiling, defaults, and anonymous flags only gate tools/call.';
 
-const ADMIN_ONLY_COPY =
-  'Only tenant administrators can change MCP tool policy. You can browse the catalog.';
+const ADMIN_ONLY_COPY = 'Only tenant administrators can change MCP options.';
 
 const MODE_LABELS: Record<TenantDefaultMode, string> = {
   all: 'All registry tools',
@@ -80,7 +84,8 @@ function titleCaseToolset(toolset: string): string {
 }
 
 export default function TenantMcpSettingsPanel({
-  editable,
+  isCurrentTenant,
+  isAdmin,
   tenantName,
 }: TenantMcpSettingsPanelProps) {
   const { confirm: confirmDialog } = useDialog();
@@ -94,6 +99,9 @@ export default function TenantMcpSettingsPanel({
   const [advanced, setAdvanced] = useState(false);
   /** Bumped after successful policy save so inherit key previews refresh. */
   const [policyRevision, setPolicyRevision] = useState(0);
+
+  const readOnly = !isAdmin;
+  const controlsDisabled = readOnly || saving;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,11 +121,11 @@ export default function TenantMcpSettingsPanel({
   }, []);
 
   useEffect(() => {
-    if (!editable || !expanded || loadedOnce) return;
+    if (!isCurrentTenant || !expanded || loadedOnce) return;
     void load();
-  }, [editable, expanded, loadedOnce, load]);
+  }, [isCurrentTenant, expanded, loadedOnce, load]);
 
-  const dirty = form && baseline ? hasMcpPolicyChanges(form, baseline) : false;
+  const dirty = form && baseline && !readOnly ? hasMcpPolicyChanges(form, baseline) : false;
   const toolsetGroups = useMemo(
     () => (form ? groupToolsByToolset(form.tools) : []),
     [form],
@@ -147,6 +155,7 @@ export default function TenantMcpSettingsPanel({
    */
   const handleToolsetToggle = useCallback(
     async (toolset: string, enabled: boolean, toolIds: string[]) => {
+      if (readOnly) return;
       if (!enabled && baseline) {
         try {
           const list = await fetchMcpKeys();
@@ -181,11 +190,11 @@ export default function TenantMcpSettingsPanel({
       }
       setForm((prev) => (prev ? patchToolsetCeiling(prev, toolset, enabled) : prev));
     },
-    [baseline, confirmDialog],
+    [baseline, confirmDialog, readOnly],
   );
 
   const handleSave = async () => {
-    if (!form) return;
+    if (!form || readOnly) return;
     const validation = validateMcpPolicyForm(form);
     if (validation) {
       setError(validation);
@@ -233,19 +242,23 @@ export default function TenantMcpSettingsPanel({
 
       {expanded && (
         <div className="space-y-4">
-          {!editable ? (
+          {!isCurrentTenant ? (
             <div className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-100 p-4 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
               <Lock className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden />
-              <div className="space-y-1 text-sm">
-                <p>{ADMIN_ONLY_COPY}</p>
-                <p className="text-slate-500 dark:text-slate-400">
-                  Select{tenantName ? ` ${tenantName}` : ' this tenant'} as your current tenant to
-                  edit MCP settings.
-                </p>
-              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Select{tenantName ? ` ${tenantName}` : ' this tenant'} as your current tenant to
+                view or edit MCP settings.
+              </p>
             </div>
           ) : (
             <>
+              {readOnly && (
+                <div className="flex items-start gap-3 rounded-lg border border-slate-300 bg-slate-100 p-4 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                  <Lock className="mt-0.5 h-5 w-5 flex-shrink-0" aria-hidden />
+                  <p className="text-sm">{ADMIN_ONLY_COPY}</p>
+                </div>
+              )}
+
               <p className="text-sm text-gray-500 dark:text-gray-400">{LIST_VS_CALL_HELP}</p>
 
               {error && <Alert variant="error">{error}</Alert>}
@@ -269,7 +282,7 @@ export default function TenantMcpSettingsPanel({
                               : prev,
                           )
                         }
-                        disabled={saving}
+                        disabled={controlsDisabled}
                       >
                         <SelectTrigger id="mcp-default-mode">
                           <SelectValue />
@@ -293,9 +306,12 @@ export default function TenantMcpSettingsPanel({
                             prev ? { ...prev, allow_anonymous_mcp: checked } : prev,
                           )
                         }
-                        disabled={saving}
+                        disabled={controlsDisabled}
                       />
-                      <Label htmlFor="mcp-allow-anonymous" className="cursor-pointer">
+                      <Label
+                        htmlFor="mcp-allow-anonymous"
+                        className={readOnly ? undefined : 'cursor-pointer'}
+                      >
                         Allow anonymous MCP calls
                       </Label>
                     </div>
@@ -342,7 +358,7 @@ export default function TenantMcpSettingsPanel({
                                   group.tools.map((t) => t.tool_id),
                                 )
                               }
-                              disabled={saving}
+                              disabled={controlsDisabled}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -386,7 +402,7 @@ export default function TenantMcpSettingsPanel({
                                               : prev,
                                           )
                                         }
-                                        disabled={saving}
+                                        disabled={controlsDisabled}
                                       />
                                       <span className="text-xs text-gray-600 dark:text-gray-400">
                                         Ceiling
@@ -408,7 +424,7 @@ export default function TenantMcpSettingsPanel({
                                               : prev,
                                           )
                                         }
-                                        disabled={saving || !tool.in_ceiling}
+                                        disabled={controlsDisabled || !tool.in_ceiling}
                                       />
                                       <span className="text-xs text-gray-600 dark:text-gray-400">
                                         Default
@@ -430,7 +446,7 @@ export default function TenantMcpSettingsPanel({
                                               : prev,
                                           )
                                         }
-                                        disabled={saving}
+                                        disabled={controlsDisabled}
                                       />
                                       <span className="text-xs text-gray-600 dark:text-gray-400">
                                         Anonymous
@@ -474,11 +490,14 @@ export default function TenantMcpSettingsPanel({
                     </div>
                   )}
 
-                  <TenantMcpKeyCapabilitiesEditor
-                    catalog={catalogItems}
-                    ceilingToolIds={ceilingToolIds}
-                    policyRevision={policyRevision}
-                  />
+                  {isAdmin ? (
+                    <TenantMcpKeyCapabilitiesEditor
+                      catalog={catalogItems}
+                      ceilingToolIds={ceilingToolIds}
+                      policyRevision={policyRevision}
+                      isAdmin={isAdmin}
+                    />
+                  ) : null}
                 </>
               ) : null}
             </>

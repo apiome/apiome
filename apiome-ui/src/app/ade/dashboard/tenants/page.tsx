@@ -700,7 +700,8 @@ const Tenants = () => {
                   </div>
 
                   <TenantMcpSettingsPanel
-                    editable={Boolean(currentTenantId) && tenant.id === currentTenantId}
+                    isCurrentTenant={Boolean(currentTenantId) && tenant.id === currentTenantId}
+                    isAdmin={isCurrentUserAdmin(tenant.id)}
                     tenantName={tenant.name}
                   />
                 </div>
