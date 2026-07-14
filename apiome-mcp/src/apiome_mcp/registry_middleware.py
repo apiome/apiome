@@ -2,7 +2,8 @@
 
 Unknown / future ``tools/call`` names that are not in the shared registry
 (``app.mcp_tool_registry``) are denied at call time until explicitly registered.
-Tenant / key enable-set gating is deferred to MTG-1.2–2.x.
+Tenant / key enable-set gating uses MTG-1.4 (``app.mcp_effective_policy``) and
+is wired in MTG-2.2.
 """
 
 from __future__ import annotations
