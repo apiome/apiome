@@ -1,0 +1,154 @@
+/**
+ * Pure helpers for the Tenants MCP Settings form (MTG-4.1 / #4780).
+ *
+ * Merges the MTG-1.1 catalog with the stored MTG-3.1 policy so every registry
+ * tool appears as a row. Missing policy rows get display defaults from
+ * `default_mode` (see EFFECTIVE_POLICY.md).
+ */
+
+import type {
+  McpToolCatalogItem,
+  TenantDefaultMode,
+  TenantMcpPolicyPutRequest,
+  TenantMcpPolicyResponse,
+  TenantMcpPolicyTool,
+} from './mcpPolicyApi';
+
+export interface McpPolicyToolRow extends TenantMcpPolicyTool {
+  description: string;
+  toolset: string;
+}
+
+export interface McpPolicyFormState {
+  default_mode: TenantDefaultMode;
+  allow_anonymous_mcp: boolean;
+  tools: McpPolicyToolRow[];
+}
+
+/** Flags applied when a catalog tool has no stored policy row. */
+export function defaultFlagsForMode(mode: TenantDefaultMode): Omit<TenantMcpPolicyTool, 'tool_id'> {
+  if (mode === 'explicit') {
+    return { in_ceiling: false, default_enabled: false, anonymous_enabled: true };
+  }
+  // `all` and `inherit_registry`: missing rows behave as in-ceiling + default-enabled.
+  return { in_ceiling: true, default_enabled: true, anonymous_enabled: true };
+}
+
+/** Merge catalog descriptors with stored policy rows into an editable form. */
+export function mcpPolicyFormFromSources(
+  policy: TenantMcpPolicyResponse,
+  catalog: McpToolCatalogItem[],
+): McpPolicyFormState {
+  const byId = new Map(policy.tools.map((t) => [t.tool_id, t]));
+  const defaults = defaultFlagsForMode(policy.default_mode);
+
+  const tools: McpPolicyToolRow[] = catalog.map((item) => {
+    const stored = byId.get(item.id);
+    if (stored) {
+      return {
+        tool_id: item.id,
+        description: item.description,
+        toolset: item.toolset,
+        in_ceiling: stored.in_ceiling,
+        default_enabled: stored.default_enabled,
+        anonymous_enabled: stored.anonymous_enabled,
+      };
+    }
+    return {
+      tool_id: item.id,
+      description: item.description,
+      toolset: item.toolset,
+      ...defaults,
+    };
+  });
+
+  return {
+    default_mode: policy.default_mode,
+    allow_anonymous_mcp: policy.allow_anonymous_mcp,
+    tools,
+  };
+}
+
+/** Build the PUT body from form state (full replace-all tool list). */
+export function buildMcpPolicyPutBody(form: McpPolicyFormState): TenantMcpPolicyPutRequest {
+  return {
+    default_mode: form.default_mode,
+    allow_anonymous_mcp: form.allow_anonymous_mcp,
+    tools: form.tools.map(({ tool_id, in_ceiling, default_enabled, anonymous_enabled }) => ({
+      tool_id,
+      in_ceiling,
+      default_enabled,
+      anonymous_enabled,
+    })),
+  };
+}
+
+/** Client-side validation matching REST 422 rules. */
+export function validateMcpPolicyForm(form: McpPolicyFormState): string | null {
+  const seen = new Set<string>();
+  for (const tool of form.tools) {
+    if (!tool.tool_id.trim()) {
+      return 'Each tool row requires a tool id.';
+    }
+    if (seen.has(tool.tool_id)) {
+      return `Duplicate tool id: ${tool.tool_id}`;
+    }
+    seen.add(tool.tool_id);
+    if (tool.default_enabled && !tool.in_ceiling) {
+      return `default_enabled requires in_ceiling for tool id: ${tool.tool_id}`;
+    }
+  }
+  return null;
+}
+
+/** True when the form differs from the last loaded baseline. */
+export function hasMcpPolicyChanges(
+  current: McpPolicyFormState,
+  baseline: McpPolicyFormState,
+): boolean {
+  if (current.default_mode !== baseline.default_mode) return true;
+  if (current.allow_anonymous_mcp !== baseline.allow_anonymous_mcp) return true;
+  if (current.tools.length !== baseline.tools.length) return true;
+  for (let i = 0; i < current.tools.length; i += 1) {
+    const a = current.tools[i];
+    const b = baseline.tools[i];
+    if (
+      a.tool_id !== b.tool_id ||
+      a.in_ceiling !== b.in_ceiling ||
+      a.default_enabled !== b.default_enabled ||
+      a.anonymous_enabled !== b.anonymous_enabled
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Update one tool flag. Clearing `in_ceiling` also clears `default_enabled`
+ * so the form stays REST-valid.
+ */
+export function patchToolFlag(
+  form: McpPolicyFormState,
+  toolId: string,
+  flag: 'in_ceiling' | 'default_enabled' | 'anonymous_enabled',
+  value: boolean,
+): McpPolicyFormState {
+  return {
+    ...form,
+    tools: form.tools.map((row) => {
+      if (row.tool_id !== toolId) return row;
+      if (flag === 'in_ceiling') {
+        return {
+          ...row,
+          in_ceiling: value,
+          default_enabled: value ? row.default_enabled : false,
+        };
+      }
+      if (flag === 'default_enabled' && value && !row.in_ceiling) {
+        return row;
+      }
+      return { ...row, [flag]: value };
+    }),
+  };
+}

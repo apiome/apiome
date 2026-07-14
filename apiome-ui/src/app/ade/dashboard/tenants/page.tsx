@@ -34,6 +34,7 @@ import {
   dashboardTbodyClass,
   dashboardTrHoverClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import TenantMcpSettingsPanel from './TenantMcpSettingsPanel';
 
 interface Tenant {
   id: string;
@@ -697,6 +698,11 @@ const Tenants = () => {
                       </>
                     )}
                   </div>
+
+                  <TenantMcpSettingsPanel
+                    editable={Boolean(currentTenantId) && tenant.id === currentTenantId}
+                    tenantName={tenant.name}
+                  />
                 </div>
               </div>
             )
