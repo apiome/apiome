@@ -386,6 +386,23 @@ async def build_lint_report(
     except Exception:  # noqa: BLE001 — evidence must never break lint
         pass
 
+    # CLX-2.3: when a base revision is supplied, capture independent oasdiff evidence.
+    if base_version is not None:
+        try:
+            from .openapi_compatibility_evidence import (
+                capture_oasdiff_compatibility_evidence,
+            )
+
+            await capture_oasdiff_compatibility_evidence(
+                base_document=base_spec,
+                head_document=head_spec,
+                version_record_id=str(version["id"]),
+                base_revision_id=str(base_version["id"]),
+                head_revision_id=str(version["id"]),
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
     findings_out = [
         LintFindingOut(
             id=f.id,

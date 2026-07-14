@@ -8,6 +8,8 @@ export type CompatibilityFindingRow = {
   rule: string;
   path: string;
   message: string;
+  /** Optional 1-based source line (oasdiff evidence / CLX-2.3). */
+  startLine?: number | null;
 };
 
 const SEVERITY_ORDER = ['breaking', 'unknown', 'safe'] as const;

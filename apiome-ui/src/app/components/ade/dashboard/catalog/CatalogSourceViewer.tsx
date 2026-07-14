@@ -86,6 +86,13 @@ export interface CatalogSourceViewerProps {
   sourceUri: string | null | undefined;
   /** Whether the Source tab is active; the raw source is fetched the first time this is true. */
   active: boolean;
+  /**
+   * Optional 1-based line to reveal when the editor loads (from ``?line=`` /
+   * compatibility evidence deep links, CLX-2.3).
+   */
+  highlightLine?: number | null;
+  /** Optional path label shown when a deep link targeted a specific source file. */
+  focusSourcePath?: string | null;
 }
 
 /**
@@ -102,6 +109,8 @@ export function CatalogSourceViewer({
   hasContent,
   sourceUri,
   active,
+  highlightLine = null,
+  focusSourcePath = null,
 }: CatalogSourceViewerProps) {
   const [status, setStatus] = useState<SourceStatus>('idle');
   const [raw, setRaw] = useState<string>('');
@@ -110,6 +119,7 @@ export function CatalogSourceViewer({
   const [wrap, setWrap] = useState(true);
   // Guards the one-shot lazy fetch so re-activating the tab never re-fetches.
   const fetchStartedRef = useRef(false);
+  const highlightAppliedRef = useRef(false);
 
   const loadSource = useCallback(async () => {
     // Lazy + one-shot: only fetch once the tab is active, only when there is a source to fetch, and
@@ -239,6 +249,22 @@ export function CatalogSourceViewer({
             imported source.
           </p>
 
+          {typeof highlightLine === 'number' && highlightLine > 0 ? (
+            <p
+              data-testid="catalog-detail-source-highlight"
+              className="catalog-source-highlight-note mt-2 text-xs text-gray-600 dark:text-gray-400"
+            >
+              Compatibility deep link
+              {focusSourcePath ? (
+                <>
+                  {' '}
+                  for <span className="font-mono">{focusSourcePath}</span>
+                </>
+              ) : null}
+              : highlighting line {highlightLine}.
+            </p>
+          ) : null}
+
           {/* Editor host: Monaco (or the offline `<pre>` fallback), an error note, or a spinner. */}
           <div
             data-testid="catalog-detail-source-editor"
@@ -261,6 +287,20 @@ export function CatalogSourceViewer({
                   wordWrap: wrap ? 'on' : 'off',
                   padding: { top: 14, bottom: 14 },
                   automaticLayout: true,
+                }}
+                onMount={(editor: {
+                  revealLineInCenter: (line: number) => void;
+                  setPosition: (pos: { lineNumber: number; column: number }) => void;
+                }) => {
+                  if (
+                    typeof highlightLine === 'number' &&
+                    highlightLine > 0 &&
+                    !highlightAppliedRef.current
+                  ) {
+                    highlightAppliedRef.current = true;
+                    editor.revealLineInCenter(highlightLine);
+                    editor.setPosition({ lineNumber: highlightLine, column: 1 });
+                  }
                 }}
               />
             ) : status === 'error' ? (

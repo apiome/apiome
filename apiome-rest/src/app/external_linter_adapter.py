@@ -270,10 +270,14 @@ def load_builtin_adapters() -> None:
     # CLX-2.2 (#4852): Spectral / Vacuum / Redocly OAS packs register on import.
     from . import openapi_validation_adapters as _oas_packs  # noqa: F401
 
+    # CLX-2.3 (#4853): oasdiff OpenAPI compatibility adapter.
+    from . import openapi_compatibility_adapters as _oas_compat  # noqa: F401
+
     _ = (
         _oas_packs.SpectralOasAdapter,
         _oas_packs.VacuumOasAdapter,
         _oas_packs.RedoclyOasAdapter,
+        _oas_compat.OasdiffAdapter,
     )
     _builtin_adapters_loaded = True
 

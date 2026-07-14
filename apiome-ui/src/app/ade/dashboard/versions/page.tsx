@@ -116,6 +116,7 @@ import {
 } from '../../../../../lib/version-merge';
 import { VersionMergeConflictList } from '../../../components/ade/dashboard/VersionMergeConflictList';
 import { CompatibilityReportPanel } from '../../../components/ade/dashboard/CompatibilityReportPanel';
+import { ExternalCompatEvidencePanel } from '../../../components/ade/dashboard/ExternalCompatEvidencePanel';
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
 import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
 import VersionExportPanel from '../../../components/ade/dashboard/export/VersionExportPanel';
@@ -5640,6 +5641,13 @@ const Versions = () => {
                       </span>
                     }
                   />
+                  <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <ExternalCompatEvidencePanel
+                      projectId={selectedProjectId}
+                      baseRevisionId={mergePreviewData?.targetTipVersionId}
+                      headRevisionId={mergePreviewData?.sourceTipVersionId}
+                    />
+                  </div>
                 </div>
                 {mergeCompat.mergeBlockedByCompatGate && (
                   <p className="text-xs mt-2 text-amber-800 dark:text-amber-200">

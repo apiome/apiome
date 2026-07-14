@@ -9,6 +9,7 @@ from apiome_cli import __version__
 from apiome_cli.client.errors import handle_cli_failure, is_verbose
 from apiome_cli.commands import (
     auth,
+    compat,
     config,
     convert,
     doctor,
@@ -65,6 +66,7 @@ app.add_typer(types.app, name="types")
 app.add_typer(versions.app, name="versions")
 app.add_typer(paths.app, name="paths")
 app.add_typer(lint.app, name="lint")
+app.add_typer(compat.app, name="compat")
 app.add_typer(spec.app, name="spec")
 app.add_typer(operations.app, name="operations")
 app.add_typer(mcp.app, name="mcp")

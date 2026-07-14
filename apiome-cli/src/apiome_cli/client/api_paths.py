@@ -220,6 +220,26 @@ def version_lint(
     return f"{version_record(tenant_slug, project_id, version_record_id)}/lint"
 
 
+def version_compatibility_evidence(
+    tenant_slug: str,
+    project_id: str | UUID,
+) -> str:
+    """POST independent oasdiff compatibility evidence for a revision pair."""
+    return f"{V1}/versions/{tenant_slug}/{project_id}/compatibility/evidence"
+
+
+def version_compatibility_evidence_list(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_record_id: str | UUID,
+) -> str:
+    """GET persisted oasdiff compatibility evidence for one revision."""
+    return (
+        f"{version_record(tenant_slug, project_id, version_record_id)}"
+        "/compatibility/evidence"
+    )
+
+
 def version_lint_policy(
     tenant_slug: str,
     project_id: str | UUID,

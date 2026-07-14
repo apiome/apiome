@@ -48,6 +48,9 @@ strings) on `stdin`, builds each into a `graphql-js` schema, and writes each cha
 `BREAKING`/`DANGEROUS`/`NON_BREAKING` verdict on `stdout`. It is driven by the
 `app.graphql_diff` service and its breaking-change classifier. Spectral, Vacuum, and Redocly
 back the CLX-2.2 OpenAPI validation packs (`app.openapi_validation_pack`).
+`oasdiff` backs CLX-2.3 independent OpenAPI compatibility evidence
+(`app.openapi_compatibility_adapters`); `openapi-changes` is an optional HTML
+renderer and is not required in the image.
 
 ## Footprint
 

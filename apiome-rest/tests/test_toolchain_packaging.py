@@ -46,6 +46,8 @@ _EXPECTED_KEYS = {
     "spectral",
     "vacuum",
     "redocly",
+    "oasdiff",
+    "openapi-changes",
 }
 
 _AUTH = {
