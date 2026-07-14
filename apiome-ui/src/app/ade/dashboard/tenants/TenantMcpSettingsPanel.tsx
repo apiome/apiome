@@ -2,7 +2,7 @@
 
 /**
  * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781)
- * + MTG-4.3 (#4782) per-key capability editor.
+ * + MTG-4.3 (#4782) per-key capability editor + MTG-4.5 (#4784) disable confirm.
  *
  * Loads MTG-3.1 policy + MTG-1.1 catalog for the session's current tenant.
  * Toolsets use master switches; optional advanced view exposes per-tool flags.
@@ -32,12 +32,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/app/components/ui/Select';
+import { useDialog } from '@/app/components/providers/DialogProvider';
 import {
   fetchMcpPolicy,
   fetchMcpToolCatalog,
   putMcpPolicy,
   type TenantDefaultMode,
 } from './mcpPolicyApi';
+import { fetchMcpKeys } from './mcpKeysApi';
 import {
   buildMcpPolicyPutBody,
   groupToolsByToolset,
@@ -48,8 +50,11 @@ import {
   validateMcpPolicyForm,
   type McpPolicyFormState,
 } from './mcpPolicyForm';
+import {
+  findActiveKeysEffectivelyEnablingTools,
+  formatToolsetDisableImpactMessage,
+} from './mcpToolsetDisableImpact';
 import TenantMcpKeyCapabilitiesEditor from './TenantMcpKeyCapabilitiesEditor';
-
 export interface TenantMcpSettingsPanelProps {
   /** When false, show a disabled note instead of the editable form. */
   editable: boolean;
@@ -78,6 +83,7 @@ export default function TenantMcpSettingsPanel({
   editable,
   tenantName,
 }: TenantMcpSettingsPanelProps) {
+  const { confirm: confirmDialog } = useDialog();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,6 +140,49 @@ export default function TenantMcpSettingsPanel({
     if (baseline) setForm(baseline);
     setError(null);
   };
+
+  /**
+   * Master toolset switch. Disabling prompts when ≥1 active key currently
+   * effective-enables tools in the set (MTG-4.5); cancel leaves form unchanged.
+   */
+  const handleToolsetToggle = useCallback(
+    async (toolset: string, enabled: boolean, toolIds: string[]) => {
+      if (!enabled && baseline) {
+        try {
+          const list = await fetchMcpKeys();
+          const impacted = findActiveKeysEffectivelyEnablingTools(
+            baseline,
+            toolIds,
+            list.keys ?? [],
+          );
+          if (impacted.length > 0) {
+            const confirmed = await confirmDialog({
+              title: `Disable ${titleCaseToolset(toolset)} toolset?`,
+              message: formatToolsetDisableImpactMessage(toolset, impacted),
+              variant: 'warning',
+              confirmLabel: 'Disable toolset',
+              cancelLabel: 'Cancel',
+            });
+            if (!confirmed) return;
+          }
+        } catch {
+          // Key list failed — still warn so an impactful disable is never silent.
+          const confirmed = await confirmDialog({
+            title: `Disable ${titleCaseToolset(toolset)} toolset?`,
+            message:
+              `Disabling the ${toolset} toolset may remove tools from active MCP keys. ` +
+              `Agents using those keys could lose access on the next call. Continue?`,
+            variant: 'warning',
+            confirmLabel: 'Disable toolset',
+            cancelLabel: 'Cancel',
+          });
+          if (!confirmed) return;
+        }
+      }
+      setForm((prev) => (prev ? patchToolsetCeiling(prev, toolset, enabled) : prev));
+    },
+    [baseline, confirmDialog],
+  );
 
   const handleSave = async () => {
     if (!form) return;
@@ -287,10 +336,10 @@ export default function TenantMcpSettingsPanel({
                               checked={group.ceilingState === 'all'}
                               indeterminate={group.ceilingState === 'mixed'}
                               onCheckedChange={(checked) =>
-                                setForm((prev) =>
-                                  prev
-                                    ? patchToolsetCeiling(prev, group.toolset, checked)
-                                    : prev,
+                                void handleToolsetToggle(
+                                  group.toolset,
+                                  checked,
+                                  group.tools.map((t) => t.tool_id),
                                 )
                               }
                               disabled={saving}
