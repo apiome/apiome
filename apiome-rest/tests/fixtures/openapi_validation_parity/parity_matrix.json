@@ -1,0 +1,15 @@
+{
+  "default_bulk_runner": "spectral.oas",
+  "rationale": "Spectral is the compatibility reference. Vacuum/Redocly run on the same fixtures but have not demonstrated equivalent enabled-rule findings on this corpus; DEFAULT_BULK_RUNNER remains spectral.oas (parity-selected, not speed-selected).",
+  "profiles": ["baseline", "tenant_guide", "strict"],
+  "fixtures": {
+    "clean": {
+      "entry": "clean/openapi.yaml",
+      "notes": "Multi-file local $ref to components.yaml; no HTTP refs."
+    },
+    "violations": {
+      "entry": "violations/openapi.yaml",
+      "expected_rule_substrings": ["operation-operationId", "info-contact", "info-description"]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+# Apiome OpenAPI baseline Redocly config (CLX-2.2 / #4852).
+extends:
+  - recommended
+rules:
+  no-unused-components: warn
+  operation-operationId: warn
+  info-contact: warn
+  info-license: off
+  tag-description: off
+  operation-description: off

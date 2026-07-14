@@ -121,6 +121,7 @@ def _guide_out(
         enabled_rule_count=int(row.get("enabled_rule_count") or 0),
         tenant_assigned=bool(row.get("tenant_assigned")),
         project_assignments=project_assignments or [],
+        external_lint_profile=str(row.get("external_lint_profile") or "baseline"),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -203,7 +204,11 @@ async def create_style_guide(
         rule_count = len(db.get_style_guide_rules(str(source["id"]), tenant_id))
     try:
         row = db.create_style_guide(
-            tenant_id, name, body.description, body.source_guide_id or None
+            tenant_id,
+            name,
+            body.description,
+            body.source_guide_id or None,
+            external_lint_profile=body.external_lint_profile,
         )
     except psycopg2.IntegrityError:
         raise _name_conflict()
@@ -230,8 +235,21 @@ async def update_style_guide(
         description = body.description or None
     else:
         description = guide.get("description")
+    profile = None
+    if "external_lint_profile" in body.model_fields_set and body.external_lint_profile:
+        from .openapi_validation_profiles import VALIDATION_PROFILES, normalize_profile
+
+        profile = normalize_profile(body.external_lint_profile)
+        if profile not in VALIDATION_PROFILES:
+            raise HTTPException(status_code=400, detail="Invalid externalLintProfile")
     try:
-        row = db.update_style_guide(str(guide["id"]), tenant_id, name, description)
+        row = db.update_style_guide(
+            str(guide["id"]),
+            tenant_id,
+            name,
+            description,
+            external_lint_profile=profile,
+        )
     except psycopg2.IntegrityError:
         raise _name_conflict()
     if not row:

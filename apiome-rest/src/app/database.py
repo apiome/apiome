@@ -3257,6 +3257,7 @@ class Database:
             return []
         query = """
             SELECT g.id, g.name, g.description, g.source, g.is_default,
+                   g.external_lint_profile,
                    g.created_at, g.updated_at,
                    COUNT(r.id) AS rule_count,
                    COUNT(r.id) FILTER (WHERE r.enabled) AS enabled_rule_count,
@@ -3314,6 +3315,7 @@ class Database:
         query = """
             SELECT id, name, description, source, is_default,
                    axis_gates, required_coverage, ci_outcomes,
+                   external_lint_profile,
                    created_at, updated_at
             FROM apiome.style_guides
             WHERE id = %s AND tenant_id = %s
@@ -3327,6 +3329,7 @@ class Database:
         name: str,
         description: Optional[str],
         source_guide_id: Optional[str] = None,
+        external_lint_profile: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a custom style guide, optionally copying another guide's rules (GOV-2.1).
 
@@ -3340,6 +3343,8 @@ class Database:
             name: Display name (unique per tenant — violations raise ``IntegrityError``).
             description: Optional description.
             source_guide_id: Same-tenant guide whose rules to copy, or ``None`` for empty.
+            external_lint_profile: Optional CLX-2.2 profile; defaults to the source guide's
+                profile when copying, otherwise ``baseline``.
 
         Returns:
             The created guide row.
@@ -3361,13 +3366,24 @@ class Database:
                     )
                     if cursor.fetchone() is None:
                         raise ValueError("Source guide not found")
+                profile = (external_lint_profile or "").strip() or None
                 cursor.execute(
                     """
-                    INSERT INTO apiome.style_guides (tenant_id, name, description, source, is_default)
-                    VALUES (%s, %s, %s, 'custom', false)
-                    RETURNING id, name, description, source, is_default, created_at, updated_at
+                    INSERT INTO apiome.style_guides (
+                        tenant_id, name, description, source, is_default, external_lint_profile
+                    )
+                    VALUES (
+                        %s, %s, %s, 'custom', false,
+                        COALESCE(
+                            %s,
+                            (SELECT external_lint_profile FROM apiome.style_guides WHERE id = %s),
+                            'baseline'
+                        )
+                    )
+                    RETURNING id, name, description, source, is_default, external_lint_profile,
+                              created_at, updated_at
                     """,
-                    (tenant_id, name.strip(), description),
+                    (tenant_id, name.strip(), description, profile, source_guide_id),
                 )
                 guide = cursor.fetchone()
                 if source_guide_id is not None:
@@ -3394,6 +3410,7 @@ class Database:
         tenant_id: str,
         name: str,
         description: Optional[str],
+        external_lint_profile: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Rename / re-describe a custom style guide (GOV-2.1, #4433).
 
@@ -3405,6 +3422,8 @@ class Database:
             tenant_id: The tenant that must own the guide.
             name: The final name to store (caller resolves partial updates).
             description: The final description to store.
+            external_lint_profile: Optional CLX-2.2 profile (``baseline`` /
+                ``tenant_guide`` / ``strict``); ``None`` leaves the column unchanged.
 
         Returns:
             The updated guide row, or ``None`` when no matching custom guide exists.
@@ -3416,11 +3435,17 @@ class Database:
             return None
         query = """
             UPDATE apiome.style_guides
-            SET name = %s, description = %s, updated_at = CURRENT_TIMESTAMP
+            SET name = %s,
+                description = %s,
+                external_lint_profile = COALESCE(%s, external_lint_profile),
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
-            RETURNING id, name, description, source, is_default, created_at, updated_at
+            RETURNING id, name, description, source, is_default, external_lint_profile,
+                      created_at, updated_at
         """
-        rows = self.execute_query(query, (name.strip(), description, guide_id, tenant_id))
+        rows = self.execute_query(
+            query, (name.strip(), description, external_lint_profile, guide_id, tenant_id)
+        )
         return rows[0] if rows else None
 
     def replace_style_guide_builtin_rules(

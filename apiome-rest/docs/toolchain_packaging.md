@@ -28,8 +28,11 @@ build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 | `asyncapi-diff` | AsyncAPI diff → breaking/non-breaking/unclassified (`@asyncapi/diff`, MFI-8.4) | `0.5.0` | node | npm into tools prefix + Node wrapper (`toolchain/asyncapi-diff.mjs`) |
 | `rover` | Apollo GraphQL schema CLI | `0.27.0` | native | GitHub release tarball |
 | `graphql-inspector-diff` | GraphQL diff → breaking/dangerous/non-breaking (`@graphql-inspector/core`, MFI-10.5) | `6.2.0` | node | npm into tools prefix + Node wrapper (`toolchain/graphql-inspector-diff.mjs`) |
+| `spectral` | OpenAPI/AsyncAPI lint (`@stoplight/spectral-cli`, CLX-2.2) | `6.16.1` | node | npm into tools prefix + wrapper |
+| `vacuum` | OpenAPI lint (`daveshanley/vacuum`, CLX-2.2) | `0.29.9` | native | GitHub release tarball |
+| `redocly` | OpenAPI lint/resolve (`@redocly/cli`, CLX-2.2) | `2.39.0` | node | npm into tools prefix + wrapper |
 
-All ten land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
+All thirteen land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
 wrappers so the runner invokes them by bare name exactly like the native binaries. The
 `asyncapi-parser` tool is a small repo-committed Node script (`apiome-rest/toolchain/
 asyncapi-parse.mjs`) that imports `@asyncapi/parser`: it reads a document on `stdin` and writes
@@ -43,7 +46,8 @@ tool is a third Node script (`toolchain/graphql-inspector-diff.mjs`) that import
 `@graphql-inspector/core` (+ its `graphql` peer): it reads `{"old": …, "new": …}` (two SDL
 strings) on `stdin`, builds each into a `graphql-js` schema, and writes each change's
 `BREAKING`/`DANGEROUS`/`NON_BREAKING` verdict on `stdout`. It is driven by the
-`app.graphql_diff` service and its breaking-change classifier.
+`app.graphql_diff` service and its breaking-change classifier. Spectral, Vacuum, and Redocly
+back the CLX-2.2 OpenAPI validation packs (`app.openapi_validation_pack`).
 
 ## Footprint
 
@@ -55,8 +59,9 @@ plus the JRE the AMF wrapper needs — smithy ships its own runtime, so no extra
 | `default-jre-headless` (for AMF) | ~140 MB |
 | `smithy` CLI (self-contained runtime) | ~80 MB |
 | `amf` assembly jar | ~60 MB |
-| `tsp` + `asyncapi` + `@asyncapi/parser` + `@asyncapi/diff` + `@graphql-inspector/core` (node_modules) | ~135 MB |
+| `tsp` + `asyncapi` + `@asyncapi/parser` + `@asyncapi/diff` + `@graphql-inspector/core` + spectral + redocly (node_modules) | ~180 MB |
 | `buf` | ~30 MB |
+| `vacuum` | ~25 MB |
 | `rover` | ~30 MB |
 | `drafter` | ~5 MB |
 | **Total added** | **~480 MB** |
