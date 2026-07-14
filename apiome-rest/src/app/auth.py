@@ -249,6 +249,50 @@ def get_authenticated_user_id(auth_data: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def require_tenant_admin_session(
+    db_handle: Any,
+    auth_data: Dict[str, Any],
+    *,
+    detail: str = "Only tenant administrators can perform this action",
+) -> str:
+    """Require a signed-in tenant administrator; reject API-key auth (MTG-3.4, #4778).
+
+    Governance mutations (MCP policy, MCP keys, style guides) are the
+    buyer-admin persona's surface. An ``X-API-Key`` / publish key must not
+    escalate by resolving ``created_by`` (or the tenant fallback admin) into
+    ``is_user_tenant_admin``. Callers pass their module-level ``db`` so unit
+    tests that patch route ``db`` exercise the same object.
+
+    Args:
+        db_handle: Database handle with ``is_user_tenant_admin``.
+        auth_data: Dict from ``validate_authentication`` (tenant_id, user_id, auth_method).
+        detail: 403 message when the caller is a non-admin user session.
+
+    Returns:
+        The authenticated tenant id.
+
+    Raises:
+        HTTPException: 403 when auth is an API key, no user session, or the user
+            is not a tenant administrator; 500 when tenant context is missing.
+    """
+    if auth_data.get("auth_method") == "api_key":
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "API keys cannot mutate governance; "
+                "sign in as a tenant administrator"
+            ),
+        )
+    tenant_id = auth_data.get("tenant_id")
+    if not tenant_id:
+        raise HTTPException(status_code=500, detail="Missing tenant context")
+    tenant_id = str(tenant_id)
+    user_id = get_authenticated_user_id(auth_data)
+    if not user_id or not db_handle.is_user_tenant_admin(tenant_id, user_id):
+        raise HTTPException(status_code=403, detail=detail)
+    return tenant_id
+
+
 def validate_session_credentials(
     authorization: Optional[str] = Header(None),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),

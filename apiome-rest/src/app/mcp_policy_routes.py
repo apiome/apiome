@@ -1,12 +1,13 @@
-"""Tenant MCP policy CRUD — MTG-3.1 (#4775).
+"""Tenant MCP policy CRUD — MTG-3.1 (#4775), auth gate — MTG-3.4 (#4778).
 
 Exposes ``GET`` / ``PUT /v1/tenants/{tenant_slug}/mcp-policy`` so Control Panel
 and automation can read and replace the tenant ceiling, default enable-set, and
 anonymous flags stored in ``tenant_mcp_policies`` / ``tenant_mcp_policy_tools``.
 
 Reads require tenant membership (any authenticated principal for the slug).
-Mutations require a **tenant administrator** user session — same stance as style
-guides: API keys cannot escalate into governance writes (MTG-3.4).
+Mutations require a **tenant administrator** user session — API keys cannot
+escalate into governance writes even when ``created_by`` maps to an admin
+(MTG-3.4).
 """
 
 from __future__ import annotations
@@ -17,7 +18,11 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from .auth import get_authenticated_user_id, validate_authentication
+from .auth import (
+    get_authenticated_user_id,
+    require_tenant_admin_session,
+    validate_authentication,
+)
 from .database import db
 from .mcp_tool_registry import is_registered_mcp_tool
 
@@ -93,19 +98,12 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 
 
 def _require_tenant_admin(auth_data: Dict[str, Any]) -> str:
-    """Gate a mutation to tenant administrators; returns the tenant id.
-
-    Tenant MCP policy is an admin-only, user-session-only operation (an API key
-    carries no administrator), mirroring style-guide governance gating.
-    """
-    tenant_id = _tenant_id(auth_data)
-    user_id = get_authenticated_user_id(auth_data)
-    if not user_id or not db.is_user_tenant_admin(tenant_id, user_id):
-        raise HTTPException(
-            status_code=403,
-            detail="Only tenant administrators can manage MCP policy",
-        )
-    return tenant_id
+    """Gate a mutation to a JWT tenant-admin session; reject API-key auth."""
+    return require_tenant_admin_session(
+        db,
+        auth_data,
+        detail="Only tenant administrators can manage MCP policy",
+    )
 
 
 def _policy_response(row: Optional[Dict[str, Any]]) -> TenantMcpPolicyResponse:
@@ -185,8 +183,9 @@ async def get_tenant_mcp_policy(
     summary="Replace tenant MCP policy",
     description=(
         "Replace the tenant MCP policy (default_mode, anonymous kill switch, and full "
-        "per-tool flag list). Tenant administrators only; unknown tool ids and "
-        "default_enabled without in_ceiling yield 422 (MTG-3.1, #4775)."
+        "per-tool flag list). Tenant administrators with a signed-in session only; "
+        "API keys cannot mutate governance. Unknown tool ids and default_enabled "
+        "without in_ceiling yield 422 (MTG-3.1, #4775; MTG-3.4, #4778)."
     ),
 )
 async def put_tenant_mcp_policy(
