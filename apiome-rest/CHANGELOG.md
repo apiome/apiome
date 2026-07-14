@@ -5,6 +5,14 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.19] - 2026-07-13
+
+### Added
+- **MCP tool & toolset registry (MTG-1.1, #4765)** — shared catalog of every Apiome MCP
+  tool id, description, and toolset (`health`, `catalog`, `search`, `document`, `structure`),
+  including governance capability ids `spec.mcp` / `spec.catalog`. Exposed as
+  `GET /api-keys/mcp-tools` for CLI and Control Panel enumeration. OpenAPI **1.0.68**.
+
 ## [1.117.2] - 2026-07-11
 
 ### Added

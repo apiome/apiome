@@ -64,6 +64,14 @@ Running **`uv run apiome-mcp serve`** without **`--transport`** loads settings a
 | **`spec.list_components`** | Component keys grouped by kind (`schemas`, `parameters`, `responses`, `securitySchemes`). |
 | **`spec.describe_component`** | Single component definition by **`kind`** + **`name`**; internal `$ref` expanded. |
 
+**Tool & toolset registry (MTG-1.1):** Stable ids, descriptions, and toolset membership
+(`health`, `catalog`, `search`, `document`, `structure`) live in
+``apiome-rest`` ``app.mcp_tool_registry`` and are exposed as
+``GET /api-keys/mcp-tools``. CI fails if a registered FastMCP tool is missing from
+that catalog. Unknown tool names fail closed on ``tools/call`` until registered.
+Capability ids ``spec.mcp`` / ``spec.catalog`` are catalog-only (governance toggles)
+until implemented as handlers.
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

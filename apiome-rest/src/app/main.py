@@ -67,6 +67,7 @@ from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 from .mcp_saved_search_routes import router as mcp_saved_search_router
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_collection_routes import router as mcp_collection_router
+from .mcp_tool_routes import router as mcp_tool_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -79,7 +80,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.0.67",
+    version="1.0.68",
 )
 
 
@@ -259,6 +260,8 @@ app.include_router(mcp_catalog_digest_router)
 app.include_router(mcp_saved_search_router)
 app.include_router(mcp_endpoint_note_router)
 app.include_router(mcp_collection_router)
+# MCP tool catalog (MTG-1.1, #4765): GET /api-keys/mcp-tools for CLI + admin UX.
+app.include_router(mcp_tool_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)
 app.include_router(ops_router)
