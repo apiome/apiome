@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.0.69
+  version: 1.0.70
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -14271,6 +14271,129 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get tenant inforesponse422.
+  /v1/tenants/{tenant_slug}/mcp-policy:
+    get:
+      tags:
+      - mcp-policy
+      summary: Get tenant MCP policy
+      description: 'Return the tenant''s MCP tool governance policy (ceiling, default
+        enable-set, anonymous flags). Tenant members may read; an unseeded tenant
+        synthesizes default_mode=all with an empty tools list (MTG-3.1, #4775).'
+      operationId: get_tenant_mcp_policy_v1_tenants__tenant_slug__mcp_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Gettenant Mcppolicyauthorization schema.
+          - type: 'null'
+            description: Gettenant Mcppolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Gettenant Mcppolicy Xapikey schema.
+          - type: 'null'
+            description: Gettenant Mcppolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get tenant mcp policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantMcpPolicyResponse'
+                description: Response payload for gettenant mcppolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for gettenant mcppolicyresponse422.
+    put:
+      tags:
+      - mcp-policy
+      summary: Replace tenant MCP policy
+      description: 'Replace the tenant MCP policy (default_mode, anonymous kill switch,
+        and full per-tool flag list). Tenant administrators only; unknown tool ids
+        and default_enabled without in_ceiling yield 422 (MTG-3.1, #4775).'
+      operationId: put_tenant_mcp_policy_v1_tenants__tenant_slug__mcp_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replacetenant Mcppolicyauthorization schema.
+          - type: 'null'
+            description: Replacetenant Mcppolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replacetenant Mcppolicy Xapikey schema.
+          - type: 'null'
+            description: Replacetenant Mcppolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantMcpPolicyPutRequest'
+              description: Request body for replacetenant mcppolicyrequest.
+        description: Request body for replace tenant mcp policy.
+      responses:
+        '200':
+          description: Successful response for replace tenant mcp policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantMcpPolicyResponse'
+                description: Response payload for replacetenant mcppolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for replacetenant mcppolicyresponse422.
   /v1/tenants/{tenant_slug}/imports:
     get:
       tags:
@@ -41377,6 +41500,118 @@ components:
       - name
       title: TenantInfoResponse
       description: Tenant summary for ``GET /v1/tenants/{slug}``.
+    TenantMcpPolicyPutRequest:
+      properties:
+        default_mode:
+          type: string
+          enum:
+          - all
+          - inherit_registry
+          - explicit
+          title: Default Mode
+          description: 'How missing tool rows resolve: all, inherit_registry, or explicit.'
+          example: all
+        allow_anonymous_mcp:
+          type: boolean
+          title: Allow Anonymous Mcp
+          description: Kill switch for anonymous tools/call against this tenant policy.
+          default: true
+          example: false
+        tools:
+          items:
+            $ref: '#/components/schemas/TenantMcpPolicyTool'
+          type: array
+          title: Tools
+          description: Full replace-all list of per-tool policy flags.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - default_mode
+      title: TenantMcpPolicyPutRequest
+      description: Writable tenant MCP policy body for ``PUT …/mcp-policy``.
+    TenantMcpPolicyResponse:
+      properties:
+        default_mode:
+          type: string
+          enum:
+          - all
+          - inherit_registry
+          - explicit
+          title: Default Mode
+          description: Default Mode.
+          example: all
+        allow_anonymous_mcp:
+          type: boolean
+          title: Allow Anonymous Mcp
+          description: Allow Anonymous MCP.
+          example: false
+        tools:
+          items:
+            $ref: '#/components/schemas/TenantMcpPolicyTool'
+          type: array
+          title: Tools
+          description: Tools.
+          maxItems: 1000
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for tenant mcp policy.
+          - type: 'null'
+            description: Response payload for tenant mcp policy.
+          title: Updated At
+          description: Last policy write time; null when no row has been persisted.
+        updated_by:
+          anyOf:
+          - type: string
+            description: Response payload for tenant mcp policy.
+          - type: 'null'
+            description: Response payload for tenant mcp policy.
+          title: Updated By
+          description: User id of the last writer; null until first admin PUT after
+            seed.
+      additionalProperties: false
+      type: object
+      required:
+      - default_mode
+      - allow_anonymous_mcp
+      - tools
+      title: TenantMcpPolicyResponse
+      description: Stored (or synthesized unseeded) tenant MCP policy snapshot.
+    TenantMcpPolicyTool:
+      properties:
+        tool_id:
+          type: string
+          title: Tool Id
+          description: Stable MTG-1.1 registry id (e.g. ping, spec.list).
+          example: tool_01h2xcejqtf3fz5y5j0v8k9m2p
+        in_ceiling:
+          type: boolean
+          title: In Ceiling
+          description: 'Ceiling membership: keys may enable this tool when true.'
+          example: false
+        default_enabled:
+          type: boolean
+          title: Default Enabled
+          description: Default enable-set for new inherit-mode MCP keys; requires
+            in_ceiling.
+          example: false
+        anonymous_enabled:
+          type: boolean
+          title: Anonymous Enabled
+          description: Anonymous enable-set membership (independent of ceiling for
+            MVP).
+          default: true
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - tool_id
+      - in_ceiling
+      - default_enabled
+      title: TenantMcpPolicyTool
+      description: Per-tool ceiling / default / anonymous flags for a tenant policy.
     TenantMembershipSchema:
       properties:
         id:
