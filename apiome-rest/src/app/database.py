@@ -14366,7 +14366,7 @@ class Database:
     _MCP_API_KEY_PREFIX_CHARS = 12
 
     _MCP_API_KEY_METADATA_SELECT = """
-        id, prefix, label, scope_json, capability_mode,
+        id, prefix, label, scope_json, capability_mode, enabled_tools,
         created_at, expires_at, revoked_at, last_used_at, created_by
     """
 
@@ -14396,6 +14396,14 @@ class Database:
         if not isinstance(scope, dict):
             scope = {}
         created_by = row.get("created_by")
+        enabled = row.get("enabled_tools")
+        if isinstance(enabled, str):
+            try:
+                enabled = json.loads(enabled)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                enabled = []
+        if not isinstance(enabled, list):
+            enabled = []
         return {
             "id": str(row["id"]),
             "prefix": str(row["prefix"]),
@@ -14405,6 +14413,9 @@ class Database:
                 "projects": list(scope.get("projects") or []),
             },
             "capability_mode": str(row.get("capability_mode") or "inherit"),
+            "enabled_tools": [
+                str(t) for t in enabled if isinstance(t, str) and t.strip()
+            ],
             "created_at": row.get("created_at"),
             "expires_at": row.get("expires_at"),
             "revoked_at": row.get("revoked_at"),
@@ -14655,6 +14666,75 @@ class Database:
         if not rows:
             # Race: another writer revoked between SELECT and UPDATE.
             return self.get_mcp_api_key(tenant_id, key_id)
+        return self._normalize_mcp_api_key_row(rows[0])
+
+    def update_mcp_api_key_capabilities(
+        self,
+        tenant_id: str,
+        key_id: str,
+        *,
+        capability_mode: str,
+        enabled_tools: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Set per-key capability grants on an **active** MCP API key (MTG-3.3, #4777).
+
+        ``inherit`` always persists ``enabled_tools=[]``. ``explicit`` stores the
+        provided list (callers must already enforce ⊆ tenant ceiling). The DB
+        trigger remains a second line of defense for ceiling violations.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            key_id: Key row UUID.
+            capability_mode: ``inherit`` or ``explicit``.
+            enabled_tools: Tool ids when ``explicit``; ignored (cleared) under inherit.
+
+        Returns:
+            Updated public metadata including ``capability_mode`` /
+            ``enabled_tools``, or ``None`` when the key is missing / revoked /
+            not in this tenant.
+
+        Raises:
+            ValueError: When ``capability_mode`` is not inherit|explicit.
+        """
+        if (
+            not tenant_id
+            or not is_uuid_string(str(tenant_id))
+            or not key_id
+            or not is_uuid_string(str(key_id))
+        ):
+            return None
+        mode = (capability_mode or "").strip()
+        if mode not in ("inherit", "explicit"):
+            raise ValueError("capability_mode must be 'inherit' or 'explicit'")
+
+        if mode == "inherit":
+            stored_tools: List[str] = []
+        else:
+            seen: Set[str] = set()
+            stored_tools = []
+            for raw in enabled_tools or []:
+                if not isinstance(raw, str):
+                    continue
+                tid = raw.strip()
+                if not tid or tid in seen:
+                    continue
+                seen.add(tid)
+                stored_tools.append(tid)
+
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.mcp_api_keys
+            SET capability_mode = %s,
+                enabled_tools = %s::jsonb
+            WHERE tenant_id = %s::uuid
+              AND id = %s::uuid
+              AND revoked_at IS NULL
+            RETURNING {self._MCP_API_KEY_METADATA_SELECT}
+            """,
+            (mode, Json(stored_tools), tenant_id, key_id),
+        )
+        if not rows:
+            return None
         return self._normalize_mcp_api_key_row(rows[0])
 
     def list_mcp_tool_invocation_stats(
