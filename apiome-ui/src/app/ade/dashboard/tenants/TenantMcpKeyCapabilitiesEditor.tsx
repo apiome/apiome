@@ -1,18 +1,29 @@
 'use client';
 
 /**
- * Per-key MCP capability editor — MTG-4.3 (#4782).
+ * Per-key MCP capability editor — MTG-4.3 (#4782) + MTG-4.4 (#4783) empty state.
  *
  * Lists MCP API keys, lets admins choose Inherit vs Custom, and when Custom
  * exposes toolset toggles constrained by the saved tenant ceiling. Effective
- * summary comes from MTG-3.3 capabilities/preview.
+ * summary comes from MTG-3.3 capabilities/preview. Zero keys shows EmptyState
+ * with an admin-only create CTA.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BadgeCheck, KeyRound, Loader2, Lock } from 'lucide-react';
+import { BadgeCheck, Check, Copy, KeyRound, Loader2, Lock, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/app/components/ui/Dialog';
+import { EmptyState } from '@/app/components/ui/EmptyState';
+import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '@/app/components/ui/RadioGroup';
 import {
@@ -25,6 +36,7 @@ import {
 import { Switch } from '@/app/components/ui/Switch';
 import type { McpToolCatalogItem } from './mcpPolicyApi';
 import {
+  createMcpKey,
   fetchMcpKeys,
   previewMcpKeyCapabilities,
   putMcpKeyCapabilities,
@@ -54,9 +66,9 @@ export interface TenantMcpKeyCapabilitiesEditorProps {
    * the new default enable-set.
    */
   policyRevision: number;
+  /** True when the viewer may create keys and mutate capabilities. */
+  isAdmin?: boolean;
 }
-
-const EMPTY_KEYS_COPY = 'No MCP API keys yet for this tenant.';
 
 function titleCaseToolset(toolset: string): string {
   if (!toolset) return 'Other';
@@ -72,6 +84,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
   catalog,
   ceilingToolIds,
   policyRevision,
+  isAdmin = true,
 }: TenantMcpKeyCapabilitiesEditorProps) {
   const [keys, setKeys] = useState<McpApiKeyMetadata[]>([]);
   const [keysLoading, setKeysLoading] = useState(true);
@@ -84,6 +97,14 @@ export default function TenantMcpKeyCapabilitiesEditor({
   const [previewRows, setPreviewRows] = useState<McpKeyEffectiveToolRow[] | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSecretModal, setShowSecretModal] = useState(false);
+  const [newKeyLabel, setNewKeyLabel] = useState('');
+  const [createError, setCreateError] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [generatedSecret, setGeneratedSecret] = useState('');
+  const [copiedSecret, setCopiedSecret] = useState(false);
 
   const loadKeys = useCallback(async () => {
     setKeysLoading(true);
@@ -175,6 +196,46 @@ export default function TenantMcpKeyCapabilitiesEditor({
     setForm((prev) => (prev ? setKeyCapabilityMode(prev, mode) : prev));
   };
 
+  const openCreateModal = () => {
+    setNewKeyLabel('');
+    setCreateError('');
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!newKeyLabel.trim()) {
+      setCreateError('Label is required');
+      return;
+    }
+    setCreating(true);
+    setCreateError('');
+    try {
+      const created = await createMcpKey({ label: newKeyLabel.trim() });
+      setShowCreateModal(false);
+      setGeneratedSecret(created.secret);
+      setCopiedSecret(false);
+      setShowSecretModal(true);
+      await loadKeys();
+      setSelectedKeyId(created.id);
+      toast.success('MCP API key created');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create MCP key';
+      setCreateError(message);
+      toast.error(message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCopySecret = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedSecret);
+      setCopiedSecret(true);
+    } catch {
+      toast.error('Could not copy to clipboard');
+    }
+  };
+
   const handleSave = async () => {
     if (!form || !selectedKeyId) return;
     const validation = validateMcpKeyCapabilityForm(form);
@@ -222,6 +283,130 @@ export default function TenantMcpKeyCapabilitiesEditor({
   );
   const deniedCount = (previewRows ?? []).filter((row) => !row.enabled).length;
 
+  const createDialogs = (
+    <>
+      <Dialog
+        open={showCreateModal}
+        onOpenChange={(open) => {
+          if (!creating) setShowCreateModal(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30">
+                <KeyRound className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              Create MCP API key
+            </DialogTitle>
+            <DialogDescription>
+              Issue a new MCP API key for this tenant. Defaults to inherit tenant policy.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {createError ? <Alert variant="error">{createError}</Alert> : null}
+            <div className="space-y-2">
+              <Label htmlFor="mcp-key-label">Label *</Label>
+              <Input
+                id="mcp-key-label"
+                value={newKeyLabel}
+                onChange={(e) => setNewKeyLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !creating) void handleCreateSubmit();
+                }}
+                placeholder="Prod agent"
+                disabled={creating}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateModal(false)}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={() => void handleCreateSubmit()} disabled={creating}>
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating…
+                </>
+              ) : (
+                'Create key'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showSecretModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowSecretModal(false);
+            setGeneratedSecret('');
+            setCopiedSecret(false);
+          }
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+                <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              MCP API key created
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Alert variant="warning">
+              <strong>Important:</strong> This is the only time you&apos;ll see this secret.
+              Copy it now and store it securely.
+            </Alert>
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950/40">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Your MCP API key
+              </p>
+              <div className="flex items-start gap-2">
+                <code className="flex-1 break-all rounded-lg border border-gray-200 bg-white p-3 font-mono text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+                  {generatedSecret}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleCopySecret()}
+                  aria-label={copiedSecret ? 'Copied' : 'Copy secret'}
+                >
+                  {copiedSecret ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="success"
+              onClick={() => {
+                setShowSecretModal(false);
+                setGeneratedSecret('');
+                setCopiedSecret(false);
+              }}
+            >
+              I&apos;ve saved my key
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
   if (keysLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 py-2">
@@ -237,7 +422,25 @@ export default function TenantMcpKeyCapabilitiesEditor({
 
   if (keys.length === 0) {
     return (
-      <p className="text-sm text-gray-500 dark:text-gray-400 py-2">{EMPTY_KEYS_COPY}</p>
+      <div className="border-t border-slate-200 pt-4 dark:border-slate-800">
+        <EmptyState
+          variant="compact"
+          showOrbs={false}
+          icon={<KeyRound className="h-8 w-8" />}
+          title="No MCP API keys yet"
+          description="Create an MCP API key to grant agents call access under this tenant’s policy."
+          iconContainerClassName="from-indigo-500 to-violet-600 shadow-indigo-500/30"
+          action={
+            isAdmin ? (
+              <Button onClick={openCreateModal}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create MCP key
+              </Button>
+            ) : undefined
+          }
+        />
+        {createDialogs}
+      </div>
     );
   }
 
@@ -485,6 +688,8 @@ export default function TenantMcpKeyCapabilitiesEditor({
           )}
         </>
       )}
+
+      {createDialogs}
     </div>
   );
 }

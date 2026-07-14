@@ -1,5 +1,5 @@
 /**
- * Per-key MCP capability editor — MTG-4.3 (#4782).
+ * Per-key MCP capability editor — MTG-4.3 (#4782) / MTG-4.4 (#4783).
  */
 
 import React from 'react';
@@ -215,7 +215,50 @@ describe('TenantMcpKeyCapabilitiesEditor', () => {
     expect(within(summary as HTMLElement).getByText(/ping/i)).toBeInTheDocument();
   });
 
-  it('shows empty copy when tenant has no MCP keys', async () => {
+  it('shows empty state with create CTA for admins when tenant has no MCP keys', async () => {
+    // @ts-expect-error test double
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const method = init?.method || 'GET';
+      if (url.includes('/api/tenants/mcp-keys') && method === 'POST') {
+        return jsonResponse({
+          success: true,
+          data: {
+            id: 'key-new',
+            prefix: 'mcp_n',
+            label: 'Agent',
+            scope_json: { tenants: [], projects: [] },
+            capability_mode: 'inherit',
+            enabled_tools: [],
+            created_at: '2026-07-13T00:00:00Z',
+            secret: 'mcp_n_one_time_secret',
+          },
+        });
+      }
+      return jsonResponse({ success: true, data: { keys: [] } });
+    });
+
+    render(
+      <TenantMcpKeyCapabilitiesEditor
+        catalog={CATALOG}
+        ceilingToolIds={CEILING}
+        policyRevision={0}
+        isAdmin
+      />,
+    );
+
+    expect(await screen.findByText(/No MCP API keys yet/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create MCP key/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Create MCP key/i }));
+    fireEvent.change(screen.getByLabelText(/Label/i), { target: { value: 'Agent' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Create key$/i }));
+
+    expect(await screen.findByText(/MCP API key created/i)).toBeInTheDocument();
+    expect(screen.getByText('mcp_n_one_time_secret')).toBeInTheDocument();
+  });
+
+  it('hides create CTA for non-admins on empty keys', async () => {
     // @ts-expect-error test double
     global.fetch = jest.fn(() =>
       jsonResponse({ success: true, data: { keys: [] } }),
@@ -226,11 +269,11 @@ describe('TenantMcpKeyCapabilitiesEditor', () => {
         catalog={CATALOG}
         ceilingToolIds={CEILING}
         policyRevision={0}
+        isAdmin={false}
       />,
     );
 
-    expect(
-      await screen.findByText(/No MCP API keys yet for this tenant/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/No MCP API keys yet/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Create MCP key/i })).not.toBeInTheDocument();
   });
 });
