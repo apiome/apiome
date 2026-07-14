@@ -3397,6 +3397,334 @@ class LintAxesResponse(BaseModel):
     evaluation: LintAxisEvaluationOut
 
 
+# --- Policy packs / waivers (CLX-1.3, #4850) -------------------------------------------------
+
+
+class StyleGuideCiOutcomesOut(BaseModel):
+    """CI outcome toggles on a policy pack / draft guide settings (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    fail_on_unwaived_errors: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("failOnUnwaivedErrors", "fail_on_unwaived_errors"),
+        serialization_alias="failOnUnwaivedErrors",
+    )
+    fail_on_required_coverage: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("failOnRequiredCoverage", "fail_on_required_coverage"),
+        serialization_alias="failOnRequiredCoverage",
+    )
+    fail_on_axis_gates: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("failOnAxisGates", "fail_on_axis_gates"),
+        serialization_alias="failOnAxisGates",
+    )
+
+
+class StyleGuidePolicySettingsOut(BaseModel):
+    """Draft policy gate settings on a live style guide (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guide_id: str = Field(serialization_alias="guideId")
+    axis_gates: Dict[str, Any] = Field(
+        default_factory=dict,
+        serialization_alias="axisGates",
+        description="Per-axis min grade/score floors, e.g. {quality: {minGrade: B}}.",
+    )
+    required_coverage: List[str] = Field(
+        default_factory=lambda: ["quality"],
+        serialization_alias="requiredCoverage",
+    )
+    ci_outcomes: StyleGuideCiOutcomesOut = Field(
+        default_factory=StyleGuideCiOutcomesOut,
+        serialization_alias="ciOutcomes",
+    )
+
+
+class StyleGuidePolicySettingsPutRequest(BaseModel):
+    """Replace draft policy gate settings on a custom style guide (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    axis_gates: Optional[Dict[str, Any]] = Field(
+        default=None,
+        validation_alias=AliasChoices("axisGates", "axis_gates"),
+        serialization_alias="axisGates",
+    )
+    required_coverage: Optional[List[str]] = Field(
+        default=None,
+        validation_alias=AliasChoices("requiredCoverage", "required_coverage"),
+        serialization_alias="requiredCoverage",
+    )
+    ci_outcomes: Optional[StyleGuideCiOutcomesOut] = Field(
+        default=None,
+        validation_alias=AliasChoices("ciOutcomes", "ci_outcomes"),
+        serialization_alias="ciOutcomes",
+    )
+    snapshot: bool = Field(
+        default=True,
+        description="When true (default), also append an immutable policy pack version.",
+    )
+
+
+class StyleGuidePolicyVersionOut(BaseModel):
+    """One immutable style-guide policy pack version (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    guide_id: str = Field(serialization_alias="guideId")
+    version_number: int = Field(serialization_alias="versionNumber")
+    content_fingerprint: str = Field(serialization_alias="contentFingerprint")
+    axis_gates: Dict[str, Any] = Field(
+        default_factory=dict, serialization_alias="axisGates"
+    )
+    required_coverage: List[str] = Field(
+        default_factory=list, serialization_alias="requiredCoverage"
+    )
+    ci_outcomes: StyleGuideCiOutcomesOut = Field(
+        default_factory=StyleGuideCiOutcomesOut, serialization_alias="ciOutcomes"
+    )
+    actor_user_id: Optional[str] = Field(
+        default=None, serialization_alias="actorUserId"
+    )
+    actor_label: Optional[str] = Field(default=None, serialization_alias="actorLabel")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+
+
+class StyleGuidePolicyVersionListResponse(BaseModel):
+    """List of policy pack versions for a style guide (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    versions: List[StyleGuidePolicyVersionOut] = Field(default_factory=list)
+    count: int = 0
+
+
+class LintFindingDecisionOut(BaseModel):
+    """One finding remediation / waiver decision (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    tenant_id: str = Field(serialization_alias="tenantId")
+    project_id: Optional[str] = Field(default=None, serialization_alias="projectId")
+    source_fingerprint: str = Field(serialization_alias="sourceFingerprint")
+    rule_id: Optional[str] = Field(default=None, serialization_alias="ruleId")
+    state: str = Field(
+        description="open | acknowledged | waived | fixed | false_positive"
+    )
+    owner_user_id: Optional[str] = Field(default=None, serialization_alias="ownerUserId")
+    rationale: Optional[str] = None
+    linked_ticket: Optional[str] = Field(default=None, serialization_alias="linkedTicket")
+    expires_at: Optional[str] = Field(default=None, serialization_alias="expiresAt")
+    policy_version_id: Optional[str] = Field(
+        default=None, serialization_alias="policyVersionId"
+    )
+    evidence_fingerprint_at_decision: Optional[str] = Field(
+        default=None, serialization_alias="evidenceFingerprintAtDecision"
+    )
+    actor_user_id: Optional[str] = Field(default=None, serialization_alias="actorUserId")
+    actor_label: Optional[str] = Field(default=None, serialization_alias="actorLabel")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+    updated_at: Optional[str] = Field(default=None, serialization_alias="updatedAt")
+
+
+class LintFindingDecisionUpsertRequest(BaseModel):
+    """Create or update a finding decision / waiver (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_fingerprint: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices("sourceFingerprint", "source_fingerprint"),
+        serialization_alias="sourceFingerprint",
+    )
+    state: str = Field(
+        description="open | acknowledged | waived | fixed | false_positive"
+    )
+    project_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("projectId", "project_id"),
+        serialization_alias="projectId",
+    )
+    rule_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("ruleId", "rule_id"),
+        serialization_alias="ruleId",
+    )
+    owner_user_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("ownerUserId", "owner_user_id"),
+        serialization_alias="ownerUserId",
+    )
+    rationale: Optional[str] = None
+    linked_ticket: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("linkedTicket", "linked_ticket"),
+        serialization_alias="linkedTicket",
+    )
+    expires_at: Optional[datetime] = Field(
+        default=None,
+        validation_alias=AliasChoices("expiresAt", "expires_at"),
+        serialization_alias="expiresAt",
+        description="Required when state is waived.",
+    )
+    policy_version_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("policyVersionId", "policy_version_id"),
+        serialization_alias="policyVersionId",
+    )
+
+
+class LintFindingDecisionListResponse(BaseModel):
+    """List of finding decisions (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    decisions: List[LintFindingDecisionOut] = Field(default_factory=list)
+    count: int = 0
+
+
+class LintFindingDecisionEventOut(BaseModel):
+    """One audit event for a finding decision (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    decision_id: str = Field(serialization_alias="decisionId")
+    before_state: Optional[str] = Field(default=None, serialization_alias="beforeState")
+    after_state: str = Field(serialization_alias="afterState")
+    rationale: Optional[str] = None
+    expires_at: Optional[str] = Field(default=None, serialization_alias="expiresAt")
+    linked_ticket: Optional[str] = Field(default=None, serialization_alias="linkedTicket")
+    policy_version_id: Optional[str] = Field(
+        default=None, serialization_alias="policyVersionId"
+    )
+    actor_user_id: Optional[str] = Field(default=None, serialization_alias="actorUserId")
+    actor_label: Optional[str] = Field(default=None, serialization_alias="actorLabel")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+
+
+class LintPolicyAnnotatedFindingOut(BaseModel):
+    """One finding with raw evidence kept separate from the policy decision (CLX-1.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    evidence: LintEvidenceFindingOut
+    decision: Optional[LintFindingDecisionOut] = None
+    effective_state: str = Field(serialization_alias="effectiveState")
+    waived: bool = False
+
+
+class LintPolicyEvaluationOut(BaseModel):
+    """Persisted / computed policy evaluation (CLX-1.3, #4850)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[str] = None
+    subject_type: str = Field(serialization_alias="subjectType")
+    subject_id: str = Field(serialization_alias="subjectId")
+    policy_version_id: str = Field(serialization_alias="policyVersionId")
+    policy_content_fingerprint: str = Field(
+        serialization_alias="policyContentFingerprint"
+    )
+    passed: bool
+    gate_results: Dict[str, Any] = Field(
+        default_factory=dict, serialization_alias="gateResults"
+    )
+    evaluated_at: Optional[str] = Field(default=None, serialization_alias="evaluatedAt")
+
+
+class LintPolicyResponse(BaseModel):
+    """GET …/lint/policy response: pack pin, evaluation, findings with decisions."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    policy_version: StyleGuidePolicyVersionOut = Field(
+        serialization_alias="policyVersion"
+    )
+    evaluation: LintPolicyEvaluationOut
+    findings: List[LintPolicyAnnotatedFindingOut] = Field(default_factory=list)
+
+
+def style_guide_ci_outcomes_from_raw(raw: Optional[Any]) -> StyleGuideCiOutcomesOut:
+    """Build :class:`StyleGuideCiOutcomesOut` from a stored JSON object (with defaults)."""
+    from .policy_evaluate import default_ci_outcomes
+
+    d = default_ci_outcomes(raw if isinstance(raw, Mapping) else None)
+    return StyleGuideCiOutcomesOut(
+        fail_on_unwaived_errors=d["failOnUnwaivedErrors"],
+        fail_on_required_coverage=d["failOnRequiredCoverage"],
+        fail_on_axis_gates=d["failOnAxisGates"],
+    )
+
+
+def style_guide_policy_version_out_from_row(
+    row: Mapping[str, Any],
+) -> StyleGuidePolicyVersionOut:
+    """Shape a ``style_guide_policy_versions`` row into its API projection."""
+    from .policy_evaluate import default_required_coverage
+
+    return StyleGuidePolicyVersionOut(
+        id=str(row["id"]),
+        guide_id=str(row["guide_id"]),
+        version_number=int(row["version_number"]),
+        content_fingerprint=str(row["content_fingerprint"]),
+        axis_gates=row.get("axis_gates") if isinstance(row.get("axis_gates"), dict) else {},
+        required_coverage=default_required_coverage(row.get("required_coverage")),
+        ci_outcomes=style_guide_ci_outcomes_from_raw(row.get("ci_outcomes")),
+        actor_user_id=str(row["actor_user_id"]) if row.get("actor_user_id") else None,
+        actor_label=row.get("actor_label"),
+        created_at=_iso_or_none(row.get("created_at")),
+    )
+
+
+def lint_finding_decision_out_from_row(row: Mapping[str, Any]) -> LintFindingDecisionOut:
+    """Shape a ``lint_finding_decisions`` row into its API projection."""
+    return LintFindingDecisionOut(
+        id=str(row["id"]),
+        tenant_id=str(row["tenant_id"]),
+        project_id=str(row["project_id"]) if row.get("project_id") else None,
+        source_fingerprint=str(row["source_fingerprint"]),
+        rule_id=row.get("rule_id"),
+        state=str(row["state"]),
+        owner_user_id=str(row["owner_user_id"]) if row.get("owner_user_id") else None,
+        rationale=row.get("rationale"),
+        linked_ticket=row.get("linked_ticket"),
+        expires_at=_iso_or_none(row.get("expires_at")),
+        policy_version_id=(
+            str(row["policy_version_id"]) if row.get("policy_version_id") else None
+        ),
+        evidence_fingerprint_at_decision=row.get("evidence_fingerprint_at_decision"),
+        actor_user_id=str(row["actor_user_id"]) if row.get("actor_user_id") else None,
+        actor_label=row.get("actor_label"),
+        created_at=_iso_or_none(row.get("created_at")),
+        updated_at=_iso_or_none(row.get("updated_at")),
+    )
+
+
+def lint_policy_evaluation_out_from_row(
+    row: Mapping[str, Any],
+    *,
+    subject_type: str,
+    subject_id: str,
+) -> LintPolicyEvaluationOut:
+    """Shape a ``lint_policy_evaluations`` row into its API projection."""
+    return LintPolicyEvaluationOut(
+        id=str(row["id"]) if row.get("id") is not None else None,
+        subject_type=subject_type,
+        subject_id=subject_id,
+        policy_version_id=str(row["policy_version_id"]),
+        policy_content_fingerprint=str(row["policy_content_fingerprint"]),
+        passed=bool(row.get("passed")),
+        gate_results=row.get("gate_results") if isinstance(row.get("gate_results"), dict) else {},
+        evaluated_at=_iso_or_none(row.get("evaluated_at") or row.get("created_at")),
+    )
+
+
 def _iso_or_none(value: Any) -> Optional[str]:
     """Render a timestamp column value as an ISO-8601 string, passing strings through."""
     if value is None:

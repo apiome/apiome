@@ -58,6 +58,45 @@ _REPORT = {
     "compatibilityOverall": None,
 }
 
+_POLICY_PASSED = {
+    "policyVersion": {"id": "pv1", "versionNumber": 1},
+    "evaluation": {
+        "subjectType": "catalog_revision",
+        "subjectId": _VERSION_ID,
+        "policyVersionId": "pv1",
+        "policyContentFingerprint": "abc",
+        "passed": True,
+        "gateResults": {
+            "unwaived_errors": {"passed": True},
+            "required_coverage": {"passed": True},
+            "axis_gates": {"passed": True},
+        },
+    },
+    "findings": [],
+}
+
+_POLICY_FAILED = {
+    "policyVersion": {"id": "pv1", "versionNumber": 1},
+    "evaluation": {
+        "subjectType": "catalog_revision",
+        "subjectId": _VERSION_ID,
+        "policyVersionId": "pv1",
+        "policyContentFingerprint": "abc",
+        "passed": False,
+        "gateResults": {
+            "unwaived_errors": {"passed": False},
+            "required_coverage": {"passed": True},
+            "axis_gates": {"passed": True},
+        },
+    },
+    "findings": [],
+}
+
+_LINT_URL = f"http://localhost:8000/v1/versions/acme-corp/{_PROJECT_ID}/{_VERSION_ID}/lint"
+_POLICY_URL = (
+    f"http://localhost:8000/v1/versions/acme-corp/{_PROJECT_ID}/{_VERSION_ID}/lint/policy"
+)
+
 
 @pytest.fixture
 def api_key_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -210,3 +249,81 @@ def test_lint_omits_stored_score_line_when_current(httpx_mock: object) -> None:
     result = runner.invoke(app, ["lint", "--project", "payments-api", "--version", "1.0.0"])
     assert result.exit_code == EXIT_SUCCESS
     assert "Stored score" not in result.stdout
+
+
+def test_lint_fail_on_policy_exits_when_failed(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(url=_LINT_URL, json=_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, json=_POLICY_FAILED)
+    result = runner.invoke(
+        app,
+        ["lint", "--project", "payments-api", "--version", "1.0.0", "--fail-on-policy"],
+    )
+    assert result.exit_code == EXIT_ERROR
+    assert "Policy evaluation: passed no" in result.stdout
+    assert "Failed gates: unwaived_errors" in result.stdout
+
+
+def test_lint_fail_on_policy_passes_when_ok(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(url=_LINT_URL, json=_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, json=_POLICY_PASSED)
+    result = runner.invoke(
+        app,
+        ["lint", "--project", "payments-api", "--version", "1.0.0", "--fail-on-policy"],
+    )
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Policy evaluation: passed yes" in result.stdout
+    assert "Failed gates:" not in result.stdout
+
+
+def test_lint_fail_on_policy_json_output(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(url=_LINT_URL, json=_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, json=_POLICY_PASSED)
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "lint",
+            "--project",
+            "payments-api",
+            "--version",
+            "1.0.0",
+            "--fail-on-policy",
+        ],
+    )
+    assert result.exit_code == EXIT_SUCCESS
+    payload = json.loads(result.stdout)
+    assert payload["lint"]["score"] == 72
+    assert payload["policy"]["evaluation"]["passed"] is True
+
+
+def test_lint_fail_on_policy_with_base_version(httpx_mock: object) -> None:
+    _mock_scope(httpx_mock)
+    httpx_mock.add_response(
+        url=f"http://localhost:8000/v1/versions/acme-corp/{_PROJECT_ID}/by-version/0.9.0",
+        json={**_VERSION, "id": _BASE_VERSION_ID, "version": "0.9.0", "slug": "0.9.0"},
+    )
+    httpx_mock.add_response(
+        url=f"{_LINT_URL}?baseRevisionId={_BASE_VERSION_ID}",
+        json=_REPORT,
+    )
+    httpx_mock.add_response(
+        url=f"{_POLICY_URL}?baseRevisionId={_BASE_VERSION_ID}",
+        json=_POLICY_PASSED,
+    )
+    result = runner.invoke(
+        app,
+        [
+            "lint",
+            "--project",
+            "payments-api",
+            "--version",
+            "1.0.0",
+            "--base-version",
+            "0.9.0",
+            "--fail-on-policy",
+        ],
+    )
+    assert result.exit_code == EXIT_SUCCESS

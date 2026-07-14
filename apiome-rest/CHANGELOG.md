@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.32] - 2026-07-14
+
+### Added
+- **Versioned policy packs, waivers, and remediation states (CLX-1.3, #4850)** — extend
+  style guides into immutable `style_guide_policy_versions` packs (rules + axis gates +
+  required coverage + CI outcomes); finding lifecycle / waivers with rationale, expiry,
+  actor, and audit events; append-only `lint_policy_evaluations` that keep raw evidence
+  separate from policy decisions. New REST surfaces for guide policy settings/versions,
+  `GET …/lint/policy`, and `/v1/lint/decisions`. OpenAPI **1.0.79**.
+
 ## [1.117.31] - 2026-07-14
 
 ### Added

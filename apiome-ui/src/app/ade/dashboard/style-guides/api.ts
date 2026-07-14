@@ -99,6 +99,59 @@ export interface VersionOption {
   label: string;
 }
 
+/** CI outcome toggles on a policy pack / draft guide settings (CLX-1.3, #4850). */
+export interface GuideCiOutcomes {
+  failOnUnwaivedErrors: boolean;
+  failOnRequiredCoverage: boolean;
+  failOnAxisGates: boolean;
+}
+
+/** Draft policy gate settings — `GET/PUT /api/style-guides/{id}/policy` (CLX-1.3, #4850). */
+export interface GuidePolicySettings {
+  guideId: string;
+  axisGates: Record<string, { minGrade?: string; minScore?: number }>;
+  requiredCoverage: string[];
+  ciOutcomes: GuideCiOutcomes;
+}
+
+/** One immutable policy pack version (CLX-1.3, #4850). */
+export interface GuidePolicyVersion {
+  id: string;
+  guideId: string;
+  versionNumber: number;
+  contentFingerprint: string;
+  axisGates: Record<string, unknown>;
+  requiredCoverage: string[];
+  ciOutcomes: GuideCiOutcomes;
+  actorLabel: string | null;
+  createdAt: string | null;
+}
+
+/** List response — `GET /api/style-guides/{id}/policy-versions` (CLX-1.3, #4850). */
+export interface GuidePolicyVersionList {
+  versions: GuidePolicyVersion[];
+  count: number;
+}
+
+/** Default CI outcome toggles when the API omits partial keys. */
+export const DEFAULT_GUIDE_CI_OUTCOMES: GuideCiOutcomes = {
+  failOnUnwaivedErrors: true,
+  failOnRequiredCoverage: true,
+  failOnAxisGates: true,
+};
+
+/** Required-coverage axes offered in the policy editor (CLX-1.2 quality axis). */
+export const POLICY_COVERAGE_AXES = ['quality'] as const;
+
+/** Letter grades for axis gate floors (best → worst). */
+export const POLICY_GRADE_OPTIONS = ['A', 'B', 'C', 'D', 'F'] as const;
+
+/** Truncate a content fingerprint for list display. */
+export function truncatePolicyFingerprint(fingerprint: string, length = 12): string {
+  if (fingerprint.length <= length) return fingerprint;
+  return `${fingerprint.slice(0, length)}…`;
+}
+
 /** The caller's permissions from `/api/access/permissions/me` (admin-gates mutations). */
 export interface MyPermissions {
   is_admin: boolean;

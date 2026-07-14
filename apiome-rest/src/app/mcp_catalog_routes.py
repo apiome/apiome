@@ -91,6 +91,7 @@ from .mcp_surface_metrics import compute_surface_metrics
 from .models import (
     LintAxesResponse,
     LintEvidenceResponse,
+    LintPolicyResponse,
     McpBrowseResponse,
     McpCredentialDeleteResponse,
     McpCredentialStatusResponse,
@@ -1409,6 +1410,43 @@ async def get_mcp_endpoint_version_lint_axes(
             subject_id=str(version_id),
         )
     )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/policy",
+    response_model=LintPolicyResponse,
+)
+async def get_mcp_endpoint_version_lint_policy(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    policy_version_id: Optional[str] = Query(
+        default=None,
+        alias="policyVersionId",
+        description="Optional historical policy pack id; defaults to the latest for the assigned guide.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintPolicyResponse:
+    """Evaluate the assigned style-guide policy pack against MCP version evidence (CLX-1.3, #4850)."""
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    from .lint_policy_service import evaluate_mcp_version_policy
+
+    try:
+        return evaluate_mcp_version_policy(
+            tenant_id=tenant_id,
+            version_id=str(version_id),
+            policy_version_id=policy_version_id,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 # ===========================================================================

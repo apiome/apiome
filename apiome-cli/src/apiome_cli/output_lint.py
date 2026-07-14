@@ -6,7 +6,7 @@ from typing import Any
 
 import typer
 
-from apiome_cli.output import ListColumn, emit_list_table
+from apiome_cli.output import ListColumn, emit_json, emit_list_table
 
 #: Letter grades ordered best-to-worst for ``--min-grade`` comparisons.
 GRADE_ORDER = ("A", "B", "C", "D", "F")
@@ -27,6 +27,73 @@ def _severity_sort_key(finding: dict[str, Any]) -> tuple[int, str, str]:
     order = {"error": 0, "warning": 1, "info": 2}
     severity = str(finding.get("severity", ""))
     return (order.get(severity, 3), str(finding.get("path", "")), str(finding.get("rule", "")))
+
+
+def failed_policy_gates(gate_results: dict[str, Any]) -> list[str]:
+    """Return gate names whose ``passed`` flag is explicitly false."""
+    failed: list[str] = []
+    for name, result in gate_results.items():
+        if isinstance(result, dict) and result.get("passed") is False:
+            failed.append(str(name))
+    return sorted(failed)
+
+
+def policy_evaluation_passed(policy: dict[str, Any]) -> bool:
+    """True when the policy payload's ``evaluation.passed`` is true."""
+    evaluation = policy.get("evaluation")
+    return isinstance(evaluation, dict) and evaluation.get("passed") is True
+
+
+def emit_lint_policy_summary(policy: dict[str, Any]) -> None:
+    """Print a short human summary of a lint policy evaluation."""
+    evaluation = policy.get("evaluation") if isinstance(policy.get("evaluation"), dict) else {}
+    passed = evaluation.get("passed")
+    gate_results = evaluation.get("gateResults")
+    gate_results = gate_results if isinstance(gate_results, dict) else {}
+
+    policy_version = policy.get("policyVersion")
+    policy_version = policy_version if isinstance(policy_version, dict) else {}
+    version_label = policy_version.get("id") or evaluation.get("policyVersionId") or "?"
+
+    status = "yes" if passed is True else "no"
+    typer.echo(f"Policy evaluation: passed {status} (policyVersion {version_label})")
+    failed = failed_policy_gates(gate_results)
+    if failed:
+        typer.echo(f"Failed gates: {', '.join(failed)}")
+    typer.echo("")
+
+
+def emit_lint_command_output(
+    *,
+    json_mode: bool,
+    report: dict[str, Any],
+    policy: dict[str, Any] | None,
+    fail_on_policy: bool,
+) -> None:
+    """Render lint report output, optionally bundling policy in JSON mode."""
+    if json_mode:
+        if fail_on_policy and policy is not None:
+            emit_json({"lint": report, "policy": policy})
+        else:
+            emit_json(report)
+        return
+
+    emit_lint_report(report)
+    if fail_on_policy and policy is not None:
+        emit_lint_policy_summary(policy)
+
+
+def lint_command_should_fail(
+    report: dict[str, Any],
+    *,
+    min_grade: str | None,
+    policy: dict[str, Any] | None,
+    fail_on_policy: bool,
+) -> bool:
+    """True when ``--min-grade`` or ``--fail-on-policy`` gates should exit non-zero."""
+    if min_grade is not None and not grade_meets_minimum(str(report.get("grade", "")), min_grade):
+        return True
+    return fail_on_policy and policy is not None and not policy_evaluation_passed(policy)
 
 
 def emit_lint_report(report: dict[str, Any]) -> None:

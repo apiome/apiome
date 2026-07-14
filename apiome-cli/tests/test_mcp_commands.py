@@ -7,7 +7,7 @@ import json
 import pytest
 from typer.testing import CliRunner
 
-from apiome_cli.exit_codes import EXIT_SUCCESS, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.main import app
 
 from helpers import strip_ansi
@@ -438,6 +438,7 @@ _VERSION_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 _DISCOVER_URL = f"{_ENDPOINT_URL}/discover"
 _JOB_URL = f"{_ENDPOINT_URL}/jobs/{_JOB_ID}"
 _LINT_URL = f"{_ENDPOINT_URL}/versions/{_VERSION_ID}/lint"
+_POLICY_URL = f"{_ENDPOINT_URL}/versions/{_VERSION_ID}/lint/policy"
 
 _QUEUED_JOB = {
     "id": _JOB_ID,
@@ -673,6 +674,40 @@ _LINT_REPORT = {
     "scoredAt": "2026-06-28T00:00:00Z",
 }
 
+_MCP_POLICY_PASSED = {
+    "policyVersion": {"id": "pv1", "versionNumber": 1},
+    "evaluation": {
+        "subjectType": "mcp_endpoint_version",
+        "subjectId": _VERSION_ID,
+        "policyVersionId": "pv1",
+        "policyContentFingerprint": "abc",
+        "passed": True,
+        "gateResults": {
+            "unwaived_errors": {"passed": True},
+            "required_coverage": {"passed": True},
+            "axis_gates": {"passed": True},
+        },
+    },
+    "findings": [],
+}
+
+_MCP_POLICY_FAILED = {
+    "policyVersion": {"id": "pv1", "versionNumber": 1},
+    "evaluation": {
+        "subjectType": "mcp_endpoint_version",
+        "subjectId": _VERSION_ID,
+        "policyVersionId": "pv1",
+        "policyContentFingerprint": "abc",
+        "passed": False,
+        "gateResults": {
+            "unwaived_errors": {"passed": True},
+            "required_coverage": {"passed": False},
+            "axis_gates": {"passed": True},
+        },
+    },
+    "findings": [],
+}
+
 
 def _endpoint_with_current(version_id: str | None) -> dict[str, object]:
     """Clone the endpoint fixture with a chosen ``current_version_id``."""
@@ -783,3 +818,48 @@ def test_mcp_lint_global_json_flag(httpx_mock: object, mcp_env: None) -> None:
     assert result.exit_code == EXIT_SUCCESS
     payload = json.loads(result.stdout)
     assert payload["versionId"] == _VERSION_ID
+
+
+def test_mcp_lint_fail_on_policy_exits_when_failed(httpx_mock: object, mcp_env: None) -> None:
+    httpx_mock.add_response(url=_LINT_URL, method="GET", json=_LINT_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, method="GET", json=_MCP_POLICY_FAILED)
+    result = runner.invoke(
+        app,
+        ["mcp", "lint", _ENDPOINT_ID, "--version", _VERSION_ID, "--fail-on-policy"],
+    )
+    assert result.exit_code == EXIT_ERROR
+    output = strip_ansi(result.stdout)
+    assert "Policy evaluation: passed no" in output
+    assert "Failed gates: required_coverage" in output
+
+
+def test_mcp_lint_fail_on_policy_passes_when_ok(httpx_mock: object, mcp_env: None) -> None:
+    httpx_mock.add_response(url=_LINT_URL, method="GET", json=_LINT_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, method="GET", json=_MCP_POLICY_PASSED)
+    result = runner.invoke(
+        app,
+        ["mcp", "lint", _ENDPOINT_ID, "--version", _VERSION_ID, "--fail-on-policy"],
+    )
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Policy evaluation: passed yes" in strip_ansi(result.stdout)
+
+
+def test_mcp_lint_fail_on_policy_json_output(httpx_mock: object, mcp_env: None) -> None:
+    httpx_mock.add_response(url=_LINT_URL, method="GET", json=_LINT_REPORT)
+    httpx_mock.add_response(url=_POLICY_URL, method="GET", json=_MCP_POLICY_PASSED)
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "mcp",
+            "lint",
+            _ENDPOINT_ID,
+            "--version",
+            _VERSION_ID,
+            "--fail-on-policy",
+        ],
+    )
+    assert result.exit_code == EXIT_SUCCESS
+    payload = json.loads(result.stdout)
+    assert payload["lint"]["score"] == 82
+    assert payload["policy"]["evaluation"]["passed"] is True

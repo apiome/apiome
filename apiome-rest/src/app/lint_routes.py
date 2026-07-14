@@ -15,12 +15,13 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .axis_score import catalog_axis_evaluation
-from .auth import validate_authentication, validate_session_credentials
+from .auth import get_authenticated_user_id, validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
 from .import_routing import PUBLISHABLE_FORMATS
 from .lint_evidence import SUBJECT_CATALOG_REVISION
+from .lint_policy_service import evaluate_catalog_revision_policy
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .models import (
     CustomRuleOut,
@@ -30,18 +31,26 @@ from .models import (
     LintAxesResponse,
     LintCategoryScoreOut,
     LintEvidenceResponse,
+    LintFindingDecisionEventOut,
+    LintFindingDecisionListResponse,
+    LintFindingDecisionOut,
+    LintFindingDecisionUpsertRequest,
     LintFindingOut,
+    LintPolicyResponse,
     LintReportResponse,
     LintRuleCatalogResponse,
     LintRuleOut,
     lint_axis_evaluation_out_from_row,
     lint_axis_fields_from_evaluation,
     lint_evidence_response_from_rows,
+    lint_finding_decision_out_from_row,
 )
+from .policy_evaluate import DECISION_STATES
 from .schema_lint import merge_compatibility_findings
 from .style_guide_engine import guided_lint_openapi_spec
 
 router = APIRouter(prefix="/v1/versions", tags=["lint"])
+decisions_router = APIRouter(prefix="/v1/lint/decisions", tags=["lint-decisions"])
 
 # The rule-catalog registry (GOV-1.2) is not version-scoped, so it lives under its own prefix.
 rules_router = APIRouter(prefix="/v1/lint", tags=["lint"])
@@ -585,3 +594,166 @@ async def lint_revision_axes(
             subject_id=version_record_id,
         )
     )
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/lint/policy",
+    response_model=LintPolicyResponse,
+)
+async def lint_revision_policy(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    policy_version_id: Optional[str] = Query(
+        default=None,
+        alias="policyVersionId",
+        description="Optional historical policy pack id; defaults to the latest for the assigned guide.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintPolicyResponse:
+    """
+    Evaluate the assigned style-guide policy pack against revision evidence (CLX-1.3, #4850).
+
+    Separates raw findings from policy decisions. Waivers require rationale + expiry and reopen
+    when expired. Persists an append-only ``lint_policy_evaluations`` row for reproducibility.
+    """
+    _ = tenant_slug
+    tenant_id = auth_data["tenant_id"]
+
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
+    if version["project_id"] != project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Revision does not belong to the specified project",
+        )
+
+    try:
+        return evaluate_catalog_revision_policy(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_record_id=version_record_id,
+            policy_version_id=policy_version_id,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@decisions_router.get("", response_model=LintFindingDecisionListResponse)
+async def list_lint_finding_decisions(
+    project_id: Optional[str] = Query(default=None, alias="projectId"),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintFindingDecisionListResponse:
+    """List finding remediation / waiver decisions for the tenant (CLX-1.3, #4850)."""
+    tenant_id = auth_data["tenant_id"]
+    rows = db.list_lint_finding_decisions(tenant_id, project_id=project_id)
+    decisions = [lint_finding_decision_out_from_row(r) for r in rows]
+    return LintFindingDecisionListResponse(decisions=decisions, count=len(decisions))
+
+
+@decisions_router.get("/{decision_id}", response_model=LintFindingDecisionOut)
+async def get_lint_finding_decision(
+    decision_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintFindingDecisionOut:
+    """Fetch one finding decision by id (CLX-1.3, #4850)."""
+    tenant_id = auth_data["tenant_id"]
+    row = db.get_lint_finding_decision(decision_id, tenant_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    return lint_finding_decision_out_from_row(row)
+
+
+@decisions_router.post("", response_model=LintFindingDecisionOut, status_code=201)
+async def upsert_lint_finding_decision(
+    body: LintFindingDecisionUpsertRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LintFindingDecisionOut:
+    """Create or update a finding decision / waiver (CLX-1.3, #4850).
+
+    Waived state requires non-empty rationale and an expiry timestamp.
+    """
+    tenant_id = auth_data["tenant_id"]
+    state = (body.state or "").strip().lower()
+    if state not in DECISION_STATES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid state; expected one of {', '.join(DECISION_STATES)}",
+        )
+    if state == "waived":
+        if not (body.rationale or "").strip():
+            raise HTTPException(
+                status_code=400, detail="Waivers require a non-empty rationale"
+            )
+        if body.expires_at is None:
+            raise HTTPException(
+                status_code=400, detail="Waivers require an expiresAt timestamp"
+            )
+
+    if body.project_id:
+        project = db.get_project_by_id(body.project_id, tenant_id)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+    actor = get_authenticated_user_id(auth_data)
+    row = db.upsert_lint_finding_decision(
+        tenant_id=tenant_id,
+        source_fingerprint=body.source_fingerprint.strip(),
+        state=state,
+        project_id=body.project_id,
+        rule_id=body.rule_id,
+        owner_user_id=body.owner_user_id,
+        rationale=(body.rationale or "").strip() or None,
+        linked_ticket=body.linked_ticket,
+        expires_at=body.expires_at,
+        policy_version_id=body.policy_version_id,
+        evidence_fingerprint_at_decision=body.source_fingerprint.strip(),
+        actor_user_id=actor,
+        actor_label=actor,
+    )
+    return lint_finding_decision_out_from_row(row)
+
+
+@decisions_router.get(
+    "/{decision_id}/events",
+    response_model=list[LintFindingDecisionEventOut],
+)
+async def list_lint_finding_decision_events(
+    decision_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> list[LintFindingDecisionEventOut]:
+    """Audit history for a finding decision (CLX-1.3, #4850)."""
+    tenant_id = auth_data["tenant_id"]
+    decision = db.get_lint_finding_decision(decision_id, tenant_id)
+    if not decision:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    rows = db.list_lint_finding_decision_events(decision_id, tenant_id)
+    out: list[LintFindingDecisionEventOut] = []
+    for row in rows:
+        out.append(
+            LintFindingDecisionEventOut(
+                id=str(row["id"]),
+                decision_id=str(row["decision_id"]),
+                before_state=row.get("before_state"),
+                after_state=str(row["after_state"]),
+                rationale=row.get("rationale"),
+                expires_at=str(row["expires_at"]) if row.get("expires_at") else None,
+                linked_ticket=row.get("linked_ticket"),
+                policy_version_id=(
+                    str(row["policy_version_id"]) if row.get("policy_version_id") else None
+                ),
+                actor_user_id=(
+                    str(row["actor_user_id"]) if row.get("actor_user_id") else None
+                ),
+                actor_label=row.get("actor_label"),
+                created_at=str(row["created_at"]) if row.get("created_at") else None,
+            )
+        )
+    return out

@@ -170,6 +170,15 @@ def mcp_endpoint_version_lint(
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/lint"
 
 
+def mcp_version_lint_policy(
+    tenant_slug: str,
+    endpoint_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Style-guide policy evaluation for one MCP version snapshot."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/lint/policy"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 
@@ -209,6 +218,15 @@ def version_lint(
 ) -> str:
     """Quality-scoring / lint report for a version (GET .../lint)."""
     return f"{version_record(tenant_slug, project_id, version_record_id)}/lint"
+
+
+def version_lint_policy(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Style-guide policy evaluation for a catalog revision (GET .../lint/policy)."""
+    return f"{version_record(tenant_slug, project_id, version_id)}/lint/policy"
 
 
 def version_publish(
