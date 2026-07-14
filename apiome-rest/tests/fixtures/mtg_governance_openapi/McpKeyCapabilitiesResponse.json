@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "enabled_tools": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "mode": {
+      "enum": [
+        "inherit",
+        "explicit"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "mode",
+    "enabled_tools"
+  ],
+  "type": "object"
+}

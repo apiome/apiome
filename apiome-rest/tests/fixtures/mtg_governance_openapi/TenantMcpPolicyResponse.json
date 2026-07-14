@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "allow_anonymous_mcp": {
+      "type": "boolean"
+    },
+    "default_mode": {
+      "enum": [
+        "all",
+        "inherit_registry",
+        "explicit"
+      ],
+      "type": "string"
+    },
+    "tools": {
+      "items": {
+        "$ref": "#/components/schemas/TenantMcpPolicyTool"
+      },
+      "type": "array"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "updated_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "default_mode",
+    "allow_anonymous_mcp",
+    "tools"
+  ],
+  "type": "object"
+}

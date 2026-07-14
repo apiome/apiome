@@ -1,0 +1,15 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "tools": {
+      "items": {
+        "$ref": "#/components/schemas/McpKeyEffectiveToolRow"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "tools"
+  ],
+  "type": "object"
+}

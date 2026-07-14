@@ -1,0 +1,26 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "deny_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "tool_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tool_id",
+    "enabled"
+  ],
+  "type": "object"
+}
