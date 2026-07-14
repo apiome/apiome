@@ -75,7 +75,11 @@ until implemented as handlers.
 **Effective policy resolver (MTG-1.4):** Ceiling, defaults, and per-key grants resolve
 to one boolean per tool via ``app.mcp_effective_policy`` (re-exported as
 ``apiome_mcp.effective_policy``). See **[docs/EFFECTIVE_POLICY.md](docs/EFFECTIVE_POLICY.md)**.
-Call-time enable-set gating wires this in MTG-2.2.
+
+**Call gate (MTG-2.2):** Authenticated ``tools/call`` runs the MTG-1.4 resolver after
+auth resolve; disabled tools raise a FastMCP ``ToolError`` whose message starts with
+stable code ``capability_disabled`` (tool name + tenant-admin enable guidance; no key
+secrets). Anonymous callers are deferred to MTG-2.3.
 
 **List-always (MTG-2.1):** ``tools/list`` always returns the full live registry —
 never filtered by tenant/key enable-set (contrast AGX-3.1). See

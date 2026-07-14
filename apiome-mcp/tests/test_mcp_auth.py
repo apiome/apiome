@@ -102,6 +102,8 @@ def test_validate_success_returns_scope() -> None:
         "key_hash": stored_hash,
         "expires_at": None,
         "revoked_at": None,
+        "capability_mode": "explicit",
+        "enabled_tools": ["ping", "spec.list"],
     }
     pool = _pool_mock([row])
 
@@ -114,8 +116,11 @@ def test_validate_success_returns_scope() -> None:
             tenant_id=tid,
             label="unit",
             scope=Scope(tenants=[tid], projects=[pid]),
+            capability_mode="explicit",
+            enabled_tools=frozenset({"ping", "spec.list"}),
         )
         assert auth == expected
+        assert auth.key_capability_snapshot().enabled_tools == frozenset({"ping", "spec.list"})
 
     asyncio.run(run())
 
