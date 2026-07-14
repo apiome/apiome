@@ -14,8 +14,10 @@ from app.mcp_effective_policy import (
     KeyCapabilitySnapshot,
     TenantMcpPolicySnapshot,
     TenantToolFlags,
+    is_tool_anonymously_allowed,
     is_tool_effectively_enabled,
     preview_effective_tools,
+    resolve_tool_anonymous,
     resolve_tool_effective,
     tool_in_ceiling,
     tool_in_default_enable_set,
@@ -272,3 +274,159 @@ def test_preview_uses_live_registry_order_by_default():
     assert preview
     assert all(row.enabled for row in preview)
     assert all(row.deny_reason is None for row in preview)
+
+
+# ---------------------------------------------------------------------------
+# Anonymous call policy (MTG-2.3 / #4772)
+# ---------------------------------------------------------------------------
+
+
+def _flags_anon(
+    ceiling: bool,
+    default: bool,
+    anonymous: bool = True,
+) -> TenantToolFlags:
+    return TenantToolFlags(
+        in_ceiling=ceiling,
+        default_enabled=default,
+        anonymous_enabled=anonymous,
+    )
+
+
+def _tenant_anon(
+    mode: str,
+    *,
+    allow_anonymous_mcp: bool = True,
+    tools: Optional[dict] = None,
+) -> TenantMcpPolicySnapshot:
+    return TenantMcpPolicySnapshot(
+        default_mode=mode,  # type: ignore[arg-type]
+        tools=tools or {},
+        allow_anonymous_mcp=allow_anonymous_mcp,
+    )
+
+
+@pytest.mark.parametrize(
+    "case_id,tool,tenant,expected_enabled,expected_deny",
+    [
+        (
+            "legacy_unseeded_allows",
+            "ping",
+            None,
+            True,
+            None,
+        ),
+        (
+            "all_mode_ignores_rows",
+            "spec.search",
+            _tenant_anon(
+                "all",
+                tools={"spec.search": _flags_anon(True, True, False)},
+            ),
+            True,
+            None,
+        ),
+        (
+            "kill_switch_denies_all",
+            "ping",
+            _tenant_anon("all", allow_anonymous_mcp=False),
+            False,
+            DenyReason.ANONYMOUS_MCP_DISABLED,
+        ),
+        (
+            "explicit_not_in_anon_set",
+            "spec.search",
+            _tenant_anon(
+                "explicit",
+                tools={
+                    "ping": _flags_anon(True, True, True),
+                    "spec.search": _flags_anon(True, True, False),
+                },
+            ),
+            False,
+            DenyReason.NOT_IN_ANONYMOUS_ENABLE_SET,
+        ),
+        (
+            "explicit_in_anon_set",
+            "ping",
+            _tenant_anon(
+                "explicit",
+                tools={"ping": _flags_anon(True, True, True)},
+            ),
+            True,
+            None,
+        ),
+        (
+            "explicit_missing_row",
+            "spec.list",
+            _tenant_anon(
+                "explicit",
+                tools={"ping": _flags_anon(True, True, True)},
+            ),
+            False,
+            DenyReason.NOT_IN_ANONYMOUS_ENABLE_SET,
+        ),
+        (
+            "inherit_registry_absent_row_allows",
+            "spec.list",
+            _tenant_anon("inherit_registry", tools={}),
+            True,
+            None,
+        ),
+        (
+            "inherit_registry_flag_off",
+            "spec.search",
+            _tenant_anon(
+                "inherit_registry",
+                tools={"spec.search": _flags_anon(True, True, False)},
+            ),
+            False,
+            DenyReason.NOT_IN_ANONYMOUS_ENABLE_SET,
+        ),
+        (
+            "unknown_tool",
+            "ghost.tool",
+            _tenant_anon("all"),
+            False,
+            DenyReason.NOT_IN_REGISTRY,
+        ),
+        (
+            "anon_off_independent_of_key_ceiling",
+            "spec.search",
+            _tenant_anon(
+                "explicit",
+                # Not in ceiling, but anonymous_enabled true — anonymous set is independent
+                tools={"spec.search": _flags_anon(False, False, True)},
+            ),
+            True,
+            None,
+        ),
+    ],
+)
+def test_anonymous_resolver_matrix(
+    case_id: str,
+    tool: str,
+    tenant: Optional[TenantMcpPolicySnapshot],
+    expected_enabled: bool,
+    expected_deny: Optional[DenyReason],
+) -> None:
+    enabled, reason = resolve_tool_anonymous(tool, tenant=tenant, registry=_REG)
+    assert enabled is expected_enabled, case_id
+    assert reason is expected_deny, case_id
+    assert is_tool_anonymously_allowed(tool, tenant=tenant, registry=_REG) is expected_enabled
+
+
+def test_authenticated_resolver_ignores_anonymous_fields() -> None:
+    """Key gating must not consult allow_anonymous_mcp / anonymous_enabled."""
+    tenant = _tenant_anon(
+        "all",
+        allow_anonymous_mcp=False,
+        tools={"ping": _flags_anon(True, True, False)},
+    )
+    key = _key("explicit", {"ping"})
+    enabled, reason = resolve_tool_effective(
+        "ping", key=key, tenant=tenant, registry=_REG
+    )
+    assert enabled is True
+    assert reason is None
+

@@ -80,7 +80,13 @@ to one boolean per tool via ``app.mcp_effective_policy`` (re-exported as
 auth resolve; disabled tools raise a FastMCP ``ToolError`` whose message starts with
 stable code ``capability_disabled`` (tool name + tenant-admin enable guidance; no key
 secrets). Every authenticated denial also appends a row to ``mcp_capability_denials``
-(MTG-2.4 / #4773; no tool arguments). Anonymous callers are deferred to MTG-2.3.
+(MTG-2.4 / #4773; no tool arguments).
+
+**Anonymous call policy (MTG-2.3):** When ``APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`` is
+set, anonymous ``tools/call`` is gated by that host tenant's ``allow_anonymous_mcp`` +
+anonymous enable-set (defaults preserve today's public behavior). When unset, anonymous
+callers passthrough. ``tools/list`` stays full. See
+**[docs/ANONYMOUS_CALL_POLICY.md](docs/ANONYMOUS_CALL_POLICY.md)**.
 
 **Policy freshness (MTG-2.5):** Tenant policy and key grants are loaded from Postgres
 on **every** authenticated ``tools/call`` (lag budget ``0``) — an admin disable takes
