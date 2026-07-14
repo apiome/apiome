@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "rule_id": "example.no-empty-servers",
+      "message": "API must declare at least one server",
+      "severity": "error",
+      "path": "openapi.yaml",
+      "start_line": 1,
+      "start_column": 1
+    }
+  ]
+}

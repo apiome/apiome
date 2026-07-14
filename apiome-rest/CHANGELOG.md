@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.117.33] - 2026-07-14
+
+### Added
+- **Sandboxed external-linter adapter framework (CLX-2.1, #4851)** — restricted adapter SPI
+  over the MFI-5.x toolchain runner: adapters declare formats, scan modes, and availability;
+  commands run under no-network sandbox with bounded I/O/resources and secret-redacted logs;
+  shared JSON / JSONL / SARIF parsers preserve source rule IDs and locations; timeout /
+  unavailable / malformed / crash map to CLX-1.1 coverage evidence. Buf lint is the first
+  real adapter (`buf.lint`); `proto_lint.run_buf_lint` delegates to it. Fixture corpus and
+  conformance tests cover a fake tool plus gated real `buf`. OpenAPI **1.0.80**.
+
 ## [1.117.32] - 2026-07-14
 
 ### Added

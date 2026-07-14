@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "fake-linter",
+          "version": "1.0.0",
+          "rules": [
+            {
+              "id": "source-rule-alpha",
+              "shortDescription": { "text": "Alpha rule" }
+            },
+            {
+              "id": "source-rule-beta",
+              "shortDescription": { "text": "Beta rule" }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "source-rule-alpha",
+          "level": "error",
+          "message": { "text": "Alpha violation at the servers block" },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": { "uri": "openapi.yaml" },
+                "region": { "startLine": 8, "startColumn": 2 }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "source-rule-beta",
+          "level": "warning",
+          "message": { "text": "Beta style note" },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": { "uri": "paths/pets.yaml" },
+                "region": { "startLine": 3, "startColumn": 1 }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
