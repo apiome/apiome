@@ -14258,6 +14258,72 @@ class Database:
             ],
         }
 
+    @staticmethod
+    def _normalize_mcp_policy_audit_snapshot(
+        *,
+        default_mode: str,
+        allow_anonymous_mcp: bool,
+        tools: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Canonical JSON shape for before/after comparison and audit storage (MTG-5.2)."""
+        normalized_tools = [
+            {
+                "tool_id": str(tool["tool_id"]),
+                "in_ceiling": bool(tool["in_ceiling"]),
+                "default_enabled": bool(tool["default_enabled"]),
+                "anonymous_enabled": bool(tool.get("anonymous_enabled", True)),
+            }
+            for tool in tools
+        ]
+        normalized_tools.sort(key=lambda t: t["tool_id"])
+        return {
+            "default_mode": str(default_mode),
+            "allow_anonymous_mcp": bool(allow_anonymous_mcp),
+            "tools": normalized_tools,
+        }
+
+    def _fetch_tenant_mcp_policy_on_cursor(
+        self, cursor: Any, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Load live policy + tools using an open RealDictCursor (same shape as get)."""
+        cursor.execute(
+            """
+            SELECT default_mode, allow_anonymous_mcp, updated_at, updated_by
+            FROM apiome.tenant_mcp_policies
+            WHERE tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        policy = cursor.fetchone()
+        if not policy:
+            return None
+        cursor.execute(
+            """
+            SELECT tool_id, in_ceiling, default_enabled, anonymous_enabled
+            FROM apiome.tenant_mcp_policy_tools
+            WHERE tenant_id = %s::uuid
+            ORDER BY tool_id
+            """,
+            (tenant_id,),
+        )
+        tool_rows = cursor.fetchall()
+        updated_by = policy.get("updated_by")
+        return {
+            "default_mode": policy["default_mode"],
+            "allow_anonymous_mcp": bool(policy.get("allow_anonymous_mcp", True)),
+            "updated_at": policy.get("updated_at"),
+            "updated_by": str(updated_by) if updated_by is not None else None,
+            "tools": [
+                {
+                    "tool_id": str(row["tool_id"]),
+                    "in_ceiling": bool(row["in_ceiling"]),
+                    "default_enabled": bool(row["default_enabled"]),
+                    "anonymous_enabled": bool(row.get("anonymous_enabled", True)),
+                }
+                for row in tool_rows
+            ],
+        }
+
     def replace_tenant_mcp_policy(
         self,
         tenant_id: str,
@@ -14266,12 +14332,15 @@ class Database:
         allow_anonymous_mcp: bool,
         tools: List[Dict[str, Any]],
         updated_by: Optional[str],
+        actor_label: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Upsert tenant MCP policy and replace-all tool rows (MTG-3.1, #4775).
 
         Transactionally upserts ``tenant_mcp_policies``, deletes existing
         ``tenant_mcp_policy_tools`` for the tenant, then inserts ``tools``.
-        Returns the same shape as :meth:`get_tenant_mcp_policy`.
+        When the stored snapshot changes, appends a row to
+        ``tenant_mcp_policy_changes`` (MTG-5.2 / #4786). No-op PUTs skip the
+        audit insert. Returns the same shape as :meth:`get_tenant_mcp_policy`.
 
         Args:
             tenant_id: Owning tenant UUID.
@@ -14280,6 +14349,7 @@ class Database:
             tools: Tool-flag dicts with ``tool_id``, ``in_ceiling``,
                 ``default_enabled``, ``anonymous_enabled``.
             updated_by: Acting user UUID, or ``None``.
+            actor_label: Display label for the audit actor (email/name), optional.
 
         Returns:
             Persisted policy snapshot (always non-None after a successful write).
@@ -14296,6 +14366,19 @@ class Database:
         prev_autocommit = self._begin_tx(conn)
         try:
             with conn.cursor() as cursor:
+                before_row = self._fetch_tenant_mcp_policy_on_cursor(cursor, tenant_id)
+                before_snapshot = self._normalize_mcp_policy_audit_snapshot(
+                    default_mode=(
+                        before_row["default_mode"] if before_row else "all"
+                    ),
+                    allow_anonymous_mcp=(
+                        bool(before_row.get("allow_anonymous_mcp", True))
+                        if before_row
+                        else True
+                    ),
+                    tools=list(before_row.get("tools") or []) if before_row else [],
+                )
+
                 cursor.execute(
                     """
                     INSERT INTO apiome.tenant_mcp_policies (
@@ -14343,8 +14426,34 @@ class Database:
                             "anonymous_enabled": bool(row["anonymous_enabled"]),
                         }
                     )
+                stored_tools.sort(key=lambda t: t["tool_id"])
+                after_snapshot = self._normalize_mcp_policy_audit_snapshot(
+                    default_mode=policy["default_mode"],
+                    allow_anonymous_mcp=bool(
+                        policy.get("allow_anonymous_mcp", True)
+                    ),
+                    tools=stored_tools,
+                )
+                if before_snapshot != after_snapshot:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.tenant_mcp_policy_changes (
+                            tenant_id, actor_user_id, actor_label,
+                            before_policy, after_policy
+                        )
+                        VALUES (
+                            %s::uuid, %s::uuid, %s, %s::jsonb, %s::jsonb
+                        )
+                        """,
+                        (
+                            tenant_id,
+                            updated_by,
+                            (str(actor_label).strip() if actor_label else None) or None,
+                            json.dumps(before_snapshot),
+                            json.dumps(after_snapshot),
+                        ),
+                    )
             conn.commit()
-            stored_tools.sort(key=lambda t: t["tool_id"])
             updated_by_val = policy.get("updated_by")
             return {
                 "default_mode": policy["default_mode"],
@@ -14358,6 +14467,60 @@ class Database:
             raise
         finally:
             conn.autocommit = prev_autocommit
+
+    def list_tenant_mcp_policy_changes(
+        self, tenant_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Return MCP policy change audit rows newest first (MTG-5.2 / #4786).
+
+        Args:
+            tenant_id: Owning tenant UUID. Non-UUID values return ``[]``.
+            limit: Max rows (clamped to 1..200).
+
+        Returns:
+            Dicts with ``id``, ``actor_user_id``, ``actor_label``, ``created_at``,
+            ``before_policy``, ``after_policy``.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return []
+        capped = max(1, min(int(limit), 200))
+        rows = self.execute_query(
+            """
+            SELECT id::text, actor_user_id::text, actor_label, created_at,
+                   before_policy, after_policy
+            FROM apiome.tenant_mcp_policy_changes
+            WHERE tenant_id = %s::uuid
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+            """,
+            (tenant_id, capped),
+        )
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            before = row.get("before_policy")
+            after = row.get("after_policy")
+            if isinstance(before, str):
+                try:
+                    before = json.loads(before)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    before = {}
+            if isinstance(after, str):
+                try:
+                    after = json.loads(after)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    after = {}
+            actor = row.get("actor_user_id")
+            out.append(
+                {
+                    "id": str(row["id"]),
+                    "actor_user_id": str(actor) if actor is not None else None,
+                    "actor_label": row.get("actor_label"),
+                    "created_at": row.get("created_at"),
+                    "before_policy": before if isinstance(before, dict) else {},
+                    "after_policy": after if isinstance(after, dict) else {},
+                }
+            )
+        return out
 
     # ------------------------------------------------------------------
     # MCP API keys lifecycle (MTG-3.2, #4776)

@@ -1,8 +1,12 @@
-"""Tenant MCP policy CRUD — MTG-3.1 (#4775), auth gate — MTG-3.4 (#4778).
+"""Tenant MCP policy CRUD — MTG-3.1 (#4775), auth gate — MTG-3.4 (#4778),
+policy change history — MTG-5.2 (#4786).
 
 Exposes ``GET`` / ``PUT /v1/tenants/{tenant_slug}/mcp-policy`` so Control Panel
 and automation can read and replace the tenant ceiling, default enable-set, and
 anonymous flags stored in ``tenant_mcp_policies`` / ``tenant_mcp_policy_tools``.
+
+``GET …/mcp-policy/history`` lists append-only before/after snapshots written on
+every non-noop admin PUT (MTG-5.2).
 
 Reads require tenant membership (any authenticated principal for the slug).
 Mutations require a **tenant administrator** user session — API keys cannot
@@ -15,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import (
@@ -89,6 +93,37 @@ class TenantMcpPolicyResponse(BaseModel):
     )
 
 
+class TenantMcpPolicySnapshot(BaseModel):
+    """Policy body stored in audit before/after JSONB (no updated_* metadata)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    default_mode: TenantDefaultMode
+    allow_anonymous_mcp: bool
+    tools: List[TenantMcpPolicyTool] = Field(default_factory=list)
+
+
+class TenantMcpPolicyChangeEntry(BaseModel):
+    """One append-only MCP policy change event (MTG-5.2 / #4786)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    actor_user_id: Optional[str] = None
+    actor_label: Optional[str] = None
+    created_at: datetime
+    before_policy: TenantMcpPolicySnapshot
+    after_policy: TenantMcpPolicySnapshot
+
+
+class TenantMcpPolicyHistoryResponse(BaseModel):
+    """Newest-first list of tenant MCP policy changes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    changes: List[TenantMcpPolicyChangeEntry] = Field(default_factory=list)
+
+
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
     """Return the authenticated tenant id or fail loudly when the context is missing."""
     tid = auth_data.get("tenant_id")
@@ -104,6 +139,15 @@ def _require_tenant_admin(auth_data: Dict[str, Any]) -> str:
         auth_data,
         detail="Only tenant administrators can manage MCP policy",
     )
+
+
+def _actor_label(auth_data: Dict[str, Any]) -> Optional[str]:
+    """Best display label for the acting user in the policy change audit."""
+    label = auth_data.get("user_email") or auth_data.get("user_name")
+    if label is None:
+        return None
+    text = str(label).strip()
+    return text or None
 
 
 def _policy_response(row: Optional[Dict[str, Any]]) -> TenantMcpPolicyResponse:
@@ -130,6 +174,25 @@ def _policy_response(row: Optional[Dict[str, Any]]) -> TenantMcpPolicyResponse:
         ],
         updated_at=row.get("updated_at"),
         updated_by=row.get("updated_by"),
+    )
+
+
+def _snapshot_from_dict(raw: Dict[str, Any]) -> TenantMcpPolicySnapshot:
+    """Coerce a stored JSONB audit snapshot into the response model."""
+    tools_raw = raw.get("tools") or []
+    return TenantMcpPolicySnapshot(
+        default_mode=raw.get("default_mode") or "all",
+        allow_anonymous_mcp=bool(raw.get("allow_anonymous_mcp", True)),
+        tools=[
+            TenantMcpPolicyTool(
+                tool_id=str(t.get("tool_id") or ""),
+                in_ceiling=bool(t.get("in_ceiling")),
+                default_enabled=bool(t.get("default_enabled")),
+                anonymous_enabled=bool(t.get("anonymous_enabled", True)),
+            )
+            for t in tools_raw
+            if isinstance(t, dict) and t.get("tool_id")
+        ],
     )
 
 
@@ -177,6 +240,39 @@ async def get_tenant_mcp_policy(
     return _policy_response(db.get_tenant_mcp_policy(tenant_id))
 
 
+@router.get(
+    "/{tenant_slug}/mcp-policy/history",
+    response_model=TenantMcpPolicyHistoryResponse,
+    summary="List tenant MCP policy change history",
+    description=(
+        "Return newest-first append-only MCP policy change events with before/after "
+        "tool-enablement snapshots (MTG-5.2, #4786). Tenant members may read."
+    ),
+)
+async def list_tenant_mcp_policy_history(
+    tenant_slug: str,
+    limit: int = Query(50, ge=1, le=200, description="Max change rows to return."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> TenantMcpPolicyHistoryResponse:
+    """List MCP policy change audit rows for the authenticated tenant."""
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    rows = db.list_tenant_mcp_policy_changes(tenant_id, limit=limit)
+    return TenantMcpPolicyHistoryResponse(
+        changes=[
+            TenantMcpPolicyChangeEntry(
+                id=row["id"],
+                actor_user_id=row.get("actor_user_id"),
+                actor_label=row.get("actor_label"),
+                created_at=row["created_at"],
+                before_policy=_snapshot_from_dict(row.get("before_policy") or {}),
+                after_policy=_snapshot_from_dict(row.get("after_policy") or {}),
+            )
+            for row in rows
+        ]
+    )
+
+
 @router.put(
     "/{tenant_slug}/mcp-policy",
     response_model=TenantMcpPolicyResponse,
@@ -185,7 +281,8 @@ async def get_tenant_mcp_policy(
         "Replace the tenant MCP policy (default_mode, anonymous kill switch, and full "
         "per-tool flag list). Tenant administrators with a signed-in session only; "
         "API keys cannot mutate governance. Unknown tool ids and default_enabled "
-        "without in_ceiling yield 422 (MTG-3.1, #4775; MTG-3.4, #4778)."
+        "without in_ceiling yield 422 (MTG-3.1, #4775; MTG-3.4, #4778). Non-noop writes "
+        "append a policy change audit row (MTG-5.2, #4786)."
     ),
 )
 async def put_tenant_mcp_policy(
@@ -212,5 +309,6 @@ async def put_tenant_mcp_policy(
             for t in body.tools
         ],
         updated_by=updated_by,
+        actor_label=_actor_label(auth_data),
     )
     return _policy_response(stored)

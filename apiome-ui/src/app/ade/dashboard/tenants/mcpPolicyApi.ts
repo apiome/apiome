@@ -1,9 +1,10 @@
 /**
- * Client helpers for tenant MCP policy (MTG-4.1 / #4780, MTG-5.1 / #4785).
+ * Client helpers for tenant MCP policy (MTG-4.1 / #4780, MTG-5.1 / #4785,
+ * MTG-5.2 / #4786 history).
  *
- * Talks to the `/api/tenants/mcp-policy`, `/api/api-keys/mcp-tools`, and
- * `/api/api-keys/mcp-capability-presets` proxies, which forward to MTG-3.1 /
- * MTG-1.1 / MTG-5.1 REST endpoints. Types mirror REST snake_case.
+ * Talks to the `/api/tenants/mcp-policy`, `/api/tenants/mcp-policy/history`,
+ * `/api/api-keys/mcp-tools`, and `/api/api-keys/mcp-capability-presets`
+ * proxies. Types mirror REST snake_case.
  */
 
 export type TenantDefaultMode = 'all' | 'inherit_registry' | 'explicit';
@@ -39,6 +40,25 @@ export interface McpToolCatalogResponse {
   tools: McpToolCatalogItem[];
 }
 
+export interface TenantMcpPolicySnapshot {
+  default_mode: TenantDefaultMode;
+  allow_anonymous_mcp: boolean;
+  tools: TenantMcpPolicyTool[];
+}
+
+export interface TenantMcpPolicyChangeEntry {
+  id: string;
+  actor_user_id: string | null;
+  actor_label: string | null;
+  created_at: string;
+  before_policy: TenantMcpPolicySnapshot;
+  after_policy: TenantMcpPolicySnapshot;
+}
+
+export interface TenantMcpPolicyHistoryResponse {
+  changes: TenantMcpPolicyChangeEntry[];
+}
+
 async function readProxyJson<T>(res: Response): Promise<T> {
   const json = await res.json();
   if (!json.success) {
@@ -68,6 +88,17 @@ export async function putMcpPolicy(
     body: JSON.stringify(body),
   });
   return readProxyJson<TenantMcpPolicyResponse>(res);
+}
+
+/** Load newest-first MCP policy change audit history (MTG-5.2). */
+export async function fetchMcpPolicyHistory(
+  limit = 50,
+): Promise<TenantMcpPolicyHistoryResponse> {
+  const qs = new URLSearchParams({ limit: String(limit) });
+  const res = await fetch(`/api/tenants/mcp-policy/history?${qs}`, {
+    cache: 'no-store',
+  });
+  return readProxyJson<TenantMcpPolicyHistoryResponse>(res);
 }
 
 /** Load the MTG-1.1 MCP tool catalog for admin labels / rows. */

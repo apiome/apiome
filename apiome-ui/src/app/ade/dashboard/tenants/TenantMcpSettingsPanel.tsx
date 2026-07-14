@@ -4,11 +4,12 @@
  * Tenant MCP Settings expandable panel — MTG-4.1 (#4780) + MTG-4.2 (#4781)
  * + MTG-4.3 (#4782) per-key capability editor + MTG-4.4 (#4783) non-admin
  * read-only + MTG-4.5 (#4784) disable confirm + MTG-5.1 (#4785) capability
- * presets.
+ * presets + MTG-5.2 (#4786) policy change history.
  *
  * Loads MTG-3.1 policy + MTG-1.1 catalog + MTG-5.1 presets for the session's
  * current tenant. Toolsets use master switches; named packs apply a draft
- * matrix; optional advanced view exposes per-tool flags. Non-admins browse
+ * matrix; optional advanced view exposes per-tool flags. MTG-5.2 policy
+ * history shows who/when/before-after tool enablement. Non-admins browse
  * the same controls disabled (GuideEditorClient pattern). When this row is
  * not the current tenant, shows a switch-tenant note (proxy is always
  * current-tenant scoped).
@@ -64,6 +65,7 @@ import {
   formatToolsetDisableImpactMessage,
 } from './mcpToolsetDisableImpact';
 import TenantMcpKeyCapabilitiesEditor from './TenantMcpKeyCapabilitiesEditor';
+import TenantMcpPolicyHistory from './TenantMcpPolicyHistory';
 
 export interface TenantMcpSettingsPanelProps {
   /** True when this row is the session's current tenant (loads live policy). */
@@ -553,6 +555,8 @@ export default function TenantMcpSettingsPanel({
                       isAdmin={isAdmin}
                     />
                   ) : null}
+
+                  <TenantMcpPolicyHistory reloadToken={policyRevision} />
                 </>
               ) : null}
             </>
