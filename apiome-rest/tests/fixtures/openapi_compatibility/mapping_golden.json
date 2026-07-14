@@ -1,0 +1,16 @@
+{
+  "info": {
+    "rule_id": "response-property-became-required",
+    "change_class": "informational",
+    "severity": "info",
+    "path": "revision/openapi.yaml",
+    "start_line": 16
+  },
+  "breaking": {
+    "rule_id": "api-path-removed-without-deprecation",
+    "change_class": "breaking",
+    "severity": "error",
+    "path": "base/openapi.yaml",
+    "start_line": 7
+  }
+}

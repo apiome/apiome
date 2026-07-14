@@ -113,6 +113,7 @@ Registered in `main.py`:
 | `versions` | `list`, `get` (REST path `project-versions`) |
 | `paths` | `list`, `show` (`GET /versions/{version_id}/paths`, filters: `--method`, `--tag`, `--q`) |
 | `lint` | Quality score + findings for a version (`GET /versions/{tenant}/{project}/{version}/lint`); `--base-version` folds breaking-change risk; `--min-grade A..F` gates CI exit code; `--fail-on-policy` fetches `GET …/lint/policy` and exits non-zero when style-guide gates fail; when the score persisted at import time is out of date (`scoreIsStale`) it also prints the stored `capturedScore`/`capturedGrade` |
+| `compat` | Independent oasdiff compatibility evidence (`POST …/compatibility/evidence`); requires `--project`, `--version`, `--base-version`; `--format json\|sarif\|junit`; `--fail-on breaking\|dangerous\|info` (default breaking) |
 | `operations` | `show` (resolve by operation UUID or `operationId`) |
 | `workflows` | `list`, `show` (`GET /versions/{version_id}/workflows`, steps sub-resource) |
 | `spec` | `export` (browse reconstructed OpenAPI/Arazzo), `download-original` (`GET /versions/{id}/import-source`) |

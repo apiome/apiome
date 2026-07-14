@@ -26,6 +26,9 @@ env/
 ENV/
 .venv
 
+# Local tool binaries used in tests
+.tools/
+
 # IDEs
 .vscode/
 .idea/

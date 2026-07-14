@@ -26,7 +26,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
 import {
   ArrowLeft,
   ArrowLeftRight,
@@ -242,6 +243,11 @@ function TabPanel({
 
 export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sourceDeepLink = useMemo(
+    () => parseCompatibilitySourceQuery(searchParams),
+    [searchParams]
+  );
   const [item, setItem] = useState<CatalogItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,6 +265,14 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
 
   // "View code" (and any future deep link into the raw source) jumps to the Source & Code tab.
   const showSourceTab = useCallback(() => setActiveTab('source'), []);
+
+  // Compatibility / CI deep links (?tab=source&sourcePath=&line=) open the Source tab (CLX-2.3).
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'source' || sourceDeepLink.sourcePath || sourceDeepLink.line) {
+      setActiveTab('source');
+    }
+  }, [searchParams, sourceDeepLink.line, sourceDeepLink.sourcePath]);
 
   // Follow a lint finding to its parsed entity: switch to the Overview tab and queue the scroll.
   const navigateToEntity = useCallback((name: string) => {
@@ -635,6 +649,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             hasContent={Boolean(source?.hasContent)}
             sourceUri={source?.uri ?? null}
             active={activeTab === 'source'}
+            highlightLine={sourceDeepLink.line}
+            focusSourcePath={sourceDeepLink.sourcePath}
           />
         </TabPanel>
 

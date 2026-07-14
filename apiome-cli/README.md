@@ -334,6 +334,11 @@ apiome lint --project payments-api --version 1.0.0
 apiome lint --project payments-api --version 1.0.0 --base-version 0.9.0
 apiome lint --project payments-api --version 1.0.0 --min-grade B
 
+# Independent oasdiff compatibility evidence (normalized JSON / SARIF / JUnit)
+apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0
+apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --format sarif
+apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --fail-on dangerous
+
 # Arazzo workflows (after arazzo import)
 apiome workflows list --project checkout-flow --version 1.0.0
 apiome workflows show checkout --project checkout-flow --version 1.0.0

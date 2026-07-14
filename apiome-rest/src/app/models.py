@@ -2927,6 +2927,66 @@ class CompatibilityCheckResponse(BaseModel):
     )
 
 
+class CompatibilityEvidenceRequest(BaseModel):
+    """Run independent oasdiff compatibility evidence for two revisions (CLX-2.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    base_revision_id: str = Field(
+        ...,
+        validation_alias=AliasChoices("baseRevisionId", "base_revision_id"),
+        description="Baseline revision (versions.id UUID) or CI-provided base.",
+    )
+    head_revision_id: str = Field(
+        ...,
+        validation_alias=AliasChoices("headRevisionId", "head_revision_id"),
+        description="Candidate / head revision (versions.id UUID).",
+    )
+
+
+class CompatibilityEvidenceFindingOut(BaseModel):
+    """One normalized oasdiff finding in a compatibility evidence response."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: Optional[str] = Field(default=None, serialization_alias="ruleId")
+    message: Optional[str] = None
+    severity: Optional[str] = None
+    change_class: Optional[str] = Field(default=None, serialization_alias="changeClass")
+    category: Optional[str] = None
+    location: Dict[str, Any] = Field(default_factory=dict)
+    source_fingerprint: Optional[str] = Field(
+        default=None, serialization_alias="sourceFingerprint"
+    )
+    remediation: Optional[Any] = None
+
+
+class CompatibilityEvidenceResponse(BaseModel):
+    """Normalized independent OpenAPI compatibility evidence (oasdiff)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_version: int = Field(default=1, serialization_alias="schemaVersion")
+    scanner_id: str = Field(serialization_alias="scannerId")
+    base_revision_id: Optional[str] = Field(
+        default=None, serialization_alias="baseRevisionId"
+    )
+    head_revision_id: Optional[str] = Field(
+        default=None, serialization_alias="headRevisionId"
+    )
+    outcome: Optional[str] = None
+    overall: str = "safe"
+    counts: Dict[str, int] = Field(default_factory=dict)
+    findings: List[CompatibilityEvidenceFindingOut] = Field(default_factory=list)
+    coverage: Dict[str, Any] = Field(default_factory=dict)
+    changelog_markdown: Optional[str] = Field(
+        default=None, serialization_alias="changelogMarkdown"
+    )
+    evidence_run_id: Optional[str] = Field(
+        default=None, serialization_alias="evidenceRunId"
+    )
+
+
 class LintFindingOut(BaseModel):
     """One itemized lint finding from the deterministic quality-scoring service (#3609)."""
 
@@ -3190,6 +3250,14 @@ class LintEvidenceFindingOut(BaseModel):
         default=None,
         serialization_alias="sourceFingerprint",
         description="Source-local stable identity of the finding, for tracking across runs.",
+    )
+    change_class: Optional[str] = Field(
+        default=None,
+        serialization_alias="changeClass",
+        description=(
+            "Compatibility change class when present: breaking, dangerous, or informational "
+            "(CLX-2.3 / oasdiff)."
+        ),
     )
 
 

@@ -17,7 +17,8 @@ What lives here:
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``asyncapi-diff``, ``rover``,
-  ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``.
+  ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
+  ``openapi-changes``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -245,6 +246,24 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         env_override_key="APIOME_REDOCLY_BIN",
         parses_json=False,
         runtime="node",
+    ),
+    BundledTool(
+        key="oasdiff",
+        executable="oasdiff",
+        version="1.23.0",
+        description="OpenAPI compatibility changelog/breaking-change CLI (oasdiff/oasdiff, CLX-2.3).",
+        env_override_key="APIOME_OASDIFF_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="openapi-changes",
+        executable="openapi-changes",
+        version="0.0.78",
+        description="Optional OpenAPI HTML/Markdown change renderer (pb33f/openapi-changes, CLX-2.3).",
+        env_override_key="APIOME_OPENAPI_CHANGES_BIN",
+        parses_json=False,
+        runtime="native",
     ),
 )
 

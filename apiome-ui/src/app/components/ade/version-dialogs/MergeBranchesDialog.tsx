@@ -31,6 +31,7 @@ import {
 } from '@lib/version-merge';
 import { VersionMergeConflictList } from '../dashboard/VersionMergeConflictList';
 import { CompatibilityReportPanel } from '../dashboard/CompatibilityReportPanel';
+import { ExternalCompatEvidencePanel } from '../dashboard/ExternalCompatEvidencePanel';
 import type { VersionBranchRow } from './types';
 
 interface MergePreviewClassification {
@@ -471,6 +472,13 @@ export function MergeBranchesDialog({
                     </span>
                   }
                 />
+                <div className="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <ExternalCompatEvidencePanel
+                    projectId={projectId}
+                    baseRevisionId={previewData?.targetTipVersionId}
+                    headRevisionId={previewData?.sourceTipVersionId}
+                  />
+                </div>
               </div>
               {compat.mergeBlockedByCompatGate && (
                 <p className="text-xs mt-2 text-amber-800 dark:text-amber-200">

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "response-property-became-required",
+    "text": "the response property `name` became required for the status `200`",
+    "level": 1,
+    "operation": "GET",
+    "operationId": "listPets",
+    "path": "/pets",
+    "section": "paths",
+    "revisionSource": {
+      "file": "revision/openapi.yaml",
+      "line": 16,
+      "column": 32
+    },
+    "fingerprint": "01dd5133aaa8"
+  }
+]

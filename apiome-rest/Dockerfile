@@ -54,6 +54,7 @@ ARG GRAPHQL_JS_VERSION=16.9.0
 ARG SPECTRAL_VERSION=6.16.1
 ARG VACUUM_VERSION=0.29.9
 ARG REDOCLY_VERSION=2.39.0
+ARG OASDIFF_VERSION=1.23.0
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -94,6 +95,18 @@ RUN case "${TARGETARCH}" in \
       | tar -xz -C /tmp \
     && mv /tmp/vacuum ${TOOLS_PREFIX}/bin/vacuum \
     && chmod +x ${TOOLS_PREFIX}/bin/vacuum
+
+# oasdiff — OpenAPI compatibility changelog (CLX-2.3 / #4853).
+# Release assets use linux_amd64 / linux_arm64.
+RUN case "${TARGETARCH}" in \
+      amd64) OASDIFF_ARCH=amd64 ;; \
+      arm64) OASDIFF_ARCH=arm64 ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/oasdiff_${OASDIFF_VERSION}_linux_${OASDIFF_ARCH}.tar.gz" \
+      | tar -xz -C /tmp \
+    && mv /tmp/oasdiff ${TOOLS_PREFIX}/bin/oasdiff \
+    && chmod +x ${TOOLS_PREFIX}/bin/oasdiff
 
 # rover — Apollo GraphQL CLI, prebuilt tarball per Rust target triple.
 RUN TRIPLE="$(cat /tmp/arch_rust)"; \
