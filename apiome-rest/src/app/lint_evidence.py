@@ -307,8 +307,10 @@ def _evidence_run(
 def expected_scanners_for_subject(subject_type: str) -> List[str]:
     """Return the scanner ids expected to have evidence for a subject kind.
 
-    Today only the native engines are expected; external scanners (Buf, GraphQL tooling, ...)
-    join this set as their adapters land in later CLX issues.
+    The baseline expects the native engines. For catalog revisions, callers that know
+    the revision's ``source_format`` should prefer
+    :func:`app.format_lint_capabilities.expected_scanners_for_catalog_format` so Buf /
+    GraphQL ESLint / OpenAPI adapters appear as expected scanners (CLX-2.4).
 
     Args:
         subject_type: ``catalog_revision`` or ``mcp_endpoint_version``.

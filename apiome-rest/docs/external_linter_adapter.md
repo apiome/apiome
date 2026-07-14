@@ -77,7 +77,10 @@ Failures are classified as `unavailable` / `timeout` / `crash` / `malformed` / `
 `adapter_evidence_run` / `AdapterRunResult.to_evidence_run` build write-ready evidence-run
 dicts. Timeout, unavailable tool, malformed output, and crash become `outcome=failed` or
 `unavailable` with `coverage.state=none` — never silent absence. Persistence into
-`lint_evidence_runs` at score-capture time is left to later CLX consumers (#4852+).
+`lint_evidence_runs` lands at score-capture / evidence-read time for OpenAPI validation
+(CLX-2.2), oasdiff (CLX-2.3), and Buf / GraphQL ESLint (CLX-2.4). Per-format coverage
+discovery is published at `GET /v1/lint/format-capabilities`
+([format_lint_capabilities.md](./format_lint_capabilities.md)).
 
 ## Built-in: Buf lint
 

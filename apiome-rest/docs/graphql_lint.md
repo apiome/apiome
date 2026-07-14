@@ -71,11 +71,11 @@ of file-result objects `{ "filePath", "messages": [{ "ruleId", "severity", "mess
 - **path** is `{filePath}:{line}:{column}` (degrading to `{filePath}:{line}` or `{filePath}`,
   and to `(sdl)` when the file path is blank).
 
-Running the `graphql-eslint` CLI itself is the job of the generic **external-linter adapter**
-(MFI-4.3) over the polyglot [toolchain runner](../src/app/toolchain_runner.py); the moment that
-adapter feeds this pack `graphql-eslint` output, it is scored alongside the native findings —
-exactly as MFI-4.3 requires of an external-linter adapter (failures degrade gracefully to the
-native packs).
+Running the `graphql-eslint` CLI itself is the **CLX-2.4** `graphql.eslint` adapter
+(`src/app/graphql_eslint_adapter.py`) on the [external-linter SPI](./external_linter_adapter.md).
+When the Node CLI is missing, the adapter records honest `unavailable` coverage evidence
+rather than a silent clean scan; mapped findings still fold into the native score when a
+report is supplied to `eslint_findings` / `lint_graphql_result`.
 
 ## Merge entry points
 

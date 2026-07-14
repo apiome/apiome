@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.0.82
+  version: 1.0.83
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5407,6 +5407,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list external lint adaptersresponse422.
+  /v1/lint/format-capabilities:
+    get:
+      tags:
+      - lint
+      summary: List Format Lint Capabilities
+      description: 'Publish the per-format lint capability matrix (CLX-2.4 / #4854).
+
+
+        Every sniffed / importable format reports ``native``, ``adapted``, or
+
+        ``unsupported``. Unsupported planned packs link their existing MFI issues
+
+        rather than duplicating parser/normalizer work.'
+      operationId: list_format_lint_capabilities_v1_lint_format_capabilities_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Format Lint Capabilitiesauthorization schema.
+          - type: 'null'
+            description: List Format Lint Capabilitiesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Format Lint Capabilities Xapikey schema.
+          - type: 'null'
+            description: List Format Lint Capabilities Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list format lint capabilities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatLintCapabilitiesResponse'
+                description: Response payload for list format lint capabilitiesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list format lint capabilitiesresponse422.
   /v1/lint/custom-rules/validate:
     post:
       tags:
@@ -30749,6 +30804,91 @@ components:
       - importable
       title: FormatCandidateModel
       description: One ranked format guess (mirrors :class:`app.format_detection.FormatCandidate`).
+    FormatLintCapabilitiesResponse:
+      properties:
+        formats:
+          items:
+            $ref: '#/components/schemas/FormatLintCapabilityOut'
+          type: array
+          title: Formats
+          description: Formats.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: Number of count.
+          example: 1
+        docsPage:
+          type: string
+          title: Docspage
+          description: Repository-relative path of the capability matrix documentation.
+          example: example
+      type: object
+      required:
+      - formats
+      - count
+      - docsPage
+      title: FormatLintCapabilitiesResponse
+      description: 'Published per-format lint capability matrix (CLX-2.4 / #4854).'
+    FormatLintCapabilityOut:
+      properties:
+        format:
+          type: string
+          title: Format
+          description: Catalog / detection format key.
+          example: openapi
+        mode:
+          type: string
+          title: Mode
+          description: native | adapted | unsupported — primary coverage classification.
+          example: example
+        importable:
+          type: boolean
+          title: Importable
+          description: Whether an import-source adapter can ingest this format today.
+          example: false
+        nativePack:
+          anyOf:
+          - type: string
+            description: Response payload for format lint capability.
+          - type: 'null'
+            description: Response payload for format lint capability.
+          title: Nativepack
+          description: Registered rule-pack key or openapi-schema-lint when applicable.
+        adaptedScanners:
+          items:
+            type: string
+          type: array
+          title: Adaptedscanners
+          description: External adapter scanner ids covering this format.
+          maxItems: 1000
+        commonPackOnly:
+          type: boolean
+          title: Commonpackonly
+          description: True when only the cross-format common pack applies (no format
+            pack).
+          default: false
+          example: false
+        relatedIssues:
+          items:
+            type: string
+          type: array
+          title: Relatedissues
+          description: Linked GitHub issues for planned pack work (no duplicate tickets).
+          maxItems: 1000
+        notes:
+          type: string
+          title: Notes
+          description: Short rationale for the classification.
+          default: ''
+          example: example
+      type: object
+      required:
+      - format
+      - mode
+      - importable
+      title: FormatLintCapabilityOut
+      description: 'One format''s lint coverage classification (CLX-2.4 / #4854).'
     GitSourceLocator:
       properties:
         repo_url:
