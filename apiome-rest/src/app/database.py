@@ -14207,6 +14207,157 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id,))
 
+    def get_tenant_mcp_policy(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Load a tenant's MCP policy row plus tool flags (MTG-3.1, #4775).
+
+        Args:
+            tenant_id: Owning tenant UUID. Non-UUID values return ``None``.
+
+        Returns:
+            Dict with ``default_mode``, ``allow_anonymous_mcp``, ``updated_at``,
+            ``updated_by``, and ``tools`` (list of tool-flag dicts), or ``None``
+            when no ``tenant_mcp_policies`` row exists.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return None
+        policy_rows = self.execute_query(
+            """
+            SELECT default_mode, allow_anonymous_mcp, updated_at, updated_by
+            FROM apiome.tenant_mcp_policies
+            WHERE tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        if not policy_rows:
+            return None
+        policy = policy_rows[0]
+        tool_rows = self.execute_query(
+            """
+            SELECT tool_id, in_ceiling, default_enabled, anonymous_enabled
+            FROM apiome.tenant_mcp_policy_tools
+            WHERE tenant_id = %s::uuid
+            ORDER BY tool_id
+            """,
+            (tenant_id,),
+        )
+        updated_by = policy.get("updated_by")
+        return {
+            "default_mode": policy["default_mode"],
+            "allow_anonymous_mcp": bool(policy.get("allow_anonymous_mcp", True)),
+            "updated_at": policy.get("updated_at"),
+            "updated_by": str(updated_by) if updated_by is not None else None,
+            "tools": [
+                {
+                    "tool_id": str(row["tool_id"]),
+                    "in_ceiling": bool(row["in_ceiling"]),
+                    "default_enabled": bool(row["default_enabled"]),
+                    "anonymous_enabled": bool(row.get("anonymous_enabled", True)),
+                }
+                for row in tool_rows
+            ],
+        }
+
+    def replace_tenant_mcp_policy(
+        self,
+        tenant_id: str,
+        *,
+        default_mode: str,
+        allow_anonymous_mcp: bool,
+        tools: List[Dict[str, Any]],
+        updated_by: Optional[str],
+    ) -> Dict[str, Any]:
+        """Upsert tenant MCP policy and replace-all tool rows (MTG-3.1, #4775).
+
+        Transactionally upserts ``tenant_mcp_policies``, deletes existing
+        ``tenant_mcp_policy_tools`` for the tenant, then inserts ``tools``.
+        Returns the same shape as :meth:`get_tenant_mcp_policy`.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            default_mode: One of ``all`` / ``inherit_registry`` / ``explicit``.
+            allow_anonymous_mcp: Kill switch for anonymous ``tools/call``.
+            tools: Tool-flag dicts with ``tool_id``, ``in_ceiling``,
+                ``default_enabled``, ``anonymous_enabled``.
+            updated_by: Acting user UUID, or ``None``.
+
+        Returns:
+            Persisted policy snapshot (always non-None after a successful write).
+
+        Raises:
+            ValueError: When ``tenant_id`` (or ``updated_by`` when set) is not a UUID.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            raise ValueError("tenant_id must be a UUID")
+        if updated_by is not None and not is_uuid_string(str(updated_by)):
+            raise ValueError("updated_by must be a UUID or None")
+
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenant_mcp_policies (
+                        tenant_id, default_mode, allow_anonymous_mcp, updated_by, updated_at
+                    )
+                    VALUES (%s::uuid, %s, %s, %s::uuid, CURRENT_TIMESTAMP)
+                    ON CONFLICT (tenant_id) DO UPDATE SET
+                        default_mode = EXCLUDED.default_mode,
+                        allow_anonymous_mcp = EXCLUDED.allow_anonymous_mcp,
+                        updated_by = EXCLUDED.updated_by,
+                        updated_at = CURRENT_TIMESTAMP
+                    RETURNING default_mode, allow_anonymous_mcp, updated_at, updated_by
+                    """,
+                    (tenant_id, default_mode, bool(allow_anonymous_mcp), updated_by),
+                )
+                policy = cursor.fetchone()
+                cursor.execute(
+                    "DELETE FROM apiome.tenant_mcp_policy_tools WHERE tenant_id = %s::uuid",
+                    (tenant_id,),
+                )
+                stored_tools: List[Dict[str, Any]] = []
+                for tool in tools:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.tenant_mcp_policy_tools (
+                            tenant_id, tool_id, in_ceiling, default_enabled, anonymous_enabled
+                        )
+                        VALUES (%s::uuid, %s, %s, %s, %s)
+                        RETURNING tool_id, in_ceiling, default_enabled, anonymous_enabled
+                        """,
+                        (
+                            tenant_id,
+                            tool["tool_id"],
+                            bool(tool["in_ceiling"]),
+                            bool(tool["default_enabled"]),
+                            bool(tool.get("anonymous_enabled", True)),
+                        ),
+                    )
+                    row = cursor.fetchone()
+                    stored_tools.append(
+                        {
+                            "tool_id": str(row["tool_id"]),
+                            "in_ceiling": bool(row["in_ceiling"]),
+                            "default_enabled": bool(row["default_enabled"]),
+                            "anonymous_enabled": bool(row["anonymous_enabled"]),
+                        }
+                    )
+            conn.commit()
+            stored_tools.sort(key=lambda t: t["tool_id"])
+            updated_by_val = policy.get("updated_by")
+            return {
+                "default_mode": policy["default_mode"],
+                "allow_anonymous_mcp": bool(policy.get("allow_anonymous_mcp", True)),
+                "updated_at": policy.get("updated_at"),
+                "updated_by": str(updated_by_val) if updated_by_val is not None else None,
+                "tools": stored_tools,
+            }
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
     def list_mcp_tool_invocation_stats(
         self, endpoint_id: str, window_days: int
     ) -> List[Dict[str, Any]]:

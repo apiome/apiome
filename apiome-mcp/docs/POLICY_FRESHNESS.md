@@ -30,9 +30,9 @@ On each authenticated `tools/call`, `CapabilityCallGateMiddleware`:
 
 Neither path may be memoized across calls for the same process.
 
-Admin writes land through tenant MCP policy CRUD (MTG-3.1 / `#4775` when
-shipped). Until that PUT exists, freshness is proven by mutating DB-backed
-snapshots between sequential middleware calls in CI.
+Admin writes land through tenant MCP policy CRUD (MTG-3.1 / `#4775`):
+`PUT /v1/tenants/{tenant_slug}/mcp-policy`. After that committed write, the
+next authenticated `tools/call` must see the change (lag `0`).
 
 ## Acceptance
 

@@ -68,6 +68,7 @@ from .mcp_saved_search_routes import router as mcp_saved_search_router
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_collection_routes import router as mcp_collection_router
 from .mcp_tool_routes import router as mcp_tool_router
+from .mcp_policy_routes import router as mcp_policy_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -80,7 +81,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.0.69",
+    version="1.0.70",
 )
 
 
@@ -242,6 +243,7 @@ app.include_router(change_report_router)
 app.include_router(version_change_report_router)
 app.include_router(change_report_template_router)
 app.include_router(tenants_session_router)
+app.include_router(mcp_policy_router)
 app.include_router(spec_import_router)
 app.include_router(import_sources_router)
 # Multi-format export (MFX-2.5, #3842): tenant-scoped fidelity report surfacing — per-target
