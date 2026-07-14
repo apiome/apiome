@@ -6,14 +6,28 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
+# Load KEY=VALUE pairs without `source`, so JSON/base64 values with `{`, `}`,
+# `/`, spaces, etc. are not interpreted by bash (brace expansion, word split).
 load_env_file() {
   local f="$1"
-  if [[ -f "$f" ]]; then
-    set -a
-    # shellcheck disable=SC1090
-    source "$f"
-    set +a
-  fi
+  [[ -f "$f" ]] || return 0
+  local line key val
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    [[ "$line" != *=* ]] && continue
+    key="${line%%=*}"
+    val="${line#*=}"
+    if [[ ${#val} -ge 2 ]]; then
+      if [[ "${val:0:1}" == '"' && "${val: -1}" == '"' ]]; then
+        val="${val:1:${#val}-2}"
+      elif [[ "${val:0:1}" == "'" && "${val: -1}" == "'" ]]; then
+        val="${val:1:${#val}-2}"
+      fi
+    fi
+    printf -v "$key" '%s' "$val"
+    export "$key"
+  done <"$f"
 }
 
 if [[ "${APIOME_LOAD_DOTENV:-1}" != "0" ]]; then
