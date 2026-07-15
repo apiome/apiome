@@ -1,0 +1,467 @@
+{
+  "edges": [
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:Contact",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Contact",
+      "status": "retained",
+      "target": "canonical:Contact",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:GET /users/{id}",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:GET /users/{id}",
+      "status": "retained",
+      "target": "canonical:GET /users/{id}",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:Status",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Status",
+      "status": "retained",
+      "target": "canonical:Status",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:User",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:User",
+      "status": "retained",
+      "target": "canonical:User",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:User.age",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:User.age",
+      "status": "retained",
+      "target": "canonical:User.age",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:User.email",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:User.email",
+      "status": "retained",
+      "target": "canonical:User.email",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:user/signedup",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:user/signedup",
+      "status": "retained",
+      "target": "canonical:user/signedup",
+      "target_mapping": null
+    },
+    {
+      "detail": "Apache Avro cannot represent the union shape; 'Contact' is approximated without faithful member alternatives",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `Contact`; its specification has no equivalent construct.",
+      "id": "projects:Contact#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:Contact",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "oneOf/union → ineligible members approximated"
+    },
+    {
+      "detail": "Apache Avro is types-only — only data schemas are exported; the request_response operation is dropped",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `GET /users/{id}`; its specification has no equivalent construct.",
+      "id": "projects:GET /users/{id}#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "critical",
+      "source": "canonical:GET /users/{id}",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": "operation → dropped (types-only export)"
+    },
+    {
+      "detail": "enum type carried to Apache Avro",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:Status#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:Status",
+      "status": "retained",
+      "target": null,
+      "target_mapping": null
+    },
+    {
+      "detail": "object carried to Apache Avro",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:User#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:User",
+      "status": "retained",
+      "target": null,
+      "target_mapping": null
+    },
+    {
+      "detail": "Apache Avro cannot enforce validation constraints; pattern/min/max/format facets are dropped",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
+      "id": "projects:User.age#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:User.age",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": "constraints → dropped"
+    },
+    {
+      "detail": "Apache Avro maps optional/nullable fields to a null-union, not JSON Schema optional semantics",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
+      "id": "projects:User.age#1",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:User.age",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "optional/nullable → [\"null\", T] union"
+    },
+    {
+      "detail": "Apache Avro requires a default for schema-evolution compatibility; one is synthesized for this optional field",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `User.age`; its specification has no equivalent construct.",
+      "id": "projects:User.age#2",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:User.age",
+      "status": "synthesized",
+      "target": null,
+      "target_mapping": "synthesized default for evolution"
+    },
+    {
+      "detail": "Apache Avro cannot enforce validation constraints; pattern/min/max/format facets are dropped",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `User.email`; its specification has no equivalent construct.",
+      "id": "projects:User.email#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:User.email",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": "constraints → dropped"
+    },
+    {
+      "detail": "Apache Avro is types-only — only data schemas are exported; the event channel is dropped",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Apache Avro Specification",
+        "url": "https://avro.apache.org/docs/1.11.1/specification/",
+        "version": "1.11.1"
+      },
+      "explanation": "The destination format cannot represent `user/signedup`; its specification has no equivalent construct.",
+      "id": "projects:user/signedup#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "critical",
+      "source": "canonical:user/signedup",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": "channel → dropped (types-only export)"
+    }
+  ],
+  "manifest_hash": "[volatile]",
+  "nodes": [
+    {
+      "canonical_kind": null,
+      "construct_key": "Contact",
+      "id": "native:Contact",
+      "kind": "native",
+      "label": "Contact",
+      "native": {
+        "native_id": null,
+        "native_name": "Contact",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "GET /users/{id}",
+      "id": "native:GET /users/{id}",
+      "kind": "native",
+      "label": "getUser",
+      "native": {
+        "native_id": null,
+        "native_name": "getUser",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "Status",
+      "id": "native:Status",
+      "kind": "native",
+      "label": "Status",
+      "native": {
+        "native_id": null,
+        "native_name": "Status",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "User",
+      "id": "native:User",
+      "kind": "native",
+      "label": "User",
+      "native": {
+        "native_id": null,
+        "native_name": "User",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "User.age",
+      "id": "native:User.age",
+      "kind": "native",
+      "label": "age",
+      "native": {
+        "native_id": null,
+        "native_name": "age",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "User.email",
+      "id": "native:User.email",
+      "kind": "native",
+      "label": "email",
+      "native": {
+        "native_id": "[redacted]",
+        "native_name": "email",
+        "source_location": "[redacted]"
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "user/signedup",
+      "id": "native:user/signedup",
+      "kind": "native",
+      "label": "user/signedup",
+      "native": {
+        "native_id": null,
+        "native_name": "user/signedup",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "Contact",
+      "id": "canonical:Contact",
+      "kind": "canonical",
+      "label": "Contact",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "operation",
+      "construct_key": "GET /users/{id}",
+      "id": "canonical:GET /users/{id}",
+      "kind": "canonical",
+      "label": "GET /users/{id}",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "Status",
+      "id": "canonical:Status",
+      "kind": "canonical",
+      "label": "Status",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "User",
+      "id": "canonical:User",
+      "kind": "canonical",
+      "label": "User",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "field",
+      "construct_key": "User.age",
+      "id": "canonical:User.age",
+      "kind": "canonical",
+      "label": "User.age",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "field",
+      "construct_key": "User.email",
+      "id": "canonical:User.email",
+      "kind": "canonical",
+      "label": "User.email",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "channel",
+      "construct_key": "user/signedup",
+      "id": "canonical:user/signedup",
+      "kind": "canonical",
+      "label": "user/signedup",
+      "native": null,
+      "target": null
+    }
+  ],
+  "reason_counts": {
+    "destination_unsupported": 7,
+    "emitter_unsupported": 0,
+    "not_applicable": 0,
+    "option_excluded": 0,
+    "security_redacted": 0,
+    "source_incomplete": 0,
+    "source_parse_limit": 0,
+    "target_tool_unavailable": 0
+  },
+  "status_counts": {
+    "approximated": 2,
+    "dropped": 4,
+    "not-applicable": 0,
+    "retained": 2,
+    "synthesized": 1,
+    "transformed": 0,
+    "unavailable": 0
+  },
+  "target": {
+    "apiome_version": "[volatile]",
+    "availability": "available",
+    "available": true,
+    "capability_profile": {
+      "constraints": false,
+      "events": false,
+      "field_identity": false,
+      "nullability": true,
+      "operations": false,
+      "unions": true
+    },
+    "documentation": {
+      "anchor": null,
+      "documentation_unavailable": false,
+      "note": null,
+      "specification": "Apache Avro Specification",
+      "url": "https://avro.apache.org/docs/1.11.1/specification/",
+      "version": "1.11.1"
+    },
+    "emitter_version": "1",
+    "format": "avro",
+    "key": "avro",
+    "label": "Apache Avro",
+    "needs_toolchain": false,
+    "paradigm": "data_schema",
+    "registry_version": "1"
+  },
+  "total_constructs": 7,
+  "truncated": false
+}
