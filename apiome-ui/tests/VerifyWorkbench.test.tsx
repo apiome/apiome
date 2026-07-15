@@ -240,3 +240,22 @@ describe('VerifyWorkbench — lens content (MFX-42.1)', () => {
     expect(onAck).toHaveBeenLastCalledWith(true);
   });
 });
+
+describe('VerifyWorkbench — projection map slot (EFP-2.2, #4814)', () => {
+  it('renders the provided projection panel once below the lenses after a settled run', () => {
+    renderWorkbench({
+      hasRun: true,
+      result: makeResult('lossy'),
+      verdict: 'lossy',
+      projectionPanel: <div data-testid="projection-panel-stub">projection map</div>,
+    });
+    // One instance at workbench level — not one per lens body / layout variant — so lens
+    // switches and the desktop/narrow swap never remount it (and re-fetch its evidence).
+    expect(screen.getAllByTestId('projection-panel-stub')).toHaveLength(1);
+  });
+
+  it('does not render the projection panel before the first run', () => {
+    renderWorkbench({ projectionPanel: <div data-testid="projection-panel-stub" /> });
+    expect(screen.queryByTestId('projection-panel-stub')).not.toBeInTheDocument();
+  });
+});

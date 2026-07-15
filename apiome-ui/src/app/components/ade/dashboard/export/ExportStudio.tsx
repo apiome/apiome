@@ -32,6 +32,7 @@ import { ProtocolPill } from '../../../ui/catalog/ProtocolPill';
 import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
 import { VerifyWorkbench, VerdictBanner } from './VerifyWorkbench';
+import { ProjectionGraphPanel } from './ProjectionGraphPanel';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { BundleExplorer } from './BundleExplorer';
 import { OriginalSourceOption } from './OriginalSourceOption';
@@ -724,6 +725,23 @@ export function ExportStudio({
                 sourceLintReport={sourceLintReport}
                 openableProblems={openableProblems}
                 onOpenProblem={openProblem}
+                projectionPanel={
+                  // The destination-aware projection map (EFP-2.2): rendered once a verify
+                  // has settled, for the same (source, target, changed-options) the verify
+                  // ran with — so the evidence pages describe the snapshot whose summary the
+                  // fidelity lens shows.
+                  displayVerifyResult ? (
+                    <ProjectionGraphPanel
+                      artifact={artifact}
+                      version={version}
+                      target={selected.key}
+                      targetLabel={selected.entry.descriptor.label}
+                      options={changedOpts}
+                      envelopeProjection={displayVerifyResult.fidelity?.projection ?? null}
+                      enabled
+                    />
+                  ) : null
+                }
               />
             </>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -65,6 +65,13 @@ export interface VerifyWorkbenchProps {
   openableProblems?: LocatedProblem[];
   /** Open a located finding in the Review editor (file + line), MFX-43.3. */
   onOpenProblem?: (problem: LocatedProblem) => void;
+  /**
+   * The destination-aware projection map (EFP-2.2, #4814), rendered once below the lenses
+   * after a settled run. The Studio owns its construction (it knows the artifact, target,
+   * and option coordinates); the workbench just places it, keeping this component
+   * fetch-free — and places it outside the lens bodies so lens switches never remount it.
+   */
+  projectionPanel?: ReactNode;
 }
 
 /** The three lenses, in tab / accordion order. */
@@ -105,6 +112,7 @@ export function VerifyWorkbench({
   sourceLintReport = null,
   openableProblems,
   onOpenProblem,
+  projectionPanel = null,
 }: VerifyWorkbenchProps) {
   // Lead with the lens that most needs attention: the validator's detail for a blocked export,
   // else the fidelity lens (where the loss + acknowledgement live).
@@ -260,6 +268,11 @@ export function VerifyWorkbench({
           </details>
         ))}
       </div>
+
+      {/* The destination-aware projection map (EFP-2.2, #4814): one instance at workbench
+          level — not inside a lens body — so switching lenses (or the desktop/narrow layout
+          swap) never remounts it and re-fetches the evidence pages. */}
+      {projectionPanel}
 
       <div className="flex justify-end">
         <Button variant="outline" data-testid="verify-rerun" onClick={onRun}>
