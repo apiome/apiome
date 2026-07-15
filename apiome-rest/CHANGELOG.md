@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.123.0] - 2026-07-14
+
+### Added
+- **CI, webhook, SARIF, and attestable lint outputs (CLX-4.2, #4860)** — governance now runs
+  before merge/release with machine-readable results and exact policy provenance, instead of a
+  human reading a dashboard.
+  - **Lint gate endpoints** — `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/gate`
+    and `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/gate`
+    (`app.lint_gate`): evaluate the pinned policy pack over the subject's current evidence
+    (persisting a reproducible `lint_policy_evaluations` row), optionally diff regressions
+    against a baseline revision/snapshot (`baselineRevisionId` / `baselineVersionId`, CLX-4.1
+    per-scanner fingerprint semantics), and emit the verdict as JSON, SARIF 2.1.0, JUnit XML,
+    Markdown, or a signed in-toto attestation (`?format=` or `Accept`). HTTP status is always
+    200 — the CI exit code belongs to the CLI and reflects only configured policy failures
+    (AC-1).
+  - **`newOnly` gating (AC-3)** — the CI verdict's unwaived-errors gate can be scoped to newly
+    introduced findings so pre-existing debt does not block; required-coverage and axis gates
+    always evaluate the full head revision.
+  - **Policy-aware SARIF (AC-2)** — verbatim scanner rule ids and locations,
+    `properties.apiome` per result (policy state, regression flag, scanner, fingerprint),
+    standard `suppressions` for waived findings, and run-level provenance (input / scanner /
+    policy / report fingerprints, AC-4) in `runs[0].properties.apiome` (`app.lint_gate_emit`).
+  - **Attestable evidence summaries** — in-toto Statement v1 in a DSSE envelope, HMAC-SHA256
+    signed with `APIOME_LINT_ATTESTATION_SIGNING_SECRET` (unsigned but well-formed when unset);
+    offline verification via `apiome lint verify-attestation` (`app.lint_attestation`).
+  - **Provider-neutral lint webhooks** — `lint.scan.completed` (new evidence run recorded;
+    fingerprint-dedup re-scans stay silent), `lint.regression.detected` and
+    `lint.coverage.failed` (fired only by deliberate gate evaluations, never plain policy
+    reads), and `lint.waiver.expiring` (periodic sweep; exactly-once per grant via the V176
+    `expiry_notified_at` claim, re-armed when a waiver is renewed) over the existing
+    HMAC-signed push-webhook channels (`app.lint_notifications`,
+    `app.lint_waiver_expiry_sweep`).
+  - **Redaction guarantee (AC-5)** — every artifact and webhook payload carries ids and
+    fingerprints only; raw configuration, raw artifacts, protected source, and credentials
+    never appear in outputs.
+
 ## [1.122.0] - 2026-07-14
 
 ### Added

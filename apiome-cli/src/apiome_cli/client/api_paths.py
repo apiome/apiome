@@ -340,6 +340,33 @@ def version_lint_policy(
     return f"{version_record(tenant_slug, project_id, version_id)}/lint/policy"
 
 
+def version_lint_gate(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Lint CI gate evaluation + artifact emission for a revision (GET .../lint/gate)."""
+    return f"{version_record(tenant_slug, project_id, version_id)}/lint/gate"
+
+
+def version_lint_evidence(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Immutable lint evidence runs for a revision (GET .../lint/evidence)."""
+    return f"{version_record(tenant_slug, project_id, version_id)}/lint/evidence"
+
+
+def mcp_endpoint_version_lint_gate(
+    tenant_slug: str,
+    endpoint_id: str | UUID,
+    version_id: str | UUID,
+) -> str:
+    """Lint CI gate evaluation for an MCP endpoint snapshot (GET .../lint/gate)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/lint/gate"
+
+
 def version_publish(
     tenant_slug: str,
     project_id: str | UUID,

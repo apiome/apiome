@@ -15,6 +15,8 @@ __all__ = [
     "GATE_FORMAT_JSON",
     "GATE_FORMAT_SARIF",
     "GATE_FORMAT_JUNIT",
+    "GATE_FORMAT_MARKDOWN",
+    "GATE_FORMAT_ATTESTATION",
     "normalize_gate_format",
     "to_normalized_json",
     "to_sarif",
@@ -26,6 +28,8 @@ __all__ = [
 GATE_FORMAT_JSON = "json"
 GATE_FORMAT_SARIF = "sarif"
 GATE_FORMAT_JUNIT = "junit"
+GATE_FORMAT_MARKDOWN = "markdown"
+GATE_FORMAT_ATTESTATION = "attestation"
 
 _SARIF_LEVEL = {
     "error": "error",
@@ -36,7 +40,7 @@ _SARIF_LEVEL = {
 
 
 def normalize_gate_format(value: Optional[str]) -> str:
-    """Normalize a format query/Accept token to json|sarif|junit."""
+    """Normalize a format query/Accept token to json|sarif|junit|markdown|attestation."""
     if not value:
         return GATE_FORMAT_JSON
     lowered = value.strip().lower()
@@ -50,6 +54,10 @@ def normalize_gate_format(value: Optional[str]) -> str:
         "junit+xml",
     ):
         return GATE_FORMAT_JUNIT
+    if lowered in ("text/markdown", "markdown", "md"):
+        return GATE_FORMAT_MARKDOWN
+    if lowered in ("application/vnd.in-toto+json", "in-toto", "attestation"):
+        return GATE_FORMAT_ATTESTATION
     if lowered in ("application/json", "json"):
         return GATE_FORMAT_JSON
     return GATE_FORMAT_JSON
@@ -62,6 +70,10 @@ def media_type_for_format(fmt: str) -> str:
         return "application/sarif+json"
     if resolved == GATE_FORMAT_JUNIT:
         return "application/junit+xml"
+    if resolved == GATE_FORMAT_MARKDOWN:
+        return "text/markdown; charset=utf-8"
+    if resolved == GATE_FORMAT_ATTESTATION:
+        return "application/vnd.in-toto+json"
     return "application/json"
 
 

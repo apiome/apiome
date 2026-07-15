@@ -2027,6 +2027,99 @@ async def get_mcp_endpoint_version_lint_policy(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/gate",
+    response_model=None,
+)
+async def get_mcp_endpoint_version_lint_gate(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    version_id: uuid.UUID,
+    request: Request,
+    format: Optional[str] = Query(
+        default=None,
+        description=(
+            "Artifact format: json (default) | sarif | junit | markdown | attestation. "
+            "The Accept header is honored when the query parameter is absent."
+        ),
+    ),
+    baseline_version_id: Optional[str] = Query(
+        default=None,
+        alias="baselineVersionId",
+        description=(
+            "Optional baseline snapshot (mcp_endpoint_versions.id) to diff regressions "
+            "against; must belong to the same endpoint."
+        ),
+    ),
+    new_only: bool = Query(
+        default=False,
+        alias="newOnly",
+        description="Scope the CI verdict's unwaived-errors gate to newly introduced findings.",
+    ),
+    policy_version_id: Optional[str] = Query(
+        default=None,
+        alias="policyVersionId",
+        description="Optional historical policy pack id; defaults to the latest for the assigned guide.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Any:
+    """Evaluate the lint CI gate for an MCP snapshot and emit a machine-readable artifact (CLX-4.2).
+
+    The MCP twin of ``GET /v1/versions/…/lint/gate``: policy verdict over the snapshot's
+    current evidence, optional baseline regression diff, and JSON / SARIF / JUnit / Markdown /
+    attestation serialization. HTTP status is always 200 — pass/fail lives in ``gate.passed``.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    version = db.get_mcp_endpoint_version(str(endpoint_id), str(version_id))
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP endpoint version not found")
+
+    baseline_id = (baseline_version_id or "").strip() or None
+    if baseline_id:
+        if baseline_id == str(version_id):
+            raise HTTPException(
+                status_code=400,
+                detail="baselineVersionId must differ from the gated version",
+            )
+        baseline = db.get_mcp_endpoint_version(str(endpoint_id), baseline_id)
+        if baseline is None:
+            raise HTTPException(
+                status_code=404, detail=f"Baseline MCP endpoint version not found: {baseline_id}"
+            )
+
+    from .config import settings
+    from .gate_report_emit import GATE_FORMAT_JSON, normalize_gate_format
+    from .lint_gate import evaluate_lint_gate, gate_payload
+    from .lint_gate_emit import serialize_lint_gate
+    from .models import LintGateResponse
+
+    try:
+        gate = evaluate_lint_gate(
+            tenant_id=tenant_id,
+            subject_type=SUBJECT_MCP_ENDPOINT_VERSION,
+            subject_id=str(version_id),
+            tenant_slug=tenant_slug,
+            baseline_subject_id=baseline_id,
+            policy_version_id=policy_version_id,
+            new_only=new_only,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    payload = gate_payload(gate)
+    fmt = normalize_gate_format(format or request.headers.get("accept"))
+    if fmt == GATE_FORMAT_JSON:
+        return LintGateResponse.model_validate(payload)
+    body, media = serialize_lint_gate(
+        fmt, payload, secret=settings.lint_attestation_signing_secret
+    )
+    return Response(content=body, media_type=media)
+
+
 # ===========================================================================
 # Outbound credentials — set / clear / redacted status (V2-MCP-20.5 / MCAT-6.5, #3681)
 # ===========================================================================

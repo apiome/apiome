@@ -96,6 +96,49 @@ def lint_command_should_fail(
     return fail_on_policy and policy is not None and not policy_evaluation_passed(policy)
 
 
+def gate_should_fail(gate: dict[str, Any]) -> bool:
+    """True when a lint gate payload's CI verdict failed (``gate.passed`` not true).
+
+    This is the ONLY condition that exits ``apiome lint gate`` non-zero: the verdict already
+    reflects the pack's configured ``ciOutcomes`` toggles, so an unconfigured gate (or plain
+    findings without policy failures) never breaks CI (#4860 AC-1).
+    """
+    verdict = gate.get("gate")
+    return not (isinstance(verdict, dict) and verdict.get("passed") is True)
+
+
+def emit_gate_output(*, json_mode: bool, gate: dict[str, Any]) -> None:
+    """Render a lint gate payload: full JSON in json mode, else a human summary."""
+    if json_mode:
+        emit_json(gate)
+        return
+
+    verdict = gate.get("gate") if isinstance(gate.get("gate"), dict) else {}
+    counts = gate.get("counts") if isinstance(gate.get("counts"), dict) else {}
+    policy = gate.get("policy") if isinstance(gate.get("policy"), dict) else {}
+    status = "PASSED" if verdict.get("passed") is True else "FAILED"
+    scope = " (new findings only)" if gate.get("newOnly") else ""
+    typer.echo(f"Lint gate: {status}{scope}")
+    typer.echo(f"Policy pack: {policy.get('policyVersionId') or '?'}")
+    if gate.get("baselineSubjectId"):
+        typer.echo(f"Baseline: {gate['baselineSubjectId']}")
+    typer.echo(
+        "Findings: "
+        f"{counts.get('total', 0)} total, "
+        f"{counts.get('new', 0)} new, "
+        f"{counts.get('unwaivedErrors', 0)} unwaived errors, "
+        f"{counts.get('waived', 0)} waived"
+    )
+    gate_results = verdict.get("gateResults")
+    failed = failed_policy_gates(gate_results if isinstance(gate_results, dict) else {})
+    if failed:
+        typer.echo(f"Failed gates: {', '.join(failed)}")
+    links = gate.get("links") if isinstance(gate.get("links"), dict) else {}
+    for name in ("evidence", "policy", "workspace"):
+        if links.get(name):
+            typer.echo(f"{name.capitalize()}: {links[name]}")
+
+
 def emit_lint_report(report: dict[str, Any]) -> None:
     """Render a lint report as a summary header plus a findings table."""
     score = report.get("score")

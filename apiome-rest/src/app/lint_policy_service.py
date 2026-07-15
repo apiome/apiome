@@ -103,7 +103,7 @@ def ensure_latest_policy_pack(
     )
 
 
-def _findings_from_evidence_or_report(
+def findings_from_evidence_or_report(
     evidence_rows: Sequence[Mapping[str, Any]],
     report: Optional[Mapping[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], Optional[str], Optional[str]]:
@@ -143,6 +143,51 @@ def _findings_from_evidence_or_report(
         ]
         return findings, None, report.get("report_fingerprint")
     return [], None, None
+
+
+# Backwards-compatible alias for the pre-#4860 private name.
+_findings_from_evidence_or_report = findings_from_evidence_or_report
+
+
+def resolve_policy_pack(
+    tenant_id: str,
+    *,
+    project_id: Optional[str] = None,
+    policy_version_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Resolve the policy pack an evaluation should be pinned to (CLX-4.2, #4860).
+
+    Shared by the catalog / MCP policy evaluations and the lint gate: resolves the assigned
+    style guide (project scope when given, tenant default otherwise), then either loads the
+    explicitly requested historical pack or ensures the latest snapshot exists.
+
+    Args:
+        tenant_id: Caller's tenant.
+        project_id: Project scope for guide resolution; ``None`` for tenant scope (MCP).
+        policy_version_id: Optional historical pack id to pin instead of the latest.
+
+    Returns:
+        The policy version row.
+
+    Raises:
+        ValueError: No assignable style guide (callers map this to HTTP 409).
+        LookupError: Requested pack / guide not found (callers map this to HTTP 404).
+    """
+    guide = resolve_style_guide(tenant_id, project_id=project_id)
+    guide_id = guide.guide_id
+    if not guide_id:
+        scope = "project" if project_id else "tenant"
+        raise ValueError(f"No assignable style guide for this {scope}")
+
+    if policy_version_id:
+        pack = db.get_style_guide_policy_version(policy_version_id, tenant_id)
+        if not pack:
+            raise LookupError("Policy version not found")
+        return pack
+    pack = ensure_latest_policy_pack(str(guide_id), tenant_id)
+    if not pack:
+        raise LookupError("Style guide not found")
+    return pack
 
 
 def _decisions_map(
@@ -281,20 +326,9 @@ def evaluate_catalog_revision_policy(
     policy_version_id: Optional[str] = None,
 ) -> LintPolicyResponse:
     """Full catalog-revision policy evaluation for GET …/lint/policy."""
-    guide = resolve_style_guide(tenant_id, project_id=project_id)
-    guide_id = guide.guide_id
-    if not guide_id:
-        # Fallback guide has no DB id — snapshot is impossible; synthesize ephemeral pack.
-        raise ValueError("No assignable style guide for this project")
-
-    if policy_version_id:
-        pack = db.get_style_guide_policy_version(policy_version_id, tenant_id)
-        if not pack:
-            raise LookupError("Policy version not found")
-    else:
-        pack = ensure_latest_policy_pack(str(guide_id), tenant_id)
-        if not pack:
-            raise LookupError("Style guide not found")
+    pack = resolve_policy_pack(
+        tenant_id, project_id=project_id, policy_version_id=policy_version_id
+    )
 
     evidence_rows = db.list_lint_evidence_runs_for_version(version_record_id, tenant_id)
     captured = db.get_version_quality_score(version_record_id, tenant_id) or {}
@@ -303,7 +337,7 @@ def evaluate_catalog_revision_policy(
         if isinstance(captured.get("quality_report"), dict)
         else {}
     )
-    findings, evidence_run_id, evidence_fp = _findings_from_evidence_or_report(
+    findings, evidence_run_id, evidence_fp = findings_from_evidence_or_report(
         evidence_rows, report
     )
 
@@ -342,25 +376,13 @@ def evaluate_mcp_version_policy(
     policy_version_id: Optional[str] = None,
 ) -> LintPolicyResponse:
     """Full MCP endpoint-version policy evaluation for GET …/lint/policy."""
-    # MCP uses the tenant default / assigned guide (no project) via resolve without project.
-    guide = resolve_style_guide(tenant_id, project_id=None)
-    guide_id = guide.guide_id
-    if not guide_id:
-        raise ValueError("No assignable style guide for this tenant")
-
-    if policy_version_id:
-        pack = db.get_style_guide_policy_version(policy_version_id, tenant_id)
-        if not pack:
-            raise LookupError("Policy version not found")
-    else:
-        pack = ensure_latest_policy_pack(str(guide_id), tenant_id)
-        if not pack:
-            raise LookupError("Style guide not found")
+    # MCP uses the tenant default / assigned guide (no project scope).
+    pack = resolve_policy_pack(tenant_id, policy_version_id=policy_version_id)
 
     evidence_rows = db.list_lint_evidence_runs_for_mcp_version(version_id)
     score_row = db.get_mcp_version_score(version_id) or {}
     report = score_row.get("report") if isinstance(score_row.get("report"), dict) else {}
-    findings, evidence_run_id, evidence_fp = _findings_from_evidence_or_report(
+    findings, evidence_run_id, evidence_fp = findings_from_evidence_or_report(
         evidence_rows, report
     )
 
