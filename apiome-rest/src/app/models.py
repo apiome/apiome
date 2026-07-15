@@ -3665,7 +3665,9 @@ class LintFindingDecisionOut(BaseModel):
     source_fingerprint: str = Field(serialization_alias="sourceFingerprint")
     rule_id: Optional[str] = Field(default=None, serialization_alias="ruleId")
     state: str = Field(
-        description="open | acknowledged | waived | fixed | false_positive"
+        description=(
+            "open | acknowledged | waiver_requested | waived | fixed | false_positive"
+        )
     )
     owner_user_id: Optional[str] = Field(default=None, serialization_alias="ownerUserId")
     rationale: Optional[str] = None
@@ -3694,7 +3696,9 @@ class LintFindingDecisionUpsertRequest(BaseModel):
         serialization_alias="sourceFingerprint",
     )
     state: str = Field(
-        description="open | acknowledged | waived | fixed | false_positive"
+        description=(
+            "open | acknowledged | waiver_requested | waived | fixed | false_positive"
+        )
     )
     project_id: Optional[str] = Field(
         default=None,
@@ -3883,6 +3887,349 @@ def _iso_or_none(value: Any) -> Optional[str]:
     if isinstance(value, datetime):
         return value.isoformat()
     return str(value)
+
+
+# --- Lint workspace (CLX-4.1, #4859) ----------------------------------------------------------
+
+
+class LintWorkspaceFindingOut(BaseModel):
+    """One row in the catalog-wide workspace findings queue (CLX-4.1, #4859).
+
+    Carries every link the finding detail needs: the revision (``projectId`` +
+    ``versionRecordId`` / ``mcpVersionId``), the evidence run (``evidenceRunId``), the policy
+    decision (``latestPolicyEvaluationId`` / ``policyPassed`` / ``decision``), and the source
+    ``location``. Remediation history is read from ``GET /v1/lint/decisions/{id}/events``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_fingerprint: Optional[str] = Field(
+        default=None, serialization_alias="sourceFingerprint"
+    )
+    rule_id: Optional[str] = Field(default=None, serialization_alias="ruleId")
+    message: Optional[str] = None
+    severity: Optional[str] = None
+    confidence: Optional[str] = None
+    category: Optional[str] = None
+    axis_key: str = Field(serialization_alias="axisKey")
+    location: Dict[str, Any] = Field(default_factory=dict)
+    remediation: Optional[Dict[str, Any]] = None
+    scanner_id: str = Field(serialization_alias="scannerId")
+    profile: Optional[str] = None
+    subject_type: str = Field(serialization_alias="subjectType")
+    version_record_id: Optional[str] = Field(
+        default=None, serialization_alias="versionRecordId"
+    )
+    mcp_version_id: Optional[str] = Field(default=None, serialization_alias="mcpVersionId")
+    project_id: Optional[str] = Field(default=None, serialization_alias="projectId")
+    project_name: Optional[str] = Field(default=None, serialization_alias="projectName")
+    subject_label: Optional[str] = Field(default=None, serialization_alias="subjectLabel")
+    composite_grade: Optional[str] = Field(
+        default=None, serialization_alias="compositeGrade"
+    )
+    required_coverage_met: Optional[bool] = Field(
+        default=None, serialization_alias="requiredCoverageMet"
+    )
+    evidence_run_id: Optional[str] = Field(
+        default=None, serialization_alias="evidenceRunId"
+    )
+    evidence_created_at: Optional[str] = Field(
+        default=None, serialization_alias="evidenceCreatedAt"
+    )
+    is_new: bool = Field(default=False, serialization_alias="isNew")
+    effective_state: str = Field(serialization_alias="effectiveState")
+    waived: bool = False
+    decision: Optional[LintFindingDecisionOut] = None
+    latest_policy_evaluation_id: Optional[str] = Field(
+        default=None, serialization_alias="latestPolicyEvaluationId"
+    )
+    policy_passed: Optional[bool] = Field(default=None, serialization_alias="policyPassed")
+
+
+class LintWorkspaceFindingsResponse(BaseModel):
+    """Paged workspace findings queue with pre-pagination facet counts (CLX-4.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    findings: List[LintWorkspaceFindingOut] = Field(default_factory=list)
+    count: int = 0
+    total: int = 0
+    limit: int = 50
+    offset: int = 0
+    facets: Dict[str, Dict[str, int]] = Field(default_factory=dict)
+
+
+class LintWorkspaceAxisSummaryOut(BaseModel):
+    """Tenant-wide rollup of one scoring axis (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    key: str
+    label: str
+    assessed_count: int = Field(default=0, serialization_alias="assessedCount")
+    not_assessed_count: int = Field(default=0, serialization_alias="notAssessedCount")
+    average_score: Optional[int] = Field(default=None, serialization_alias="averageScore")
+    grade_distribution: Dict[str, int] = Field(
+        default_factory=dict, serialization_alias="gradeDistribution"
+    )
+    severity_counts: Dict[str, int] = Field(
+        default_factory=dict, serialization_alias="severityCounts"
+    )
+
+
+class LintWorkspaceCoverageSubjectOut(BaseModel):
+    """One subject missing required axis coverage (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    subject_type: str = Field(serialization_alias="subjectType")
+    subject_id: str = Field(serialization_alias="subjectId")
+    project_id: Optional[str] = Field(default=None, serialization_alias="projectId")
+    subject_label: Optional[str] = Field(default=None, serialization_alias="subjectLabel")
+    missing_axes: List[str] = Field(default_factory=list, serialization_alias="missingAxes")
+
+
+class LintWorkspaceSummaryResponse(BaseModel):
+    """Tenant-wide lint posture rollup for the workspace header (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    subjects: Dict[str, int] = Field(default_factory=dict)
+    grade_distribution: Dict[str, int] = Field(
+        default_factory=dict, serialization_alias="gradeDistribution"
+    )
+    axes: List[LintWorkspaceAxisSummaryOut] = Field(default_factory=list)
+    coverage: Dict[str, Any] = Field(default_factory=dict)
+    findings: Dict[str, int] = Field(default_factory=dict)
+    waivers: Dict[str, int] = Field(default_factory=dict)
+
+
+class LintWorkspaceTrendPointOut(BaseModel):
+    """One day in the remediation-vs-policy trend series (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    date: str
+    new_findings: int = Field(default=0, serialization_alias="newFindings")
+    remediated_findings: int = Field(
+        default=0, serialization_alias="remediatedFindings"
+    )
+    waivers_granted: int = Field(default=0, serialization_alias="waiversGranted")
+    waivers_expired: int = Field(default=0, serialization_alias="waiversExpired")
+    marked_false_positive: int = Field(
+        default=0, serialization_alias="markedFalsePositive"
+    )
+    policy_pack_publications: int = Field(
+        default=0, serialization_alias="policyPackPublications"
+    )
+
+
+class LintWorkspaceTrendsResponse(BaseModel):
+    """Daily trend series separating genuine remediation from policy change (CLX-4.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    days: int
+    series: List[LintWorkspaceTrendPointOut] = Field(default_factory=list)
+
+
+class LintWorkspaceBulkItem(BaseModel):
+    """One finding targeted by a bulk decision action (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_fingerprint: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices("sourceFingerprint", "source_fingerprint"),
+        serialization_alias="sourceFingerprint",
+    )
+    project_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("projectId", "project_id"),
+        serialization_alias="projectId",
+    )
+    rule_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("ruleId", "rule_id"),
+        serialization_alias="ruleId",
+    )
+
+
+class LintWorkspaceBulkSet(BaseModel):
+    """The decision fields a bulk action applies to every targeted finding (CLX-4.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    state: Optional[str] = Field(
+        default=None,
+        description=(
+            "open | acknowledged | waiver_requested | waived | fixed | false_positive"
+        ),
+    )
+    owner_user_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("ownerUserId", "owner_user_id"),
+        serialization_alias="ownerUserId",
+    )
+    rationale: Optional[str] = None
+    linked_ticket: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("linkedTicket", "linked_ticket"),
+        serialization_alias="linkedTicket",
+    )
+    expires_at: Optional[datetime] = Field(
+        default=None,
+        validation_alias=AliasChoices("expiresAt", "expires_at"),
+        serialization_alias="expiresAt",
+        description="Required when state is waived.",
+    )
+    policy_version_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("policyVersionId", "policy_version_id"),
+        serialization_alias="policyVersionId",
+    )
+
+
+class LintWorkspaceBulkDecisionRequest(BaseModel):
+    """Bulk assign / state-change request over workspace findings (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: List[LintWorkspaceBulkItem] = Field(min_length=1)
+    set: LintWorkspaceBulkSet
+
+
+class LintWorkspaceBulkItemResultOut(BaseModel):
+    """Per-item outcome of a bulk decision action (CLX-4.1, #4859).
+
+    ``beforeState`` is what makes bulk actions reversible: the client can build the exact
+    inverse request from the returned states (grouped by ``beforeState``).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source_fingerprint: str = Field(serialization_alias="sourceFingerprint")
+    project_id: Optional[str] = Field(default=None, serialization_alias="projectId")
+    decision_id: Optional[str] = Field(default=None, serialization_alias="decisionId")
+    before_state: Optional[str] = Field(default=None, serialization_alias="beforeState")
+    after_state: Optional[str] = Field(default=None, serialization_alias="afterState")
+    ok: bool = False
+    error: Optional[str] = None
+
+
+class LintWorkspaceBulkDecisionResponse(BaseModel):
+    """Bulk decision outcome: per-item results plus applied/failed tallies (CLX-4.1)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    results: List[LintWorkspaceBulkItemResultOut] = Field(default_factory=list)
+    applied_count: int = Field(default=0, serialization_alias="appliedCount")
+    failed_count: int = Field(default=0, serialization_alias="failedCount")
+
+
+class LintWorkspaceSavedViewOut(BaseModel):
+    """One saved workspace view owned by the caller (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    filters: Dict[str, Any] = Field(default_factory=dict)
+    query: str = ""
+    sort: str = "severity"
+    is_pinned: bool = Field(default=False, serialization_alias="isPinned")
+    created_at: Optional[str] = Field(default=None, serialization_alias="createdAt")
+    updated_at: Optional[str] = Field(default=None, serialization_alias="updatedAt")
+
+
+class LintWorkspaceSavedViewListResponse(BaseModel):
+    """Envelope for listing saved workspace views (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    views: List[LintWorkspaceSavedViewOut] = Field(default_factory=list)
+    count: int = 0
+
+
+class LintWorkspaceSavedViewCreate(BaseModel):
+    """Request body for creating a saved workspace view (CLX-4.1, #4859)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: str
+    filters: Dict[str, Any] = Field(default_factory=dict)
+    query: str = ""
+    sort: str = "severity"
+    is_pinned: bool = Field(default=False, alias="isPinned")
+
+
+class LintWorkspaceSavedViewUpdate(BaseModel):
+    """Request body for patching a saved workspace view (all fields optional)."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    name: Optional[str] = None
+    filters: Optional[Dict[str, Any]] = None
+    query: Optional[str] = None
+    sort: Optional[str] = None
+    is_pinned: Optional[bool] = Field(default=None, alias="isPinned")
+
+
+def lint_workspace_finding_out_from_row(row: Mapping[str, Any]) -> LintWorkspaceFindingOut:
+    """Shape one enriched workspace finding dict into its API projection."""
+    decision_row = row.get("decision")
+    return LintWorkspaceFindingOut(
+        source_fingerprint=row.get("source_fingerprint"),
+        rule_id=row.get("rule_id"),
+        message=row.get("message"),
+        severity=row.get("severity"),
+        confidence=row.get("confidence"),
+        category=row.get("category"),
+        axis_key=str(row.get("axis_key") or "quality"),
+        location=row.get("location") if isinstance(row.get("location"), dict) else {},
+        remediation=(
+            row.get("remediation") if isinstance(row.get("remediation"), dict) else None
+        ),
+        scanner_id=str(row.get("scanner_id") or ""),
+        profile=row.get("profile"),
+        subject_type=str(row.get("subject_type") or ""),
+        version_record_id=row.get("version_record_id"),
+        mcp_version_id=row.get("mcp_version_id"),
+        project_id=row.get("project_id"),
+        project_name=row.get("project_name"),
+        subject_label=row.get("subject_label"),
+        composite_grade=row.get("composite_grade"),
+        required_coverage_met=row.get("required_coverage_met"),
+        evidence_run_id=row.get("evidence_run_id"),
+        evidence_created_at=_iso_or_none(row.get("evidence_created_at")),
+        is_new=bool(row.get("is_new")),
+        effective_state=str(row.get("effective_state") or "open"),
+        waived=bool(row.get("waived")),
+        decision=(
+            lint_finding_decision_out_from_row(decision_row) if decision_row else None
+        ),
+        latest_policy_evaluation_id=row.get("latest_policy_evaluation_id"),
+        policy_passed=row.get("policy_passed"),
+    )
+
+
+def lint_workspace_saved_view_out_from_row(
+    row: Mapping[str, Any],
+) -> LintWorkspaceSavedViewOut:
+    """Project a ``lint_workspace_saved_views`` row onto the wire model."""
+    raw_filters = row.get("filters") or {}
+    if not isinstance(raw_filters, dict):
+        raw_filters = {}
+    return LintWorkspaceSavedViewOut(
+        id=str(row["id"]),
+        name=str(row["name"]),
+        filters=raw_filters,
+        query=str(row.get("query") or ""),
+        sort=str(row.get("sort") or "severity"),
+        is_pinned=bool(row.get("is_pinned")),
+        created_at=_iso_or_none(row.get("created_at")),
+        updated_at=_iso_or_none(row.get("updated_at")),
+    )
 
 
 def lint_axis_out_from_dict(axis: Mapping[str, Any]) -> LintAxisOut:

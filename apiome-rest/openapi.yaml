@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.4.0
+  version: 1.5.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5604,10 +5604,21 @@ paths:
       tags:
       - lint-decisions
       summary: Upsert Lint Finding Decision
-      description: 'Create or update a finding decision / waiver (CLX-1.3, #4850).
+      description: 'Create or update a finding decision / waiver (CLX-1.3, #4850;
+        guarded by CLX-4.1, #4859).
 
 
-        Waived state requires non-empty rationale and an expiry timestamp.'
+        Waived state requires non-empty rationale and an expiry timestamp. The transition
+        is
+
+        RBAC-guarded on the ``lint_findings`` resource: triage transitions need ``edit``;
+
+        approval-tier transitions (entering/leaving ``waived``, resolving a ``waiver_requested``
+
+        row) need ``publish`` — the same rules the workspace bulk endpoint enforces,
+        so bulk
+
+        authorization can never be bypassed one decision at a time.'
       operationId: upsert_lint_finding_decision_v1_lint_decisions_post
       parameters:
       - name: tenant_slug
@@ -5799,6 +5810,778 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list lint finding decision eventsresponse422.
+  /v1/lint/workspace/findings:
+    get:
+      tags:
+      - lint-workspace
+      summary: List Workspace Findings
+      description: 'Cross-catalog findings queue over the latest evidence per subject
+        (CLX-4.1, #4859).
+
+
+        "All new unwaived security errors" (acceptance criterion 1) is
+
+        ``?new=true&severity=error&axis=security&state=open``; missing required coverage
+        lives in
+
+        ``GET /summary``''s coverage block. Facets are computed over the filtered,
+        pre-pagination
+
+        set so the toolbar can show counts for the current queue.'
+      operationId: list_workspace_findings_v1_lint_workspace_findings_get
+      parameters:
+      - name: severity
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsseverity schema.
+          - type: 'null'
+            description: List Workspace Findingsseverity schema.
+          description: CSV of error,warning,info
+          title: Severity
+        description: CSV of error,warning,info
+      - name: state
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsstate schema.
+          - type: 'null'
+            description: List Workspace Findingsstate schema.
+          description: CSV of effective decision states
+          title: State
+        description: CSV of effective decision states
+      - name: axis
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsaxis schema.
+          - type: 'null'
+            description: List Workspace Findingsaxis schema.
+          description: CSV of scoring axis keys
+          title: Axis
+        description: CSV of scoring axis keys
+      - name: grade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsgrade schema.
+          - type: 'null'
+            description: List Workspace Findingsgrade schema.
+          description: CSV of composite grades A–F
+          title: Grade
+        description: CSV of composite grades A–F
+      - name: coverage
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingscoverage schema.
+          - type: 'null'
+            description: List Workspace Findingscoverage schema.
+          description: missing | met
+          title: Coverage
+        description: missing | met
+      - name: profile
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsprofile schema.
+          - type: 'null'
+            description: List Workspace Findingsprofile schema.
+          description: CSV of execution profiles
+          title: Profile
+        description: CSV of execution profiles
+      - name: scanner
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsscanner schema.
+          - type: 'null'
+            description: List Workspace Findingsscanner schema.
+          description: CSV of scanner ids (source)
+          title: Scanner
+        description: CSV of scanner ids (source)
+      - name: subjectType
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingssubject Type schema.
+          - type: 'null'
+            description: List Workspace Findingssubject Type schema.
+          description: catalog_revision | mcp_endpoint_version
+          title: Subjecttype
+        description: catalog_revision | mcp_endpoint_version
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsproject ID schema.
+          - type: 'null'
+            description: List Workspace Findingsproject ID schema.
+          title: Projectid
+          description: Projectid schema.
+        description: 'Query parameter: project id.'
+      - name: ownerUserId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsowner User ID schema.
+          - type: 'null'
+            description: List Workspace Findingsowner User ID schema.
+          title: Owneruserid
+          description: Owneruserid schema.
+        description: 'Query parameter: owner user id.'
+      - name: ruleId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsrule ID schema.
+          - type: 'null'
+            description: List Workspace Findingsrule ID schema.
+          title: Ruleid
+          description: Ruleid schema.
+        description: 'Query parameter: rule id.'
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingscategory schema.
+          - type: 'null'
+            description: List Workspace Findingscategory schema.
+          title: Category
+          description: Category schema.
+        description: 'Query parameter: category.'
+      - name: new
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+            description: List Workspace Findingsnew schema.
+          - type: 'null'
+            description: List Workspace Findingsnew schema.
+          description: True restricts to regressions (new since previous run)
+          title: New
+        description: True restricts to regressions (new since previous run)
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsq schema.
+          - type: 'null'
+            description: List Workspace Findingsq schema.
+          description: Free-text search
+          title: Q
+        description: Free-text search
+      - name: sort
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingssort schema.
+          - type: 'null'
+            description: List Workspace Findingssort schema.
+          description: severity | newest | rule | subject
+          title: Sort
+        description: severity | newest | rule | subject
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+          description: Offset schema.
+        description: Number of rows to skip before returning results.
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findingsauthorization schema.
+          - type: 'null'
+            description: List Workspace Findingsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Findings Xapikey schema.
+          - type: 'null'
+            description: List Workspace Findings Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list workspace findings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceFindingsResponse'
+                description: Response payload for list workspace findingsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list workspace findingsresponse422.
+  /v1/lint/workspace/summary:
+    get:
+      tags:
+      - lint-workspace
+      summary: Workspace Summary
+      description: 'Tenant-wide posture rollup: grades, axes, coverage gaps, finding/waiver
+        counts.'
+      operationId: workspace_summary_v1_lint_workspace_summary_get
+      parameters:
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Summaryproject ID schema.
+          - type: 'null'
+            description: Workspace Summaryproject ID schema.
+          title: Projectid
+          description: Projectid schema.
+        description: 'Query parameter: project id.'
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Summaryauthorization schema.
+          - type: 'null'
+            description: Workspace Summaryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Summary Xapikey schema.
+          - type: 'null'
+            description: Workspace Summary Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for workspace summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceSummaryResponse'
+                description: Response payload for workspace summaryresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for workspace summaryresponse422.
+  /v1/lint/workspace/trends:
+    get:
+      tags:
+      - lint-workspace
+      summary: Workspace Trends
+      description: 'Daily series separating genuine remediation from policy / waiver
+        / coverage change.
+
+
+        ``remediatedFindings`` counts only fingerprints that disappeared from evidence
+        and were
+
+        NOT waived or false-positived; waiver grants, expiries, false-positive marks,
+        and policy
+
+        pack publications are their own series (acceptance criterion 4).'
+      operationId: workspace_trends_v1_lint_workspace_trends_get
+      parameters:
+      - name: days
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 365
+          minimum: 1
+          default: 30
+          title: Days
+          description: Days schema.
+        description: 'Query parameter: days.'
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Trendsproject ID schema.
+          - type: 'null'
+            description: Workspace Trendsproject ID schema.
+          title: Projectid
+          description: Projectid schema.
+        description: 'Query parameter: project id.'
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Trendsauthorization schema.
+          - type: 'null'
+            description: Workspace Trendsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Workspace Trends Xapikey schema.
+          - type: 'null'
+            description: Workspace Trends Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for workspace trends.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceTrendsResponse'
+                description: Response payload for workspace trendsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for workspace trendsresponse422.
+  /v1/lint/workspace/decisions/bulk:
+    post:
+      tags:
+      - lint-workspace
+      summary: Bulk Decision Action
+      description: 'Apply one decision change to up to :data:`BULK_ITEM_CAP` findings
+        (CLX-4.1, #4859).
+
+
+        **Authorized**: requires ``lint_findings:edit``; items whose transition is
+        approval-tier
+
+        (entering/leaving ``waived``, resolving a ``waiver_requested`` row) additionally
+        require
+
+        ``lint_findings:publish`` and fail per-item without it.
+
+        **Audited**: every applied item appends an immutable ``lint_finding_decision_events``
+        row
+
+        (plus the standard denial audit on 403).
+
+        **Reversible**: each result carries ``beforeState`` so the client can issue
+        the exact
+
+        inverse request; approval-tier inversions require the same publish permission.'
+      operationId: bulk_decision_action_v1_lint_workspace_decisions_bulk_post
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Bulk Decision Actionauthorization schema.
+          - type: 'null'
+            description: Bulk Decision Actionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Bulk Decision Action Xapikey schema.
+          - type: 'null'
+            description: Bulk Decision Action Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LintWorkspaceBulkDecisionRequest'
+              description: Request body for bulk decision actionrequest.
+        description: Request body for bulk decision action.
+      responses:
+        '200':
+          description: Successful response for bulk decision action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceBulkDecisionResponse'
+                description: Response payload for bulk decision actionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for bulk decision actionresponse422.
+  /v1/lint/workspace/views:
+    get:
+      tags:
+      - lint-workspace
+      summary: List Workspace Saved Views
+      description: List the caller's saved workspace views (pinned first, then newest).
+      operationId: list_workspace_saved_views_v1_lint_workspace_views_get
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Saved Viewsauthorization schema.
+          - type: 'null'
+            description: List Workspace Saved Viewsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Workspace Saved Views Xapikey schema.
+          - type: 'null'
+            description: List Workspace Saved Views Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list workspace saved views.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceSavedViewListResponse'
+                description: Response payload for list workspace saved viewsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list workspace saved viewsresponse422.
+    post:
+      tags:
+      - lint-workspace
+      summary: Create Workspace Saved View
+      description: Save the current workspace filter bundle under a name.
+      operationId: create_workspace_saved_view_v1_lint_workspace_views_post
+      parameters:
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create Workspace Saved Viewauthorization schema.
+          - type: 'null'
+            description: Create Workspace Saved Viewauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Create Workspace Saved View Xapikey schema.
+          - type: 'null'
+            description: Create Workspace Saved View Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LintWorkspaceSavedViewCreate'
+              description: Request body for create workspace saved viewrequest.
+        description: Request body for create workspace saved view.
+      responses:
+        '201':
+          description: Successful response for create workspace saved view.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceSavedViewOut'
+                description: Response payload for create workspace saved viewresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for create workspace saved viewresponse422.
+  /v1/lint/workspace/views/{view_id}:
+    patch:
+      tags:
+      - lint-workspace
+      summary: Update Workspace Saved View
+      description: Update a saved workspace view owned by the caller.
+      operationId: update_workspace_saved_view_v1_lint_workspace_views__view_id__patch
+      parameters:
+      - name: view_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: View Id
+          description: View Id schema.
+        description: Path parameter identifying the view id segment.
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update Workspace Saved Viewauthorization schema.
+          - type: 'null'
+            description: Update Workspace Saved Viewauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update Workspace Saved View Xapikey schema.
+          - type: 'null'
+            description: Update Workspace Saved View Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LintWorkspaceSavedViewUpdate'
+              description: Request body for update workspace saved viewrequest.
+        description: Request body for update workspace saved view.
+      responses:
+        '200':
+          description: Successful response for update workspace saved view.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LintWorkspaceSavedViewOut'
+                description: Response payload for update workspace saved viewresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for update workspace saved viewresponse422.
+    delete:
+      tags:
+      - lint-workspace
+      summary: Delete Workspace Saved View
+      description: Delete a saved workspace view owned by the caller.
+      operationId: delete_workspace_saved_view_v1_lint_workspace_views__view_id__delete
+      parameters:
+      - name: view_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: View Id
+          description: View Id schema.
+        description: Path parameter identifying the view id segment.
+      - name: tenant_slug
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Delete Workspace Saved Viewauthorization schema.
+          - type: 'null'
+            description: Delete Workspace Saved Viewauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Delete Workspace Saved View Xapikey schema.
+          - type: 'null'
+            description: Delete Workspace Saved View Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for delete workspace saved view.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+                title: Response Delete Workspace Saved View V1 Lint Workspace Views  View
+                  Id  Delete
+                description: Response Delete Workspace Saved View V1 Lint Workspace
+                  Views  View Id  Delete schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for delete workspace saved viewresponse422.
   /v1/style-guides/{tenant_slug}:
     get:
       tags:
@@ -33431,7 +34214,7 @@ components:
         state:
           type: string
           title: State
-          description: open | acknowledged | waived | fixed | false_positive
+          description: open | acknowledged | waiver_requested | waived | fixed | false_positive
           example: example
         ownerUserId:
           anyOf:
@@ -33532,7 +34315,7 @@ components:
         state:
           type: string
           title: State
-          description: open | acknowledged | waived | fixed | false_positive
+          description: open | acknowledged | waiver_requested | waived | fixed | false_positive
           example: example
         projectId:
           anyOf:
@@ -34023,6 +34806,780 @@ components:
         severity the
 
         rule applies when no style guide overrides it.'
+    LintWorkspaceAxisSummaryOut:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: Key.
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        assessedCount:
+          type: integer
+          title: Assessedcount
+          default: 0
+          description: Number of assessed.
+          example: 1
+        notAssessedCount:
+          type: integer
+          title: Notassessedcount
+          default: 0
+          description: Number of not assessed.
+          example: 1
+        averageScore:
+          anyOf:
+          - type: integer
+            description: Response payload for lint workspace axis summary.
+          - type: 'null'
+            description: Response payload for lint workspace axis summary.
+          title: Averagescore
+          description: Average Score.
+        gradeDistribution:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Gradedistribution
+          description: Grade Distribution.
+        severityCounts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Severitycounts
+          description: Severity Counts.
+      type: object
+      required:
+      - key
+      - label
+      title: LintWorkspaceAxisSummaryOut
+      description: 'Tenant-wide rollup of one scoring axis (CLX-4.1, #4859).'
+    LintWorkspaceBulkDecisionRequest:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceBulkItem'
+          type: array
+          minItems: 1
+          title: Items
+          description: Items.
+          maxItems: 100
+        set:
+          $ref: '#/components/schemas/LintWorkspaceBulkSet'
+          description: Set.
+      type: object
+      required:
+      - items
+      - set
+      title: LintWorkspaceBulkDecisionRequest
+      description: 'Bulk assign / state-change request over workspace findings (CLX-4.1,
+        #4859).'
+    LintWorkspaceBulkDecisionResponse:
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceBulkItemResultOut'
+          type: array
+          title: Results
+          description: Results.
+          maxItems: 100
+        appliedCount:
+          type: integer
+          title: Appliedcount
+          default: 0
+          description: Number of applied.
+          example: 1
+        failedCount:
+          type: integer
+          title: Failedcount
+          default: 0
+          description: Number of failed.
+          example: 1
+      type: object
+      title: LintWorkspaceBulkDecisionResponse
+      description: 'Bulk decision outcome: per-item results plus applied/failed tallies
+        (CLX-4.1).'
+    LintWorkspaceBulkItem:
+      properties:
+        sourceFingerprint:
+          type: string
+          minLength: 1
+          title: Sourcefingerprint
+          description: Source Fingerprint.
+          example: a1b2c3d4e5f6789012345678901234ab
+        projectId:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk schema.
+          - type: 'null'
+            description: Lint Workspace Bulk schema.
+          title: Projectid
+          description: Project ID.
+        ruleId:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk schema.
+          - type: 'null'
+            description: Lint Workspace Bulk schema.
+          title: Ruleid
+          description: Rule ID.
+      type: object
+      required:
+      - sourceFingerprint
+      title: LintWorkspaceBulkItem
+      description: 'One finding targeted by a bulk decision action (CLX-4.1, #4859).'
+    LintWorkspaceBulkItemResultOut:
+      properties:
+        sourceFingerprint:
+          type: string
+          title: Sourcefingerprint
+          description: Source Fingerprint.
+          example: a1b2c3d4e5f6789012345678901234ab
+        projectId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace bulk item result.
+          - type: 'null'
+            description: Response payload for lint workspace bulk item result.
+          title: Projectid
+          description: Project ID.
+        decisionId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace bulk item result.
+          - type: 'null'
+            description: Response payload for lint workspace bulk item result.
+          title: Decisionid
+          description: Decision ID.
+        beforeState:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace bulk item result.
+          - type: 'null'
+            description: Response payload for lint workspace bulk item result.
+          title: Beforestate
+          description: Before State.
+        afterState:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace bulk item result.
+          - type: 'null'
+            description: Response payload for lint workspace bulk item result.
+          title: Afterstate
+          description: After State.
+        ok:
+          type: boolean
+          title: Ok
+          default: false
+          description: Ok.
+          example: false
+        error:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace bulk item result.
+          - type: 'null'
+            description: Response payload for lint workspace bulk item result.
+          title: Error
+          description: Error.
+      type: object
+      required:
+      - sourceFingerprint
+      title: LintWorkspaceBulkItemResultOut
+      description: 'Per-item outcome of a bulk decision action (CLX-4.1, #4859).
+
+
+        ``beforeState`` is what makes bulk actions reversible: the client can build
+        the exact
+
+        inverse request from the returned states (grouped by ``beforeState``).'
+    LintWorkspaceBulkSet:
+      properties:
+        state:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: State
+          description: open | acknowledged | waiver_requested | waived | fixed | false_positive
+        ownerUserId:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: Owneruserid
+          description: Owner User ID.
+        rationale:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: Rationale
+          description: Rationale.
+        linkedTicket:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: Linkedticket
+          description: Linked Ticket.
+        expiresAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: Expiresat
+          description: Required when state is waived.
+        policyVersionId:
+          anyOf:
+          - type: string
+            description: Lint Workspace Bulk Set schema.
+          - type: 'null'
+            description: Lint Workspace Bulk Set schema.
+          title: Policyversionid
+          description: Policy Version ID.
+      type: object
+      title: LintWorkspaceBulkSet
+      description: The decision fields a bulk action applies to every targeted finding
+        (CLX-4.1).
+    LintWorkspaceFindingOut:
+      properties:
+        sourceFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Sourcefingerprint
+          description: Source Fingerprint.
+        ruleId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Ruleid
+          description: Rule ID.
+        message:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Message
+          description: Message.
+        severity:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Severity
+          description: Severity.
+        confidence:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Confidence
+          description: Confidence.
+        category:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Category
+          description: Classification category for the primitive type.
+        axisKey:
+          type: string
+          title: Axiskey
+          description: Axis Key.
+          example: example
+        location:
+          additionalProperties: true
+          type: object
+          title: Location
+          description: Location.
+        remediation:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Remediation
+          description: Remediation.
+        scannerId:
+          type: string
+          title: Scannerid
+          description: Scanner ID.
+          example: example
+        profile:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Profile
+          description: Profile.
+        subjectType:
+          type: string
+          title: Subjecttype
+          description: Subject Type.
+          example: example
+        versionRecordId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Versionrecordid
+          description: Version Record ID.
+        mcpVersionId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Mcpversionid
+          description: MCP Version ID.
+        projectId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Projectid
+          description: Project ID.
+        projectName:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Projectname
+          description: Project Name.
+        subjectLabel:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Subjectlabel
+          description: Subject Label.
+        compositeGrade:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Compositegrade
+          description: Composite Grade.
+        requiredCoverageMet:
+          anyOf:
+          - type: boolean
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Requiredcoveragemet
+          description: Required Coverage Met.
+        evidenceRunId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Evidencerunid
+          description: Evidence Run ID.
+        evidenceCreatedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Evidencecreatedat
+          description: Evidence Created At.
+        isNew:
+          type: boolean
+          title: Isnew
+          default: false
+          description: Is New.
+          example: false
+        effectiveState:
+          type: string
+          title: Effectivestate
+          description: Effective State.
+          example: example
+        waived:
+          type: boolean
+          title: Waived
+          default: false
+          description: Waived.
+          example: false
+        decision:
+          anyOf:
+          - $ref: '#/components/schemas/LintFindingDecisionOut'
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          description: Decision.
+        latestPolicyEvaluationId:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Latestpolicyevaluationid
+          description: Latest Policy Evaluation ID.
+        policyPassed:
+          anyOf:
+          - type: boolean
+            description: Response payload for lint workspace finding.
+          - type: 'null'
+            description: Response payload for lint workspace finding.
+          title: Policypassed
+          description: Policy Passed.
+      type: object
+      required:
+      - axisKey
+      - scannerId
+      - subjectType
+      - effectiveState
+      title: LintWorkspaceFindingOut
+      description: 'One row in the catalog-wide workspace findings queue (CLX-4.1,
+        #4859).
+
+
+        Carries every link the finding detail needs: the revision (``projectId`` +
+
+        ``versionRecordId`` / ``mcpVersionId``), the evidence run (``evidenceRunId``),
+        the policy
+
+        decision (``latestPolicyEvaluationId`` / ``policyPassed`` / ``decision``),
+        and the source
+
+        ``location``. Remediation history is read from ``GET /v1/lint/decisions/{id}/events``.'
+    LintWorkspaceFindingsResponse:
+      properties:
+        findings:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceFindingOut'
+          type: array
+          title: Findings
+          description: Findings.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          default: 0
+          description: Number of count.
+          example: 1
+        total:
+          type: integer
+          title: Total
+          default: 0
+          description: Total.
+          example: 1
+        limit:
+          type: integer
+          title: Limit
+          default: 50
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          default: 0
+          description: Offset.
+          example: 0
+        facets:
+          additionalProperties:
+            additionalProperties:
+              type: integer
+            type: object
+          type: object
+          title: Facets
+          description: Facets.
+      type: object
+      title: LintWorkspaceFindingsResponse
+      description: Paged workspace findings queue with pre-pagination facet counts
+        (CLX-4.1).
+    LintWorkspaceSavedViewCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+          description: Filters.
+        query:
+          type: string
+          title: Query
+          default: ''
+          description: Query.
+          example: example
+        sort:
+          type: string
+          title: Sort
+          default: severity
+          description: Sort.
+          example: example
+        isPinned:
+          type: boolean
+          title: Ispinned
+          default: false
+          description: Is Pinned.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: LintWorkspaceSavedViewCreate
+      description: 'Request body for creating a saved workspace view (CLX-4.1, #4859).'
+    LintWorkspaceSavedViewListResponse:
+      properties:
+        views:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceSavedViewOut'
+          type: array
+          title: Views
+          description: Views.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          default: 0
+          description: Number of count.
+          example: 1
+      type: object
+      title: LintWorkspaceSavedViewListResponse
+      description: 'Envelope for listing saved workspace views (CLX-4.1, #4859).'
+    LintWorkspaceSavedViewOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+          description: Filters.
+        query:
+          type: string
+          title: Query
+          default: ''
+          description: Query.
+          example: example
+        sort:
+          type: string
+          title: Sort
+          default: severity
+          description: Sort.
+          example: example
+        isPinned:
+          type: boolean
+          title: Ispinned
+          default: false
+          description: Is Pinned.
+          example: false
+        createdAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace saved view.
+          - type: 'null'
+            description: Response payload for lint workspace saved view.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            description: Response payload for lint workspace saved view.
+          - type: 'null'
+            description: Response payload for lint workspace saved view.
+          title: Updatedat
+          description: Updated At.
+      type: object
+      required:
+      - id
+      - name
+      title: LintWorkspaceSavedViewOut
+      description: 'One saved workspace view owned by the caller (CLX-4.1, #4859).'
+    LintWorkspaceSavedViewUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            description: Lint Workspace Saved View Update schema.
+          - type: 'null'
+            description: Lint Workspace Saved View Update schema.
+          title: Name
+          description: Human-readable name.
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Lint Workspace Saved View Update schema.
+          - type: 'null'
+            description: Lint Workspace Saved View Update schema.
+          title: Filters
+          description: Filters.
+        query:
+          anyOf:
+          - type: string
+            description: Lint Workspace Saved View Update schema.
+          - type: 'null'
+            description: Lint Workspace Saved View Update schema.
+          title: Query
+          description: Query.
+        sort:
+          anyOf:
+          - type: string
+            description: Lint Workspace Saved View Update schema.
+          - type: 'null'
+            description: Lint Workspace Saved View Update schema.
+          title: Sort
+          description: Sort.
+        isPinned:
+          anyOf:
+          - type: boolean
+            description: Lint Workspace Saved View Update schema.
+          - type: 'null'
+            description: Lint Workspace Saved View Update schema.
+          title: Ispinned
+          description: Is Pinned.
+      additionalProperties: false
+      type: object
+      title: LintWorkspaceSavedViewUpdate
+      description: Request body for patching a saved workspace view (all fields optional).
+    LintWorkspaceSummaryResponse:
+      properties:
+        subjects:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Subjects
+          description: Subjects.
+        gradeDistribution:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Gradedistribution
+          description: Grade Distribution.
+        axes:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceAxisSummaryOut'
+          type: array
+          title: Axes
+          description: Axes.
+          maxItems: 1000
+        coverage:
+          additionalProperties: true
+          type: object
+          title: Coverage
+          description: Coverage.
+        findings:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Findings
+          description: Findings.
+        waivers:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Waivers
+          description: Waivers.
+      type: object
+      title: LintWorkspaceSummaryResponse
+      description: 'Tenant-wide lint posture rollup for the workspace header (CLX-4.1,
+        #4859).'
+    LintWorkspaceTrendPointOut:
+      properties:
+        date:
+          type: string
+          title: Date
+          description: Date.
+          example: example
+        newFindings:
+          type: integer
+          title: Newfindings
+          default: 0
+          description: New Findings.
+          example: 1
+        remediatedFindings:
+          type: integer
+          title: Remediatedfindings
+          default: 0
+          description: Remediated Findings.
+          example: 1
+        waiversGranted:
+          type: integer
+          title: Waiversgranted
+          default: 0
+          description: Waivers Granted.
+          example: 1
+        waiversExpired:
+          type: integer
+          title: Waiversexpired
+          default: 0
+          description: Waivers Expired.
+          example: 1
+        markedFalsePositive:
+          type: integer
+          title: Markedfalsepositive
+          default: 0
+          description: Marked False Positive.
+          example: 1
+        policyPackPublications:
+          type: integer
+          title: Policypackpublications
+          default: 0
+          description: Policy Pack Publications.
+          example: 1
+      type: object
+      required:
+      - date
+      title: LintWorkspaceTrendPointOut
+      description: 'One day in the remediation-vs-policy trend series (CLX-4.1, #4859).'
+    LintWorkspaceTrendsResponse:
+      properties:
+        days:
+          type: integer
+          title: Days
+          description: Days.
+          example: 1
+        series:
+          items:
+            $ref: '#/components/schemas/LintWorkspaceTrendPointOut'
+          type: array
+          title: Series
+          description: Series.
+          maxItems: 1000
+      type: object
+      required:
+      - days
+      title: LintWorkspaceTrendsResponse
+      description: Daily trend series separating genuine remediation from policy change
+        (CLX-4.1).
     LossItem:
       properties:
         construct:

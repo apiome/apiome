@@ -180,5 +180,5 @@ export async function fetchFormatLintCapabilities(options?: {
         notes: asString(r.notes) ?? '',
       };
     })
-    .filter((e): e is FormatLintCapability => e != null);
+    .filter((e: FormatLintCapability | null): e is FormatLintCapability => e != null);
 }

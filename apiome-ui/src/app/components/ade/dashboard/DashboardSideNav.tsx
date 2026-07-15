@@ -25,6 +25,7 @@ import {
   GitCompareArrows,
   Layers,
   BookOpenCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { useDarkMode } from '@/app/hooks/useDarkMode';
 
@@ -85,6 +86,13 @@ const DashboardSideNav: React.FC = () => {
           href: '/ade/dashboard/style-guides',
           icon: BookOpenCheck,
           disabled: !hasTenant,
+        },
+        {
+          label: 'Lint Posture',
+          href: '/ade/dashboard/lint-workspace',
+          icon: ShieldCheck,
+          disabled: !hasTenant,
+          pill: 'Preview',
         },
       ],
     },
@@ -182,6 +190,12 @@ const DashboardSideNav: React.FC = () => {
     }
     if (href === '/ade/dashboard/catalog') {
       return pathname === '/ade/dashboard/catalog' || pathname.startsWith('/ade/dashboard/catalog/');
+    }
+    if (href === '/ade/dashboard/lint-workspace') {
+      return (
+        pathname === '/ade/dashboard/lint-workspace' ||
+        pathname.startsWith('/ade/dashboard/lint-workspace/')
+      );
     }
     return pathname === href;
   };

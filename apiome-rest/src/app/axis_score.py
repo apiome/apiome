@@ -486,6 +486,47 @@ def evaluate_axes(
     )
 
 
+#: Scanners whose findings belong wholly to one non-quality axis (CLX-4.1, #4859).
+_SCANNER_AXIS: Mapping[str, str] = {
+    "apiome.mcp-conformance": AXIS_PROTOCOL,
+    "apiome.mcp-trust-posture": AXIS_SUPPLY_CHAIN,
+}
+
+
+def axis_key_for_finding(
+    category: Optional[str],
+    *,
+    scanner_id: Optional[str] = None,
+) -> str:
+    """Map one evidence finding onto the axis it is scored under (CLX-4.1, #4859).
+
+    Mirrors how :func:`evaluate_axes` distributes findings across axes so a workspace
+    queue filtered by axis matches the axis severity tallies:
+
+    * The conformance and trust-posture scanners feed the ``protocol`` and ``supply_chain``
+      axes wholesale (their ``category`` values — ``readiness``, ``metadata``, ``source`` …
+      — are scanner-internal vocabularies, and ``protocol`` appears in both).
+    * Surface-lint findings split by category: ``security`` and ``compatibility`` map to
+      their axes; everything else is definition quality.
+
+    Args:
+        category: The finding's envelope ``category`` value, if any.
+        scanner_id: The evidence run's ``scanner_id``, when known.
+
+    Returns:
+        One of :data:`AXIS_KEYS`.
+    """
+    scanner_axis = _SCANNER_AXIS.get(str(scanner_id or ""))
+    if scanner_axis:
+        return scanner_axis
+    normalized = str(category or "").strip().lower()
+    if normalized == AXIS_SECURITY:
+        return AXIS_SECURITY
+    if normalized == AXIS_COMPATIBILITY:
+        return AXIS_COMPATIBILITY
+    return AXIS_QUALITY
+
+
 def catalog_axis_evaluation(report: Mapping[str, Any], **kwargs: Any) -> AxisEvaluation:
     """Evaluate axes for a catalog revision report."""
     return evaluate_axes(report, subject_type=SUBJECT_CATALOG_REVISION, **kwargs)

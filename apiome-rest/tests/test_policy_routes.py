@@ -77,9 +77,11 @@ def test_upsert_waiver_requires_rationale_and_expiry(mdb):
     assert "expires" in resp2.json()["detail"].lower()
 
 
-@patch("app.lint_routes.get_authenticated_user_id", return_value="u1")
 @patch("app.lint_routes.db")
-def test_upsert_waiver_persists(mdb, _actor):
+def test_upsert_waiver_persists(mdb):
+    # The CLX-4.1 guard resolves the current decision (none) and authorizes via the
+    # mocked db (user_has_permission on a MagicMock is truthy).
+    mdb.list_lint_finding_decisions.return_value = []
     mdb.upsert_lint_finding_decision.return_value = {
         "id": "d1",
         "tenant_id": "t1",

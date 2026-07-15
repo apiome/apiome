@@ -3052,6 +3052,377 @@ class Database:
         rows = self.execute_query(query, (version_id,))
         return rows[0] if rows else None
 
+    # --- Lint workspace — tenant-wide read paths (CLX-4.1, #4859) ----------------------------
+    #
+    # ``lint_evidence_runs`` / ``lint_axis_evaluations`` / ``lint_policy_evaluations`` carry no
+    # tenant_id: tenant scope is joined through the owning project (catalog revisions) or the
+    # owning endpoint (MCP snapshots). The workspace reads the LATEST live revision per project
+    # and the LATEST snapshot per endpoint — stale revisions never pollute the queue.
+
+    #: Latest live revision per live project in a tenant (optionally one project).
+    _WORKSPACE_CATALOG_SUBJECTS = """
+        catalog_subjects AS (
+            SELECT DISTINCT ON (v.project_id)
+                   v.id AS subject_version_record_id, v.version_id AS subject_label,
+                   p.id AS project_id, p.name AS project_name, p.publishable
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE p.tenant_id = %s AND p.deleted_at IS NULL AND v.deleted_at IS NULL
+              AND (%s::uuid IS NULL OR p.id = %s::uuid)
+            ORDER BY v.project_id, v.created_at DESC NULLS LAST, v.id DESC
+        )
+    """
+
+    #: Latest discovery snapshot per live endpoint in a tenant.
+    _WORKSPACE_MCP_SUBJECTS = """
+        mcp_subjects AS (
+            SELECT DISTINCT ON (mv.endpoint_id)
+                   mv.id AS subject_mcp_version_id, ep.name AS subject_label
+            FROM apiome.mcp_endpoint_versions mv
+            JOIN apiome.mcp_endpoints ep ON ep.id = mv.endpoint_id
+            WHERE ep.tenant_id = %s AND ep.deleted_at IS NULL
+            ORDER BY mv.endpoint_id, mv.version_seq DESC
+        )
+    """
+
+    def list_latest_lint_evidence_runs_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        runs_per_scanner: int = 2,
+    ) -> List[Dict[str, Any]]:
+        """List the newest evidence runs per (subject, scanner) across a tenant (CLX-4.1, #4859).
+
+        Subjects are the latest live catalog revision per project plus the latest snapshot per
+        MCP endpoint. ``runs_per_scanner`` newest rows are returned for each (subject, scanner)
+        pair — the workspace merges row 1 per scanner into "current findings" and diffs row 1
+        against row 2 for regression (new-finding) detection.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: When set, restricts to that project's latest revision only (the MCP
+                side is excluded — MCP endpoints have no project scope).
+            runs_per_scanner: How many newest runs per (subject, scanner) to return (>= 1).
+
+        Returns:
+            Evidence-run rows newest-first, each carrying ``rn`` (1 = newest for its scanner),
+            ``project_id`` / ``project_name`` / ``publishable`` (catalog side, else NULL) and
+            ``subject_label`` (revision label or endpoint name).
+        """
+        per_scanner = max(1, int(runs_per_scanner))
+        run_columns = """
+                   r.id, r.subject_type, r.version_record_id, r.mcp_version_id, r.scanner_id,
+                   r.scanner_version, r.profile, r.outcome, r.report_fingerprint,
+                   r.findings, r.coverage, r.created_at
+        """
+        catalog_branch = f"""
+            SELECT * FROM (
+                SELECT {run_columns},
+                       cs.project_id, cs.project_name::text AS project_name, cs.publishable,
+                       cs.subject_label::text AS subject_label,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY r.version_record_id, r.scanner_id
+                           ORDER BY r.created_at DESC, r.id DESC
+                       ) AS rn
+                FROM apiome.lint_evidence_runs r
+                JOIN catalog_subjects cs ON cs.subject_version_record_id = r.version_record_id
+            ) c WHERE c.rn <= %s
+        """
+        mcp_branch = f"""
+            SELECT * FROM (
+                SELECT {run_columns},
+                       NULL::uuid AS project_id, NULL::text AS project_name,
+                       NULL::boolean AS publishable, ms.subject_label::text AS subject_label,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY r.mcp_version_id, r.scanner_id
+                           ORDER BY r.created_at DESC, r.id DESC
+                       ) AS rn
+                FROM apiome.lint_evidence_runs r
+                JOIN mcp_subjects ms ON ms.subject_mcp_version_id = r.mcp_version_id
+            ) m WHERE m.rn <= %s
+        """
+        if project_id:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}
+                {catalog_branch}
+                ORDER BY created_at DESC, id
+            """
+            params: Tuple[Any, ...] = (tenant_id, project_id, project_id, per_scanner)
+        else:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}, {self._WORKSPACE_MCP_SUBJECTS}
+                {catalog_branch}
+                UNION ALL
+                {mcp_branch}
+                ORDER BY created_at DESC, id
+            """
+            params = (tenant_id, None, None, per_scanner, tenant_id, per_scanner)
+        return self.execute_query(query, params)
+
+    def list_latest_axis_evaluations_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        algorithm_id: str = ALGORITHM_ID,
+    ) -> List[Dict[str, Any]]:
+        """Newest axis evaluation per workspace subject across a tenant (CLX-4.1, #4859).
+
+        Same subject scoping as :meth:`list_latest_lint_evidence_runs_for_tenant`.
+
+        Returns:
+            One row per subject with axes / composite / coverage columns plus
+            ``project_id`` / ``project_name`` / ``subject_label``.
+        """
+        eval_columns = """
+                       e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
+                       e.axes, e.composite_score, e.composite_grade,
+                       e.required_coverage_met, e.evaluated_at
+        """
+        catalog_branch = f"""
+            SELECT DISTINCT ON (e.version_record_id)
+                   {eval_columns},
+                   cs.project_id, cs.project_name::text AS project_name,
+                   cs.subject_label::text AS subject_label
+            FROM apiome.lint_axis_evaluations e
+            JOIN catalog_subjects cs ON cs.subject_version_record_id = e.version_record_id
+            WHERE e.algorithm_id = %s
+            ORDER BY e.version_record_id, e.evaluated_at DESC, e.id DESC
+        """
+        mcp_branch = f"""
+            SELECT DISTINCT ON (e.mcp_version_id)
+                   {eval_columns},
+                   NULL::uuid AS project_id, NULL::text AS project_name,
+                   ms.subject_label::text AS subject_label
+            FROM apiome.lint_axis_evaluations e
+            JOIN mcp_subjects ms ON ms.subject_mcp_version_id = e.mcp_version_id
+            WHERE e.algorithm_id = %s
+            ORDER BY e.mcp_version_id, e.evaluated_at DESC, e.id DESC
+        """
+        if project_id:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}
+                SELECT * FROM ({catalog_branch}) c
+            """
+            params: Tuple[Any, ...] = (tenant_id, project_id, project_id, algorithm_id)
+        else:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}, {self._WORKSPACE_MCP_SUBJECTS}
+                SELECT * FROM ({catalog_branch}) c
+                UNION ALL
+                SELECT * FROM ({mcp_branch}) m
+            """
+            params = (tenant_id, None, None, algorithm_id, tenant_id, algorithm_id)
+        return self.execute_query(query, params)
+
+    def list_latest_lint_policy_evaluations_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Newest policy evaluation per workspace subject across a tenant (CLX-4.1, #4859).
+
+        Same subject scoping as :meth:`list_latest_lint_evidence_runs_for_tenant`.
+
+        Returns:
+            One row per subject: id, policy_version_id, passed, gate_results, evaluated_at.
+        """
+        eval_columns = """
+                       e.id, e.subject_type, e.version_record_id, e.mcp_version_id,
+                       e.policy_version_id, e.passed, e.gate_results, e.evaluated_at
+        """
+        catalog_branch = f"""
+            SELECT DISTINCT ON (e.version_record_id) {eval_columns}
+            FROM apiome.lint_policy_evaluations e
+            JOIN catalog_subjects cs ON cs.subject_version_record_id = e.version_record_id
+            ORDER BY e.version_record_id, e.evaluated_at DESC, e.id DESC
+        """
+        mcp_branch = f"""
+            SELECT DISTINCT ON (e.mcp_version_id) {eval_columns}
+            FROM apiome.lint_policy_evaluations e
+            JOIN mcp_subjects ms ON ms.subject_mcp_version_id = e.mcp_version_id
+            ORDER BY e.mcp_version_id, e.evaluated_at DESC, e.id DESC
+        """
+        if project_id:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}
+                SELECT * FROM ({catalog_branch}) c
+            """
+            params: Tuple[Any, ...] = (tenant_id, project_id, project_id)
+        else:
+            query = f"""
+                WITH {self._WORKSPACE_CATALOG_SUBJECTS}, {self._WORKSPACE_MCP_SUBJECTS}
+                SELECT * FROM ({catalog_branch}) c
+                UNION ALL
+                SELECT * FROM ({mcp_branch}) m
+            """
+            params = (tenant_id, None, None, tenant_id)
+        return self.execute_query(query, params)
+
+    def list_lint_finding_decision_events_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        since: Any,
+        project_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List decision audit events in a window, oldest first (CLX-4.1, #4859 trends).
+
+        Args:
+            tenant_id: The caller's tenant.
+            since: Inclusive lower bound on ``created_at`` (datetime or ISO string).
+            project_id: When set, restricts to that project's decisions plus tenant-wide ones
+                (matching how decisions apply to a project's findings).
+
+        Returns:
+            Event rows joined with their decision's fingerprint / project / owner columns.
+        """
+        clauses = ["e.tenant_id = %s", "e.created_at >= %s"]
+        params: List[Any] = [tenant_id, since]
+        if project_id:
+            clauses.append("(d.project_id IS NULL OR d.project_id = %s)")
+            params.append(project_id)
+        query = f"""
+            SELECT e.id, e.decision_id, e.before_state, e.after_state, e.rationale,
+                   e.expires_at, e.linked_ticket, e.policy_version_id,
+                   e.actor_user_id, e.actor_label, e.created_at,
+                   d.source_fingerprint, d.project_id, d.rule_id, d.owner_user_id
+            FROM apiome.lint_finding_decision_events e
+            JOIN apiome.lint_finding_decisions d ON d.id = e.decision_id
+            WHERE {' AND '.join(clauses)}
+            ORDER BY e.created_at ASC, e.id
+        """
+        return self.execute_query(query, tuple(params))
+
+    def list_style_guide_policy_versions_for_tenant(
+        self, tenant_id: str, *, since: Any
+    ) -> List[Dict[str, Any]]:
+        """List policy pack publications in a window, oldest first (CLX-4.1, #4859 trends)."""
+        query = """
+            SELECT pv.id, pv.guide_id, pv.version_number, pv.actor_user_id, pv.actor_label,
+                   pv.created_at
+            FROM apiome.style_guide_policy_versions pv
+            WHERE pv.tenant_id = %s AND pv.created_at >= %s
+            ORDER BY pv.created_at ASC, pv.id
+        """
+        return self.execute_query(query, (tenant_id, since))
+
+    # --- Lint workspace — saved views (CLX-4.1, #4859) ---------------------------------------
+
+    _LINT_WORKSPACE_SAVED_VIEW_COLUMNS = (
+        "id, tenant_id, user_id, name, filters, query, sort, is_pinned, created_at, updated_at"
+    )
+
+    def list_lint_workspace_saved_views(
+        self, tenant_id: str, user_id: str
+    ) -> List[Dict[str, Any]]:
+        """List a user's saved workspace views, pinned first then newest (CLX-4.1, #4859)."""
+        q = f"""
+            SELECT {self._LINT_WORKSPACE_SAVED_VIEW_COLUMNS}
+            FROM apiome.lint_workspace_saved_views
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid
+            ORDER BY is_pinned DESC, updated_at DESC, name ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id, user_id))]
+
+    def get_lint_workspace_saved_view(
+        self, tenant_id: str, user_id: str, view_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch one saved workspace view scoped to tenant + owner (CLX-4.1, #4859)."""
+        q = f"""
+            SELECT {self._LINT_WORKSPACE_SAVED_VIEW_COLUMNS}
+            FROM apiome.lint_workspace_saved_views
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (view_id, tenant_id, user_id))
+        return dict(rows[0]) if rows else None
+
+    def create_lint_workspace_saved_view(
+        self,
+        tenant_id: str,
+        user_id: str,
+        *,
+        name: str,
+        filters: Dict[str, Any],
+        query: str,
+        sort: str,
+        is_pinned: bool,
+    ) -> Dict[str, Any]:
+        """Insert a saved workspace view for the owner (CLX-4.1, #4859)."""
+        q = f"""
+            INSERT INTO apiome.lint_workspace_saved_views
+                (tenant_id, user_id, name, filters, query, sort, is_pinned)
+            VALUES (%s::uuid, %s::uuid, %s, %s::jsonb, %s, %s, %s)
+            RETURNING {self._LINT_WORKSPACE_SAVED_VIEW_COLUMNS}
+        """
+        rows = self.execute_query(
+            q,
+            (tenant_id, user_id, name, Json(filters), query, sort, is_pinned),
+        )
+        return dict(rows[0]) if rows else {}
+
+    def update_lint_workspace_saved_view(
+        self,
+        tenant_id: str,
+        user_id: str,
+        view_id: str,
+        *,
+        name: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        query: Optional[str] = None,
+        sort: Optional[str] = None,
+        is_pinned: Optional[bool] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Patch a saved workspace view owned by the caller (CLX-4.1, #4859)."""
+        sets: List[str] = ["updated_at = CURRENT_TIMESTAMP"]
+        params: List[Any] = []
+        if name is not None:
+            sets.append("name = %s")
+            params.append(name)
+        if filters is not None:
+            sets.append("filters = %s::jsonb")
+            params.append(Json(filters))
+        if query is not None:
+            sets.append("query = %s")
+            params.append(query)
+        if sort is not None:
+            sets.append("sort = %s")
+            params.append(sort)
+        if is_pinned is not None:
+            sets.append("is_pinned = %s")
+            params.append(is_pinned)
+        params.extend([view_id, tenant_id, user_id])
+        q = f"""
+            UPDATE apiome.lint_workspace_saved_views
+            SET {", ".join(sets)}
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+            RETURNING {self._LINT_WORKSPACE_SAVED_VIEW_COLUMNS}
+        """
+        rows = self.execute_query(q, tuple(params))
+        return dict(rows[0]) if rows else None
+
+    def delete_lint_workspace_saved_view(
+        self, tenant_id: str, user_id: str, view_id: str
+    ) -> bool:
+        """Delete a saved workspace view owned by the caller (CLX-4.1, #4859)."""
+        q = """
+            DELETE FROM apiome.lint_workspace_saved_views
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND user_id = %s::uuid
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(q, (view_id, tenant_id, user_id))
+                deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
     def set_version_source_format(
         self,
         version_record_id: str,
