@@ -86,7 +86,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.5.0",
+    version="1.6.0",
 )
 
 
@@ -289,6 +289,7 @@ _repository_file_scan_task: asyncio.Task | None = None
 _repository_refresh_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
+_lint_waiver_expiry_task: asyncio.Task | None = None
 
 
 @app.on_event("startup")
@@ -469,6 +470,38 @@ async def startup_event():
             except Exception:
                 log.exception("mcp catalog digest sweep")
 
+    async def _lint_waiver_expiry_sweep() -> None:
+        """Periodically notify soon-expiring lint waivers (CLX-4.2, #4860).
+
+        Each tick claims unnotified waivers expiring within the warning window
+        (``APIOME_LINT_WAIVER_EXPIRY_WARNING_HOURS``, default 72h) and enqueues one
+        ``lint.waiver.expiring`` webhook per claim. The claim is atomic across replicas
+        (``FOR UPDATE SKIP LOCKED``), so several instances sweeping concurrently still
+        notify each waiver exactly once. Runs on a dedicated DB connection like the other
+        sweeps.
+        """
+        log = logging.getLogger(__name__)
+        while True:
+            await asyncio.sleep(300)
+            try:
+
+                def _run_expiry() -> int:
+                    thread_db = Database()
+                    try:
+                        from .lint_waiver_expiry_sweep import (
+                            process_lint_waiver_expiry_sweep,
+                        )
+
+                        return process_lint_waiver_expiry_sweep(thread_db)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_expiry)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("lint waiver expiry sweep")
+
     global _webhook_delivery_task
     _webhook_delivery_task = asyncio.create_task(_webhook_delivery_sweep())
     global _repository_file_scan_task
@@ -479,6 +512,8 @@ async def startup_event():
     _mcp_discovery_task = asyncio.create_task(_mcp_discovery_sweep())
     global _mcp_catalog_digest_task
     _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
+    global _lint_waiver_expiry_task
+    _lint_waiver_expiry_task = asyncio.create_task(_lint_waiver_expiry_sweep())
 
 
 @app.on_event("shutdown")
@@ -524,6 +559,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _mcp_catalog_digest_task = None
+    global _lint_waiver_expiry_task
+    if _lint_waiver_expiry_task is not None:
+        _lint_waiver_expiry_task.cancel()
+        try:
+            await _lint_waiver_expiry_task
+        except asyncio.CancelledError:
+            pass
+        _lint_waiver_expiry_task = None
     db.close()
 
 

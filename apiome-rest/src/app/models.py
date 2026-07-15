@@ -3805,6 +3805,106 @@ class LintPolicyResponse(BaseModel):
     findings: List[LintPolicyAnnotatedFindingOut] = Field(default_factory=list)
 
 
+class LintGateFindingOut(BaseModel):
+    """One gate finding: evidence envelope + scanner attribution + policy state (CLX-4.2).
+
+    Field aliases are bidirectional (``alias`` + ``populate_by_name``) so instances can be
+    validated straight from the camelCase :func:`app.lint_gate.gate_payload` dict.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: Optional[str] = Field(default=None, alias="ruleId")
+    message: Optional[str] = None
+    severity: Optional[str] = None
+    confidence: Optional[str] = None
+    category: Optional[str] = None
+    location: Dict[str, Any] = Field(default_factory=dict)
+    remediation: Optional[Any] = None
+    source_fingerprint: Optional[str] = Field(default=None, alias="sourceFingerprint")
+    scanner_id: Optional[str] = Field(default=None, alias="scannerId")
+    evidence_run_id: Optional[str] = Field(default=None, alias="evidenceRunId")
+    is_new: bool = Field(default=False, alias="isNew")
+    effective_state: Optional[str] = Field(default=None, alias="effectiveState")
+    waived: bool = False
+    decision_id: Optional[str] = Field(default=None, alias="decisionId")
+    decision_rationale: Optional[str] = Field(default=None, alias="decisionRationale")
+
+
+class LintGateScannerOut(BaseModel):
+    """Per-scanner provenance for one gate artifact — fingerprints and ids only (CLX-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    scanner_id: Optional[str] = Field(default=None, alias="scannerId")
+    scanner_version: Optional[str] = Field(default=None, alias="scannerVersion")
+    adapter_version: Optional[str] = Field(default=None, alias="adapterVersion")
+    profile: Optional[str] = None
+    outcome: Optional[str] = None
+    evidence_run_id: Optional[str] = Field(default=None, alias="evidenceRunId")
+    report_fingerprint: Optional[str] = Field(default=None, alias="reportFingerprint")
+    input_fingerprint: Optional[str] = Field(default=None, alias="inputFingerprint")
+    source_fingerprint: Optional[str] = Field(default=None, alias="sourceFingerprint")
+    config_fingerprint: Optional[str] = Field(default=None, alias="configFingerprint")
+    recorded_at: Optional[str] = Field(default=None, alias="recordedAt")
+
+
+class LintGatePolicyOut(BaseModel):
+    """The policy pack a gate verdict is pinned to (CLX-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    policy_version_id: str = Field(alias="policyVersionId")
+    content_fingerprint: str = Field(alias="contentFingerprint")
+    ci_outcomes: Dict[str, bool] = Field(default_factory=dict, alias="ciOutcomes")
+
+
+class LintGateEvaluationOut(BaseModel):
+    """The full persisted policy evaluation behind a gate verdict (CLX-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    evaluation_id: Optional[str] = Field(default=None, alias="evaluationId")
+    passed: bool
+    gate_results: Dict[str, Any] = Field(default_factory=dict, alias="gateResults")
+
+
+class LintGateVerdictOut(BaseModel):
+    """The CI verdict: the evaluation driving exit codes, possibly new-only (CLX-4.2)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    passed: bool
+    new_only: bool = Field(default=False, alias="newOnly")
+    gate_results: Dict[str, Any] = Field(default_factory=dict, alias="gateResults")
+
+
+class LintGateResponse(BaseModel):
+    """GET …/lint/gate JSON response (CLX-4.2, #4860).
+
+    Machine-readable gate outcome: raw findings annotated with policy state and regression
+    flags, the full + gating evaluations, per-scanner provenance fingerprints, and links back
+    to the evidence/policy/workspace APIs. Never carries raw configuration or source text.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_version: int = Field(default=1, alias="schemaVersion")
+    subject_type: str = Field(alias="subjectType")
+    subject_id: str = Field(alias="subjectId")
+    project_id: Optional[str] = Field(default=None, alias="projectId")
+    baseline_subject_id: Optional[str] = Field(default=None, alias="baselineSubjectId")
+    new_only: bool = Field(default=False, alias="newOnly")
+    policy: LintGatePolicyOut
+    evaluation: LintGateEvaluationOut
+    gate: LintGateVerdictOut
+    counts: Dict[str, int] = Field(default_factory=dict)
+    new_fingerprints: List[str] = Field(default_factory=list, alias="newFingerprints")
+    findings: List[LintGateFindingOut] = Field(default_factory=list)
+    scanners: List[LintGateScannerOut] = Field(default_factory=list)
+    links: Dict[str, Optional[str]] = Field(default_factory=dict)
+
+
 def style_guide_ci_outcomes_from_raw(raw: Optional[Any]) -> StyleGuideCiOutcomesOut:
     """Build :class:`StyleGuideCiOutcomesOut` from a stored JSON object (with defaults)."""
     from .policy_evaluate import default_ci_outcomes

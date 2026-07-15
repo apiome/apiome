@@ -127,6 +127,25 @@ class Settings(BaseSettings):
     # Pre-commit policy default when project metadata omits maxCommitPayloadBytes (#2565)
     commit_policy_max_payload_bytes_default: int = 5_242_880
 
+    # HMAC-SHA256 secret signing lint gate attestation envelopes (CLX-4.2, #4860). Unset =>
+    # attestations are emitted unsigned (empty signatures list). Share with CI verifiers.
+    lint_attestation_signing_secret: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_LINT_ATTESTATION_SIGNING_SECRET",
+            "lint_attestation_signing_secret",
+        ),
+    )
+
+    # How far ahead of expiry the lint.waiver.expiring webhook fires (CLX-4.2, #4860).
+    lint_waiver_expiry_warning_hours: int = Field(
+        default=72,
+        validation_alias=AliasChoices(
+            "APIOME_LINT_WAIVER_EXPIRY_WARNING_HOURS",
+            "lint_waiver_expiry_warning_hours",
+        ),
+    )
+
     # Fernet key (url-safe base64) from `Fernet.generate_key()` — encrypts webhook signing secrets at rest (#2588)
     webhook_signing_secret_encryption_key: Optional[str] = Field(
         default=None,

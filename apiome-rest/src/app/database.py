@@ -2448,7 +2448,73 @@ class Database:
                 mcp_version_id,
             ),
         )
-        return str(rows[0]["id"]) if rows else None
+        new_id = str(rows[0]["id"]) if rows else None
+        if new_id:
+            # CLX-4.2 (#4860): a genuinely NEW run notifies lint.scan.completed subscribers.
+            # The dedup skip above (rows empty) stays silent, and any notification failure is
+            # swallowed — evidence capture runs inside import scoring and must never break it.
+            try:
+                from .lint_notifications import notify_lint_scan_completed
+
+                tenant_id = self.tenant_id_for_lint_subject(
+                    run["subject_type"],
+                    version_record_id=version_record_id,
+                    mcp_version_id=mcp_version_id,
+                )
+                if tenant_id:
+                    notify_lint_scan_completed(
+                        self, tenant_id=tenant_id, run={**run, "id": new_id}
+                    )
+            except Exception:  # noqa: BLE001 - notification is strictly additive
+                _logger.warning(
+                    "Failed to notify lint.scan.completed for run %s", new_id, exc_info=True
+                )
+        return new_id
+
+    def tenant_id_for_lint_subject(
+        self,
+        subject_type: str,
+        *,
+        version_record_id: Optional[str] = None,
+        mcp_version_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """Resolve the owning tenant of a lint subject (CLX-4.2, #4860).
+
+        Evidence writers don't carry a tenant id (the V167 contract is subject-scoped), but
+        webhook fan-out is tenant-scoped — this resolves catalog revisions through their
+        project and MCP snapshots through their endpoint.
+
+        Args:
+            subject_type: ``catalog_revision`` | ``mcp_endpoint_version``.
+            version_record_id: The revision id, for catalog subjects.
+            mcp_version_id: The snapshot id, for MCP subjects.
+
+        Returns:
+            The tenant id string, or ``None`` when the subject cannot be resolved.
+        """
+        if subject_type == "catalog_revision" and version_record_id:
+            rows = self.execute_query(
+                """
+                SELECT p.tenant_id
+                FROM apiome.versions v
+                JOIN apiome.projects p ON p.id = v.project_id
+                WHERE v.id = %s
+                """,
+                (version_record_id,),
+            )
+        elif subject_type == "mcp_endpoint_version" and mcp_version_id:
+            rows = self.execute_query(
+                """
+                SELECT ep.tenant_id
+                FROM apiome.mcp_endpoint_versions mv
+                JOIN apiome.mcp_endpoints ep ON ep.id = mv.endpoint_id
+                WHERE mv.id = %s
+                """,
+                (mcp_version_id,),
+            )
+        else:
+            return None
+        return str(rows[0]["tenant_id"]) if rows and rows[0].get("tenant_id") else None
 
     _LINT_EVIDENCE_COLUMNS = """
             r.id, r.subject_type, r.version_record_id, r.mcp_version_id, r.scanner_id,
@@ -2863,7 +2929,11 @@ class Database:
                             owner_user_id = %s, rationale = %s, linked_ticket = %s,
                             expires_at = %s, policy_version_id = %s,
                             evidence_fingerprint_at_decision = COALESCE(%s, evidence_fingerprint_at_decision),
-                            actor_user_id = %s, actor_label = %s, updated_at = CURRENT_TIMESTAMP
+                            actor_user_id = %s, actor_label = %s, updated_at = CURRENT_TIMESTAMP,
+                            -- A (re-)granted waiver gets a fresh expiry, so the one-shot
+                            -- lint.waiver.expiring marker must re-arm (#4860).
+                            expiry_notified_at = CASE WHEN %s = 'waived' THEN NULL
+                                                      ELSE expiry_notified_at END
                         WHERE id = %s
                         RETURNING id, tenant_id, project_id, source_fingerprint, rule_id, state,
                                   owner_user_id, rationale, linked_ticket, expires_at,
@@ -2881,6 +2951,7 @@ class Database:
                             evidence_fingerprint_at_decision or source_fingerprint,
                             actor_user_id,
                             actor_label,
+                            state,
                             decision_id,
                         ),
                     )
@@ -2944,6 +3015,46 @@ class Database:
             raise
         finally:
             conn.autocommit = prev_autocommit
+
+    def claim_expiring_lint_waivers(
+        self, *, cutoff: Any, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Atomically claim waivers whose expiry falls before ``cutoff`` (CLX-4.2, #4860).
+
+        Stamps ``expiry_notified_at`` on up to ``limit`` unnotified active waivers and returns
+        the claimed rows, so the ``lint.waiver.expiring`` webhook fires exactly once per grant
+        even with several replicas sweeping concurrently (``FOR UPDATE SKIP LOCKED``). A
+        waiver re-granted with a new expiry re-arms because the decision upsert resets the
+        marker to NULL.
+
+        Args:
+            cutoff: Claim waivers with ``expires_at <= cutoff`` (a timezone-aware datetime).
+            limit: Max rows claimed per call (sweep batch size).
+
+        Returns:
+            The claimed decision rows (including ``tenant_id`` for notification fan-out),
+            ordered soonest-expiring first.
+        """
+        query = """
+            UPDATE apiome.lint_finding_decisions d
+            SET expiry_notified_at = CURRENT_TIMESTAMP
+            WHERE d.id IN (
+                SELECT id FROM apiome.lint_finding_decisions
+                WHERE state = 'waived'
+                  AND expiry_notified_at IS NULL
+                  AND expires_at IS NOT NULL
+                  AND expires_at <= %s
+                ORDER BY expires_at
+                LIMIT %s
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING d.id, d.tenant_id, d.project_id, d.source_fingerprint, d.rule_id,
+                      d.state, d.owner_user_id, d.rationale, d.linked_ticket, d.expires_at,
+                      d.policy_version_id, d.actor_user_id, d.actor_label,
+                      d.created_at, d.updated_at
+        """
+        rows = self.execute_query(query, (cutoff, limit))
+        return sorted(rows, key=lambda r: str(r.get("expires_at") or ""))
 
     def list_lint_finding_decision_events(
         self, decision_id: str, tenant_id: str

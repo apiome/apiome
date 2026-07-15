@@ -12,15 +12,19 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
 from .auth import validate_authentication, validate_session_credentials
 from .axis_score import catalog_axis_evaluation
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
+from .config import settings
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
+from .gate_report_emit import GATE_FORMAT_JSON, normalize_gate_format
 from .import_routing import PUBLISHABLE_FORMATS
 from .lint_evidence import SUBJECT_CATALOG_REVISION
+from .lint_gate import evaluate_lint_gate, gate_payload
+from .lint_gate_emit import serialize_lint_gate
 from .lint_policy_service import evaluate_catalog_revision_policy
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
 from .lint_workspace import (
@@ -45,6 +49,7 @@ from .models import (
     LintFindingDecisionOut,
     LintFindingDecisionUpsertRequest,
     LintFindingOut,
+    LintGateResponse,
     LintPolicyResponse,
     LintReportResponse,
     LintRuleCatalogResponse,
@@ -755,6 +760,117 @@ async def lint_revision_policy(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/lint/gate",
+    response_model=None,
+)
+async def lint_revision_gate(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    request: Request,
+    format: Optional[str] = Query(
+        default=None,
+        description=(
+            "Artifact format: json (default) | sarif | junit | markdown | attestation. "
+            "The Accept header is honored when the query parameter is absent."
+        ),
+    ),
+    baseline_revision_id: Optional[str] = Query(
+        default=None,
+        alias="baselineRevisionId",
+        description=(
+            "Optional baseline revision (versions.id) to diff regressions against; must "
+            "belong to the same project. Without it, regressions compare each scanner's "
+            "latest run to its own previous run."
+        ),
+    ),
+    new_only: bool = Query(
+        default=False,
+        alias="newOnly",
+        description=(
+            "Scope the CI verdict's unwaived-errors gate to newly introduced findings, so "
+            "pre-existing debt does not block. Coverage and axis gates always evaluate the "
+            "full head revision."
+        ),
+    ),
+    policy_version_id: Optional[str] = Query(
+        default=None,
+        alias="policyVersionId",
+        description="Optional historical policy pack id; defaults to the latest for the assigned guide.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Any:
+    """
+    Evaluate the lint CI gate for a revision and emit a machine-readable artifact (CLX-4.2).
+
+    Runs the pinned policy pack over the revision's current evidence (persisting a
+    reproducible ``lint_policy_evaluations`` row), optionally compares against a baseline
+    revision for regressions, and serializes the verdict as JSON, SARIF 2.1.0, JUnit XML,
+    Markdown, or a signed in-toto attestation. The HTTP status is always 200 — the pass/fail
+    verdict lives in the body (``gate.passed``), so CI exit codes stay under the CLI's
+    control and reflect only configured policy failures.
+    """
+    _ = tenant_slug
+    tenant_id = auth_data["tenant_id"]
+
+    project = db.get_project_by_id(project_id, tenant_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+
+    version = db.get_version_by_id(version_record_id, tenant_id)
+    if not version:
+        raise HTTPException(status_code=404, detail=f"Revision not found: {version_record_id}")
+    if version["project_id"] != project_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Revision does not belong to the specified project",
+        )
+
+    baseline_id = (baseline_revision_id or "").strip() or None
+    if baseline_id:
+        if baseline_id == version_record_id:
+            raise HTTPException(
+                status_code=400,
+                detail="baselineRevisionId must differ from the gated revision",
+            )
+        baseline = db.get_version_by_id(baseline_id, tenant_id)
+        if not baseline:
+            raise HTTPException(
+                status_code=404, detail=f"Baseline revision not found: {baseline_id}"
+            )
+        if baseline["project_id"] != project_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Baseline revision must belong to the specified project",
+            )
+
+    try:
+        gate = evaluate_lint_gate(
+            tenant_id=tenant_id,
+            subject_type=SUBJECT_CATALOG_REVISION,
+            subject_id=version_record_id,
+            project_id=project_id,
+            tenant_slug=tenant_slug,
+            baseline_subject_id=baseline_id,
+            policy_version_id=policy_version_id,
+            new_only=new_only,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    payload = gate_payload(gate)
+    fmt = normalize_gate_format(format or request.headers.get("accept"))
+    if fmt == GATE_FORMAT_JSON:
+        return LintGateResponse.model_validate(payload)
+    body, media = serialize_lint_gate(
+        fmt, payload, secret=settings.lint_attestation_signing_secret
+    )
+    return Response(content=body, media_type=media)
 
 
 @decisions_router.get("", response_model=LintFindingDecisionListResponse)

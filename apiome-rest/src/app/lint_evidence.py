@@ -491,7 +491,7 @@ def latest_runs_by_scanner(
     A subject can be scanned by several scanners, each writing its own evidence run. "The
     current evidence for this subject" is the newest run of *each* scanner — taking only the
     single newest row overall would silently discard every other scanner's findings (see
-    :func:`app.lint_policy_service._findings_from_evidence_or_report` for the full rationale).
+    :func:`app.lint_policy_service.findings_from_evidence_or_report` for the full rationale).
 
     Args:
         runs: Evidence-run rows for ONE subject, most recent first.
