@@ -60,6 +60,26 @@ apiome lint --project <p> --version <v> --min-grade B
 apiome spec export --project <p> --version <v> -o spec.json
 ```
 
+## Cross-format export & projection evidence
+
+`export` emits a version to another format (AsyncAPI, GraphQL SDL, Proto3, Avro, …) and
+predicts its fidelity first. Before trusting a lossy export, page the **machine-readable
+projection evidence** — one row per source construct with its status, cause category,
+and reviewed explanation, tied to a stable snapshot hash:
+
+```bash
+apiome export targets  --project <p> --version <v>              # emitters + fidelity tier
+apiome export evidence --project <p> --version <v> --target avro
+apiome --json export evidence --project <p> --target avro       # summary + rows + next_cursor
+apiome export avro --project <p> --version <v> --output User.avsc   # the export itself
+```
+
+**Non-zero exits are deliberate CI gates:** a `lossy`/`types-only` export exits `1`
+unless you pass `--force` (or confirm at a TTY), and an export job submitted with an
+acknowledged snapshot that no longer matches the current preview fails with a
+`STALE_PREVIEW` error (exit `1`) telling you to re-preview and re-acknowledge. See
+[export-fidelity.md](export-fidelity.md) for how to read the evidence.
+
 ## Command groups
 
 | Group | What it does |
@@ -72,6 +92,7 @@ apiome spec export --project <p> --version <v> -o spec.json
 | `import` | Import OpenAPI / Swagger / Arazzo / JSON Schema (`auto` detects) |
 | `lint` | Server-computed quality score & findings |
 | `spec` | Export reconstructed OpenAPI / Arazzo documents |
+| `export` | Emit a version to another format; list targets; page projection evidence |
 | `repos` | List & inspect linked Git repositories |
 
 Useful global flags: `--json` (raw JSON for scripting), `--tenant`, `--api-key`, `--base-url`,

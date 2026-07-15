@@ -53,6 +53,12 @@ class Emitter(ABC):
     ) -> EmitResult: ...
 ```
 
+> **Projection evidence obligations (EFP-3.3).** An emitter's capability profile,
+> rule-pack verdicts, reason codes, registry documentation entry, and corpus fixtures
+> together feed the user-facing export-fidelity projection. Adding an emitter — or
+> supporting a new construct in an existing one — carries mandatory updates to all of
+> them: see the [export projection author guide](./export_projection_author_guide.md).
+
 A concrete emitter must:
 
 1. **Be deterministic and side-effect free** — same `api` → equal `EmitResult`,

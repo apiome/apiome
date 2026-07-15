@@ -450,7 +450,13 @@ via the async job pipeline: `apiome export <format> <artifact> [--version] [--ou
 `export evidence` pages the source→target projection evidence for a configured export
 (EFP-2.1): one row per source construct with its status, reason category, and reviewed
 explanation, for exactly the snapshot hash a preview of the same source, target, and
-options references. Use `--json` for the machine-readable page (with `next_cursor`).
+options references. Use `--json` for the machine-readable page: a `summary` (snapshot
+hash, emitter/registry versions, status + reason counts) plus a bounded `page` of rows
+with `next_cursor` for paging. `--option key=value` folds per-target emit options into
+the snapshot — different options are a different snapshot. Source-native values are
+always redacted server-side (`[redacted]`); statuses, reasons, and target locations
+remain. How to interpret the statuses, reason categories, and destination-documentation
+links is documented in [`docs/guide/export-fidelity.md`](../docs/guide/export-fidelity.md).
 
 ```bash
 # List the emitter targets + per-source fidelity for a version:
@@ -497,6 +503,13 @@ and a concise per-construct loss table always come from the emitter registry's d
 emitted document does not carry every source construct (e.g. an event-driven source loses its channels).
 The document is written regardless; pass `--force` to accept the loss and exit `0`, or confirm at the
 interactive prompt when stdin is a TTY. Requires a workspace API key and tenant scope.
+
+**Stale previews.** The dispatch path submits the preview's snapshot hash as the job's
+`acknowledged_snapshot` (EFP-3.1). If the source revision, options, emitter version, or capability
+registry changed between preview and generate, the job fails with a structured `STALE_PREVIEW` error
+(exit `1`) naming both the acknowledged and the current hash — nothing is silently exported that
+differs from what was accepted. Re-run the export (which re-previews) or re-fetch
+`export evidence` to see what changed, then acknowledge the current snapshot.
 
 ### Repository Store
 

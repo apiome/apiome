@@ -180,7 +180,11 @@ app = typer.Typer(
     cls=DispatchExportGroup,
     help=(
         "Export a version to a target format via the emitter registry. "
-        "Registered targets are also invokable as ``export <format> <artifact>`` (async job + poll)."
+        "Registered targets are also invokable as ``export <format> <artifact>`` (async job + poll). "
+        "``export evidence --json`` returns the machine-readable projection evidence (snapshot hash, "
+        "status/reason counts, per-construct rows). A lossy/types-only export exits non-zero without "
+        "--force, and a job whose acknowledged preview snapshot no longer matches fails with "
+        "STALE_PREVIEW — re-preview and acknowledge the current snapshot."
     ),
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,

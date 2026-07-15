@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.129.1] - 2026-07-15
+
+### Added
+- **Export-fidelity user and format-author guidance (EFP-3.3, #4818)** — published
+  the emitter-author projection contract
+  (`docs/export_projection_author_guide.md`): the four obligations for every newly
+  supported target construct (capability, reason, documentation, fixtures),
+  reason-code truthfulness rules, documentation-link governance (allowlist, review
+  and version-update ownership), and the corpus fixture/waiver gate. Cross-linked
+  from `docs/emitter_spi.md`. The `projection-evidence` OpenAPI description now
+  points to the user interpretation guide (`docs/guide/export-fidelity.md`);
+  OpenAPI 1.10.0 → 1.10.1 (no contract shape changes).
+
 ## [1.129.0] - 2026-07-15
 
 ### Added
