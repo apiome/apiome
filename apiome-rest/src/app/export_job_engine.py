@@ -86,6 +86,7 @@ from .export_source import ExportSource, ExportSourceError, load_export_source
 from .export_validation import EmittedArtifactValidation, validate_emitted_artifact
 from .export_validation_gate import EmittedValidationReport, build_validation_report
 from .lossiness import LossinessSeverity
+from .projection_telemetry import projection_telemetry
 from .transcoding_guards import TranscodeGuard, classify_transcode
 
 logger = logging.getLogger(__name__)
@@ -989,6 +990,7 @@ async def _drive_export_job(job_id: str) -> None:
             request.acknowledged_snapshot is not None
             and request.acknowledged_snapshot != snapshot_hash
         ):
+            projection_telemetry.record("stale_acknowledgement")
             await _fail(
                 job_id,
                 "STALE_PREVIEW",

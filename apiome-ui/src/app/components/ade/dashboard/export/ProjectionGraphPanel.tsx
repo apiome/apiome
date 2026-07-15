@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import {
   AlertTriangle,
   ChevronDown,
@@ -35,6 +35,7 @@ import {
 } from './projectionGraph';
 import { useCapabilityReasons } from './useCapabilityReasons';
 import { useProjectionEvidence } from './useProjectionEvidence';
+import { trackProjectionMetric } from './projectionMetrics';
 
 /** Zoom bounds/step for the graph view (pure scale; layout stays deterministic). */
 const MIN_ZOOM = 0.5;
@@ -138,6 +139,18 @@ export function ProjectionGraphPanel({
     [view, selectedKey],
   );
 
+  // Fire once per aggregated view (EFP-3.2 privacy-safe telemetry — counts only).
+  const aggregationReported = useRef(false);
+  const optionsKey = useMemo(() => JSON.stringify(options ?? null), [options]);
+  useEffect(() => {
+    aggregationReported.current = false;
+  }, [artifact, version, target, optionsKey]);
+  useEffect(() => {
+    if (!view.aggregated || aggregationReported.current) return;
+    aggregationReported.current = true;
+    void trackProjectionMetric({ kind: 'aggregation_used', page_total: view.rowCount });
+  }, [view.aggregated, view.rowCount]);
+
   const selectEntry = useCallback((key: string | null) => {
     setSelectedKey((current) => (current === key ? null : key));
   }, []);
@@ -207,7 +220,7 @@ export function ProjectionGraphPanel({
     <section
       data-testid="projection-panel"
       aria-label={`Projection map for ${targetLabel}`}
-      className="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+      className="projection-panel rounded-xl border border-gray-200 p-4 dark:border-gray-700"
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.stopPropagation();

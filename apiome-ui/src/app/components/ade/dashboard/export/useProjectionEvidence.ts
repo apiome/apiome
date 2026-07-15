@@ -15,6 +15,14 @@ export const EVIDENCE_PAGE_LIMIT = 200;
 /** Pages fetched per window — one auto-load walks at most this many cursors. */
 export const EVIDENCE_PAGES_PER_WINDOW = 5;
 
+/**
+ * Documented initial-render row budget: first auto-load window ceiling
+ * `EVIDENCE_PAGE_LIMIT × EVIDENCE_PAGES_PER_WINDOW`). Aggregation at the documented
+ * graph threshold (48) further bounds DOM work (EFP-3.2).
+ */
+export const EVIDENCE_INITIAL_RENDER_ROW_BUDGET =
+  EVIDENCE_PAGE_LIMIT * EVIDENCE_PAGES_PER_WINDOW;
+
 export interface UseProjectionEvidenceResult {
   /** The snapshot summary from the first page (hash, provenance, full status counts). */
   summary: ProjectionManifestSummary | null;

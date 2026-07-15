@@ -402,6 +402,39 @@ button {
     transform: none;
     opacity: 0.55;
   }
+
+  .projection-panel svg .motion-safe\:transition-colors,
+  .projection-panel table .motion-safe\:transition-colors {
+    transition: none !important;
+  }
+}
+
+/* Projection graph/table high-contrast accents (EFP-3.2) — colour is supplemental;
+   status still uses text label + symbol + stroke pattern. */
+[data-theme="high-contrast"] .projection-panel,
+.theme-high-contrast .projection-panel {
+  border-color: #ffffff;
+  background: #000000;
+  color: #ffffff;
+}
+
+[data-theme="high-contrast"] .projection-panel [data-testid="projection-table"],
+.theme-high-contrast .projection-panel [data-testid="projection-table"] {
+  border-color: #ffffff;
+}
+
+[data-theme="high-contrast"] .projection-panel [data-testid^="projection-node-"] rect,
+[data-theme="high-contrast"] .projection-panel [data-testid^="projection-node-"] circle,
+.theme-high-contrast .projection-panel [data-testid^="projection-node-"] rect,
+.theme-high-contrast .projection-panel [data-testid^="projection-node-"] circle {
+  stroke: #ffffff;
+  stroke-width: 2px;
+}
+
+[data-theme="high-contrast"] .projection-panel [data-testid^="projection-row-"],
+.theme-high-contrast .projection-panel [data-testid^="projection-row-"] {
+  border-color: #ffffff;
+  outline-color: #ffffff;
 }
 
 

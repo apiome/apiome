@@ -325,10 +325,15 @@ export function laneForStatus(status: ProjectionStatus): ProjectionLaneKey {
 
 /**
  * Evidence-row count above which the view aggregates (the documented large-manifest
- * threshold). Chosen so a typical mid-size API renders fully and a thousand-construct
- * manifest stays readable; the panel states the rule whenever it aggregates.
+ * threshold — EFP-3.2 initial-render budget). Chosen so a typical mid-size API renders
+ * fully and a thousand-construct manifesto stays readable; the panel states the rule
+ * whenever it aggregates. Soft CI budget for {@link buildProjectionView} over a large
+ * fixture: {@link BUILD_PROJECTION_VIEW_SOFT_BUDGET_MS}.
  */
 export const GRAPH_AGGREGATION_THRESHOLD = 48;
+
+/** Soft wall-clock budget (ms) for `buildProjectionView` over a large fixture (EFP-3.2 CI). */
+export const BUILD_PROJECTION_VIEW_SOFT_BUDGET_MS = 100;
 
 /**
  * Statuses eligible for aggregation. Dropped and unavailable evidence is NEVER aggregated

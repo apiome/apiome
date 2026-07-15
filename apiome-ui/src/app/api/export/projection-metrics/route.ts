@@ -4,17 +4,11 @@ import { getAuthenticatedTenantContext, proxyRestPost } from '@lib/primitives-ap
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/export/projection-evidence — one bounded page of projection evidence
- * (EFP-2.1, #4813).
+ * POST /api/export/projection-metrics — privacy-safe projection telemetry (EFP-3.2).
  *
- * Proxies REST `POST /v1/export/{tenant_slug}/projection-evidence`, which builds the
- * deterministic projection manifest for a `(source revision, target, options)` triple and
- * returns one cursor-paginated page of source→target outcome edges plus the nodes they
- * reference, together with the snapshot summary (`manifest_hash`, emitter/registry
- * versions, status/reason counts). The same inputs resolve to the same snapshot hash the
- * preview/verify envelopes embed, so the graph (EFP-2.2) and evidence drawer (EFP-2.3)
- * can page detail for exactly the snapshot the user previewed. Source-native evidence is
- * always redacted by REST (EFP-3.2); a `redact_source` field is ignored if still sent.
+ * Proxies REST `POST /v1/export/{tenant_slug}/projection-metrics`. Payload is a
+ * strict whitelist of kinds and optional integer/reason-category fields — never
+ * construct labels or source content.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error, status } = await proxyRestPost(
       ctx.user,
-      `/export/${ctx.tenantSlug}/projection-evidence`,
+      `/export/${ctx.tenantSlug}/projection-metrics`,
       body,
     );
 
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, ...(data as Record<string, unknown>) });
   } catch (error) {
-    console.error('Error fetching projection evidence:', error);
+    console.error('Error recording projection metric:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }

@@ -116,6 +116,8 @@ __all__ = [
     "paginate_evidence",
     "DEFAULT_EVIDENCE_PAGE_SIZE",
     "MAX_EVIDENCE_PAGE_SIZE",
+    "EVIDENCE_BUILD_SOFT_BUDGET_SECONDS",
+    "UI_AGGREGATION_THRESHOLD_ROWS",
 ]
 
 
@@ -201,6 +203,14 @@ _SEVERITY_ORDER: Dict[LossinessSeverity, int] = {
 #: Default and hard-cap page sizes for :func:`paginate_evidence`.
 DEFAULT_EVIDENCE_PAGE_SIZE = 50
 MAX_EVIDENCE_PAGE_SIZE = 500
+
+#: Soft wall-clock budget (seconds) for building one projection manifesto in CI
+#: (EFP-3.2). Exceeding this is a signal to investigate, not a hard abort in prod.
+EVIDENCE_BUILD_SOFT_BUDGET_SECONDS = 2.0
+
+#: UI aggregation threshold mirrored for REST ``large_manifest`` telemetry
+#: (see apiome-ui ``GRAPH_AGGREGATION_THRESHOLD`` — EFP-3.2).
+UI_AGGREGATION_THRESHOLD_ROWS = 48
 
 
 # ===========================================================================
