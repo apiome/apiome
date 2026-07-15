@@ -1,0 +1,21 @@
+{
+  "kind": "mcp_surface",
+  "protocol_version": "2025-06-18",
+  "server_info": {
+    "name": "srv",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "resources": {}
+  },
+  "resource_templates": [
+    {
+      "name": "tpl",
+      "item_type": "resource_template",
+      "uri_template": null,
+      "raw": {
+        "name": "tpl"
+      }
+    }
+  ]
+}

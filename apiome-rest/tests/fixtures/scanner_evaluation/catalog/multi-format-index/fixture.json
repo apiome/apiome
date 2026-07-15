@@ -1,0 +1,25 @@
+{
+  "kind": "catalog_pointer_index",
+  "pointers": [
+    {
+      "format": "openapi",
+      "path": "../../openapi_family/openapi-3.1-petstore.yaml"
+    },
+    {
+      "format": "asyncapi",
+      "path": "../../asyncapi/suite/api.yaml"
+    },
+    {
+      "format": "graphql",
+      "path": "../../graphql/schema.query.graphql"
+    },
+    {
+      "format": "protobuf",
+      "path": "../../proto/grpc/echo.proto"
+    },
+    {
+      "format": "external_linter",
+      "path": "../../external_linter/findings.sarif.json"
+    }
+  ]
+}

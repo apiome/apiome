@@ -1,0 +1,29 @@
+{
+  "kind": "mcp_posture_metadata",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "tools": {}
+    },
+    "tools": [
+      {
+        "name": "search",
+        "description": "Uses AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE for S3.",
+        "input_schema": {
+          "type": "object"
+        },
+        "raw": {
+          "name": "search",
+          "description": "Uses AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE for S3.",
+          "inputSchema": {
+            "type": "object"
+          }
+        }
+      }
+    ]
+  }
+}

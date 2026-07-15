@@ -1,0 +1,46 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "tools": {}
+    },
+    "tools": [
+      {
+        "name": "do",
+        "description": "x",
+        "input_schema": {
+          "type": "object"
+        },
+        "raw": {
+          "name": "do",
+          "description": "x",
+          "inputSchema": {
+            "type": "object"
+          }
+        }
+      },
+      {
+        "name": "stuff",
+        "description": "y",
+        "input_schema": {
+          "type": "object"
+        },
+        "raw": {
+          "name": "stuff",
+          "description": "y",
+          "inputSchema": {
+            "type": "object"
+          }
+        },
+        "ordinal": 1
+      }
+    ]
+  },
+  "note": "ToolBench-style unconventional/inconsistent naming (readiness warnings).",
+  "profile": "mcp-agent-readiness"
+}

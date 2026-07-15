@@ -10,6 +10,7 @@ import type { LintAxisEvaluation } from '../src/app/utils/lint-axis-ui';
 const evaluation: LintAxisEvaluation = {
   algorithmId: 'clx-axis-v1',
   algorithmVersion: '1',
+  algorithmDocsPage: 'docs/guide/axis-score.md',
   compositeScore: 90,
   compositeGrade: 'A',
   requiredCoverageMet: true,
@@ -59,5 +60,10 @@ describe('LintAxisCoveragePanel', () => {
     expect(screen.getByTestId('lint-axis-row-security')).toHaveTextContent('No findings');
     expect(screen.getByTestId('lint-axis-row-quality')).toHaveTextContent('90/100');
     expect(screen.getByText(/composite/i)).toBeInTheDocument();
+    const link = screen.getByTestId('lint-axis-algorithm-docs-link');
+    expect(link).toHaveAttribute(
+      'href',
+      expect.stringContaining('docs/guide/axis-score.md'),
+    );
   });
 });

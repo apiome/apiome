@@ -1,0 +1,28 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "tools": {}
+    }
+  },
+  "transcript_records": [
+    {
+      "method": "tools/list",
+      "request_id": 7,
+      "params": null,
+      "http_status": 200,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 9999,
+        "result": {
+          "tools": []
+        }
+      }
+    }
+  ]
+}

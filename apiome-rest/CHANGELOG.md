@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.124.0] - 2026-07-15
+
+### Added
+- **Transparent rules, benchmark corpus, and scanner evaluation (CLX-4.3, #4861)** —
+  foundational quality program so blocking lint claims stay auditable.
+  - **Blocking-rule transparency catalog** (`app.scanner_rule_transparency`, revision `1`):
+    every error-severity rule across schema lint, MCP surface lint, conformance, and trust
+    posture carries stable id, reference, rationale, remediation, false-positive guidance,
+    scan-mode requirements, and a corpus `fixtureId`. Catalog APIs enrich descriptors;
+    `GET /v1/mcp/lint/rules` publishes the MCP surface catalog.
+  - **Scanner-evaluation corpus** under `tests/fixtures/scanner_evaluation/` — safe/unsafe
+    MCP surfaces, OWASP MCP Top 10 examples, ToolBench-style usability defects, multi-format
+    catalog pointers, and ops-failure inventory over external-linter fixtures. Differential +
+    determinism tests (`test_scanner_evaluation_corpus.py`) gate scanner updates before release.
+  - **Docs** — `docs/scanner_evaluation.md` (corpus layout, release gate, unassessed coverage,
+    dynamic-scan consent risks, adapter deprecation policy); `docs/guide/axis-score.md`;
+    generated MCP rule reference pages; algorithm `algorithmDocsPage` on axis evaluations.
+
 ## [1.123.0] - 2026-07-14
 
 ### Added

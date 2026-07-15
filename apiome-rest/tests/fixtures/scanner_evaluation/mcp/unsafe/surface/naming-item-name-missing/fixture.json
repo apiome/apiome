@@ -1,0 +1,29 @@
+{
+  "kind": "mcp_surface",
+  "protocol_version": "2025-06-18",
+  "server_info": {
+    "name": "srv",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "tools": {}
+  },
+  "tools": [
+    {
+      "name": "",
+      "description": "A tool with a missing name.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      },
+      "raw": {
+        "name": "",
+        "description": "A tool with a missing name.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}

@@ -247,16 +247,21 @@ class PostureRule:
 
     def as_dict(self) -> Dict[str, Any]:
         """Return the rule descriptor as a JSON-ready dict (the ``/rules`` catalog payload)."""
-        return {
-            "rule_id": self.rule_id,
-            "origin": self.origin,
-            "origin_label": ORIGIN_LABELS[self.origin],
-            "severity": self.severity,
-            "owasp_ids": list(self.owasp_ids),
-            "rationale": self.rationale,
-            "reference": self.reference,
-            "requires": self.requires,
-        }
+        from .scanner_rule_transparency import enrich_rule_dict
+
+        return enrich_rule_dict(
+            {
+                "rule_id": self.rule_id,
+                "origin": self.origin,
+                "origin_label": ORIGIN_LABELS[self.origin],
+                "severity": self.severity,
+                "owasp_ids": list(self.owasp_ids),
+                "rationale": self.rationale,
+                "reference": self.reference,
+                "requires": self.requires,
+            },
+            self.rule_id,
+        )
 
 
 @dataclass(frozen=True)

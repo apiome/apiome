@@ -3134,7 +3134,8 @@ class LintRuleOut(BaseModel):
 
     ``rule_id`` is the stable identifier findings carry in their ``rule`` field, so every
     violation is attributable to a registered rule. ``default_severity`` is the severity the
-    rule applies when no style guide overrides it.
+    rule applies when no style guide overrides it. Blocking (error) rules include CLX-4.3
+    transparency fields (reference, remediation, fixture, false-positive guidance).
     """
 
     model_config = ConfigDict(populate_by_name=True)
@@ -3157,6 +3158,29 @@ class LintRuleOut(BaseModel):
     docs_anchor: str = Field(
         serialization_alias="docsAnchor",
         description="Anchor slug into the rule reference page documenting this rule.",
+    )
+    reference: Optional[str] = Field(
+        default=None,
+        description="Resolvable reference URL (populated for blocking rules, CLX-4.3).",
+    )
+    remediation: Optional[str] = Field(
+        default=None,
+        description="Remediation guidance (populated for blocking rules, CLX-4.3).",
+    )
+    false_positive_guidance: Optional[str] = Field(
+        default=None,
+        serialization_alias="falsePositiveGuidance",
+        description="When a hit may be noise (populated for blocking rules, CLX-4.3).",
+    )
+    fixture_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixtureId",
+        description="Scanner-evaluation corpus fixture id (blocking rules, CLX-4.3).",
+    )
+    scan_modes: Optional[List[str]] = Field(
+        default=None,
+        serialization_alias="scanModes",
+        description="Scan modes / evidence requirements (blocking rules, CLX-4.3).",
     )
 
 
@@ -3521,6 +3545,11 @@ class LintAxisEvaluationOut(BaseModel):
     algorithm_version: str = Field(
         serialization_alias="algorithmVersion",
         description="Implementation revision of the algorithm.",
+    )
+    algorithm_docs_page: Optional[str] = Field(
+        default=None,
+        serialization_alias="algorithmDocsPage",
+        description="Repository-relative guide for the scoring algorithm (CLX-4.3, #4861).",
     )
     axes: List[LintAxisOut] = Field(default_factory=list)
     composite_score: Optional[int] = Field(
@@ -4360,17 +4389,21 @@ def lint_axis_evaluation_out_from_row(
     subject_id: Optional[str] = None,
 ) -> LintAxisEvaluationOut:
     """Shape a ``lint_axis_evaluations`` row (or computed evaluation dict) into the API model."""
+    from .axis_score import ALGORITHM_DOCS_PAGE
+
     resolved_type = subject_type or str(row.get("subject_type") or "")
     resolved_id = subject_id or str(
         row.get("version_record_id") or row.get("mcp_version_id") or row.get("subject_id") or ""
     )
     axes_raw = row.get("axes") or []
+    docs_page = row.get("algorithm_docs_page") or ALGORITHM_DOCS_PAGE
     return LintAxisEvaluationOut(
         id=str(row["id"]) if row.get("id") is not None else None,
         subject_type=resolved_type,
         subject_id=resolved_id,
         algorithm_id=str(row.get("algorithm_id") or ""),
         algorithm_version=str(row.get("algorithm_version") or "1"),
+        algorithm_docs_page=str(docs_page) if docs_page else None,
         axes=[lint_axis_out_from_dict(a) for a in axes_raw if isinstance(a, dict)],
         composite_score=row.get("composite_score"),
         composite_grade=row.get("composite_grade"),
@@ -7441,6 +7474,69 @@ class McpConformanceRuleOut(BaseModel):
             "assumed to pass — when no transcript was captured."
         ),
     )
+    reference: Optional[str] = Field(
+        default=None,
+        description="Alias of specReference for shared transparency consumers (CLX-4.3).",
+    )
+    remediation: Optional[str] = Field(
+        default=None,
+        description="Remediation guidance for blocking rules (CLX-4.3).",
+    )
+    false_positive_guidance: Optional[str] = Field(
+        default=None,
+        serialization_alias="falsePositiveGuidance",
+        description="False-positive triage guidance for blocking rules (CLX-4.3).",
+    )
+    fixture_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixtureId",
+        description="Scanner-evaluation corpus fixture id (CLX-4.3).",
+    )
+    scan_modes: Optional[List[str]] = Field(
+        default=None,
+        serialization_alias="scanModes",
+        description="Scan modes / evidence requirements (CLX-4.3).",
+    )
+    docs_page: Optional[str] = Field(default=None, serialization_alias="docsPage")
+    docs_anchor: Optional[str] = Field(default=None, serialization_alias="docsAnchor")
+
+
+class McpSurfaceLintRuleOut(BaseModel):
+    """One MCP surface-lint rule descriptor (CLX-4.3, #4861)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId")
+    category: str
+    severity: str
+    rationale: str = ""
+    reference: Optional[str] = None
+    remediation: Optional[str] = None
+    false_positive_guidance: Optional[str] = Field(
+        default=None, serialization_alias="falsePositiveGuidance"
+    )
+    fixture_id: Optional[str] = Field(default=None, serialization_alias="fixtureId")
+    scan_modes: Optional[List[str]] = Field(default=None, serialization_alias="scanModes")
+    docs_page: Optional[str] = Field(default=None, serialization_alias="docsPage")
+    docs_anchor: Optional[str] = Field(default=None, serialization_alias="docsAnchor")
+
+
+class McpSurfaceLintRulesResponse(BaseModel):
+    """MCP surface-lint rule catalog (CLX-4.3, #4861)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    transparency_revision: str = Field(
+        serialization_alias="transparencyRevision",
+        description="Revision of the blocking-rule transparency catalog.",
+    )
+    docs_page: str = Field(
+        serialization_alias="docsPage",
+        description="Repository-relative docs page for MCP surface lint rules.",
+    )
+    rules: List[McpSurfaceLintRuleOut]
+    count: int
 
 
 class McpConformanceProfileOut(BaseModel):
@@ -7702,6 +7798,27 @@ class McpPostureRuleOut(BaseModel):
     requires: str = Field(
         description="The evidence the rule needs: surface | source | sbom | vulnerabilities | probe.",
     )
+    remediation: Optional[str] = Field(
+        default=None,
+        description="Remediation guidance for blocking rules (CLX-4.3).",
+    )
+    false_positive_guidance: Optional[str] = Field(
+        default=None,
+        serialization_alias="falsePositiveGuidance",
+        description="False-positive triage guidance for blocking rules (CLX-4.3).",
+    )
+    fixture_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="fixtureId",
+        description="Scanner-evaluation corpus fixture id (CLX-4.3).",
+    )
+    scan_modes: Optional[List[str]] = Field(
+        default=None,
+        serialization_alias="scanModes",
+        description="Scan modes / evidence requirements (CLX-4.3).",
+    )
+    docs_page: Optional[str] = Field(default=None, serialization_alias="docsPage")
+    docs_anchor: Optional[str] = Field(default=None, serialization_alias="docsAnchor")
 
 
 class McpPostureProfileOut(BaseModel):

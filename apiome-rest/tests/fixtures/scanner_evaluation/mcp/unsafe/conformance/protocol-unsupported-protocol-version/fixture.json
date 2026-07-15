@@ -1,0 +1,11 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "1999-01-01",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {}
+  }
+}

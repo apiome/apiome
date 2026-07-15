@@ -21,6 +21,7 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | Edit classes & properties | [edit-classes-and-properties.md](edit-classes-and-properties.md) | `/ade/studio` | `PUT /v1/classes/{tenant}/{class_id}` |
 | Edit paths & operations | [edit-paths.md](edit-paths.md) | `/ade/studio/paths` | `PUT /v1/paths/{tenant}/{version}/{path_id}` |
 | Lint & quality scoring | [lint-and-quality.md](lint-and-quality.md) | `/ade/studio` | `GET /v1/versions/{tenant}/{project}/{version}/lint` |
+| Axis score algorithm (`clx-axis-v1`) | [axis-score.md](axis-score.md) | Lint axes panels | `GET …/lint/axes` |
 | Cut a version | [cut-a-version.md](cut-a-version.md) | `/ade/dashboard/versions` | `POST /v1/versions/{tenant}/{project}` |
 | Publish a version | [publish-a-version.md](publish-a-version.md) | `/ade/dashboard/versions` | `POST /v1/versions/{tenant}/{project}/{version}/publish` |
 | Browse published specs | [browse-published-specs.md](browse-published-specs.md) | `/ade/dashboard/published` | `GET /v1/browse/tenants/{tenant}/projects` |

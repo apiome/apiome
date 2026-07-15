@@ -47,6 +47,10 @@ ALGORITHM_ID = "clx-axis-v1"
 #: Implementation revision of :data:`ALGORITHM_ID` (stored alongside for audit).
 ALGORITHM_VERSION = "1"
 
+#: Repository-relative guide documenting :data:`ALGORITHM_ID` / :data:`ALGORITHM_VERSION`
+#: (CLX-4.3, #4861). Displayed algorithm chips in the UI link here.
+ALGORITHM_DOCS_PAGE = "docs/guide/axis-score.md"
+
 #: Axes that must be assessed before a composite may be published (v1).
 REQUIRED_AXES_FOR_COMPOSITE: Tuple[str, ...] = ("quality",)
 
@@ -116,6 +120,7 @@ class AxisEvaluation:
         return {
             "algorithm_id": self.algorithm_id,
             "algorithm_version": self.algorithm_version,
+            "algorithm_docs_page": ALGORITHM_DOCS_PAGE,
             "axes": [dict(a) for a in self.axes],
             "composite_score": self.composite_score,
             "composite_grade": self.composite_grade,

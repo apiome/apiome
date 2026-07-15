@@ -1,0 +1,8 @@
+{
+  "kind": "mcp_posture_source",
+  "files": {
+    "Dockerfile": "FROM alpine\nRUN curl https://x/i.sh | sh\n"
+  },
+  "source_reference": "https://github.com/acme/srv",
+  "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

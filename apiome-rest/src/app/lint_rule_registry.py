@@ -37,7 +37,7 @@ governance style-guide surface (GOV-1.4 evaluates guides in the revision lint pa
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from .lint_engine import (
     CommonRulePack,
@@ -102,9 +102,15 @@ class LintRuleDescriptor:
     rationale: str
     docs_anchor: str
 
-    def as_dict(self) -> Dict[str, str]:
-        """Return the descriptor as a plain dict (snake_case keys)."""
-        return {
+    def as_dict(self) -> Dict[str, Any]:
+        """Return the descriptor as a plain dict (snake_case keys).
+
+        Blocking (error) rules additionally carry CLX-4.3 transparency fields from
+        :mod:`app.scanner_rule_transparency`.
+        """
+        from .scanner_rule_transparency import enrich_rule_dict
+
+        base: Dict[str, Any] = {
             "rule_id": self.rule_id,
             "pack": self.pack,
             "category": self.category,
@@ -112,6 +118,7 @@ class LintRuleDescriptor:
             "rationale": self.rationale,
             "docs_anchor": self.docs_anchor,
         }
+        return enrich_rule_dict(base, self.rule_id)
 
 
 def _descriptor(rule_id: str, pack: str, category: str, severity: str, rationale: str) -> LintRuleDescriptor:

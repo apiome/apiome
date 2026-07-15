@@ -85,17 +85,24 @@ async def list_lint_rules(
     (GOV-1.1/GOV-1.4) layer per-tenant enable/disable and severity overrides on top of it.
     """
     descriptors = builtin_rule_descriptors()
-    rules = [
-        LintRuleOut(
-            rule_id=d.rule_id,
-            pack=d.pack,
-            category=d.category,
-            default_severity=d.default_severity,
-            rationale=d.rationale,
-            docs_anchor=d.docs_anchor,
+    rules = []
+    for d in descriptors:
+        payload = d.as_dict()
+        rules.append(
+            LintRuleOut(
+                rule_id=d.rule_id,
+                pack=d.pack,
+                category=d.category,
+                default_severity=d.default_severity,
+                rationale=d.rationale,
+                docs_anchor=d.docs_anchor,
+                reference=payload.get("reference"),
+                remediation=payload.get("remediation"),
+                false_positive_guidance=payload.get("false_positive_guidance"),
+                fixture_id=payload.get("fixture_id"),
+                scan_modes=payload.get("scan_modes"),
+            )
         )
-        for d in descriptors
-    ]
     return LintRuleCatalogResponse(rules=rules, count=len(rules), docs_page=LINT_RULE_DOCS_PAGE)
 
 

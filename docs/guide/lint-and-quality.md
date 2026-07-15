@@ -45,8 +45,14 @@ X-API-Key: <your-api-key>
 ```
 
 Returns every registered built-in rule with its stable id, pack, category, default severity,
-one-line rationale, and a docs anchor into [lint-rules.md](lint-rules.md). The catalog is the
-same for every tenant; style guides layer per-tenant overrides on top of it.
+one-line rationale, and a docs anchor into [lint-rules.md](lint-rules.md). Blocking (`error`)
+rules also include reference, remediation, false-positive guidance, and corpus fixture ids
+(CLX-4.3). The catalog is the same for every tenant; style guides layer per-tenant overrides
+on top of it.
+
+Multi-axis evaluations display algorithm `clx-axis-v1` — see [axis-score.md](axis-score.md).
+Scanner-evaluation corpus and adapter deprecation policy:
+[scanner_evaluation.md](../../apiome-rest/docs/scanner_evaluation.md).
 
 ### Validate a custom-rule style guide
 

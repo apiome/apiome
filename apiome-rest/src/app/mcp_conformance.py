@@ -130,15 +130,23 @@ class ConformanceRule:
 
     def as_dict(self) -> Dict[str, Any]:
         """Return the rule descriptor as a JSON-ready dict (the ``/rules`` catalog payload)."""
-        return {
-            "rule_id": self.rule_id,
-            "category": self.category,
-            "severity": self.severity,
-            "spec_version": self.spec_version,
-            "spec_reference": self.spec_reference,
-            "rationale": self.rationale,
-            "requires_transcript": self.requires_transcript,
-        }
+        from .scanner_rule_transparency import enrich_rule_dict
+
+        return enrich_rule_dict(
+            {
+                "rule_id": self.rule_id,
+                "category": self.category,
+                "severity": self.severity,
+                "spec_version": self.spec_version,
+                "spec_reference": self.spec_reference,
+                "rationale": self.rationale,
+                "requires_transcript": self.requires_transcript,
+                # Spec reference is the conformance catalog's normative URL; also expose
+                # as ``reference`` for the shared transparency consumer.
+                "reference": self.spec_reference,
+            },
+            self.rule_id,
+        )
 
 
 @dataclass(frozen=True)
