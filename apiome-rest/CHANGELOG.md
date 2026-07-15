@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Docs: `docs/lint_workspace.md`. UI: the ADE **Lint Posture** workspace (queue with bulk
     select, finding detail linking revision/evidence/policy/history, trends tab, saved views).
 
+### Fixed
+- **Lint decisions proxy never reached the backend (CLX-1.3 follow-up, #4859)** — the
+  `/v1/lint/*` routers take the tenant slug as a **required `tenant_slug` query parameter**
+  (they have no slug path segment), but the UI's `/api/lint/decisions` proxy never sent it, so
+  every call failed request validation (422) and decisions silently never loaded. The decisions
+  and new workspace proxies now resolve the session tenant's slug and forward it; a route test
+  pins the contract against the real auth dependency (dependency-override tests could not see
+  it).
+
 ## [1.121.0] - 2026-07-14
 
 ### Added

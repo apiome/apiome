@@ -13,5 +13,5 @@ export async function GET(request: NextRequest) {
   if (days) params.set('days', days);
   if (projectId) params.set('projectId', projectId);
   const query = params.toString() ? `?${params.toString()}` : '';
-  return proxyToRest(auth.user, `/lint/workspace/trends${query}`);
+  return proxyToRest(auth, `/lint/workspace/trends${query}`);
 }

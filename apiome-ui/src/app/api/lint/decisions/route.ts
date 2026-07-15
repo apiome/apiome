@@ -62,9 +62,12 @@ export async function GET(request: NextRequest) {
     const ctx = await tenantContext(user);
     if ('error' in ctx) return ctx.error;
 
+    // The lint decisions router takes the tenant slug as a query parameter (CLX-4.1 fix:
+    // without it the REST call fails validation and decisions silently never load).
+    const params = new URLSearchParams({ tenant_slug: ctx.tenant.slug });
     const projectId = request.nextUrl.searchParams.get('projectId');
-    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
-    const response = await fetch(`${REST_API_BASE_URL}/lint/decisions${query}`, {
+    if (projectId) params.set('projectId', projectId);
+    const response = await fetch(`${REST_API_BASE_URL}/lint/decisions?${params.toString()}`, {
       method: 'GET',
       headers: createAuthHeaders(user),
     });
@@ -90,11 +93,14 @@ export async function POST(request: NextRequest) {
     if ('error' in ctx) return ctx.error;
 
     const body = await request.json();
-    const response = await fetch(`${REST_API_BASE_URL}/lint/decisions`, {
-      method: 'POST',
-      headers: createAuthHeaders(user),
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${REST_API_BASE_URL}/lint/decisions?tenant_slug=${encodeURIComponent(ctx.tenant.slug)}`,
+      {
+        method: 'POST',
+        headers: createAuthHeaders(user),
+        body: JSON.stringify(body),
+      },
+    );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
       return NextResponse.json({ success: false, ...(typeof data === 'object' && data ? data : {}) }, { status: response.status });

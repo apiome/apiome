@@ -5,9 +5,11 @@ over the CLX-1.x substrate: evidence runs (V167), multi-axis evaluations (V168),
 policy pack / waiver / decision store (V169). It adds no new evidence writers — it is a read
 and governance layer.
 
-Tenant scope always comes from the token (`auth_data["tenant_id"]`); there is no tenant slug
-in these paths. Project scope is the optional `projectId` query parameter (catalog side only —
-MCP endpoints have no project).
+Tenant scope: every request carries the tenant slug as the **required `tenant_slug` query
+parameter** (these routers have no slug path segment; `validate_authentication` verifies the
+caller's access to that tenant and the handlers scope by the resolved `tenant_id`). This is
+the same contract the `/v1/lint/decisions` router uses. Project scope is the optional
+`projectId` query parameter (catalog side only — MCP endpoints have no project).
 
 ## Subjects
 

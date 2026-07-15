@@ -445,6 +445,77 @@ def test_single_upsert_waiver_request_state(mdb):
     assert resp.json()["state"] == "waiver_requested"
 
 
+# --- Tenant-wide SQL param alignment -------------------------------------------------------------
+
+
+def test_tenant_wide_query_params_align_with_placeholders(monkeypatch):
+    """Pin the SQL param order of the workspace read paths (regression: #4859).
+
+    The UNION queries place BOTH subject CTEs before the per-branch filters, so params
+    must be (catalog CTE ×3, mcp CTE ×1, branch, branch) — a swap puts an integer into
+    ``ep.tenant_id`` and fails at runtime with ``operator does not exist: uuid = integer``,
+    which mocked-db route tests can never see.
+    """
+    from app.database import db as real_db
+
+    captured = []
+    monkeypatch.setattr(
+        real_db, "execute_query", lambda query, params=None: captured.append((query, params)) or []
+    )
+
+    real_db.list_latest_lint_evidence_runs_for_tenant("tenant-1")
+    real_db.list_latest_axis_evaluations_for_tenant("tenant-1")
+    real_db.list_latest_lint_policy_evaluations_for_tenant("tenant-1")
+
+    evidence_q, evidence_p = captured[0]
+    axis_q, axis_p = captured[1]
+    policy_q, policy_p = captured[2]
+
+    assert evidence_p == ("tenant-1", None, None, "tenant-1", 2, 2)
+    assert axis_p == ("tenant-1", None, None, "tenant-1", "clx-axis-v1", "clx-axis-v1")
+    assert policy_p == ("tenant-1", None, None, "tenant-1")
+    # Placeholder count must match the params for every query.
+    for query, params in captured:
+        assert query.count("%s") == len(params)
+
+    # Project-scoped variants (catalog branch only).
+    captured.clear()
+    real_db.list_latest_lint_evidence_runs_for_tenant("tenant-1", project_id="p1")
+    real_db.list_latest_axis_evaluations_for_tenant("tenant-1", project_id="p1")
+    real_db.list_latest_lint_policy_evaluations_for_tenant("tenant-1", project_id="p1")
+    assert captured[0][1] == ("tenant-1", "p1", "p1", 2)
+    assert captured[1][1] == ("tenant-1", "p1", "p1", "clx-axis-v1")
+    assert captured[2][1] == ("tenant-1", "p1", "p1")
+    for query, params in captured:
+        assert query.count("%s") == len(params)
+
+
+# --- Real auth dependency wiring ---------------------------------------------------------------
+
+
+def test_findings_requires_tenant_slug_query_param():
+    """Pin the tenant-scope contract against the REAL dependency (no override).
+
+    ``validate_authentication`` takes ``tenant_slug`` and these routes have no path segment
+    for it, so FastAPI surfaces it as a REQUIRED QUERY parameter — the UI proxies must send
+    ``?tenant_slug=``. Without this test the dependency-override fixtures would hide a
+    regression entirely (which is exactly how the original 422 shipped).
+    """
+    app.dependency_overrides.pop(validate_authentication, None)
+    try:
+        # Missing tenant_slug -> FastAPI request validation error.
+        resp = client.get("/v1/lint/workspace/findings")
+        assert resp.status_code == 422
+        assert any(
+            e.get("loc") == ["query", "tenant_slug"] for e in resp.json()["detail"]
+        )
+        # With tenant_slug but no credentials -> the route resolves and auth answers 401.
+        resp2 = client.get("/v1/lint/workspace/findings", params={"tenant_slug": "acme"})
+        assert resp2.status_code == 401
+    finally:
+        app.dependency_overrides[validate_authentication] = lambda: _JWT
+
+
 # --- Saved views -------------------------------------------------------------------------------------
 
 
