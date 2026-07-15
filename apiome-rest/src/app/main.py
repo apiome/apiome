@@ -62,6 +62,7 @@ from .export_job_routes import router as export_job_router
 from .access_routes import router as access_router, platform_router as access_platform_router
 from .mock_routes import router as mock_router, data_router as mock_data_router
 from .mcp_catalog_routes import mcp_endpoints_router
+from .mcp_probe_routes import router as mcp_probe_router
 from .mcp_badge_routes import router as mcp_badge_router
 from .mcp_feed_routes import router as mcp_feed_router
 from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
@@ -83,7 +84,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.2.0",
+    version="1.3.0",
 )
 
 
@@ -263,6 +264,8 @@ app.include_router(mock_router)
 app.include_router(mock_data_router)
 # MCP Catalog (#3663): tenant-scoped CRUD over registered external MCP endpoints.
 app.include_router(mcp_endpoints_router)
+# MCP dynamic probes (CLX-3.3, #4857): consent-gated, sandboxed, audited active probing.
+app.include_router(mcp_probe_router)
 app.include_router(mcp_catalog_digest_router)
 app.include_router(mcp_saved_search_router)
 app.include_router(mcp_endpoint_note_router)

@@ -5,6 +5,44 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.120.0] - 2026-07-14
+
+### Added
+- **Consent-gated, sandboxed MCP dynamic probes (CLX-3.3, #4857)** — the first MCP engine that
+  *sends a live server something and watches what it does*, so a finding can graduate from
+  **suspected** (a static signal) to **observed** (a probe witnessed the behaviour) to
+  **exploited-in-test** (a probe demonstrated it against a live server in isolation). It fills the
+  guarded `make_proven_finding` door CLX-3.2 shipped unused — and keeps the guarantee, because only
+  an exploited-in-test finding ever becomes `ProbeEvidence`.
+  - **Three profiles** (`app.mcp_probe`). `passive` (default) is read-only — it re-reads the
+    transcript discovery already captured, sends nothing, needs no consent, and never touches a
+    business tool. `safe-active` sends benign protocol-layer messages (never a side-effecting
+    business-tool call); `payload-fuzzing` sends crafted canary payloads to tool parameters. A
+    passive profile *cannot* emit an exploit tier — the ceiling is enforced at probe registration and
+    again at report assembly.
+  - **Consent (AC2).** An active run requires a `ConsentRecord` carrying an allowlisted target, a
+    declared ownership assertion, an acknowledging user, a dedicated (non-production) test identity,
+    and — for fuzzing — explicit per-run approval. The whole record is copied into the audit trail.
+    The allowlist is `apiome.mcp_probe_targets` (V173); enrolling requires the ownership assertion,
+    which the schema makes unstorable to omit.
+  - **Isolation (AC3).** `IsolationSpec` is the least-privilege sandbox contract a stdio target must
+    run inside — read-only rootfs, no host socket, dropped capabilities, restricted egress, hard
+    pids/memory/CPU/wall-clock limits, disposability. It fails closed: `require_isolation` refuses a
+    stdio probe under any spec that is not provably locked down. The bytes-on-the-wire runner is
+    injected as a `ProbeTransport`, so the policy is testable without real infrastructure.
+  - **Kill switch, rate & concurrency, audit (AC5).** `mcp_probe_enabled` (default **false**) is a
+    global kill switch that freezes active probing without touching the read-only passive lane.
+    Per-tenant concurrency/rate caps are read from the audit table (`apiome.mcp_probe_runs`), so they
+    hold across replicas and restarts; per-run request/byte caps are enforced by a counting transport,
+    not merely recorded. Every active run and every refusal is audited.
+  - **Bridge to trust posture** (`app.mcp_probe_rules`): registers `REQUIRES_PROBE` rules
+    (`protocol.proven-auth-bypass`, `protocol.proven-input-injection`) that turn exploited-in-test
+    evidence into `proven` posture findings and move `proven_count`. Loaded from the probe side to
+    keep the import graph acyclic; skipped-and-reported when no probe evidence exists.
+  - **REST** — `GET /v1/mcp/probes/catalog`; `POST|GET|DELETE .../endpoints/{id}/probe-targets`;
+    `POST .../versions/{vid}/probe`; `GET .../probe-runs`. **CLI** — `apiome mcp probe-catalog`,
+    `probe-target-add`/`probe-target-list`, `probe`, `probe-runs`. See `docs/mcp_probes.md`.
+
 ## [1.119.0] - 2026-07-14
 
 ### Added
