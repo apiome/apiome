@@ -15066,6 +15066,140 @@ class Database:
         )
         return [dict(r) for r in rows]
 
+    # --- MCP trust baselines: approved drift reference (CLX-3.4, #4858) ------------------------
+
+    _MCP_TRUST_BASELINE_COLUMNS = """
+        id, tenant_id, endpoint_id, version_id, manifest_fingerprint, manifest,
+        rationale, gating_categories, approved_by, superseded_at, created_at, updated_at
+    """
+
+    def approve_mcp_trust_baseline(
+        self,
+        *,
+        tenant_id: str,
+        endpoint_id: str,
+        version_id: str,
+        manifest_fingerprint: str,
+        manifest: Dict[str, Any],
+        rationale: str,
+        gating_categories: List[str],
+        approved_by: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Approve a new trust baseline, superseding the endpoint's prior live baseline atomically.
+
+        The prior live baseline (if any) is soft-superseded (``superseded_at`` stamped) and the new
+        approval inserted in one transaction, so the partial unique index (one live baseline per
+        endpoint) is never violated and no window exists with zero or two live baselines.
+
+        Args:
+            tenant_id: Owning tenant (already validated by the caller).
+            endpoint_id: The endpoint being approved.
+            version_id: The snapshot the operator approved.
+            manifest_fingerprint: The composed trust-manifest fingerprint of that snapshot.
+            manifest: The full approved manifest envelope (stored for old→new drift evidence).
+            rationale: The administrator's reason for the approval (required, non-blank).
+            gating_categories: The drift categories that gate for this baseline (configured risk deltas).
+            approved_by: The approving user id, or ``None`` for an unattributable API-key call.
+
+        Returns:
+            The newly inserted baseline row, or ``None`` on insert failure.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.mcp_trust_baselines
+                    SET superseded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE endpoint_id = %s::uuid AND superseded_at IS NULL
+                    """,
+                    (endpoint_id,),
+                )
+                cursor.execute(
+                    f"""
+                    INSERT INTO apiome.mcp_trust_baselines
+                      (tenant_id, endpoint_id, version_id, manifest_fingerprint, manifest,
+                       rationale, gating_categories, approved_by)
+                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::jsonb, %s, %s::jsonb, %s::uuid)
+                    RETURNING {self._MCP_TRUST_BASELINE_COLUMNS}
+                    """,
+                    (
+                        tenant_id,
+                        endpoint_id,
+                        version_id,
+                        manifest_fingerprint,
+                        Json(manifest),
+                        rationale,
+                        Json(list(gating_categories)),
+                        approved_by,
+                    ),
+                )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception:
+            conn.rollback()
+            raise
+
+    def get_active_mcp_trust_baseline(
+        self, endpoint_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the endpoint's live (non-superseded) trust baseline, or ``None`` if never approved."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_TRUST_BASELINE_COLUMNS}
+            FROM apiome.mcp_trust_baselines
+            WHERE endpoint_id = %s::uuid AND superseded_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (endpoint_id,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_mcp_trust_baselines(
+        self, endpoint_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List an endpoint's trust-baseline approvals newest first (the approval history)."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_TRUST_BASELINE_COLUMNS}
+            FROM apiome.mcp_trust_baselines
+            WHERE endpoint_id = %s::uuid
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (endpoint_id, int(limit)),
+        )
+        return [dict(r) for r in rows]
+
+    def list_mcp_enabled_capability_names(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Capability items of every *enabled* endpoint's current snapshot, for shadowing detection.
+
+        Joins each live, enabled endpoint to its ``current_version_id`` snapshot's
+        ``mcp_capability_items`` and carries the endpoint identity (name/slug/url) alongside each
+        item, so :func:`app.mcp_trust_manifest.detect_shadowed_names` can group names exposed by more
+        than one enabled endpoint in the tenant's host scope. Scoped by ``tenant_id`` only.
+
+        Args:
+            tenant_id: The tenant whose enabled host scope to read.
+
+        Returns:
+            One row per capability item: ``endpoint_id``, ``endpoint_name``, ``endpoint_slug``,
+            ``endpoint_url``, ``item_type``, ``name``.
+        """
+        q = """
+            SELECT e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                   e.endpoint_url AS endpoint_url, c.item_type, c.name
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_capability_items c ON c.version_id = e.current_version_id
+            WHERE e.tenant_id = %s::uuid
+              AND e.deleted_at IS NULL
+              AND e.enabled = true
+            ORDER BY e.name ASC, c.item_type ASC, c.ordinal ASC
+        """
+        return self.execute_query(q, (tenant_id,))
+
     def touch_mcp_endpoint_discovery(
         self,
         endpoint_id: str,

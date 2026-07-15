@@ -20,6 +20,8 @@ export * from './CapabilityChurnPanel';
 export * from './GradeSurfaceTrendPanel';
 export * from './CapabilityPresenceMatrixPanel';
 export * from './ChangedSinceDigestPanel';
+export * from './TrustDriftAlertsPanel';
+export * from './ShadowedNamesPanel';
 export * from './DiscoveryHealthPanel';
 export * from './ToolLatencyPanel';
 export * from './TrustProfilePanel';

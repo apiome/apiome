@@ -40,6 +40,7 @@ import { McpCatalogCard } from "@/app/components/ade/dashboard/mcp/McpCatalogCar
 import { McpCatalogToolbar } from "@/app/components/ade/dashboard/mcp/McpCatalogToolbar";
 import { McpSavedSearchesPanel } from "@/app/components/ade/dashboard/mcp/McpSavedSearchesPanel";
 import { McpCollectionsPanel } from "@/app/components/ade/dashboard/mcp/McpCollectionsPanel";
+import { ShadowedNamesPanel } from "@/app/components/ui/mcp/ShadowedNamesPanel";
 import { mcpVisibleEndpointIds } from "@/app/components/ade/dashboard/mcp/mcpCollectionUi";
 
 export default function McpBrowsePage() {
@@ -212,6 +213,10 @@ export default function McpBrowsePage() {
               </div>
               <div className="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
                 <McpCollectionsPanel selectedEndpointIds={visibleEndpointIds} />
+              </div>
+              {/* Shadowed / duplicate tool names across the enabled host scope (CLX-3.4, #4858). */}
+              <div className="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
+                <ShadowedNamesPanel />
               </div>
             </>
           ) : null}

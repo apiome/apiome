@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.3.0
+  version: 1.4.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -25763,6 +25763,297 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list probe runsresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/trust-baseline:
+    post:
+      tags:
+      - mcp-trust-drift
+      summary: Approve Trust Baseline
+      description: 'Approve a new trust baseline for an endpoint (AC2).
+
+
+        Body: ``version_id`` (optional; defaults to the latest snapshot), ``rationale``
+        (required,
+
+        non-blank), and ``gating_categories`` (optional list of drift categories that
+        block; defaults to
+
+        security_regression + coverage_loss). Composes the approved snapshot''s trust
+        manifest, supersedes
+
+        the prior baseline, and writes a policy event to the governance audit.'
+      operationId: approve_trust_baseline_v1_mcp__tenant_slug__endpoints__endpoint_id__trust_baseline_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Approve Trust Baselineauthorization schema.
+          - type: 'null'
+            description: Approve Trust Baselineauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Approve Trust Baseline Xapikey schema.
+          - type: 'null'
+            description: Approve Trust Baseline Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              title: Body
+              description: Body schema.
+        description: Request body for approve trust baseline.
+      responses:
+        '201':
+          description: Successful response for approve trust baseline.
+          content:
+            application/json:
+              schema:
+                description: Response payload for approve trust baselineresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for approve trust baselineresponse422.
+    get:
+      tags:
+      - mcp-trust-drift
+      summary: Get Trust Baseline
+      description: Return the endpoint's active trust baseline and its approval history.
+      operationId: get_trust_baseline_v1_mcp__tenant_slug__endpoints__endpoint_id__trust_baseline_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Trust Baselineauthorization schema.
+          - type: 'null'
+            description: Get Trust Baselineauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Trust Baseline Xapikey schema.
+          - type: 'null'
+            description: Get Trust Baseline Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get trust baseline.
+          content:
+            application/json:
+              schema:
+                description: Response payload for get trust baselineresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get trust baselineresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/trust-drift:
+    get:
+      tags:
+      - mcp-trust-drift
+      summary: Get Trust Drift
+      description: 'Diff the current snapshot against the approved baseline and classify
+        the drift (AC1/AC4).
+
+
+        Requires an approved baseline (404 otherwise) and a current discovered snapshot
+        (409 otherwise).
+
+        The response carries every classified change with old→new evidence, the drift
+        gate over the
+
+        baseline''s configured risk deltas, and — when ``notify=true`` and the notification
+        kill switch is
+
+        on — the ids of any alerts fanned out.'
+      operationId: get_trust_drift_v1_mcp__tenant_slug__endpoints__endpoint_id__trust_drift_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: notify
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Fan out a push-webhook alert when a regression is found.
+          default: false
+          title: Notify
+        description: Fan out a push-webhook alert when a regression is found.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Trust Driftauthorization schema.
+          - type: 'null'
+            description: Get Trust Driftauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Trust Drift Xapikey schema.
+          - type: 'null'
+            description: Get Trust Drift Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get trust drift.
+          content:
+            application/json:
+              schema:
+                description: Response payload for get trust driftresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get trust driftresponse422.
+  /v1/mcp/{tenant_slug}/data-quality/shadowing:
+    get:
+      tags:
+      - mcp-trust-drift
+      summary: Get Shadowing Report
+      description: Report tool/resource/prompt names shadowed across the tenant's
+        enabled host scope (AC3).
+      operationId: get_shadowing_report_v1_mcp__tenant_slug__data_quality_shadowing_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Shadowing Reportauthorization schema.
+          - type: 'null'
+            description: Get Shadowing Reportauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Shadowing Report Xapikey schema.
+          - type: 'null'
+            description: Get Shadowing Report Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get shadowing report.
+          content:
+            application/json:
+              schema:
+                description: Response payload for get shadowing reportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get shadowing reportresponse422.
   /v1/mcp/{tenant_slug}/digest/config:
     get:
       tags:
