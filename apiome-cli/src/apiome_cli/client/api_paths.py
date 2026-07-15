@@ -42,6 +42,16 @@ def export_preview(tenant_slug: str) -> str:
     return f"{V1}/export/{tenant_slug}/preview"
 
 
+def export_projection_evidence(tenant_slug: str) -> str:
+    """Bounded, cursor-paginated projection evidence for one configured export (EFP-2.1).
+
+    Drives ``export evidence``: ``POST`` a source revision + target + options (+ cursor/limit)
+    and receive one page of source→target outcome edges with the snapshot summary the
+    preview/verify envelopes reference. No artifact is emitted.
+    """
+    return f"{V1}/export/{tenant_slug}/projection-evidence"
+
+
 def export_document(tenant_slug: str) -> str:
     """Emit one (artifact, target) export document through the Emitter SPI (MFX-11.5).
 

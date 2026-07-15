@@ -207,6 +207,14 @@ class ExportJobStartRequest(BaseModel):
         description="When true, proceed with a **severe** conversion (MFX-3.3) the transcoding "
         "guard would otherwise fail the job on. Ignored for non-severe conversions and dry-runs.",
     )
+    acknowledged_snapshot: Optional[str] = Field(
+        default=None,
+        description="The projection snapshot hash (``fidelity.projection.manifest_hash``) the "
+        "caller previewed and acknowledged (EFP-2.1). When set, the job recomputes the snapshot "
+        "for its actual inputs and **fails with `STALE_PREVIEW`** if the hashes differ — the "
+        "source revision, options, emitter version, or registry changed since the preview, so "
+        "the acknowledgement no longer describes what would be generated. Null skips the check.",
+    )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
@@ -251,6 +259,17 @@ class ExportJobResult(BaseModel):
     )
     target: str = Field(description="The resolved target format key (e.g. ``openapi-3.1``).")
     dry_run: bool = Field(description="True when the job stopped after the fidelity report.")
+    snapshot_hash: str = Field(
+        default="",
+        description="The projection snapshot hash this job computed (EFP-2.1) — the same "
+        "``fidelity.projection.manifest_hash`` a preview/verify of identical inputs returns. "
+        "Recorded so the completed job is attributable to one exact snapshot.",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="The per-target emit options the job was submitted with (EFP-2.1) — the "
+        "configuration half of the snapshot record; null when the target defaults applied.",
+    )
     fidelity: ExportFidelity = Field(
         description="The full fidelity envelope (target + tier + report + advisory).",
     )
@@ -938,6 +957,29 @@ async def _drive_export_job(job_id: str) -> None:
             min_severity=request.min_severity,
             options=request.options,
         )
+        # --- Stale-acknowledgement gate (EFP-2.1) ------------------------------------
+        # The snapshot hash folds source content, target, normalized options, and the
+        # emitter/registry versions; if the caller acknowledged a different snapshot than
+        # the one these inputs produce, the acknowledgement no longer describes what would
+        # be generated — reject with a structured error so the caller re-previews.
+        snapshot_hash = fidelity.projection.manifest_hash
+        if (
+            request.acknowledged_snapshot is not None
+            and request.acknowledged_snapshot != snapshot_hash
+        ):
+            await _fail(
+                job_id,
+                "STALE_PREVIEW",
+                "The acknowledged preview snapshot no longer matches this export's inputs "
+                "(the source revision, options, emitter, or capability registry changed). "
+                "Request a new preview and acknowledge the current snapshot.",
+                {
+                    "acknowledged_snapshot": request.acknowledged_snapshot,
+                    "current_snapshot": snapshot_hash,
+                },
+            )
+            return
+
         # Classify the conversion off the envelope's report (MFX-3.3), so the job's guard and
         # the /preview guard agree and the pre-flight gate can refuse a severe conversion.
         guard: TranscodeGuard = classify_transcode(
@@ -967,6 +1009,8 @@ async def _drive_export_job(job_id: str) -> None:
                 version_label=source.version_label,
                 target=target_format,
                 dry_run=True,
+                snapshot_hash=snapshot_hash,
+                options=request.options,
                 fidelity=fidelity,
                 guard=guard,
                 files=[],
@@ -1070,6 +1114,8 @@ async def _drive_export_job(job_id: str) -> None:
             version_label=source.version_label,
             target=target_format,
             dry_run=False,
+            snapshot_hash=snapshot_hash,
+            options=request.options,
             fidelity=fidelity,
             guard=guard,
             validation=validation_report,

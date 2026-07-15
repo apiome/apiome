@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.8.1
+  version: 1.9.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -17787,6 +17787,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for previewexportfidelityforonetargetresponse422.
+  /v1/export/{tenant_slug}/projection-evidence:
+    post:
+      tags:
+      - export
+      summary: Page through projection evidence for one configured export
+      description: 'Return one bounded, cursor-paginated page of source→target projection
+        evidence (EFP-2.1) for the given source revision, target, and options — the
+        traceable rows behind the projection summary that preview, verify, dispatch,
+        and job results embed. The same inputs resolve to the same snapshot hash on
+        every surface. Tenant-scoped; `redact_source: true` withholds source-native
+        evidence values for relaying callers.'
+      operationId: get_projection_evidence_v1_export__tenant_slug__projection_evidence_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pagethroughprojectionevidenceforoneconfiauthorization schema.
+          - type: 'null'
+            description: Pagethroughprojectionevidenceforoneconfiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pagethroughprojectionevidenceforoneconfi Xapikey schema.
+          - type: 'null'
+            description: Pagethroughprojectionevidenceforoneconfi Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportProjectionEvidenceRequest'
+              description: Request body for pagethroughprojectionevidenceforoneconfirequest.
+        description: Request body for page through projection evidence for one configured
+          export.
+      responses:
+        '200':
+          description: Successful response for page through projection evidence for
+            one configured export.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportProjectionEvidenceResponse'
+                description: Response payload for pagethroughprojectionevidenceforoneconfiresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for pagethroughprojectionevidenceforoneconfiresponse422.
   /v1/export/{tenant_slug}/document:
     post:
       tags:
@@ -33082,6 +33153,26 @@ components:
           title: Dry Run
           description: True when the job stopped after the fidelity report.
           example: true
+        snapshot_hash:
+          type: string
+          title: Snapshot Hash
+          description: The projection snapshot hash this job computed (EFP-2.1) —
+            the same ``fidelity.projection.manifest_hash`` a preview/verify of identical
+            inputs returns. Recorded so the completed job is attributable to one exact
+            snapshot.
+          default: ''
+          example: a1b2c3d4e5f6789012345678901234ab
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Job schema.
+          - type: 'null'
+            description: Export Job schema.
+          title: Options
+          description: The per-target emit options the job was submitted with (EFP-2.1)
+            — the configuration half of the snapshot record; null when the target
+            defaults applied.
         fidelity:
           $ref: '#/components/schemas/ExportFidelity'
           description: The full fidelity envelope (target + tier + report + advisory).
@@ -33199,6 +33290,19 @@ components:
             conversions and dry-runs.
           default: false
           example: false
+        acknowledged_snapshot:
+          anyOf:
+          - type: string
+            description: Request body for export job start.
+          - type: 'null'
+            description: Request body for export job start.
+          title: Acknowledged Snapshot
+          description: The projection snapshot hash (``fidelity.projection.manifest_hash``)
+            the caller previewed and acknowledged (EFP-2.1). When set, the job recomputes
+            the snapshot for its actual inputs and **fails with `STALE_PREVIEW`**
+            if the hashes differ — the source revision, options, emitter version,
+            or registry changed since the preview, so the acknowledgement no longer
+            describes what would be generated. Null skips the check.
         min_severity:
           $ref: '#/components/schemas/LossinessSeverity'
           description: Lowest loss severity that raises the advisory (MFX-2.4); does
@@ -33306,6 +33410,18 @@ components:
           title: Target
           description: Target emitter key (``openapi``) or format key (``openapi-3.1``).
           example: example
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for export preview.
+          - type: 'null'
+            description: Request body for export preview.
+          title: Options
+          description: Per-target emit options (MFX-1.4); null or empty applies the
+            target defaults. Folded (normalized) into the projection snapshot hash
+            (EFP-2.1), so a preview, a verify, and a dispatch of the same source,
+            target, and options reference the same snapshot.
         min_severity:
           $ref: '#/components/schemas/LossinessSeverity'
           description: Lowest loss severity that raises the advisory (MFX-2.4); does
@@ -33367,6 +33483,155 @@ components:
       title: ExportPreviewResponse
       description: 'The dry-run fidelity preview: the full envelope + the resolved
         source coordinates (MFX-2.5).'
+    ExportProjectionEvidenceRequest:
+      properties:
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project) id to export.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Request body for export projection evidence.
+          - type: 'null'
+            description: Request body for export projection evidence.
+          title: Version
+          description: Revision UUID, version label (``1.0.0``), or null for the latest
+            revision.
+        target:
+          type: string
+          title: Target
+          description: Target emitter key (``openapi``) or format key (``openapi-3.1``).
+          example: example
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for export projection evidence.
+          - type: 'null'
+            description: Request body for export projection evidence.
+          title: Options
+          description: Per-target emit options (MFX-1.4); null or empty applies the
+            target defaults. Folded (normalized) into the snapshot hash — different
+            options are a different snapshot.
+        cursor:
+          anyOf:
+          - type: string
+            description: Request body for export projection evidence.
+          - type: 'null'
+            description: Request body for export projection evidence.
+          title: Cursor
+          description: Opaque cursor from a previous page, or null to start at the
+            beginning. A malformed cursor is rejected with 422.
+        limit:
+          type: integer
+          minimum: 1.0
+          title: Limit
+          description: Maximum evidence rows per page; clamped to 500.
+          default: 50
+          example: 50
+        redact_source:
+          type: boolean
+          title: Redact Source
+          description: When true, source-native evidence values (native id, source
+            location) are replaced with a redaction placeholder in the returned nodes
+            — for callers relaying evidence to viewers without source access. EFP-3.2
+            layers the full redaction policy on top of this hook.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - artifact
+      - target
+      title: ExportProjectionEvidenceRequest
+      description: 'A bounded projection-evidence page request for one configured
+        export (EFP-2.1).
+
+
+        Identifies the same ``(source revision, target, options)`` triple a preview
+        / verify /
+
+        dispatch describes, plus the cursor/limit window into the manifest''s evidence
+        rows.
+
+        Matching inputs resolve to the same snapshot (``manifest_hash``) every surface
+        shares.'
+    ExportProjectionEvidenceResponse:
+      properties:
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project) id the evidence describes.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Response payload for export projection evidence.
+          - type: 'null'
+            description: Response payload for export projection evidence.
+          title: Version
+          description: The version selector as requested (label, UUID, or null).
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The resolved revision (``versions.id``).
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for export projection evidence.
+          - type: 'null'
+            description: Response payload for export projection evidence.
+          title: Version Label
+          description: The resolved revision's version label (e.g. ``1.0.0``).
+        summary:
+          $ref: '#/components/schemas/ProjectionManifestSummary'
+          description: The bounded snapshot summary — hash, target/version provenance
+            (emitter/registry versions), and status/reason counts.
+        page:
+          $ref: '#/components/schemas/ProjectionEvidencePage'
+          description: This page of outcome edges + the nodes they reference, with
+            the opaque cursor for the next page (null on the last page).
+        redacted:
+          type: boolean
+          title: Redacted
+          description: True when source-native evidence values were redacted in this
+            response.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - artifact
+      - version_record_id
+      - summary
+      - page
+      - redacted
+      title: ExportProjectionEvidenceResponse
+      description: 'One bounded, cursor-paginated page of projection evidence (EFP-2.1).
+
+
+        The authenticated evidence surface behind the preview/verify summaries: the
+        resolved
+
+        source coordinates, the snapshot provenance (:class:`~app.export_projection.ManifestTarget`
+
+        carries the emitter/registry versions and destination documentation), the
+        bounded
+
+        :class:`~app.export_projection.ProjectionManifestSummary`, and one
+
+        :class:`~app.export_projection.ProjectionEvidencePage` of outcome edges +
+        their nodes.
+
+        Deterministic: the same ``(revision, target, options)`` yields the same snapshot
+        hash a
+
+        preview / verify / dispatch / job result references, and paging the same snapshot
+        twice
+
+        yields identical pages.'
     ExportTargetFidelity:
       properties:
         descriptor:
@@ -44891,6 +45156,52 @@ components:
       - dailyRollups
       title: MockUsageResponse
       description: Mock usage counters for a tenant (#4420, SIM-1.5).
+    NativeEvidence:
+      properties:
+        native_id:
+          anyOf:
+          - type: string
+            description: Native Evidence schema.
+          - type: 'null'
+            description: Native Evidence schema.
+          title: Native Id
+          description: Source-native stable identifier (e.g. a native element id),
+            when captured.
+        native_name:
+          anyOf:
+          - type: string
+            description: Native Evidence schema.
+          - type: 'null'
+            description: Native Evidence schema.
+          title: Native Name
+          description: The construct's name in the source document (e.g. a source
+            field name).
+        source_location:
+          anyOf:
+          - type: string
+            description: Native Evidence schema.
+          - type: 'null'
+            description: Native Evidence schema.
+          title: Source Location
+          description: Source location (line/range/pointer) the construct came from,
+            when captured.
+      additionalProperties: false
+      type: object
+      title: NativeEvidence
+      description: 'Source-native evidence for a construct, where safely available
+        (EFP-1.1).
+
+
+        Populated best-effort from the canonical construct''s source name and its
+
+        ``extras`` bag (format-specific): a native identifier, the native/source name,
+
+        and a source location (line/range) when the parser captured one. Every field
+        is
+
+        optional — a construct with no recoverable native detail carries a bare node
+
+        rather than a fabricated one.'
     OpenApiChangeReportRequest:
       properties:
         baselineOpenApi:
@@ -46277,6 +46588,165 @@ components:
       type: object
       title: ProjectUpdateRequest
       description: Request model for updating a project.
+    ProjectionEdge:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Deterministic, stable edge id (unique within a manifest).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        relation:
+          $ref: '#/components/schemas/ProjectionEdgeRelation'
+          description: derives (provenance) or projects (outcome).
+        source:
+          type: string
+          title: Source
+          description: Id of the node this edge starts at.
+          example: human
+        target:
+          anyOf:
+          - type: string
+            description: Projection Edge schema.
+          - type: 'null'
+            description: Projection Edge schema.
+          title: Target
+          description: Id of the node this edge ends at; null for a projects edge
+            to a dropped construct (no target node exists).
+        status:
+          $ref: '#/components/schemas/ProjectionStatus'
+          description: The projection outcome this edge records.
+        reason:
+          anyOf:
+          - $ref: '#/components/schemas/ProjectionReason'
+          - type: 'null'
+            description: Projection Edge schema.
+          description: Cause category for a non-preserved status; required for drop/approx/synth/unavailable.
+        severity:
+          $ref: '#/components/schemas/LossinessSeverity'
+          description: How much the outcome matters (info / warn / critical), from
+            the report.
+          default: info
+        detail:
+          type: string
+          title: Detail
+          description: Human-readable explanation of the outcome.
+          example: example
+        target_mapping:
+          anyOf:
+          - type: string
+            description: Projection Edge schema.
+          - type: 'null'
+            description: Projection Edge schema.
+          title: Target Mapping
+          description: How the construct landed in the target when not dropped (from
+            the report).
+        explanation:
+          anyOf:
+          - type: string
+            description: Projection Edge schema.
+          - type: 'null'
+            description: Projection Edge schema.
+          title: Explanation
+          description: Reviewed, reason-specific explanation from the capability registry
+            (EFP-1.2), naming the construct. Present on non-preserved outcome edges.
+        documentation:
+          anyOf:
+          - $ref: '#/components/schemas/DocumentationEvidence'
+          - type: 'null'
+            description: Projection Edge schema.
+          description: 'Reason-scoped documentation evidence from the capability registry
+            (EFP-1.2): a destination-format link only when the reason is a genuine
+            destination limit, otherwise a truthful documentation-unavailable fallback.
+            Present on non-preserved outcome edges.'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - relation
+      - source
+      - status
+      - detail
+      title: ProjectionEdge
+      description: 'One edge in the projection graph.
+
+
+        A ``derives`` edge links a native-evidence node to its canonical construct
+
+        (provenance); a ``projects`` edge links a canonical construct to its target
+
+        location (or to nothing, for a dropped construct) and carries the projection
+
+        outcome — :attr:`status`, :attr:`reason`, :attr:`severity`, and the human
+
+        :attr:`detail`. Exactly one ``projects`` edge exists per
+
+        :class:`~app.lossiness.LossItem`, which is what makes the manifest reconcile
+
+        construct-for-construct with the report.'
+    ProjectionEdgeRelation:
+      type: string
+      enum:
+      - derives
+      - projects
+      title: ProjectionEdgeRelation
+      description: The relationship a :class:`ProjectionEdge` expresses.
+    ProjectionEvidencePage:
+      properties:
+        manifest_hash:
+          type: string
+          title: Manifest Hash
+          description: The manifest hash this page belongs to (the snapshot id).
+          example: a1b2c3d4e5f6789012345678901234ab
+        edges:
+          items:
+            $ref: '#/components/schemas/ProjectionEdge'
+          type: array
+          title: Edges
+          description: This page's outcome edges, in canonical order.
+          maxItems: 1000
+        nodes:
+          items:
+            $ref: '#/components/schemas/ProjectionNode'
+          type: array
+          title: Nodes
+          description: The nodes referenced by this page's edges.
+          maxItems: 1000
+        next_cursor:
+          anyOf:
+          - type: string
+            description: Projection Evidence Page schema.
+          - type: 'null'
+            description: Projection Evidence Page schema.
+          title: Next Cursor
+          description: Opaque cursor for the next page, or null when this is the last
+            page.
+        total:
+          type: integer
+          title: Total
+          description: Total outcome edges across the whole manifest.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - manifest_hash
+      - edges
+      - nodes
+      - total
+      title: ProjectionEvidencePage
+      description: 'One cursor-paginated page of projection evidence (EFP-1.1).
+
+
+        A bounded slice of the manifest''s outcome (``projects``) edges together with
+        the
+
+        nodes those edges reference, plus an opaque :attr:`next_cursor` for the following
+
+        page (``None`` at the end). Deterministic: the edges are page-sliced from
+        the
+
+        manifest''s canonical order, so paging the same manifest twice yields identical
+
+        pages.'
     ProjectionManifestSummary:
       properties:
         manifest_hash:
@@ -46368,6 +46838,80 @@ components:
         summary
 
         across every surface, so they all describe the same snapshot.'
+    ProjectionNode:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Deterministic, stable node id (unique within a manifest).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        kind:
+          $ref: '#/components/schemas/ProjectionNodeKind'
+          description: Which projection layer this node belongs to.
+        label:
+          type: string
+          title: Label
+          description: Short human label for the node (a construct key, name, or path).
+          example: example
+        construct_key:
+          anyOf:
+          - type: string
+            description: Projection Node schema.
+          - type: 'null'
+            description: Projection Node schema.
+          title: Construct Key
+          description: The canonical construct key this node concerns (present on
+            every node kind).
+        canonical_kind:
+          anyOf:
+          - type: string
+            description: Projection Node schema.
+          - type: 'null'
+            description: Projection Node schema.
+          title: Canonical Kind
+          description: 'Coarse construct class on a canonical node: operation / channel
+            / type / field.'
+        native:
+          anyOf:
+          - $ref: '#/components/schemas/NativeEvidence'
+          - type: 'null'
+            description: Projection Node schema.
+          description: Source-native evidence, on a ``native`` node.
+        target:
+          anyOf:
+          - $ref: '#/components/schemas/TargetLocation'
+          - type: 'null'
+            description: Projection Node schema.
+          description: Target location, on a ``target`` node.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - kind
+      - label
+      title: ProjectionNode
+      description: 'One node in the projection graph: native evidence, canonical construct,
+        or target.
+
+
+        A single model with a :attr:`kind` discriminator and kind-specific optional
+
+        payloads, so the UI (EFP-2.2) can group nodes into source/native, canonical,
+        and
+
+        target lanes from one homogeneous list. Node :attr:`id` is deterministic —
+        derived
+
+        from the construct key and node kind — so identical inputs yield identical
+        IDs.'
+    ProjectionNodeKind:
+      type: string
+      enum:
+      - native
+      - canonical
+      - target
+      title: ProjectionNodeKind
+      description: Which layer of the source→target projection a node belongs to.
     ProjectionReason:
       type: string
       enum:
@@ -46396,6 +46940,29 @@ components:
 
         so the taxonomy is the single source of truth for what a valid reason code
         is.'
+    ProjectionStatus:
+      type: string
+      enum:
+      - retained
+      - transformed
+      - approximated
+      - synthesized
+      - dropped
+      - unavailable
+      - not-applicable
+      title: ProjectionStatus
+      description: 'The fate of one construct when projected onto a target format
+        (EFP-1.1).
+
+
+        The four outcomes the :class:`~app.lossiness.LossinessReport` produces map
+
+        one-to-one onto the first four members; the last three extend the vocabulary
+        for
+
+        richer emitter rule packs and the capability registry (EFP-1.2), and are never
+
+        produced by the default report-driven build.'
     PublicExportDocumentRequest:
       properties:
         target:
@@ -50120,6 +50687,43 @@ components:
         is fetched
 
         on demand via ``POST /export/preview`` (:class:`ExportFidelity`).'
+    TargetLocation:
+      properties:
+        json_pointer:
+          anyOf:
+          - type: string
+            description: Target Location schema.
+          - type: 'null'
+            description: Target Location schema.
+          title: Json Pointer
+          description: RFC 6901 JSON Pointer into the emitted document (JSON/YAML
+            targets).
+        native_path:
+          anyOf:
+          - type: string
+            description: Target Location schema.
+          - type: 'null'
+            description: Target Location schema.
+          title: Native Path
+          description: Target-native path into the emitted artifact (SDL/schema/proto
+            targets).
+      additionalProperties: false
+      type: object
+      title: TargetLocation
+      description: 'Where a construct lands in the emitted artifact, when a locator
+        can place it.
+
+
+        Exactly one addressing scheme is used per target: a :attr:`json_pointer` for
+
+        JSON/YAML-document targets (OpenAPI, AsyncAPI) or a :attr:`native_path` for
+
+        text/schema targets (a GraphQL type path, a Protobuf message field, an Avro
+
+        record field). ``None`` for both when the target has no registered locator
+        — a
+
+        truthful "we cannot point to where this landed" rather than a guess.'
     TenantInfoResponse:
       properties:
         slug:

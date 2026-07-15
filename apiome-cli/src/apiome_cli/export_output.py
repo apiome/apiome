@@ -431,3 +431,55 @@ def projection_parity_issues(fidelity: Mapping[str, Any] | None) -> list[str]:
         )
 
     return issues
+
+
+def evidence_rows(page: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    """Flatten one projection-evidence page into ``export evidence`` table rows (EFP-2.1).
+
+    One row per outcome edge: the construct key (derived from the edge's canonical source
+    node id), the projection status, the reason category (empty for a retained row), the
+    severity, and the human explanation — preferring the registry's reviewed
+    ``explanation`` (EFP-1.2) over the raw report ``detail`` when present.
+
+    Parameters
+    ----------
+    page:
+        The response's ``page`` mapping (``edges`` / ``nodes`` / ``next_cursor`` / ``total``).
+
+    Returns
+    -------
+    list[dict]
+        Table rows in the page's canonical edge order; empty for a missing/malformed page.
+    """
+    if not isinstance(page, Mapping):
+        return []
+    edges = page.get("edges")
+    if not isinstance(edges, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for edge in edges:
+        if not isinstance(edge, Mapping):
+            continue
+        source = str(edge.get("source") or "")
+        construct = source.removeprefix("canonical:") or source
+        explanation = edge.get("explanation") or edge.get("detail") or ""
+        rows.append(
+            {
+                "construct": construct,
+                "status": str(edge.get("status") or ""),
+                "reason": str(edge.get("reason") or ""),
+                "severity": str(edge.get("severity") or ""),
+                "explanation": str(explanation),
+            }
+        )
+    return rows
+
+
+# Column layout for the ``export evidence`` table (header, row key, optional formatter).
+EXPORT_EVIDENCE_COLUMNS: tuple[ListColumn, ...] = (
+    ("Construct", "construct", None),
+    ("Status", "status", None),
+    ("Reason", "reason", None),
+    ("Severity", "severity", None),
+    ("Explanation", "explanation", None),
+)

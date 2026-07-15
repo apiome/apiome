@@ -31,6 +31,7 @@ from apiome_cli.client.export_document import fetch_export_document
 from apiome_cli.client.export_registry import (
     fetch_export_preview,
     fetch_export_targets,
+    fetch_projection_evidence,
     preview_fidelity,
 )
 from apiome_cli.client.http import RestClient
@@ -38,11 +39,14 @@ from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.spec_download import SpecSerialization, fetch_browse_spec
 from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_USAGE
-from apiome_cli.export_dispatch import run_generic_export
+from apiome_cli.export_dispatch import parse_export_options, run_generic_export
 from apiome_cli.export_output import (
+    EXPORT_EVIDENCE_COLUMNS,
     EXPORT_TARGET_COLUMNS,
     enforce_export_fidelity_gate,
+    evidence_rows,
     format_export_fidelity_summary,
+    format_projection_snapshot_lines,
     target_rows,
 )
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
@@ -721,3 +725,93 @@ def export_targets(
         min_width=100,
     )
 
+
+
+@app.command(
+    "evidence",
+    help="Page through source→target projection evidence for one configured export.",
+)
+def export_evidence(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", help="Project UUID or slug."),
+    target: str = typer.Option(
+        ...,
+        "--target",
+        help="Target emitter key (e.g. `openapi`) or format key (e.g. `openapi-3.1`).",
+    ),
+    version: str | None = typer.Option(
+        None,
+        "--version",
+        help="Version UUID, slug, or label (default: latest revision).",
+    ),
+    option: list[str] = typer.Option(
+        [],
+        "--option",
+        help="Per-target emit option as key=value (repeatable). Folded into the snapshot "
+        "hash — different options are a different snapshot.",
+    ),
+    cursor: str | None = typer.Option(
+        None,
+        "--cursor",
+        help="Opaque cursor from a previous page (default: first page).",
+    ),
+    limit: int | None = typer.Option(
+        None,
+        "--limit",
+        min=1,
+        help="Maximum evidence rows per page (server clamps to its hard cap).",
+    ),
+    redact_source: bool = typer.Option(
+        False,
+        "--redact-source",
+        help="Withhold source-native evidence values (redaction placeholder).",
+    ),
+    tenant: str | None = typer.Option(
+        None,
+        "--tenant",
+        help="Tenant UUID or slug (overrides APIOME_TENANT_ID).",
+    ),
+) -> None:
+    """Fetch one bounded page of projection evidence for a configured export (EFP-2.1).
+
+    The machine-readable twin of the preview's projection summary: each row is one
+    source construct's outcome (status + reason + reviewed explanation) in the chosen
+    destination, for exactly the snapshot hash a preview/verify of the same source,
+    target, and options references. ``--json`` emits the raw response (summary + page
+    with ``next_cursor``); the human view prints the snapshot line and an evidence table.
+    """
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = _export_client(ctx)
+    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant)
+
+    options = parse_export_options(option) if option else None
+    project_id = resolve_project_uuid(client, tenant_slug, project)
+    response = fetch_projection_evidence(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=target,
+        options=options,
+        cursor=cursor,
+        limit=limit,
+        redact_source=redact_source,
+    )
+
+    if json_mode_from_context(ctx):
+        emit_json(response)
+        return
+
+    summary = response.get("summary")
+    for line in format_projection_snapshot_lines({"projection": summary}):
+        typer.echo(line)
+    page = response.get("page")
+    emit_list_table(
+        evidence_rows(page),
+        list(EXPORT_EVIDENCE_COLUMNS),
+        empty_message="No projection evidence rows for this export.",
+        min_width=100,
+    )
+    if isinstance(page, dict) and page.get("next_cursor"):
+        typer.echo(f"More rows available — continue with --cursor {page['next_cursor']}")
