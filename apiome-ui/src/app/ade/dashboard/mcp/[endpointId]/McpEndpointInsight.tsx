@@ -36,6 +36,7 @@ import { CapabilityChurnPanel } from "@/app/components/ui/mcp/CapabilityChurnPan
 import { CapabilityPresenceMatrixPanel } from "@/app/components/ui/mcp/CapabilityPresenceMatrixPanel";
 import { GradeSurfaceTrendPanel } from "@/app/components/ui/mcp/GradeSurfaceTrendPanel";
 import { ChangedSinceDigestPanel } from "@/app/components/ui/mcp/ChangedSinceDigestPanel";
+import { TrustDriftAlertsPanel } from "@/app/components/ui/mcp/TrustDriftAlertsPanel";
 import { DiscoveryHealthPanel } from "@/app/components/ui/mcp/DiscoveryHealthPanel";
 import { ToolLatencyPanel } from "@/app/components/ui/mcp/ToolLatencyPanel";
 import {
@@ -1094,6 +1095,16 @@ export default function McpEndpointInsight({
               error={digestError}
               onReviewChanges={(versionId) => onOpenVersionDiff?.(versionId)}
             />
+          </div>
+          {/* Trust-drift alerts (CLX-3.4, #4858) — how the current snapshot differs from the approved
+              baseline, each change classified normal / quality / security / coverage-loss. */}
+          <div className={dashboardPanelPaddedClass}>
+            <PanelHeading
+              icon={ShieldAlert}
+              title="Trust drift from your approved baseline"
+              description="Every material surface or source change since you approved this server's baseline, classified as a normal change, a quality regression, a security regression, or coverage loss."
+            />
+            <TrustDriftAlertsPanel endpointId={endpointId} />
           </div>
         </div>
       ),

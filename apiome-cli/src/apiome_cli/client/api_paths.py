@@ -255,6 +255,21 @@ def mcp_endpoint_probe_runs(tenant_slug: str, endpoint_id: str | UUID) -> str:
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/probe-runs"
 
 
+def mcp_endpoint_trust_baseline(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """An MCP endpoint's approved trust baseline: approve (POST) / read (GET) (CLX-3.4, #4858)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/trust-baseline"
+
+
+def mcp_endpoint_trust_drift(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """Diff an MCP endpoint's current snapshot against its approved baseline (CLX-3.4, #4858)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/trust-drift"
+
+
+def mcp_shadowing(tenant_slug: str) -> str:
+    """Shadowed/duplicate tool names across a tenant's enabled host scope (CLX-3.4, #4858)."""
+    return f"{V1}/mcp/{tenant_slug}/data-quality/shadowing"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 

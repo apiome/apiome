@@ -680,6 +680,35 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP trust-baseline drift detection (CLX-3.4, #4858). A trust manifest (identity, transport, the
+    # reused surface fingerprint, policy-relevant tool authority annotations, and source/SBOM digests)
+    # is diffed against an operator-approved baseline, and each material change is classified as a
+    # normal change, a quality regression, a security regression, or coverage loss.
+    #
+    # mcp_trust_drift_gate_enabled  When True, a drift report whose gate is BLOCKED (a configured risk
+    #                               delta was detected against the approved baseline) is reported as a
+    #                               hard gate. When False (the default) the same drift is still computed
+    #                               and surfaced, but the gate is advisory only — an operator enables
+    #                               blocking once baselines are established. Computing and viewing drift
+    #                               never depends on this flag; only whether the gate blocks.
+    mcp_trust_drift_gate_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_TRUST_DRIFT_GATE_ENABLED",
+            "mcp_trust_drift_gate_enabled",
+        ),
+    )
+    # THE NOTIFICATION KILL SWITCH. When False (the default) no drift alert is fanned out over the
+    # push-webhook channel, regardless of severity — the single flag an operator flips to silence drift
+    # notifications during noisy migrations without losing the on-demand drift view.
+    mcp_trust_drift_notify_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_TRUST_DRIFT_NOTIFY_ENABLED",
+            "mcp_trust_drift_notify_enabled",
+        ),
+    )
+
     # Observability & error handling (RC1-3.2, #3617). Structured JSON logs, request-id
     # propagation, in-process request metrics, and an ops dashboard that surfaces backup status.
     #

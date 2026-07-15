@@ -61,6 +61,14 @@ _POSTURE_PROFILES = ("mcp-trust-posture", "mcp-metadata-posture", "mcp-supply-ch
 # MCP dynamic-probe profiles (CLX-3.3, #4857). Mirrors the REST enum; 'passive' is the read-only
 # default, the two active profiles are consent-gated and audited.
 _PROBE_PROFILES = ("passive", "safe-active", "payload-fuzzing")
+# MCP trust-drift categories (CLX-3.4, #4858). Mirrors the REST engine's DRIFT_CATEGORIES; used to
+# validate --gate values locally so a typo is a usage error rather than a 400 round-trip.
+_DRIFT_CATEGORIES = (
+    "normal_change",
+    "quality_regression",
+    "security_regression",
+    "coverage_loss",
+)
 _SOURCE_KINDS = ("git", "package", "image", "registry")
 _SOURCE_PROVENANCES = (
     "operator_declared",
@@ -1343,5 +1351,163 @@ def probe_runs(
         runs if isinstance(runs, list) else [],
         _PROBE_RUN_COLUMNS,
         empty_message="No probe runs recorded.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
+
+
+# =================================================================================================
+# Trust baselines, drift, and shadowing (CLX-3.4, #4858).
+# =================================================================================================
+
+_DRIFT_CHANGE_COLUMNS: tuple[ListColumn, ...] = (
+    ("Category", "category", None),
+    ("Component", "component", None),
+    ("Path", "path", None),
+    ("Summary", "summary", None),
+)
+
+_SHADOW_GROUP_COLUMNS: tuple[ListColumn, ...] = (
+    ("Type", "item_type", None),
+    ("Name", "name", None),
+    ("Scope", "host_scope", None),
+    ("Endpoints", "endpoint_count", None),
+)
+
+
+def _emit_drift_human(report: dict[str, Any]) -> None:
+    """Print a readable drift summary: alert severity, gate, category tallies, and each change."""
+    typer.echo(f"Alert severity: {report.get('alert_severity', '?')}")
+    gate = report.get("gate") or {}
+    enforced = " (enforced)" if gate.get("enforced") else " (advisory)"
+    typer.echo(f"Gate: {gate.get('status', '?')}{enforced} — {gate.get('reason', '')}")
+    counts = report.get("category_counts") or {}
+    typer.echo(
+        "Changes — security_regression: {s}, coverage_loss: {c}, quality_regression: {q}, "
+        "normal_change: {n}".format(
+            s=counts.get("security_regression", 0),
+            c=counts.get("coverage_loss", 0),
+            q=counts.get("quality_regression", 0),
+            n=counts.get("normal_change", 0),
+        )
+    )
+    for change in report.get("changes") or []:
+        typer.echo(
+            f"  [{change.get('category')}] {change.get('component')}:{change.get('path')}  "
+            f"{change.get('summary')}"
+        )
+
+
+@app.command("trust-baseline-approve")
+def trust_baseline_approve(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID to approve a baseline for."),
+    rationale: str = typer.Option(
+        ..., "--rationale", help="Why this snapshot is approved (required; recorded as a policy event)."
+    ),
+    version: UUID | None = typer.Option(
+        None, "--version", help="Version snapshot UUID to approve (default: the current version)."
+    ),
+    gate: list[str] = typer.Option(
+        [],
+        "--gate",
+        help=(
+            "Drift categories that block the gate (repeatable): security_regression, coverage_loss, "
+            "quality_regression, normal_change. Default: security_regression + coverage_loss."
+        ),
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Approve a trust baseline for an endpoint (POST .../trust-baseline).
+
+    Pins the trust manifest of the approved snapshot as the reference every later rediscovery/release
+    is diffed against. The rationale is required and recorded as a governance policy event; approving
+    a new baseline supersedes the prior one.
+    """
+    gating = [_normalize_choice(g, _DRIFT_CATEGORIES, "--gate") for g in gate]
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    body: dict[str, Any] = {"rationale": rationale}
+    if version is not None:
+        body["version_id"] = str(version)
+    if gating:
+        body["gating_categories"] = gating
+    path = api_paths.mcp_endpoint_trust_baseline(tenant_slug, str(endpoint_id))
+    payload = client.post(path, json=body).json()
+    if json_mode:
+        emit_json(payload)
+    else:
+        baseline = payload.get("baseline") if isinstance(payload, dict) else None
+        typer.echo(f"Approved trust baseline: {(baseline or {}).get('id', '?')}")
+
+
+@app.command("trust-baseline-show")
+def trust_baseline_show(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Show an endpoint's active trust baseline and approval history (GET .../trust-baseline)."""
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    path = api_paths.mcp_endpoint_trust_baseline(tenant_slug, str(endpoint_id))
+    payload = client.get(path).json()
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    baseline = payload.get("baseline")
+    if not baseline:
+        typer.echo("No approved trust baseline for this endpoint.")
+        return
+    typer.echo(f"Baseline: {baseline.get('id')}  (version {baseline.get('versionId')})")
+    typer.echo(f"Fingerprint: {baseline.get('manifestFingerprint')}")
+    typer.echo(f"Rationale: {baseline.get('rationale')}")
+    typer.echo(f"Gating: {', '.join(baseline.get('gatingCategories') or [])}")
+
+
+@app.command("trust-drift")
+def trust_drift(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    notify: bool = typer.Option(
+        False, "--notify", help="Fan out a push-webhook alert when a regression is found."
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Diff an endpoint's current snapshot against its approved baseline (GET .../trust-drift).
+
+    Every material surface/source change is classified as a normal change, a quality regression, a
+    security regression, or coverage loss, and carries an old→new evidence reference. The gate
+    reflects the baseline's configured risk deltas.
+    """
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    path = api_paths.mcp_endpoint_trust_drift(tenant_slug, str(endpoint_id))
+    if notify:
+        path = f"{path}?{urlencode({'notify': 'true'})}"
+    payload = client.get(path).json()
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    _emit_drift_human(payload.get("drift") or {})
+
+
+@app.command("shadowing")
+def shadowing(
+    ctx: typer.Context,
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """List tool/resource/prompt names shadowed across enabled endpoints (GET .../data-quality/shadowing)."""
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    path = api_paths.mcp_shadowing(tenant_slug)
+    payload = client.get(path).json()
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    groups = payload.get("groups")
+    emit_list_table(
+        groups if isinstance(groups, list) else [],
+        _SHADOW_GROUP_COLUMNS,
+        empty_message="No shadowed names across the enabled host scope.",
         min_width=_MCP_LIST_MIN_WIDTH,
     )

@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.121.0] - 2026-07-14
+
+### Added
+- **MCP trust baselines, drift, and shadowing detection (CLX-3.4, #4858)** — a point-in-time score
+  cannot detect a *rug pull*, so this pins an operator-approved **baseline** and diffs every later
+  rediscovery/release against what was actually blessed, classifying each material change and gating
+  the configured risk deltas.
+  - **Trust manifest** (`app.mcp_trust_manifest`) — one comparable fingerprint composed from
+    identity, transport (with volatile timing dropped), the **reused** `surface_fingerprint`
+    (capabilities / tool-resource-prompt metadata / normalized schemas), the policy-relevant tool
+    authority annotations (`readOnlyHint` / `destructiveHint` / `openWorldHint` / `idempotentHint`),
+    and the source/SBOM digests. Existing discovery fingerprints/history are reused, not duplicated.
+  - **Drift classification** — `diff_trust_manifests` classifies every change as **normal_change**,
+    **quality_regression**, **security_regression**, or **coverage_loss**, and each change carries an
+    old→new evidence reference (AC1). The surface diff and schema severity come from the canonical
+    `diff_surfaces` / `classify_change` engines.
+  - **Gate over configured risk deltas** — a `DriftGate` decides pass/warn/blocked; blocking is
+    enforced only when `APIOME_MCP_TRUST_DRIFT_GATE_ENABLED` is on, advisory otherwise.
+  - **Shadowing** (AC3) — `detect_shadowed_names` groups tool/resource/prompt names exposed by more
+    than one *enabled* endpoint in the host scope; a same-host collision is flagged strongest.
+  - **Baseline approval** (AC2) — `mcp_trust_baselines` (V174) stores the approved snapshot, the full
+    manifest envelope, the required administrator **rationale**, and the gating categories; approving
+    a new baseline supersedes the prior one and writes a `registry_audit` policy event.
+  - **REST** (`POST|GET .../trust-baseline`, `GET .../trust-drift`, `GET .../data-quality/shadowing`),
+    **CLI** (`apiome mcp trust-baseline-approve` / `trust-baseline-show` / `trust-drift` /
+    `shadowing`), push-webhook drift alerts (`mcp.trust.drift`, kill-switched by
+    `APIOME_MCP_TRUST_DRIFT_NOTIFY_ENABLED`), config flags, V174 migration, OpenAPI + semver bumps,
+    docs, and comprehensive engine/route/CLI/migration tests.
+
 ## [1.120.0] - 2026-07-14
 
 ### Added
