@@ -95,6 +95,63 @@ def preview_fidelity(preview: Mapping[str, Any]) -> dict[str, Any] | None:
     return fidelity if isinstance(fidelity, dict) else None
 
 
+def fetch_projection_evidence(
+    client: RestClient,
+    tenant_slug: str,
+    *,
+    artifact: str,
+    version: str | None,
+    target: str,
+    options: Mapping[str, Any] | None = None,
+    cursor: str | None = None,
+    limit: int | None = None,
+    redact_source: bool = False,
+) -> dict[str, Any]:
+    """Fetch one bounded page of projection evidence for a configured export (EFP-2.1).
+
+    Parameters
+    ----------
+    client:
+        Authenticated REST client (API key + tenant scope).
+    tenant_slug:
+        The tenant URL slug.
+    artifact:
+        The artifact (project) id being exported.
+    version:
+        Revision UUID / version label, or ``None`` for the latest revision.
+    target:
+        Target emitter key (``openapi``) or format key (``openapi-3.1``).
+    options:
+        Per-target emit options; ``None`` applies the target defaults. Folded into the
+        snapshot hash server-side, so different options are a different snapshot.
+    cursor:
+        Opaque cursor from a previous page, or ``None`` to start at the beginning.
+    limit:
+        Maximum evidence rows per page (server clamps to its hard cap); ``None`` applies
+        the server default.
+    redact_source:
+        When true, source-native evidence values are withheld (redaction placeholder).
+
+    Returns
+    -------
+    dict
+        The parsed ``ExportProjectionEvidenceResponse`` (``summary`` snapshot + ``page``
+        of edges/nodes with the ``next_cursor``).
+    """
+    body: dict[str, Any] = {"artifact": artifact, "target": target}
+    if version is not None:
+        body["version"] = version
+    if options is not None:
+        body["options"] = dict(options)
+    if cursor is not None:
+        body["cursor"] = cursor
+    if limit is not None:
+        body["limit"] = limit
+    if redact_source:
+        body["redact_source"] = True
+    return client.post(api_paths.export_projection_evidence(tenant_slug), json=body).json()
+
+
 # User-facing target aliases that differ from the emitter registry key.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",

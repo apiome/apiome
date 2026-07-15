@@ -62,6 +62,16 @@ from .export_fidelity import (
     build_export_fidelity,
     build_target_fidelity,
 )
+from .export_projection import (
+    DEFAULT_EVIDENCE_PAGE_SIZE,
+    MAX_EVIDENCE_PAGE_SIZE,
+    NativeEvidence,
+    ProjectionEvidencePage,
+    ProjectionManifestSummary,
+    build_projection_manifest,
+    paginate_evidence,
+    summarize_manifest,
+)
 from .export_service import ExportError, ExportPersistenceContext, emit_canonical, resolve_emitter
 from .export_source import ExportSourceError, load_export_source
 from .export_validation import validate_emitted_artifact
@@ -133,6 +143,13 @@ class ExportPreviewRequest(BaseModel):
     target: str = Field(
         description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
     )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Per-target emit options (MFX-1.4); null or empty applies the target "
+        "defaults. Folded (normalized) into the projection snapshot hash (EFP-2.1), so a "
+        "preview, a verify, and a dispatch of the same source, target, and options reference "
+        "the same snapshot.",
+    )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
@@ -161,6 +178,85 @@ class ExportPreviewResponse(BaseModel):
         "(clean / lossy / near-empty / severe), whether it needs an explicit confirmation, and "
         "why. Lets the UI/CLI warn (near-empty) or prompt for confirmation (severe) before "
         "dispatching the export.",
+    )
+
+
+class ExportProjectionEvidenceRequest(BaseModel):
+    """A bounded projection-evidence page request for one configured export (EFP-2.1).
+
+    Identifies the same ``(source revision, target, options)`` triple a preview / verify /
+    dispatch describes, plus the cursor/limit window into the manifest's evidence rows.
+    Matching inputs resolve to the same snapshot (``manifest_hash``) every surface shares.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id to export.")
+    version: Optional[str] = Field(
+        default=None,
+        description="Revision UUID, version label (``1.0.0``), or null for the latest revision.",
+    )
+    target: str = Field(
+        description="Target emitter key (``openapi``) or format key (``openapi-3.1``).",
+    )
+    options: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Per-target emit options (MFX-1.4); null or empty applies the target "
+        "defaults. Folded (normalized) into the snapshot hash — different options are a "
+        "different snapshot.",
+    )
+    cursor: Optional[str] = Field(
+        default=None,
+        description="Opaque cursor from a previous page, or null to start at the beginning. "
+        "A malformed cursor is rejected with 422.",
+    )
+    limit: int = Field(
+        default=DEFAULT_EVIDENCE_PAGE_SIZE,
+        ge=1,
+        description=f"Maximum evidence rows per page; clamped to {MAX_EVIDENCE_PAGE_SIZE}.",
+    )
+    redact_source: bool = Field(
+        default=False,
+        description="When true, source-native evidence values (native id, source location) are "
+        "replaced with a redaction placeholder in the returned nodes — for callers relaying "
+        "evidence to viewers without source access. EFP-3.2 layers the full redaction policy "
+        "on top of this hook.",
+    )
+
+
+class ExportProjectionEvidenceResponse(BaseModel):
+    """One bounded, cursor-paginated page of projection evidence (EFP-2.1).
+
+    The authenticated evidence surface behind the preview/verify summaries: the resolved
+    source coordinates, the snapshot provenance (:class:`~app.export_projection.ManifestTarget`
+    carries the emitter/registry versions and destination documentation), the bounded
+    :class:`~app.export_projection.ProjectionManifestSummary`, and one
+    :class:`~app.export_projection.ProjectionEvidencePage` of outcome edges + their nodes.
+    Deterministic: the same ``(revision, target, options)`` yields the same snapshot hash a
+    preview / verify / dispatch / job result references, and paging the same snapshot twice
+    yields identical pages.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    artifact: str = Field(description="The artifact (project) id the evidence describes.")
+    version: Optional[str] = Field(
+        default=None, description="The version selector as requested (label, UUID, or null)."
+    )
+    version_record_id: str = Field(description="The resolved revision (``versions.id``).")
+    version_label: Optional[str] = Field(
+        default=None, description="The resolved revision's version label (e.g. ``1.0.0``)."
+    )
+    summary: ProjectionManifestSummary = Field(
+        description="The bounded snapshot summary — hash, target/version provenance "
+        "(emitter/registry versions), and status/reason counts.",
+    )
+    page: ProjectionEvidencePage = Field(
+        description="This page of outcome edges + the nodes they reference, with the opaque "
+        "cursor for the next page (null on the last page).",
+    )
+    redacted: bool = Field(
+        description="True when source-native evidence values were redacted in this response.",
     )
 
 
@@ -567,7 +663,10 @@ async def preview_export_fidelity(
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     fidelity = build_export_fidelity(
-        source.api, emitter_cls, min_severity=request.min_severity
+        source.api,
+        emitter_cls,
+        min_severity=request.min_severity,
+        options=request.options,
     )
     # Classify the conversion off the envelope's report so the preview and the eventual
     # dispatch/job agree, and the UI knows up front whether it must confirm (MFX-3.3).
@@ -579,6 +678,114 @@ async def preview_export_fidelity(
         version_label=source.version_label,
         fidelity=fidelity,
         guard=guard,
+    )
+
+
+#: Placeholder written over redacted source-native evidence values (EFP-2.1). A present
+#: placeholder tells a viewer "a value was captured but withheld", which is honestly
+#: different from ``null`` ("nothing was captured"). Matches the projection corpus's
+#: golden redaction convention.
+SOURCE_EVIDENCE_REDACTED = "[redacted]"
+
+
+def _redact_evidence_page(page: ProjectionEvidencePage) -> ProjectionEvidencePage:
+    """Return a copy of ``page`` with source-native evidence values redacted.
+
+    Replaces every present ``native_id`` / ``source_location`` value on the page's native
+    nodes with :data:`SOURCE_EVIDENCE_REDACTED`; construct keys, labels, statuses, reasons,
+    and target locations are structural (apiome-controlled) and stay. The page's edges,
+    cursor, and totals are unchanged, so a redacted and an unredacted walk of the same
+    snapshot page identically.
+
+    Args:
+        page: The evidence page to redact.
+
+    Returns:
+        The redacted copy (the input is not mutated).
+    """
+    nodes = []
+    for node in page.nodes:
+        if node.native is not None and (
+            node.native.native_id is not None or node.native.source_location is not None
+        ):
+            native = NativeEvidence(
+                native_id=SOURCE_EVIDENCE_REDACTED if node.native.native_id is not None else None,
+                native_name=node.native.native_name,
+                source_location=(
+                    SOURCE_EVIDENCE_REDACTED if node.native.source_location is not None else None
+                ),
+            )
+            nodes.append(node.model_copy(update={"native": native}))
+        else:
+            nodes.append(node)
+    return page.model_copy(update={"nodes": nodes})
+
+
+@router.post(
+    "/{tenant_slug}/projection-evidence",
+    response_model=ExportProjectionEvidenceResponse,
+    summary="Page through projection evidence for one configured export",
+    description=(
+        "Return one bounded, cursor-paginated page of source→target projection evidence "
+        "(EFP-2.1) for the given source revision, target, and options — the traceable rows "
+        "behind the projection summary that preview, verify, dispatch, and job results embed. "
+        "The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped; "
+        "`redact_source: true` withholds source-native evidence values for relaying callers."
+    ),
+)
+async def get_projection_evidence(
+    tenant_slug: str,
+    request: ExportProjectionEvidenceRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ExportProjectionEvidenceResponse:
+    """Return one bounded page of projection evidence for a configured export.
+
+    Builds the deterministic projection manifest for the requested ``(revision, target,
+    options)`` (no artifact is emitted) and pages its outcome edges with the manifest's
+    canonical cursor pagination — bounded by the hard page-size cap regardless of the
+    requested limit.
+
+    Args:
+        tenant_slug: The tenant slug (scopes the artifact lookup).
+        request: The source coordinates + target + options + page window.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The evidence page with its snapshot summary and provenance.
+
+    Raises:
+        HTTPException: 404 when the artifact/version is unknown; 422 when the revision has
+            no reconstructable source or the cursor is malformed; 400 when the target or
+            source format is unsupported.
+    """
+    tenant_id = auth_data["tenant_id"]
+    try:
+        source = load_export_source(tenant_id, request.artifact, request.version)
+    except ExportSourceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    try:
+        emitter_cls = type(resolve_emitter(request.target))
+    except ExportError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    manifest = build_projection_manifest(source.api, emitter_cls, options=request.options)
+    try:
+        page = paginate_evidence(manifest, cursor=request.cursor, limit=request.limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if request.redact_source:
+        page = _redact_evidence_page(page)
+
+    return ExportProjectionEvidenceResponse(
+        artifact=source.artifact_id,
+        version=request.version,
+        version_record_id=source.version_record_id,
+        version_label=source.version_label,
+        summary=summarize_manifest(manifest),
+        page=page,
+        redacted=request.redact_source,
     )
 
 

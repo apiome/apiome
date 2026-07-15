@@ -447,9 +447,18 @@ reports how faithful that export is. `export targets` lists the emitters availab
 Any other registered target (or a format key like `openapi-3.1` / `protobuf`) is also exportable
 via the async job pipeline: `apiome export <format> <artifact> [--version] [--out file|dir]`.
 
+`export evidence` pages the source→target projection evidence for a configured export
+(EFP-2.1): one row per source construct with its status, reason category, and reviewed
+explanation, for exactly the snapshot hash a preview of the same source, target, and
+options references. Use `--json` for the machine-readable page (with `next_cursor`).
+
 ```bash
 # List the emitter targets + per-source fidelity for a version:
 apiome export targets --project payments-api --version 1.0.0
+
+# Page the projection evidence for one configured export (JSON for automation):
+apiome export evidence --project payments-api --version 1.0.0 --target avro
+apiome --json export evidence --project payments-api --target avro --limit 25
 
 # Generic async export (submit job → poll → download → write/unzip):
 apiome export openapi-3.1 payments-api --version 1.0.0 --out openapi.json
