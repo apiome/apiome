@@ -168,7 +168,8 @@ export function ArtifactPreviewCard({
         language={language}
         overlay={copyButton}
         onMount={markers.onEditorMount}
-        className="mt-2 min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
+        height={360}
+        className="mt-2 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
         editorTestId="export-artifact-editor"
         fallbackTestId="export-artifact-content"
       />

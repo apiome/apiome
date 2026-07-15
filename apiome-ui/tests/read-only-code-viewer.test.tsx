@@ -14,17 +14,20 @@ jest.mock('@monaco-editor/react', () => ({
     value,
     language,
     theme,
+    height,
     options,
   }: {
     value?: string;
     language?: string;
     theme?: string;
+    height?: string | number;
     options?: { wordWrap?: string; readOnly?: boolean };
   }) => (
     <div
       data-testid="mock-monaco"
       data-language={language}
       data-theme={theme}
+      data-height={String(height)}
       data-wordwrap={options?.wordWrap}
       data-readonly={String(options?.readOnly)}
     >
@@ -84,11 +87,11 @@ describe('ReadOnlyCodeViewer (MFX-43.1)', () => {
     expect(editor).toHaveAttribute('data-wordwrap', 'on');
   });
 
-  it('uses the light theme by default', async () => {
+  it('uses the vs (light) theme by default', async () => {
     render(<ReadOnlyCodeViewer value={PROTO} language="protobuf" />);
 
     const editor = await screen.findByTestId('mock-monaco');
-    expect(editor).toHaveAttribute('data-theme', 'light');
+    expect(editor).toHaveAttribute('data-theme', 'vs');
   });
 
   it('matches the app dark theme when the html carries the dark class', async () => {
@@ -97,5 +100,16 @@ describe('ReadOnlyCodeViewer (MFX-43.1)', () => {
 
     const editor = await screen.findByTestId('mock-monaco');
     expect(editor).toHaveAttribute('data-theme', 'vs-dark');
+  });
+
+  it('passes a concrete pixel height into Monaco (not a nested 100%)', async () => {
+    render(<ReadOnlyCodeViewer value={PROTO} language="protobuf" />);
+
+    const host = await screen.findByTestId('read-only-code-editor');
+    const editor = await screen.findByTestId('mock-monaco');
+    // Host + Monaco both get 360px — nested height:100% collapsed the editor to ~10px.
+    expect(host).toHaveStyle({ height: '360px' });
+    expect(editor).toHaveAttribute('data-height', '360');
+    expect(editor).toHaveTextContent('syntax = "proto3"');
   });
 });

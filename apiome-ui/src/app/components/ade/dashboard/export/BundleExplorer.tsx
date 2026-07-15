@@ -223,7 +223,8 @@ export function BundleExplorer({
         language={language}
         overlay={copyButton}
         onMount={markers.onEditorMount}
-        className="min-h-0 flex-1 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
+        height={360}
+        className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]"
         editorTestId="bundle-file-editor"
         fallbackTestId="bundle-file-content"
       />

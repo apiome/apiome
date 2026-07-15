@@ -96,7 +96,11 @@ export interface ReadOnlyCodeViewerProps {
   wordWrap?: 'on' | 'off';
   /** Optional control rendered pinned to the editor's top-right (e.g. a copy button). */
   overlay?: ReactNode;
-  /** Editor height. Defaults to filling the container (`'100%'`). */
+  /**
+   * Editor height. Defaults to `360` (a concrete pixel box) so Monaco always has a definite
+   * viewport — `height: 100%` alone collapses to an empty white panel when the parent only has
+   * `min-height` / flex grow without an explicit height (Export Studio Review).
+   */
   height?: string | number;
   /** Extra classes for the editor container (borders, background, layout). */
   className?: string;
@@ -114,7 +118,7 @@ export interface ReadOnlyCodeViewerProps {
 
 /**
  * The shared read-only code viewer. Tracks the app theme by observing the `dark` class Next-Themes
- * toggles on `<html>`, so it flips between Monaco's `vs-dark` and `light` live as the user switches.
+ * toggles on `<html>`, so it flips between Monaco's `vs-dark` and `vs` live as the user switches.
  *
  * @param props The document, its language, and presentation options.
  * @returns The read-only Monaco editor (or its offline fallback) in a themed container.
@@ -124,7 +128,7 @@ export function ReadOnlyCodeViewer({
   language,
   wordWrap = 'off',
   overlay,
-  height = '100%',
+  height = 360,
   className,
   editorTestId = 'read-only-code-editor',
   fallbackTestId,
@@ -140,17 +144,24 @@ export function ReadOnlyCodeViewer({
     return () => observer.disconnect();
   }, []);
 
+  // Pass a concrete pixel height straight into `@monaco-editor/react`. Nesting `height: 100%`
+  // inside an absolutely-filled box collapses Monaco's internal flex host to ~one line (~10px)
+  // even when the outer card looks tall — Copy still works because the model holds the text.
+  // Built-in theme ids are `vs` / `vs-dark` (not `light`).
+  const fillsParent = height === '100%';
+
   return (
     <div
       data-testid={editorTestId}
       data-language={language}
-      className={cn('relative overflow-hidden', className)}
+      className={cn('relative overflow-hidden', fillsParent && 'h-full min-h-[240px]', className)}
+      style={fillsParent ? undefined : { height }}
     >
       {overlay ? <div className="absolute right-2 top-2 z-10">{overlay}</div> : null}
       <MonacoEditor
-        height={height}
+        height={fillsParent ? '100%' : height}
         language={language}
-        theme={isDark ? 'vs-dark' : 'light'}
+        theme={isDark ? 'vs-dark' : 'vs'}
         value={value}
         fallbackTestId={fallbackTestId}
         options={{ ...READ_ONLY_OPTIONS, wordWrap }}

@@ -775,7 +775,6 @@ export function ExportStudio({
                     on the left, then download the .zip.
                   </p>
                   <BundleExplorer
-                    className="min-h-[420px]"
                     manifest={bundle}
                     countsByPath={bundleFindingCounts}
                     targetKey={selected.key}
@@ -791,7 +790,6 @@ export function ExportStudio({
                     file or a .zip bundle.
                   </p>
                   <ArtifactPreviewCard
-                    className="min-h-[420px]"
                     artifact={emitted}
                     report={verifyResult?.fidelity.report ?? null}
                     targetKey={selected.key}
