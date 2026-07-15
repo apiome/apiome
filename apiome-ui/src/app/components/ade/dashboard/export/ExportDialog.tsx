@@ -139,13 +139,21 @@ export function ExportDialog({
     [selected],
   );
 
+  // Only the non-default option overrides are sent — to the preview, the projection
+  // evidence, and the emit — so all three describe one configuration and one projection
+  // snapshot (EFP-2.3): an option change refreshes the report and the graph together.
+  const changedOpts = useMemo(
+    () => (selected ? changedOptions(optionValues, selected.entry.default_options) : null),
+    [selected, optionValues],
+  );
+
   // The dry-run fidelity preview (advisory + per-construct report, MFX-6.2) for the chosen
-  // target, fetched while the Fidelity step is showing.
+  // target and options, fetched while the Fidelity step is showing.
   const {
     preview,
     loading: previewLoading,
     error: previewError,
-  } = useExportPreview(open && step === 'fidelity', artifact, version, selectedKey);
+  } = useExportPreview(open && step === 'fidelity', artifact, version, selectedKey, changedOpts);
 
   const sourceLabel = artifactLabel || artifact;
   const versionLabel = response?.version_label || version || 'latest';
@@ -199,6 +207,10 @@ export function ExportDialog({
 
   const setOption = useCallback((key: string, value: unknown) => {
     setOptionValues((current) => ({ ...current, [key]: value }));
+    // A different option is a different conversion (EFP-2.3): the old acknowledgement no
+    // longer describes what would be exported, so it clears; the preview and the projection
+    // evidence re-fetch for the new configuration together.
+    setAcknowledged(false);
   }, []);
 
   /** Emit the document for the selected target and show it in the preview card (MFX-6.3). */
@@ -400,18 +412,22 @@ export function ExportDialog({
               acknowledged={acknowledged}
               onAcknowledgedChange={setAcknowledged}
             />
-            {/* The destination-aware projection map (EFP-2.2): where each construct lands,
-                with the accessible table fallback. Fetches the evidence for the same
-                (source, target) the preview above described — the dialog's preview sends no
-                option overrides, so neither does the evidence request. */}
+            {/* The destination-aware projection map (EFP-2.2) with its evidence drawer
+                (EFP-2.3): where each construct lands, why, and what to do about it. Fetches
+                the evidence for the same (source, target, changed-options) the preview above
+                described, so both always show one projection snapshot. The drawer's safe
+                remediation navigates back to the Target step (targets and options both live
+                there in this dialog); an actual change re-previews and re-gates. */}
             <ProjectionGraphPanel
               artifact={artifact}
               version={version}
               target={selected.key}
               targetLabel={selected.entry.descriptor.label}
-              options={null}
+              options={changedOpts}
               envelopeProjection={preview?.fidelity.projection ?? null}
               enabled={open && step === 'fidelity'}
+              onChangeTarget={() => setStep('target')}
+              onChangeOptions={() => setStep('target')}
             />
           </div>
         )}

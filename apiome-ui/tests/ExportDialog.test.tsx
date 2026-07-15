@@ -530,6 +530,8 @@ describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
       artifact: 'proj-petstore',
       version: null,
       target: 'proto',
+      // Every option ran at its default, so no overrides are folded into the preview.
+      options: null,
     });
   });
 
@@ -607,6 +609,52 @@ describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
 
     expect(screen.getByRole('checkbox')).not.toBeChecked();
     expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeDisabled();
+  });
+
+  it('clears the acknowledgement and refreshes the report and graph together on an option change (EFP-2.3)', async () => {
+    const fetchMock = mockFetch();
+    await renderAtFidelityStep(fetchMock, 'proto');
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeEnabled();
+
+    // Back to the target step, change one option: the old acknowledgement no longer
+    // describes the conversion, so it cannot survive.
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i }));
+    fireEvent.click(screen.getByLabelText(/Emit Services/i));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    await waitFor(() => expect(screen.getByTestId('export-advisory')).toBeInTheDocument());
+
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+    expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeDisabled();
+
+    // Both the preview and the projection evidence were re-requested with the changed
+    // option folded in — one configuration, one snapshot, no stale report or graph.
+    await waitFor(() => {
+      const previewBodies = fetchMock.mock.calls
+        .filter(([url]) => String(url).includes('/api/export/preview'))
+        .map((call) => JSON.parse((call[1] as { body: string }).body));
+      expect(previewBodies.at(-1)).toMatchObject({ target: 'proto', options: { emit_services: false } });
+    });
+    await waitFor(() => {
+      const evidenceBodies = fetchMock.mock.calls
+        .filter(([url]) => String(url).includes('/api/export/projection-evidence'))
+        .map((call) => JSON.parse((call[1] as { body: string }).body));
+      expect(evidenceBodies.at(-1)).toMatchObject({ target: 'proto', options: { emit_services: false } });
+    });
+  });
+
+  it('navigates back to the target step from the evidence drawer remediation (EFP-2.3)', async () => {
+    await renderAtFidelityStep(mockFetch(), 'proto');
+    await waitFor(() => expect(screen.getByTestId('projection-table')).toBeInTheDocument());
+
+    // Open the dropped construct's evidence drawer: a destination format limit.
+    fireEvent.click(screen.getByTestId('projection-row-select-pe2'));
+    expect(screen.getByTestId('projection-detail-category')).toHaveTextContent('Format limit');
+
+    // The safe remediation navigates back to the target grid; nothing is changed by itself.
+    fireEvent.click(screen.getByTestId('projection-detail-action-change-target'));
+    await waitFor(() => expect(screen.getByText('Choose a target format')).toBeInTheDocument());
   });
 
   it('exports a lossless target without any acknowledgement and shows the quiet reassurance', async () => {

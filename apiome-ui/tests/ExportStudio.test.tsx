@@ -387,6 +387,46 @@ function mockFetch(
       }
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, ...status }) });
     }
+    // Projection evidence behind the Verify workbench's projection map (EFP-2.1/2.2): one
+    // dropped construct whose drawer offers the EFP-2.3 option-change remediation.
+    if (url.includes('/api/export/projection-evidence') && init?.method === 'POST') {
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            artifact: 'proj-petstore',
+            version: null,
+            version_record_id: 'rev-1',
+            version_label: '1.2.0',
+            redacted: false,
+            summary: {
+              manifest_hash: 'hash-studio-evidence',
+              target: { key: submittedTarget, emitter_version: '1.4.0', registry_version: '2025.07.01' },
+              status_counts: { dropped: 1 },
+              reason_counts: { option_excluded: 1 },
+              total_constructs: 1,
+              node_count: 1,
+              edge_count: 1,
+              evidence_count: 1,
+              is_lossless: false,
+              worst_severity: 'warn',
+              truncated: false,
+            },
+            page: {
+              manifest_hash: 'hash-studio-evidence',
+              nodes: [
+                { id: 'c1', kind: 'canonical', label: 'PetService', construct_key: 'PetService' },
+              ],
+              edges: [
+                { id: 'se1', relation: 'projects', source: 'c1', target: null, status: 'dropped', severity: 'warn', reason: 'option_excluded', detail: 'Services were excluded by the emit_services option.' },
+              ],
+              next_cursor: null,
+              total: 1,
+            },
+          }),
+      });
+    }
     // Catalog-source context for the Source step (MFX-41.2) — a non-OpenAPI (gRPC) import.
     if (url.includes('/api/catalog/')) {
       return Promise.resolve({
@@ -705,6 +745,23 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(screen.queryByTestId('verify-verdict')).not.toBeInTheDocument();
     expect(screen.getByTestId('verify-run')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
+  });
+
+  it('routes the evidence drawer remediation to the Options step (EFP-2.3)', async () => {
+    await advanceToVerify(mockFetch(), 'proto');
+    await runVerification();
+
+    // The projection map renders below the lenses; open the excluded construct's drawer.
+    await waitFor(() => expect(screen.getByTestId('projection-table')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('projection-row-select-se1'));
+    expect(screen.getByTestId('projection-detail-category')).toHaveTextContent('Excluded by option');
+
+    // The safe remediation navigates to the Options step — nothing changes until the user
+    // edits an option there, which re-locks the gate (covered above).
+    fireEvent.click(screen.getByTestId('projection-detail-action-change-options'));
+    await waitFor(() =>
+      expect(screen.getByTestId('export-studio-step-options')).toHaveAttribute('data-state', 'current'),
+    );
   });
 
   it('generates a lossy target and sends only the changed options', async () => {

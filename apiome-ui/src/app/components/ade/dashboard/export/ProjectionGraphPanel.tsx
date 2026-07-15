@@ -5,16 +5,21 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Loader2,
   Network,
   RotateCcw,
   ShieldAlert,
-  X,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { advisorySeverityPillClass } from '../../../../utils/export-advisory';
-import { isKnownReasonCode, sanitizeDocumentationEvidence } from './capabilityRegistry';
+import { sanitizeDocumentationEvidence } from './capabilityRegistry';
+import { EvidenceDrawer } from './EvidenceDrawer';
+import {
+  categoryForReason,
+  documentationLink,
+  reasonCategoryPresentation,
+} from './lossExplanation';
 import type { ProjectionManifestSummary } from './exportFidelityPreview';
 import { PROJECTION_STATUSES } from './projectionEvidence';
 import {
@@ -28,6 +33,7 @@ import {
   type ProjectionGraphLayout,
   type ProjectionViewEntry,
 } from './projectionGraph';
+import { useCapabilityReasons } from './useCapabilityReasons';
 import { useProjectionEvidence } from './useProjectionEvidence';
 
 /** Zoom bounds/step for the graph view (pure scale; layout stays deterministic). */
@@ -57,6 +63,18 @@ export interface ProjectionGraphPanelProps {
   envelopeProjection?: ProjectionManifestSummary | null;
   /** Only fetch/render while truthy (the surface's fidelity view is showing). */
   enabled?: boolean;
+  /**
+   * Navigate back to the surface's target choice — the evidence drawer's safe remediation
+   * for a destination format limit (EFP-2.3). The navigation changes nothing by itself; an
+   * actual target change re-previews, invalidates the acknowledgement, and refreshes the
+   * graph and report together. Omitted → the drawer offers no target action.
+   */
+  onChangeTarget?: () => void;
+  /**
+   * Navigate back to the surface's export options — the drawer's safe remediation for an
+   * option exclusion (EFP-2.3). Same contract as {@link onChangeTarget}.
+   */
+  onChangeOptions?: () => void;
 }
 
 /**
@@ -95,9 +113,14 @@ export function ProjectionGraphPanel({
   options = null,
   envelopeProjection = null,
   enabled = true,
+  onChangeTarget,
+  onChangeOptions,
 }: ProjectionGraphPanelProps) {
   const { summary, nodes, edges, redacted, loading, error, integrityIssues, complete, loadMore } =
     useProjectionEvidence(Boolean(enabled) && Boolean(target), artifact, version, target, options);
+  // The reviewed reason explanations + remediation guidance the evidence drawer prints
+  // (EFP-2.3). Static reference data, fetched once per page load and shared.
+  const { reasons } = useCapabilityReasons(Boolean(enabled) && Boolean(target));
 
   const rows = useMemo(() => buildEvidenceRows(nodes, edges), [nodes, edges]);
   const view = useMemo(() => buildProjectionView(rows), [rows]);
@@ -356,7 +379,16 @@ export function ProjectionGraphPanel({
           )}
 
           <div aria-live="polite">
-            {selected && <EvidenceDetailCard entry={selected} onClose={() => setSelectedKey(null)} />}
+            {selected && (
+              <EvidenceDrawer
+                entry={selected}
+                summary={summary}
+                reasons={reasons}
+                onClose={() => setSelectedKey(null)}
+                onChangeTarget={onChangeTarget}
+                onChangeOptions={onChangeOptions}
+              />
+            )}
           </div>
         </>
       )}
@@ -757,7 +789,7 @@ function ProjectionTable({ entries, selectedKey, onSelect }: ProjectionTableProp
                   )}
                 </td>
                 <td className="px-3 py-2 align-top text-gray-600 dark:text-gray-300">
-                  {row.reasonSummary}
+                  <ReasonCell row={row} entryKey={entry.key} />
                 </td>
               </tr>
             );
@@ -781,129 +813,43 @@ function StatusCell({ presentation }: { presentation: ReturnType<typeof statusPr
 }
 
 /**
- * The selection-to-evidence detail card: the full evidence behind the selected entry —
- * construct, status + severity, reason category and reviewed summary, destination
- * location, source-native provenance (which may carry the `[redacted]` placeholder), and
- * the host-allowlisted documentation link when the registry provided one.
+ * A table row's Reason cell (EFP-2.3): the concise cause-category chip, the one-line reason
+ * summary, and — for a genuine destination limit that has one — the official documentation
+ * link (host-allowlisted, version-disclosing, accessibly named). The table is the graph's
+ * accessibility source of truth, so every non-preserved row carries its category here, not
+ * only in the drawer.
  */
-function EvidenceDetailCard({
-  entry,
-  onClose,
-}: {
-  entry: ProjectionViewEntry;
-  onClose: () => void;
-}) {
-  const p = statusPresentation(entry.status);
-
-  return (
-    <div
-      data-testid="projection-detail"
-      role="region"
-      aria-label="Selected construct evidence"
-      className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 dark:border-indigo-900 dark:bg-indigo-950/30"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${p.badgeClass}`}>
-            <span aria-hidden>{p.symbol} </span>
-            {p.label}
-          </span>
-          {entry.kind === 'row' && entry.row && entry.row.severity !== 'info' && (
-            <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase ${advisorySeverityPillClass(entry.row.severity)}`}
-            >
-              {entry.row.severity}
-            </span>
-          )}
-          <code className="break-all font-mono text-xs font-semibold text-gray-900 dark:text-gray-100">
-            {entry.kind === 'row' ? entry.row?.construct : entry.label}
-          </code>
-        </div>
-        <button
-          type="button"
-          data-testid="projection-detail-close"
-          aria-label="Close evidence detail"
-          onClick={onClose}
-          className="rounded-md p-1 text-gray-500 hover:bg-white hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden />
-        </button>
-      </div>
-
-      {entry.kind === 'aggregate' ? (
-        <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-          {entry.members?.length ?? 0} constructs with this outcome were aggregated for
-          readability. Expand the aggregate row in the table to list every construct.
-        </p>
-      ) : (
-        entry.row && <EvidenceDetailBody row={entry.row} />
-      )}
-    </div>
-  );
-}
-
-/** The row-level detail body of the evidence card. */
-function EvidenceDetailBody({ row }: { row: ProjectionEvidenceRow }) {
-  const documentation = row.edge.documentation
-    ? sanitizeDocumentationEvidence(row.edge.documentation)
+function ReasonCell({ row, entryKey }: { row: ProjectionEvidenceRow; entryKey: string }) {
+  const category = categoryForReason(row.reason);
+  const categoryView = category ? reasonCategoryPresentation(category) : null;
+  const docLink = row.edge.documentation
+    ? documentationLink(sanitizeDocumentationEvidence(row.edge.documentation))
     : null;
   return (
-    <dl className="mt-2 space-y-1.5 text-xs">
-      <div>
-        <dt className="sr-only">Reason</dt>
-        <dd className="text-gray-700 dark:text-gray-200">
-          {row.reason && isKnownReasonCode(row.reason) && (
-            <span className="mr-1.5 rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px] text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-              {row.reason}
-            </span>
-          )}
-          {row.reasonSummary}
-        </dd>
-      </div>
-      {(row.targetLocation || row.targetLabel) && (
-        <div>
-          <dt className="inline font-medium text-gray-500 dark:text-gray-400">In the destination: </dt>
-          <dd className="inline">
-            <code className="break-all font-mono text-gray-700 dark:text-gray-300">
-              {row.targetLocation ?? row.targetLabel}
-            </code>
-          </dd>
-        </div>
+    <div className="space-y-0.5">
+      {categoryView && (
+        <span
+          data-testid={`projection-row-category-${entryKey}`}
+          className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${categoryView.badgeClass}`}
+        >
+          {categoryView.label}
+        </span>
       )}
-      {(row.sourceLabel || row.sourceLocation) && (
-        <div>
-          <dt className="inline font-medium text-gray-500 dark:text-gray-400">From the source: </dt>
-          <dd className="inline text-gray-700 dark:text-gray-300">
-            {row.sourceLabel}
-            {row.sourceLocation ? (
-              <span className="text-gray-500 dark:text-gray-400"> ({row.sourceLocation})</span>
-            ) : null}
-          </dd>
-        </div>
+      <div>{row.reasonSummary}</div>
+      {docLink && (
+        <a
+          data-testid={`projection-row-doc-${entryKey}`}
+          href={docLink.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={docLink.ariaLabel}
+          className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+        >
+          {docLink.text}
+          <ExternalLink className="h-3 w-3" aria-hidden />
+        </a>
       )}
-      {documentation && documentation.url && (
-        <div>
-          <dt className="sr-only">Documentation</dt>
-          <dd>
-            <a
-              href={`${documentation.url}${documentation.anchor ?? ''}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-indigo-600 hover:underline dark:text-indigo-300"
-            >
-              {documentation.specification ?? 'Destination documentation'}
-              {documentation.version ? ` (${documentation.version})` : ''}
-            </a>
-          </dd>
-        </div>
-      )}
-      {documentation && !documentation.url && documentation.note && (
-        <div>
-          <dt className="sr-only">Documentation note</dt>
-          <dd className="text-gray-500 dark:text-gray-400">{documentation.note}</dd>
-        </div>
-      )}
-    </dl>
+    </div>
   );
 }
 
