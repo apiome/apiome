@@ -19,6 +19,7 @@ import { Alert } from '../../../ui/Alert';
 import { useExportTargets } from './useExportTargets';
 import { useExportPreview } from './useExportPreview';
 import { FidelityWarningPanel } from './FidelityWarningPanel';
+import { ProjectionGraphPanel } from './ProjectionGraphPanel';
 import { ArtifactPreviewCard } from './ArtifactPreviewCard';
 import { ExportTargetGrid } from './ExportTargetGrid';
 import { ExportOptionsForm } from './ExportOptionsForm';
@@ -398,6 +399,19 @@ export function ExportDialog({
               previewError={previewError}
               acknowledged={acknowledged}
               onAcknowledgedChange={setAcknowledged}
+            />
+            {/* The destination-aware projection map (EFP-2.2): where each construct lands,
+                with the accessible table fallback. Fetches the evidence for the same
+                (source, target) the preview above described — the dialog's preview sends no
+                option overrides, so neither does the evidence request. */}
+            <ProjectionGraphPanel
+              artifact={artifact}
+              version={version}
+              target={selected.key}
+              targetLabel={selected.entry.descriptor.label}
+              options={null}
+              envelopeProjection={preview?.fidelity.projection ?? null}
+              enabled={open && step === 'fidelity'}
             />
           </div>
         )}

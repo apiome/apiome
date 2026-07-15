@@ -1,0 +1,604 @@
+/**
+ * Destination-aware projection view model + deterministic graph layout (EFP-2.2, #4814).
+ *
+ * The quick-export Fidelity step and the Export Studio Verify fidelity lens render a
+ * **projection map**: a deterministic SVG graph of where each source construct lands in the
+ * chosen destination, alongside a synchronized, fully accessible table. Both surfaces render
+ * from the **one** view model this module builds from the server's projection evidence
+ * (EFP-2.1, `./projectionEvidence.ts`) — so the graph and the table cannot disagree about
+ * counts, statuses, or evidence rows; they are two projections of the same array.
+ *
+ * Responsibilities, all pure (no React, no fetch, no randomness) so they unit-test directly —
+ * mirroring `./exportFidelityPreview.ts` / `./projectionEvidence.ts`:
+ *
+ * - `sanitizeProjectionLabel` — defence-in-depth for untrusted source labels: strips control
+ *   and bidi-override characters, collapses whitespace, and caps length before a label is
+ *   placed into SVG text, an aria-label, or a table cell. Labels are only ever rendered as
+ *   React **text** nodes (never `dangerouslySetInnerHTML`, never interpolated into Mermaid
+ *   or raw SVG markup), so this guard is belt-and-braces, not the only line of defence.
+ * - `buildEvidenceRows` — joins outcome (`projects`) edges to their canonical, native
+ *   (via `derives` provenance edges), and target nodes into flat evidence rows.
+ * - `buildProjectionView` — orders rows deterministically into the destination lanes
+ *   (target / omitted / unavailable) and applies the documented large-manifest aggregation
+ *   that NEVER hides dropped, unavailable, or critical evidence (EFP-2.2 acceptance).
+ * - `projectionGraphLayout` — deterministic column/lane geometry for the SVG renderer; no
+ *   client-side layout engine, so the same evidence always draws the same picture.
+ * - `statusPresentation` — text label + symbol + stroke pattern + palette per status, so
+ *   colour is always supplemental to a textual/symbolic/pattern channel.
+ *
+ * Keep the status vocabulary in sync with `./projectionEvidence.ts` and
+ * `apiome-rest/src/app/projection_taxonomy.py`.
+ */
+
+import type { LossinessSeverity, ProjectionStatus } from './exportFidelityPreview';
+import type {
+  ProjectionEdge,
+  ProjectionNode,
+} from './projectionEvidence';
+
+// ---------------------------------------------------------------------------
+// Label sanitisation
+// ---------------------------------------------------------------------------
+
+/** Longest label rendered anywhere in the projection map (SVG text, aria, table cells). */
+export const MAX_PROJECTION_LABEL_LENGTH = 80;
+
+/** Placeholder rendered for a node/construct the server sent without a usable label. */
+export const UNNAMED_LABEL = '(unnamed)';
+
+/**
+ * Unicode bidi-control and directional-override code points. Stripped so an imported label
+ * cannot reorder the text around it (e.g. disguise `dropped` as `retained` in an aria string).
+ */
+const BIDI_CONTROL = new Set([
+  0x061c, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068,
+  0x2069,
+]);
+
+/**
+ * Sanitize an untrusted source label for display.
+ *
+ * Strips C0/C1 control characters and Unicode bidi overrides, collapses all whitespace runs
+ * to single spaces, trims, and truncates to {@link MAX_PROJECTION_LABEL_LENGTH} with an
+ * ellipsis. Markup characters are deliberately **kept** — labels are only rendered as text
+ * nodes, where `<script>` is inert; rewriting them would misreport the user's own names.
+ *
+ * @param raw The label as received from the server (may be null/empty).
+ * @returns A display-safe label, or {@link UNNAMED_LABEL} when nothing survives.
+ */
+export function sanitizeProjectionLabel(raw: string | null | undefined): string {
+  if (raw == null) return UNNAMED_LABEL;
+  let cleaned = '';
+  for (const ch of raw) {
+    const code = ch.codePointAt(0) as number;
+    // Whitespace controls (tab/newline/…) survive to the collapse below as separators.
+    if (/\s/.test(ch)) {
+      cleaned += ' ';
+      continue;
+    }
+    const isControl = code < 0x20 || (code >= 0x7f && code <= 0x9f);
+    if (isControl || BIDI_CONTROL.has(code)) continue;
+    cleaned += ch;
+  }
+  const collapsed = cleaned.replace(/\s+/g, ' ').trim();
+  if (collapsed.length === 0) return UNNAMED_LABEL;
+  if (collapsed.length <= MAX_PROJECTION_LABEL_LENGTH) return collapsed;
+  return `${collapsed.slice(0, MAX_PROJECTION_LABEL_LENGTH - 1)}…`;
+}
+
+// ---------------------------------------------------------------------------
+// Status presentation — colour is always supplemental
+// ---------------------------------------------------------------------------
+
+/** One status's full presentation: text, symbol, and pattern channels + palette. */
+export interface StatusPresentation {
+  /** Human text label (e.g. `Dropped`) — the primary channel. */
+  label: string;
+  /** Compact color-independent symbol printed beside the label (e.g. `×`). */
+  symbol: string;
+  /** Tailwind classes for the status chip/badge. */
+  badgeClass: string;
+  /** Tailwind stroke class for the graph edge/outcome border. */
+  strokeClass: string;
+  /**
+   * SVG `stroke-dasharray` for the outcome edge, or null for a solid line. A distinct dash
+   * pattern per non-retained status keeps outcomes distinguishable without colour.
+   */
+  dashArray: string | null;
+}
+
+const STATUS_PRESENTATION: Record<ProjectionStatus, StatusPresentation> = {
+  retained: {
+    label: 'Retained',
+    symbol: '✓',
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+    strokeClass: 'stroke-emerald-500 dark:stroke-emerald-400',
+    dashArray: null,
+  },
+  transformed: {
+    label: 'Transformed',
+    symbol: '⇄',
+    badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+    strokeClass: 'stroke-sky-500 dark:stroke-sky-400',
+    dashArray: null,
+  },
+  approximated: {
+    label: 'Approximated',
+    symbol: '≈',
+    badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    strokeClass: 'stroke-amber-500 dark:stroke-amber-400',
+    dashArray: '6 3',
+  },
+  synthesized: {
+    label: 'Synthesized',
+    symbol: '＋',
+    badgeClass: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+    strokeClass: 'stroke-violet-500 dark:stroke-violet-400',
+    dashArray: '2 3',
+  },
+  dropped: {
+    label: 'Dropped',
+    symbol: '×',
+    badgeClass: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+    strokeClass: 'stroke-rose-500 dark:stroke-rose-400',
+    dashArray: '8 4',
+  },
+  unavailable: {
+    label: 'Unavailable',
+    symbol: '⊘',
+    badgeClass: 'bg-slate-200 text-slate-800 dark:bg-slate-700/60 dark:text-slate-200',
+    strokeClass: 'stroke-slate-400 dark:stroke-slate-500',
+    dashArray: '2 6',
+  },
+  'not-applicable': {
+    label: 'Not applicable',
+    symbol: '—',
+    badgeClass: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    strokeClass: 'stroke-gray-400 dark:stroke-gray-500',
+    dashArray: '1 4',
+  },
+};
+
+/** The presentation (text/symbol/pattern/palette) for one projection status. */
+export function statusPresentation(status: ProjectionStatus): StatusPresentation {
+  return STATUS_PRESENTATION[status];
+}
+
+/** Worst-first severity rank (critical → warn → info), for deterministic ordering. */
+const SEVERITY_RANK: Record<LossinessSeverity, number> = { critical: 0, warn: 1, info: 2 };
+
+// ---------------------------------------------------------------------------
+// Evidence rows — the flat join both the graph and the table render from
+// ---------------------------------------------------------------------------
+
+/** One outcome (projects) edge joined to its canonical/native/target nodes. */
+export interface ProjectionEvidenceRow {
+  /** The outcome edge's id — the stable row identity. */
+  id: string;
+  /** Sanitized display label of the canonical construct. */
+  construct: string;
+  /** The canonical construct key when the node carries one (unsanitised; used for sorting). */
+  constructKey: string | null;
+  /** Coarse canonical construct class (operation / channel / type / field), when present. */
+  canonicalKind: string | null;
+  /** The projection outcome. */
+  status: ProjectionStatus;
+  /** How much the outcome matters. */
+  severity: LossinessSeverity;
+  /** Cause category code for a non-preserved outcome, else null. */
+  reason: string | null;
+  /** One-line reason summary: the registry explanation when present, else the edge detail. */
+  reasonSummary: string;
+  /** Sanitized label of the destination node, when the construct landed. */
+  targetLabel: string | null;
+  /** Where the construct landed (JSON Pointer, else target-native path), when it landed. */
+  targetLocation: string | null;
+  /** Sanitized source-native name, when captured (may be the `[redacted]` placeholder). */
+  sourceLabel: string | null;
+  /** Sanitized source location, when captured (may be the `[redacted]` placeholder). */
+  sourceLocation: string | null;
+  /** The full outcome edge, for the selection-to-evidence detail card. */
+  edge: ProjectionEdge;
+}
+
+/**
+ * Join outcome edges to their nodes into flat evidence rows.
+ *
+ * For each `projects` edge: the edge's source node is the canonical construct and the
+ * edge's target node (when present) is the destination construct. Source-native
+ * provenance resolves two ways: a `derives` edge pointing at the canonical node (full
+ * manifests), or — the evidence-page shape, which bundles the native node but pages only
+ * outcome edges — a `native` node sharing the canonical node's `construct_key`. Edges
+ * referencing nodes missing from the bundle are skipped — `evidencePageIssues` (EFP-2.1)
+ * rejects such a page before this builder runs, so the skip is a final safety net.
+ *
+ * @param nodes Every node bundled with the loaded evidence pages.
+ * @param edges Every edge from the loaded evidence pages (outcome edges; `derives` edges
+ *   are honoured too when a caller has the full manifest).
+ * @returns One row per resolvable outcome edge, in the server's order.
+ */
+export function buildEvidenceRows(
+  nodes: ProjectionNode[],
+  edges: ProjectionEdge[],
+): ProjectionEvidenceRow[] {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  /** canonical node id → the first native node derived into it (canonical provenance order). */
+  const nativeByCanonical = new Map<string, ProjectionNode>();
+  for (const edge of edges) {
+    if (edge.relation !== 'derives' || edge.target == null) continue;
+    const native = nodeById.get(edge.source);
+    if (native && !nativeByCanonical.has(edge.target)) {
+      nativeByCanonical.set(edge.target, native);
+    }
+  }
+  /** construct key → its native node, the evidence-page provenance channel. */
+  const nativeByConstructKey = new Map<string, ProjectionNode>();
+  for (const node of nodes) {
+    if (node.kind === 'native' && node.construct_key != null && !nativeByConstructKey.has(node.construct_key)) {
+      nativeByConstructKey.set(node.construct_key, node);
+    }
+  }
+
+  const rows: ProjectionEvidenceRow[] = [];
+  for (const edge of edges) {
+    if (edge.relation !== 'projects') continue;
+    const canonical = nodeById.get(edge.source);
+    if (!canonical) continue;
+    const target = edge.target != null ? (nodeById.get(edge.target) ?? null) : null;
+    const native =
+      nativeByCanonical.get(canonical.id) ??
+      (canonical.construct_key != null
+        ? (nativeByConstructKey.get(canonical.construct_key) ?? null)
+        : null);
+    rows.push({
+      id: edge.id,
+      construct: sanitizeProjectionLabel(canonical.label),
+      constructKey: canonical.construct_key ?? null,
+      canonicalKind: canonical.canonical_kind ?? null,
+      status: edge.status,
+      severity: edge.severity,
+      reason: edge.reason ?? null,
+      reasonSummary: sanitizeProjectionLabel(edge.explanation ?? edge.detail),
+      targetLabel: target ? sanitizeProjectionLabel(target.label) : null,
+      targetLocation:
+        target?.target?.json_pointer ??
+        target?.target?.native_path ??
+        edge.target_mapping ??
+        null,
+      sourceLabel: native?.native?.native_name
+        ? sanitizeProjectionLabel(native.native.native_name)
+        : native
+          ? sanitizeProjectionLabel(native.label)
+          : null,
+      sourceLocation: native?.native?.source_location
+        ? sanitizeProjectionLabel(native.native.source_location)
+        : null,
+      edge,
+    });
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
+// Destination lanes + deterministic ordering + aggregation
+// ---------------------------------------------------------------------------
+
+/** The destination-side lane a row lands in. */
+export type ProjectionLaneKey = 'target' | 'omitted' | 'unavailable';
+
+/** The lanes, in render order, with their user-facing headings. */
+export const PROJECTION_LANES: readonly { key: ProjectionLaneKey; label: string }[] = [
+  { key: 'target', label: 'In the destination' },
+  { key: 'omitted', label: 'Omitted from the destination' },
+  { key: 'unavailable', label: 'Unavailable' },
+];
+
+/**
+ * Which destination lane a status belongs to: everything that lands in the artifact
+ * (retained / transformed / approximated / synthesized) is `target`; `dropped` is
+ * `omitted`; `unavailable` and `not-applicable` (nothing existed to land) are `unavailable`.
+ */
+export function laneForStatus(status: ProjectionStatus): ProjectionLaneKey {
+  switch (status) {
+    case 'dropped':
+      return 'omitted';
+    case 'unavailable':
+    case 'not-applicable':
+      return 'unavailable';
+    default:
+      return 'target';
+  }
+}
+
+/**
+ * Evidence-row count above which the view aggregates (the documented large-manifest
+ * threshold). Chosen so a typical mid-size API renders fully and a thousand-construct
+ * manifest stays readable; the panel states the rule whenever it aggregates.
+ */
+export const GRAPH_AGGREGATION_THRESHOLD = 48;
+
+/**
+ * Statuses eligible for aggregation. Dropped and unavailable evidence is NEVER aggregated
+ * (EFP-2.2 acceptance: aggregation must not hide dropped or critical evidence — and an
+ * unavailable outcome is exactly the truth-telling this surface exists for), and
+ * approximated/synthesized rows stay individual because relating losses to one another is
+ * the point of the map. Only clean outcomes collapse.
+ */
+const AGGREGATABLE_STATUSES: ReadonlySet<ProjectionStatus> = new Set([
+  'retained',
+  'transformed',
+  'not-applicable',
+]);
+
+/** One entry of the shared view: an individual evidence row or a deterministic aggregate. */
+export interface ProjectionViewEntry {
+  /** Stable entry key: the row id, or `aggregate:<status>` for an aggregate. */
+  key: string;
+  kind: 'row' | 'aggregate';
+  status: ProjectionStatus;
+  /** Worst member severity for an aggregate; the row's own severity otherwise. */
+  severity: LossinessSeverity;
+  /** The destination lane the entry renders in. */
+  lane: ProjectionLaneKey;
+  /** Display label: the construct label, or `N constructs` for an aggregate. */
+  label: string;
+  /** The underlying row (kind `row` only). */
+  row?: ProjectionEvidenceRow;
+  /** Every member row, deterministically ordered (kind `aggregate` only). */
+  members?: ProjectionEvidenceRow[];
+}
+
+/** The shared view model both the SVG graph and the accessible table render from. */
+export interface ProjectionView {
+  /** The entries, in final render order (lane order, then worst-first within a lane). */
+  entries: ProjectionViewEntry[];
+  /** True when at least one aggregate entry was formed. */
+  aggregated: boolean;
+  /** Total individual evidence rows represented (aggregate members included). */
+  rowCount: number;
+}
+
+/** Deterministic row order: severity (worst first), then construct label, then row id. */
+function compareRows(a: ProjectionEvidenceRow, b: ProjectionEvidenceRow): number {
+  return (
+    SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
+    a.construct.localeCompare(b.construct) ||
+    a.id.localeCompare(b.id)
+  );
+}
+
+/**
+ * Build the shared view model: deterministic lane grouping + documented aggregation.
+ *
+ * Rows are grouped into the destination lanes and ordered worst-first within each lane.
+ * When the row count exceeds `aggregationThreshold`, rows whose status is aggregatable
+ * ({@link AGGREGATABLE_STATUSES}) **and** whose severity is `info` collapse into one
+ * aggregate entry per status, keeping their members (deterministically ordered) for
+ * detail-on-demand. Everything else — every dropped, unavailable, approximated,
+ * synthesized, warn, or critical row — always stays an individual entry.
+ *
+ * The same input always yields the same output (no randomness, total ordering), so the
+ * graph is reproducible across sessions and screenshots.
+ *
+ * @param rows The evidence rows from {@link buildEvidenceRows}.
+ * @param options.aggregationThreshold Row count above which aggregation applies
+ *   (default {@link GRAPH_AGGREGATION_THRESHOLD}); tests pass a small value.
+ * @returns The ordered entries plus aggregation metadata.
+ */
+export function buildProjectionView(
+  rows: ProjectionEvidenceRow[],
+  options?: { aggregationThreshold?: number },
+): ProjectionView {
+  const threshold = options?.aggregationThreshold ?? GRAPH_AGGREGATION_THRESHOLD;
+  const shouldAggregate = rows.length > threshold;
+
+  const individual: ProjectionEvidenceRow[] = [];
+  const aggregates = new Map<ProjectionStatus, ProjectionEvidenceRow[]>();
+  for (const row of rows) {
+    if (shouldAggregate && AGGREGATABLE_STATUSES.has(row.status) && row.severity === 'info') {
+      const bucket = aggregates.get(row.status) ?? [];
+      bucket.push(row);
+      aggregates.set(row.status, bucket);
+    } else {
+      individual.push(row);
+    }
+  }
+
+  const entries: ProjectionViewEntry[] = individual.map((row) => ({
+    key: row.id,
+    kind: 'row',
+    status: row.status,
+    severity: row.severity,
+    lane: laneForStatus(row.status),
+    label: row.construct,
+    row,
+  }));
+  for (const [status, members] of aggregates) {
+    members.sort(compareRows);
+    entries.push({
+      key: `aggregate:${status}`,
+      kind: 'aggregate',
+      status,
+      severity: 'info',
+      lane: laneForStatus(status),
+      label: `${members.length} construct${members.length === 1 ? '' : 's'}`,
+      members,
+    });
+  }
+
+  const laneRank = new Map(PROJECTION_LANES.map((lane, index) => [lane.key, index]));
+  entries.sort((a, b) => {
+    const byLane = (laneRank.get(a.lane) ?? 0) - (laneRank.get(b.lane) ?? 0);
+    if (byLane !== 0) return byLane;
+    const bySeverity = SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
+    if (bySeverity !== 0) return bySeverity;
+    // Aggregates read after the individual rows of their lane; then stable label/key order.
+    const byKind = (a.kind === 'aggregate' ? 1 : 0) - (b.kind === 'aggregate' ? 1 : 0);
+    if (byKind !== 0) return byKind;
+    return a.label.localeCompare(b.label) || a.key.localeCompare(b.key);
+  });
+
+  return { entries, aggregated: aggregates.size > 0, rowCount: rows.length };
+}
+
+/**
+ * Count represented evidence rows per status in a view (aggregate members included).
+ * The graph header, the table caption, and the tests all use this one counter — which is
+ * what guarantees the two surfaces expose identical counts.
+ */
+export function viewStatusCounts(
+  entries: ProjectionViewEntry[],
+): Partial<Record<ProjectionStatus, number>> {
+  const counts: Partial<Record<ProjectionStatus, number>> = {};
+  for (const entry of entries) {
+    const size = entry.kind === 'aggregate' ? (entry.members?.length ?? 0) : 1;
+    counts[entry.status] = (counts[entry.status] ?? 0) + size;
+  }
+  return counts;
+}
+
+// ---------------------------------------------------------------------------
+// Accessible naming
+// ---------------------------------------------------------------------------
+
+/**
+ * The screen-reader label for one view entry — used verbatim by the graph node's
+ * `aria-label` and assembled from the same fields the table row prints, so the two
+ * surfaces *say* the same thing too (EFP-2.2 acceptance: source construct, result status,
+ * target location when present, reason summary).
+ */
+export function entryAriaLabel(entry: ProjectionViewEntry): string {
+  const status = statusPresentation(entry.status);
+  if (entry.kind === 'aggregate') {
+    const count = entry.members?.length ?? 0;
+    return `${count} construct${count === 1 ? '' : 's'} ${status.label.toLowerCase()}, aggregated. Select to list them.`;
+  }
+  const row = entry.row as ProjectionEvidenceRow;
+  const parts = [`${row.construct} — ${status.label.toLowerCase()}`];
+  if (row.sourceLabel && row.sourceLabel !== row.construct) {
+    parts.push(`from source ${row.sourceLabel}`);
+  }
+  if (row.targetLocation) {
+    parts.push(`lands at ${row.targetLocation}`);
+  } else if (row.targetLabel) {
+    parts.push(`lands in ${row.targetLabel}`);
+  } else {
+    parts.push('no destination location');
+  }
+  if (row.severity !== 'info') parts.push(`severity ${row.severity}`);
+  parts.push(row.reasonSummary);
+  return `${parts.join('; ')}.`;
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic SVG layout
+// ---------------------------------------------------------------------------
+
+/** Fixed geometry constants (SVG user units). Exported for the renderer and its tests. */
+export const GRAPH_GEOMETRY = {
+  /** Width of each of the three columns (source, canonical, destination). */
+  columnWidth: 200,
+  /** Horizontal gap between columns (the edge-drawing corridor). */
+  columnGap: 64,
+  /** Vertical rhythm per entry band. */
+  rowHeight: 40,
+  /** Height of one node box. */
+  nodeHeight: 30,
+  /** Height reserved for each lane's heading. */
+  laneHeaderHeight: 24,
+  /** Vertical gap between lanes. */
+  laneGap: 12,
+  /** Outer padding. */
+  padding: 12,
+} as const;
+
+/** One node box's placed rectangle. */
+export interface PlacedBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** One entry's placed band: its boxes plus the connector geometry between them. */
+export interface PlacedEntry {
+  entry: ProjectionViewEntry;
+  /** The source/native column box; null when the row has no captured native provenance. */
+  sourceBox: PlacedBox | null;
+  /** The canonical column box (always present). */
+  canonicalBox: PlacedBox;
+  /** The destination column box (always present — omitted/unavailable lanes still show the outcome). */
+  outcomeBox: PlacedBox;
+}
+
+/** One destination lane's placed band. */
+export interface PlacedLane {
+  key: ProjectionLaneKey;
+  label: string;
+  /** Lane heading baseline y. */
+  headerY: number;
+  /** Vertical extent of the lane's entries. */
+  top: number;
+  bottom: number;
+  /** Number of entries in the lane. */
+  count: number;
+}
+
+/** The full deterministic layout the SVG renderer draws verbatim. */
+export interface ProjectionGraphLayout {
+  width: number;
+  height: number;
+  /** x of each column's left edge. */
+  columns: { source: number; canonical: number; outcome: number };
+  entries: PlacedEntry[];
+  lanes: PlacedLane[];
+}
+
+/**
+ * Compute the deterministic three-column layout for a view.
+ *
+ * Columns: source/native → canonical → destination; the destination column is banded into
+ * the three lanes ({@link PROJECTION_LANES}), each with a heading. Entries keep the view
+ * order. Pure geometry over the entry list — same entries, same picture, every time.
+ *
+ * @param entries The ordered entries from {@link buildProjectionView}.
+ * @returns Placed boxes, lane bands, and the overall canvas size.
+ */
+export function projectionGraphLayout(entries: ProjectionViewEntry[]): ProjectionGraphLayout {
+  const g = GRAPH_GEOMETRY;
+  const columns = {
+    source: g.padding,
+    canonical: g.padding + g.columnWidth + g.columnGap,
+    outcome: g.padding + 2 * (g.columnWidth + g.columnGap),
+  };
+  const width = columns.outcome + g.columnWidth + g.padding;
+
+  const placed: PlacedEntry[] = [];
+  const lanes: PlacedLane[] = [];
+  let y = g.padding;
+  for (const lane of PROJECTION_LANES) {
+    const laneEntries = entries.filter((entry) => entry.lane === lane.key);
+    if (laneEntries.length === 0) continue;
+    const headerY = y + g.laneHeaderHeight - 8;
+    y += g.laneHeaderHeight;
+    const top = y;
+    for (const entry of laneEntries) {
+      const boxY = y + (g.rowHeight - g.nodeHeight) / 2;
+      const hasSource = entry.kind === 'row' && Boolean(entry.row?.sourceLabel);
+      placed.push({
+        entry,
+        sourceBox: hasSource
+          ? { x: columns.source, y: boxY, width: g.columnWidth, height: g.nodeHeight }
+          : null,
+        canonicalBox: { x: columns.canonical, y: boxY, width: g.columnWidth, height: g.nodeHeight },
+        outcomeBox: { x: columns.outcome, y: boxY, width: g.columnWidth, height: g.nodeHeight },
+      });
+      y += g.rowHeight;
+    }
+    lanes.push({ key: lane.key, label: lane.label, headerY, top, bottom: y, count: laneEntries.length });
+    y += g.laneGap;
+  }
+  const height = Math.max(y - g.laneGap + g.padding, g.padding * 2 + g.rowHeight);
+
+  return { width, height, columns, entries: placed, lanes };
+}

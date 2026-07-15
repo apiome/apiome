@@ -251,6 +251,49 @@ function mockFetch(): jest.Mock {
           }),
       });
     }
+    if (url.includes('/api/export/projection-evidence') && init?.method === 'POST') {
+      // A minimal, internally consistent evidence page (EFP-2.2): one retained field and
+      // one dropped operation, for whichever target the dialog is previewing.
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            success: true,
+            artifact: 'proj-petstore',
+            version: null,
+            version_record_id: 'rev-1',
+            version_label: '1.2.0',
+            redacted: false,
+            summary: {
+              manifest_hash: 'hash-dialog-evidence',
+              target: {},
+              status_counts: { retained: 1, dropped: 1 },
+              reason_counts: { destination_unsupported: 1 },
+              total_constructs: 2,
+              node_count: 3,
+              edge_count: 2,
+              evidence_count: 2,
+              is_lossless: false,
+              worst_severity: 'warn',
+              truncated: false,
+            },
+            page: {
+              manifest_hash: 'hash-dialog-evidence',
+              nodes: [
+                { id: 'c1', kind: 'canonical', label: 'User.name', construct_key: 'User.name' },
+                { id: 'c2', kind: 'canonical', label: 'Sub.onPing', construct_key: 'Sub.onPing' },
+                { id: 't1', kind: 'target', label: 'name', target: { json_pointer: '/User/name' } },
+              ],
+              edges: [
+                { id: 'pe1', relation: 'projects', source: 'c1', target: 't1', status: 'retained', severity: 'info', detail: 'Carried faithfully.' },
+                { id: 'pe2', relation: 'projects', source: 'c2', target: null, status: 'dropped', severity: 'warn', reason: 'destination_unsupported', detail: 'Subscriptions are not representable.' },
+              ],
+              next_cursor: null,
+              total: 2,
+            },
+          }),
+      });
+    }
     if (url.includes('/api/export/document') && init?.method === 'POST') {
       const target = String(JSON.parse(init?.body ?? '{}').target);
       const doc =
@@ -502,6 +545,36 @@ describe('ExportDialog — fidelity warning panel (MFX-6.2)', () => {
     expect(report).toHaveTextContent('APPROX');
     expect(report).toHaveTextContent('query parameter → request message field');
     expect(report).toHaveTextContent('OK');
+  });
+
+  it('renders the destination-aware projection map with its synchronized table (EFP-2.2)', async () => {
+    const fetchMock = mockFetch();
+    await renderAtFidelityStep(fetchMock, 'proto');
+
+    await waitFor(() => expect(screen.getByTestId('projection-table')).toBeInTheDocument());
+    // The evidence request describes the same (source, target) as the preview above it.
+    const evidenceCall = fetchMock.mock.calls.find(([url]) =>
+      String(url).includes('/api/export/projection-evidence'),
+    );
+    expect(evidenceCall).toBeDefined();
+    expect(JSON.parse((evidenceCall![1] as { body: string }).body)).toMatchObject({
+      artifact: 'proj-petstore',
+      version: null,
+      target: 'proto',
+      options: null,
+    });
+
+    // Graph and table render the same two evidence rows.
+    expect(screen.getByTestId('projection-node-pe1')).toBeInTheDocument();
+    expect(screen.getByTestId('projection-node-pe2')).toBeInTheDocument();
+    expect(screen.getByTestId('projection-row-pe1')).toBeInTheDocument();
+    expect(screen.getByTestId('projection-row-pe2')).toBeInTheDocument();
+
+    // Selecting the dropped construct opens its evidence.
+    fireEvent.click(screen.getByTestId('projection-row-select-pe2'));
+    expect(screen.getByTestId('projection-detail')).toHaveTextContent(
+      'Subscriptions are not representable.',
+    );
   });
 
   it('keeps a lossy export disabled until the loss is acknowledged', async () => {
