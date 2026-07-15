@@ -148,6 +148,26 @@ def test_build_result_manifest_reports_paths_and_serialized_sizes():
     assert "content" not in manifest[0].model_dump()
 
 
+def test_build_bundle_manifest_records_provenance_when_provided():
+    """The zip manifest carries snapshot + version provenance without source content (EFP-3.1)."""
+    result = EmitResult(
+        files=[EmittedFile(path="a.avsc", content='{"type":"record"}', media_type="application/json")],
+        media_type="application/json",
+    )
+    provenance = {
+        "snapshot_hash": "abc123",
+        "version_record_id": "rev-1",
+        "version_label": "1.0.0",
+        "options": {"namespace": "test"},
+        "emitter_version": "1.0",
+        "registry_version": "2.0",
+        "apiome_version": "3.0",
+    }
+    manifest = build_bundle_manifest(result, "avro", provenance=provenance)
+    assert manifest["provenance"] == provenance
+    assert "source" not in json.dumps(manifest)
+
+
 def test_build_export_zip_bundles_every_file_and_a_manifest():
     """The zip seam (MFX-4.2) packages each emitted file plus a root manifest.json."""
     import io

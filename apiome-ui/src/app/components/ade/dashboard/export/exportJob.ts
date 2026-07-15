@@ -93,6 +93,10 @@ export interface ExportJobResult {
   target: string;
   /** True when the job stopped after the fidelity report (no artifact). */
   dry_run: boolean;
+  /** The projection snapshot hash this job computed (EFP-3.1). */
+  snapshot_hash?: string;
+  /** The per-target emit options the job was submitted with; null when defaults applied. */
+  options?: Record<string, unknown> | null;
   /** The full fidelity envelope — the same shape a `/export/preview` returns. */
   fidelity?: ExportFidelityEnvelope | null;
   /** The emitted-output validation gate + report, set on a completed real export. */
@@ -210,6 +214,7 @@ export function failedStageForCode(code: string | null | undefined): ExportJobSt
       return 'loading-source';
     case 'UNSUPPORTED_TARGET':
     case 'TRANSCODE_CONFIRMATION_REQUIRED':
+    case 'STALE_PREVIEW':
       return 'analyzing-fidelity';
     case 'EMIT_FAILED':
     case 'EMPTY_EMIT':
@@ -292,6 +297,7 @@ export type ExportFailureClass =
   | 'source'
   | 'target'
   | 'confirmation'
+  | 'stale-preview'
   | 'emitter'
   | 'validation'
   | 'packaging'
@@ -315,7 +321,8 @@ export type ExportRecoveryAction =
   | 'reconfigure-target'
   | 'reconfigure-options'
   | 'acknowledge-and-retry'
-  | 'fix-in-verify';
+  | 'fix-in-verify'
+  | 'refresh-preview';
 
 /** The presentation of a job failure: class, stage, copy, and the recovery action + label. */
 export interface ExportFailureInfo {
@@ -377,6 +384,16 @@ export function classifyExportFailure(
           'The transcoding guard flagged this as a severe conversion. Acknowledge the loss to generate it anyway.',
         action: 'acknowledge-and-retry',
         actionLabel: 'Acknowledge & generate',
+      };
+    case 'STALE_PREVIEW':
+      return {
+        class: 'stale-preview',
+        stage: 'analyzing-fidelity',
+        title: 'The preview snapshot is stale',
+        description:
+          'The source revision, options, emitter, or capability registry changed since you verified. Re-run verification and acknowledge the current snapshot before generating again.',
+        action: 'refresh-preview',
+        actionLabel: 'Refresh preview',
       };
     case 'EMIT_FAILED':
       return {

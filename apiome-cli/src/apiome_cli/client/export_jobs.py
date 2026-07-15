@@ -37,7 +37,19 @@ def _failure_detail(payload: Mapping[str, Any]) -> str | None:
     """Best-effort human-readable reason for a non-completed terminal export."""
     error = payload.get("error")
     if isinstance(error, Mapping):
+        code = error.get("code")
         message = error.get("message")
+        if isinstance(code, str) and code.strip() == "STALE_PREVIEW":
+            context = error.get("context")
+            if isinstance(context, Mapping):
+                ack = context.get("acknowledged_snapshot")
+                current = context.get("current_snapshot")
+                if isinstance(ack, str) and isinstance(current, str):
+                    return (
+                        f"[STALE_PREVIEW] {message.strip() if isinstance(message, str) else 'Preview snapshot is stale.'} "
+                        f"(acknowledged {ack[:12]}…, current {current[:12]}…). "
+                        "Re-run export preview and acknowledge the current snapshot."
+                    )
         if isinstance(message, str) and message.strip():
             code = error.get("code")
             if isinstance(code, str) and code.strip():
@@ -75,6 +87,7 @@ def start_export_job(
     target: str,
     options: Mapping[str, Any] | None = None,
     confirm: bool = False,
+    acknowledged_snapshot: str | None = None,
 ) -> dict[str, Any]:
     """Submit ``POST /v1/export/{tenant}/jobs`` and return the 202 acceptance payload."""
     body: dict[str, Any] = {"artifact": artifact, "target": target, "confirm": confirm}
@@ -82,6 +95,8 @@ def start_export_job(
         body["version"] = version
     if options:
         body["options"] = dict(options)
+    if acknowledged_snapshot:
+        body["acknowledged_snapshot"] = acknowledged_snapshot
     response = client.post(api_paths.export_jobs(tenant_slug), json=body)
     payload = response.json()
     if not isinstance(payload, dict):

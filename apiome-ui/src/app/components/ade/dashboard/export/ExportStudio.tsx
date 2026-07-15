@@ -336,7 +336,7 @@ export function ExportStudio({
     setStep('review');
   }, [job, cards, selectedKey, selectCard]);
 
-  /** Submit the async export job for the selected target (MFX-46.2); progress renders on Review. */
+  /** Submit an export job for the selected target (MFX-46.2); progress renders on Review. */
   const handleGenerate = useCallback(() => {
     if (!selected) return;
     setError(null);
@@ -344,6 +344,8 @@ export function ExportStudio({
     setBundle(null);
     setProblemReveal(null);
     downloadedJobRef.current = null;
+    const acceptedSnapshot =
+      displayVerifyResult?.fidelity?.projection?.manifest_hash ?? null;
     start({
       target: selected.key,
       targetLabel: selected.entry.descriptor.label,
@@ -351,8 +353,9 @@ export function ExportStudio({
       // A conversion past the lossy acknowledgement is confirmed, so the transcoding guard
       // (MFX-3.3) does not fail a severe-but-acknowledged job.
       confirm: acknowledged,
+      acknowledgedSnapshot: acceptedSnapshot,
     });
-  }, [selected, optionValues, acknowledged, start]);
+  }, [selected, optionValues, acknowledged, displayVerifyResult, start]);
 
   /** Re-run verification, dropping any validation-gate override so the fresh result shows. */
   const handleRunVerify = useCallback(() => {
@@ -376,6 +379,15 @@ export function ExportStudio({
     setAcknowledged(true);
     void retry({ confirm: true });
   }, [retry]);
+
+  /** Route a stale-preview failure back to Verify so the user re-runs and re-acknowledges (EFP-3.1). */
+  const handleRefreshPreview = useCallback(() => {
+    clear();
+    downloadedJobRef.current = null;
+    setAcknowledged(false);
+    resetVerify();
+    setStep('verify');
+  }, [clear, resetVerify]);
 
   // Once a real export job completes, fetch its emitted artifact (single document or bundle) so the
   // Review step can preview and download it, and record the recent export. Runs once per job id.
@@ -816,6 +828,7 @@ export function ExportStudio({
                     }}
                     onAcknowledgeAndRetry={handleAcknowledgeAndRetry}
                     onFixInVerify={handleFixInVerify}
+                    onRefreshPreview={handleRefreshPreview}
                   />
                 )
               ) : (

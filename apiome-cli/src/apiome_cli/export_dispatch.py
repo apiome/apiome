@@ -31,8 +31,10 @@ from apiome_cli.client.export_jobs import (
     wait_for_export_job,
 )
 from apiome_cli.client.export_registry import (
+    fetch_export_preview,
     fetch_export_targets,
     preview_fidelity,
+    projection_snapshot_hash,
     resolve_export_target,
     unknown_export_target_message,
 )
@@ -216,6 +218,16 @@ def run_generic_export(
         else import_timeout_from_context(ctx)
     )
 
+    preview = fetch_export_preview(
+        client,
+        tenant_slug,
+        artifact=str(project_id),
+        version=version,
+        target=target_key,
+        options=options or None,
+    )
+    acknowledged_snapshot = projection_snapshot_hash(preview)
+
     accepted = start_export_job(
         client,
         tenant_slug,
@@ -224,6 +236,7 @@ def run_generic_export(
         target=target_key,
         options=options or None,
         confirm=confirm,
+        acknowledged_snapshot=acknowledged_snapshot,
     )
     job_id = accepted.get("job_id")
     if not isinstance(job_id, str) or not job_id:
@@ -268,6 +281,7 @@ def run_generic_export(
     )
 
     json_mode = json_mode_from_context(ctx)
+    result_snapshot = result.get("snapshot_hash")
     metadata = SpecExportMetadata(
         output=effective_out,
         bytes_written=bytes_written,
@@ -276,6 +290,7 @@ def run_generic_export(
         fidelity_target=target_key,
         fidelity=_fidelity_metadata(fidelity if isinstance(fidelity, dict) else None),
         filename=disposition_name,
+        snapshot_hash=result_snapshot if isinstance(result_snapshot, str) else None,
     )
     emit_download_metadata(metadata, json_mode=json_mode)
 

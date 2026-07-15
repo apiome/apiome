@@ -40,6 +40,24 @@
       "affected": 0,
       "headline": "No fidelity loss",
       "message": ""
+    },
+    "projection": {
+      "manifest_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status_counts": {},
+      "target": {
+        "key": "openapi",
+        "format": "openapi-3.1",
+        "label": "OpenAPI 3.1",
+        "paradigm": "rest",
+        "emitter_version": "1.0.0",
+        "apiome_version": "1.128.0",
+        "registry_version": "1.0.0",
+        "needs_toolchain": false,
+        "available": true,
+        "availability": "available",
+        "capability_profile": {},
+        "documentation": {}
+      }
     }
   }
 }
