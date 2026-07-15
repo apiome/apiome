@@ -68,6 +68,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import __version__
 from .canonical_model import ApiParadigm, CanonicalApi
+from .capability_registry import (
+    REGISTRY_VERSION,
+    DestinationAvailability,
+    DocumentationEvidence,
+    capability_for,
+    documentation_for,
+    explanation_for,
+)
 from .emitter import (
     CapabilityProfile,
     EmitOptionsError,
@@ -81,6 +89,7 @@ from .lossiness import (
     LossinessReport,
     LossinessSeverity,
 )
+from .projection_taxonomy import ProjectionReason, ProjectionStatus
 
 #: The apiome-rest package version stamped into every manifest's provenance and hash.
 APIOME_VERSION = __version__
@@ -113,44 +122,6 @@ __all__ = [
 # ===========================================================================
 # Vocabulary
 # ===========================================================================
-
-
-class ProjectionStatus(str, Enum):
-    """The fate of one construct when projected onto a target format (EFP-1.1).
-
-    The four outcomes the :class:`~app.lossiness.LossinessReport` produces map
-    one-to-one onto the first four members (see :data:`_STATUS_FOR_KIND`); the last
-    three extend the vocabulary for richer emitter rule packs and the capability
-    registry (EFP-1.2), and are never produced by the default report-driven build.
-    """
-
-    RETAINED = "retained"  # source meaning represented without material change (← ok)
-    TRANSFORMED = "transformed"  # meaning survives a documented target transformation
-    APPROXIMATED = "approximated"  # related construct, but not all semantics kept (← approx)
-    SYNTHESIZED = "synthesized"  # content invented for target conventions (← synth)
-    DROPPED = "dropped"  # the construct is not emitted (← drop)
-    UNAVAILABLE = "unavailable"  # apiome cannot reliably inspect/expose the source data
-    NOT_APPLICABLE = "not-applicable"  # the construct does not apply to this target/source
-
-
-class ProjectionReason(str, Enum):
-    """The cause *category* of a non-preserved :class:`ProjectionStatus` (EFP-1.1).
-
-    A destination limitation (``destination_unsupported``) must never be claimed when
-    the real cause is apiome's emitter (``emitter_unsupported``) or its source
-    analysis (``source_incomplete`` / ``source_parse_limit``). EFP-1.2's capability
-    registry refines these per construct; the default build uses the truthful
-    category implied by the report's capability-profile source.
-    """
-
-    DESTINATION_UNSUPPORTED = "destination_unsupported"
-    EMITTER_UNSUPPORTED = "emitter_unsupported"
-    SOURCE_INCOMPLETE = "source_incomplete"
-    SOURCE_PARSE_LIMIT = "source_parse_limit"
-    OPTION_EXCLUDED = "option_excluded"
-    SECURITY_REDACTED = "security_redacted"
-    TARGET_TOOL_UNAVAILABLE = "target_tool_unavailable"
-    NOT_APPLICABLE = "not_applicable"
 
 
 class ProjectionNodeKind(str, Enum):
@@ -289,40 +260,6 @@ class TargetLocation(BaseModel):
         return self.json_pointer or self.native_path or ""
 
 
-class DocumentationEvidence(BaseModel):
-    """Destination-format documentation metadata for a target (EFP-1.1 seed for EFP-1.2).
-
-    A minimal, reviewed pointer to the authoritative specification for the
-    destination format, with an explicit ``documentation_unavailable`` fallback so a
-    target with no known link says so truthfully rather than inventing one. EFP-1.2's
-    versioned capability/documentation registry supersedes this per-construct; here it
-    is a per-target seed carried on :class:`ManifestTarget`.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    specification: Optional[str] = Field(
-        default=None, description="Human label of the destination specification (e.g. 'OpenAPI 3.1')."
-    )
-    version: Optional[str] = Field(
-        default=None, description="Specification version the link refers to, when versioned."
-    )
-    url: Optional[str] = Field(
-        default=None, description="Authoritative technical-documentation URL, or null when unavailable."
-    )
-    anchor: Optional[str] = Field(
-        default=None, description="Optional URL fragment/anchor for a specific capability."
-    )
-    documentation_unavailable: bool = Field(
-        default=False,
-        description="True when no authoritative link is known; the UI explains the limitation "
-        "without inventing a URL.",
-    )
-    note: Optional[str] = Field(
-        default=None, description="Short reviewed note about the documentation, when present."
-    )
-
-
 class ProjectionNode(BaseModel):
     """One node in the projection graph: native evidence, canonical construct, or target.
 
@@ -390,6 +327,17 @@ class ProjectionEdge(BaseModel):
         default=None,
         description="How the construct landed in the target when not dropped (from the report).",
     )
+    explanation: Optional[str] = Field(
+        default=None,
+        description="Reviewed, reason-specific explanation from the capability registry (EFP-1.2), "
+        "naming the construct. Present on non-preserved outcome edges.",
+    )
+    documentation: Optional[DocumentationEvidence] = Field(
+        default=None,
+        description="Reason-scoped documentation evidence from the capability registry (EFP-1.2): a "
+        "destination-format link only when the reason is a genuine destination limit, otherwise a "
+        "truthful documentation-unavailable fallback. Present on non-preserved outcome edges.",
+    )
 
     @model_validator(mode="after")
     def _require_reason(self) -> "ProjectionEdge":
@@ -417,8 +365,17 @@ class ManifestTarget(BaseModel):
     )
     needs_toolchain: bool = Field(description="Whether emit hard-requires an external toolchain.")
     available: bool = Field(description="Whether this emitter can run in the current runtime.")
+    availability: DestinationAvailability = Field(
+        description="The capability registry's availability state (available / experimental / "
+        "unavailable) — a finer classification than ``available`` alone (EFP-1.2).",
+    )
+    registry_version: str = Field(
+        description="The capability-registry contract version this manifest's documentation and "
+        "reason evidence were resolved against (EFP-1.2). Folded into the manifest hash.",
+    )
     documentation: DocumentationEvidence = Field(
-        description="Destination-format documentation metadata (EFP-1.2 seed), with a safe fallback."
+        description="Destination-format documentation metadata from the capability registry "
+        "(EFP-1.2), with a safe fallback."
     )
 
 
@@ -643,49 +600,6 @@ def _target_locator_for(
 
 
 # ===========================================================================
-# Documentation seed (superseded per-construct by EFP-1.2's registry)
-# ===========================================================================
-
-# format-key prefix → reviewed destination-specification documentation. Verified
-# against each specification's canonical landing page; EFP-1.2 replaces this with a
-# versioned, anchored registry.
-_DOCUMENTATION_SEED: Dict[str, DocumentationEvidence] = {
-    "openapi": DocumentationEvidence(
-        specification="OpenAPI Specification",
-        url="https://spec.openapis.org/oas/latest.html",
-    ),
-    "asyncapi": DocumentationEvidence(
-        specification="AsyncAPI Specification",
-        url="https://www.asyncapi.com/docs/reference/specification/latest",
-    ),
-    "graphql": DocumentationEvidence(
-        specification="GraphQL Specification",
-        url="https://spec.graphql.org/",
-    ),
-    "proto": DocumentationEvidence(
-        specification="Protocol Buffers Language Guide (proto3)",
-        url="https://protobuf.dev/programming-guides/proto3/",
-    ),
-    "avro": DocumentationEvidence(
-        specification="Apache Avro Specification",
-        url="https://avro.apache.org/docs/current/specification/",
-    ),
-}
-
-
-def _documentation_for(emitter_cls: type[Emitter]) -> DocumentationEvidence:
-    """Return reviewed documentation for a target, or a truthful unavailable fallback."""
-    fmt = emitter_cls.format or ""
-    for prefix, doc in _DOCUMENTATION_SEED.items():
-        if fmt.startswith(prefix):
-            return doc.model_copy()
-    return DocumentationEvidence(
-        documentation_unavailable=True,
-        note="No authoritative specification link is registered for this destination yet.",
-    )
-
-
-# ===========================================================================
 # Source construct index
 # ===========================================================================
 
@@ -781,7 +695,14 @@ def _default_reason(status: ProjectionStatus) -> Optional[ProjectionReason]:
 
 
 def _manifest_target(emitter_cls: type[Emitter], descriptor: EmitterDescriptor) -> ManifestTarget:
-    """Assemble the target + version provenance block for a manifest."""
+    """Assemble the target + version provenance block for a manifest.
+
+    Sources the destination documentation, availability state, and registry version from
+    the EFP-1.2 capability registry (:func:`app.capability_registry.capability_for`), so a
+    manifest's target-level evidence carries reviewed, versioned data rather than an ad hoc
+    seed.
+    """
+    capability = capability_for(emitter_cls)
     return ManifestTarget(
         key=descriptor.key,
         format=descriptor.format,
@@ -792,7 +713,9 @@ def _manifest_target(emitter_cls: type[Emitter], descriptor: EmitterDescriptor) 
         capability_profile=emitter_cls.capability_profile(),
         needs_toolchain=descriptor.needs_toolchain,
         available=descriptor.available,
-        documentation=_documentation_for(emitter_cls),
+        availability=capability.availability,
+        registry_version=REGISTRY_VERSION,
+        documentation=capability.documentation,
     )
 
 
@@ -824,15 +747,16 @@ def _compute_manifest_hash(
 ) -> str:
     """Compute the stable content hash over the manifest's identity-bearing content.
 
-    Folds the target format, emitter version, apiome version, and normalized options
-    into a digest over the (already deterministically ordered) nodes and edges, so an
-    emitter upgrade or an option change yields a different snapshot while identical
-    inputs yield an identical hash.
+    Folds the target format, emitter version, apiome version, capability-registry
+    version, and normalized options into a digest over the (already deterministically
+    ordered) nodes and edges, so an emitter upgrade, a registry revision, or an option
+    change yields a different snapshot while identical inputs yield an identical hash.
     """
     payload = {
         "target_format": target_format,
         "emitter_version": emitter_version,
         "apiome_version": APIOME_VERSION,
+        "registry_version": REGISTRY_VERSION,
         "options": options,
         "nodes": [node.model_dump(mode="json") for node in nodes],
         "edges": [edge.model_dump(mode="json") for edge in edges],
@@ -947,7 +871,17 @@ def build_projection_manifest(
                         target=location,
                     )
 
-        # The outcome (projects) edge — exactly one per report item.
+        # The outcome (projects) edge — exactly one per report item. A non-preserved
+        # outcome carries the registry's reviewed, reason-scoped explanation and
+        # documentation (EFP-1.2): a destination-format link only when the reason is a
+        # genuine destination limit, otherwise a truthful documentation-unavailable
+        # fallback that never blames the destination for an emitter/source/option cause.
+        explanation: Optional[str] = None
+        documentation: Optional[DocumentationEvidence] = None
+        if reason is not None:
+            explanation = explanation_for(reason, key)
+            documentation = documentation_for(emitter_cls, reason)
+
         index = ordinal[key]
         ordinal[key] += 1
         edges.append(
@@ -961,6 +895,8 @@ def build_projection_manifest(
                 severity=item.severity,
                 detail=item.message,
                 target_mapping=item.target_mapping,
+                explanation=explanation,
+                documentation=documentation,
             )
         )
 

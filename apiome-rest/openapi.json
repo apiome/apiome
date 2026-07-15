@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.7.2",
+    "version": "1.8.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -25054,6 +25054,93 @@
         }
       }
     },
+    "/v1/export/{tenant_slug}/capability-registry": {
+      "get": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Get the destination capability & documentation registry",
+        "description": "Return the versioned destination capability registry (EFP-1.2): one reviewed capability entry per registered export destination (label, availability state, and host-allowlisted destination-format documentation with a safe fallback) plus the reviewed explanation for every projection reason code. This is static reference data \u2014 the same for every source \u2014 that lets the export UI render honest loss reasons and authoritative documentation links from reviewed data instead of hard-coding URLs in components.",
+        "operationId": "get_capability_registry_v1_export__tenant_slug__capability_registry_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthedestinationcapabilitydocumentationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthedestinationcapabilitydocumentationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthedestinationcapabilitydocumentation Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthedestinationcapabilitydocumentation Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get the destination capability & documentation registry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityRegistrySnapshot",
+                  "description": "Response payload for getthedestinationcapabilitydocumentationresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for getthedestinationcapabilitydocumentationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/export/{tenant_slug}/preview": {
       "post": {
         "tags": [
@@ -41879,6 +41966,60 @@
         "title": "CapabilityProfile",
         "description": "Static declaration of which canonical constructs a target can represent.\n\nConsumed by the fidelity engine (MFX-EPIC-2) to predict loss *before* emit.\nEach flag is ``True`` when the target can carry the construct faithfully (not\nmerely approximate or synthesize a stand-in)."
       },
+      "CapabilityRegistrySnapshot": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "The registry contract version (``REGISTRY_VERSION``).",
+            "example": "1.0.0"
+          },
+          "review_date": {
+            "type": "string",
+            "title": "Review Date",
+            "description": "When the registry links/explanations were last reviewed.",
+            "example": "example"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reason Codes",
+            "description": "The canonical set of valid reason-code strings, sorted. Contract tests reject any reason code outside this set.",
+            "maxItems": 1000
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/ReasonExplanation"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "The reviewed explanation for each reason code, in taxonomy order.",
+            "maxItems": 1000
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/DestinationCapability"
+            },
+            "type": "array",
+            "title": "Destinations",
+            "description": "One capability entry per registered destination, in key order.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "review_date",
+          "reason_codes",
+          "reasons",
+          "destinations"
+        ],
+        "title": "CapabilityRegistrySnapshot",
+        "description": "The full, deterministic registry view exposed to the REST contract + UI (EFP-1.2).\n\nCarries the :attr:`version`, the reviewed :class:`ReasonExplanation` for every reason\ncode (the drawer's honest wording), and a :class:`DestinationCapability` for every\nruntime-available emitter, all in a stable order. Because it is derived from the\nstatic registry and the (deterministic) emitter registry, identical inputs yield an\nidentical snapshot \u2014 safe to cache and to mirror in a TypeScript contract."
+      },
       "CatalogConversionRef": {
         "properties": {
           "projectId": {
@@ -44086,6 +44227,78 @@
         "title": "DataRecordUpdateBody",
         "description": "DataRecordUpdateBody schema."
       },
+      "DestinationAvailability": {
+        "type": "string",
+        "enum": [
+          "available",
+          "experimental",
+          "unavailable"
+        ],
+        "title": "DestinationAvailability",
+        "description": "Whether a destination emitter can be relied on in the current runtime (EFP-1.2)."
+      },
+      "DestinationCapability": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Stable emitter target key (e.g. ``openapi``).",
+            "example": "example"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "Output format key the emitter produces (e.g. ``openapi-3.1``).",
+            "example": "openapi"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Human label for the destination.",
+            "example": "example"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/DestinationAvailability",
+            "description": "Whether this destination is available / experimental / unavailable here."
+          },
+          "documentation": {
+            "$ref": "#/components/schemas/DocumentationEvidence",
+            "description": "Reviewed destination-documentation metadata, with a safe fallback."
+          },
+          "emitter_version": {
+            "type": "string",
+            "title": "Emitter Version",
+            "description": "The emitter implementation version this entry describes.",
+            "example": "1.0.0"
+          },
+          "registry_version": {
+            "type": "string",
+            "title": "Registry Version",
+            "description": "The registry contract version this entry belongs to.",
+            "example": "1.0.0"
+          },
+          "review_date": {
+            "type": "string",
+            "title": "Review Date",
+            "description": "When this entry's link/explanation was last reviewed.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "format",
+          "label",
+          "availability",
+          "documentation",
+          "emitter_version",
+          "registry_version",
+          "review_date"
+        ],
+        "title": "DestinationCapability",
+        "description": "The versioned capability + documentation entry for one destination target (EFP-1.2)."
+      },
       "DetectFormatRequest": {
         "properties": {
           "text": {
@@ -44295,7 +44508,7 @@
               }
             ],
             "title": "Url",
-            "description": "Authoritative technical-documentation URL, or null when unavailable."
+            "description": "Authoritative, host-allowlisted https documentation URL, or null when unavailable."
           },
           "anchor": {
             "anyOf": [
@@ -44309,12 +44522,12 @@
               }
             ],
             "title": "Anchor",
-            "description": "Optional URL fragment/anchor for a specific capability."
+            "description": "Optional URL fragment/anchor for a specific capability or reason."
           },
           "documentation_unavailable": {
             "type": "boolean",
             "title": "Documentation Unavailable",
-            "description": "True when no authoritative link is known; the UI explains the limitation without inventing a URL.",
+            "description": "True when no authoritative link applies; the UI explains the limitation without inventing a URL.",
             "default": false,
             "example": false
           },
@@ -44336,7 +44549,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "DocumentationEvidence",
-        "description": "Destination-format documentation metadata for a target (EFP-1.1 seed for EFP-1.2).\n\nA minimal, reviewed pointer to the authoritative specification for the\ndestination format, with an explicit ``documentation_unavailable`` fallback so a\ntarget with no known link says so truthfully rather than inventing one. EFP-1.2's\nversioned capability/documentation registry supersedes this per-construct; here it\nis a per-target seed carried on :class:`ManifestTarget`."
+        "description": "Reviewed destination-format documentation metadata for a target (EFP-1.2).\n\nA validated pointer to the authoritative specification for a destination format,\nwith an explicit ``documentation_unavailable`` fallback so a target with no known \u2014\nor no *applicable* \u2014 link says so truthfully rather than inventing one. When\n:attr:`url` is present it is validated against the host allowlist at construction\ntime (:func:`validate_documentation_url`), so an unsafe link can never enter a model\ninstance. This supersedes EFP-1.1's per-target seed; it is now sourced per\ndestination (and, on a projection edge, per reason code) from this registry."
       },
       "EmittedArtifactLint": {
         "properties": {
@@ -49739,9 +49952,19 @@
             "description": "Whether this emitter can run in the current runtime.",
             "example": false
           },
+          "availability": {
+            "$ref": "#/components/schemas/DestinationAvailability",
+            "description": "The capability registry's availability state (available / experimental / unavailable) \u2014 a finer classification than ``available`` alone (EFP-1.2)."
+          },
+          "registry_version": {
+            "type": "string",
+            "title": "Registry Version",
+            "description": "The capability-registry contract version this manifest's documentation and reason evidence were resolved against (EFP-1.2). Folded into the manifest hash.",
+            "example": "1.0.0"
+          },
           "documentation": {
             "$ref": "#/components/schemas/DocumentationEvidence",
-            "description": "Destination-format documentation metadata (EFP-1.2 seed), with a safe fallback."
+            "description": "Destination-format documentation metadata from the capability registry (EFP-1.2), with a safe fallback."
           }
         },
         "additionalProperties": false,
@@ -49756,6 +49979,8 @@
           "capability_profile",
           "needs_toolchain",
           "available",
+          "availability",
+          "registry_version",
           "documentation"
         ],
         "title": "ManifestTarget",
@@ -62299,6 +62524,21 @@
         "title": "ProjectionManifestSummary",
         "description": "The bounded projection summary embedded in the fidelity envelope (EFP-1.1).\n\nEverything a preview/verify/CLI/job needs to *reference* a snapshot \u2014 the\n:attr:`manifest_hash`, the target/version provenance, and the aggregate\nstatus/reason counts \u2014 **without** the (potentially large) node/edge graph, which\nis fetched page by page via :func:`paginate_evidence`. Because the summary is\nderived from the deterministic manifest, the same inputs produce the same summary\nacross every surface, so they all describe the same snapshot."
       },
+      "ProjectionReason": {
+        "type": "string",
+        "enum": [
+          "destination_unsupported",
+          "emitter_unsupported",
+          "source_incomplete",
+          "source_parse_limit",
+          "option_excluded",
+          "security_redacted",
+          "target_tool_unavailable",
+          "not_applicable"
+        ],
+        "title": "ProjectionReason",
+        "description": "The cause *category* of a non-preserved :class:`ProjectionStatus` (EFP-1.1).\n\nA destination limitation (``destination_unsupported``) must never be claimed when\nthe real cause is apiome's emitter (``emitter_unsupported``) or its source\nanalysis (``source_incomplete`` / ``source_parse_limit``). EFP-1.2's capability\nregistry keys its reviewed explanation and documentation templates by these codes,\nso the taxonomy is the single source of truth for what a valid reason code is."
+      },
       "PublicExportDocumentRequest": {
         "properties": {
           "target": {
@@ -62913,6 +63153,49 @@
         "type": "object",
         "title": "PushWebhookSubscriptionUpdateRequest",
         "description": "Update URL, active flag, and/or rotate signing secret (#2587)."
+      },
+      "ReasonExplanation": {
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/ProjectionReason",
+            "description": "The cause category this explanation is for."
+          },
+          "category_label": {
+            "type": "string",
+            "title": "Category Label",
+            "description": "Short human label for the category (e.g. 'Destination limit').",
+            "example": "domain"
+          },
+          "summary_template": {
+            "type": "string",
+            "title": "Summary Template",
+            "description": "Reviewed one-line explanation, optionally with a single ``{construct}`` slot.",
+            "example": "Example description for documentation and mocks."
+          },
+          "remediation": {
+            "type": "string",
+            "title": "Remediation",
+            "description": "Short, safe remediation guidance for this category.",
+            "example": "example"
+          },
+          "destination_documentation_applies": {
+            "type": "boolean",
+            "title": "Destination Documentation Applies",
+            "description": "True only for a genuine destination-specification limit \u2014 the one category for which an authoritative destination-format link is meaningful.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason",
+          "category_label",
+          "summary_template",
+          "remediation",
+          "destination_documentation_applies"
+        ],
+        "title": "ReasonExplanation",
+        "description": "A reviewed, reason-specific explanation template (EFP-1.2).\n\nOne per :class:`~app.projection_taxonomy.ProjectionReason`, so the eight cause\ncategories are represented and rendered *separately* \u2014 a specification limit, an\nemitter gap, a source-parse gap, a redaction, an excluded option, and an unavailable\ntoolchain each get their own honest wording and remediation. :attr:`summary_template`\nmay contain a single ``{construct}`` slot, substituted only with the (safe) canonical\nconstruct key by :func:`explanation_for`."
       },
       "RefreshHistoryEntryOut": {
         "properties": {

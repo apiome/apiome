@@ -47,6 +47,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
+from .capability_registry import CapabilityRegistrySnapshot, registry_snapshot
 from .emitter import (
     CapabilityProfile,
     EmitterDescriptor,
@@ -485,6 +486,42 @@ async def list_export_targets(
         version_label=source.version_label,
         targets=entries,
     )
+
+
+@router.get(
+    "/{tenant_slug}/capability-registry",
+    response_model=CapabilityRegistrySnapshot,
+    summary="Get the destination capability & documentation registry",
+    description=(
+        "Return the versioned destination capability registry (EFP-1.2): one reviewed "
+        "capability entry per registered export destination (label, availability state, and "
+        "host-allowlisted destination-format documentation with a safe fallback) plus the "
+        "reviewed explanation for every projection reason code. This is static reference "
+        "data — the same for every source — that lets the export UI render honest loss "
+        "reasons and authoritative documentation links from reviewed data instead of "
+        "hard-coding URLs in components."
+    ),
+)
+async def get_capability_registry(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CapabilityRegistrySnapshot:
+    """Return the versioned destination capability & documentation registry snapshot.
+
+    The snapshot is deterministic and source-independent — it describes the destinations
+    themselves, not any particular export — so the UI can fetch it once and cache it by
+    :attr:`~app.capability_registry.CapabilityRegistrySnapshot.version`. Every documentation
+    link it carries has already passed the registry's host allowlist, and every reason code
+    is a member of the canonical taxonomy.
+
+    Args:
+        tenant_slug: The tenant slug (scopes access; the snapshot content is tenant-independent).
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        The full :class:`~app.capability_registry.CapabilityRegistrySnapshot`.
+    """
+    return registry_snapshot()
 
 
 @router.post(
