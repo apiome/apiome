@@ -23,6 +23,8 @@ import { ProjectionGraphPanel } from '../src/app/components/ade/dashboard/export
 import {
   EVIDENCE_PAGES_PER_WINDOW,
 } from '../src/app/components/ade/dashboard/export/useProjectionEvidence';
+import { resetCapabilityReasonsCache } from '../src/app/components/ade/dashboard/export/useCapabilityReasons';
+import { REASON_CODES } from '../src/app/components/ade/dashboard/export/capabilityRegistry';
 import type {
   ExportProjectionEvidenceResponse,
   ProjectionEdge,
@@ -55,7 +57,7 @@ const EDGES: ProjectionEdge[] = [
 
 const SUMMARY: ProjectionManifestSummary = {
   manifest_hash: 'hash-aaaaaaaaaaaaaaaa',
-  target: { key: 'openapi' },
+  target: { key: 'openapi', emitter_version: '1.4.0', registry_version: '2025.07.01' },
   status_counts: { retained: 1, transformed: 0, approximated: 1, synthesized: 0, dropped: 1, unavailable: 1, 'not-applicable': 0 },
   reason_counts: { destination_unsupported: 2, source_parse_limit: 1 },
   total_constructs: 4,
@@ -90,10 +92,44 @@ function evidenceResponse(
   };
 }
 
-/** Mock fetch answering /api/export/projection-evidence with the queued responses in order. */
+/**
+ * A minimal, contract-valid capability-registry snapshot (EFP-1.2) for the drawer's
+ * reviewed remediation guidance. Answered on `GET /api/export/capability-registry`.
+ */
+const REGISTRY = {
+  version: '2025.07.01',
+  review_date: '2026-07-01',
+  reason_codes: [...REASON_CODES],
+  reasons: [
+    {
+      reason: 'destination_unsupported',
+      category_label: 'Destination limit',
+      summary_template: 'The destination format cannot represent {construct}.',
+      remediation: 'Choose a destination format that supports this construct, or accept the loss.',
+      destination_documentation_applies: true,
+    },
+    {
+      reason: 'source_parse_limit',
+      category_label: 'Parser limitation',
+      summary_template: 'apiome could not capture {construct} from the source.',
+      remediation: 'This is an apiome parser limitation; the source data itself may be intact.',
+      destination_documentation_applies: false,
+    },
+  ],
+  destinations: [],
+};
+
+/**
+ * Mock fetch: answers `GET /api/export/capability-registry` with the registry fixture and
+ * `POST /api/export/projection-evidence` with the queued responses in order.
+ */
 function mockEvidenceFetch(responses: Array<ExportProjectionEvidenceResponse | { error: string }>): jest.Mock {
   let call = 0;
-  const fetchMock = jest.fn(() => {
+  const fetchMock = jest.fn((input: unknown) => {
+    const url = typeof input === 'string' ? input : String(input);
+    if (url.includes('/api/export/capability-registry')) {
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, ...REGISTRY }) });
+    }
     const response = responses[Math.min(call, responses.length - 1)];
     call += 1;
     if ('error' in response) {
@@ -103,6 +139,11 @@ function mockEvidenceFetch(responses: Array<ExportProjectionEvidenceResponse | {
   }) as unknown as jest.Mock;
   global.fetch = fetchMock as unknown as typeof fetch;
   return fetchMock;
+}
+
+/** The evidence-page calls a mock received (the registry fetch is not an evidence call). */
+function evidenceCalls(fetchMock: jest.Mock): unknown[][] {
+  return fetchMock.mock.calls.filter(([url]) => String(url).includes('projection-evidence'));
 }
 
 function renderPanel(props: Partial<React.ComponentProps<typeof ProjectionGraphPanel>> = {}) {
@@ -128,6 +169,8 @@ async function renderLoadedPanel(props: Partial<React.ComponentProps<typeof Proj
 
 afterEach(() => {
   jest.restoreAllMocks();
+  // The registry is module-cached across mounts; reset it so every test fetches afresh.
+  resetCapabilityReasonsCache();
 });
 
 // ---------------------------------------------------------------------------
@@ -383,8 +426,8 @@ describe('ProjectionGraphPanel — evidence paging and snapshot identity', () =>
     const fetchMock = mockEvidenceFetch([pageOne, pageTwo]);
     await renderLoadedPanel();
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const secondInit = (fetchMock.mock.calls[1] as [unknown, { body?: string }])[1];
+    await waitFor(() => expect(evidenceCalls(fetchMock)).toHaveLength(2));
+    const secondInit = (evidenceCalls(fetchMock)[1] as [unknown, { body?: string }])[1];
     const secondBody = JSON.parse(secondInit?.body ?? '{}');
     expect(secondBody.cursor).toBe('cursor-2');
     await waitFor(() =>
@@ -410,12 +453,12 @@ describe('ProjectionGraphPanel — evidence paging and snapshot identity', () =>
     const fetchMock = mockEvidenceFetch(pages);
     await renderLoadedPanel();
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(EVIDENCE_PAGES_PER_WINDOW));
+    await waitFor(() => expect(evidenceCalls(fetchMock)).toHaveLength(EVIDENCE_PAGES_PER_WINDOW));
     const loadMore = await screen.findByTestId('projection-load-more');
     expect(screen.getByText(new RegExp(`first ${EVIDENCE_PAGES_PER_WINDOW} of ${EVIDENCE_PAGES_PER_WINDOW + 1} evidence rows`))).toBeInTheDocument();
 
     fireEvent.click(loadMore);
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(EVIDENCE_PAGES_PER_WINDOW + 1));
+    await waitFor(() => expect(evidenceCalls(fetchMock)).toHaveLength(EVIDENCE_PAGES_PER_WINDOW + 1));
     await waitFor(() =>
       expect(screen.queryByTestId('projection-load-more')).not.toBeInTheDocument(),
     );
@@ -484,5 +527,97 @@ describe('ProjectionGraphPanel — aggregate rows stay explorable', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Type.f00')).toBeInTheDocument();
     expect(screen.getByText('Type.f59')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EFP-2.3 — loss reasons, documentation, and safe remediation (#4815)
+// ---------------------------------------------------------------------------
+
+describe('ProjectionGraphPanel — loss reasons and documentation (EFP-2.3)', () => {
+  it('labels every non-preserved table row with its cause category', async () => {
+    mockEvidenceFetch([evidenceResponse()]);
+    await renderLoadedPanel();
+
+    // A destination limit and a parser limit read as different categories (AC 2).
+    expect(screen.getByTestId('projection-row-category-e3')).toHaveTextContent('Format limit');
+    expect(screen.getByTestId('projection-row-category-e2')).toHaveTextContent('Format limit');
+    expect(screen.getByTestId('projection-row-category-e4')).toHaveTextContent('Source incomplete');
+    // A preserved row carries no cause category — nothing was lost.
+    expect(screen.queryByTestId('projection-row-category-e1')).not.toBeInTheDocument();
+  });
+
+  it('links a destination limit to its official documentation from the table row (AC 1/3)', async () => {
+    mockEvidenceFetch([evidenceResponse()]);
+    await renderLoadedPanel();
+
+    const link = screen.getByTestId('projection-row-doc-e3');
+    expect(link).toHaveTextContent('OpenAPI 3.1 (3.1)');
+    expect(link).toHaveAttribute('href', 'https://spec.openapis.org/oas/v3.1.0');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link.getAttribute('aria-label')).toMatch(/spec\.openapis\.org.*opens in a new tab/i);
+    // Rows without documentation evidence render no link at all.
+    expect(screen.queryByTestId('projection-row-doc-e4')).not.toBeInTheDocument();
+  });
+
+  it('shows the cause distinction, reviewed remediation, and provenance in the drawer', async () => {
+    mockEvidenceFetch([evidenceResponse()]);
+    await renderLoadedPanel();
+
+    fireEvent.click(screen.getByTestId('projection-row-select-e3'));
+    expect(screen.getByTestId('projection-detail-category')).toHaveTextContent('Format limit');
+    expect(screen.getByTestId('projection-detail-distinction')).toHaveTextContent(
+      /destination format cannot represent/i,
+    );
+    // The reviewed remediation guidance arrives from the capability registry fetch.
+    await waitFor(() =>
+      expect(screen.getByTestId('projection-detail-remediation')).toHaveTextContent(
+        'Choose a destination format that supports this construct, or accept the loss.',
+      ),
+    );
+    // The evidence is attributable to the versions that produced it.
+    expect(screen.getByTestId('projection-detail-provenance')).toHaveTextContent(
+      'emitter v1.4.0 · registry v2025.07.01',
+    );
+  });
+
+  it('routes the drawer remediation actions to the surface navigation callbacks (AC 4)', async () => {
+    const onChangeTarget = jest.fn();
+    mockEvidenceFetch([evidenceResponse()]);
+    await renderLoadedPanel({ onChangeTarget, onChangeOptions: jest.fn() });
+
+    fireEvent.click(screen.getByTestId('projection-row-select-e3'));
+    fireEvent.click(screen.getByTestId('projection-detail-action-change-target'));
+    expect(onChangeTarget).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers no remediation action when the surface wired no callbacks', async () => {
+    mockEvidenceFetch([evidenceResponse()]);
+    await renderLoadedPanel();
+
+    fireEvent.click(screen.getByTestId('projection-row-select-e3'));
+    expect(screen.queryByTestId('projection-detail-action-change-target')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('projection-detail-action-change-options')).not.toBeInTheDocument();
+  });
+
+  it('renders the drawer fully even when the registry fetch fails (degrades, never gates)', async () => {
+    const fetchMock = jest.fn((input: unknown) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('/api/export/capability-registry')) {
+        return Promise.resolve({ ok: false, json: () => Promise.resolve({ success: false }) });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true, ...evidenceResponse() }),
+      });
+    }) as unknown as jest.Mock;
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await renderLoadedPanel();
+
+    fireEvent.click(screen.getByTestId('projection-row-select-e3'));
+    // Category, distinction, and documentation come from the edge itself — no registry needed.
+    expect(screen.getByTestId('projection-detail-category')).toHaveTextContent('Format limit');
+    expect(screen.getByTestId('projection-detail-doc')).toBeInTheDocument();
   });
 });

@@ -56,18 +56,17 @@ const BIDI_CONTROL = new Set([
 ]);
 
 /**
- * Sanitize an untrusted source label for display.
+ * Strip C0/C1 control characters and Unicode bidi overrides from untrusted text, collapse
+ * all whitespace runs to single spaces, and trim. The shared core of every evidence-text
+ * sanitizer (labels here, drawer prose in `./lossExplanation.ts`); callers apply their own
+ * length cap and empty-result fallback. Markup characters are deliberately **kept** — the
+ * text is only ever rendered as React text nodes, where `<script>` is inert; rewriting it
+ * would misreport the user's own names.
  *
- * Strips C0/C1 control characters and Unicode bidi overrides, collapses all whitespace runs
- * to single spaces, trims, and truncates to {@link MAX_PROJECTION_LABEL_LENGTH} with an
- * ellipsis. Markup characters are deliberately **kept** — labels are only rendered as text
- * nodes, where `<script>` is inert; rewriting them would misreport the user's own names.
- *
- * @param raw The label as received from the server (may be null/empty).
- * @returns A display-safe label, or {@link UNNAMED_LABEL} when nothing survives.
+ * @param raw The text as received from the server.
+ * @returns The cleaned, whitespace-collapsed text (possibly empty).
  */
-export function sanitizeProjectionLabel(raw: string | null | undefined): string {
-  if (raw == null) return UNNAMED_LABEL;
+export function stripControlAndBidi(raw: string): string {
   let cleaned = '';
   for (const ch of raw) {
     const code = ch.codePointAt(0) as number;
@@ -80,7 +79,21 @@ export function sanitizeProjectionLabel(raw: string | null | undefined): string 
     if (isControl || BIDI_CONTROL.has(code)) continue;
     cleaned += ch;
   }
-  const collapsed = cleaned.replace(/\s+/g, ' ').trim();
+  return cleaned.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Sanitize an untrusted source label for display.
+ *
+ * {@link stripControlAndBidi}, then truncation to {@link MAX_PROJECTION_LABEL_LENGTH} with
+ * an ellipsis.
+ *
+ * @param raw The label as received from the server (may be null/empty).
+ * @returns A display-safe label, or {@link UNNAMED_LABEL} when nothing survives.
+ */
+export function sanitizeProjectionLabel(raw: string | null | undefined): string {
+  if (raw == null) return UNNAMED_LABEL;
+  const collapsed = stripControlAndBidi(raw);
   if (collapsed.length === 0) return UNNAMED_LABEL;
   if (collapsed.length <= MAX_PROJECTION_LABEL_LENGTH) return collapsed;
   return `${collapsed.slice(0, MAX_PROJECTION_LABEL_LENGTH - 1)}…`;

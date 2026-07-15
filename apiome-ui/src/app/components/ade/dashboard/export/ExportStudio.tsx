@@ -726,10 +726,12 @@ export function ExportStudio({
                 openableProblems={openableProblems}
                 onOpenProblem={openProblem}
                 projectionPanel={
-                  // The destination-aware projection map (EFP-2.2): rendered once a verify
-                  // has settled, for the same (source, target, changed-options) the verify
-                  // ran with — so the evidence pages describe the snapshot whose summary the
-                  // fidelity lens shows.
+                  // The destination-aware projection map (EFP-2.2) with its evidence drawer
+                  // (EFP-2.3): rendered once a verify has settled, for the same (source,
+                  // target, changed-options) the verify ran with — so the evidence pages
+                  // describe the snapshot whose summary the fidelity lens shows. The drawer's
+                  // safe remediation navigates to the Target/Options steps; an actual change
+                  // there resets the verify, the acknowledgement, and any generated artifact.
                   displayVerifyResult ? (
                     <ProjectionGraphPanel
                       artifact={artifact}
@@ -739,6 +741,8 @@ export function ExportStudio({
                       options={changedOpts}
                       envelopeProjection={displayVerifyResult.fidelity?.projection ?? null}
                       enabled
+                      onChangeTarget={() => setStep('target')}
+                      onChangeOptions={() => setStep('options')}
                     />
                   ) : null
                 }

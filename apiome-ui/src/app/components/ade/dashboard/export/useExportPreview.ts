@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ExportPreviewResponse } from './exportFidelityPreview';
 
 export interface UseExportPreviewResult {
@@ -20,22 +20,30 @@ export interface UseExportPreviewResult {
  * Fetches `POST /api/export/preview` — the full fidelity envelope (per-construct report +
  * user-facing advisory, MFX-2.5) computed without emitting an artifact — while `enabled` is
  * truthy (i.e. while the ExportDialog's Fidelity step is showing). Re-fetches when the
- * source or target changes. Mirrors `./useExportTargets`.
+ * source, target, or option overrides change, so an option change always yields a fresh
+ * report — never a stale one (EFP-2.3). Mirrors `./useExportTargets`.
  *
  * @param enabled Only fetch while truthy (e.g. while the Fidelity step is showing).
  * @param artifact The artifact (project) id to export.
  * @param version The revision to measure (UUID or label); the latest revision when null.
  * @param target The chosen target emitter key (e.g. `proto`); no fetch while null.
+ * @param options The changed (non-default) option overrides the export would run with, or
+ *   null. Folded into the preview (EFP-2.1) so its projection snapshot matches the evidence
+ *   fetched for the same configuration.
  */
 export function useExportPreview(
   enabled: boolean,
   artifact: string,
   version: string | null | undefined,
   target: string | null,
+  options: Record<string, unknown> | null = null,
 ): UseExportPreviewResult {
   const [preview, setPreview] = useState<ExportPreviewResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // A stable key for the options object so the effect re-runs on content, not identity.
+  const optionsKey = useMemo(() => JSON.stringify(options ?? null), [options]);
 
   useEffect(() => {
     if (!enabled || !artifact || !target) return;
@@ -53,7 +61,12 @@ export function useExportPreview(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ artifact, version: version || null, target }),
+          body: JSON.stringify({
+            artifact,
+            version: version || null,
+            target,
+            options: options ?? null,
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
@@ -77,7 +90,8 @@ export function useExportPreview(
     return () => {
       cancelled = true;
     };
-  }, [enabled, artifact, version, target]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- optionsKey stands in for `options` content
+  }, [enabled, artifact, version, target, optionsKey]);
 
   return { preview, loading, error };
 }
