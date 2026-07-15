@@ -774,8 +774,10 @@ export function ExportStudio({
                     Generated a <strong>{bundle.files.length}-file bundle</strong>. Navigate the files
                     on the left, then download the .zip.
                   </p>
+                  {/* A definite height (not just min-h): the viewer's Monaco surface sizes off the
+                      CSS height chain, and 70vh keeps the review surface tall on large screens. */}
                   <BundleExplorer
-                    className="min-h-[420px]"
+                    className="h-[70vh] min-h-[420px]"
                     manifest={bundle}
                     countsByPath={bundleFindingCounts}
                     targetKey={selected.key}
@@ -790,8 +792,10 @@ export function ExportStudio({
                     Generated <strong>{emitted.filename}</strong>. Review it below, then download the
                     file or a .zip bundle.
                   </p>
+                  {/* A definite height (not just min-h) so the emitted source is actually visible
+                      in the Monaco viewer — see ReadOnlyCodeViewer's absolute-fill note. */}
                   <ArtifactPreviewCard
-                    className="min-h-[420px]"
+                    className="h-[70vh] min-h-[420px]"
                     artifact={emitted}
                     report={verifyResult?.fidelity.report ?? null}
                     targetKey={selected.key}

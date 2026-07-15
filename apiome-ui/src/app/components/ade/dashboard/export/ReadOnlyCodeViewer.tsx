@@ -147,15 +147,22 @@ export function ReadOnlyCodeViewer({
       className={cn('relative overflow-hidden', className)}
     >
       {overlay ? <div className="absolute right-2 top-2 z-10">{overlay}</div> : null}
-      <MonacoEditor
-        height={height}
-        language={language}
-        theme={isDark ? 'vs-dark' : 'light'}
-        value={value}
-        fallbackTestId={fallbackTestId}
-        options={{ ...READ_ONLY_OPTIONS, wordWrap }}
-        onMount={onMount}
-      />
+      {/* Absolute fill: Monaco's `height: 100%` needs a *definite* CSS height on every ancestor,
+          which a flex chain sized only by `min-h-*` (the Studio Review step) cannot provide — the
+          percentage resolves to 0 and the editor collapses even though the container has a real
+          pixel box. Filling that box absolutely sizes the editor from the rendered box instead of
+          the CSS height chain, so the viewer works in any bounded container. */}
+      <div className="absolute inset-0">
+        <MonacoEditor
+          height={height}
+          language={language}
+          theme={isDark ? 'vs-dark' : 'light'}
+          value={value}
+          fallbackTestId={fallbackTestId}
+          options={{ ...READ_ONLY_OPTIONS, wordWrap }}
+          onMount={onMount}
+        />
+      </div>
     </div>
   );
 }

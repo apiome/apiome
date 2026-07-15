@@ -98,4 +98,14 @@ describe('ReadOnlyCodeViewer (MFX-43.1)', () => {
     const editor = await screen.findByTestId('mock-monaco');
     expect(editor).toHaveAttribute('data-theme', 'vs-dark');
   });
+
+  it('absolutely fills its container so the editor never collapses in a min-height flex chain', async () => {
+    // Monaco's `height: 100%` resolves to 0 when an ancestor's height is only derived from
+    // `min-h-*` (the Studio Review step) — the editor must be sized by the container's rendered
+    // box (absolute fill), not the CSS percentage chain, or only the copy overlay stays visible.
+    render(<ReadOnlyCodeViewer value={PROTO} language="protobuf" />);
+
+    const editor = await screen.findByTestId('mock-monaco');
+    expect(editor.parentElement).toHaveClass('absolute', 'inset-0');
+  });
 });
