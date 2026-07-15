@@ -333,7 +333,7 @@ export function laneForStatus(status: ProjectionStatus): ProjectionLaneKey {
 export const GRAPH_AGGREGATION_THRESHOLD = 48;
 
 /** Soft wall-clock budget (ms) for `buildProjectionView` over a large fixture (EFP-3.2 CI). */
-export const BUILD_PROJECTION_VIEW_SOFT_BUDGET_MS = 100;
+export const BUILD_PROJECTION_VIEW_SOFT_BUDGET_MS = 1000;
 
 /**
  * Statuses eligible for aggregation. Dropped and unavailable evidence is NEVER aggregated

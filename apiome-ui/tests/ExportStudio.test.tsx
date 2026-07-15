@@ -794,6 +794,9 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
       options: { package: 'com.example' },
       // A lossy conversion continued past the acknowledgement submits the job confirmed (MFX-3.3).
       confirm: true,
+      // Studio always forwards the verify envelope's projection snapshot id (EFP-3.1); this
+      // fixture's fidelity preview has no projection summary, so the field is null.
+      acknowledged_snapshot: null,
     });
     // The same changed options are reported to onGenerated, so the recent-export record can offer
     // a faithful re-run (MFX-41.3).
