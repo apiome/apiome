@@ -33,6 +33,7 @@ class SpecExportMetadata:
     fidelity_target: str | None = None
     fidelity: dict[str, object] | None = None
     filename: str | None = None
+    snapshot_hash: str | None = None
 
 
 def write_document_bytes(body: bytes, output: str) -> None:

@@ -46,6 +46,8 @@ export interface GenerateProgressProps {
   onAcknowledgeAndRetry: () => void;
   /** Route back to the Verify lenses with the validator's findings loaded (`fix-in-verify`). */
   onFixInVerify: (validation: EmittedValidationReport | null) => void;
+  /** Route back to Verify to re-run preview/acknowledgement after STALE_PREVIEW (EFP-3.1). */
+  onRefreshPreview: () => void;
 }
 
 /**
@@ -72,6 +74,7 @@ export function GenerateProgress({
   onReconfigureOptions,
   onAcknowledgeAndRetry,
   onFixInVerify,
+  onRefreshPreview,
 }: GenerateProgressProps) {
   const { state, percent } = status;
   const inFlight = state === 'queued' || state === 'running';
@@ -171,6 +174,7 @@ export function GenerateProgress({
           onReconfigureOptions={onReconfigureOptions}
           onAcknowledgeAndRetry={onAcknowledgeAndRetry}
           onFixInVerify={onFixInVerify}
+          onRefreshPreview={onRefreshPreview}
         />
       )}
     </div>
@@ -260,6 +264,7 @@ interface FailureSurfaceProps {
   onReconfigureOptions: () => void;
   onAcknowledgeAndRetry: () => void;
   onFixInVerify: (validation: EmittedValidationReport | null) => void;
+  onRefreshPreview: () => void;
 }
 
 /** The structured failure surface: class heading, message, class detail, and the recovery action. */
@@ -272,6 +277,7 @@ function FailureSurface({
   onReconfigureOptions,
   onAcknowledgeAndRetry,
   onFixInVerify,
+  onRefreshPreview,
 }: FailureSurfaceProps) {
   const validation = validationReportFromError(status.error);
   const reasons = guardReasonsFrom(status.error?.context);
@@ -289,6 +295,9 @@ function FailureSurface({
         break;
       case 'fix-in-verify':
         onFixInVerify(validation);
+        break;
+      case 'refresh-preview':
+        onRefreshPreview();
         break;
       case 'retry':
       default:
@@ -372,6 +381,7 @@ function recoveryIcon(action: ExportRecoveryAction) {
       return <SlidersHorizontal className="h-4 w-4" aria-hidden />;
     case 'fix-in-verify':
       return <ShieldAlert className="h-4 w-4" aria-hidden />;
+    case 'refresh-preview':
     case 'acknowledge-and-retry':
     case 'retry':
     default:

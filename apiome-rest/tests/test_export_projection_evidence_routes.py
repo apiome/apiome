@@ -289,3 +289,88 @@ async def test_job_rejects_a_stale_acknowledged_snapshot() -> None:
     assert error["context"]["acknowledged_snapshot"] == "0" * 64
     assert error["context"]["current_snapshot"] == _current_snapshot_hash()
     assert "preview" in error["message"].lower()
+
+
+async def test_job_rejects_stale_ack_when_options_change() -> None:
+    """An option change is a different snapshot — the old acknowledgement fails (EFP-3.1)."""
+    default_hash = _current_snapshot_hash()
+    request = ExportJobStartRequest(
+        artifact="artifact-1",
+        target="avro",
+        dry_run=True,
+        options={"namespace": "corpus.test"},
+        acknowledged_snapshot=default_hash,
+    )
+    status = await _run_job(request)
+    assert status["state"] == "failed"
+    assert status["error"]["code"] == "STALE_PREVIEW"
+
+
+async def test_job_rejects_stale_ack_after_emitter_version_bump() -> None:
+    """An emitter upgrade between preview and generate yields STALE_PREVIEW (EFP-3.1)."""
+    from app.avro_emitter import AvroEmitter
+
+    ack = _current_snapshot_hash()
+    original = AvroEmitter.version
+    try:
+        AvroEmitter.version = "999-bumped-for-test"
+        request = ExportJobStartRequest(
+            artifact="artifact-1",
+            target="avro",
+            dry_run=True,
+            acknowledged_snapshot=ack,
+        )
+        status = await _run_job(request)
+    finally:
+        AvroEmitter.version = original
+    assert status["state"] == "failed"
+    assert status["error"]["code"] == "STALE_PREVIEW"
+
+
+async def test_job_rejects_stale_ack_after_registry_version_bump() -> None:
+    """A capability-registry revision between preview and generate yields STALE_PREVIEW."""
+    from app.export_projection import REGISTRY_VERSION
+
+    ack = _current_snapshot_hash()
+    with patch("app.export_projection.REGISTRY_VERSION", "999-bumped-registry"):
+        request = ExportJobStartRequest(
+            artifact="artifact-1",
+            target="avro",
+            dry_run=True,
+            acknowledged_snapshot=ack,
+        )
+        status = await _run_job(request)
+    assert status["state"] == "failed"
+    assert status["error"]["code"] == "STALE_PREVIEW"
+    assert REGISTRY_VERSION != "999-bumped-registry"
+
+
+async def test_job_rejects_stale_ack_after_source_revision_change() -> None:
+    """A source revision change between preview and generate yields STALE_PREVIEW."""
+    from projection_corpus import event_api
+
+    ack = _current_snapshot_hash()
+    altered = ExportSource(
+        api=event_api(),
+        artifact_id="artifact-1",
+        version_record_id="rev-uuid-2",
+        version_label="2.0.0",
+    )
+    request = ExportJobStartRequest(
+        artifact="artifact-1",
+        target="avro",
+        dry_run=True,
+        acknowledged_snapshot=ack,
+    )
+    with patch("app.export_job_engine.load_export_source", return_value=altered):
+        accepted = await schedule_export_job(_TENANT, _MOCK_AUTH["tenant_id"], request)
+        for _ in range(500):
+            status = await get_export_job_status(_TENANT, accepted.job_id)
+            if status.state in ("completed", "failed", "canceled"):
+                payload = status.model_dump(mode="json")
+                break
+            await asyncio.sleep(0.01)
+        else:
+            raise AssertionError("export job did not reach a terminal state")
+    assert payload["state"] == "failed"
+    assert payload["error"]["code"] == "STALE_PREVIEW"

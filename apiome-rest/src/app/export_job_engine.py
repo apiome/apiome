@@ -439,6 +439,8 @@ class _ExportJobRecord:
     # Epoch-ms deadline after which the retained artifact expires and is dropped; None means
     # no expiry (retention disabled) or no artifact yet (MFX-4.3).
     artifact_expires_at_ms: Optional[int] = None
+    # Snapshot + version provenance for multi-file zip manifests (EFP-3.1); set at packaging.
+    bundle_provenance: Optional[Dict[str, Any]] = None
 
 
 _jobs: Dict[str, _ExportJobRecord] = {}
@@ -802,7 +804,11 @@ def _bundle_manifest_name(result: EmitResult) -> str:
 
 
 def build_bundle_manifest(
-    result: EmitResult, target_format: str, *, manifest_name: str = _BUNDLE_MANIFEST_NAME
+    result: EmitResult,
+    target_format: str,
+    *,
+    manifest_name: str = _BUNDLE_MANIFEST_NAME,
+    provenance: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build the ``manifest.json`` document embedded at the root of a zip bundle (MFX-4.2).
 
@@ -813,23 +819,31 @@ def build_bundle_manifest(
     the job status or unzips the bundle. The manifest describes the *emitted* files only; it
     never lists itself.
 
+    When ``provenance`` is set (EFP-3.1), the manifest also records the projection snapshot
+    hash and the minimum auditable version metadata (emitter/registry/apiome versions, source
+    revision, options) that produced the bundle — without retaining unredacted source content.
+
     Args:
         result: The emitter's output bundle.
         target_format: The resolved target format key (e.g. ``protobuf-3``).
         manifest_name: The manifest's own filename within the bundle (recorded so a reader
             knows which entry to skip); defaults to ``manifest.json``.
+        provenance: Optional snapshot + version provenance block for the export job.
 
     Returns:
         The manifest as a JSON-serializable dict.
     """
     files = build_result_manifest(result)
-    return {
+    manifest: Dict[str, Any] = {
         "target": target_format,
         "media_type": result.media_type,
         "manifest": manifest_name,
         "file_count": len(files),
         "files": [f.model_dump() for f in files],
     }
+    if provenance:
+        manifest["provenance"] = provenance
+    return manifest
 
 
 def _write_zip_entry(archive: zipfile.ZipFile, name: str, text: str) -> None:
@@ -841,7 +855,12 @@ def _write_zip_entry(archive: zipfile.ZipFile, name: str, text: str) -> None:
     archive.writestr(info, text.encode("utf-8"))
 
 
-def build_export_zip(result: EmitResult, target_format: str) -> bytes:
+def build_export_zip(
+    result: EmitResult,
+    target_format: str,
+    *,
+    provenance: Optional[Dict[str, Any]] = None,
+) -> bytes:
     """Package a multi-file emit result into a deterministic zip bundle (MFX-4.2).
 
     The bundle carries every emitted file at its bundle-relative path — each serialized by
@@ -853,12 +872,15 @@ def build_export_zip(result: EmitResult, target_format: str) -> bytes:
     Args:
         result: The emitter's output bundle (typically multi-file, but valid for one file too).
         target_format: The resolved target format key, recorded in the manifest.
+        provenance: Optional snapshot + version provenance for the bundle manifest (EFP-3.1).
 
     Returns:
         The zip archive as raw bytes, ready to serve as ``application/zip``.
     """
     manifest_name = _bundle_manifest_name(result)
-    manifest = build_bundle_manifest(result, target_format, manifest_name=manifest_name)
+    manifest = build_bundle_manifest(
+        result, target_format, manifest_name=manifest_name, provenance=provenance
+    )
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for emitted in result.files:
@@ -1103,6 +1125,15 @@ async def _drive_export_job(job_id: str) -> None:
         if not await _publish(job_id, percent=_STAGE_PERCENT["packaging"], stage="packaging"):
             return
         manifest = build_result_manifest(emit_result)
+        bundle_provenance = {
+            "snapshot_hash": snapshot_hash,
+            "version_record_id": source.version_record_id,
+            "version_label": source.version_label,
+            "options": request.options,
+            "emitter_version": fidelity.projection.target.emitter_version,
+            "registry_version": fidelity.projection.target.registry_version,
+            "apiome_version": fidelity.projection.target.apiome_version,
+        }
 
         # Retain the artifact under a temp-retention window (MFX-4.3): compute the expiry once
         # so the record and the poller-facing result advertise the same deadline.
@@ -1130,6 +1161,7 @@ async def _drive_export_job(job_id: str) -> None:
             if rec is not None:
                 rec.emit_result = emit_result
                 rec.artifact_expires_at_ms = artifact_expires_at
+                rec.bundle_provenance = bundle_provenance
 
         await _publish(
             job_id,
@@ -1376,6 +1408,7 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
             rec.artifact_expires_at_ms is not None and now_ms >= rec.artifact_expires_at_ms
         )
         result_target = rec.status.result.target if rec.status.result else None
+        bundle_provenance = rec.bundle_provenance
 
     # A real export whose window has elapsed: honest 410 (the artifact existed but is gone),
     # distinct from the 409 a dry-run / never-completed job gets (no artifact was ever emitted).
@@ -1404,7 +1437,7 @@ def resolve_export_download(tenant_slug: str, job_id: str) -> ExportDownloadArti
         return ExportDownloadArtifact(
             filename=_bundle_filename(target_format),
             media_type=BUNDLE_MEDIA_TYPE,
-            body=build_export_zip(emit_result, target_format),
+            body=build_export_zip(emit_result, target_format, provenance=bundle_provenance),
         )
 
     primary = emit_result.files[0]

@@ -29,6 +29,7 @@ const PARAMS: ExportJobSubmitParams = {
   targetLabel: 'OpenAPI 3.1',
   options: null,
   confirm: false,
+  acknowledgedSnapshot: 'abc123snapshot',
 };
 
 /** A completed-job GET status payload. */
@@ -102,6 +103,17 @@ describe('exportJobTracker — submit + poll', () => {
     expect(changes).toContain('completed');
     // A subscriber is attached (Studio on screen), so no background toast fires.
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('includes acknowledged_snapshot in the submit payload (EFP-3.1)', async () => {
+    const mock = installFetch();
+    await startExportJob(PARAMS);
+    const submit = mock.mock.calls.find(
+      ([url, init]) => String(url).endsWith('/api/export/jobs') && init?.method === 'POST',
+    );
+    expect(submit).toBeTruthy();
+    const body = JSON.parse((submit![1] as { body: string }).body);
+    expect(body.acknowledged_snapshot).toBe('abc123snapshot');
   });
 
   it('toasts on background completion when no subscriber is attached', async () => {

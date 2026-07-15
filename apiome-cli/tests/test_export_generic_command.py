@@ -49,10 +49,18 @@ def api_key_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("APIOME_TENANT_ID", "acme-corp")
 
 
+_PREVIEW_URL = f"{_BASE}/v1/export/acme-corp/preview"
+_PREVIEW = json.loads((_FIXTURES / "export-preview-lossless.json").read_text())
+
+
 def _mock_scope(httpx_mock: object) -> None:
     httpx_mock.add_response(
         url=f"{_BASE}/v1/projects/acme-corp/by-slug/payments-api", json=_PROJECT
     )
+
+
+def _mock_preview(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_PREVIEW_URL, method="POST", json=_PREVIEW)
 
 
 def _mock_targets(httpx_mock: object) -> None:
@@ -142,6 +150,7 @@ def test_generic_export_writes_single_file_and_lossless_exit(
 ) -> None:
     _mock_scope(httpx_mock)
     _mock_targets(httpx_mock)
+    _mock_preview(httpx_mock)
     _mock_job_pipeline(httpx_mock, status_payload=_JOB_LOSSLESS, download_body=_OPENAPI_BYTES)
     out_file = tmp_path / "openapi.json"
 
@@ -160,12 +169,14 @@ def test_generic_export_writes_single_file_and_lossless_exit(
         "target": "openapi",
         "version": "1.0.0",
         "confirm": False,
+        "acknowledged_snapshot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     }
 
 
 def test_generic_export_lossy_exits_nonzero(httpx_mock: object, tmp_path: Path) -> None:
     _mock_scope(httpx_mock)
     _mock_targets(httpx_mock)
+    _mock_preview(httpx_mock)
     lossy_job = {**_JOB_LOSSY, "job_id": _JOB_ID}
     _mock_job_pipeline(httpx_mock, status_payload=lossy_job, download_body=_OPENAPI_BYTES)
     out_file = tmp_path / "openapi.json"
@@ -180,6 +191,7 @@ def test_generic_export_lossy_exits_nonzero(httpx_mock: object, tmp_path: Path) 
 def test_generic_export_force_accepts_lossy(httpx_mock: object, tmp_path: Path) -> None:
     _mock_scope(httpx_mock)
     _mock_targets(httpx_mock)
+    _mock_preview(httpx_mock)
     _mock_job_pipeline(httpx_mock, status_payload=_JOB_LOSSY, download_body=_OPENAPI_BYTES)
     out_file = tmp_path / "openapi.json"
 
@@ -191,6 +203,7 @@ def test_generic_export_force_accepts_lossy(httpx_mock: object, tmp_path: Path) 
 def test_generic_export_json_metadata(httpx_mock: object, tmp_path: Path) -> None:
     _mock_scope(httpx_mock)
     _mock_targets(httpx_mock)
+    _mock_preview(httpx_mock)
     _mock_job_pipeline(httpx_mock, status_payload=_JOB_LOSSLESS, download_body=_OPENAPI_BYTES)
     out_file = tmp_path / "openapi.json"
 
@@ -200,6 +213,7 @@ def test_generic_export_json_metadata(httpx_mock: object, tmp_path: Path) -> Non
     payload = json.loads(result.stdout.strip())
     assert payload["fidelity_target"] == "openapi"
     assert payload["fidelity"]["status"] == "lossless"
+    assert payload["snapshot_hash"] == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 
 def test_generic_export_unknown_format_is_usage_error(httpx_mock: object, tmp_path: Path) -> None:

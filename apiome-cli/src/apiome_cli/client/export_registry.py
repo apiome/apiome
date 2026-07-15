@@ -61,6 +61,7 @@ def fetch_export_preview(
     artifact: str,
     version: str | None,
     target: str,
+    options: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Fetch the dry-run fidelity preview for one (artifact, target) export.
 
@@ -76,6 +77,9 @@ def fetch_export_preview(
         Revision UUID / version label, or ``None`` for the latest revision.
     target:
         Target emitter key (``openapi``) or format key (``openapi-3.1``).
+    options:
+        Per-target emit options; ``None`` applies the target defaults. Folded into the
+        snapshot hash server-side, so different options are a different snapshot.
 
     Returns
     -------
@@ -86,7 +90,21 @@ def fetch_export_preview(
     body: dict[str, Any] = {"artifact": artifact, "target": target}
     if version is not None:
         body["version"] = version
+    if options:
+        body["options"] = dict(options)
     return client.post(api_paths.export_preview(tenant_slug), json=body).json()
+
+
+def projection_snapshot_hash(preview: Mapping[str, Any]) -> str | None:
+    """Return ``fidelity.projection.manifest_hash`` from a preview response, when present."""
+    fidelity = preview.get("fidelity")
+    if not isinstance(fidelity, Mapping):
+        return None
+    projection = fidelity.get("projection")
+    if not isinstance(projection, Mapping):
+        return None
+    manifest_hash = projection.get("manifest_hash")
+    return manifest_hash if isinstance(manifest_hash, str) and manifest_hash.strip() else None
 
 
 def preview_fidelity(preview: Mapping[str, Any]) -> dict[str, Any] | None:

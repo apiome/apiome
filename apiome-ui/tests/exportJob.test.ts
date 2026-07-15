@@ -105,6 +105,7 @@ describe('exportJob — failedStage', () => {
     expect(failedStageForCode('SOURCE_LOAD_FAILED')).toBe('loading-source');
     expect(failedStageForCode('UNSUPPORTED_TARGET')).toBe('analyzing-fidelity');
     expect(failedStageForCode('TRANSCODE_CONFIRMATION_REQUIRED')).toBe('analyzing-fidelity');
+    expect(failedStageForCode('STALE_PREVIEW')).toBe('analyzing-fidelity');
     expect(failedStageForCode('EMIT_FAILED')).toBe('emitting');
     expect(failedStageForCode('EMPTY_EMIT')).toBe('emitting');
     expect(failedStageForCode('EMITTED_ARTIFACT_INVALID')).toBe('validating');
@@ -127,6 +128,7 @@ describe('exportJob — classifyExportFailure', () => {
     ['SOURCE_LOAD_FAILED', { class: 'source', action: 'retry' }],
     ['UNSUPPORTED_TARGET', { class: 'target', action: 'reconfigure-target' }],
     ['TRANSCODE_CONFIRMATION_REQUIRED', { class: 'confirmation', action: 'acknowledge-and-retry' }],
+    ['STALE_PREVIEW', { class: 'stale-preview', action: 'refresh-preview' }],
     ['EMIT_FAILED', { class: 'emitter', action: 'retry' }],
     ['EMPTY_EMIT', { class: 'emitter', action: 'reconfigure-options' }],
     ['EMITTED_ARTIFACT_INVALID', { class: 'validation', action: 'fix-in-verify' }],

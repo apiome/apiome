@@ -9,6 +9,7 @@
     "version_label": "1.0.0",
     "target": "openapi-3.1",
     "dry_run": false,
+    "snapshot_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "fidelity": {
       "summary": {
         "tier": "lossless",
