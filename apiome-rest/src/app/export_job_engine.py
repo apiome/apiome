@@ -936,6 +936,7 @@ async def _drive_export_job(job_id: str) -> None:
             source.api,
             emitter_cls,
             min_severity=request.min_severity,
+            options=request.options,
         )
         # Classify the conversion off the envelope's report (MFX-3.3), so the job's guard and
         # the /preview guard agree and the pre-flight gate can refuse a severe conversion.

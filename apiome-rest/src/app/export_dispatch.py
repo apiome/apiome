@@ -142,7 +142,9 @@ def dispatch_from_source(
     # The fidelity envelope is computed the same way the preview endpoint does, so a preview and
     # the dispatch it previews agree byte-for-byte. The guard reuses the envelope's report so it
     # never re-walks the model and always corroborates what the report shows.
-    fidelity = build_export_fidelity(source.api, emitter_cls, min_severity=min_severity)
+    fidelity = build_export_fidelity(
+        source.api, emitter_cls, min_severity=min_severity, options=options
+    )
     guard = classify_transcode(source.api, emitter_cls, report=fidelity.report)
 
     if dry_run:

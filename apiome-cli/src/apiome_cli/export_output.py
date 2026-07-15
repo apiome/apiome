@@ -208,7 +208,45 @@ def format_export_fidelity_summary(
             lines.append(message.strip())
 
     lines.extend(format_loss_table_lines(fidelity))
+    lines.extend(format_projection_snapshot_lines(fidelity))
     return lines
+
+
+def format_projection_snapshot_lines(fidelity: Mapping[str, Any] | None) -> list[str]:
+    """Build the one-line projection-snapshot reference for an export (EFP-1.1).
+
+    The projection summary (``fidelity.projection``) carries the snapshot hash that a
+    preview, a verify, a job, and this CLI all share for identical inputs, plus the
+    construct/evidence counts. Emitting its short hash lets a user cross-reference the
+    machine-readable ``--json`` evidence (which carries the full ``projection`` block)
+    with what the human summary showed. Absent (older server), nothing is emitted.
+
+    Parameters
+    ----------
+    fidelity:
+        The ``fidelity`` envelope, whose ``projection`` block is summarized.
+
+    Returns
+    -------
+    list[str]
+        A single ``Projection snapshot …`` line, or an empty list when unavailable.
+    """
+    if not isinstance(fidelity, Mapping):
+        return []
+    projection = fidelity.get("projection")
+    if not isinstance(projection, Mapping):
+        return []
+    manifest_hash = projection.get("manifest_hash")
+    if not isinstance(manifest_hash, str) or not manifest_hash:
+        return []
+    constructs = projection.get("total_constructs")
+    evidence = projection.get("evidence_count")
+    parts = [f"Projection snapshot {manifest_hash[:12]}"]
+    if isinstance(constructs, int):
+        parts.append(f"{constructs} constructs")
+    if isinstance(evidence, int):
+        parts.append(f"{evidence} evidence rows")
+    return [" — ".join([parts[0], ", ".join(parts[1:])]) if len(parts) > 1 else parts[0]]
 
 
 _LOSSY_EXIT_HINT = (
