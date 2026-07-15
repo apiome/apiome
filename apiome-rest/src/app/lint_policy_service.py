@@ -14,6 +14,7 @@ from .database import db
 from .lint_evidence import (
     SUBJECT_CATALOG_REVISION,
     SUBJECT_MCP_ENDPOINT_VERSION,
+    merged_findings_from_runs,
     normalize_native_finding,
 )
 from .models import (
@@ -22,7 +23,6 @@ from .models import (
     LintPolicyAnnotatedFindingOut,
     LintPolicyEvaluationOut,
     LintPolicyResponse,
-    StyleGuidePolicyVersionOut,
     lint_finding_decision_out_from_row,
     style_guide_policy_version_out_from_row,
 )
@@ -122,8 +122,10 @@ def _findings_from_evidence_or_report(
 
     Rows arrive newest-first (``ORDER BY created_at DESC``), so the first row seen for a scanner
     is that scanner's latest run. Scanners are merged in sorted id order for a deterministic
-    finding sequence. The run id and fingerprint reported alongside remain those of the newest
-    run overall, preserving the existing single-scanner behaviour.
+    finding sequence (the shared :func:`app.lint_evidence.merged_findings_from_runs`, also used
+    by the CLX-4.1 workspace so the two surfaces can never disagree about "current findings").
+    The run id and fingerprint reported alongside remain those of the newest run overall,
+    preserving the existing single-scanner behaviour.
 
     Falls back to the native report when no evidence exists at all.
 
@@ -131,15 +133,7 @@ def _findings_from_evidence_or_report(
         (findings, evidence_run_id, evidence_fingerprint)
     """
     if evidence_rows:
-        latest_by_scanner: Dict[str, Mapping[str, Any]] = {}
-        for row in evidence_rows:
-            latest_by_scanner.setdefault(str(row.get("scanner_id") or ""), row)
-        findings: List[Dict[str, Any]] = []
-        for scanner_id in sorted(latest_by_scanner):
-            run = latest_by_scanner[scanner_id]
-            findings.extend(
-                f if isinstance(f, dict) else {} for f in (run.get("findings") or [])
-            )
+        findings = merged_findings_from_runs(evidence_rows)
         newest = evidence_rows[0]
         return findings, str(newest["id"]), newest.get("report_fingerprint")
     if report and isinstance(report.get("findings"), list):

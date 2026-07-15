@@ -9,6 +9,7 @@ import { cn } from '@lib/utils';
 export type LintDecisionState =
   | 'open'
   | 'acknowledged'
+  | 'waiver_requested'
   | 'waived'
   | 'fixed'
   | 'false_positive';
@@ -16,6 +17,7 @@ export type LintDecisionState =
 const STATE_LABEL: Record<LintDecisionState, string> = {
   open: 'Open',
   acknowledged: 'Acknowledged',
+  waiver_requested: 'Waiver requested',
   waived: 'Waived',
   fixed: 'Fixed',
   false_positive: 'False positive',
@@ -24,6 +26,7 @@ const STATE_LABEL: Record<LintDecisionState, string> = {
 const STATE_CLASS: Record<LintDecisionState, string> = {
   open: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   acknowledged: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+  waiver_requested: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
   waived: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
   fixed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
   false_positive: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',

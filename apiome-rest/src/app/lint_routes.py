@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from .auth import validate_authentication, validate_session_credentials
 from .axis_score import catalog_axis_evaluation
-from .auth import get_authenticated_user_id, validate_authentication, validate_session_credentials
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
@@ -23,6 +23,11 @@ from .import_routing import PUBLISHABLE_FORMATS
 from .lint_evidence import SUBJECT_CATALOG_REVISION
 from .lint_policy_service import evaluate_catalog_revision_policy
 from .lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors, builtin_rule_ids
+from .lint_workspace import (
+    ACTION_PUBLISH,
+    required_action_for_transition,
+    transition_error,
+)
 from .models import (
     CustomRuleOut,
     CustomRulesValidateRequest,
@@ -49,7 +54,8 @@ from .models import (
     lint_evidence_response_from_rows,
     lint_finding_decision_out_from_row,
 )
-from .policy_evaluate import DECISION_STATES
+from .permissions import Action, Resource, enforce_permission
+from .policy_evaluate import match_decision_for_fingerprint
 from .schema_lint import merge_compatibility_findings
 from .style_guide_engine import guided_lint_openapi_spec
 
@@ -781,33 +787,42 @@ async def upsert_lint_finding_decision(
     body: LintFindingDecisionUpsertRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintFindingDecisionOut:
-    """Create or update a finding decision / waiver (CLX-1.3, #4850).
+    """Create or update a finding decision / waiver (CLX-1.3, #4850; guarded by CLX-4.1, #4859).
 
-    Waived state requires non-empty rationale and an expiry timestamp.
+    Waived state requires non-empty rationale and an expiry timestamp. The transition is
+    RBAC-guarded on the ``lint_findings`` resource: triage transitions need ``edit``;
+    approval-tier transitions (entering/leaving ``waived``, resolving a ``waiver_requested``
+    row) need ``publish`` — the same rules the workspace bulk endpoint enforces, so bulk
+    authorization can never be bypassed one decision at a time.
     """
     tenant_id = auth_data["tenant_id"]
     state = (body.state or "").strip().lower()
-    if state not in DECISION_STATES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid state; expected one of {', '.join(DECISION_STATES)}",
-        )
-    if state == "waived":
-        if not (body.rationale or "").strip():
-            raise HTTPException(
-                status_code=400, detail="Waivers require a non-empty rationale"
-            )
-        if body.expires_at is None:
-            raise HTTPException(
-                status_code=400, detail="Waivers require an expiresAt timestamp"
-            )
+    error = transition_error(
+        state, rationale=body.rationale, expires_at=body.expires_at
+    )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
 
     if body.project_id:
         project = db.get_project_by_id(body.project_id, tenant_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-    actor = get_authenticated_user_id(auth_data)
+    current_rows = db.list_lint_finding_decisions(
+        tenant_id, fingerprints=[body.source_fingerprint.strip()]
+    )
+    current = match_decision_for_fingerprint(
+        current_rows, body.source_fingerprint.strip(), project_id=body.project_id
+    )
+    before_state = str(current["state"]) if current else None
+    required_action = required_action_for_transition(before_state, state)
+    actor = enforce_permission(
+        db,
+        auth_data,
+        Resource.LINT_FINDINGS,
+        Action.PUBLISH if required_action == ACTION_PUBLISH else Action.EDIT,
+        target=f"lint-decision:{body.source_fingerprint.strip()}",
+    )
     row = db.upsert_lint_finding_decision(
         tenant_id=tenant_id,
         source_fingerprint=body.source_fingerprint.strip(),

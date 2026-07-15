@@ -33,16 +33,19 @@ DEFAULT_CI_OUTCOMES: Mapping[str, bool] = {
     "failOnAxisGates": True,
 }
 
-#: Closed finding lifecycle vocabulary (matches V169 check constraint).
+#: Closed finding lifecycle vocabulary (matches V169 check constraint, widened by V175).
 DECISION_STATES: Tuple[str, ...] = (
     "open",
     "acknowledged",
+    "waiver_requested",
     "waived",
     "fixed",
     "false_positive",
 )
 
 #: States that suppress an error-severity finding from the unwaived-errors gate.
+#: ``waiver_requested`` is deliberately absent — a requested-but-unapproved waiver still
+#: gates exactly like ``open`` until a privileged reviewer approves it (CLX-4.1, #4859).
 SUPPRESSED_FOR_ERRORS: frozenset[str] = frozenset({"waived", "fixed", "false_positive"})
 
 #: Letter grades ordered best → worst for axis gate comparisons.

@@ -483,6 +483,52 @@ def expected_scanners_for_subject(subject_type: str) -> List[str]:
     return [NATIVE_SCANNER_ID]
 
 
+def latest_runs_by_scanner(
+    runs: Sequence[Mapping[str, Any]],
+) -> Dict[str, Mapping[str, Any]]:
+    """Pick each scanner's newest run from rows ordered newest-first (CLX-4.1, #4859).
+
+    A subject can be scanned by several scanners, each writing its own evidence run. "The
+    current evidence for this subject" is the newest run of *each* scanner — taking only the
+    single newest row overall would silently discard every other scanner's findings (see
+    :func:`app.lint_policy_service._findings_from_evidence_or_report` for the full rationale).
+
+    Args:
+        runs: Evidence-run rows for ONE subject, most recent first.
+
+    Returns:
+        Map of ``scanner_id`` -> that scanner's newest run row.
+    """
+    latest: Dict[str, Mapping[str, Any]] = {}
+    for run in runs:
+        latest.setdefault(str(run.get("scanner_id") or ""), run)
+    return latest
+
+
+def merged_findings_from_runs(
+    runs: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Merge the newest run per scanner into one findings list (CLX-4.1, #4859).
+
+    Scanners contribute in sorted id order for a deterministic sequence; non-dict finding
+    entries degrade to ``{}`` rather than raising, mirroring the policy-service behaviour.
+
+    Args:
+        runs: Evidence-run rows for ONE subject, most recent first.
+
+    Returns:
+        Envelope finding dicts from each scanner's latest run.
+    """
+    latest = latest_runs_by_scanner(runs)
+    findings: List[Dict[str, Any]] = []
+    for scanner_id in sorted(latest):
+        run = latest[scanner_id]
+        findings.extend(
+            f if isinstance(f, dict) else {} for f in (run.get("findings") or [])
+        )
+    return findings
+
+
 def coverage_entries(
     runs: Sequence[Mapping[str, Any]],
     expected_scanners: Sequence[str],

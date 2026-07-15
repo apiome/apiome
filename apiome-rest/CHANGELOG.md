@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.122.0] - 2026-07-14
+
+### Added
+- **Catalog-wide lint posture and remediation workspace (CLX-4.1, #4859)** — a persistent triage
+  surface over the CLX-1.x substrate so teams can own risk instead of exporting one-off reports.
+  - **Cross-catalog read paths** — the newest evidence run per (subject, scanner) across the
+    tenant's latest live catalog revisions and MCP snapshots, joined with axis evaluations, latest
+    policy evaluations, and finding decisions (`app.lint_workspace`,
+    `GET /v1/lint/workspace/{findings,summary,trends}`). Findings merge per scanner via the shared
+    `app.lint_evidence.merged_findings_from_runs`, so the workspace and policy evaluation can never
+    disagree about "current findings". Regressions (`isNew`) diff each scanner's latest run against
+    its previous one.
+  - **Queue filters and facets** — severity / effective state / axis / grade / coverage / profile /
+    scanner (source) / subject type / project / owner / rule / category / new / free-text, with
+    pre-pagination facet counts and severity/newest/rule/subject sorts.
+  - **Trends that separate genuine remediation from policy change (AC-4)** — `remediatedFindings`
+    counts only fingerprints that disappeared without being waived or false-positived; waiver
+    grants/expiries, false-positive marks, and policy pack publications are distinct series.
+  - **Waiver request → review** — a new `waiver_requested` decision state (V175): requesting is an
+    editor action, approving into `waived` (or rejecting) needs the new `lint_findings:publish`
+    permission. Requested waivers still gate CI exactly like `open`.
+  - **Bulk actions: authorized, audited, reversible (AC-3)** — `POST /v1/lint/workspace/decisions/bulk`
+    (≤200 items) enforces `lint_findings` RBAC (per-item publish gating), appends the existing
+    immutable decision events, and returns per-item `beforeState` so clients can build the exact
+    inverse request. The single `POST /v1/lint/decisions` upsert now enforces the same guard, so
+    bulk authorization cannot be bypassed one decision at a time — keyless legacy API-key callers
+    without a resolvable user now receive 403 on decision mutations.
+  - **Saved views** — per-user named filter bundles (`lint_workspace_saved_views`, V175) with
+    validated filter blobs, mirroring the MCP saved-search surface.
+  - **RBAC** — new `lint_findings` resource seeded into the built-in role grids (Owner/Admin:
+    full + publish; Editor: view/edit; Viewer: view).
+  - Docs: `docs/lint_workspace.md`. UI: the ADE **Lint Posture** workspace (queue with bulk
+    select, finding detail linking revision/evidence/policy/history, trends tab, saved views).
+
 ## [1.121.0] - 2026-07-14
 
 ### Added

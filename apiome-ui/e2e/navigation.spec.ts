@@ -59,6 +59,14 @@ test.describe('Application Navigation', () => {
       expect(page.url()).toContain('login');
     });
 
+    test('lint workspace should redirect to login when not authenticated', async ({ page }) => {
+      await page.goto('/ade/dashboard/lint-workspace');
+
+      // Should redirect to login
+      await page.waitForURL(/login/, { timeout: 10000 });
+      expect(page.url()).toContain('login');
+    });
+
     test('api-keys page should redirect to login when not authenticated', async ({ page }) => {
       await page.goto('/ade/dashboard/api-keys');
 

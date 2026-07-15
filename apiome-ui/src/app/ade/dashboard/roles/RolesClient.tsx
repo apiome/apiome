@@ -27,6 +27,7 @@ const RESOURCES: { key: string; label: string }[] = [
   { key: 'members', label: 'Members' },
   { key: 'api_keys', label: 'API Keys' },
   { key: 'billing', label: 'Billing' },
+  { key: 'lint_findings', label: 'Lint Findings' },
 ];
 
 const ACTIONS: { key: string; label: string }[] = [
