@@ -9,5 +9,5 @@ export async function GET(request: NextRequest) {
   if ('error' in auth) return auth.error;
   const projectId = request.nextUrl.searchParams.get('projectId');
   const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
-  return proxyToRest(auth.user, `/lint/workspace/summary${query}`);
+  return proxyToRest(auth, `/lint/workspace/summary${query}`);
 }

@@ -18,7 +18,7 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
   }
-  return proxyToRest(auth.user, `/lint/workspace/views/${encodeURIComponent(viewId)}`, {
+  return proxyToRest(auth, `/lint/workspace/views/${encodeURIComponent(viewId)}`, {
     method: 'PATCH',
     body,
   });
@@ -31,7 +31,7 @@ export async function DELETE(
   const auth = await requireSessionUser();
   if ('error' in auth) return auth.error;
   const { viewId } = await params;
-  return proxyToRest(auth.user, `/lint/workspace/views/${encodeURIComponent(viewId)}`, {
+  return proxyToRest(auth, `/lint/workspace/views/${encodeURIComponent(viewId)}`, {
     method: 'DELETE',
   });
 }

@@ -9,5 +9,5 @@ export async function GET(request: NextRequest) {
   const auth = await requireSessionUser();
   if ('error' in auth) return auth.error;
   const query = whitelistedQuery(request.nextUrl.searchParams);
-  return proxyToRest(auth.user, `/lint/workspace/findings${query}`);
+  return proxyToRest(auth, `/lint/workspace/findings${query}`);
 }

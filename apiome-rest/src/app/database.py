@@ -3157,7 +3157,9 @@ class Database:
                 {mcp_branch}
                 ORDER BY created_at DESC, id
             """
-            params = (tenant_id, None, None, per_scanner, tenant_id, per_scanner)
+            # Placeholder order follows the SQL text: BOTH CTEs first (catalog: tenant,
+            # project, project; mcp: tenant), then each branch's rn cap.
+            params = (tenant_id, None, None, tenant_id, per_scanner, per_scanner)
         return self.execute_query(query, params)
 
     def list_latest_axis_evaluations_for_tenant(
@@ -3213,7 +3215,9 @@ class Database:
                 UNION ALL
                 SELECT * FROM ({mcp_branch}) m
             """
-            params = (tenant_id, None, None, algorithm_id, tenant_id, algorithm_id)
+            # Placeholder order follows the SQL text: BOTH CTEs first (catalog: tenant,
+            # project, project; mcp: tenant), then each branch's algorithm filter.
+            params = (tenant_id, None, None, tenant_id, algorithm_id, algorithm_id)
         return self.execute_query(query, params)
 
     def list_latest_lint_policy_evaluations_for_tenant(

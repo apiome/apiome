@@ -1,18 +1,27 @@
 /**
  * Shared proxy plumbing for the lint workspace API routes (CLX-4.1, #4859).
  *
- * Every /api/lint/workspace/* route authenticates the session, mints the REST bearer token
- * via the shared lib/rest-auth helper, forwards to apiome-rest (tenant scope travels in the
- * token — no tenant slug in the path), and wraps the response in the { success, ... } envelope.
+ * Every /api/lint/workspace/* route authenticates the session, resolves the current tenant's
+ * slug, mints the REST bearer token via the shared lib/rest-auth helper, forwards to
+ * apiome-rest with the required `tenant_slug` query parameter (the /v1/lint/* routers take
+ * the tenant slug as a query param, not a path segment), and wraps the response in the
+ * { success, ... } envelope.
  */
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL, SessionUserForRest } from '@lib/rest-auth';
 
-/** Resolve the session user or the 401/400 error response to return instead. */
+/** Authenticated caller context every workspace proxy call needs. */
+export interface WorkspaceProxyAuth {
+  user: SessionUserForRest;
+  tenantSlug: string;
+}
+
+/** Resolve the session user + tenant slug, or the 401/400/404 error response to return. */
 export async function requireSessionUser(): Promise<
-  { user: SessionUserForRest } | { error: NextResponse }
+  WorkspaceProxyAuth | { error: NextResponse }
 > {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -24,26 +33,35 @@ export async function requireSessionUser(): Promise<
       error: NextResponse.json({ success: false, error: 'No tenant selected' }, { status: 400 }),
     };
   }
-  return { user };
+  const tenant = await getTenantById(user.current_tenant_id);
+  if (!tenant?.slug) {
+    return {
+      error: NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 }),
+    };
+  }
+  return { user, tenantSlug: tenant.slug };
 }
 
 /**
  * Forward a request to apiome-rest and wrap the JSON reply in the success envelope.
  *
- * @param user - Authenticated session user (from requireSessionUser).
+ * @param auth - Authenticated session user + tenant slug (from requireSessionUser).
  * @param path - REST path under the API base, e.g. `/lint/workspace/findings?...`.
  * @param init - Optional method/body overrides (defaults to GET).
  * @returns The enveloped NextResponse mirroring the upstream status on failure.
  */
 export async function proxyToRest(
-  user: SessionUserForRest,
+  auth: WorkspaceProxyAuth,
   path: string,
   init?: { method?: string; body?: unknown },
 ): Promise<NextResponse> {
   try {
-    const response = await fetch(`${REST_API_BASE_URL}${path}`, {
+    // The lint routers take the tenant slug as a query parameter (see the REST OpenAPI spec).
+    const separator = path.includes('?') ? '&' : '?';
+    const url = `${REST_API_BASE_URL}${path}${separator}tenant_slug=${encodeURIComponent(auth.tenantSlug)}`;
+    const response = await fetch(url, {
       method: init?.method ?? 'GET',
-      headers: createRestAuthHeaders(user),
+      headers: createRestAuthHeaders(auth.user),
       ...(init?.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
     });
     const data = await response.json().catch(() => null);

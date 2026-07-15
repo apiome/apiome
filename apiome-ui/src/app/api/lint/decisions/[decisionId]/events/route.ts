@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL, SessionUserForRest } from '@lib/rest-auth';
 
 export async function GET(
@@ -20,9 +21,14 @@ export async function GET(
     if (!user.current_tenant_id) {
       return NextResponse.json({ success: false, error: 'No tenant selected' }, { status: 400 });
     }
+    const tenant = await getTenantById(user.current_tenant_id);
+    if (!tenant?.slug) {
+      return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
+    }
     const { decisionId } = await params;
+    // The lint decisions router takes the tenant slug as a query parameter.
     const response = await fetch(
-      `${REST_API_BASE_URL}/lint/decisions/${encodeURIComponent(decisionId)}/events`,
+      `${REST_API_BASE_URL}/lint/decisions/${encodeURIComponent(decisionId)}/events?tenant_slug=${encodeURIComponent(tenant.slug)}`,
       { method: 'GET', headers: createRestAuthHeaders(user) },
     );
     const data = await response.json().catch(() => null);

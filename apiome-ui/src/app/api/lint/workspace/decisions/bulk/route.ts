@@ -14,5 +14,5 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
   }
-  return proxyToRest(auth.user, '/lint/workspace/decisions/bulk', { method: 'POST', body });
+  return proxyToRest(auth, '/lint/workspace/decisions/bulk', { method: 'POST', body });
 }
