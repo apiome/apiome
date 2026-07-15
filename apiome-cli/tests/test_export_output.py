@@ -12,6 +12,7 @@ from apiome_cli.export_output import (
     enforce_export_fidelity_gate,
     format_export_fidelity_summary,
     format_loss_table_lines,
+    format_projection_snapshot_lines,
     is_lossy,
     kind_label,
     sort_report_items_worst_first,
@@ -87,3 +88,37 @@ def test_enforce_export_fidelity_gate_interactive_confirm(
     monkeypatch.setattr("apiome_cli.export_output.sys.stdin.isatty", lambda: True)
     monkeypatch.setattr("typer.confirm", lambda *args, **kwargs: True)
     enforce_export_fidelity_gate(_PREVIEW_LOSSY["fidelity"], force=False)
+
+
+# ---------------------------------------------------------------------------
+# Projection snapshot line (EFP-1.1)
+# ---------------------------------------------------------------------------
+
+
+def test_projection_snapshot_line_when_present() -> None:
+    fidelity = {
+        "projection": {
+            "manifest_hash": "abcdef0123456789",
+            "total_constructs": 7,
+            "evidence_count": 12,
+        }
+    }
+    lines = format_projection_snapshot_lines(fidelity)
+    assert lines == ["Projection snapshot abcdef012345 — 7 constructs, 12 evidence rows"]
+
+
+def test_projection_snapshot_line_absent_without_projection() -> None:
+    assert format_projection_snapshot_lines({"summary": {}}) == []
+    assert format_projection_snapshot_lines(None) == []
+    assert format_projection_snapshot_lines({"projection": {"manifest_hash": ""}}) == []
+
+
+def test_fidelity_summary_includes_projection_line() -> None:
+    fidelity = dict(_PREVIEW_LOSSY["fidelity"])
+    fidelity["projection"] = {
+        "manifest_hash": "deadbeefcafebabe",
+        "total_constructs": 3,
+        "evidence_count": 4,
+    }
+    lines = format_export_fidelity_summary(fidelity, target="openapi")
+    assert any(line.startswith("Projection snapshot deadbeefcafe") for line in lines)

@@ -466,6 +466,11 @@ class Emitter(ABC):
     #: Output format key this emitter produces, e.g. ``"openapi-3.1"``. Used as the
     #: registry key.
     format: ClassVar[str] = ""
+    #: Emitter implementation version, bumped when this emitter's output or fidelity
+    #: behaviour changes. Recorded in the projection manifest's evidence and folded
+    #: into its snapshot hash (EFP-1.1, #4810), so a manifest built by an upgraded
+    #: emitter is a *different* snapshot even for the same source and options.
+    version: ClassVar[str] = "1"
     #: Human label for target cards / CLI listings.
     label: ClassVar[str] = ""
     #: One-line description of what the emitter exports.

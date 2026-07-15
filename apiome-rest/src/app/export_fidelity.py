@@ -26,11 +26,16 @@ no I/O — so a target badge, a preview, and an export result agree for the same
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .canonical_model import CanonicalApi
 from .emitter import CapabilityProfile, Emitter, EmitterDescriptor
+from .export_projection import (
+    ProjectionManifestSummary,
+    build_export_projection_summary,
+)
 from .fidelity_advisory import ExportAdvisory, build_export_advisory
 from .fidelity_engine import compute_lossiness_for_emitter
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
@@ -119,6 +124,12 @@ class ExportFidelity(BaseModel):
     )
     advisory: ExportAdvisory = Field(
         description="The user-facing 'may lose fidelity' advisory (MFX-2.4), shown when lossy.",
+    )
+    projection: ProjectionManifestSummary = Field(
+        description="The bounded projection-manifest summary (EFP-1.1): the snapshot hash, "
+        "target/version provenance, and status/reason counts that reconcile with ``report``. "
+        "The full source→target node/edge graph is fetched page by page; this summary is what "
+        "lets a preview, a verify, a CLI JSON dump, and a completed job reference one snapshot.",
     )
 
 
@@ -211,14 +222,16 @@ def build_export_fidelity(
     emitter: type[Emitter],
     *,
     min_severity: LossinessSeverity = LossinessSeverity.INFO,
+    options: Optional[Dict[str, Any]] = None,
 ) -> ExportFidelity:
     """Compute the full :class:`ExportFidelity` envelope for exporting ``api`` to ``emitter``.
 
     The single builder shared by the preview endpoint and the export job: it computes the
     prediction report **once** (honouring the emitter's rule pack), the matching advisory
-    (MFX-2.4), and the coarse summary, and assembles them with the target descriptor. No
-    artifact is emitted. Pure and deterministic — a preview and the export it previews are
-    identical for the same inputs.
+    (MFX-2.4), the coarse summary, and the bounded projection-manifest summary (EFP-1.1),
+    and assembles them with the target descriptor. No artifact is emitted. Pure and
+    deterministic — a preview and the export it previews are identical for the same inputs,
+    down to the projection snapshot hash.
 
     Args:
         api: The source canonical model to be exported.
@@ -226,9 +239,13 @@ def build_export_fidelity(
         min_severity: The lowest loss severity that raises the advisory (passed through to
             :func:`app.fidelity_advisory.build_export_advisory`); the report and counts are
             unaffected by it.
+        options: The per-target emit options this envelope describes; ``None``/``{}`` applies
+            the target defaults. Folded (normalized) into the projection snapshot hash so a
+            different option set is a different snapshot, while the report and counts are
+            unaffected by it.
 
     Returns:
-        The full fidelity envelope (target + summary + report + advisory).
+        The full fidelity envelope (target + summary + report + advisory + projection summary).
     """
     report = compute_lossiness_for_emitter(api, emitter)
     profile = emitter.capability_profile()
@@ -236,9 +253,13 @@ def build_export_fidelity(
     advisory = build_export_advisory(
         report, descriptor.label, min_severity=min_severity
     )
+    projection = build_export_projection_summary(
+        api, emitter, options=options, report=report
+    )
     return ExportFidelity(
         target=descriptor,
         summary=_summarize(report, profile),
         report=report,
         advisory=advisory,
+        projection=projection,
     )

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.7.1
+  version: 1.7.2
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -31929,6 +31929,74 @@ components:
       - ambiguous
       title: DetectFormatResponse
       description: The auto-detection verdict for a document.
+    DocumentationEvidence:
+      properties:
+        specification:
+          anyOf:
+          - type: string
+            description: Documentation Evidence schema.
+          - type: 'null'
+            description: Documentation Evidence schema.
+          title: Specification
+          description: Human label of the destination specification (e.g. 'OpenAPI
+            3.1').
+        version:
+          anyOf:
+          - type: string
+            description: Documentation Evidence schema.
+          - type: 'null'
+            description: Documentation Evidence schema.
+          title: Version
+          description: Specification version the link refers to, when versioned.
+        url:
+          anyOf:
+          - type: string
+            description: Documentation Evidence schema.
+          - type: 'null'
+            description: Documentation Evidence schema.
+          title: Url
+          description: Authoritative technical-documentation URL, or null when unavailable.
+        anchor:
+          anyOf:
+          - type: string
+            description: Documentation Evidence schema.
+          - type: 'null'
+            description: Documentation Evidence schema.
+          title: Anchor
+          description: Optional URL fragment/anchor for a specific capability.
+        documentation_unavailable:
+          type: boolean
+          title: Documentation Unavailable
+          description: True when no authoritative link is known; the UI explains the
+            limitation without inventing a URL.
+          default: false
+          example: false
+        note:
+          anyOf:
+          - type: string
+            description: Documentation Evidence schema.
+          - type: 'null'
+            description: Documentation Evidence schema.
+          title: Note
+          description: Short reviewed note about the documentation, when present.
+      additionalProperties: false
+      type: object
+      title: DocumentationEvidence
+      description: 'Destination-format documentation metadata for a target (EFP-1.1
+        seed for EFP-1.2).
+
+
+        A minimal, reviewed pointer to the authoritative specification for the
+
+        destination format, with an explicit ``documentation_unavailable`` fallback
+        so a
+
+        target with no known link says so truthfully rather than inventing one. EFP-1.2''s
+
+        versioned capability/documentation registry supersedes this per-construct;
+        here it
+
+        is a per-target seed carried on :class:`ManifestTarget`.'
     EmittedArtifactLint:
       properties:
         applicable:
@@ -32473,6 +32541,13 @@ components:
           $ref: '#/components/schemas/ExportAdvisory'
           description: The user-facing 'may lose fidelity' advisory (MFX-2.4), shown
             when lossy.
+        projection:
+          $ref: '#/components/schemas/ProjectionManifestSummary'
+          description: 'The bounded projection-manifest summary (EFP-1.1): the snapshot
+            hash, target/version provenance, and status/reason counts that reconcile
+            with ``report``. The full source→target node/edge graph is fetched page
+            by page; this summary is what lets a preview, a verify, a CLI JSON dump,
+            and a completed job reference one snapshot.'
       additionalProperties: false
       type: object
       required:
@@ -32480,6 +32555,7 @@ components:
       - summary
       - report
       - advisory
+      - projection
       title: ExportFidelity
       description: 'The full fidelity envelope for one (source, target) export (MFX-2.5).
 
@@ -36116,6 +36192,70 @@ components:
         CLI flag the export: a ``critical`` item warrants a dismiss-to-proceed
 
         acknowledgement, an ``info`` item a quiet footnote.'
+    ManifestTarget:
+      properties:
+        key:
+          type: string
+          title: Key
+          description: Stable target key (e.g. ``openapi``).
+          example: example
+        format:
+          type: string
+          title: Format
+          description: Output format key (e.g. ``openapi-3.1``).
+          example: openapi
+        label:
+          type: string
+          title: Label
+          description: Human label for the target.
+          example: example
+        paradigm:
+          $ref: '#/components/schemas/ApiParadigm'
+          description: The canonical paradigm this emitter targets.
+        emitter_version:
+          type: string
+          title: Emitter Version
+          description: The emitter implementation version (folded into the hash).
+          example: 1.0.0
+        apiome_version:
+          type: string
+          title: Apiome Version
+          description: The apiome-rest package version that built the manifest.
+          example: 1.0.0
+        capability_profile:
+          $ref: '#/components/schemas/CapabilityProfile'
+          description: The target's static capability profile the report was computed
+            against.
+        needs_toolchain:
+          type: boolean
+          title: Needs Toolchain
+          description: Whether emit hard-requires an external toolchain.
+          example: false
+        available:
+          type: boolean
+          title: Available
+          description: Whether this emitter can run in the current runtime.
+          example: false
+        documentation:
+          $ref: '#/components/schemas/DocumentationEvidence'
+          description: Destination-format documentation metadata (EFP-1.2 seed), with
+            a safe fallback.
+      additionalProperties: false
+      type: object
+      required:
+      - key
+      - format
+      - label
+      - paradigm
+      - emitter_version
+      - apiome_version
+      - capability_profile
+      - needs_toolchain
+      - available
+      - documentation
+      title: ManifestTarget
+      description: The target descriptor + version provenance a manifest was built
+        for (EFP-1.1).
     McpAnnotationCoverageOut:
       properties:
         tool_count:
@@ -45933,6 +46073,97 @@ components:
       type: object
       title: ProjectUpdateRequest
       description: Request model for updating a project.
+    ProjectionManifestSummary:
+      properties:
+        manifest_hash:
+          type: string
+          title: Manifest Hash
+          description: The manifest's stable content hash — the snapshot id.
+          example: a1b2c3d4e5f6789012345678901234ab
+        target:
+          $ref: '#/components/schemas/ManifestTarget'
+          description: The target + version provenance the manifest is for.
+        status_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Status Counts
+          description: Count of projected constructs per ProjectionStatus, zero-filled.
+        reason_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Reason Counts
+          description: Count of non-preserved constructs per ProjectionReason, zero-filled.
+        total_constructs:
+          type: integer
+          title: Total Constructs
+          description: Distinct canonical constructs the manifest projects.
+          example: 1
+        node_count:
+          type: integer
+          title: Node Count
+          description: Total projection nodes in the full manifest.
+          example: 1
+        edge_count:
+          type: integer
+          title: Edge Count
+          description: Total projection edges in the full manifest.
+          example: 1
+        evidence_count:
+          type: integer
+          title: Evidence Count
+          description: Total outcome (projects) edges — the evidence rows.
+          example: 1
+        is_lossless:
+          type: boolean
+          title: Is Lossless
+          description: True when every construct was retained.
+          example: true
+        worst_severity:
+          anyOf:
+          - $ref: '#/components/schemas/LossinessSeverity'
+          - type: 'null'
+            description: Projection Manifest schema.
+          description: Worst severity among non-retained constructs, or null when
+            lossless.
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the underlying graph was aggregated rather than complete.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - manifest_hash
+      - target
+      - status_counts
+      - reason_counts
+      - total_constructs
+      - node_count
+      - edge_count
+      - evidence_count
+      - is_lossless
+      title: ProjectionManifestSummary
+      description: 'The bounded projection summary embedded in the fidelity envelope
+        (EFP-1.1).
+
+
+        Everything a preview/verify/CLI/job needs to *reference* a snapshot — the
+
+        :attr:`manifest_hash`, the target/version provenance, and the aggregate
+
+        status/reason counts — **without** the (potentially large) node/edge graph,
+        which
+
+        is fetched page by page via :func:`paginate_evidence`. Because the summary
+        is
+
+        derived from the deterministic manifest, the same inputs produce the same
+        summary
+
+        across every surface, so they all describe the same snapshot.'
     PublicExportDocumentRequest:
       properties:
         target:
