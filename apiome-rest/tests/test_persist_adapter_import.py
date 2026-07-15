@@ -27,6 +27,8 @@ class _FakeDb:
         self.created_project: Optional[Dict[str, Any]] = None
         self.created_version: Optional[Dict[str, Any]] = None
         self.source_format_call: Optional[Dict[str, Any]] = None
+        self.persisted_canonical: Optional[Dict[str, Any]] = None
+        self.created_classes: list = []
 
     def get_project_by_slug(self, slug: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         return None
@@ -71,6 +73,22 @@ class _FakeDb:
             "format_metadata": format_metadata,
         }
         return True
+
+    def create_class(self, version_id, name, schema, description=None, enabled=True):
+        row = {"id": f"class-{len(self.created_classes) + 1}", "name": name, "schema": schema}
+        self.created_classes.append(row)
+        return row
+
+    def persist_canonical_api(self, *, tenant_id, creator_id, version_id, model):
+        self.persisted_canonical = {
+            "tenant_id": tenant_id,
+            "creator_id": creator_id,
+            "version_id": version_id,
+            "format": model.format,
+            "channel_count": len(model.channels),
+            "operation_count": len(model.operations()),
+        }
+        return "artifact-1"
 
 
 def _model() -> CanonicalApi:
@@ -274,3 +292,88 @@ def test_allocates_a_unique_slug_when_publishable_slug_is_taken(monkeypatch) -> 
     assert fake.created_project["slug"] == "orders-2"
     assert fake.created_version is not None
     assert fake.created_version["version_id"] == "1.0.0-2"
+
+
+def test_asyncapi_import_promotes_classes_and_persists_canonical(monkeypatch) -> None:
+    """REPO-3.3: AsyncAPI catalog import also writes Classes + api_* tree (#2772)."""
+    from app.canonical_model import Channel, Message, MessageRole, Operation, OperationKind, Service
+
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+    model = CanonicalApi(
+        paradigm=ApiParadigm.EVENT,
+        format="asyncapi-3",
+        identity=ApiIdentity(name="User Events"),
+        channels=[
+            Channel(
+                key="user/signedup",
+                address="user/signedup",
+                bindings={"kafka": {"partitions": 1}},
+            )
+        ],
+        services=[
+            Service(
+                key="default",
+                name="default",
+                operations=[
+                    Operation(
+                        key="onUserSignedUp",
+                        name="onUserSignedUp",
+                        kind=OperationKind.SUBSCRIBE,
+                        channel_ref="user/signedup",
+                        extras={"action": "receive"},
+                        messages=[
+                            Message(
+                                key="onUserSignedUp#event",
+                                role=MessageRole.EVENT,
+                                name="UserSignedUp",
+                                payload_schema={
+                                    "type": "object",
+                                    "properties": {"userId": {"type": "string"}},
+                                },
+                            )
+                        ],
+                    )
+                ],
+            )
+        ],
+    )
+    routing = ImportRoutingDecision(
+        target=ImportTarget.CATALOG,
+        publishable=False,
+        schemas_only=False,
+        reason="asyncapi",
+        source="asyncapi",
+        paradigm="event",
+        format="asyncapi-3",
+        operation_count=1,
+        type_count=0,
+        channel_count=1,
+    )
+    payload = _payload()
+    payload["filename"] = "asyncapi.yaml"
+    payload["metadata"]["source_kind"] = "asyncapi"
+    payload["metadata"]["project"] = {"name": "User Events", "slug": "user-events"}
+
+    result = persist_adapter_import(
+        payload, model, _text_intake("asyncapi: '3.0.0'"), routing
+    )
+
+    assert result is not None
+    assert fake.source_format_call["source_format"] == "asyncapi-3"
+    assert fake.created_classes and fake.created_classes[0]["name"] == "UserSignedUp"
+    assert fake.persisted_canonical is not None
+    assert fake.persisted_canonical["channel_count"] == 1
+    assert fake.persisted_canonical["operation_count"] == 1
+    # Class UUID landed on the message extras before relational persist.
+    assert model.operations()[0].messages[0].extras["payload_class_id"] == "class-1"
+
+
+def test_non_asyncapi_skips_canonical_persist(monkeypatch) -> None:
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+
+    persist_adapter_import(_payload(), _model(), _text_intake('syntax = "proto3";'), _catalog_routing())
+
+    assert fake.persisted_canonical is None
+    assert fake.created_classes == []

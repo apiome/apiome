@@ -56,6 +56,15 @@ the job fails with a user-facing message rather than a stack trace; an *advisory
 `normalize()` accepts either the `AsyncApiParseResult` `parse()` returns or a bare dereferenced
 `dict` (the latter keeps the adapter unit-testable without the Node toolchain). It detects the
 family and delegates to the registered [`AsyncApiNormalizer`](./normalizer_spi.md) (MFI-8.2).
+Per-channel failures are isolated: a broken channel is kept with
+`extras.status = "parse_error"` so sibling channels still import (REPO-3.3 / #2772).
+
+On a non-dry-run catalog import, `persist_adapter_import` also:
+
+1. promotes each message `payload_schema` / headers into designer `classes` rows and stores
+   `payload_class_id` / `headers_class_id` on the message `extras`;
+2. persists the full `CanonicalApi` into the MFI-2.2 tables (`api_artifacts`, `api_channels`,
+   `api_operations`, `api_messages`, …) via [`canonical_persistence`](../src/app/canonical_persistence.py).
 
 `lint()` folds the `spectral:asyncapi` diagnostics the parser already produced into the score via
 [`lint_asyncapi_result`](./asyncapi_lint.md) (MFI-8.3) when the parse result is on hand (the

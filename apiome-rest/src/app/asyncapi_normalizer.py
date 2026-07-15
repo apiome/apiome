@@ -315,22 +315,28 @@ class AsyncApiNormalizer(Normalizer, register=True):
         channels: List[Channel] = []
         channel_key_by_name: Dict[str, str] = {}
         for name, spec in self._items(channels_map):
-            channel = self._channel_v3(name, spec, coercer)
+            try:
+                channel = self._channel_v3(name, spec, coercer)
+            except Exception as exc:  # noqa: BLE001 - isolate; import continues
+                channel = self._parse_error_channel(name, exc)
             channels.append(channel)
             channel_key_by_name[name] = channel.key
 
         operations: List[Operation] = []
         for op_name, op_spec in self._items(source.get("operations")):
-            operations.append(
-                self._operation_v3(
-                    op_name,
-                    op_spec,
-                    channels_map if isinstance(channels_map, dict) else {},
-                    channel_key_by_name,
-                    coercer,
-                    default_content_type,
+            try:
+                operations.append(
+                    self._operation_v3(
+                        op_name,
+                        op_spec,
+                        channels_map if isinstance(channels_map, dict) else {},
+                        channel_key_by_name,
+                        coercer,
+                        default_content_type,
+                    )
                 )
-            )
+            except Exception:  # noqa: BLE001 - skip broken ops; channels already captured
+                continue
         return channels, operations
 
     def _channel_v3(
@@ -506,20 +512,23 @@ class AsyncApiNormalizer(Normalizer, register=True):
 
         for address, spec in self._items(source.get("channels")):
             channel_key = address
-            channels.append(self._channel_v2(address, spec, coercer))
-            for action in _V2_ACTIONS:
-                op_spec = spec.get(action)
-                if isinstance(op_spec, dict):
-                    operations.append(
-                        self._operation_v2(
-                            action,
-                            address,
-                            channel_key,
-                            op_spec,
-                            coercer,
-                            default_content_type,
+            try:
+                channels.append(self._channel_v2(address, spec, coercer))
+                for action in _V2_ACTIONS:
+                    op_spec = spec.get(action)
+                    if isinstance(op_spec, dict):
+                        operations.append(
+                            self._operation_v2(
+                                action,
+                                address,
+                                channel_key,
+                                op_spec,
+                                coercer,
+                                default_content_type,
+                            )
                         )
-                    )
+            except Exception as exc:  # noqa: BLE001 - isolate; other channels continue
+                channels.append(self._parse_error_channel(address, exc))
         return channels, operations
 
     def _channel_v2(
@@ -740,6 +749,19 @@ class AsyncApiNormalizer(Normalizer, register=True):
             if value is not None and value != [] and value != {}:
                 extras[key] = value
         return extras
+
+    @staticmethod
+    def _parse_error_channel(channel_key: str, error: BaseException) -> Channel:
+        """Build a placeholder channel marked ``parse_error`` (REPO-3.3 / #2772).
+
+        A single malformed channel must not abort the rest of the document import.
+        """
+        message = str(error)[:500] or error.__class__.__name__
+        return Channel(
+            key=channel_key,
+            address=channel_key,
+            extras={"status": "parse_error", "parse_error": message},
+        )
 
 
 class _AsyncApi2Normalizer(AsyncApiNormalizer, register=True):

@@ -9549,6 +9549,33 @@ class Database:
         rows = self.execute_query(query, (tenant_id, project_id))
         return [str(r["key"]) for r in rows if r.get("key")]
 
+    def persist_canonical_api(
+        self,
+        *,
+        tenant_id: str,
+        creator_id: str,
+        version_id: str,
+        model: Any,
+    ) -> str:
+        """Soft-delete any live artifact and insert ``model`` (REPO-3.3 / #2772)."""
+        from .canonical_persistence import persist_canonical_api as _persist
+
+        return _persist(
+            self,
+            tenant_id=tenant_id,
+            creator_id=creator_id,
+            version_id=version_id,
+            model=model,
+        )
+
+    def load_canonical_api(
+        self, *, tenant_id: str, version_id: str
+    ) -> Optional[Any]:
+        """Load the live canonical artifact for ``version_id``, or ``None``."""
+        from .canonical_persistence import load_canonical_api as _load
+
+        return _load(self, tenant_id=tenant_id, version_id=version_id)
+
     def create_version_push_transaction(
         self,
         project_id: str,

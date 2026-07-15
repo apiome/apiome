@@ -1,0 +1,102 @@
+# Official-style AsyncAPI 3 example used by REPO-3.3 (#2772) acceptance — Anyway Jobs.
+# Mirrors the v3 shape in the AsyncAPI simple account example, expanded for a job board
+# with kafka channel bindings and send/receive operations.
+asyncapi: '3.0.0'
+id: 'urn:com:anyway:jobs'
+info:
+  title: Anyway Jobs
+  version: '1.0.0'
+  description: Event-driven API for job posting and application lifecycle events.
+defaultContentType: application/json
+servers:
+  production:
+    host: kafka.anyway.example.com
+    protocol: kafka
+    description: Production Kafka cluster
+channels:
+  jobPosted:
+    address: jobs/posted
+    description: Emitted when a new job listing is published.
+    bindings:
+      kafka:
+        topic: jobs.posted
+        partitions: 6
+        bindingVersion: '0.5.0'
+    messages:
+      JobPosted:
+        $ref: '#/components/messages/JobPosted'
+  applicationSubmitted:
+    address: jobs/{jobId}/applications
+    description: Emitted when a candidate applies to a job.
+    parameters:
+      jobId:
+        description: Identifier of the job listing.
+    bindings:
+      kafka:
+        topic: jobs.applications
+        bindingVersion: '0.5.0'
+    messages:
+      ApplicationSubmitted:
+        $ref: '#/components/messages/ApplicationSubmitted'
+operations:
+  sendJobPosted:
+    action: send
+    channel:
+      $ref: '#/channels/jobPosted'
+    messages:
+      - $ref: '#/channels/jobPosted/messages/JobPosted'
+  onApplicationSubmitted:
+    action: receive
+    channel:
+      $ref: '#/channels/applicationSubmitted'
+    messages:
+      - $ref: '#/channels/applicationSubmitted/messages/ApplicationSubmitted'
+components:
+  messages:
+    JobPosted:
+      name: JobPosted
+      title: Job posted
+      summary: A new job listing was published.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/JobPostedPayload'
+      headers:
+        type: object
+        properties:
+          correlationId:
+            type: string
+    ApplicationSubmitted:
+      name: ApplicationSubmitted
+      title: Application submitted
+      summary: A candidate applied to a job.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ApplicationSubmittedPayload'
+  schemas:
+    JobPostedPayload:
+      type: object
+      required: [jobId, title]
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        company:
+          type: string
+        postedAt:
+          type: string
+          format: date-time
+    ApplicationSubmittedPayload:
+      type: object
+      required: [jobId, applicantId]
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        applicantId:
+          type: string
+          format: uuid
+        resumeUri:
+          type: string
+          format: uri
