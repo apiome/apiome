@@ -26,6 +26,7 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | Publish a version | [publish-a-version.md](publish-a-version.md) | `/ade/dashboard/versions` | `POST /v1/versions/{tenant}/{project}/{version}/publish` |
 | Browse published specs | [browse-published-specs.md](browse-published-specs.md) | `/ade/dashboard/published` | `GET /v1/browse/tenants/{tenant}/projects` |
 | Export / download a spec | [export-a-spec.md](export-a-spec.md) | `/ade/dashboard/published` | `GET /v1/schema/{tenant}/{project}/{version}` |
+| Understand export fidelity (projection map, reasons, acknowledgement) | [export-fidelity.md](export-fidelity.md) | `/ade/dashboard/export/studio` | `POST /v1/export/{tenant}/projection-evidence` |
 
 ## References & quick-starts
 

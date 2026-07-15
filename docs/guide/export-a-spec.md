@@ -15,6 +15,11 @@ apiome spec export --project <id-or-slug> --version <id-or-label> --output petst
 # YAML
 apiome spec export --project <id-or-slug> --version <id-or-label> --yaml -o petstore.yaml
 
+# Exporting to another format (AsyncAPI, GraphQL, Proto3, Avro, …)? Check what will be
+# preserved — and why anything changes — before you generate:
+apiome export targets  --project <id-or-slug> --version <id-or-label>
+apiome export evidence --project <id-or-slug> --version <id-or-label> --target avro
+
 # Arazzo workflow document instead of OpenAPI
 apiome spec export --project <id-or-slug> --version <id-or-label> --format arazzo -o flows.json
 ```
@@ -47,5 +52,7 @@ downloaded document with `openapi-spec-validator`.
 
 ## Related
 
+- [export-fidelity.md](export-fidelity.md) — cross-format exports: what is preserved,
+  what is lost and why, and the risk acknowledgement
 - [browse-published-specs.md](browse-published-specs.md) — view the same spec rendered
 - [cli-quickstart.md](cli-quickstart.md) — full CLI reference
