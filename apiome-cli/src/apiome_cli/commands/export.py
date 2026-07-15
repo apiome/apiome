@@ -764,7 +764,7 @@ def export_evidence(
     redact_source: bool = typer.Option(
         False,
         "--redact-source",
-        help="Withhold source-native evidence values (redaction placeholder).",
+        help="Deprecated no-op (EFP-3.2): REST always redacts source-native evidence.",
     ),
     tenant: str | None = typer.Option(
         None,

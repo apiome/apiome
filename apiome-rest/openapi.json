@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.9.1",
+    "version": "1.10.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -25240,13 +25240,112 @@
         }
       }
     },
+    "/v1/export/{tenant_slug}/projection-metrics": {
+      "post": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Record a privacy-safe projection metric",
+        "description": "Increment an in-process counter and emit a structured ``export.projection`` log line for UI/ops telemetry (EFP-3.2). Payload is a strict whitelist of kinds and optional integer/reason-category fields \u2014 never construct labels or source content.",
+        "operationId": "record_projection_metric_v1_export__tenant_slug__projection_metrics_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordaprivacysafeprojectionmetricauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordaprivacysafeprojectionmetricauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordaprivacysafeprojectionmetric Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordaprivacysafeprojectionmetric Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportProjectionMetricRequest",
+                "description": "Request body for recordaprivacysafeprojectionmetricrequest."
+              }
+            }
+          },
+          "description": "Request body for record a privacy-safe projection metric."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for record a privacy-safe projection metric.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportProjectionMetricResponse",
+                  "description": "Response payload for recordaprivacysafeprojectionmetricresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for recordaprivacysafeprojectionmetricresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/export/{tenant_slug}/projection-evidence": {
       "post": {
         "tags": [
           "export"
         ],
         "summary": "Page through projection evidence for one configured export",
-        "description": "Return one bounded, cursor-paginated page of source\u2192target projection evidence (EFP-2.1) for the given source revision, target, and options \u2014 the traceable rows behind the projection summary that preview, verify, dispatch, and job results embed. The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped; `redact_source: true` withholds source-native evidence values for relaying callers.",
+        "description": "Return one bounded, cursor-paginated page of source\u2192target projection evidence (EFP-2.1 / EFP-3.2) for the given source revision, target, and options \u2014 the traceable rows behind the projection summary that preview, verify, dispatch, and job results embed. The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped. Source-native evidence is **always** redacted (EFP-3.2); `redact_source` is accepted for compatibility and ignored.",
         "operationId": "get_projection_evidence_v1_export__tenant_slug__projection_evidence_post",
         "parameters": [
           {
@@ -46151,8 +46250,8 @@
           "redact_source": {
             "type": "boolean",
             "title": "Redact Source",
-            "description": "When true, source-native evidence values (native id, source location) are replaced with a redaction placeholder in the returned nodes \u2014 for callers relaying evidence to viewers without source access. EFP-3.2 layers the full redaction policy on top of this hook.",
-            "default": false,
+            "description": "Ignored (EFP-3.2). Source-native evidence is always redacted; kept for request-body compatibility with earlier callers. Response ``redacted`` is always true.",
+            "default": true,
             "example": false
           }
         },
@@ -46218,7 +46317,7 @@
           "redacted": {
             "type": "boolean",
             "title": "Redacted",
-            "description": "True when source-native evidence values were redacted in this response.",
+            "description": "Always true (EFP-3.2): source-native evidence values are redacted.",
             "example": false
           }
         },
@@ -46233,6 +46332,84 @@
         ],
         "title": "ExportProjectionEvidenceResponse",
         "description": "One bounded, cursor-paginated page of projection evidence (EFP-2.1).\n\nThe authenticated evidence surface behind the preview/verify summaries: the resolved\nsource coordinates, the snapshot provenance (:class:`~app.export_projection.ManifestTarget`\ncarries the emitter/registry versions and destination documentation), the bounded\n:class:`~app.export_projection.ProjectionManifestSummary`, and one\n:class:`~app.export_projection.ProjectionEvidencePage` of outcome edges + their nodes.\nDeterministic: the same ``(revision, target, options)`` yields the same snapshot hash a\npreview / verify / dispatch / job result references, and paging the same snapshot twice\nyields identical pages."
+      },
+      "ExportProjectionMetricRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "preview_failure",
+              "stale_acknowledgement",
+              "evidence_page",
+              "aggregation_used",
+              "documentation_link_available",
+              "documentation_link_missing"
+            ],
+            "title": "Kind",
+            "description": "Privacy-safe metric kind (whitelist).",
+            "example": "preview_failure"
+          },
+          "page_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Request body for export projection metric."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export projection metric."
+              }
+            ],
+            "title": "Page Total",
+            "description": "Optional integer page/evidence total (no labels)."
+          },
+          "reason_category": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for export projection metric."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export projection metric."
+              }
+            ],
+            "title": "Reason Category",
+            "description": "Optional controlled failure category (whitelist only)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "ExportProjectionMetricRequest",
+        "description": "Whitelist-only client/server projection metric event (EFP-3.2).\n\nRejects unknown fields. Only :data:`~app.projection_telemetry.ALLOWED_METRIC_KINDS`\nare accepted; reason categories are optional and themselves whitelisted."
+      },
+      "ExportProjectionMetricResponse": {
+        "properties": {
+          "recorded": {
+            "type": "boolean",
+            "title": "Recorded",
+            "default": true,
+            "description": "Recorded.",
+            "example": false
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "ExportProjectionMetricResponse",
+        "description": "Acknowledgement that a privacy-safe metric was recorded."
       },
       "ExportTargetFidelity": {
         "properties": {

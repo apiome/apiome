@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.129.0] - 2026-07-15
+
+### Added
+- **Projection evidence guardrails (EFP-3.2, #4817)** — always-on source
+  redaction (`native_id` / `native_name` / `source_location` plus scrubbed edge
+  text), TTL manifest cache, documented performance budgets
+  (`docs/projection_evidence_guardrails.md`), privacy-safe
+  `export.projection` telemetry (preview failures, stale acknowledgements,
+  evidence pages, documentation-link counts), and
+  `POST /v1/export/{tenant}/projection-metrics` for whitelisted UI metrics
+  (e.g. `aggregation_used`). `redact_source` is ignored; responses always set
+  `redacted: true`.
+
 ## [1.124.1] - 2026-07-15
 
 ### Fixed

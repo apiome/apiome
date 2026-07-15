@@ -39,15 +39,16 @@ and load the source model version-scoped through :func:`app.export_source.load_e
 from __future__ import annotations
 
 import json
+import time
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import yaml
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
-from .capability_registry import CapabilityRegistrySnapshot, registry_snapshot
+from .capability_registry import CapabilityRegistrySnapshot, REGISTRY_VERSION, registry_snapshot
 from .emitter import (
     CapabilityProfile,
     EmitterDescriptor,
@@ -65,9 +66,11 @@ from .export_fidelity import (
 from .export_projection import (
     DEFAULT_EVIDENCE_PAGE_SIZE,
     MAX_EVIDENCE_PAGE_SIZE,
+    UI_AGGREGATION_THRESHOLD_ROWS,
     NativeEvidence,
     ProjectionEvidencePage,
     ProjectionManifestSummary,
+    _normalize_options_for_hash,
     build_projection_manifest,
     paginate_evidence,
     summarize_manifest,
@@ -77,7 +80,10 @@ from .export_source import ExportSourceError, load_export_source
 from .export_validation import validate_emitted_artifact
 from .export_validation_gate import EmittedValidationReport, build_validation_report
 from .lossiness import LossinessSeverity
+from .projection_manifest_cache import build_manifest_cache_key, manifest_cache
+from .projection_telemetry import ALLOWED_METRIC_KINDS, ALLOWED_REASON_CATEGORIES, projection_telemetry
 from .transcoding_guards import TranscodeGuard, TranscodeGuardError, classify_transcode
+from . import __version__ as APIOME_VERSION
 
 router = APIRouter(prefix="/v1/export", tags=["export"])
 
@@ -216,11 +222,9 @@ class ExportProjectionEvidenceRequest(BaseModel):
         description=f"Maximum evidence rows per page; clamped to {MAX_EVIDENCE_PAGE_SIZE}.",
     )
     redact_source: bool = Field(
-        default=False,
-        description="When true, source-native evidence values (native id, source location) are "
-        "replaced with a redaction placeholder in the returned nodes — for callers relaying "
-        "evidence to viewers without source access. EFP-3.2 layers the full redaction policy "
-        "on top of this hook.",
+        default=True,
+        description="Ignored (EFP-3.2). Source-native evidence is always redacted; kept for "
+        "request-body compatibility with earlier callers. Response ``redacted`` is always true.",
     )
 
 
@@ -256,7 +260,7 @@ class ExportProjectionEvidenceResponse(BaseModel):
         "cursor for the next page (null on the last page).",
     )
     redacted: bool = Field(
-        description="True when source-native evidence values were redacted in this response.",
+        description="Always true (EFP-3.2): source-native evidence values are redacted.",
     )
 
 
@@ -655,11 +659,13 @@ async def preview_export_fidelity(
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
+        projection_telemetry.record("preview_failure", reason_category="source_load")
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     try:
         emitter_cls = type(resolve_emitter(request.target))
     except ExportError as exc:
+        projection_telemetry.record("preview_failure", reason_category="unsupported_target")
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     fidelity = build_export_fidelity(
@@ -681,21 +687,21 @@ async def preview_export_fidelity(
     )
 
 
-#: Placeholder written over redacted source-native evidence values (EFP-2.1). A present
-#: placeholder tells a viewer "a value was captured but withheld", which is honestly
-#: different from ``null`` ("nothing was captured"). Matches the projection corpus's
-#: golden redaction convention.
+#: Placeholder written over redacted source-native evidence values (EFP-2.1 / EFP-3.2).
+#: A present placeholder tells a viewer "a value was captured but withheld", which is
+#: honestly different from ``null`` ("nothing was captured"). Matches the projection
+#: corpus's golden redaction convention.
 SOURCE_EVIDENCE_REDACTED = "[redacted]"
 
 
 def _redact_evidence_page(page: ProjectionEvidencePage) -> ProjectionEvidencePage:
-    """Return a copy of ``page`` with source-native evidence values redacted.
+    """Return a copy of ``page`` with source-native evidence always redacted (EFP-3.2).
 
-    Replaces every present ``native_id`` / ``source_location`` value on the page's native
-    nodes with :data:`SOURCE_EVIDENCE_REDACTED`; construct keys, labels, statuses, reasons,
-    and target locations are structural (apiome-controlled) and stay. The page's edges,
-    cursor, and totals are unchanged, so a redacted and an unredacted walk of the same
-    snapshot page identically.
+    Replaces every present ``native_id`` / ``native_name`` / ``source_location`` value on
+    native nodes with :data:`SOURCE_EVIDENCE_REDACTED`, then scrubs those captured strings
+    out of edge ``detail`` / ``explanation`` / ``target_mapping`` text. Construct keys,
+    statuses, reasons, and target locations stay. Edges, cursors, and totals are unchanged
+    so pagination identity is preserved under always-on redaction.
 
     Args:
         page: The evidence page to redact.
@@ -703,14 +709,26 @@ def _redact_evidence_page(page: ProjectionEvidencePage) -> ProjectionEvidencePag
     Returns:
         The redacted copy (the input is not mutated).
     """
+    sensitive: list[str] = []
+    for node in page.nodes:
+        if node.native is None:
+            continue
+        for value in (node.native.native_id, node.native.native_name, node.native.source_location):
+            if value:
+                sensitive.append(value)
+
     nodes = []
     for node in page.nodes:
         if node.native is not None and (
-            node.native.native_id is not None or node.native.source_location is not None
+            node.native.native_id is not None
+            or node.native.native_name is not None
+            or node.native.source_location is not None
         ):
             native = NativeEvidence(
                 native_id=SOURCE_EVIDENCE_REDACTED if node.native.native_id is not None else None,
-                native_name=node.native.native_name,
+                native_name=(
+                    SOURCE_EVIDENCE_REDACTED if node.native.native_name is not None else None
+                ),
                 source_location=(
                     SOURCE_EVIDENCE_REDACTED if node.native.source_location is not None else None
                 ),
@@ -718,7 +736,119 @@ def _redact_evidence_page(page: ProjectionEvidencePage) -> ProjectionEvidencePag
             nodes.append(node.model_copy(update={"native": native}))
         else:
             nodes.append(node)
-    return page.model_copy(update={"nodes": nodes})
+
+    edges = []
+    for edge in page.edges:
+        updates: Dict[str, Any] = {}
+        for field_name in ("detail", "explanation", "target_mapping"):
+            text = getattr(edge, field_name)
+            if not text:
+                continue
+            scrubbed = text
+            for value in sensitive:
+                if value and value in scrubbed:
+                    scrubbed = scrubbed.replace(value, SOURCE_EVIDENCE_REDACTED)
+            if scrubbed != text:
+                updates[field_name] = scrubbed
+        edges.append(edge.model_copy(update=updates) if updates else edge)
+
+    return page.model_copy(update={"nodes": nodes, "edges": edges})
+
+
+def _doc_link_counts(page: ProjectionEvidencePage) -> tuple[int, int]:
+    """Count edges whose documentation URL is available vs unavailable (privacy-safe)."""
+    available = 0
+    missing = 0
+    for edge in page.edges:
+        doc = edge.documentation
+        if doc is None:
+            continue
+        if doc.url and not doc.documentation_unavailable:
+            available += 1
+        else:
+            missing += 1
+    return available, missing
+
+
+class ExportProjectionMetricRequest(BaseModel):
+    """Whitelist-only client/server projection metric event (EFP-3.2).
+
+    Rejects unknown fields. Only :data:`~app.projection_telemetry.ALLOWED_METRIC_KINDS`
+    are accepted; reason categories are optional and themselves whitelisted.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal[
+        "preview_failure",
+        "stale_acknowledgement",
+        "evidence_page",
+        "aggregation_used",
+        "documentation_link_available",
+        "documentation_link_missing",
+    ] = Field(description="Privacy-safe metric kind (whitelist).")
+    page_total: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="Optional integer page/evidence total (no labels).",
+    )
+    reason_category: Optional[str] = Field(
+        default=None,
+        description="Optional controlled failure category (whitelist only).",
+    )
+
+
+class ExportProjectionMetricResponse(BaseModel):
+    """Acknowledgement that a privacy-safe metric was recorded."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    recorded: bool = True
+    kind: str
+
+
+@router.post(
+    "/{tenant_slug}/projection-metrics",
+    response_model=ExportProjectionMetricResponse,
+    summary="Record a privacy-safe projection metric",
+    description=(
+        "Increment an in-process counter and emit a structured ``export.projection`` log "
+        "line for UI/ops telemetry (EFP-3.2). Payload is a strict whitelist of kinds and "
+        "optional integer/reason-category fields — never construct labels or source content."
+    ),
+)
+async def record_projection_metric(
+    tenant_slug: str,
+    request: ExportProjectionMetricRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ExportProjectionMetricResponse:
+    """Record one privacy-safe projection metric event.
+
+    Args:
+        tenant_slug: Tenant slug (scopes the call; unused in the counter key by design).
+        request: Whitelisted metric payload.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        ``{"recorded": true, "kind": ...}``.
+
+    Raises:
+        HTTPException: 422 when the reason category is not on the allowlist.
+    """
+    _ = tenant_slug, auth_data  # auth required; tenant is not folded into metrics keys
+    if request.kind not in ALLOWED_METRIC_KINDS:
+        raise HTTPException(status_code=422, detail="unsupported metric kind")
+    if (
+        request.reason_category is not None
+        and request.reason_category not in ALLOWED_REASON_CATEGORIES
+    ):
+        raise HTTPException(status_code=422, detail="unsupported reason_category")
+    projection_telemetry.record(
+        request.kind,
+        reason_category=request.reason_category,
+        page_total=request.page_total,
+    )
+    return ExportProjectionMetricResponse(kind=request.kind)
 
 
 @router.post(
@@ -727,10 +857,11 @@ def _redact_evidence_page(page: ProjectionEvidencePage) -> ProjectionEvidencePag
     summary="Page through projection evidence for one configured export",
     description=(
         "Return one bounded, cursor-paginated page of source→target projection evidence "
-        "(EFP-2.1) for the given source revision, target, and options — the traceable rows "
-        "behind the projection summary that preview, verify, dispatch, and job results embed. "
-        "The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped; "
-        "`redact_source: true` withholds source-native evidence values for relaying callers."
+        "(EFP-2.1 / EFP-3.2) for the given source revision, target, and options — the "
+        "traceable rows behind the projection summary that preview, verify, dispatch, and "
+        "job results embed. The same inputs resolve to the same snapshot hash on every "
+        "surface. Tenant-scoped. Source-native evidence is **always** redacted (EFP-3.2); "
+        "`redact_source` is accepted for compatibility and ignored."
     ),
 )
 async def get_projection_evidence(
@@ -740,10 +871,10 @@ async def get_projection_evidence(
 ) -> ExportProjectionEvidenceResponse:
     """Return one bounded page of projection evidence for a configured export.
 
-    Builds the deterministic projection manifest for the requested ``(revision, target,
-    options)`` (no artifact is emitted) and pages its outcome edges with the manifest's
+    Builds (or reuses a cached) deterministic projection manifesto for the requested
+    ``(revision, target, options)`` and pages its outcome edges with the manifest's
     canonical cursor pagination — bounded by the hard page-size cap regardless of the
-    requested limit.
+    requested limit. Source-native fields are always redacted before return.
 
     Args:
         tenant_slug: The tenant slug (scopes the artifact lookup).
@@ -758,34 +889,68 @@ async def get_projection_evidence(
             no reconstructable source or the cursor is malformed; 400 when the target or
             source format is unsupported.
     """
+    _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
+    started = time.perf_counter()
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
+        projection_telemetry.record("preview_failure", reason_category="source_load")
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     try:
         emitter_cls = type(resolve_emitter(request.target))
     except ExportError as exc:
+        projection_telemetry.record("preview_failure", reason_category="unsupported_target")
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
-    manifest = build_projection_manifest(source.api, emitter_cls, options=request.options)
+    normalized_options = _normalize_options_for_hash(emitter_cls, request.options)
+    cache_key = build_manifest_cache_key(
+        tenant_id=tenant_id,
+        artifact_id=source.artifact_id,
+        version_record_id=source.version_record_id,
+        target=request.target,
+        options=normalized_options,
+        emitter_version=emitter_cls.version,
+        registry_version=REGISTRY_VERSION,
+        apiome_version=APIOME_VERSION,
+    )
+    manifest = manifest_cache.get(cache_key)
+    if manifest is None:
+        manifest = build_projection_manifest(source.api, emitter_cls, options=request.options)
+        manifest_cache.put(cache_key, manifest)
+
     try:
         page = paginate_evidence(manifest, cursor=request.cursor, limit=request.limit)
     except ValueError as exc:
+        projection_telemetry.record("preview_failure", reason_category="malformed_cursor")
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    if request.redact_source:
-        page = _redact_evidence_page(page)
+    page = _redact_evidence_page(page)
+    summary = summarize_manifest(manifest)
+    latency_ms = (time.perf_counter() - started) * 1000.0
+    available, missing = _doc_link_counts(page)
+    projection_telemetry.record(
+        "evidence_page",
+        page_total=page.total,
+        latency_ms=latency_ms,
+        status_counts=summary.status_counts,
+        reason_counts=summary.reason_counts,
+        large_manifest=page.total > UI_AGGREGATION_THRESHOLD_ROWS,
+    )
+    if available:
+        projection_telemetry.record("documentation_link_available", n=available)
+    if missing:
+        projection_telemetry.record("documentation_link_missing", n=missing)
 
     return ExportProjectionEvidenceResponse(
         artifact=source.artifact_id,
         version=request.version,
         version_record_id=source.version_record_id,
         version_label=source.version_label,
-        summary=summarize_manifest(manifest),
+        summary=summary,
         page=page,
-        redacted=request.redact_source,
+        redacted=True,
     )
 
 

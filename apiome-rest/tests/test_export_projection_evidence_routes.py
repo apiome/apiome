@@ -1,4 +1,4 @@
-"""Endpoint + job tests for the projection-evidence surface — EFP-2.1 (#4813).
+"""Endpoint + job tests for the projection-evidence surface — EFP-2.1 (#4813) / EFP-3.2 (#4817).
 
 Pins the ticket's acceptance criteria:
 
@@ -9,8 +9,10 @@ Pins the ticket's acceptance criteria:
   outcome edges deterministically, clamps oversized limits to the hard cap, rejects a
   malformed cursor with 422 and an unknown target with an ExportError status, and requires
   authentication;
-* **redaction-aware** — ``redact_source: true`` withholds source-native evidence values
-  (placeholder, not silence) while leaving edges, counts, cursors, and totals identical;
+* **always-on redaction (EFP-3.2)** — source-native evidence values are always withheld
+  behind an explicit ``[redacted]`` placeholder; ``redact_source`` is ignored;
+* **budgets / cache / telemetry (EFP-3.2)** — soft build budget, tenant-scoped manifest
+  cache, privacy-safe counters for evidence / stale acknowledgement;
 * **jobs record + reject stale** — a job records its snapshot hash and submitted options in
   the result, completes when the acknowledged snapshot matches, and fails with a structured
   ``STALE_PREVIEW`` error (naming both hashes) when it does not.
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 from unittest.mock import patch
 
 import pytest
@@ -32,16 +35,24 @@ from app.export_job_engine import (
     get_export_job_status,
     schedule_export_job,
 )
-from app.export_projection import MAX_EVIDENCE_PAGE_SIZE
+from app.export_projection import (
+    EVIDENCE_BUILD_SOFT_BUDGET_SECONDS,
+    MAX_EVIDENCE_PAGE_SIZE,
+    build_projection_manifest,
+)
 from app.export_routes import SOURCE_EVIDENCE_REDACTED
+from app.export_service import resolve_emitter
 from app.export_source import ExportSource
 from app.main import app
+from app.projection_manifest_cache import manifest_cache
+from app.projection_telemetry import projection_telemetry
 
 client = TestClient(app)
 
 _MOCK_AUTH = {"tenant_id": "test-tenant-id", "user_id": "test-user-id", "auth_method": "jwt"}
 _TENANT = "test-tenant"
 _EVIDENCE_URL = f"/v1/export/{_TENANT}/projection-evidence"
+_METRICS_URL = f"/v1/export/{_TENANT}/projection-metrics"
 
 
 def _source() -> ExportSource:
@@ -62,10 +73,14 @@ def _body(**overrides) -> dict:
 
 
 @pytest.fixture(autouse=True)
-def _auth():
+def _auth_and_guardrails():
     app.dependency_overrides[validate_authentication] = lambda: _MOCK_AUTH
+    manifest_cache.clear()
+    projection_telemetry.reset()
     yield
     app.dependency_overrides.clear()
+    manifest_cache.clear()
+    projection_telemetry.reset()
 
 
 def _post_evidence(body: dict):
@@ -188,42 +203,110 @@ def test_evidence_carries_snapshot_provenance() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Redaction-aware
+# Always-on redaction (EFP-3.2)
 # ---------------------------------------------------------------------------
 
 
-def test_unredacted_evidence_returns_native_values_to_the_owner() -> None:
-    """The owning tenant sees its own source-native evidence by default."""
+def test_evidence_always_redacts_native_values() -> None:
+    """Source-native evidence is always withheld — even without redact_source."""
     response = _post_evidence(_body())
     assert response.status_code == 200
     body = response.json()
-    assert body["redacted"] is False
-    assert SENSITIVE_SENTINEL in json.dumps(body), (
-        "the rich fixture plants native evidence that should reach the owner unredacted"
-    )
-
-
-def test_redact_source_withholds_native_values_with_a_placeholder() -> None:
-    """redact_source strips values but keeps the page's edges/counts/total identical."""
-    clear = _post_evidence(_body())
-    redacted = _post_evidence(_body(redact_source=True))
-    assert clear.status_code == redacted.status_code == 200
-
-    redacted_body = redacted.json()
-    assert redacted_body["redacted"] is True
-    text = json.dumps(redacted_body)
+    assert body["redacted"] is True
+    text = json.dumps(body)
     assert SENSITIVE_SENTINEL not in text
     assert SOURCE_EVIDENCE_REDACTED in text, (
         "a captured-but-withheld value must show the placeholder, not silent null"
     )
 
-    # Redaction changes evidence values only — never the evidence itself.
-    clear_page = clear.json()["page"]
-    redacted_page = redacted_body["page"]
-    assert redacted_page["edges"] == clear_page["edges"]
-    assert redacted_page["total"] == clear_page["total"]
-    assert redacted_page["next_cursor"] == clear_page["next_cursor"]
-    assert clear.json()["summary"] == redacted_body["summary"]
+
+def test_redact_source_false_still_redacts() -> None:
+    """redact_source is ignored; false cannot opt out of EFP-3.2 always-on policy."""
+    response = _post_evidence(_body(redact_source=False))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["redacted"] is True
+    assert SENSITIVE_SENTINEL not in json.dumps(body)
+    assert SOURCE_EVIDENCE_REDACTED in json.dumps(body)
+
+
+def test_redaction_preserves_edges_counts_and_cursors() -> None:
+    """Always-on redaction never changes pagination identity."""
+    first = _post_evidence(_body(limit=2))
+    second = _post_evidence(_body(limit=2, redact_source=False))
+    assert first.status_code == second.status_code == 200
+    a = first.json()["page"]
+    b = second.json()["page"]
+    assert a["edges"] == b["edges"]
+    assert a["total"] == b["total"]
+    assert a["next_cursor"] == b["next_cursor"]
+    assert first.json()["summary"] == second.json()["summary"]
+
+
+# ---------------------------------------------------------------------------
+# Budgets, cache, telemetry (EFP-3.2)
+# ---------------------------------------------------------------------------
+
+
+def test_evidence_build_meets_soft_budget() -> None:
+    """Building the rich corpus manifesto stays under the documented soft budget."""
+    emitter_cls = type(resolve_emitter("avro"))
+    started = time.perf_counter()
+    build_projection_manifest(rich_api(), emitter_cls)
+    elapsed = time.perf_counter() - started
+    assert elapsed < EVIDENCE_BUILD_SOFT_BUDGET_SECONDS, (
+        f"evidence build took {elapsed:.3f}s (budget {EVIDENCE_BUILD_SOFT_BUDGET_SECONDS}s)"
+    )
+
+
+def test_manifest_cache_isolates_tenants() -> None:
+    """A cached manifesto for tenant A is never served to tenant B."""
+    builds = {"n": 0}
+    real_build = build_projection_manifest
+
+    def counting_build(*args, **kwargs):
+        builds["n"] += 1
+        return real_build(*args, **kwargs)
+
+    with patch("app.export_routes.build_projection_manifest", side_effect=counting_build):
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            assert client.post(_EVIDENCE_URL, json=_body()).status_code == 200
+            assert builds["n"] == 1
+            # Same tenant, same key → cache hit.
+            assert client.post(_EVIDENCE_URL, json=_body()).status_code == 200
+            assert builds["n"] == 1
+
+        other_auth = {**_MOCK_AUTH, "tenant_id": "other-tenant-id"}
+        app.dependency_overrides[validate_authentication] = lambda: other_auth
+        with patch("app.export_routes.load_export_source", return_value=_source()):
+            assert client.post(_EVIDENCE_URL, json=_body()).status_code == 200
+            assert builds["n"] == 2, "cross-tenant must miss the cache"
+
+
+def test_evidence_page_records_privacy_safe_telemetry() -> None:
+    response = _post_evidence(_body())
+    assert response.status_code == 200
+    snap = projection_telemetry.snapshot()
+    assert snap.get("evidence_page", 0) >= 1
+    assert SENSITIVE_SENTINEL not in json.dumps(snap)
+
+
+def test_projection_metrics_endpoint_accepts_aggregation() -> None:
+    response = client.post(
+        _METRICS_URL,
+        json={"kind": "aggregation_used", "page_total": 120},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"recorded": True, "kind": "aggregation_used"}
+    assert projection_telemetry.snapshot()["aggregation_used"] == 1
+
+
+def test_projection_metrics_rejects_unknown_reason_category() -> None:
+    response = client.post(
+        _METRICS_URL,
+        json={"kind": "preview_failure", "reason_category": "leak-me"},
+    )
+    assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +372,7 @@ async def test_job_rejects_a_stale_acknowledged_snapshot() -> None:
     assert error["context"]["acknowledged_snapshot"] == "0" * 64
     assert error["context"]["current_snapshot"] == _current_snapshot_hash()
     assert "preview" in error["message"].lower()
+    assert projection_telemetry.snapshot().get("stale_acknowledgement", 0) >= 1
 
 
 async def test_job_rejects_stale_ack_when_options_change() -> None:
