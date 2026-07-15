@@ -11,6 +11,7 @@
 import * as React from 'react';
 import { cn } from '@lib/utils';
 import {
+  buildGovernanceDocsHref,
   lintAxisBand,
   lintAxisCompositeLabel,
   lintAxisScoreLabel,
@@ -81,8 +82,17 @@ export function LintAxisCoveragePanel({
         </p>
       </div>
       <p className="text-[11px] text-gray-500 dark:text-gray-400">
-        Algorithm <span className="font-mono">{evaluation.algorithmId}</span> v
-        {evaluation.algorithmVersion}. Not assessed means no scanner evidence — it is not a clean
+        Algorithm{' '}
+        <a
+          href={buildGovernanceDocsHref(evaluation.algorithmDocsPage)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+          data-testid="lint-axis-algorithm-docs-link"
+        >
+          {evaluation.algorithmId}
+        </a>{' '}
+        v{evaluation.algorithmVersion}. Not assessed means no scanner evidence — it is not a clean
         score.
       </p>
 

@@ -1,0 +1,25 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {},
+    "tools": [
+      {
+        "name": "search",
+        "input_schema": {
+          "type": "object"
+        },
+        "raw": {
+          "name": "search",
+          "inputSchema": {
+            "type": "object"
+          }
+        }
+      }
+    ]
+  }
+}

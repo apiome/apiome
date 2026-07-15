@@ -8,6 +8,10 @@ Reference for every built-in lint rule in the rule-catalog registry (GOV-1.2). E
 violation always links back to the rule documented here. The **default severity** is what the
 rule applies when no style guide overrides it.
 
+Blocking (`error`) rules additionally publish reference, remediation, false-positive guidance,
+fixture id, and scan-mode requirements (CLX-4.3 / #4861). See
+[scanner evaluation](../../apiome-rest/docs/scanner_evaluation.md).
+
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [lint-and-quality.md](lint-and-quality.md)).
 
@@ -20,6 +24,11 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationId must resolve to an embedded sourceDescription.
+- **Reference:** https://github.com/apiome/apiome/blob/main/docs/guide/lint-rules.md#arazzo-dangling-operation-id
+- **Remediation:** Point the step's operationId at an operation declared in an embedded OpenAPI sourceDescription, or remove the step.
+- **False-positive guidance:** Only false if the engine cannot see an operation that exists only in an external (non-embedded) source — embed the description or switch to operationRef.
+- **Fixture:** `catalog/arazzo-dangling-operation-id`
+- **Scan modes:** `lint`
 
 <a id="arazzo-missing-success-criteria"></a>
 ### `arazzo.missing-success-criteria`
@@ -41,6 +50,11 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationRef must point at a declared sourceDescription.
+- **Reference:** https://github.com/apiome/apiome/blob/main/docs/guide/lint-rules.md#arzzo-unresolvable-operation-ref
+- **Remediation:** Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a declared source, or fix the sourceDescription name.
+- **False-positive guidance:** External HTTP operationRef targets are out of scope for static resolution — prefer embedded sources for gateable workflows.
+- **Fixture:** `catalog/arzzo-unresolvable-operation-ref`
+- **Scan modes:** `lint`
 
 
 ## Pack: `asyncapi`
@@ -200,6 +214,11 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** error
 - **Rationale:** A change relative to the base revision breaks existing consumers.
+- **Reference:** https://github.com/apiome/apiome/blob/main/docs/guide/lint-rules.md#compatibility-breaking
+- **Remediation:** Restore the removed/changed contract surface, introduce a new path or version, or deliberately gate with a documented breaking-change process.
+- **False-positive guidance:** Diff noise from reorder-only or documentation-only revisions should not appear; if it does, file a scanner bug with the base/head pair.
+- **Fixture:** `catalog/compatibility-breaking`
+- **Scan modes:** `breaking`, `lint`
 
 <a id="compatibility-unknown"></a>
 ### `compatibility.unknown`

@@ -3,11 +3,13 @@
  */
 
 import {
+  buildGovernanceDocsHref,
   lintAxisBand,
   lintAxisEvaluationFromLintReport,
   lintAxisEvaluationFromPayload,
   lintAxisFromPayload,
   lintAxisScoreLabel,
+  POLICY_DOCS_PAGE,
 } from '../../src/app/utils/lint-axis-ui';
 
 describe('lintAxisUi', () => {
@@ -73,9 +75,17 @@ describe('lintAxisUi', () => {
     });
     expect(evaluation).not.toBeNull();
     expect(evaluation!.algorithmId).toBe('clx-axis-v1');
+    expect(evaluation!.algorithmDocsPage).toBe('docs/guide/axis-score.md');
     expect(evaluation!.compositeScore).toBe(90);
     expect(evaluation!.axes[1].assessed).toBe(false);
     expect(evaluation!.axes[1].score).toBeNull();
+  });
+
+  it('builds governance docs hrefs for algorithm and policy pages', () => {
+    expect(buildGovernanceDocsHref('docs/guide/axis-score.md')).toContain(
+      'docs/guide/axis-score.md',
+    );
+    expect(buildGovernanceDocsHref(POLICY_DOCS_PAGE)).toContain('lint-and-quality.md');
   });
 
   it('withholds composite when required coverage is incomplete', () => {

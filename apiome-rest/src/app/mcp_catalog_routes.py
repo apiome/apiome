@@ -192,6 +192,8 @@ from .models import (
     McpSourceLinkRequest,
     McpSourceListResponse,
     McpSourceResponse,
+    McpSurfaceLintRuleOut,
+    McpSurfaceLintRulesResponse,
     McpToolExampleOut,
     McpToolInvocationReliabilityOut,
     McpTrustProfileOut,
@@ -1326,6 +1328,46 @@ def _recompute_mcp_conformance(
         profile=profile,
         fail_on=fail_on,
         min_score=min_score,
+    )
+
+
+@mcp_endpoints_router.get("/lint/rules", response_model=McpSurfaceLintRulesResponse)
+async def get_mcp_surface_lint_rules(
+    auth_data: Dict[str, Any] = Depends(validate_session_credentials),
+) -> McpSurfaceLintRulesResponse:
+    """Return the MCP surface-lint rule catalog with CLX-4.3 transparency metadata.
+
+    Registry-level (describes the engine, not any endpoint). Blocking rules carry
+    reference, remediation, false-positive guidance, fixture id, and scan modes.
+    """
+    _ = auth_data
+    from .mcp_lint import RULE_CATALOGUE
+    from .scanner_rule_transparency import (
+        MCP_SURFACE_RULES_DOCS_PAGE,
+        TRANSPARENCY_CATALOG_REVISION,
+        enrich_rule_dict,
+        get_blocking_meta,
+    )
+
+    rules: List[McpSurfaceLintRuleOut] = []
+    for rule_id in sorted(RULE_CATALOGUE):
+        category, severity = RULE_CATALOGUE[rule_id]
+        meta = get_blocking_meta(rule_id)
+        payload = enrich_rule_dict(
+            {
+                "rule_id": rule_id,
+                "category": category,
+                "severity": severity,
+                "rationale": meta.rationale if meta else "",
+            },
+            rule_id,
+        )
+        rules.append(McpSurfaceLintRuleOut(**payload))
+    return McpSurfaceLintRulesResponse(
+        transparency_revision=TRANSPARENCY_CATALOG_REVISION,
+        docs_page=MCP_SURFACE_RULES_DOCS_PAGE,
+        rules=rules,
+        count=len(rules),
     )
 
 

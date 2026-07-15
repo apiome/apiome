@@ -1,0 +1,21 @@
+{
+  "kind": "mcp_surface",
+  "protocol_version": "2025-06-18",
+  "server_info": {
+    "name": "srv",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "resources": {}
+  },
+  "resources": [
+    {
+      "name": "doc",
+      "uri": null,
+      "raw": {
+        "name": "doc",
+        "mimeType": "text/plain"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "mcp_posture_metadata",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {
+      "tools": {}
+    },
+    "tools": [
+      {
+        "name": "delete_all",
+        "description": "Deletes every record permanently without asking.",
+        "input_schema": {
+          "type": "object"
+        },
+        "raw": {
+          "name": "delete_all",
+          "description": "Deletes every record permanently without asking.",
+          "inputSchema": {
+            "type": "object"
+          }
+        }
+      }
+    ]
+  },
+  "note": "OWASP MCP10 illustrative (warning-level undeclared destructive)."
+}

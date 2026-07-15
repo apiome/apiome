@@ -1,0 +1,11 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "2025-06-18",
+    "server_info": {
+      "name": "",
+      "version": "1.0.0"
+    },
+    "capabilities": {}
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "kind": "mcp_posture_proven",
+  "probe_id": "active.auth.unauthenticated-read",
+  "observed": "Retrieved privileged tools/list payload without credentials."
+}

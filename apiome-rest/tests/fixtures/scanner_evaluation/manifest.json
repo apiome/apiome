@@ -1,0 +1,281 @@
+{
+  "corpus_version": "1",
+  "transparency_revision": "1",
+  "description": "CLX-4.3 scanner-evaluation corpus.",
+  "soft_budget_seconds": 30,
+  "ops_failure_inventory": [
+    {
+      "id": "external_linter/malformed.sarif.json",
+      "path": "../external_linter/malformed.sarif.json"
+    },
+    {
+      "id": "external_linter/malformed.jsonl",
+      "path": "../external_linter/malformed.jsonl"
+    },
+    {
+      "id": "external_linter/clean.sarif.json",
+      "path": "../external_linter/clean.sarif.json"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "catalog/arazzo-dangling-operation-id",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arazzo.dangling-operation-id"
+      ]
+    },
+    {
+      "id": "catalog/arzzo-unresolvable-operation-ref",
+      "kind": "catalog_arazzo",
+      "expected_blocking_rule_ids": [
+        "arzzo.unresolvable-operation-ref"
+      ]
+    },
+    {
+      "id": "catalog/compatibility-breaking",
+      "kind": "catalog_compatibility",
+      "expected_blocking_rule_ids": [
+        "compatibility.breaking"
+      ]
+    },
+    {
+      "id": "catalog/multi-format-index",
+      "kind": "catalog_pointer_index",
+      "expected_blocking_rule_ids": [],
+      "pointers": [
+        {
+          "format": "openapi",
+          "path": "../../openapi_family/openapi-3.1-petstore.yaml"
+        },
+        {
+          "format": "asyncapi",
+          "path": "../../asyncapi/suite/api.yaml"
+        },
+        {
+          "format": "graphql",
+          "path": "../../graphql/schema.query.graphql"
+        },
+        {
+          "format": "protobuf",
+          "path": "../../proto/grpc/echo.proto"
+        },
+        {
+          "format": "external_linter",
+          "path": "../../external_linter/findings.sarif.json"
+        }
+      ]
+    },
+    {
+      "id": "mcp/safe/clean-surface",
+      "kind": "mcp_surface",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "quality.item-missing-title",
+        "quality.server-missing-instructions",
+        "quality.tool-missing-output-schema"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-list-result-missing-items",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.list-result-missing-items"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-missing-protocol-version",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.missing-protocol-version"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-missing-server-name",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.missing-server-name"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-response-id-not-echoed",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.response-id-not-echoed"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-undeclared-capability-listed",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.undeclared-capability-listed"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-unsupported-protocol-version",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.unsupported-protocol-version"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp01-hidden-instruction",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [
+        "metadata.hidden-instruction"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp01-invisible-characters",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [
+        "metadata.invisible-characters"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp01-proven-input-injection",
+      "kind": "mcp_posture_proven",
+      "expected_blocking_rule_ids": [
+        "protocol.proven-input-injection"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp02-exfiltration-directive",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [
+        "metadata.exfiltration-directive"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp03-privileged-container",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.privileged-container"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp04-remote-script-execution",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.remote-script-execution"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp05-command-execution",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.remote-script-execution"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp06-committed-private-key",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.committed-private-key"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp06-credential-in-description",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [
+        "metadata.credential-in-description"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp06-hardcoded-provider-credential",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.hardcoded-provider-credential"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp07-proven-auth-bypass",
+      "kind": "mcp_posture_proven",
+      "expected_blocking_rule_ids": [
+        "protocol.proven-auth-bypass"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp07-tls-verification-disabled",
+      "kind": "mcp_posture_source",
+      "expected_blocking_rule_ids": [
+        "source.tls-verification-disabled"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp08-context-oversharing",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [
+        "metadata.exfiltration-directive"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp09-tool-name-shadowing",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "metadata.tool-name-shadowing"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/owasp/mcp10-undeclared-destructive",
+      "kind": "mcp_posture_metadata",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "metadata.unauthenticated-write-capability",
+        "metadata.undeclared-destructive-tool"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/surface/naming-item-name-missing",
+      "kind": "mcp_surface",
+      "expected_blocking_rule_ids": [
+        "naming.item-name-missing"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/surface/schema-resource-invalid-uri",
+      "kind": "mcp_surface",
+      "expected_blocking_rule_ids": [
+        "schema.resource-invalid-uri"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/surface/schema-resource-template-invalid-uri-template",
+      "kind": "mcp_surface",
+      "expected_blocking_rule_ids": [
+        "schema.resource-template-invalid-uri-template"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/surface/schema-tool-input-schema-invalid",
+      "kind": "mcp_surface",
+      "expected_blocking_rule_ids": [
+        "schema.tool-input-schema-invalid"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/toolbench/ambiguous-tool-name",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "readiness.tool-description-too-brief",
+        "readiness.tool-missing-annotations",
+        "readiness.tool-missing-output-schema",
+        "readiness.tool-missing-recovery-guidance"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/toolbench/missing-parameter-descriptions",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [],
+      "expected_rule_ids": [
+        "readiness.tool-missing-annotations",
+        "readiness.tool-missing-output-schema",
+        "readiness.tool-missing-recovery-guidance",
+        "readiness.tool-parameter-missing-description",
+        "readiness.tool-parameter-unconstrained"
+      ]
+    }
+  ]
+}

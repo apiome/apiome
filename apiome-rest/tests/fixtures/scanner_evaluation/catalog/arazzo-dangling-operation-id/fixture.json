@@ -1,0 +1,71 @@
+{
+  "kind": "catalog_arazzo",
+  "document": {
+    "arazzo": "1.0.1",
+    "info": {
+      "title": "Checkout",
+      "version": "1.0.0",
+      "summary": "Checkout flow"
+    },
+    "sourceDescriptions": [
+      {
+        "name": "openapi",
+        "type": "openapi",
+        "url": "https://example.test/openapi.json",
+        "content": {
+          "openapi": "3.0.0",
+          "info": {
+            "title": "Shop",
+            "version": "1.0.0"
+          },
+          "paths": {
+            "/carts": {
+              "post": {
+                "operationId": "createCart",
+                "responses": {
+                  "201": {}
+                }
+              }
+            },
+            "/payments": {
+              "post": {
+                "operationId": "createPayment",
+                "responses": {
+                  "200": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "workflows": [
+      {
+        "workflowId": "checkout",
+        "summary": "Checkout cart and pay",
+        "steps": [
+          {
+            "stepId": "createCart",
+            "operationId": "createCart",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 201",
+                "type": "simple"
+              }
+            ]
+          },
+          {
+            "stepId": "ghostStep",
+            "operationId": "doesNotExist",
+            "successCriteria": [
+              {
+                "condition": "$statusCode == 200",
+                "type": "simple"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

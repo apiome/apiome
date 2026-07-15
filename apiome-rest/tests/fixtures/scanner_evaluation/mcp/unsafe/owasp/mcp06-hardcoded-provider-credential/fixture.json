@@ -1,0 +1,8 @@
+{
+  "kind": "mcp_posture_source",
+  "files": {
+    ".env": "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\n"
+  },
+  "source_reference": "https://github.com/acme/srv",
+  "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

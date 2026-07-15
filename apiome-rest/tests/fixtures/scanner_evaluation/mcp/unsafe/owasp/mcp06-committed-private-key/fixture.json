@@ -1,0 +1,8 @@
+{
+  "kind": "mcp_posture_source",
+  "files": {
+    "id_rsa": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF6P...\n-----END RSA PRIVATE KEY-----\n"
+  },
+  "source_reference": "https://github.com/acme/srv",
+  "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.5.0
+  version: 1.7.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5294,6 +5294,154 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for lint revision policyresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/gate:
+    get:
+      tags:
+      - lint
+      summary: Lint Revision Gate
+      description: 'Evaluate the lint CI gate for a revision and emit a machine-readable
+        artifact (CLX-4.2).
+
+
+        Runs the pinned policy pack over the revision''s current evidence (persisting
+        a
+
+        reproducible ``lint_policy_evaluations`` row), optionally compares against
+        a baseline
+
+        revision for regressions, and serializes the verdict as JSON, SARIF 2.1.0,
+        JUnit XML,
+
+        Markdown, or a signed in-toto attestation. The HTTP status is always 200 —
+        the pass/fail
+
+        verdict lives in the body (``gate.passed``), so CI exit codes stay under the
+        CLI''s
+
+        control and reflect only configured policy failures.'
+      operationId: lint_revision_gate_v1_versions__tenant_slug___project_id___version_record_id__lint_gate_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: format
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Gateformat schema.
+          - type: 'null'
+            description: Lint Revision Gateformat schema.
+          description: 'Artifact format: json (default) | sarif | junit | markdown
+            | attestation. The Accept header is honored when the query parameter is
+            absent.'
+          title: Format
+        description: 'Artifact format: json (default) | sarif | junit | markdown |
+          attestation. The Accept header is honored when the query parameter is absent.'
+      - name: baselineRevisionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Gatebaseline Revision ID schema.
+          - type: 'null'
+            description: Lint Revision Gatebaseline Revision ID schema.
+          description: Optional baseline revision (versions.id) to diff regressions
+            against; must belong to the same project. Without it, regressions compare
+            each scanner's latest run to its own previous run.
+          title: Baselinerevisionid
+        description: Optional baseline revision (versions.id) to diff regressions
+          against; must belong to the same project. Without it, regressions compare
+          each scanner's latest run to its own previous run.
+      - name: newOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Scope the CI verdict's unwaived-errors gate to newly introduced
+            findings, so pre-existing debt does not block. Coverage and axis gates
+            always evaluate the full head revision.
+          default: false
+          title: Newonly
+        description: Scope the CI verdict's unwaived-errors gate to newly introduced
+          findings, so pre-existing debt does not block. Coverage and axis gates always
+          evaluate the full head revision.
+      - name: policyVersionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Gatepolicy Version ID schema.
+          - type: 'null'
+            description: Lint Revision Gatepolicy Version ID schema.
+          description: Optional historical policy pack id; defaults to the latest
+            for the assigned guide.
+          title: Policyversionid
+        description: Optional historical policy pack id; defaults to the latest for
+          the assigned guide.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Gateauthorization schema.
+          - type: 'null'
+            description: Lint Revision Gateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Lint Revision Gate Xapikey schema.
+          - type: 'null'
+            description: Lint Revision Gate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for lint revision gate.
+          content:
+            application/json:
+              schema:
+                description: Response payload for lint revision gateresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for lint revision gateresponse422.
   /v1/lint/rules:
     get:
       tags:
@@ -23036,6 +23184,60 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get mcp endpoint version changesresponse422.
+  /v1/mcp/lint/rules:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Get Mcp Surface Lint Rules
+      description: 'Return the MCP surface-lint rule catalog with CLX-4.3 transparency
+        metadata.
+
+
+        Registry-level (describes the engine, not any endpoint). Blocking rules carry
+
+        reference, remediation, false-positive guidance, fixture id, and scan modes.'
+      operationId: get_mcp_surface_lint_rules_v1_mcp_lint_rules_get
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Surface Lint Rulesauthorization schema.
+          - type: 'null'
+            description: Get MCP Surface Lint Rulesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Surface Lint Rules Xapikey schema.
+          - type: 'null'
+            description: Get MCP Surface Lint Rules Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get mcp surface lint rules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpSurfaceLintRulesResponse'
+                description: Response payload for get mcp surface lint rulesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get mcp surface lint rulesresponse422.
   /v1/mcp/conformance/rules:
     get:
       tags:
@@ -24298,6 +24500,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get mcp endpoint version lint policyresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/lint/gate:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Get Mcp Endpoint Version Lint Gate
+      description: 'Evaluate the lint CI gate for an MCP snapshot and emit a machine-readable
+        artifact (CLX-4.2).
+
+
+        The MCP twin of ``GET /v1/versions/…/lint/gate``: policy verdict over the
+        snapshot''s
+
+        current evidence, optional baseline regression diff, and JSON / SARIF / JUnit
+        / Markdown /
+
+        attestation serialization. HTTP status is always 200 — pass/fail lives in
+        ``gate.passed``.'
+      operationId: get_mcp_endpoint_version_lint_gate_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__lint_gate_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Version Id
+          description: Version Id schema.
+        description: Version identifier or semantic version label, depending on the
+          route.
+      - name: format
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Gateformat schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Gateformat schema.
+          description: 'Artifact format: json (default) | sarif | junit | markdown
+            | attestation. The Accept header is honored when the query parameter is
+            absent.'
+          title: Format
+        description: 'Artifact format: json (default) | sarif | junit | markdown |
+          attestation. The Accept header is honored when the query parameter is absent.'
+      - name: baselineVersionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Gatebaseline Version ID schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Gatebaseline Version ID schema.
+          description: Optional baseline snapshot (mcp_endpoint_versions.id) to diff
+            regressions against; must belong to the same endpoint.
+          title: Baselineversionid
+        description: Optional baseline snapshot (mcp_endpoint_versions.id) to diff
+          regressions against; must belong to the same endpoint.
+      - name: newOnly
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Scope the CI verdict's unwaived-errors gate to newly introduced
+            findings.
+          default: false
+          title: Newonly
+        description: Scope the CI verdict's unwaived-errors gate to newly introduced
+          findings.
+      - name: policyVersionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Gatepolicy Version ID schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Gatepolicy Version ID schema.
+          description: Optional historical policy pack id; defaults to the latest
+            for the assigned guide.
+          title: Policyversionid
+        description: Optional historical policy pack id; defaults to the latest for
+          the assigned guide.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Gateauthorization schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Gateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get MCP Endpoint Version Lint Gate Xapikey schema.
+          - type: 'null'
+            description: Get MCP Endpoint Version Lint Gate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get mcp endpoint version lint gate.
+          content:
+            application/json:
+              schema:
+                description: Response payload for get mcp endpoint version lint gateresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get mcp endpoint version lint gateresponse422.
   /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/credentials:
     get:
       tags:
@@ -33576,6 +33917,15 @@ components:
           title: Algorithmversion
           description: Implementation revision of the algorithm.
           example: 1.0.0
+        algorithmDocsPage:
+          anyOf:
+          - type: string
+            description: Response payload for lint axis evaluation.
+          - type: 'null'
+            description: Response payload for lint axis evaluation.
+          title: Algorithmdocspage
+          description: 'Repository-relative guide for the scoring algorithm (CLX-4.3,
+            #4861).'
         axes:
           items:
             $ref: '#/components/schemas/LintAxisOut'
@@ -34786,6 +35136,48 @@ components:
           title: Docsanchor
           description: Anchor slug into the rule reference page documenting this rule.
           example: example
+        reference:
+          anyOf:
+          - type: string
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Reference
+          description: Resolvable reference URL (populated for blocking rules, CLX-4.3).
+        remediation:
+          anyOf:
+          - type: string
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Remediation
+          description: Remediation guidance (populated for blocking rules, CLX-4.3).
+        falsePositiveGuidance:
+          anyOf:
+          - type: string
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Falsepositiveguidance
+          description: When a hit may be noise (populated for blocking rules, CLX-4.3).
+        fixtureId:
+          anyOf:
+          - type: string
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Fixtureid
+          description: Scanner-evaluation corpus fixture id (blocking rules, CLX-4.3).
+        scanModes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for lint rule.
+          - type: 'null'
+            description: Response payload for lint rule.
+          title: Scanmodes
+          description: Scan modes / evidence requirements (blocking rules, CLX-4.3).
       type: object
       required:
       - ruleId
@@ -34805,7 +35197,10 @@ components:
         violation is attributable to a registered rule. ``default_severity`` is the
         severity the
 
-        rule applies when no style guide overrides it.'
+        rule applies when no style guide overrides it. Blocking (error) rules include
+        CLX-4.3
+
+        transparency fields (reference, remediation, fixture, false-positive guidance).'
     LintWorkspaceAxisSummaryOut:
       properties:
         key:
@@ -37261,6 +37656,64 @@ components:
           description: Whether the rule needs live protocol evidence. Such a rule
             is skipped — never assumed to pass — when no transcript was captured.
           example: false
+        reference:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Reference
+          description: Alias of specReference for shared transparency consumers (CLX-4.3).
+        remediation:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Remediation
+          description: Remediation guidance for blocking rules (CLX-4.3).
+        falsePositiveGuidance:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Falsepositiveguidance
+          description: False-positive triage guidance for blocking rules (CLX-4.3).
+        fixtureId:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Fixtureid
+          description: Scanner-evaluation corpus fixture id (CLX-4.3).
+        scanModes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Scanmodes
+          description: Scan modes / evidence requirements (CLX-4.3).
+        docsPage:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Docspage
+          description: Docs Page.
+        docsAnchor:
+          anyOf:
+          - type: string
+            description: Response payload for mcp conformance rule.
+          - type: 'null'
+            description: Response payload for mcp conformance rule.
+          title: Docsanchor
+          description: Docs Anchor.
       type: object
       required:
       - ruleId
@@ -41455,6 +41908,56 @@ components:
           description: 'The evidence the rule needs: surface | source | sbom | vulnerabilities
             | probe.'
           example: example
+        remediation:
+          anyOf:
+          - type: string
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Remediation
+          description: Remediation guidance for blocking rules (CLX-4.3).
+        falsePositiveGuidance:
+          anyOf:
+          - type: string
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Falsepositiveguidance
+          description: False-positive triage guidance for blocking rules (CLX-4.3).
+        fixtureId:
+          anyOf:
+          - type: string
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Fixtureid
+          description: Scanner-evaluation corpus fixture id (CLX-4.3).
+        scanModes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Scanmodes
+          description: Scan modes / evidence requirements (CLX-4.3).
+        docsPage:
+          anyOf:
+          - type: string
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Docspage
+          description: Docs Page.
+        docsAnchor:
+          anyOf:
+          - type: string
+            description: Response payload for mcp posture rule.
+          - type: 'null'
+            description: Response payload for mcp posture rule.
+          title: Docsanchor
+          description: Docs Anchor.
       type: object
       required:
       - ruleId
@@ -42737,6 +43240,132 @@ components:
       - source
       title: McpSourceResponse
       description: 'A single linked source association (CLX-3.2, #4856).'
+    McpSurfaceLintRuleOut:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: Rule ID.
+          example: documentation.schema-missing-description
+        category:
+          type: string
+          title: Category
+          description: Classification category for the primitive type.
+          example: domain
+        severity:
+          type: string
+          title: Severity
+          description: Severity.
+          example: warning
+        rationale:
+          type: string
+          title: Rationale
+          default: ''
+          description: Rationale.
+          example: example
+        reference:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Reference
+          description: Reference.
+        remediation:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Remediation
+          description: Remediation.
+        falsePositiveGuidance:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Falsepositiveguidance
+          description: False Positive Guidance.
+        fixtureId:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Fixtureid
+          description: Fixture ID.
+        scanModes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Scanmodes
+          description: Scan Modes.
+        docsPage:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Docspage
+          description: Docs Page.
+        docsAnchor:
+          anyOf:
+          - type: string
+            description: Response payload for mcp surface lint rule.
+          - type: 'null'
+            description: Response payload for mcp surface lint rule.
+          title: Docsanchor
+          description: Docs Anchor.
+      type: object
+      required:
+      - ruleId
+      - category
+      - severity
+      title: McpSurfaceLintRuleOut
+      description: 'One MCP surface-lint rule descriptor (CLX-4.3, #4861).'
+    McpSurfaceLintRulesResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        transparencyRevision:
+          type: string
+          title: Transparencyrevision
+          description: Revision of the blocking-rule transparency catalog.
+          example: example
+        docsPage:
+          type: string
+          title: Docspage
+          description: Repository-relative docs page for MCP surface lint rules.
+          example: example
+        rules:
+          items:
+            $ref: '#/components/schemas/McpSurfaceLintRuleOut'
+          type: array
+          title: Rules
+          description: Rules.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: Number of count.
+          example: 1
+      type: object
+      required:
+      - transparencyRevision
+      - docsPage
+      - rules
+      - count
+      title: McpSurfaceLintRulesResponse
+      description: 'MCP surface-lint rule catalog (CLX-4.3, #4861).'
     McpSurfaceMetricsOut:
       properties:
         type_counts:

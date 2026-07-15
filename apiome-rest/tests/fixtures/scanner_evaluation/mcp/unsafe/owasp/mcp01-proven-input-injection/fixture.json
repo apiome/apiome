@@ -1,0 +1,5 @@
+{
+  "kind": "mcp_posture_proven",
+  "probe_id": "fuzz.parameter-injection",
+  "observed": "Injected payload appeared unescaped in tool output."
+}

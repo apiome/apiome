@@ -1,0 +1,8 @@
+{
+  "kind": "mcp_posture_source",
+  "files": {
+    "docker-compose.yml": "services:\n  x:\n    image: alpine\n    privileged: true\n"
+  },
+  "source_reference": "https://github.com/acme/srv",
+  "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

@@ -1,0 +1,49 @@
+{
+  "kind": "mcp_surface",
+  "protocol_version": "2025-06-18",
+  "server_info": {
+    "name": "clean-srv",
+    "version": "1.0.0"
+  },
+  "capabilities": {
+    "tools": {},
+    "resources": {}
+  },
+  "tools": [
+    {
+      "name": "search",
+      "description": "Search the catalog by keyword.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          }
+        }
+      },
+      "raw": {
+        "name": "search",
+        "description": "Search the catalog by keyword.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "q": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "readme",
+      "uri": "file:///docs/README.md",
+      "raw": {
+        "name": "readme",
+        "uri": "file:///docs/README.md",
+        "mimeType": "text/plain"
+      }
+    }
+  ]
+}

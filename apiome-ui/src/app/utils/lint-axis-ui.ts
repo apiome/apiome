@@ -27,6 +27,8 @@ export interface LintAxis {
 export interface LintAxisEvaluation {
   algorithmId: string;
   algorithmVersion: string;
+  /** Repository-relative docs page for the scoring algorithm (CLX-4.3). */
+  algorithmDocsPage: string | null;
   axes: LintAxis[];
   compositeScore: number | null;
   compositeGrade: string | null;
@@ -35,6 +37,20 @@ export interface LintAxisEvaluation {
 }
 
 export type LintAxisBand = 'strong' | 'fair' | 'weak' | 'gap';
+
+/** Default algorithm docs page when the API omits algorithmDocsPage (CLX-4.3). */
+export const DEFAULT_ALGORITHM_DOCS_PAGE = 'docs/guide/axis-score.md';
+
+/** Style-guide / policy docs linked from displayed policy versions (CLX-4.3). */
+export const POLICY_DOCS_PAGE = 'docs/guide/lint-and-quality.md';
+
+const GITHUB_DOCS_BASE = 'https://github.com/apiome/apiome/blob/main/';
+
+/** Build an external docs href for algorithm or policy documentation. */
+export function buildGovernanceDocsHref(docsPage: string | null | undefined): string {
+  const page = (docsPage || DEFAULT_ALGORITHM_DOCS_PAGE).replace(/^\//, '');
+  return `${GITHUB_DOCS_BASE}${page}`;
+}
 
 function asString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
@@ -93,6 +109,8 @@ export function lintAxisEvaluationFromPayload(raw: unknown): LintAxisEvaluation 
   return {
     algorithmId: asString(r.algorithmId ?? r.algorithm_id) ?? 'clx-axis-v1',
     algorithmVersion: asString(r.algorithmVersion ?? r.algorithm_version) ?? '1',
+    algorithmDocsPage:
+      asString(r.algorithmDocsPage ?? r.algorithm_docs_page) ?? DEFAULT_ALGORITHM_DOCS_PAGE,
     axes,
     compositeScore: requiredCoverageMet ? compositeScore : null,
     compositeGrade: requiredCoverageMet
@@ -114,6 +132,7 @@ export function lintAxisEvaluationFromLintReport(
   return lintAxisEvaluationFromPayload({
     algorithmId: report.algorithmId ?? report.algorithm_id,
     algorithmVersion: report.algorithmVersion ?? report.algorithm_version ?? '1',
+    algorithmDocsPage: report.algorithmDocsPage ?? report.algorithm_docs_page,
     axes: report.axes,
     compositeScore: report.compositeScore ?? report.composite_score,
     compositeGrade: report.compositeGrade ?? report.composite_grade,

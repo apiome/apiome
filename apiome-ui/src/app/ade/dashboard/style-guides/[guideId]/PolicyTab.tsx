@@ -12,6 +12,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Switch } from '@/app/components/ui/Switch';
 import {
+  buildGovernanceDocsHref,
+  POLICY_DOCS_PAGE,
+} from '@/app/utils/lint-axis-ui';
+import {
   DEFAULT_GUIDE_CI_OUTCOMES,
   POLICY_COVERAGE_AXES,
   POLICY_GRADE_OPTIONS,
@@ -316,7 +320,16 @@ export default function PolicyTab({ guideId, readOnly }: { guideId: string; read
         <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/50">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Policy versions</h3>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-            Immutable snapshots created when policy is saved
+            Immutable snapshots created when policy is saved.{' '}
+            <a
+              href={buildGovernanceDocsHref(POLICY_DOCS_PAGE)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+              data-testid="policy-docs-link"
+            >
+              Policy documentation
+            </a>
           </p>
         </div>
         {versions.length === 0 ? (
