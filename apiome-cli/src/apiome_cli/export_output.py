@@ -310,3 +310,124 @@ EXPORT_TARGET_COLUMNS: tuple[ListColumn, ...] = (
     ("Preserved", "preserved_percent", _format_percent),
     ("Available", "available", None),
 )
+
+
+# ---------------------------------------------------------------------------
+# Projection evidence parity (EFP-1.3)
+# ---------------------------------------------------------------------------
+
+# The canonical projection reason codes. Mirrors apiome-rest's ProjectionReason taxonomy
+# (`app/projection_taxonomy.py`); the parity checker flags any code outside this set so
+# the CLI never presents evidence the contract does not define.
+PROJECTION_REASON_CODES: frozenset[str] = frozenset(
+    {
+        "destination_unsupported",
+        "emitter_unsupported",
+        "source_incomplete",
+        "source_parse_limit",
+        "option_excluded",
+        "security_redacted",
+        "target_tool_unavailable",
+        "not_applicable",
+    }
+)
+
+# LossinessReport kind → the projection statuses it reconciles with. `transformed`
+# reconciles to `ok` (a documented transformation preserves meaning), exactly as the
+# server-side reconciliation does; `unavailable` / `not-applicable` have no report
+# counterpart and stay out of the comparison.
+_PARITY_KINDS_TO_STATUSES: dict[str, tuple[str, ...]] = {
+    "ok": ("retained", "transformed"),
+    "approx": ("approximated",),
+    "synth": ("synthesized",),
+    "drop": ("dropped",),
+}
+
+# Coarse-summary count field → the report kind it must equal.
+_PARITY_SUMMARY_TO_KIND: dict[str, str] = {
+    "preserved": "ok",
+    "approximated": "approx",
+    "synthesized": "synth",
+    "dropped": "drop",
+}
+
+
+def projection_parity_issues(fidelity: Mapping[str, Any] | None) -> list[str]:
+    """Return every internal disagreement in a fidelity envelope's projection evidence.
+
+    The CLI leg of the EFP-1.3 cross-surface parity contract: the ``--json`` evidence the
+    export commands emit passes the server's fidelity envelope through verbatim, and this
+    checker proves that envelope is telling one story — the ``report.kind_counts``, the
+    coarse ``summary`` counts, and the ``projection`` status/reason counts must agree,
+    every reason code must be canonical, and ``is_lossless`` must match the evidence.
+    Mirrors ``envelope_parity_issues`` in apiome-rest's projection corpus and
+    ``projectionParityIssues`` in apiome-ui, over the same serialized shape.
+
+    Parameters
+    ----------
+    fidelity:
+        The serialized fidelity envelope (``summary`` / ``report`` / ``projection``), or
+        ``None`` / a non-mapping for a missing envelope.
+
+    Returns
+    -------
+    list[str]
+        Human-readable disagreement descriptions; empty when the envelope is consistent.
+        A pre-projection (older-server) envelope without a ``projection`` block reports
+        exactly one issue naming the missing block.
+    """
+    if not isinstance(fidelity, Mapping):
+        return ["fidelity envelope is missing"]
+    report = fidelity.get("report")
+    summary = fidelity.get("summary")
+    projection = fidelity.get("projection")
+    if not isinstance(report, Mapping) or not isinstance(summary, Mapping):
+        return ["envelope is missing its report/summary blocks"]
+    if not isinstance(projection, Mapping):
+        return ["envelope is missing its projection summary block (EFP-1.1)"]
+
+    issues: list[str] = []
+    if not projection.get("manifest_hash"):
+        issues.append("projection summary has no manifest_hash (snapshot id)")
+
+    kind_counts = report.get("kind_counts") or {}
+    status_counts = projection.get("status_counts") or {}
+    reason_counts = projection.get("reason_counts") or {}
+
+    for kind, statuses in _PARITY_KINDS_TO_STATUSES.items():
+        kind_total = int(kind_counts.get(kind, 0))
+        status_total = sum(int(status_counts.get(status, 0)) for status in statuses)
+        if kind_total != status_total:
+            issues.append(
+                f"report kind_counts[{kind!r}]={kind_total} disagrees with projection "
+                f"status_counts{list(statuses)}={status_total}"
+            )
+
+    for field, kind in _PARITY_SUMMARY_TO_KIND.items():
+        summary_value = int(summary.get(field, 0))
+        kind_value = int(kind_counts.get(kind, 0))
+        if summary_value != kind_value:
+            issues.append(
+                f"summary {field}={summary_value} disagrees with report "
+                f"kind_counts[{kind!r}]={kind_value}"
+            )
+    report_total = sum(int(kind_counts.get(kind, 0)) for kind in _PARITY_KINDS_TO_STATUSES)
+    if int(summary.get("total", 0)) != report_total:
+        issues.append(
+            f"summary total={summary.get('total')} disagrees with report item total={report_total}"
+        )
+
+    for code in reason_counts:
+        if code not in PROJECTION_REASON_CODES:
+            issues.append(f"projection reason_counts carries unknown reason code {code!r}")
+
+    evidence_count = int(projection.get("evidence_count", 0))
+    retained = int(status_counts.get("retained", 0))
+    is_lossless = bool(projection.get("is_lossless", False))
+    if is_lossless != (evidence_count == retained):
+        issues.append(
+            f"projection is_lossless={is_lossless} disagrees with retained {retained} of "
+            f"{evidence_count} evidence rows"
+        )
+
+    return issues

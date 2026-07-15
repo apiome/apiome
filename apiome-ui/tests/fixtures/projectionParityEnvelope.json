@@ -1,0 +1,76 @@
+{
+  "projection": {
+    "edge_count": 14,
+    "evidence_count": 7,
+    "is_lossless": false,
+    "manifest_hash": "[volatile]",
+    "node_count": 14,
+    "reason_counts": {
+      "destination_unsupported": 5,
+      "emitter_unsupported": 0,
+      "not_applicable": 0,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "source_incomplete": 0,
+      "source_parse_limit": 0,
+      "target_tool_unavailable": 0
+    },
+    "status_counts": {
+      "approximated": 4,
+      "dropped": 1,
+      "not-applicable": 0,
+      "retained": 2,
+      "synthesized": 0,
+      "transformed": 0,
+      "unavailable": 0
+    },
+    "target": {
+      "apiome_version": "[volatile]",
+      "availability": "available",
+      "available": true,
+      "capability_profile": {
+        "constraints": false,
+        "events": false,
+        "field_identity": false,
+        "nullability": true,
+        "operations": true,
+        "unions": true
+      },
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "GraphQL Specification",
+        "url": "https://spec.graphql.org/October2021/",
+        "version": "October 2021"
+      },
+      "emitter_version": "1",
+      "format": "graphql",
+      "key": "graphql",
+      "label": "GraphQL SDL",
+      "needs_toolchain": false,
+      "paradigm": "graph",
+      "registry_version": "1"
+    },
+    "total_constructs": 7,
+    "truncated": false,
+    "worst_severity": "critical"
+  },
+  "report": {
+    "kind_counts": {
+      "approx": 4,
+      "drop": 1,
+      "ok": 2,
+      "synth": 0
+    }
+  },
+  "summary": {
+    "approximated": 4,
+    "dropped": 1,
+    "preserved": 2,
+    "preserved_percent": 29,
+    "synthesized": 0,
+    "tier": "lossy",
+    "total": 7
+  }
+}

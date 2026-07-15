@@ -1,0 +1,303 @@
+{
+  "edges": [
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:Contact",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Contact",
+      "status": "retained",
+      "target": "canonical:Contact",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:GET /users/{id}",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:GET /users/{id}",
+      "status": "retained",
+      "target": "canonical:GET /users/{id}",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:Status",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:Status",
+      "status": "retained",
+      "target": "canonical:Status",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:User",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:User",
+      "status": "retained",
+      "target": "canonical:User",
+      "target_mapping": null
+    },
+    {
+      "detail": "source construct normalized into the canonical model",
+      "documentation": null,
+      "explanation": null,
+      "id": "derives:user/signedup",
+      "reason": null,
+      "relation": "derives",
+      "severity": "info",
+      "source": "native:user/signedup",
+      "status": "retained",
+      "target": "canonical:user/signedup",
+      "target_mapping": null
+    },
+    {
+      "detail": "union carried to AsyncAPI 3.1",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:Contact#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:Contact",
+      "status": "retained",
+      "target": null,
+      "target_mapping": "one-of / discriminated alternatives"
+    },
+    {
+      "detail": "AsyncAPI 3.1 has no HTTP operation vocabulary; the request_response exchange is reframed as an action: send + reply and its HTTP method, path are dropped",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "AsyncAPI Specification",
+        "url": "https://www.asyncapi.com/docs/reference/specification/v3.0.0",
+        "version": "3.0.0"
+      },
+      "explanation": "The destination format cannot represent `GET /users/{id}`; its specification has no equivalent construct.",
+      "id": "projects:GET /users/{id}#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:GET /users/{id}",
+      "status": "approximated",
+      "target": null,
+      "target_mapping": "request/response → send + reply (HTTP method, path dropped)"
+    },
+    {
+      "detail": "enum type carried to AsyncAPI 3.1",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:Status#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:Status",
+      "status": "retained",
+      "target": null,
+      "target_mapping": null
+    },
+    {
+      "detail": "object carried to AsyncAPI 3.1",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:User#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:User",
+      "status": "retained",
+      "target": null,
+      "target_mapping": null
+    },
+    {
+      "detail": "event channel carried to AsyncAPI 3.1",
+      "documentation": null,
+      "explanation": null,
+      "id": "projects:user/signedup#0",
+      "reason": null,
+      "relation": "projects",
+      "severity": "info",
+      "source": "canonical:user/signedup",
+      "status": "retained",
+      "target": null,
+      "target_mapping": null
+    }
+  ],
+  "manifest_hash": "[volatile]",
+  "nodes": [
+    {
+      "canonical_kind": null,
+      "construct_key": "Contact",
+      "id": "native:Contact",
+      "kind": "native",
+      "label": "Contact",
+      "native": {
+        "native_id": null,
+        "native_name": "Contact",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "GET /users/{id}",
+      "id": "native:GET /users/{id}",
+      "kind": "native",
+      "label": "getUser",
+      "native": {
+        "native_id": null,
+        "native_name": "getUser",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "Status",
+      "id": "native:Status",
+      "kind": "native",
+      "label": "Status",
+      "native": {
+        "native_id": null,
+        "native_name": "Status",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "User",
+      "id": "native:User",
+      "kind": "native",
+      "label": "User",
+      "native": {
+        "native_id": null,
+        "native_name": "User",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": null,
+      "construct_key": "user/signedup",
+      "id": "native:user/signedup",
+      "kind": "native",
+      "label": "user/signedup",
+      "native": {
+        "native_id": null,
+        "native_name": "user/signedup",
+        "source_location": null
+      },
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "Contact",
+      "id": "canonical:Contact",
+      "kind": "canonical",
+      "label": "Contact",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "operation",
+      "construct_key": "GET /users/{id}",
+      "id": "canonical:GET /users/{id}",
+      "kind": "canonical",
+      "label": "GET /users/{id}",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "Status",
+      "id": "canonical:Status",
+      "kind": "canonical",
+      "label": "Status",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "type",
+      "construct_key": "User",
+      "id": "canonical:User",
+      "kind": "canonical",
+      "label": "User",
+      "native": null,
+      "target": null
+    },
+    {
+      "canonical_kind": "channel",
+      "construct_key": "user/signedup",
+      "id": "canonical:user/signedup",
+      "kind": "canonical",
+      "label": "user/signedup",
+      "native": null,
+      "target": null
+    }
+  ],
+  "reason_counts": {
+    "destination_unsupported": 1,
+    "emitter_unsupported": 0,
+    "not_applicable": 0,
+    "option_excluded": 0,
+    "security_redacted": 0,
+    "source_incomplete": 0,
+    "source_parse_limit": 0,
+    "target_tool_unavailable": 0
+  },
+  "status_counts": {
+    "approximated": 1,
+    "dropped": 0,
+    "not-applicable": 0,
+    "retained": 4,
+    "synthesized": 0,
+    "transformed": 0,
+    "unavailable": 0
+  },
+  "target": {
+    "apiome_version": "[volatile]",
+    "availability": "available",
+    "available": true,
+    "capability_profile": {
+      "constraints": true,
+      "events": true,
+      "field_identity": false,
+      "nullability": true,
+      "operations": false,
+      "unions": true
+    },
+    "documentation": {
+      "anchor": null,
+      "documentation_unavailable": false,
+      "note": null,
+      "specification": "AsyncAPI Specification",
+      "url": "https://www.asyncapi.com/docs/reference/specification/v3.0.0",
+      "version": "3.0.0"
+    },
+    "emitter_version": "1",
+    "format": "asyncapi-3",
+    "key": "asyncapi",
+    "label": "AsyncAPI 3.1",
+    "needs_toolchain": false,
+    "paradigm": "event",
+    "registry_version": "1"
+  },
+  "total_constructs": 5,
+  "truncated": false
+}

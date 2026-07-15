@@ -14,6 +14,7 @@
  */
 
 import type { ExportAdvisory } from '../../../../utils/export-advisory';
+import { isKnownReasonCode } from './capabilityRegistry';
 import type {
   ExportFidelityTier,
   ExportTargetDescriptor,
@@ -60,6 +61,49 @@ export interface ExportFidelityEnvelope {
   report: LossinessReport;
   /** The user-facing "may lose fidelity" advisory (MFX-2.4), rendered verbatim. */
   advisory: ExportAdvisory;
+  /** The bounded projection-manifest summary (EFP-1.1); absent from older servers. */
+  projection?: ProjectionManifestSummary | null;
+}
+
+/** A construct's projected fate in the target (mirrors Python `ProjectionStatus`). */
+export type ProjectionStatus =
+  | 'retained'
+  | 'transformed'
+  | 'approximated'
+  | 'synthesized'
+  | 'dropped'
+  | 'unavailable'
+  | 'not-applicable';
+
+/**
+ * The bounded projection summary embedded in the fidelity envelope (mirrors Python
+ * `ProjectionManifestSummary`, EFP-1.1). The snapshot id (`manifest_hash`) plus the
+ * aggregate status/reason counts — everything a surface needs to *reference* the
+ * projection snapshot without carrying the node/edge graph.
+ */
+export interface ProjectionManifestSummary {
+  /** The manifest's stable content hash — the snapshot id. */
+  manifest_hash: string;
+  /** The target + version provenance block (registry/emitter versions and docs ride here). */
+  target: Record<string, unknown>;
+  /** Count of projected constructs per ProjectionStatus, zero-filled. */
+  status_counts: Record<string, number>;
+  /** Count of non-preserved constructs per ProjectionReason, zero-filled. */
+  reason_counts: Record<string, number>;
+  /** Distinct canonical constructs the manifest projects. */
+  total_constructs: number;
+  /** Total projection nodes in the full manifest. */
+  node_count: number;
+  /** Total projection edges in the full manifest. */
+  edge_count: number;
+  /** Total outcome (projects) edges — the evidence rows. */
+  evidence_count: number;
+  /** True when every construct was retained. */
+  is_lossless: boolean;
+  /** Worst severity among non-retained constructs, or null when lossless. */
+  worst_severity?: LossinessSeverity | null;
+  /** True when the underlying graph was aggregated rather than complete. */
+  truncated: boolean;
 }
 
 /** The `POST /api/export/preview` response (mirrors REST `ExportPreviewResponse`). */
@@ -212,4 +256,106 @@ export function ringStrokeClass(tier: ExportFidelityTier): string {
     default:
       return 'stroke-rose-500 dark:stroke-rose-400';
   }
+}
+
+// ---------------------------------------------------------------------------
+// Projection evidence parity (EFP-1.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * LossinessReport kind → the projection statuses it reconciles with. `transformed`
+ * reconciles to `ok` (a documented transformation preserves meaning), exactly as the
+ * server-side reconciliation does; `unavailable` / `not-applicable` have no report
+ * counterpart and stay out of the comparison.
+ */
+const PARITY_KINDS_TO_STATUSES: Record<LossinessKind, readonly ProjectionStatus[]> = {
+  ok: ['retained', 'transformed'],
+  approx: ['approximated'],
+  synth: ['synthesized'],
+  drop: ['dropped'],
+};
+
+/** Coarse-summary count field → the report kind it must equal. */
+const PARITY_SUMMARY_TO_KIND = {
+  preserved: 'ok',
+  approximated: 'approx',
+  synthesized: 'synth',
+  dropped: 'drop',
+} as const;
+
+/**
+ * Return every internal disagreement in a fidelity envelope's projection evidence.
+ *
+ * The UI leg of the EFP-1.3 cross-surface parity contract: before the export UI trusts
+ * an envelope (a preview, a verify, a job result relayed through the route proxies), the
+ * `report.kind_counts`, the coarse `summary` counts, and the `projection` status/reason
+ * counts must all tell one story, every reason code must be a member of the canonical
+ * taxonomy (see `./capabilityRegistry`), and `is_lossless` must match the evidence rows.
+ * Mirrors `envelope_parity_issues` in apiome-rest's projection corpus and
+ * `projection_parity_issues` in apiome-cli, over the same serialized shape — the jest
+ * corpus exercises all three against the same golden fixture bytes.
+ *
+ * Returns human-readable disagreement descriptions; empty when the envelope is
+ * consistent. An older-server envelope with no `projection` block reports exactly one
+ * issue naming the missing block, so callers can degrade gracefully.
+ */
+export function projectionParityIssues(envelope: ExportFidelityEnvelope): string[] {
+  const { report, summary, projection } = envelope;
+  if (!report || !summary) {
+    return ['envelope is missing its report/summary blocks'];
+  }
+  if (!projection) {
+    return ['envelope is missing its projection summary block (EFP-1.1)'];
+  }
+
+  const issues: string[] = [];
+  if (!projection.manifest_hash) {
+    issues.push('projection summary has no manifest_hash (snapshot id)');
+  }
+
+  const kindCounts = report.kind_counts ?? {};
+  const statusCounts = projection.status_counts ?? {};
+  const reasonCounts = projection.reason_counts ?? {};
+
+  for (const [kind, statuses] of Object.entries(PARITY_KINDS_TO_STATUSES)) {
+    const kindTotal = kindCounts[kind] ?? 0;
+    const statusTotal = statuses.reduce((sum, status) => sum + (statusCounts[status] ?? 0), 0);
+    if (kindTotal !== statusTotal) {
+      issues.push(
+        `report kind_counts['${kind}']=${kindTotal} disagrees with projection ` +
+          `status_counts[${statuses.join(', ')}]=${statusTotal}`,
+      );
+    }
+  }
+
+  for (const [field, kind] of Object.entries(PARITY_SUMMARY_TO_KIND)) {
+    const summaryValue = summary[field as keyof typeof PARITY_SUMMARY_TO_KIND] ?? 0;
+    const kindValue = kindCounts[kind] ?? 0;
+    if (summaryValue !== kindValue) {
+      issues.push(`summary ${field}=${summaryValue} disagrees with report kind_counts['${kind}']=${kindValue}`);
+    }
+  }
+  const reportTotal = Object.keys(PARITY_KINDS_TO_STATUSES).reduce(
+    (sum, kind) => sum + (kindCounts[kind] ?? 0),
+    0,
+  );
+  if ((summary.total ?? 0) !== reportTotal) {
+    issues.push(`summary total=${summary.total} disagrees with report item total=${reportTotal}`);
+  }
+
+  for (const code of Object.keys(reasonCounts)) {
+    if (!isKnownReasonCode(code)) {
+      issues.push(`projection reason_counts carries unknown reason code '${code}'`);
+    }
+  }
+
+  const retained = statusCounts['retained'] ?? 0;
+  if (projection.is_lossless !== (projection.evidence_count === retained)) {
+    issues.push(
+      `projection is_lossless=${projection.is_lossless} disagrees with retained ${retained} of ` +
+        `${projection.evidence_count} evidence rows`,
+    );
+  }
+
+  return issues;
 }
