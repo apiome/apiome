@@ -76,6 +76,13 @@ JSON_SCHEMA_FORMAT = "json-schema"
 #: must decline anything carrying an API-description discriminator to avoid stealing it.
 _API_MARKERS = ("openapi", "swagger", "asyncapi", "arazzo", "openrpc", "avro")
 
+#: Keys that never appear in JSON Schema but mark JSON Type Definition forms. Without
+#: this, a JTD object schema's ``properties`` map is mistaken for a JSON Schema document
+#: and format detection reports a false ambiguity (or wrong winner).
+_JTD_EXCLUSIVE_KEYS = frozenset(
+    {"optionalProperties", "elements", "values", "mapping"}
+)
+
 #: The ``type`` keyword values that are valid JSON Schema types. A structural sniff on
 #: ``type`` matches only these, so an arbitrary JSON object with a domain ``type`` field
 #: (e.g. ``{"type": "user"}``) is not mistaken for a schema.
@@ -312,6 +319,11 @@ class JsonSchemaImportSource(ImportSource, register=True):
         if not isinstance(document, dict):
             return NO_MATCH
         if any(marker in document for marker in _API_MARKERS):
+            return NO_MATCH
+        # Leave JTD documents to the JTD adapter (structural ``properties`` is shared).
+        if any(key in document for key in _JTD_EXCLUSIVE_KEYS):
+            return NO_MATCH
+        if "ref" in document and "$ref" not in document:
             return NO_MATCH
 
         schema_marker = document.get("$schema")

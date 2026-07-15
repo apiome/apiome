@@ -33,7 +33,7 @@ const baseProps = {
 const renderCell = (overrides: Partial<React.ComponentProps<typeof VersionMockCell>> = {}) =>
   render(<VersionMockCell {...baseProps} {...overrides} />);
 
-const getToggle = () => screen.getByRole('checkbox', { name: 'Mock for version 1.0.0' });
+const getToggle = () => screen.getByRole('switch', { name: 'Mock for version 1.0.0' });
 
 let consoleErrorSpy: jest.SpyInstance;
 

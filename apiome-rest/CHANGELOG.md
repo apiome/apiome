@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.124.1] - 2026-07-15
+
+### Fixed
+- **CI suite regressions after CLX-4.3 / format emitters** — JSON Schema detection declines
+  JTD-exclusive documents and shares dialect tags with its sniffer (no false ambiguity on
+  `optionalProperties` / `json-schema-2020-12`); stale tests updated for WSDL emit support,
+  lint-rule transparency fields, style-guide `externalLintProfile`, and Connect-RPC tests that
+  require the `buf` toolchain.
+
 ## [1.124.0] - 2026-07-15
 
 ### Added

@@ -293,26 +293,11 @@ def _sniff_jtd(payload: DetectionInput) -> DetectionResult:
 
 
 def _sniff_jsonschema(payload: DetectionInput) -> DetectionResult:
-    from .jsonschema_import_source import is_jsonschema
+    from .jsonschema_import_source import JsonSchemaImportSource
 
-    text = _text_of(payload)
-    if is_jsonschema(text):
-        return DetectionResult(
-            confidence=0.94,
-            format="json-schema",
-            reason="`$schema` / `$defs` JSON Schema document",
-        )
-    document = payload.document
-    if isinstance(document, dict):
-        import json
-
-        if is_jsonschema(json.dumps(document, separators=(",", ":"))):
-            return DetectionResult(
-                confidence=0.93,
-                format="json-schema",
-                reason="`$schema` / `$defs` JSON Schema document",
-            )
-    return NO_MATCH
+    # Delegate so dialect tags (e.g. json-schema-2020-12) match the adapter and do not
+    # create a false ambiguity against a parallel json-schema candidate.
+    return JsonSchemaImportSource().detect(payload)
 
 
 def _sniff_zosconnect(payload: DetectionInput) -> DetectionResult:

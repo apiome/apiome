@@ -144,7 +144,9 @@ def test_create_empty_guide():
     assert r.status_code == 201
     assert r.json()["name"] == "Payments Guide"
     assert r.json()["ruleCount"] == 0
-    create.assert_called_once_with("t1", "Payments Guide", "House rules", None)
+    create.assert_called_once_with(
+        "t1", "Payments Guide", "House rules", None, external_lint_profile=None
+    )
 
 
 def test_create_duplicates_source_guide_rules():
@@ -163,7 +165,9 @@ def test_create_duplicates_source_guide_rules():
     assert r.status_code == 201
     assert r.json()["ruleCount"] == 5
     assert r.json()["enabledRuleCount"] == 5
-    create.assert_called_once_with("t1", "My Copy", None, BUILTIN_ID)
+    create.assert_called_once_with(
+        "t1", "My Copy", None, BUILTIN_ID, external_lint_profile=None
+    )
 
 
 def test_create_with_unknown_source_guide_404s():
@@ -220,7 +224,9 @@ def test_update_renames_custom_guide():
     assert r.status_code == 200
     assert r.json()["name"] == "Renamed"
     # Description untouched when the body omits it.
-    update.assert_called_once_with(GUIDE_ID, "t1", "Renamed", None)
+    update.assert_called_once_with(
+        GUIDE_ID, "t1", "Renamed", None, external_lint_profile=None
+    )
 
 
 def test_delete_builtin_guide_is_read_only():

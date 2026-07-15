@@ -233,7 +233,7 @@ def test_preview_conversion_applies_defaults_only_where_empty() -> None:
 def test_preview_conversion_rejects_unsupported_target() -> None:
     """Targets without a registered emitter are a 400 ConversionError."""
     with pytest.raises(ConversionError) as exc:
-        preview_conversion(_source(), target_format="wsdl")
+        preview_conversion(_source(), target_format="no-such-format")
     assert exc.value.status_code == 400
 
 
@@ -313,7 +313,7 @@ async def test_unsupported_target_format_raises() -> None:
         await run_conversion(
             tenant_slug="acme", tenant_id="t", user_id="u", source=_source(),
             committer=_FakeCommitter(), scorer=_FakeScorer(), store=_FakeStore(),
-            target_format="wsdl",
+            target_format="no-such-format",
         )
     assert exc.value.status_code == 400
 

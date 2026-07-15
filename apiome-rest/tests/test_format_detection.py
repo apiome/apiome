@@ -105,7 +105,11 @@ def test_each_format_fixture_auto_routes(expected_format: str, text: str) -> Non
     detection = detect_format(DetectionInput(text=text))
     assert detection.matched, f"{expected_format} fixture was not recognized"
     assert detection.detected is not None
-    assert detection.detected.format == expected_format
+    detected = detection.detected.format
+    # Dialect tags (e.g. json-schema-2020-12) still belong to the fixture's format family.
+    assert detected == expected_format or detected.startswith(f"{expected_format}-"), (
+        f"expected {expected_format!r} (or dialect), got {detected!r}"
+    )
     assert not detection.ambiguous, f"{expected_format} should be an unambiguous match"
 
 

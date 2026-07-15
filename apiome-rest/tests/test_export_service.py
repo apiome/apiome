@@ -105,9 +105,9 @@ def test_emit_canonical_produces_valid_graphql_sdl() -> None:
 
 def test_emit_canonical_unknown_target_raises() -> None:
     with pytest.raises(ExportError) as exc:
-        emit_canonical(_minimal_rest_api(), "wsdl")
+        emit_canonical(_minimal_rest_api(), "no-such-format")
     assert exc.value.status_code == 400
-    assert "wsdl" in str(exc.value)
+    assert "no-such-format" in str(exc.value)
 
 
 def test_emit_canonical_accepts_valid_options_dict() -> None:
@@ -138,5 +138,5 @@ def test_preview_conversion_rejects_unknown_target() -> None:
         source_format="graphql",
     )
     with pytest.raises(ConversionError) as exc:
-        preview_conversion(source, target_format="wsdl")
+        preview_conversion(source, target_format="no-such-format")
     assert exc.value.status_code == 400

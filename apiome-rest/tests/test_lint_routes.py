@@ -321,11 +321,21 @@ def test_lint_rules_catalog_entries_are_fully_populated():
             "defaultSeverity",
             "rationale",
             "docsAnchor",
+            # CLX-4.3 transparency fields (null for non-blocking rules).
+            "reference",
+            "remediation",
+            "falsePositiveGuidance",
+            "fixtureId",
+            "scanModes",
         }
         assert rule["ruleId"] and rule["pack"] and rule["category"]
         assert rule["defaultSeverity"] in {"error", "warning", "info"}
         assert rule["rationale"].strip()
         assert rule["docsAnchor"] == rule["ruleId"].replace(".", "-")
+        if rule["defaultSeverity"] == "error":
+            assert rule["reference"]
+            assert rule["remediation"]
+            assert rule["scanModes"]
 
 
 def test_lint_rules_catalog_is_deterministic():
@@ -401,5 +411,6 @@ def test_lint_scores_under_the_assigned_style_guide():
     assert body["findings"][0]["severity"] == "error"
     assert body["severityCounts"]["error"] == 1
     assert body["score"] == 90  # one error-severity rule: 100 - 10
-    # The resolution chain received this tenant and project (project tier first).
-    m_resolve.assert_called_once_with("t1", PID)
+    # Guided lint + external-validation evidence each resolve the assigned guide.
+    assert m_resolve.call_count >= 1
+    m_resolve.assert_called_with("t1", PID)

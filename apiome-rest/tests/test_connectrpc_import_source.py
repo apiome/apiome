@@ -53,6 +53,10 @@ def test_auto_detect_ranks_connect_above_grpc_for_connect_proto():
     assert result.format == "connectrpc"
 
 
+@pytest.mark.skipif(
+    not GrpcImportSource().descriptor().available,
+    reason="buf toolchain unavailable",
+)
 def test_normalizer_relabels_format():
     grpc = GrpcImportSource()
     compiled = grpc.parse(_CONNECT_GREETER, source_label="greeter.proto")
@@ -79,6 +83,10 @@ def test_adapter_invalid_source_raises(adapter: ConnectRpcImportSource):
         adapter.parse("not a proto")
 
 
+@pytest.mark.skipif(
+    not GrpcImportSource().descriptor().available,
+    reason="buf toolchain unavailable",
+)
 def test_emitter_produces_proto_bundle():
     grpc = GrpcImportSource()
     compiled = grpc.parse(_CONNECT_GREETER, source_label="greeter.proto")
