@@ -226,6 +226,35 @@ def mcp_trust_posture_rules() -> str:
     return f"{V1}/mcp/trust-posture/rules"
 
 
+def mcp_probe_catalog() -> str:
+    """Registry-level MCP probe catalog: probes, profiles, classification tiers (CLX-3.3, #4857)."""
+    return f"{V1}/mcp/probes/catalog"
+
+
+def mcp_endpoint_probe_targets(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """An MCP endpoint's active-probe allowlist (CLX-3.3, #4857)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/probe-targets"
+
+
+def mcp_endpoint_probe_target(
+    tenant_slug: str, endpoint_id: str | UUID, target_id: str | UUID
+) -> str:
+    """One allowlist entry."""
+    return f"{mcp_endpoint_probe_targets(tenant_slug, endpoint_id)}/{target_id}"
+
+
+def mcp_endpoint_version_probe(
+    tenant_slug: str, endpoint_id: str | UUID, version_id: str | UUID
+) -> str:
+    """Run a probe profile against one version snapshot (CLX-3.3, #4857)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/versions/{version_id}/probe"
+
+
+def mcp_endpoint_probe_runs(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """An MCP endpoint's probe-run audit trail (CLX-3.3, #4857)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/probe-runs"
+
+
 def projects(tenant_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}"
 

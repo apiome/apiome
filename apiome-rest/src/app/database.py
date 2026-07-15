@@ -14804,6 +14804,268 @@ class Database:
         )
         return dict(rows[0]) if rows else None
 
+    # --- MCP dynamic probes: allowlist + audit/rate ledger (CLX-3.3, #4857) -------------------
+
+    _MCP_PROBE_TARGET_COLUMNS = """
+        id, tenant_id, endpoint_id, transport, locator, ownership_declared,
+        test_credential_id, enrolled_by, retired_at, created_at, updated_at
+    """
+
+    _MCP_PROBE_RUN_COLUMNS = """
+        id, tenant_id, endpoint_id, version_id, profile, target_locator, transport,
+        consent, limits, isolation, status, refusal_reason, requests_sent, observed_count,
+        exploited_count, report, report_fingerprint, started_by, started_at, completed_at
+    """
+
+    def enroll_mcp_probe_target(
+        self,
+        *,
+        tenant_id: str,
+        endpoint_id: str,
+        transport: str,
+        locator: str,
+        test_credential_id: Optional[str],
+        enrolled_by: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Add an endpoint to the active-probe allowlist (``mcp_probe_targets``, V173).
+
+        Enrollment is the operator asserting they own/are authorized to probe the target and naming
+        the dedicated test credential a probe authenticates as. ``ownership_declared`` is stored TRUE
+        (the schema refuses a row without it). Idempotent per live ``(endpoint, transport)`` via
+        ``ON CONFLICT DO NOTHING``, returning the existing live row so a retry does not 500.
+
+        Args:
+            tenant_id: The owning tenant.
+            endpoint_id: The endpoint being enrolled.
+            transport: ``http`` or ``stdio``.
+            locator: The resolved target (URL or command reference).
+            test_credential_id: The dedicated probe credential id, or ``None`` for an unauthenticated
+                target.
+            enrolled_by: The acting user id.
+
+        Returns:
+            The created (or already-existing live) row, or ``None`` on an unexpected miss.
+        """
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.mcp_probe_targets (
+                tenant_id, endpoint_id, transport, locator, ownership_declared,
+                test_credential_id, enrolled_by
+            )
+            VALUES (%s::uuid, %s::uuid, %s, %s, TRUE, %s::uuid, %s::uuid)
+            ON CONFLICT (endpoint_id, transport) WHERE retired_at IS NULL
+            DO NOTHING
+            RETURNING {self._MCP_PROBE_TARGET_COLUMNS}
+            """,
+            (tenant_id, endpoint_id, transport, locator, test_credential_id, enrolled_by),
+        )
+        if rows:
+            return dict(rows[0])
+        existing = self.execute_query(
+            f"""
+            SELECT {self._MCP_PROBE_TARGET_COLUMNS}
+            FROM apiome.mcp_probe_targets
+            WHERE endpoint_id = %s::uuid AND transport = %s AND retired_at IS NULL
+            """,
+            (endpoint_id, transport),
+        )
+        return dict(existing[0]) if existing else None
+
+    def get_mcp_probe_target(
+        self, endpoint_id: str, transport: str
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch the live allowlist entry for ``(endpoint, transport)``, or ``None`` if not enrolled."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_PROBE_TARGET_COLUMNS}
+            FROM apiome.mcp_probe_targets
+            WHERE endpoint_id = %s::uuid AND transport = %s AND retired_at IS NULL
+            """,
+            (endpoint_id, transport),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_mcp_probe_targets(self, endpoint_id: str) -> List[Dict[str, Any]]:
+        """List an endpoint's live allowlist entries, newest first."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_PROBE_TARGET_COLUMNS}
+            FROM apiome.mcp_probe_targets
+            WHERE endpoint_id = %s::uuid AND retired_at IS NULL
+            ORDER BY created_at DESC
+            """,
+            (endpoint_id,),
+        )
+        return [dict(r) for r in rows]
+
+    def retire_mcp_probe_target(self, endpoint_id: str, target_id: str) -> bool:
+        """Soft-retire an allowlist entry (sets ``retired_at``), scoped to its endpoint.
+
+        Returns ``True`` when a live row was retired, ``False`` when none matched.
+        """
+        rows = self.execute_query(
+            """
+            UPDATE apiome.mcp_probe_targets
+            SET retired_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND endpoint_id = %s::uuid AND retired_at IS NULL
+            RETURNING id
+            """,
+            (target_id, endpoint_id),
+        )
+        return bool(rows)
+
+    def get_mcp_probe_tenant_usage(self, tenant_id: str) -> Dict[str, int]:
+        """Return a tenant's live probe usage: in-flight runs and runs started in the last hour.
+
+        This is the *authoritative* concurrency/rate ledger the governor reads — the counts come from
+        the audit table, not an in-memory counter, so a restart cannot lose track of in-flight runs
+        and two API replicas cannot each believe a tenant is idle. ``active_runs`` counts
+        ``status='running'`` rows; ``runs_last_hour`` counts rows started in the trailing hour.
+
+        Args:
+            tenant_id: The tenant to measure.
+
+        Returns:
+            ``{"active_runs": int, "runs_last_hour": int}``.
+        """
+        rows = self.execute_query(
+            """
+            SELECT
+                COUNT(*) FILTER (WHERE status = 'running') AS active_runs,
+                COUNT(*) FILTER (WHERE started_at >= CURRENT_TIMESTAMP - INTERVAL '1 hour')
+                    AS runs_last_hour
+            FROM apiome.mcp_probe_runs
+            WHERE tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        row = dict(rows[0]) if rows else {}
+        return {
+            "active_runs": int(row.get("active_runs") or 0),
+            "runs_last_hour": int(row.get("runs_last_hour") or 0),
+        }
+
+    def start_mcp_probe_run(
+        self,
+        *,
+        tenant_id: str,
+        endpoint_id: str,
+        version_id: Optional[str],
+        profile: str,
+        target_locator: str,
+        transport: str,
+        consent: Dict[str, Any],
+        limits: Dict[str, Any],
+        isolation: Optional[Dict[str, Any]],
+        started_by: Optional[str],
+    ) -> Optional[str]:
+        """Open an audit row for an active probe run in ``running`` state, returning its id.
+
+        Written *before* any request goes out, so the run counts against the tenant's concurrency the
+        instant it is authorized — closing the window in which two concurrent requests could each
+        pass a stale idle check. The row is later moved to a terminal state by
+        :meth:`complete_mcp_probe_run` or :meth:`refuse_mcp_probe_run`.
+
+        Returns:
+            The new run id, or ``None`` on failure.
+        """
+        rows = self.execute_query(
+            """
+            INSERT INTO apiome.mcp_probe_runs (
+                tenant_id, endpoint_id, version_id, profile, target_locator, transport,
+                consent, limits, isolation, status, started_by
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s::jsonb, 'running', %s::uuid
+            )
+            RETURNING id
+            """,
+            (
+                tenant_id,
+                endpoint_id,
+                version_id,
+                profile,
+                target_locator,
+                transport,
+                Json(consent),
+                Json(limits),
+                Json(isolation) if isolation is not None else None,
+                started_by,
+            ),
+        )
+        return str(rows[0]["id"]) if rows else None
+
+    def complete_mcp_probe_run(
+        self,
+        run_id: str,
+        *,
+        report: Dict[str, Any],
+        requests_sent: int,
+        observed_count: int,
+        exploited_count: int,
+        report_fingerprint: str,
+    ) -> None:
+        """Move a run to ``completed`` and record its report and outcome tallies."""
+        self.execute_query(
+            """
+            UPDATE apiome.mcp_probe_runs
+            SET status = 'completed',
+                report = %s::jsonb,
+                requests_sent = %s,
+                observed_count = %s,
+                exploited_count = %s,
+                report_fingerprint = %s,
+                completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid
+            """,
+            (
+                Json(report),
+                requests_sent,
+                observed_count,
+                exploited_count,
+                report_fingerprint,
+                run_id,
+            ),
+        )
+
+    def refuse_mcp_probe_run(self, run_id: str, *, reason: str) -> None:
+        """Move a run to ``refused`` with its reason (a guardrail turned it away)."""
+        self.execute_query(
+            """
+            UPDATE apiome.mcp_probe_runs
+            SET status = 'refused', refusal_reason = %s, completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid
+            """,
+            (reason, run_id),
+        )
+
+    def fail_mcp_probe_run(self, run_id: str, *, reason: str) -> None:
+        """Move a run to ``failed`` (an error during execution), recording the reason."""
+        self.execute_query(
+            """
+            UPDATE apiome.mcp_probe_runs
+            SET status = 'failed', refusal_reason = %s, completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid
+            """,
+            (reason, run_id),
+        )
+
+    def list_mcp_probe_runs(
+        self, endpoint_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List an endpoint's probe-run audit rows, newest first (the audit-trail view)."""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._MCP_PROBE_RUN_COLUMNS}
+            FROM apiome.mcp_probe_runs
+            WHERE endpoint_id = %s::uuid
+            ORDER BY started_at DESC
+            LIMIT %s
+            """,
+            (endpoint_id, int(limit)),
+        )
+        return [dict(r) for r in rows]
+
     def touch_mcp_endpoint_discovery(
         self,
         endpoint_id: str,

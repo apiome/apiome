@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -35033,6 +35033,663 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get mcp catalog insightresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/probes/catalog": {
+      "get": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "Get Mcp Probe Catalog",
+        "description": "Return the probe catalog: every probe, the three profiles, and the classification tiers.\n\nRegistry-level (describes the engine, not any endpoint), authenticated like the other MCP rule\ncatalogs. Lets a consumer see, before running anything, which probe belongs to which profile,\nthe strongest classification each can reach, and what the three tiers mean.",
+        "operationId": "get_mcp_probe_catalog_v1_mcp_probes_catalog_get",
+        "parameters": [
+          {
+            "name": "profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Probe Catalogprofile schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Probe Catalogprofile schema."
+                }
+              ],
+              "description": "Restrict the probe list to this profile's probes.",
+              "title": "Profile"
+            },
+            "description": "Restrict the probe list to this profile's probes."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Probe Catalogauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Probe Catalogauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Probe Catalog Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Probe Catalog Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp probe catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for get mcp probe catalogresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp probe catalogresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/probe-targets": {
+      "post": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "Enroll Probe Target",
+        "description": "Enrol an endpoint on the active-probe allowlist.\n\nThe operator asserts ownership/authorization (``ownership_declared: true``, required) and may name\nthe dedicated test credential (``test_credential_id``) a probe authenticates as. Refuses without\nthe ownership assertion \u2014 probing a system nobody vouched for is exactly what the allowlist\nexists to prevent. Idempotent per ``(endpoint, transport)``. 404 for a cross-tenant endpoint.",
+        "operationId": "enroll_probe_target_v1_mcp__tenant_slug__endpoints__endpoint_id__probe_targets_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Enroll Probe Targetauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Enroll Probe Targetauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Enroll Probe Target Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Enroll Probe Target Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for enroll probe target."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for enroll probe target.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for enroll probe targetresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for enroll probe targetresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "List Probe Targets",
+        "description": "List an endpoint's live allowlist entries. 404 for a cross-tenant endpoint.",
+        "operationId": "list_probe_targets_v1_mcp__tenant_slug__endpoints__endpoint_id__probe_targets_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Probe Targetsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Probe Targetsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Probe Targets Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Probe Targets Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list probe targets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for list probe targetsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list probe targetsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/probe-targets/{target_id}": {
+      "delete": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "Retire Probe Target",
+        "description": "Retire an allowlist entry (soft; historical audit rows citing it stay interpretable).\n\n404 for a cross-tenant endpoint or a target id that is not this endpoint's live entry.",
+        "operationId": "retire_probe_target_v1_mcp__tenant_slug__endpoints__endpoint_id__probe_targets__target_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "target_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Target Id",
+              "description": "Target Id schema."
+            },
+            "description": "Path parameter identifying the target id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retire Probe Targetauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retire Probe Targetauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retire Probe Target Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retire Probe Target Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for retire probe target.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for retire probe targetresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for retire probe targetresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions/{version_id}/probe": {
+      "post": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "Run Probe",
+        "description": "Run a probe profile against one version snapshot.\n\n``profile`` (body) defaults to ``passive``. The passive profile re-reads the captured transcript,\nsends nothing, needs no consent, and is always available (subject to nothing but the snapshot\nexisting). Active profiles (``safe-active``, ``payload-fuzzing``) pass, in order: the global kill\nswitch and this tenant's concurrency/rate budget, then consent (the target must be allowlisted,\nownership declared, the run acknowledged, a dedicated identity used, and \u2014 for fuzzing \u2014 explicitly\napproved), then isolation (a stdio target needs a least-privilege sandbox). Every refusal and\nevery completed active run is recorded in the audit trail.\n\n404 when the endpoint/version is not the caller's; 400 on an unknown profile; 403 when a gate\nrefuses; 503 when active probing is requested but this deployment has no probe runner configured.",
+        "operationId": "run_probe_v1_mcp__tenant_slug__endpoints__endpoint_id__versions__version_id__probe_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Version Id",
+              "description": "Version Id schema."
+            },
+            "description": "Version identifier or semantic version label, depending on the route."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Run Probeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Run Probeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Run Probe Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Run Probe Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Request body for run proberequest."
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for run proberequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for run probe."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for run probe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for run proberesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for run proberesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/probe-runs": {
+      "get": {
+        "tags": [
+          "mcp-probe"
+        ],
+        "summary": "List Probe Runs",
+        "description": "Return an endpoint's probe-run audit trail, newest first. 404 for a cross-tenant endpoint.",
+        "operationId": "list_probe_runs_v1_mcp__tenant_slug__endpoints__endpoint_id__probe_runs_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Probe Runsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Probe Runsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Probe Runs Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Probe Runs Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list probe runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for list probe runsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list probe runsresponse422."
                 }
               }
             }

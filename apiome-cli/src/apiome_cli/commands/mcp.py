@@ -57,6 +57,10 @@ _CONFORMANCE_FAIL_ON = ("error", "warning", "info", "none")
 # MCP trust-posture gate vocabulary (CLX-3.2, #4856). Mirrors the REST query-param enums, so a
 # typo is a local usage error rather than a 422 round-trip.
 _POSTURE_PROFILES = ("mcp-trust-posture", "mcp-metadata-posture", "mcp-supply-chain")
+
+# MCP dynamic-probe profiles (CLX-3.3, #4857). Mirrors the REST enum; 'passive' is the read-only
+# default, the two active profiles are consent-gated and audited.
+_PROBE_PROFILES = ("passive", "safe-active", "payload-fuzzing")
 _SOURCE_KINDS = ("git", "package", "image", "registry")
 _SOURCE_PROVENANCES = (
     "operator_declared",
@@ -1115,5 +1119,229 @@ def trust_posture_rules(
         rules,
         _POSTURE_RULE_COLUMNS,
         empty_message="No trust-posture rules.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
+
+
+# =================================================================================================
+# Dynamic probes (CLX-3.3, #4857).
+# =================================================================================================
+
+_PROBE_CATALOG_COLUMNS: tuple[ListColumn, ...] = (
+    ("Probe", "probeId", None),
+    ("Profile", "profile", None),
+    ("Emits", "emits", None),
+    ("OWASP", "owaspIds", lambda v: ",".join(v) if isinstance(v, list) else _format_optional(v)),
+    ("Title", "title", None),
+)
+
+_PROBE_RUN_COLUMNS: tuple[ListColumn, ...] = (
+    ("Started", "startedAt", None),
+    ("Profile", "profile", None),
+    ("Status", "status", None),
+    ("Sent", "requestsSent", None),
+    ("Observed", "observedCount", None),
+    ("Exploited", "exploitedCount", None),
+    ("Reason", "refusalReason", _format_optional),
+)
+
+
+def _emit_probe_report_human(report: dict[str, Any]) -> None:
+    """Print a readable probe-run summary: profile, classification tallies, findings, audit envelope."""
+    profile = report.get("profile") or "?"
+    counts = report.get("classification_counts") or {}
+    typer.echo(f"MCP probe profile: {profile}")
+    typer.echo(
+        "Findings — observed: {o}, exploited-in-test: {e}".format(
+            o=counts.get("observed", 0), e=report.get("exploited_count", 0)
+        )
+    )
+    typer.echo(f"Requests sent: {report.get('requests_sent', 0)}")
+    for finding in report.get("findings") or []:
+        cls = finding.get("classification") or "?"
+        probe = finding.get("probe_id") or "?"
+        path_hint = finding.get("path") or ""
+        owasp = ",".join(finding.get("owasp_ids") or [])
+        typer.echo(f"  [{cls}] {probe}  {path_hint}  ({owasp})")
+        observed = finding.get("observed")
+        if observed:
+            typer.echo(f"      observed: {observed}")
+    skipped = report.get("skipped_probes") or {}
+    for probe_id, reason in skipped.items():
+        typer.echo(f"  SKIPPED {probe_id}: {reason}")
+
+
+@app.command("probe-catalog")
+def probe_catalog(
+    ctx: typer.Context,
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Only list probes in this profile: passive, safe-active, or payload-fuzzing.",
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """List the MCP probe catalog (GET /v1/mcp/probes/catalog).
+
+    Shows every probe, which profile runs it, and the strongest classification tier it can reach —
+    so you know, before running anything, what a probe can and cannot demonstrate.
+    """
+    profile_id = (
+        _normalize_choice(profile, _PROBE_PROFILES, "--profile") if profile is not None else None
+    )
+    json_mode = _json_output(ctx, output)
+    client = _registry_client(ctx)
+
+    path = api_paths.mcp_probe_catalog()
+    if profile_id is not None:
+        path = f"{path}?{urlencode({'profile': profile_id})}"
+    payload = client.get(path).json()
+
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    probes = payload.get("probes")
+    if not isinstance(probes, list):
+        emit_json(payload)
+        return
+    emit_list_table(
+        probes,
+        _PROBE_CATALOG_COLUMNS,
+        empty_message="No probes.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
+
+
+@app.command("probe-target-add")
+def probe_target_add(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID to enrol on the allowlist."),
+    own: bool = typer.Option(
+        False,
+        "--i-own-or-am-authorized",
+        help="Assert you own or are authorized to probe this target (required).",
+    ),
+    test_credential_id: UUID | None = typer.Option(
+        None,
+        "--test-credential",
+        help="The dedicated (non-production) test credential a probe authenticates as.",
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Enrol an endpoint on the active-probe allowlist (POST .../probe-targets).
+
+    Active probing may only ever fire at an allowlisted target. Enrolling records, on the record, that
+    you asserted ownership/authorization and (optionally) the dedicated test identity a probe uses.
+    """
+    if not own:
+        typer.echo(
+            "Refusing: pass --i-own-or-am-authorized to assert you may probe this target.", err=True
+        )
+        raise typer.Exit(EXIT_ERROR)
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    body: dict[str, Any] = {"ownership_declared": True}
+    if test_credential_id is not None:
+        body["test_credential_id"] = str(test_credential_id)
+    path = api_paths.mcp_endpoint_probe_targets(tenant_slug, str(endpoint_id))
+    payload = client.post(path, json=body).json()
+    if json_mode:
+        emit_json(payload)
+    else:
+        target = payload.get("target") if isinstance(payload, dict) else None
+        typer.echo(f"Enrolled probe target: {(target or {}).get('id', '?')}")
+
+
+@app.command("probe-target-list")
+def probe_target_list(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """List an endpoint's active-probe allowlist entries (GET .../probe-targets)."""
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    path = api_paths.mcp_endpoint_probe_targets(tenant_slug, str(endpoint_id))
+    payload = client.get(path).json()
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    targets = payload.get("targets")
+    emit_list_table(
+        targets if isinstance(targets, list) else [],
+        (
+            ("Id", "id", None),
+            ("Transport", "transport", None),
+            ("Locator", "locator", None),
+            ("Owns", "ownershipDeclared", None),
+            ("Test cred", "testCredentialId", _format_optional),
+        ),
+        empty_message="No allowlisted probe targets.",
+        min_width=_MCP_LIST_MIN_WIDTH,
+    )
+
+
+@app.command("probe")
+def probe_endpoint(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    version: UUID | None = typer.Option(
+        None, "--version", help="Version snapshot UUID (default: the endpoint's current version)."
+    ),
+    profile: str = typer.Option(
+        "passive",
+        "--profile",
+        help="Profile: passive (default, read-only), safe-active, or payload-fuzzing.",
+    ),
+    explicit_approval: bool = typer.Option(
+        False,
+        "--i-approve-hostile-payloads",
+        help="Explicit per-run approval, required for payload-fuzzing.",
+    ),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Run a dynamic probe against a version snapshot (POST .../versions/{id}/probe).
+
+    The default 'passive' profile is read-only: it re-reads the captured transcript, sends nothing,
+    and classifies observed protocol behaviour. Active profiles require the target to be allowlisted
+    (see 'probe-target-add'), the global kill switch to be on, and — for payload-fuzzing —
+    --i-approve-hostile-payloads. Nothing here is 'proven' unless a probe demonstrated it against a
+    live server in isolation (an exploited-in-test finding).
+    """
+    profile_id = _normalize_choice(profile, _PROBE_PROFILES, "--profile")
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+
+    version_id = _resolve_lint_version_id(client, tenant_slug, str(endpoint_id), version)
+    path = api_paths.mcp_endpoint_version_probe(tenant_slug, str(endpoint_id), version_id)
+    body = {"profile": profile_id, "explicit_approval": explicit_approval}
+    payload = client.post(path, json=body).json()
+
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    _emit_probe_report_human(payload)
+
+
+@app.command("probe-runs")
+def probe_runs(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    limit: int = typer.Option(50, "--limit", min=1, max=200, help="Max audit rows to return."),
+    output: str | None = typer.Option(None, "--output", help="Output: table (default) or json."),
+) -> None:
+    """Show an endpoint's probe-run audit trail (GET .../probe-runs)."""
+    json_mode = _json_output(ctx, output)
+    client, tenant_slug = _scoped_client(ctx)
+    path = api_paths.mcp_endpoint_probe_runs(tenant_slug, str(endpoint_id))
+    payload = client.get(f"{path}?{urlencode({'limit': limit})}").json()
+    if json_mode or not isinstance(payload, dict):
+        emit_json(payload)
+        return
+    runs = payload.get("runs")
+    emit_list_table(
+        runs if isinstance(runs, list) else [],
+        _PROBE_RUN_COLUMNS,
+        empty_message="No probe runs recorded.",
         min_width=_MCP_LIST_MIN_WIDTH,
     )

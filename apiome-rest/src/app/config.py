@@ -635,6 +635,51 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP dynamic probes (CLX-3.3, #4857). Consent-gated, sandboxed active probing of live MCP
+    # servers, which sends the server crafted requests and classifies what it does as observed or
+    # exploited-in-test. This is the most dangerous MCP feature in the product — it puts traffic on
+    # the wire and, for stdio targets, executes untrusted code — so it is gated on multiple axes and
+    # every one of these defaults to the safe value.
+    #
+    # mcp_probe_enabled  THE GLOBAL KILL SWITCH (AC5). When False (the default) NO active probe runs
+    #                    for ANY tenant, regardless of consent — the single flag an operator flips to
+    #                    freeze the feature during an incident. The read-only PASSIVE profile is
+    #                    unaffected: it sends nothing, so it keeps classifying observed behaviour even
+    #                    while active probing is off. Turning this on does not by itself run anything;
+    #                    a run still needs an allowlisted target, a valid consent record, and (for
+    #                    stdio) a least-privilege sandbox.
+    mcp_probe_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("APIOME_MCP_PROBE_ENABLED", "mcp_probe_enabled"),
+    )
+    # The most active probe runs one tenant may have IN FLIGHT at once (AC5 concurrency limit). The
+    # authoritative in-flight count comes from the audit table (mcp_probe_runs in status 'running'),
+    # so this cap holds across API replicas and restarts.
+    mcp_probe_max_concurrent_per_tenant: int = Field(
+        default=2,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_PROBE_MAX_CONCURRENT_PER_TENANT",
+            "mcp_probe_max_concurrent_per_tenant",
+        ),
+    )
+    # The most active probe runs one tenant may START per rolling hour (AC5 rate limit).
+    mcp_probe_max_runs_per_hour_per_tenant: int = Field(
+        default=20,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_PROBE_MAX_RUNS_PER_HOUR_PER_TENANT",
+            "mcp_probe_max_runs_per_hour_per_tenant",
+        ),
+    )
+    # The most JSON-RPC requests a single active run may send (a hard per-run cap, enforced by the
+    # counting transport, not merely recorded). A probe run is a diagnostic, not a load test.
+    mcp_probe_max_requests_per_run: int = Field(
+        default=50,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_PROBE_MAX_REQUESTS_PER_RUN",
+            "mcp_probe_max_requests_per_run",
+        ),
+    )
+
     # Observability & error handling (RC1-3.2, #3617). Structured JSON logs, request-id
     # propagation, in-process request metrics, and an ops dashboard that surfaces backup status.
     #
