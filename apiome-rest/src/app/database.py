@@ -777,6 +777,19 @@ class Database:
         # Match UI format: key_prefix is first 12 characters + '...'
         key_prefix = api_key[:12] + '...'
 
+        query_with_scopes = """
+            SELECT ak.id, ak.tenant_id, ak.created_by_user_id, ak.key_hash, ak.expires_at, ak.enabled,
+                   ak.scopes,
+                   t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name
+            FROM apiome.api_keys ak
+            JOIN apiome.tenants t ON ak.tenant_id = t.id
+            WHERE ak.key_prefix = %s
+              AND ak.deleted_at IS NULL
+              AND ak.enabled = true
+              AND t.deleted_at IS NULL
+              AND t.enabled = true
+              AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
+        """
         query_with_creator = """
             SELECT ak.id, ak.tenant_id, ak.created_by_user_id, ak.key_hash, ak.expires_at, ak.enabled,
                    t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name
@@ -802,12 +815,23 @@ class Database:
               AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
         """
         try:
-            results = self.execute_query(query_with_creator, (key_prefix,))
+            results = self.execute_query(query_with_scopes, (key_prefix,))
         except Exception as e:
             root = e.__cause__ if getattr(e, "__cause__", None) else e
             pgcode = getattr(root, "pgcode", None)
             msg_l = str(e).lower()
-            if pgcode == "42703" or ("created_by_user_id" in msg_l and "does not exist" in msg_l):
+            if pgcode == "42703" or ("scopes" in msg_l and "does not exist" in msg_l):
+                try:
+                    results = self.execute_query(query_with_creator, (key_prefix,))
+                except Exception as e2:
+                    root2 = e2.__cause__ if getattr(e2, "__cause__", None) else e2
+                    pgcode2 = getattr(root2, "pgcode", None)
+                    msg2 = str(e2).lower()
+                    if pgcode2 == "42703" or ("created_by_user_id" in msg2 and "does not exist" in msg2):
+                        results = self.execute_query(query_legacy, (key_prefix,))
+                    else:
+                        raise
+            elif pgcode == "42703" or ("created_by_user_id" in msg_l and "does not exist" in msg_l):
                 results = self.execute_query(query_legacy, (key_prefix,))
             else:
                 raise
@@ -824,6 +848,9 @@ class Database:
             try:
                 if bcrypt.checkpw(api_key_bytes, key_hash):
                     api_key_data = dict(row)
+                    # Pre-V177 rows / legacy SELECT: treat missing scopes as full access.
+                    if api_key_data.get("scopes") is None:
+                        api_key_data["scopes"] = ["*"]
                     # Update last_used_at
                     try:
                         update_query = "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s"

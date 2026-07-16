@@ -1096,6 +1096,46 @@ describe('Database Helper - API Key Functions', () => {
 
     expect(parsed.success).toBe(true);
     expect(crypto.randomBytes).toHaveBeenCalledWith(32);
+    expect(mockQuery).toHaveBeenCalled();
+    const insertSql = mockQuery.mock.calls[0][0] as string;
+    expect(insertSql).toMatch(/scopes/);
+    expect(mockQuery.mock.calls[0][1]).toEqual(
+      expect.arrayContaining(['tenant-1', 'New Key']),
+    );
+    // Default scopes = full access
+    expect(mockQuery.mock.calls[0][1]).toEqual(
+      expect.arrayContaining([['*']]),
+    );
+  });
+
+  test('createApiKey should persist diff:read scopes', async () => {
+    const { createApiKey } = await import('../lib/db/helper');
+    const crypto = require('crypto');
+
+    crypto.randomBytes.mockReturnValue(Buffer.from('test-api-key-data'));
+
+    mockQuery.mockResolvedValue({
+      rows: [{
+        id: 'key-ci',
+        key_prefix: 'sk_testdata...',
+        scopes: ['diff:read'],
+        created_at: new Date().toISOString(),
+      }]
+    });
+
+    const result = await createApiKey(
+      'tenant-1',
+      'CI Diff',
+      'Pipeline',
+      null,
+      ['diff:read'],
+    );
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(true);
+    expect(mockQuery.mock.calls[0][1]).toEqual(
+      expect.arrayContaining([['diff:read']]),
+    );
   });
 
   test('deleteApiKey should delete API key', async () => {

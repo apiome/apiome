@@ -369,6 +369,10 @@ apiKeysCmd
   .option("--description <description>", "Optional description")
   .option("--expires-days <days>", "Expire the key after N days (default: never)")
   .option("--created-by <user>", "Attribute creation to a user (email or id)")
+  .option(
+    "--scopes <scopes>",
+    "Comma-separated scopes: * (full access, default), diff:read, lint:read (CTG-2.3)",
+  )
   .action(async (opts, cmd: Command) => {
     const g = cmd.optsWithGlobals() as GlobalOpts;
     const expiresInDays = parseExpiresDays(opts.expiresDays);
@@ -381,6 +385,7 @@ apiKeysCmd
           description: opts.description,
           expiresInDays,
           createdByRef: opts.createdBy,
+          scopes: opts.scopes,
         },
         modeOf(g),
       ),

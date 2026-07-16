@@ -14,7 +14,7 @@ Apiome project version. The Action wraps [`apiome diff`](../../apiome-cli/README
 
 1. A published baseline in Apiome (`project@version` or `project@latest`).
 2. Repository secrets:
-   - `APIOME_API_KEY` — workspace API key (read-only CI tokens with `diff:read` work once CTG-2.3 lands)
+   - `APIOME_API_KEY` — workspace API key (prefer a read-only CI token with `diff:read`)
    - `APIOME_TENANT_ID` — tenant slug or UUID
 3. Optional repository variable `APIOME_BASE_URL` (defaults to `https://api.apiome.dev` in the Action).
 

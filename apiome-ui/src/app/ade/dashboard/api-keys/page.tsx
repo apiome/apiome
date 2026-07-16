@@ -30,8 +30,14 @@ import {
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import { Switch } from '../../../components/ui/Switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../components/ui/Tooltip';
+import { RadioGroup, RadioGroupItem } from '../../../components/ui/RadioGroup';
 import { cn } from '../../../../../lib/utils';
 import { useDialog } from '../../../components/providers/DialogProvider';
+import {
+  API_KEY_SCOPE_PRESETS,
+  type ApiKeyScopePreset,
+  formatApiKeyScopes,
+} from '@/app/utils/apiKeyScopes';
 
 interface ApiKey {
   id: string;
@@ -39,12 +45,36 @@ interface ApiKey {
   name: string;
   description: string;
   key_prefix: string;
+  scopes?: string[] | null;
   last_used_at: string | null;
   expires_at: string | null;
   enabled: boolean;
   created_at: string;
   updated_at: string;
 }
+
+const SCOPE_PRESET_OPTIONS: { value: ApiKeyScopePreset; label: string; hint: string }[] = [
+  {
+    value: 'full',
+    label: 'Full access',
+    hint: 'Same as today — all REST operations for this tenant (default).',
+  },
+  {
+    value: 'diff',
+    label: 'CI: classified diff (diff:read)',
+    hint: 'POST /v1/diff/…/classified only — recommended for contract gates.',
+  },
+  {
+    value: 'lint',
+    label: 'CI: lint (lint:read)',
+    hint: 'GET …/lint and …/lint/gate only (catalog + MCP).',
+  },
+  {
+    value: 'ci_both',
+    label: 'CI: diff + lint',
+    hint: 'Both CI read scopes; still no write access.',
+  },
+];
 
 const ApiKeys = () => {
   const { data: session } = useSession();
@@ -55,6 +85,7 @@ const ApiKeys = () => {
   const [newApiKeyName, setNewApiKeyName] = useState('');
   const [newApiKeyDescription, setNewApiKeyDescription] = useState('');
   const [newApiKeyExpiry, setNewApiKeyExpiry] = useState('');
+  const [newApiKeyScopePreset, setNewApiKeyScopePreset] = useState<ApiKeyScopePreset>('full');
   const [generatedApiKey, setGeneratedApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -78,6 +109,7 @@ const ApiKeys = () => {
     setNewApiKeyName('');
     setNewApiKeyDescription('');
     setNewApiKeyExpiry('');
+    setNewApiKeyScopePreset('full');
     setErrorMessage('');
     setShowCreateModal(true);
   };
@@ -93,7 +125,14 @@ const ApiKeys = () => {
 
     try {
       const expiresInDays = newApiKeyExpiry ? parseInt(newApiKeyExpiry) : null;
-      const result = await createApiKey(currentTenantId, newApiKeyName, newApiKeyDescription, expiresInDays);
+      const scopes = API_KEY_SCOPE_PRESETS[newApiKeyScopePreset];
+      const result = await createApiKey(
+        currentTenantId,
+        newApiKeyName,
+        newApiKeyDescription,
+        expiresInDays,
+        scopes,
+      );
       const response = JSON.parse(result);
 
       if (response.success) {
@@ -223,7 +262,7 @@ const ApiKeys = () => {
                   API Keys
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                  Manage API keys for external REST API access
+                  Manage API keys for external REST API access. Prefer scoped CI tokens for pipelines.
                 </p>
               </div>
               <Button onClick={handleCreateApiKey}>
@@ -257,6 +296,7 @@ const ApiKeys = () => {
                   <tr>
                     <th className={dashboardThClass}>Name</th>
                     <th className={dashboardThClass}>Prefix</th>
+                    <th className={dashboardThClass}>Scopes</th>
                     <th className={dashboardThClass}>Status</th>
                     <th className={dashboardThClass}>Last used</th>
                     <th className={dashboardThClass}>Created</th>
@@ -289,6 +329,11 @@ const ApiKeys = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md text-gray-900 dark:text-gray-100">
                           {apiKey.key_prefix}…
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                          {formatApiKeyScopes(apiKey.scopes)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -365,6 +410,29 @@ const ApiKeys = () => {
               <div className="space-y-2">
                 <Label htmlFor="keyDescription">Description</Label>
                 <Textarea id="keyDescription" value={newApiKeyDescription} onChange={(e) => setNewApiKeyDescription(e.target.value)} placeholder="What is this key used for?" rows={3} />
+              </div>
+              <div className="space-y-2">
+                <Label>Scopes</Label>
+                <RadioGroup
+                  value={newApiKeyScopePreset}
+                  onValueChange={(v) => setNewApiKeyScopePreset(v as ApiKeyScopePreset)}
+                  className="space-y-2"
+                >
+                  {SCOPE_PRESET_OPTIONS.map((opt) => (
+                    <RadioGroupItem
+                      key={opt.value}
+                      value={opt.value}
+                      label={
+                        <span className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {opt.label}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{opt.hint}</span>
+                        </span>
+                      }
+                    />
+                  ))}
+                </RadioGroup>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="keyExpiry">Expires In (Days)</Label>

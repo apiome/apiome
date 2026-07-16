@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.135.0] - 2026-07-15
+
+### Added
+- **CI tokens & scoped keys (CTG-2.3, #4473)** — workspace `api_keys.scopes`
+  (`*`, `diff:read`, `lint:read`). Restricted machine keys are allowlisted to
+  `POST /v1/diff/{tenant}/classified` and catalog/MCP `GET …/lint` + `…/lint/gate`
+  only; writes and other routes return 403. Control Panel key creation offers a
+  scope picker (default full access). OpenAPI 1.14.0 → 1.15.0.
+
 ## [1.134.0] - 2026-07-15
 
 ### Added

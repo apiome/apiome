@@ -2,13 +2,17 @@
 Authentication module for JWT and API Key validation.
 
 Supports both JWT tokens (from NextAuth) and API keys for authentication.
+API keys may carry machine scopes (CTG-2.3 / #4473): ``*`` (full access),
+``diff:read``, and ``lint:read``. Restricted keys are allowlisted by method+path.
 """
 
 import logging
+import re
 import uuid
 import jwt
-from typing import Optional, Dict, Any
-from fastapi import HTTPException, Header
+from typing import Any, Dict, List, Optional, Sequence
+
+from fastapi import HTTPException, Header, Request
 
 from .config import settings
 from .database import db
@@ -23,6 +27,109 @@ if _ExpiredSignatureError is None or _InvalidTokenError is None:
     raise ImportError(
         'Install PyJWT for apiome-rest (e.g. pip install "PyJWT>=2.8"). '
         "If the unrelated `jwt` package is installed, remove it: pip uninstall jwt"
+    )
+
+#: Full-access token (default for existing keys).
+API_KEY_SCOPE_FULL = "*"
+API_KEY_SCOPE_DIFF_READ = "diff:read"
+API_KEY_SCOPE_LINT_READ = "lint:read"
+
+#: (HTTP method, path regex) → required scope for restricted machine keys.
+_API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
+    (
+        "POST",
+        re.compile(r"^/v1/diff/[^/]+/classified/?$"),
+        API_KEY_SCOPE_DIFF_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/versions/[^/]+/[^/]+/[^/]+/lint/?$"),
+        API_KEY_SCOPE_LINT_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/versions/[^/]+/[^/]+/[^/]+/lint/gate/?$"),
+        API_KEY_SCOPE_LINT_READ,
+    ),
+    (
+        "GET",
+        re.compile(
+            r"^/v1/mcp/[^/]+/endpoints/[^/]+/versions/[^/]+/lint/?$"
+        ),
+        API_KEY_SCOPE_LINT_READ,
+    ),
+    (
+        "GET",
+        re.compile(
+            r"^/v1/mcp/[^/]+/endpoints/[^/]+/versions/[^/]+/lint/gate/?$"
+        ),
+        API_KEY_SCOPE_LINT_READ,
+    ),
+)
+
+
+def normalize_api_key_scopes(raw: Any) -> List[str]:
+    """
+    Normalize scopes from a DB row into a list of strings.
+
+    Missing / empty values default to full access (``['*']``) for back-compat.
+    """
+    if raw is None:
+        return [API_KEY_SCOPE_FULL]
+    if isinstance(raw, str):
+        parts = [p.strip() for p in raw.strip("{}").split(",") if p.strip()]
+        return parts or [API_KEY_SCOPE_FULL]
+    if isinstance(raw, (list, tuple)):
+        parts = [str(p).strip() for p in raw if str(p).strip()]
+        return parts or [API_KEY_SCOPE_FULL]
+    return [API_KEY_SCOPE_FULL]
+
+
+def is_full_access_key(scopes: Sequence[str]) -> bool:
+    """True when the key carries the full-access ``*`` scope (or is empty → treated as full)."""
+    if not scopes:
+        return True
+    return API_KEY_SCOPE_FULL in scopes
+
+
+def required_scope_for_request(method: str, path: str) -> Optional[str]:
+    """
+    Return the CI scope required for ``method`` + ``path``, or None if not allowlisted.
+
+    Restricted keys (no ``*``) may only call allowlisted routes whose required scope
+    is present on the key.
+    """
+    method_u = (method or "").upper()
+    # Strip query string if a caller passed a full URL path.
+    path_only = (path or "").split("?", 1)[0]
+    for allow_method, pattern, scope in _API_KEY_SCOPE_ALLOWLIST:
+        if allow_method == method_u and pattern.match(path_only):
+            return scope
+    return None
+
+
+def enforce_api_key_scopes(auth_data: Dict[str, Any], request: Request) -> None:
+    """
+    Deny restricted machine keys on non-allowlisted routes (CTG-2.3 / #4473).
+
+    JWT auth is unaffected. Full-access keys (``*``) pass. Restricted keys must
+    hold the scope required by the current method+path allowlist entry.
+    """
+    if auth_data.get("auth_method") != "api_key":
+        return
+    scopes = normalize_api_key_scopes(auth_data.get("scopes"))
+    if is_full_access_key(scopes):
+        return
+    required = required_scope_for_request(request.method, request.url.path)
+    if required and required in scopes:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "API key scope does not allow this operation. "
+            f"Key scopes={list(scopes)}; "
+            f"required={required or 'full access (*)'}"
+        ),
     )
 
 
@@ -137,6 +244,7 @@ def validate_user_tenant_access(user_id: str, tenant_slug: str) -> Optional[Dict
 
 
 def validate_authentication(
+    request: Request,
     tenant_slug: str,
     authorization: Optional[str] = Header(None),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key")
@@ -148,7 +256,11 @@ def validate_authentication(
     1. JWT token in Authorization header (from NextAuth)
     2. API key in X-API-Key header
 
+    Restricted API keys (scopes without ``*``) are allowlisted by method+path
+    (CTG-2.3 / #4473).
+
     Args:
+        request: Incoming request (used for API key scope allowlisting).
         tenant_slug: The requested tenant slug
         authorization: Authorization header (Bearer token)
         x_api_key: API key header
@@ -217,11 +329,14 @@ def validate_authentication(
             )
 
         uid = api_key_data.get("created_by_user_id")
-        return {
+        auth_data = {
             **api_key_data,
             "auth_method": "api_key",
             "user_id": uid,
+            "scopes": normalize_api_key_scopes(api_key_data.get("scopes")),
         }
+        enforce_api_key_scopes(auth_data, request)
+        return auth_data
 
     # No authentication provided
     raise HTTPException(
@@ -294,6 +409,7 @@ def require_tenant_admin_session(
 
 
 def validate_session_credentials(
+    request: Request,
     authorization: Optional[str] = Header(None),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ) -> Dict[str, Any]:
@@ -301,6 +417,7 @@ def validate_session_credentials(
     Validate JWT or API key without requiring a tenant path segment.
 
     Used by ``GET /v1/tenants/me``, ``HEAD /v1/tenants/{slug}``, and similar session-scoped endpoints.
+    Restricted API keys are allowlisted by method+path (CTG-2.3 / #4473).
     """
     if authorization:
         jwt_payload = decode_jwt(authorization)
@@ -327,7 +444,14 @@ def validate_session_credentials(
                 headers={"WWW-Authenticate": "API-Key"},
             )
         uid = api_key_data.get("created_by_user_id")
-        return {**api_key_data, "auth_method": "api_key", "user_id": uid}
+        auth_data = {
+            **api_key_data,
+            "auth_method": "api_key",
+            "user_id": uid,
+            "scopes": normalize_api_key_scopes(api_key_data.get("scopes")),
+        }
+        enforce_api_key_scopes(auth_data, request)
+        return auth_data
 
     raise HTTPException(
         status_code=401,

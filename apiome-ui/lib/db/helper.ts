@@ -15,6 +15,7 @@ import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } fr
 import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
+import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
 
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
@@ -2477,10 +2478,23 @@ export async function getApiKeysForTenant(tenantId: string) {
   }
 }
 
-export async function createApiKey(tenantId: string, name: string, description: string, expiresInDays: number | null) {
+export async function createApiKey(
+  tenantId: string,
+  name: string,
+  description: string,
+  expiresInDays: number | null,
+  scopes: string[] | null = null,
+) {
   try {
     if (!name || name.trim().length === 0) {
       return JSON.stringify({ success: false, error: 'API key name is required' });
+    }
+
+    let normalizedScopes: string[];
+    try {
+      normalizedScopes = normalizeApiKeyScopes(scopes);
+    } catch (scopeErr: any) {
+      return JSON.stringify({ success: false, error: scopeErr?.message || 'Invalid scopes' });
     }
 
     const session = await getAuthSession();
@@ -2506,10 +2520,10 @@ export async function createApiKey(tenantId: string, name: string, description: 
 
     // Insert the API key (created_by_user_id: REST uses this as creator_id for API-key writes)
     const result = await connectionPool.query(
-      `INSERT INTO apiome.api_keys (tenant_id, name, description, key_hash, key_prefix, expires_at, created_by_user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, key_prefix, created_at`,
-      [tenantId, name.trim(), description?.trim() || null, keyHash, keyPrefix, expiresAt, createdByUserId]
+      `INSERT INTO apiome.api_keys (tenant_id, name, description, key_hash, key_prefix, expires_at, created_by_user_id, scopes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, key_prefix, scopes, created_at`,
+      [tenantId, name.trim(), description?.trim() || null, keyHash, keyPrefix, expiresAt, createdByUserId, normalizedScopes]
     );
 
     // Return the plain API key (only time it will be visible)
@@ -2518,11 +2532,46 @@ export async function createApiKey(tenantId: string, name: string, description: 
       apiKey: apiKey,
       id: result.rows[0].id,
       keyPrefix: result.rows[0].key_prefix,
+      scopes: result.rows[0].scopes,
       createdAt: result.rows[0].created_at
     });
   } catch (error: any) {
     if (error.code === '23505') { // Unique constraint violation
       return JSON.stringify({ success: false, error: 'An API key with this name already exists for this tenant' });
+    }
+    // Pre-V177 DB without scopes column — retry without scopes (full-access legacy).
+    if (error.code === '42703' || String(error.message || '').toLowerCase().includes('scopes')) {
+      try {
+        const session = await getAuthSession();
+        const sessionUser = session?.user as { id?: string } | undefined;
+        const createdByUserId =
+          typeof sessionUser?.id === 'string' && sessionUser.id.trim() !== '' ? sessionUser.id.trim() : null;
+        const apiKey = 'sk_' + crypto.randomBytes(32).toString('hex');
+        const keyPrefix = apiKey.substring(0, 12) + '...';
+        const keyHash = await bcrypt.hash(apiKey, 10);
+        let expiresAt = null;
+        if (expiresInDays && expiresInDays > 0) {
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + expiresInDays);
+          expiresAt = expirationDate;
+        }
+        const result = await connectionPool.query(
+          `INSERT INTO apiome.api_keys (tenant_id, name, description, key_hash, key_prefix, expires_at, created_by_user_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id, key_prefix, created_at`,
+          [tenantId, name.trim(), description?.trim() || null, keyHash, keyPrefix, expiresAt, createdByUserId]
+        );
+        return JSON.stringify({
+          success: true,
+          apiKey: apiKey,
+          id: result.rows[0].id,
+          keyPrefix: result.rows[0].key_prefix,
+          scopes: ['*'],
+          createdAt: result.rows[0].created_at
+        });
+      } catch (retryErr: any) {
+        return JSON.stringify({ success: false, error: retryErr.message });
+      }
     }
     return JSON.stringify({ success: false, error: error.message });
   }
