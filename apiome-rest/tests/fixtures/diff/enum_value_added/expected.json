@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "non-breaking",
+  "counts": {
+    "breaking": 0,
+    "non-breaking": 1,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.enum_value_added",
+      "severity": "non-breaking",
+      "pointer": "/components/schemas/Pet/properties/status/enum",
+      "unclassified": false,
+      "change_kind": "enum_value_added",
+      "before": null,
+      "after": "unknown"
+    }
+  ]
+}

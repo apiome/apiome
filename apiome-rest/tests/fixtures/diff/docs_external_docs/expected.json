@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "docs-only",
+  "counts": {
+    "breaking": 0,
+    "non-breaking": 0,
+    "docs-only": 1,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.docs_external_docs",
+      "severity": "docs-only",
+      "pointer": "/info/externalDocs",
+      "unclassified": false,
+      "change_kind": "docs_external_docs",
+      "before": {
+        "url": "https://old.example.com"
+      },
+      "after": {
+        "url": "https://new.example.com"
+      }
+    }
+  ]
+}

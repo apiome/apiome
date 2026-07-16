@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.131.0] - 2026-07-15
+
+### Added
+- **Change taxonomy & classifier (CTG-1.1, #4467; corpus CTG-1.4, #4470)** — OpenAPI
+  document classifier that grades every base→head change as **breaking** /
+  **non-breaking** / **docs-only**, each with a stable rule id, JSON Pointer, and
+  before/after values. Unknown kinds fail safe to breaking with `unclassified=True`.
+  Extensible rule registry (`register_rule` / `override_severity`) for later GOV
+  style-guide re-severity. Pure API: `classify_openapi_changes` in
+  `app.change_taxonomy` (REST endpoint is CTG-1.2). Regression corpus under
+  `tests/fixtures/diff/` with golden outputs. Docs: `docs/change_taxonomy.md`.
+  OpenAPI 1.10.1 → 1.11.0 (library surface; no new HTTP routes yet).
+
 ## [1.130.0] - 2026-07-15
 
 ### Added

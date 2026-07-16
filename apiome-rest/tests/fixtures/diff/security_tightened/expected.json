@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.security_tightened",
+      "severity": "breaking",
+      "pointer": "/security",
+      "unclassified": false,
+      "change_kind": "security_tightened",
+      "before": [],
+      "after": [
+        {
+          "ApiKey": []
+        }
+      ]
+    }
+  ]
+}

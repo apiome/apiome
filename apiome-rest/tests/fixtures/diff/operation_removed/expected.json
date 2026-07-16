@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.operation_removed",
+      "severity": "breaking",
+      "pointer": "/paths/~1pets/get",
+      "unclassified": false,
+      "change_kind": "operation_removed",
+      "before": {
+        "summary": "List pets",
+        "operationId": "listPets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "missing"
+          }
+        }
+      },
+      "after": null
+    }
+  ]
+}
