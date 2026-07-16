@@ -39,6 +39,7 @@ from .data_routes import router as data_router
 from .migration_plans_routes import router as migration_plans_router
 from .version_tags_routes import router as version_tags_router
 from .compatibility_routes import router as compatibility_router
+from .classified_diff_routes import router as classified_diff_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
 from .lint_routes import decisions_router as lint_decisions_router
@@ -86,7 +87,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.11.0",
+    version="1.12.0",
 )
 
 
@@ -231,6 +232,7 @@ app.include_router(projects_router)
 app.include_router(catalog_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
+app.include_router(classified_diff_router)
 app.include_router(lint_router)
 app.include_router(lint_rules_router)
 app.include_router(lint_decisions_router)

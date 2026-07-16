@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.132.0] - 2026-07-15
+
+### Added
+- **Classified diff REST endpoint (CTG-1.2, #4468)** —
+  `POST /v1/diff/{tenant_slug}/classified` wraps the CTG-1.1 classifier for
+  **stored-vs-stored** and **inline-vs-stored** (uploaded candidate OpenAPI vs a
+  stored base). Response includes classified changes, summary counts, and
+  `maxSeverity`. Inline documents over 10MB UTF-8 are rejected with `413`.
+  Auth: JWT or API key with `versions:view`. Docs: `docs/change_taxonomy.md`.
+  OpenAPI 1.11.0 → 1.12.0.
+
 ## [1.131.0] - 2026-07-15
 
 ### Added
