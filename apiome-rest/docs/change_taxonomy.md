@@ -1,7 +1,7 @@
-# Change taxonomy & classifier (CTG-1.1)
+# Change taxonomy & classifier (CTG-1.1 / CTG-1.2)
 
-> **Status:** OpenAPI document classifier — `src/app/change_taxonomy.py`  
-> **Issues:** [#4467](https://github.com/apiome/apiome/issues/4467) (taxonomy) · [#4470](https://github.com/apiome/apiome/issues/4470) (regression corpus)  
+> **Status:** OpenAPI document classifier + REST endpoint  
+> **Issues:** [#4467](https://github.com/apiome/apiome/issues/4467) (taxonomy) · [#4468](https://github.com/apiome/apiome/issues/4468) (REST) · [#4470](https://github.com/apiome/apiome/issues/4470) (regression corpus)  
 > **Epic:** CTG-EPIC-1 (#4459)
 
 Classifies every change between two OpenAPI documents as **breaking**, **non-breaking**, or **docs-only**. Each classified change carries a stable **rule id**, a **JSON Pointer**, and **before/after** values. Unknown enumerator kinds fail safe to **breaking** with `unclassified=True`.
@@ -32,6 +32,34 @@ Optional call-site severity overrides (GOV style-guide hook):
 classify_openapi_changes(base, head, overrides={"ctg.path_removed": "non-breaking"})
 # or persist via override_severity("ctg.path_removed", "non-breaking")
 ```
+
+## REST endpoint (CTG-1.2)
+
+`POST /v1/diff/{tenant_slug}/classified` — JWT or API key with `versions:view`.
+
+**Stored vs stored:**
+
+```json
+{
+  "base": { "project": "pets", "version": "1.0.0" },
+  "head": { "project": "pets", "version": "1.1.0" }
+}
+```
+
+**Inline vs stored** (CI PR candidate vs published contract):
+
+```json
+{
+  "base": { "project": "pets", "version": "latest" },
+  "head": { "inline": "openapi: 3.1.0\ninfo:\n  title: Pets\n  version: 1.1.0\npaths: {}\n" }
+}
+```
+
+- `project` — project slug or UUID
+- `version` — version label, revision UUID, or `latest`
+- `inline` — raw OpenAPI YAML/JSON text; **max 10MB UTF-8** (oversize → `413`)
+
+Response: `changes` (rule id, pointer, before/after, severity), `counts`, `maxSeverity`, plus resolved `base` / `head` metadata. Implementation: `app.classified_diff_routes`.
 
 ## Severities
 
@@ -86,3 +114,4 @@ Fixtures live under `tests/fixtures/diff/<case>/` (`base.yaml`, `head.yaml`, `ex
 | `app.change_taxonomy` | Public types + `classify_openapi_changes` |
 | `app.change_taxonomy_enum` | OpenAPI walk → `RawChange` |
 | `app.change_taxonomy_rules` | Rule registry + defaults |
+| `app.classified_diff_routes` | `POST /v1/diff/{tenant}/classified` (CTG-1.2) |

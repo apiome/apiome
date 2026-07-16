@@ -5,7 +5,8 @@ or **docs-only**. Raw changes come from :mod:`app.change_taxonomy_enum`; each is
 matched against the extensible rule registry in :mod:`app.change_taxonomy_rules`.
 Unknown kinds fail safe to **breaking** with ``unclassified=True``.
 
-This module is pure (no DB, no network). The REST endpoint that exposes it is CTG-1.2.
+This module is pure (no DB, no network). The REST endpoint that exposes it is
+``POST /v1/diff/{tenant_slug}/classified`` (CTG-1.2 / ``app.classified_diff_routes``).
 """
 
 from __future__ import annotations

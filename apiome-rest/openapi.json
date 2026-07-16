@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6847,6 +6847,105 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for list compatibility evidenceresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/diff/{tenant_slug}/classified": {
+      "post": {
+        "tags": [
+          "classified-diff"
+        ],
+        "summary": "Post Classified Diff",
+        "description": "Classify changes between a stored base revision and a stored or inline head.\n\nSupports **stored-vs-stored** (``head: {project, version}``) and\n**inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline\ndocuments larger than 10MB UTF-8 are rejected with ``413``.",
+        "operationId": "post_classified_diff_v1_diff__tenant_slug__classified_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Post Classified Diffauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Post Classified Diffauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Post Classified Diff Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Post Classified Diff Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifiedDiffRequest",
+                "description": "Request body for post classified diffrequest."
+              }
+            }
+          },
+          "description": "Request body for post classified diff."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for post classified diff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassifiedDiffResponse",
+                  "description": "Response payload for post classified diffresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for post classified diffresponse422."
                 }
               }
             }
@@ -43856,6 +43955,294 @@
         "type": "object",
         "title": "ClassUpdateRequest",
         "description": "Partial update payload for a class, including canvas metadata when provided."
+      },
+      "ClassifiedDiffChangeOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "Severity.",
+            "example": "warning"
+          },
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "Pointer.",
+            "example": "example"
+          },
+          "before": {
+            "title": "Before",
+            "description": "Before."
+          },
+          "after": {
+            "title": "After",
+            "description": "After."
+          },
+          "unclassified": {
+            "type": "boolean",
+            "title": "Unclassified",
+            "default": false,
+            "description": "Unclassified.",
+            "example": false
+          },
+          "changeKind": {
+            "type": "string",
+            "title": "Changekind",
+            "default": "",
+            "description": "Change Kind.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ruleId",
+          "severity",
+          "pointer"
+        ],
+        "title": "ClassifiedDiffChangeOut",
+        "description": "One classified change in the API response."
+      },
+      "ClassifiedDiffHeadMeta": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "stored",
+              "inline"
+            ],
+            "title": "Source",
+            "description": "Provenance source for the record (for example human or imported).",
+            "example": "human"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Classified Diff Head Meta schema."
+              },
+              {
+                "type": "null",
+                "description": "Classified Diff Head Meta schema."
+              }
+            ],
+            "title": "Projectid",
+            "description": "Project ID."
+          },
+          "projectSlug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Classified Diff Head Meta schema."
+              },
+              {
+                "type": "null",
+                "description": "Classified Diff Head Meta schema."
+              }
+            ],
+            "title": "Projectslug",
+            "description": "Project Slug."
+          },
+          "versionRecordId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Classified Diff Head Meta schema."
+              },
+              {
+                "type": "null",
+                "description": "Classified Diff Head Meta schema."
+              }
+            ],
+            "title": "Versionrecordid",
+            "description": "Version Record ID."
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Classified Diff Head Meta schema."
+              },
+              {
+                "type": "null",
+                "description": "Classified Diff Head Meta schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "ClassifiedDiffHeadMeta",
+        "description": "Resolved head metadata (stored coords when source is stored)."
+      },
+      "ClassifiedDiffInlineHead": {
+        "properties": {
+          "inline": {
+            "type": "string",
+            "title": "Inline",
+            "description": "Raw OpenAPI 3.x document as YAML or JSON text (max 10MB UTF-8).",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "inline"
+        ],
+        "title": "ClassifiedDiffInlineHead",
+        "description": "Uploaded candidate OpenAPI document as raw YAML or JSON text."
+      },
+      "ClassifiedDiffRequest": {
+        "properties": {
+          "base": {
+            "$ref": "#/components/schemas/ClassifiedDiffStoredRef",
+            "description": "Stored baseline revision (published contract / older side)."
+          },
+          "head": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassifiedDiffStoredRef"
+              },
+              {
+                "$ref": "#/components/schemas/ClassifiedDiffInlineHead"
+              }
+            ],
+            "title": "Head",
+            "description": "Head side: either another stored ``{project, version}`` or ``{inline}`` candidate document text."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "base",
+          "head"
+        ],
+        "title": "ClassifiedDiffRequest",
+        "description": "Request body for classified diff: stored base vs stored or inline head."
+      },
+      "ClassifiedDiffResolvedStored": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectSlug": {
+            "type": "string",
+            "title": "Projectslug",
+            "description": "Project Slug.",
+            "example": "example-resource"
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "Version Record ID.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "type": "string",
+            "title": "Versionlabel",
+            "description": "Version Label.",
+            "example": "1.0.0"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "projectId",
+          "projectSlug",
+          "versionRecordId",
+          "versionLabel"
+        ],
+        "title": "ClassifiedDiffResolvedStored",
+        "description": "Resolved coordinates for a stored side of the comparison."
+      },
+      "ClassifiedDiffResponse": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ClassifiedDiffChangeOut"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Changes.",
+            "maxItems": 1000
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "maxSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for classified diff."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for classified diff."
+              }
+            ],
+            "title": "Maxseverity",
+            "description": "Max Severity."
+          },
+          "base": {
+            "$ref": "#/components/schemas/ClassifiedDiffResolvedStored",
+            "description": "Base."
+          },
+          "head": {
+            "$ref": "#/components/schemas/ClassifiedDiffHeadMeta",
+            "description": "Head."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "base",
+          "head"
+        ],
+        "title": "ClassifiedDiffResponse",
+        "description": "Classified change list with summary counts, max severity, and resolved sides."
+      },
+      "ClassifiedDiffStoredRef": {
+        "properties": {
+          "project": {
+            "type": "string",
+            "title": "Project",
+            "description": "Project slug or project UUID within the authenticated tenant.",
+            "example": "example"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Version label (e.g. ``1.0.0``), revision UUID, or the literal ``latest``.",
+            "example": "1.0.0"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project",
+          "version"
+        ],
+        "title": "ClassifiedDiffStoredRef",
+        "description": "Reference to a stored project revision (slug/UUID + version label/UUID/latest)."
       },
       "CompatibilityCheckRequest": {
         "properties": {
