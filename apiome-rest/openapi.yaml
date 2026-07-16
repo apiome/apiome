@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.17.0
+  version: 1.18.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -47959,6 +47959,20 @@ components:
           description: Whether deliveries are enabled.
           default: true
           example: false
+        minSeverity:
+          anyOf:
+          - type: string
+            enum:
+            - docs-only
+            - non-breaking
+            - breaking
+            description: Request body for push webhook subscription create.
+          - type: 'null'
+            description: Request body for push webhook subscription create.
+          title: Minseverity
+          description: 'Publish-event severity threshold (CTG-3.3): deliver version.published
+            events only when the classified max severity meets this level. Omit/null
+            to receive every publish event (default; other event types are never filtered).'
       type: object
       required:
       - url
@@ -47988,6 +48002,18 @@ components:
           title: Signingsecretref
           description: Signing Secret Ref.
           example: example
+        minSeverity:
+          anyOf:
+          - type: string
+            enum:
+            - docs-only
+            - non-breaking
+            - breaking
+            description: Response payload for push webhook subscription.
+          - type: 'null'
+            description: Response payload for push webhook subscription.
+          title: Minseverity
+          description: Min Severity.
         createdAt:
           anyOf:
           - type: string
@@ -48042,9 +48068,24 @@ components:
             description: Request body for push webhook subscription update.
           title: Active
           description: Active.
+        minSeverity:
+          anyOf:
+          - type: string
+            enum:
+            - docs-only
+            - non-breaking
+            - breaking
+            description: Request body for push webhook subscription update.
+          - type: 'null'
+            description: Request body for push webhook subscription update.
+          title: Minseverity
+          description: Publish-event severity threshold (CTG-3.3). Pass an explicit
+            null to clear the filter (deliver every publish event); omit to leave
+            unchanged.
       type: object
       title: PushWebhookSubscriptionUpdateRequest
-      description: Update URL, active flag, and/or rotate signing secret (#2587).
+      description: 'Update URL, active flag, severity filter, and/or rotate signing
+        secret (#2587, #4477).'
     ReasonExplanation:
       properties:
         reason:

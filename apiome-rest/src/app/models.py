@@ -2796,6 +2796,11 @@ class VersionDraftLockStatusResponse(BaseModel):
     expires_at: Optional[datetime] = Field(default=None, serialization_alias="expiresAt")
 
 
+#: Publish-event severity threshold vocabulary (CTG-3.3, #4477). Matches the
+#: ``version_changelogs.max_severity`` values persisted by CTG-3.1 (#4475).
+PushWebhookMinSeverity = Literal["docs-only", "non-breaking", "breaking"]
+
+
 class PushWebhookSubscriptionCreateRequest(BaseModel):
     """Create a push webhook subscription (#2587). Plaintext signing secret is write-only."""
 
@@ -2814,10 +2819,21 @@ class PushWebhookSubscriptionCreateRequest(BaseModel):
         description="Shared secret for signing deliveries; never returned after create.",
     )
     active: bool = Field(default=True, description="Whether deliveries are enabled.")
+    min_severity: Optional[PushWebhookMinSeverity] = Field(
+        default=None,
+        validation_alias=AliasChoices("minSeverity", "min_severity"),
+        serialization_alias="minSeverity",
+        description=(
+            "Publish-event severity threshold (CTG-3.3): deliver version.published "
+            "events only when the classified max severity meets this level. "
+            "Omit/null to receive every publish event (default; other event types "
+            "are never filtered)."
+        ),
+    )
 
 
 class PushWebhookSubscriptionUpdateRequest(BaseModel):
-    """Update URL, active flag, and/or rotate signing secret (#2587)."""
+    """Update URL, active flag, severity filter, and/or rotate signing secret (#2587, #4477)."""
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -2832,6 +2848,15 @@ class PushWebhookSubscriptionUpdateRequest(BaseModel):
         serialization_alias="signingSecret",
     )
     active: Optional[bool] = None
+    min_severity: Optional[PushWebhookMinSeverity] = Field(
+        default=None,
+        validation_alias=AliasChoices("minSeverity", "min_severity"),
+        serialization_alias="minSeverity",
+        description=(
+            "Publish-event severity threshold (CTG-3.3). Pass an explicit null to "
+            "clear the filter (deliver every publish event); omit to leave unchanged."
+        ),
+    )
 
 
 class PushWebhookSubscriptionResponse(BaseModel):
@@ -2843,6 +2868,9 @@ class PushWebhookSubscriptionResponse(BaseModel):
     url: str
     active: bool
     signing_secret_ref: str = Field(serialization_alias="signingSecretRef")
+    min_severity: Optional[PushWebhookMinSeverity] = Field(
+        default=None, serialization_alias="minSeverity"
+    )
     created_at: Optional[datetime] = Field(default=None, serialization_alias="createdAt")
     updated_at: Optional[datetime] = Field(default=None, serialization_alias="updatedAt")
 

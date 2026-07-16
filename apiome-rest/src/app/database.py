@@ -10376,8 +10376,20 @@ class Database:
         url_normalized: str,
         signing_secret_plain: str,
         active: bool = True,
+        min_severity: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Insert a push webhook row; returns public fields only (no hash)."""
+        """Insert a push webhook row; returns public fields only (no hash).
+
+        Args:
+            tenant_id: Owning tenant id.
+            url: The webhook URL as provided by the caller.
+            url_normalized: Canonical URL used for per-tenant duplicate detection.
+            signing_secret_plain: Plaintext shared secret (stored hashed + encrypted).
+            active: Whether deliveries are enabled.
+            min_severity: Publish-event severity threshold (CTG-3.3, #4477):
+                ``docs-only`` / ``non-breaking`` / ``breaking``, or ``None`` for
+                no filter (every publish event is delivered).
+        """
         secret_hash = self.hash_webhook_signing_secret(signing_secret_plain)
         secret_enc = encrypt_signing_secret(signing_secret_plain)
         conn = self.connect()
@@ -10386,11 +10398,12 @@ class Database:
                 cursor.execute(
                     """
                     INSERT INTO apiome.push_webhook_subscriptions
-                      (tenant_id, url, url_normalized, active, signing_secret_hash, signing_secret_encrypted)
-                    VALUES (%s::uuid, %s, %s, %s, %s, %s)
-                    RETURNING id, url, active, signing_secret_ref, created_at, updated_at
+                      (tenant_id, url, url_normalized, active,
+                       signing_secret_hash, signing_secret_encrypted, min_severity)
+                    VALUES (%s::uuid, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, url, active, signing_secret_ref, min_severity, created_at, updated_at
                     """,
-                    (tenant_id, url, url_normalized, active, secret_hash, secret_enc),
+                    (tenant_id, url, url_normalized, active, secret_hash, secret_enc, min_severity),
                 )
                 row = cursor.fetchone()
                 conn.commit()
@@ -10401,7 +10414,7 @@ class Database:
 
     def list_push_webhook_subscriptions(self, tenant_id: str) -> List[Dict[str, Any]]:
         q = """
-            SELECT id, url, active, signing_secret_ref, created_at, updated_at
+            SELECT id, url, active, signing_secret_ref, min_severity, created_at, updated_at
             FROM apiome.push_webhook_subscriptions
             WHERE tenant_id = %s::uuid AND deleted_at IS NULL
             ORDER BY created_at DESC
@@ -10429,11 +10442,39 @@ class Database:
         """
         return [str(row["id"]) for row in self.execute_query(q, (tenant_id,))]
 
+    def list_active_push_webhook_subscription_filters(
+        self, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """Return every active (non-deleted) subscription's id and severity filter.
+
+        Used by the publish-event fan-out (CTG-3.3, #4477) to decide, per
+        subscription, whether a ``version.published`` delivery meets the
+        subscriber's ``min_severity`` threshold before enqueueing it.
+
+        Args:
+            tenant_id: Owning tenant id.
+
+        Returns:
+            A list of ``{"id": str, "min_severity": Optional[str]}`` dicts
+            (possibly empty), newest first. ``min_severity`` is ``None`` when
+            the subscription is unfiltered.
+        """
+        q = """
+            SELECT id, min_severity
+            FROM apiome.push_webhook_subscriptions
+            WHERE tenant_id = %s::uuid AND active = true AND deleted_at IS NULL
+            ORDER BY created_at DESC
+        """
+        return [
+            {"id": str(row["id"]), "min_severity": row.get("min_severity")}
+            for row in self.execute_query(q, (tenant_id,))
+        ]
+
     def get_push_webhook_subscription(
         self, tenant_id: str, subscription_id: str
     ) -> Optional[Dict[str, Any]]:
         q = """
-            SELECT id, url, active, signing_secret_ref, created_at, updated_at
+            SELECT id, url, active, signing_secret_ref, min_severity, created_at, updated_at
             FROM apiome.push_webhook_subscriptions
             WHERE tenant_id = %s::uuid AND id = %s::uuid AND deleted_at IS NULL
         """
@@ -10448,10 +10489,16 @@ class Database:
         url_normalized: Optional[str] = None,
         active: Optional[bool] = None,
         signing_secret_plain: Optional[str] = None,
+        min_severity: Optional[str] = None,
+        update_min_severity: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """
         Update subscription fields. Returns public row or None if not found.
         Raises ValueError if no updatable fields were provided.
+
+        ``min_severity`` is tri-state (unchanged / set / cleared), so it is only
+        applied when ``update_min_severity`` is True; passing
+        ``update_min_severity=True, min_severity=None`` clears the filter.
         """
         sets: List[str] = []
         params: List[Any] = []
@@ -10473,6 +10520,10 @@ class Database:
             sets.append("signing_secret_encrypted = %s")
             params.append(encrypt_signing_secret(signing_secret_plain))
 
+        if update_min_severity:
+            sets.append("min_severity = %s")
+            params.append(min_severity)
+
         if not sets:
             raise ValueError("no_updates")
 
@@ -10483,7 +10534,7 @@ class Database:
             UPDATE apiome.push_webhook_subscriptions
             SET {", ".join(sets)}
             WHERE tenant_id = %s::uuid AND id = %s::uuid AND deleted_at IS NULL
-            RETURNING id, url, active, signing_secret_ref, created_at, updated_at
+            RETURNING id, url, active, signing_secret_ref, min_severity, created_at, updated_at
         """
         conn = self.connect()
         try:

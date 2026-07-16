@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.138.0] - 2026-07-15
+
+### Added
+- **Webhook payload upgrade (CTG-3.3, #4477)** — publishing a version now fans
+  a `version.published` event out over the existing push-webhook channels,
+  embedding the CTG-3.1 classified changelog (severity counts, top changes
+  with rule id / path / severity, max severity). Subscriptions gain an
+  optional `minSeverity` threshold (`docs-only` | `non-breaking` | `breaking`,
+  V179): filtered subscriptions receive only publishes whose classified max
+  severity meets the threshold (fail-safe: unclassifiable publishes are
+  delivered); unfiltered subscriptions receive every publish (backwards
+  compatible). Retry/dead-letter semantics unchanged. Payload schema in
+  `docs/publish_webhooks.md`. OpenAPI 1.17.0 → 1.18.0.
+
 ## [1.137.0] - 2026-07-15
 
 ### Added

@@ -178,3 +178,123 @@ def test_delivery_detail_not_found():
             "/v1/push-webhook-subscriptions/tn/deliveries/11111111-1111-1111-1111-111111111111"
         )
         assert r.status_code == 404
+
+
+# --- min_severity filter (CTG-3.3, #4477) ---------------------------------
+
+
+def _sub_row(**overrides):
+    row = {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "url": "https://example.com/hook",
+        "active": True,
+        "signing_secret_ref": "22222222-2222-2222-2222-222222222222",
+        "min_severity": None,
+        "created_at": None,
+        "updated_at": None,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_create_with_min_severity():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.create_push_webhook_subscription.return_value = _sub_row(
+            min_severity="breaking"
+        )
+        r = client.post(
+            "/v1/push-webhook-subscriptions/tn",
+            json={
+                "url": "https://example.com/hook",
+                "signingSecret": "supersecretvaluehere",
+                "minSeverity": "breaking",
+            },
+        )
+        assert r.status_code == 200
+        assert r.json()["minSeverity"] == "breaking"
+        ca = mdb.create_push_webhook_subscription.call_args
+        assert ca.kwargs["min_severity"] == "breaking"
+
+
+def test_create_defaults_min_severity_to_none():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.create_push_webhook_subscription.return_value = _sub_row()
+        r = client.post(
+            "/v1/push-webhook-subscriptions/tn",
+            json={
+                "url": "https://example.com/hook",
+                "signingSecret": "supersecretvaluehere",
+            },
+        )
+        assert r.status_code == 200
+        assert r.json()["minSeverity"] is None
+        ca = mdb.create_push_webhook_subscription.call_args
+        assert ca.kwargs["min_severity"] is None
+
+
+def test_create_rejects_unknown_min_severity():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        r = client.post(
+            "/v1/push-webhook-subscriptions/tn",
+            json={
+                "url": "https://example.com/hook",
+                "signingSecret": "supersecretvaluehere",
+                "minSeverity": "catastrophic",
+            },
+        )
+        assert r.status_code == 422
+        mdb.create_push_webhook_subscription.assert_not_called()
+
+
+def test_update_min_severity_only():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.update_push_webhook_subscription.return_value = _sub_row(
+            min_severity="non-breaking"
+        )
+        r = client.patch(
+            "/v1/push-webhook-subscriptions/tn/11111111-1111-1111-1111-111111111111",
+            json={"minSeverity": "non-breaking"},
+        )
+        assert r.status_code == 200
+        assert r.json()["minSeverity"] == "non-breaking"
+        ca = mdb.update_push_webhook_subscription.call_args
+        assert ca.kwargs["min_severity"] == "non-breaking"
+        assert ca.kwargs["update_min_severity"] is True
+
+
+def test_update_clears_min_severity_with_explicit_null():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.update_push_webhook_subscription.return_value = _sub_row()
+        r = client.patch(
+            "/v1/push-webhook-subscriptions/tn/11111111-1111-1111-1111-111111111111",
+            json={"minSeverity": None},
+        )
+        assert r.status_code == 200
+        assert r.json()["minSeverity"] is None
+        ca = mdb.update_push_webhook_subscription.call_args
+        assert ca.kwargs["min_severity"] is None
+        assert ca.kwargs["update_min_severity"] is True
+
+
+def test_update_omitting_min_severity_leaves_it_unchanged():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.update_push_webhook_subscription.return_value = _sub_row(active=False)
+        r = client.patch(
+            "/v1/push-webhook-subscriptions/tn/11111111-1111-1111-1111-111111111111",
+            json={"active": False},
+        )
+        assert r.status_code == 200
+        ca = mdb.update_push_webhook_subscription.call_args
+        assert ca.kwargs["update_min_severity"] is False
+
+
+def test_get_single_includes_min_severity():
+    with patch("app.push_webhook_subscriptions_routes.db") as mdb:
+        mdb.get_push_webhook_subscription.return_value = _sub_row(
+            min_severity="docs-only"
+        )
+        r = client.get(
+            "/v1/push-webhook-subscriptions/tn/11111111-1111-1111-1111-111111111111"
+        )
+        assert r.status_code == 200
+        assert r.json()["minSeverity"] == "docs-only"

@@ -41,6 +41,7 @@ __all__ = [
     "render_changelog_json",
     "render_changelog_json_text",
     "render_changelog_markdown",
+    "severity_rank",
 ]
 
 #: Stable schema id for JSON consumers (CTG-2.2 PR comments, CTG-3.x UI/webhooks).
@@ -63,6 +64,25 @@ _SEVERITY_HEADINGS: Dict[Severity, str] = {
     "non-breaking": "Non-breaking changes",
     "docs-only": "Documentation changes",
 }
+
+
+def severity_rank(severity: Optional[str]) -> Optional[int]:
+    """Return the ascending impact rank of a severity label.
+
+    ``docs-only`` (0) < ``non-breaking`` (1) < ``breaking`` (2). Used wherever
+    two severities must be compared (e.g. the CTG-3.3 webhook ``min_severity``
+    threshold). Unknown or missing labels return ``None`` so callers decide
+    their own fail-safe.
+
+    Args:
+        severity: A severity label, or ``None``.
+
+    Returns:
+        The rank (0-2), or ``None`` when the label is missing/unrecognized.
+    """
+    if severity is None:
+        return None
+    return _SEVERITY_RANK.get(severity)  # type: ignore[arg-type]
 
 
 class ChangelogEntry(BaseModel):
