@@ -48,6 +48,7 @@ from .publication_change_report import (
     validate_manual_baseline_revision,
 )
 from .publication_changelog import generate_version_changelog_on_publish
+from .publish_notifications import notify_version_published_on_publish
 from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
 from .revision_deprecation import (
@@ -2063,6 +2064,15 @@ async def publish_version(
     background_tasks.add_task(
         generate_version_changelog_on_publish,
         tenant_slug=tenant_slug,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        published_revision_id=version_record_id,
+        actor_id=user_id,
+    )
+    # Must stay after the changelog task: background tasks run in order, so the
+    # webhook payload (CTG-3.3, #4477) sees the persisted version_changelogs row.
+    background_tasks.add_task(
+        notify_version_published_on_publish,
         tenant_id=auth_data["tenant_id"],
         project_id=project_id,
         published_revision_id=version_record_id,

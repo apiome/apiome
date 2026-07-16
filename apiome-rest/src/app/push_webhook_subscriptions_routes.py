@@ -66,6 +66,7 @@ def _row_to_response(row: Dict[str, Any]) -> PushWebhookSubscriptionResponse:
         url=row["url"],
         active=bool(row["active"]),
         signing_secret_ref=str(row["signing_secret_ref"]),
+        min_severity=row.get("min_severity"),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -176,6 +177,7 @@ async def create_push_webhook_subscription(
             norm,
             body.signing_secret,
             active=body.active,
+            min_severity=body.min_severity,
         )
     except psycopg2.errors.UniqueViolation:
         raise _duplicate_http() from None
@@ -211,10 +213,19 @@ async def update_push_webhook_subscription(
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
-    if body.url is None and body.active is None and body.signing_secret is None:
+    # min_severity is tri-state on PATCH: an explicit null clears the filter,
+    # while an omitted field leaves it unchanged — hence the model_fields_set check.
+    min_severity_provided = "min_severity" in body.model_fields_set
+
+    if (
+        body.url is None
+        and body.active is None
+        and body.signing_secret is None
+        and not min_severity_provided
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Provide at least one of: url, active, signingSecret",
+            detail="Provide at least one of: url, active, signingSecret, minSeverity",
         )
 
     url_val: str | None = None
@@ -234,12 +245,14 @@ async def update_push_webhook_subscription(
             url_normalized=norm_val,
             active=body.active,
             signing_secret_plain=body.signing_secret,
+            min_severity=body.min_severity,
+            update_min_severity=min_severity_provided,
         )
     except ValueError as e:
         if str(e) == "no_updates":
             raise HTTPException(
                 status_code=400,
-                detail="Provide at least one of: url, active, signingSecret",
+                detail="Provide at least one of: url, active, signingSecret, minSeverity",
             ) from e
         raise HTTPException(status_code=500, detail="Invalid update request") from e
     except psycopg2.errors.UniqueViolation:
