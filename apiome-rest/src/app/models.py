@@ -5539,6 +5539,65 @@ class VersionChangeReportRegenerateRequest(BaseModel):
     )
 
 
+# ==================== Version changelogs (CTG-3.2, #4476) ====================
+
+
+class VersionChangelogOut(BaseModel):
+    """Stored publish-time classified changelog for one published revision (CTG-3.1 row).
+
+    ``changelog`` carries the raw ``ctg.changelog.v1`` payload (or the
+    initial-publication marker); it is ``None`` when classification failed.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    published_revision_id: str = Field(serialization_alias="publishedRevisionId")
+    baseline_revision_id: Optional[str] = Field(None, serialization_alias="baselineRevisionId")
+    version_label: Optional[str] = Field(None, serialization_alias="versionLabel")
+    baseline_version_label: Optional[str] = Field(
+        None, serialization_alias="baselineVersionLabel"
+    )
+    published_at: Optional[datetime] = Field(None, serialization_alias="publishedAt")
+    status: str
+    max_severity: Optional[str] = Field(None, serialization_alias="maxSeverity")
+    error: Optional[str] = None
+    changelog: Optional[Dict[str, Any]] = None
+    created_at: Optional[datetime] = Field(None, serialization_alias="createdAt")
+    updated_at: Optional[datetime] = Field(None, serialization_alias="updatedAt")
+
+
+class VersionChangelogSummaryRow(BaseModel):
+    """Per-published-revision changelog summary (no entries payload).
+
+    ``status`` is ``None`` when the revision has no ``version_changelogs`` row yet
+    (classification pending, or published before V178 without backfill).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    published_revision_id: str = Field(serialization_alias="publishedRevisionId")
+    version_label: Optional[str] = Field(None, serialization_alias="versionLabel")
+    published_at: Optional[datetime] = Field(None, serialization_alias="publishedAt")
+    baseline_revision_id: Optional[str] = Field(None, serialization_alias="baselineRevisionId")
+    baseline_version_label: Optional[str] = Field(
+        None, serialization_alias="baselineVersionLabel"
+    )
+    status: Optional[str] = None
+    max_severity: Optional[str] = Field(None, serialization_alias="maxSeverity")
+    counts: Optional[Dict[str, int]] = None
+    updated_at: Optional[datetime] = Field(None, serialization_alias="updatedAt")
+
+
+class ProjectVersionChangelogsResponse(BaseModel):
+    """All published-revision changelog summaries for a project, newest publish first."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    project_id: str = Field(serialization_alias="projectId")
+    changelogs: List[VersionChangelogSummaryRow]
+    filtered_count: int = Field(serialization_alias="filteredCount")
+
+
 # ==================== Change report templates (CR-03, #2701) ====================
 
 

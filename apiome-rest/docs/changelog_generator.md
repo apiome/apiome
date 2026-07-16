@@ -134,6 +134,7 @@ _2 change(s): 1 breaking, 1 non-breaking, 0 docs-only._
 | `app.changelog_generator` | Types, ordering, aggregation, md/json renderers |
 | `app.change_taxonomy` | Classifier input (`ClassifiedDiff`) |
 | `app.publication_changelog` | Publish-time persist into `version_changelogs` (CTG-3.1) |
+| `app.version_changelog_routes` | Authenticated GET APIs over stored changelogs (CTG-3.2) |
 
 **Publish persistence (CTG-3.1 / #4475):** after `db.publish_version` succeeds,
 `generate_version_changelog_on_publish` runs as a FastAPI `BackgroundTasks`
@@ -143,4 +144,11 @@ hook (alongside the Mustache change-report pipeline). It reuses
 `initial` | `failed`). Failures never raise out of the hook. After V178,
 backfill latest published revisions with
 `PYTHONPATH=src python scripts/backfill_version_changelogs.py`.
-Public GET changelog API and UI remain CTG-3.2+.
+**Read APIs (CTG-3.2 / #4476):** `GET /v1/versions/{tenant}/{project}/changelogs`
+returns one summary row per published revision (status, `max_severity`, counts;
+revisions without a stored row appear with `status: null` so UIs can render a
+pending state), and `GET /v1/versions/{tenant}/{project}/{revision}/changelog`
+returns the full stored `ctg.changelog.v1` payload with baseline labels. The
+dashboard "Changes" tab and diff badges consume these; the public browse app
+reads `version_changelogs` directly and serves per-project RSS / JSON Feed
+changelog feeds.

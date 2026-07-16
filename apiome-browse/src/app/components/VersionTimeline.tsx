@@ -3,6 +3,12 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { sanitizeSearchInput, SAFE_SEARCH_HTML_PATTERN } from '../utils/searchValidation';
+import type { Severity } from '../../../lib/changelog/types';
+import {
+  severityBadgeClasses,
+  severityDotClasses,
+  severityLabel,
+} from '../../../lib/changelog/group';
 
 interface Version {
   id: string;
@@ -16,6 +22,8 @@ interface Version {
 
 interface VersionTimelineProps {
   versions: Version[];
+  /** Classified max severity per version label, when a stored changelog row exists (CTG-3.2). */
+  changelogSeverities?: Record<string, Severity>;
   tenantSlug: string;
   projectSlug: string;
   latestVersionId?: string;
@@ -41,6 +49,7 @@ function relativeTime(iso?: string): string | undefined {
 
 export function VersionTimeline({
   versions,
+  changelogSeverities,
   tenantSlug,
   projectSlug,
   latestVersionId,
@@ -139,6 +148,16 @@ export function VersionTimeline({
                       <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         Published
                       </span>
+                      {changelogSeverities?.[v.version_id] && (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(changelogSeverities[v.version_id])}`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(changelogSeverities[v.version_id])}`}
+                          ></span>
+                          {severityLabel(changelogSeverities[v.version_id])}
+                        </span>
+                      )}
                     </div>
                     {v.description && (
                       <p className="mt-1 line-clamp-1 text-[13px] text-zinc-600 dark:text-zinc-400">

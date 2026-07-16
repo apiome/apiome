@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { diffLines, type Change } from 'diff';
 import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
 import { useTheme, specThemes } from '../../../../components/ThemeProvider';
+import type { PublicVersionChangelogRow } from '../../../../../../lib/changelog/types';
+import { findDiffLineIndexForPointer } from '../../../../../../lib/changelog/focus';
+import {
+  severityBadgeClasses,
+  severityDotClasses,
+  severityLabel,
+} from '../../../../../../lib/changelog/group';
 
 interface Project {
   id: string;
@@ -25,11 +32,15 @@ type ViewMode = 'side-by-side' | 'unified';
 interface CompareClientProps {
   project: Project;
   versions: Version[];
+  /** Stored publish changelog rows for the project, newest first (CTG-3.2, #4476). */
+  changelogs: PublicVersionChangelogRow[];
   tenantSlug: string;
   projectSlug: string;
   restApiBaseUrl: string;
   initialV1?: string;
   initialV2?: string;
+  /** JSON Pointer (from a Changes-tab deep link) to scroll the diff to, best effort. */
+  initialFocus?: string;
 }
 
 /** Normalize diff chunks into lines (handles trailing newline the same way `diff` emits values). */
@@ -130,11 +141,13 @@ const DIFF_ROWMono = 'font-mono text-[12px] leading-6';
 export function CompareClient({
   project,
   versions,
+  changelogs,
   tenantSlug,
   projectSlug,
   restApiBaseUrl,
   initialV1,
   initialV2,
+  initialFocus,
 }: CompareClientProps) {
   const router = useRouter();
   const { specTheme } = useTheme();
@@ -153,6 +166,39 @@ export function CompareClient({
   const pairedLines = useMemo(() => buildPairedDiffLines(diffResult), [diffResult]);
 
   const diffStats = useMemo(() => diffLineStats(diffResult), [diffResult]);
+
+  // The stored classification for the selected pair — the row published as v2 whose recorded
+  // baseline is v1. Chips are sourced ONLY from this row; nothing is re-classified client-side.
+  const storedChangelog = useMemo(
+    () =>
+      changelogs.find(
+        (row) => row.versionLabel === version2 && row.baselineVersionLabel === version1
+      ) ?? null,
+    [changelogs, version1, version2]
+  );
+
+  // Best-effort focus target for a ?focus=<pointer> deep link: the first diff line that mentions
+  // the pointer's last meaningful key. Both view modes enumerate lines in the same order, so one
+  // index addresses the row in either panel.
+  const focusIndex = useMemo(() => {
+    if (!initialFocus || pairedLines.length === 0) return -1;
+    const lineTexts = pairedLines.map((row) =>
+      row.rightKind === 'gap' ? row.leftText : row.rightText
+    );
+    return findDiffLineIndexForPointer(lineTexts, initialFocus);
+  }, [initialFocus, pairedLines]);
+
+  const focusAppliedRef = useRef(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+
+  useEffect(() => {
+    if (focusAppliedRef.current || loading || focusIndex < 0) return;
+    focusAppliedRef.current = true;
+    setHighlightIndex(focusIndex);
+    document.getElementById(`diff-row-${focusIndex}`)?.scrollIntoView({ block: 'center' });
+    // Fire-and-forget: the highlight fades once, even if the effect never re-runs.
+    setTimeout(() => setHighlightIndex(-1), 2500);
+  }, [focusIndex, loading]);
 
   const loadSpecs = useCallback(async () => {
     if (!version1 || !version2) return;
@@ -300,6 +346,30 @@ export function CompareClient({
                   <DiffSummaryChip icon="minus" label="removed" count={diffStats.removed} variant="rose" />
                 </>
               )}
+
+              {/* Stored classification for this exact pair (CTG-3.2) — never re-derived here. */}
+              {storedChangelog && (
+                <>
+                  {(storedChangelog.changelog?.counts?.breaking ?? 0) > 0 && (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses('breaking')}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${severityDotClasses('breaking')}`}></span>
+                      {storedChangelog.changelog?.counts?.breaking} breaking
+                    </span>
+                  )}
+                  {storedChangelog.maxSeverity && (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(storedChangelog.maxSeverity)}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(storedChangelog.maxSeverity)}`}
+                      ></span>
+                      {severityLabel(storedChangelog.maxSeverity)} changes
+                    </span>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="flex flex-wrap items-end gap-2">
@@ -352,13 +422,18 @@ export function CompareClient({
         {!loading && !error && spec1 != null && spec2 != null && diffResult.length > 0 && (
           <>
             {viewMode === 'unified' ? (
-              <UnifiedDiffPanel changes={diffResult} themeColors={themeColors} />
+              <UnifiedDiffPanel
+                changes={diffResult}
+                themeColors={themeColors}
+                highlightIndex={highlightIndex}
+              />
             ) : (
               <SideBySideDiffPanel
                 pairedLines={pairedLines}
                 version1={version1}
                 version2={version2}
                 themeColors={themeColors}
+                highlightIndex={highlightIndex}
               />
             )}
 
@@ -370,16 +445,21 @@ export function CompareClient({
   );
 }
 
+/** Ring drawn over the row a ?focus deep link resolved to, cleared after a short beat. */
+const DIFF_FOCUS_RING = 'ring-2 ring-inset ring-amber-400 dark:ring-amber-500';
+
 function SideBySideDiffPanel({
   pairedLines,
   version1,
   version2,
   themeColors,
+  highlightIndex,
 }: {
   pairedLines: PairedDiffLine[];
   version1: string;
   version2: string;
   themeColors: (typeof specThemes)[keyof typeof specThemes];
+  highlightIndex: number;
 }) {
   const neutralStyle = { backgroundColor: themeColors.bgColor, color: themeColors.textColor } as const;
 
@@ -433,7 +513,10 @@ function SideBySideDiffPanel({
           return (
             <div
               key={i}
-              className="grid grid-cols-2 border-b border-zinc-100 dark:border-zinc-800/80"
+              id={`diff-row-${i}`}
+              className={`grid grid-cols-2 border-b border-zinc-100 dark:border-zinc-800/80 ${
+                i === highlightIndex ? DIFF_FOCUS_RING : ''
+              }`}
               style={{ minHeight: '1.5rem' }}
             >
               <div
@@ -500,19 +583,25 @@ function SideBySideDiffPanel({
 function UnifiedDiffPanel({
   changes,
   themeColors,
+  highlightIndex,
 }: {
   changes: Change[];
   themeColors: (typeof specThemes)[keyof typeof specThemes];
+  highlightIndex: number;
 }) {
   const neutralStyle = { backgroundColor: themeColors.bgColor, color: themeColors.textColor } as const;
   let oldNum = 0;
   let newNum = 0;
+  // Row counter matching buildPairedDiffLines' enumeration, so one focus index fits both views.
+  let rowIndex = -1;
 
   const rows: ReactNode[] = [];
   changes.forEach((part, partIndex) => {
     const lines = splitDiffLines(part.value);
     lines.forEach((line, lineIndex) => {
       const key = `${partIndex}-${lineIndex}`;
+      rowIndex += 1;
+      const thisRowIndex = rowIndex;
       let oldGutter = '';
       let newGutter = '';
       let rowClass = '';
@@ -539,7 +628,10 @@ function UnifiedDiffPanel({
       rows.push(
         <div
           key={key}
-          className={`flex min-h-[1.5rem] border-b border-zinc-100 dark:border-zinc-800/80 ${rowClass}`}
+          id={`diff-row-${thisRowIndex}`}
+          className={`flex min-h-[1.5rem] border-b border-zinc-100 dark:border-zinc-800/80 ${rowClass} ${
+            thisRowIndex === highlightIndex ? DIFF_FOCUS_RING : ''
+          }`}
           style={!part.added && !part.removed ? neutralStyle : undefined}
         >
           <div
