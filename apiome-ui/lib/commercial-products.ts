@@ -37,11 +37,12 @@ function isAbsoluteHref(href: string): boolean {
 export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
+  const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
 
   return [
     {
       id: 'suite',
-      navLabel: 'Suite',
+      navLabel: 'Designer',
       name: 'Designer Suite',
       tagline: 'Design workspace',
       description:
@@ -56,6 +57,34 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
       enabled: true,
       showInNav: true,
       showOnHome: true,
+      menuItems: [
+        {
+          id: 'suite-home',
+          label: 'Home',
+          description: 'Suite home dashboard',
+          href: suiteHref,
+          icon: 'LayoutDashboard',
+          external: isAbsoluteHref(suiteHref),
+        },
+        {
+          id: 'suite-designer',
+          label: 'Designer',
+          description: 'Model schemas on the canvas',
+          href: editorHref,
+          icon: 'Palette',
+          featureFlag: 'designer',
+          external: isAbsoluteHref(editorHref),
+        },
+        {
+          id: 'suite-paths',
+          label: 'Paths Editor',
+          description: 'Author OpenAPI paths and operations',
+          href: pathsHref,
+          icon: 'Route',
+          featureFlag: 'paths',
+          external: isAbsoluteHref(pathsHref),
+        },
+      ],
     },
     {
       id: 'developer-suite',
@@ -70,8 +99,10 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
       glow: 'group-hover:shadow-sky-500/20',
       enabled: false,
       external: false,
-      showInNav: false,
+      showInNav: true,
       showOnHome: true,
+      // Rendered as a disabled dropdown in nav until developer products ship.
+      menuItems: [],
     },
   ];
 }

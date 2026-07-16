@@ -52,16 +52,29 @@ describe('external-links (commercial products)', () => {
       'suite',
       'developer-suite',
     ]);
-    expect(getCommercialNavItems(entitled).map((item) => item.id)).toEqual(['suite']);
+    // Disabled developer suite stays in nav (rendered shaded as coming soon).
+    expect(getCommercialNavItems(entitled).map((item) => item.id)).toEqual([
+      'suite',
+      'developer-suite',
+    ]);
+    // Suite dropdown destinations are also entitlement-filtered: no paths flag → no paths editor.
+    expect(getCommercialNavItems(entitled)[0]?.menuItems?.map((item) => item.id)).toEqual([
+      'suite-home',
+      'suite-designer',
+    ]);
 
     const pathsOnly = new Set(['paths']);
     expect(getCommercialHomeCards(pathsOnly).map((card) => card.id)).toEqual([
       'suite',
       'developer-suite',
     ]);
+    expect(getCommercialNavItems(pathsOnly)[0]?.menuItems?.map((item) => item.id)).toEqual([
+      'suite-home',
+      'suite-paths',
+    ]);
 
     expect(getCommercialHomeCards(new Set()).map((card) => card.id)).toEqual(['developer-suite']);
-    expect(getCommercialNavItems(new Set()).map((item) => item.id)).toEqual([]);
+    expect(getCommercialNavItems(new Set()).map((item) => item.id)).toEqual(['developer-suite']);
   });
 
   it('hides designer helpers when entitlement is missing', () => {
@@ -75,7 +88,12 @@ describe('external-links (commercial products)', () => {
 
     expect(getDesignerHomeHref(flags)).toBe('https://studio.example.com/');
     expect(getExternalNavItems()).toEqual([
-      expect.objectContaining({ id: 'suite', label: 'Suite', href: 'https://studio.example.com/' }),
+      expect.objectContaining({
+        id: 'suite',
+        label: 'Designer',
+        href: 'https://studio.example.com/',
+      }),
+      expect.objectContaining({ id: 'developer-suite', label: 'Developer', enabled: false }),
     ]);
     expect(buildDesignerEditorHref('proj-1', 'ver-2', flags)).toBe(
       'https://studio.example.com/editor?projectId=proj-1&versionId=ver-2'

@@ -17,10 +17,17 @@ describe('commercial-products', () => {
     const products = getBuiltinCommercialProducts();
     expect(products.map((product) => product.id)).toEqual(['suite', 'developer-suite']);
     expect(products[0]?.anyFeatureFlags).toEqual(['designer', 'paths']);
-    expect(products[0]?.navLabel).toBe('Suite');
+    expect(products[0]?.navLabel).toBe('Designer');
     expect(products[0]?.name).toBe('Designer Suite');
+    expect(products[0]?.menuItems?.map((item) => item.id)).toEqual([
+      'suite-home',
+      'suite-designer',
+      'suite-paths',
+    ]);
     expect(products[1]?.enabled).toBe(false);
     expect(products[1]?.name).toBe('Developer Suite');
+    expect(products[1]?.showInNav).toBe(true);
+    expect(products[1]?.menuItems).toEqual([]);
     expect(COMMERCIAL_PRODUCT_FLAG_NAMES).toEqual(['designer', 'paths']);
   });
 
@@ -32,6 +39,11 @@ describe('commercial-products', () => {
     expect(products[0]?.href).toBe('http://localhost:3003/');
     expect(products[0]?.editorHref).toBe('http://localhost:3003/editor');
     expect(products[0]?.external).toBe(true);
+    expect(products[0]?.menuItems?.map((item) => item.href)).toEqual([
+      'http://localhost:3003/',
+      'http://localhost:3003/editor',
+      'http://localhost:3003/paths',
+    ]);
   });
 
   it('uses in-app studio root on the studio surface', () => {
@@ -42,5 +54,6 @@ describe('commercial-products', () => {
     expect(products[0]?.href).toBe('/');
     expect(products[0]?.editorHref).toBe('/editor');
     expect(products[0]?.external).toBe(false);
+    expect(products[0]?.menuItems?.map((item) => item.href)).toEqual(['/', '/editor', '/paths']);
   });
 });

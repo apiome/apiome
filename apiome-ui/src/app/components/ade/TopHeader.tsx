@@ -21,7 +21,8 @@ import {
   resolvePlatformNavHref,
 } from '../../../../lib/platform-nav';
 import { getCommercialAccessForSession } from '../../../../lib/db/commercial-access';
-import type { ExternalNavItem } from '../../../../lib/external-links';
+import { resolveExternalLinkIcon } from '../../../../lib/external-links';
+import type { ExternalNavItem, ExternalNavMenuItem } from '../../../../lib/external-links';
 import { getTenantsAdministratedByUser, getTenantsForUser } from '../../../../lib/db/helper';
 
 /** Optional CI/build stamp (e.g. `2026.05.05-84a231c`). Otherwise badge uses semver from package.json. */
@@ -35,6 +36,15 @@ type NavItem = ReturnType<typeof getPlatformNavItems>[number];
 
 function isExternalHref(href: string): boolean {
   return href.startsWith('http://') || href.startsWith('https://');
+}
+
+function isNavMenuItemActive(menuItem: ExternalNavMenuItem, pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (menuItem.external || isExternalHref(menuItem.href)) return false;
+  return (
+    pathname === menuItem.href ||
+    (menuItem.href !== '/' && pathname.startsWith(`${menuItem.href}/`))
+  );
 }
 
 type TenantRow = { id: string; name: string };
@@ -92,6 +102,7 @@ function TopHeaderView({
 }: TopHeaderViewProps) {
   const [open, setOpen] = useState(false);
   const [tenantMenuOpen, setTenantMenuOpen] = useState(false);
+  const [openNavMenuId, setOpenNavMenuId] = useState<string | null>(null);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [currentTenantName, setCurrentTenantName] = useState<string>(() => {
@@ -113,6 +124,7 @@ function TopHeaderView({
   const [commercialNavItems, setCommercialNavItems] = useState<ExternalNavItem[]>([]);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const tenantMenuRef = useRef<HTMLDivElement | null>(null);
+  const navMenuRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const currentUserId =
@@ -137,8 +149,10 @@ function TopHeaderView({
       const t = e.target as Node;
       if (menuRef.current?.contains(t)) return;
       if (tenantMenuRef.current?.contains(t)) return;
+      if (navMenuRef.current?.contains(t)) return;
       setOpen(false);
       setTenantMenuOpen(false);
+      setOpenNavMenuId(null);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -246,7 +260,7 @@ function TopHeaderView({
       </div>
 
       {/* Center: Navigation */}
-      <nav aria-label="Main navigation" className="min-w-0 flex-1 text-center">
+      <nav ref={navMenuRef} aria-label="Main navigation" className="min-w-0 flex-1 text-center">
         <ul
           className="m-0 inline-flex list-none items-center gap-2 p-0 text-[13px]"
         >
@@ -254,16 +268,109 @@ function TopHeaderView({
             const href = resolvePlatformNavHref(item);
             const isActive = platformNavItemIsActive(item, pathname);
             const external = item.external || isExternalHref(href);
+            const isDropdown = item.menuItems !== undefined;
+            const navMenuOpen = openNavMenuId === item.id;
 
             return (
-              <li key={item.id}>
+              <li key={item.id} className="relative">
                 {item.enabled === false ? (
                   <span
-                    className="cursor-not-allowed rounded-md px-2 py-1 text-[13px] text-slate-400 dark:text-slate-500"
+                    className="inline-flex cursor-not-allowed items-center gap-1 rounded-md px-2 py-1 text-[13px] text-slate-400 dark:text-slate-500"
                     title="Coming soon"
                   >
                     {item.label}
+                    {isDropdown && <ChevronDown className="h-3.5 w-3.5" aria-hidden />}
                   </span>
+                ) : isDropdown && item.menuItems!.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={navMenuOpen}
+                      onClick={() => {
+                        setOpen(false);
+                        setTenantMenuOpen(false);
+                        setOpenNavMenuId((current) => (current === item.id ? null : item.id));
+                      }}
+                      className={`inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-[13px] text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-indigo-400 ${
+                        isActive ? 'bg-slate-200/80 font-medium text-slate-900 dark:bg-slate-700 dark:text-white' : ''
+                      }`}
+                    >
+                      {item.label}
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 transition-transform ${navMenuOpen ? 'rotate-180' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+                    {navMenuOpen && (
+                      <div
+                        role="menu"
+                        aria-label={`${item.label} menu`}
+                        className="absolute left-1/2 z-[10050] mt-2 w-[420px] -translate-x-1/2 rounded-lg bg-white p-2 text-left shadow-lg shadow-slate-900/15 dark:bg-slate-800 dark:shadow-gray-900/50"
+                      >
+                        <div className="grid max-h-[min(70vh,26rem)] grid-cols-2 gap-1 overflow-y-auto overscroll-contain">
+                          {item.menuItems!.map((menuItem) => {
+                            const menuExternal = menuItem.external || isExternalHref(menuItem.href);
+                            const menuActive = isNavMenuItemActive(menuItem, pathname);
+                            const MenuIcon = menuItem.icon
+                              ? resolveExternalLinkIcon(menuItem.icon)
+                              : null;
+                            const tileClassName = `flex items-start gap-2.5 rounded-md px-3 py-2.5 transition-colors ${
+                              menuActive
+                                ? 'bg-indigo-50 dark:bg-indigo-950/50'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                            }`;
+                            const tileBody = (
+                              <>
+                                {MenuIcon && (
+                                  <MenuIcon
+                                    className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400"
+                                    aria-hidden
+                                  />
+                                )}
+                                <span className="min-w-0">
+                                  <span className="block truncate text-[13px] font-medium text-slate-900 dark:text-slate-100">
+                                    {menuItem.label}
+                                  </span>
+                                  {menuItem.description && (
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                      {menuItem.description}
+                                    </span>
+                                  )}
+                                </span>
+                              </>
+                            );
+                            return menuExternal ? (
+                              <a
+                                key={menuItem.id}
+                                role="menuitem"
+                                href={menuItem.href}
+                                target={menuItem.opensNewBrowser ? '_blank' : undefined}
+                                rel={menuItem.opensNewBrowser ? 'noopener noreferrer' : undefined}
+                                className={tileClassName}
+                                style={{ textDecoration: 'none' }}
+                                onClick={() => setOpenNavMenuId(null)}
+                              >
+                                {tileBody}
+                              </a>
+                            ) : (
+                              <Link
+                                key={menuItem.id}
+                                role="menuitem"
+                                href={menuItem.href}
+                                aria-current={menuActive ? 'page' : undefined}
+                                className={tileClassName}
+                                style={{ textDecoration: 'none' }}
+                                onClick={() => setOpenNavMenuId(null)}
+                              >
+                                {tileBody}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : external ? (
                   <a
                     href={href}
@@ -303,6 +410,7 @@ function TopHeaderView({
               disabled={isSwitchingTenant || isLoadingTenants}
               onClick={() => {
                 setOpen(false);
+                setOpenNavMenuId(null);
                 setTenantMenuOpen((s) => !s);
               }}
               className="flex cursor-pointer items-center gap-2 rounded-lg border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 px-3 py-1.5 transition-colors hover:from-indigo-100 hover:to-purple-100 disabled:cursor-wait disabled:opacity-70 dark:border-indigo-800/50 dark:from-indigo-900/20 dark:to-purple-900/20 dark:hover:from-indigo-900/35 dark:hover:to-purple-900/35"
@@ -386,6 +494,7 @@ function TopHeaderView({
           aria-expanded={open}
           onClick={() => {
             setTenantMenuOpen(false);
+            setOpenNavMenuId(null);
             setOpen((s) => !s);
           }}
           className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-transparent px-2 py-1 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"

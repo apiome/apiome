@@ -37,6 +37,23 @@ export type ExternalLinkEntry = {
   featureFlag?: string;
   /** Entitled when the user has any of these license flags. */
   anyFeatureFlags?: string[];
+  /** Dropdown destinations shown from the nav item (box menu). */
+  menuItems?: ExternalNavMenuItem[];
+};
+
+/** One destination inside a nav dropdown (box menu) — e.g. a suite product. */
+export type ExternalNavMenuItem = {
+  id: string;
+  label: string;
+  /** Short line under the label in the box menu tile. */
+  description?: string;
+  href: string;
+  /** Lucide icon name — resolved to a component on the client. */
+  icon?: string;
+  external?: boolean;
+  opensNewBrowser?: boolean;
+  featureFlag?: string;
+  anyFeatureFlags?: string[];
 };
 
 export type ExternalNavItem = {
@@ -48,6 +65,8 @@ export type ExternalNavItem = {
   opensNewBrowser?: boolean;
   featureFlag?: string;
   anyFeatureFlags?: string[];
+  /** When present the nav item renders as a dropdown (box menu) of these destinations. */
+  menuItems?: ExternalNavMenuItem[];
 };
 
 export type ExternalHomeCard = {
@@ -120,8 +139,9 @@ export function getExternalLinkById(id: string): ExternalLinkEntry | undefined {
 }
 
 export function getExternalNavItems(): ExternalNavItem[] {
+  // Disabled entries stay in nav (rendered shaded as "coming soon") when showInNav is set.
   return loadLinks()
-    .filter((link) => link.showInNav && link.enabled !== false)
+    .filter((link) => link.showInNav)
     .map((link) => ({
       id: link.id,
       label: link.navLabel,
@@ -131,6 +151,7 @@ export function getExternalNavItems(): ExternalNavItem[] {
       opensNewBrowser: link.opensNewBrowser,
       featureFlag: link.featureFlag,
       anyFeatureFlags: link.anyFeatureFlags,
+      menuItems: link.menuItems,
     }));
 }
 
@@ -161,7 +182,18 @@ export function getCommercialHomeCards(entitledFlags: Set<string>): ExternalHome
 
 /** Nav items limited to flags the user is entitled to via license/admin overrides. */
 export function getCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
-  return getExternalNavItems().filter((item) => isEntitledToEntry(item, entitledFlags));
+  return getExternalNavItems()
+    .filter((item) => isEntitledToEntry(item, entitledFlags))
+    .map((item) =>
+      item.menuItems
+        ? {
+            ...item,
+            menuItems: item.menuItems.filter((menuItem) =>
+              isEntitledToEntry(menuItem, entitledFlags)
+            ),
+          }
+        : item
+    );
 }
 
 function hasSuiteEntitlement(entitledFlags?: Set<string>): boolean {
