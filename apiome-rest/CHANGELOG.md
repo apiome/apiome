@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.136.0] - 2026-07-15
+
+### Added
+- **Publish pipeline classification (CTG-3.1, #4475)** — after successful
+  publish, a background task classifies the revision vs the prior published
+  baseline (`get_prior_published_baseline_revision_id`), builds a
+  `ctg.changelog.v1` payload, and upserts `apiome.version_changelogs`
+  (`ready` / `initial` / `failed`). Classification failures never undo
+  publish. Ops backfill: `scripts/backfill_version_changelogs.py` (after
+  V178). OpenAPI 1.15.0 → 1.16.0.
+
 ## [1.135.0] - 2026-07-15
 
 ### Added
