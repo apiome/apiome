@@ -33,7 +33,10 @@ export type ExternalLinkEntry = {
   opensNewBrowser?: boolean;
   showInNav?: boolean;
   showOnHome?: boolean;
+  /** Single license flag required for this entry. */
   featureFlag?: string;
+  /** Entitled when the user has any of these license flags. */
+  anyFeatureFlags?: string[];
 };
 
 export type ExternalNavItem = {
@@ -44,6 +47,7 @@ export type ExternalNavItem = {
   external?: boolean;
   opensNewBrowser?: boolean;
   featureFlag?: string;
+  anyFeatureFlags?: string[];
 };
 
 export type ExternalHomeCard = {
@@ -60,6 +64,7 @@ export type ExternalHomeCard = {
   accent: string;
   glow: string;
   featureFlag?: string;
+  anyFeatureFlags?: string[];
 };
 
 const KNOWN_ICONS: Record<string, LucideIcon> = {
@@ -87,7 +92,19 @@ function normalizeEntry(entry: ExternalLinkEntry): ExternalLinkEntry {
 function loadLinks(): ExternalLinkEntry[] {
   return getBuiltinCommercialProducts()
     .map(normalizeEntry)
-    .filter((link) => link.enabled !== false);
+    // Keep disabled catalog entries that still appear on the home grid (e.g. Coming Soon).
+    .filter((link) => link.enabled !== false || link.showOnHome);
+}
+
+function isEntitledToEntry(
+  entry: { featureFlag?: string; anyFeatureFlags?: string[] },
+  entitledFlags: Set<string>
+): boolean {
+  if (entry.anyFeatureFlags?.length) {
+    return entry.anyFeatureFlags.some((flag) => entitledFlags.has(flag));
+  }
+  if (!entry.featureFlag) return true;
+  return entitledFlags.has(entry.featureFlag);
 }
 
 export function resolveExternalLinkIcon(iconName: string): LucideIcon {
@@ -104,7 +121,7 @@ export function getExternalLinkById(id: string): ExternalLinkEntry | undefined {
 
 export function getExternalNavItems(): ExternalNavItem[] {
   return loadLinks()
-    .filter((link) => link.showInNav)
+    .filter((link) => link.showInNav && link.enabled !== false)
     .map((link) => ({
       id: link.id,
       label: link.navLabel,
@@ -113,6 +130,7 @@ export function getExternalNavItems(): ExternalNavItem[] {
       external: link.external,
       opensNewBrowser: link.opensNewBrowser,
       featureFlag: link.featureFlag,
+      anyFeatureFlags: link.anyFeatureFlags,
     }));
 }
 
@@ -132,32 +150,32 @@ export function getExternalHomeCards(): ExternalHomeCard[] {
       accent: link.accent,
       glow: link.glow,
       featureFlag: link.featureFlag,
+      anyFeatureFlags: link.anyFeatureFlags,
     }));
 }
 
 /** Home cards limited to flags the user is entitled to via license/admin overrides. */
 export function getCommercialHomeCards(entitledFlags: Set<string>): ExternalHomeCard[] {
-  return getExternalHomeCards().filter((card) => {
-    if (!card.featureFlag) return true;
-    return entitledFlags.has(card.featureFlag);
-  });
+  return getExternalHomeCards().filter((card) => isEntitledToEntry(card, entitledFlags));
 }
 
 /** Nav items limited to flags the user is entitled to via license/admin overrides. */
 export function getCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
-  return getExternalNavItems().filter((item) => {
-    if (!item.featureFlag) return true;
-    return entitledFlags.has(item.featureFlag);
-  });
+  return getExternalNavItems().filter((item) => isEntitledToEntry(item, entitledFlags));
 }
 
-/** Home/checklist entry for the designer app when the user has designer access. */
+function hasSuiteEntitlement(entitledFlags?: Set<string>): boolean {
+  if (!entitledFlags) return true;
+  return entitledFlags.has('designer') || entitledFlags.has('paths');
+}
+
+/** Home/checklist entry for the designer suite when the user has suite access. */
 export function getDesignerHomeHref(entitledFlags?: Set<string>): string | null {
-  if (entitledFlags && !entitledFlags.has('designer')) {
+  if (!hasSuiteEntitlement(entitledFlags)) {
     return null;
   }
-  const designer = getExternalLinkById('designer');
-  if (designer?.href) return designer.href;
+  const suite = getExternalLinkById('suite');
+  if (suite?.href) return suite.href;
   return null;
 }
 
@@ -167,11 +185,11 @@ export function buildDesignerEditorHref(
   versionId: string,
   entitledFlags?: Set<string>
 ): string | null {
-  if (entitledFlags && !entitledFlags.has('designer')) {
+  if (!hasSuiteEntitlement(entitledFlags)) {
     return null;
   }
-  const designer = getExternalLinkById('designer');
-  const base = designer?.editorHref ?? designer?.href ?? null;
+  const suite = getExternalLinkById('suite');
+  const base = suite?.editorHref ?? suite?.href ?? null;
   if (!base) {
     return null;
   }

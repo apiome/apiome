@@ -16,12 +16,13 @@ function resolveStudioSurfaceHref(path: string): string {
   return new URL(path.replace(/^\//, ''), getStudioAppUrl()).toString();
 }
 
-function resolveStudioEditorHref(): string {
-  return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.editor);
+function resolveStudioRootHref(): string {
+  if (isStudioSurface()) return STUDIO_APP_ROUTES.root;
+  return getStudioAppUrl();
 }
 
-function resolveStudioPathsHref(): string {
-  return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
+function resolveStudioEditorHref(): string {
+  return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.editor);
 }
 
 function isAbsoluteHref(href: string): boolean {
@@ -30,46 +31,46 @@ function isAbsoluteHref(href: string): boolean {
 
 /**
  * Built-in commercial applications shipped with apiome-ui.
- * Visibility is gated by license feature flags (`designer`, `paths`) in admin.
+ * Designer Suite visibility is gated by license feature flags (`designer` or `paths`).
+ * Developer Suite is always listed on the home grid as coming soon.
  */
 export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
-  const designerHref = resolveStudioEditorHref();
-  const pathsHref = resolveStudioPathsHref();
+  const suiteHref = resolveStudioRootHref();
+  const editorHref = resolveStudioEditorHref();
 
   return [
     {
-      id: 'designer',
-      navLabel: 'Designer',
-      name: 'Data Designer',
-      tagline: 'Schema design',
+      id: 'suite',
+      navLabel: 'Suite',
+      name: 'Designer Suite',
+      tagline: 'Design workspace',
       description:
-        'Model classes on an interactive canvas with versions, tags, and live validation.',
-      href: designerHref,
-      editorHref: designerHref,
-      icon: 'Palette',
+        'Schema design and API path modeling in one suite — canvas, versions, tags, and OpenAPI operations.',
+      href: suiteHref,
+      editorHref,
+      icon: 'Layers',
       accent: 'from-violet-500 to-fuchsia-600',
       glow: 'group-hover:shadow-fuchsia-500/20',
-      featureFlag: 'designer',
-      external: isAbsoluteHref(designerHref),
+      anyFeatureFlags: ['designer', 'paths'],
+      external: isAbsoluteHref(suiteHref),
       enabled: true,
       showInNav: true,
       showOnHome: true,
     },
     {
-      id: 'paths',
-      navLabel: 'Paths',
-      name: 'API Paths',
-      tagline: 'OpenAPI operations',
+      id: 'developer-suite',
+      navLabel: 'Developer',
+      name: 'Developer Suite',
+      tagline: 'Developer tools',
       description:
-        'Design paths, operations, request bodies, and responses for your API surface.',
-      href: pathsHref,
-      icon: 'Route',
-      accent: 'from-emerald-500 to-teal-600',
-      glow: 'group-hover:shadow-emerald-500/20',
-      featureFlag: 'paths',
-      external: isAbsoluteHref(pathsHref),
-      enabled: true,
-      showInNav: true,
+        'SDKs, tooling, and developer workflows for your API specifications — coming soon.',
+      href: '#',
+      icon: 'Workflow',
+      accent: 'from-sky-500 to-indigo-600',
+      glow: 'group-hover:shadow-sky-500/20',
+      enabled: false,
+      external: false,
+      showInNav: false,
       showOnHome: true,
     },
   ];

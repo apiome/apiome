@@ -25,15 +25,15 @@ describe('platform-nav', () => {
     const items = getPlatformNavItems();
     expect(items.map((item) => item.id)).toEqual(['home', 'control-panel']);
 
-    const designer = {
-      id: 'designer',
-      label: 'Designer',
-      href: 'http://localhost:3003/editor',
+    const suite = {
+      id: 'suite',
+      label: 'Suite',
+      href: 'http://localhost:3003/',
       external: true,
     };
-    expect(resolvePlatformNavHref(designer)).toBe('http://localhost:3003/editor');
+    expect(resolvePlatformNavHref(suite)).toBe('http://localhost:3003/');
     expect(
-      platformNavItemIsActive({ id: 'designer', label: 'Designer', href: '/ade/studio/editor' }, '/ade/studio/editor')
+      platformNavItemIsActive({ id: 'suite', label: 'Suite', href: '/ade/studio' }, '/ade/studio/editor')
     ).toBe(true);
   });
 
@@ -41,15 +41,14 @@ describe('platform-nav', () => {
     process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
     process.env.NEXT_PUBLIC_MAIN_APP_URL = 'http://localhost:3000';
 
-    const commercial = [
-      { id: 'designer', label: 'Designer', href: '/editor' },
-      { id: 'paths', label: 'Paths', href: '/paths' },
-    ];
+    const commercial = [{ id: 'suite', label: 'Suite', href: '/' }];
     const items = getPlatformNavItems(commercial);
     expect(items[0]?.href).toBe('http://localhost:3000/ade');
-    expect(items[2]?.href).toBe('/editor');
-    expect(resolvePlatformNavHref(items[2]!)).toBe('/editor');
+    expect(items[2]?.href).toBe('/');
+    expect(resolvePlatformNavHref(items[2]!)).toBe('/');
+    expect(platformNavItemIsActive(items[2]!, '/')).toBe(true);
     expect(platformNavItemIsActive(items[2]!, '/editor')).toBe(true);
+    expect(platformNavItemIsActive(items[2]!, '/paths')).toBe(true);
     expect(isStudioSurface()).toBe(true);
   });
 });

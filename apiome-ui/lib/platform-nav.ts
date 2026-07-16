@@ -47,7 +47,7 @@ export function getPlatformCoreNavItems(): ExternalNavItem[] {
   ];
 }
 
-/** Commercial app tabs (Designer, Paths) — pass items filtered by license entitlements. */
+/** Commercial app tabs (Suite) — pass items filtered by license entitlements. */
 export function getStudioCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
   return getCommercialNavItems(entitledFlags);
 }
@@ -61,6 +61,24 @@ export function resolvePlatformNavHref(item: ExternalNavItem): string {
   return item.href;
 }
 
+function isStudioAppPathActive(pathname: string): boolean {
+  if (isStudioSurface()) {
+    return (
+      pathname === STUDIO_APP_ROUTES.root ||
+      pathname === STUDIO_APP_ROUTES.editor ||
+      pathname.startsWith(`${STUDIO_APP_ROUTES.editor}/`) ||
+      pathname === STUDIO_APP_ROUTES.paths ||
+      pathname.startsWith(`${STUDIO_APP_ROUTES.paths}/`) ||
+      pathname === STUDIO_APP_ROUTES.code ||
+      pathname.startsWith(`${STUDIO_APP_ROUTES.code}/`)
+    );
+  }
+  return (
+    pathname === UI_STUDIO_ROUTES.root ||
+    pathname.startsWith(`${UI_STUDIO_ROUTES.root}/`)
+  );
+}
+
 export function platformNavItemIsActive(item: ExternalNavItem, pathname: string | null): boolean {
   if (!pathname) return false;
 
@@ -70,27 +88,8 @@ export function platformNavItemIsActive(item: ExternalNavItem, pathname: string 
   if (item.id === 'control-panel') {
     return !isStudioSurface() && pathname.startsWith('/ade/dashboard');
   }
-  if (item.id === 'designer') {
-    if (isStudioSurface()) {
-      return (
-        pathname === STUDIO_APP_ROUTES.editor ||
-        pathname.startsWith(`${STUDIO_APP_ROUTES.editor}/`) ||
-        pathname === STUDIO_APP_ROUTES.code ||
-        pathname.startsWith(`${STUDIO_APP_ROUTES.code}/`)
-      );
-    }
-    return (
-      pathname === UI_STUDIO_ROUTES.editor ||
-      pathname.startsWith(`${UI_STUDIO_ROUTES.editor}/`) ||
-      pathname === UI_STUDIO_ROUTES.code ||
-      pathname.startsWith(`${UI_STUDIO_ROUTES.code}/`)
-    );
-  }
-  if (item.id === 'paths') {
-    if (isStudioSurface()) {
-      return pathname === STUDIO_APP_ROUTES.paths || pathname.startsWith(`${STUDIO_APP_ROUTES.paths}/`);
-    }
-    return pathname === UI_STUDIO_ROUTES.paths || pathname.startsWith(`${UI_STUDIO_ROUTES.paths}/`);
+  if (item.id === 'suite') {
+    return isStudioAppPathActive(pathname);
   }
 
   if (item.external || item.href.startsWith('http://') || item.href.startsWith('https://')) {

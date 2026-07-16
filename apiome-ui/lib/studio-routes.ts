@@ -6,6 +6,7 @@ export const UI_STUDIO_ROUTES = {
 } as const;
 
 export const STUDIO_APP_ROUTES = {
+  root: '/',
   editor: '/editor',
   paths: '/paths',
   code: '/code',

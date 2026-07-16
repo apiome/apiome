@@ -204,7 +204,7 @@ function AppLaunchCard({
             </span>
           ) : (
             <span className="rounded-full border border-zinc-200/80 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:border-zinc-700/80 dark:text-zinc-400">
-              Soon
+              Coming Soon
             </span>
           )}
         </div>
