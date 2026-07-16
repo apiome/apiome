@@ -390,6 +390,11 @@ apiome diff ./openapi.yaml --against payments-api@latest --format md
 
 **Exit codes (this command only):** `0` = gate passed, `1` = threshold met (breaking/warn findings), `2` = auth/network/parse/oversize. Requires API key + tenant scope. Read-only CI tokens with `diff:read` (CTG-2.3) work once issued.
 
+For GitHub pull requests, prefer the copy-paste Action
+[`apiome/apiome/diff-action`](../diff-action/) — it runs this command, fails the check on
+exit `1`, surfaces exit `2` distinctly, and upserts one sticky PR comment with `--format md`.
+See [CI contract gate](../docs/guide/ci-diff-gate.md).
+
 ### Inspect paths and operations
 
 List flattened path/operation rows for a project version (filters: `--method`, `--tag`, `--q`):
