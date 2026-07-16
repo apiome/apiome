@@ -115,3 +115,4 @@ Fixtures live under `tests/fixtures/diff/<case>/` (`base.yaml`, `head.yaml`, `ex
 | `app.change_taxonomy_enum` | OpenAPI walk → `RawChange` |
 | `app.change_taxonomy_rules` | Rule registry + defaults |
 | `app.classified_diff_routes` | `POST /v1/diff/{tenant}/classified` (CTG-1.2) |
+| `app.changelog_generator` | Ordered md/json changelog + since-version aggregation (CTG-1.3 / #4469); see [`changelog_generator.md`](./changelog_generator.md) |

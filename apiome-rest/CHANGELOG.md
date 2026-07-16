@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.133.0] - 2026-07-15
+
+### Added
+- **Changelog generator (CTG-1.3, #4469)** — deterministic ordered/grouped
+  changelog over CTG-1.1 classified diffs: breaking → non-breaking → docs-only,
+  grouped by path. Stable **markdown** and **JSON** (`ctg.changelog.v1`)
+  renderers plus **"since \<version\>"** aggregation across intermediate hops
+  (`build_changelog`, `changelog_since`, `render_changelog_markdown` /
+  `render_changelog_json` in `app.changelog_generator`). Docs:
+  `docs/changelog_generator.md`. OpenAPI 1.12.0 → 1.13.0 (library surface; no
+  new HTTP routes — persist/publish is CTG-3.1).
+
 ## [1.132.0] - 2026-07-15
 
 ### Added
