@@ -6,6 +6,12 @@
  */
 
 import { buildClassSchema } from './openapi';
+import {
+  splitCanvasAnnotationsForExport,
+  X_APIOME_CANVAS_EXTENSION,
+  X_APIOME_NOTE_EXTENSION,
+  type CanvasNoteAnnotation,
+} from './canvas-annotations';
 
 /**
  * Converts OpenAPI-style $ref paths to JSON Schema $defs paths
@@ -59,6 +65,8 @@ export function generateJsonSchema(
     projectName?: string;
     version?: string;
     description?: string;
+    /** Canvas sticky notes / callouts (#2394 DUX-2.1); see canvas-annotations.ts. */
+    canvasAnnotations?: CanvasNoteAnnotation[];
     metadata?: {
       summary?: string;
       termsOfService?: string;
@@ -97,6 +105,21 @@ export function generateJsonSchema(
   // Add project metadata to top level as x-metadata extension
   if (options?.metadata && Object.keys(options.metadata).length > 0) {
     jsonSchemaDoc['x-metadata'] = options.metadata;
+  }
+
+  // Canvas annotations (#2394): attached notes ride on their $defs schema,
+  // freeform notes ride the document-level x-apiome-canvas extension.
+  if (options?.canvasAnnotations && options.canvasAnnotations.length > 0) {
+    const split = splitCanvasAnnotationsForExport(
+      options.canvasAnnotations,
+      new Set(Object.keys(definitions))
+    );
+    for (const [schemaName, notes] of Object.entries(split.notesBySchema)) {
+      definitions[schemaName][X_APIOME_NOTE_EXTENSION] = notes;
+    }
+    if (split.documentExtension) {
+      jsonSchemaDoc[X_APIOME_CANVAS_EXTENSION] = split.documentExtension;
+    }
   }
 
   return JSON.stringify(jsonSchemaDoc, null, 2);

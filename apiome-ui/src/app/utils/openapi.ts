@@ -9,6 +9,11 @@
 import { renderTemplate } from './template-loader';
 import { getOpenAPIVersionConfig, DEFAULT_OPENAPI_VERSION } from './openapi-versions';
 import { extractClassNameFromRef, findReferencedClasses } from './openapi-schema-refs';
+import {
+  splitCanvasAnnotationsForExport,
+  X_APIOME_NOTE_EXTENSION,
+  type CanvasNoteAnnotation,
+} from './canvas-annotations';
 
 export { extractClassNameFromRef, findReferencedClasses };
 
@@ -253,6 +258,12 @@ export async function generateOpenApiSpec(
     externalDocs?: { url: string; description?: string };
     /** Optional reusable components (#424) */
     components?: OpenAPIComponents;
+    /**
+     * Canvas sticky notes / callouts (#2394 DUX-2.1). Attached notes are
+     * emitted on their class schema as `x-apiome-note`; freeform notes go to
+     * the document-level `x-apiome-canvas` extension.
+     */
+    canvasAnnotations?: CanvasNoteAnnotation[];
     metadata?: {
       summary?: string;
       termsOfService?: string;
@@ -277,6 +288,20 @@ export async function generateOpenApiSpec(
   classes.forEach((cls) => {
     schemas[cls.name] = buildClassSchema(cls);
   });
+
+  // Canvas annotations (#2394): attached notes ride on their class schema,
+  // freeform notes ride the document-level x-apiome-canvas extension.
+  let canvasExtension: ReturnType<typeof splitCanvasAnnotationsForExport>['documentExtension'] = null;
+  if (options?.canvasAnnotations && options.canvasAnnotations.length > 0) {
+    const split = splitCanvasAnnotationsForExport(
+      options.canvasAnnotations,
+      new Set(Object.keys(schemas))
+    );
+    canvasExtension = split.documentExtension;
+    for (const [schemaName, notes] of Object.entries(split.notesBySchema)) {
+      schemas[schemaName][X_APIOME_NOTE_EXTENSION] = notes;
+    }
+  }
 
   // Get OpenAPI version configuration
   const versionConfig = getOpenAPIVersionConfig(options?.openapiVersion);
@@ -366,6 +391,11 @@ export async function generateOpenApiSpec(
   // Add project metadata to top level as x-metadata extension
   if (options?.metadata && Object.keys(options.metadata).length > 0) {
     templateData.xMetadata = options.metadata;
+  }
+
+  // Add freeform canvas notes to top level as x-apiome-canvas extension (#2394)
+  if (canvasExtension) {
+    templateData.xApiomeCanvas = canvasExtension;
   }
 
   // Render using Handlebars template
