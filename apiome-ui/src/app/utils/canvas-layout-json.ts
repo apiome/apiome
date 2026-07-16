@@ -136,6 +136,11 @@ export function filterCanvasLayoutForTargetClasses(
     if (n.type === 'groupNode') {
       return false;
     }
+    // Canvas notes (#2394) are version-scoped annotations restored separately;
+    // never count them as dropped classes.
+    if (n.type === 'noteNode') {
+      return false;
+    }
     if (typeof n.id !== 'string') {
       return false;
     }

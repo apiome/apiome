@@ -4803,6 +4803,195 @@ export async function saveDefaultCanvasLayout(
 }
 
 // ============================================================================
+// CANVAS NOTES (#2394 DUX-2.1)
+// Sticky notes / callouts persist as `noteNode` entries inside the default
+// canvas layout's `nodes` JSON payload. These helpers read and merge them so
+// exports can embed x-apiome-note / x-apiome-canvas extensions and imports can
+// restore annotations.
+// ============================================================================
+
+/** React Flow node type used for canvas notes in layout payloads. */
+const CANVAS_NOTE_NODE_TYPE = 'noteNode';
+
+/** One note as stored in the layout payload / returned to the studio. */
+type CanvasNoteRow = {
+  id: string;
+  kind: 'sticky' | 'callout';
+  text: string;
+  color: string;
+  position: { x: number; y: number };
+  dimensions?: { width: number; height: number };
+  attachedToClassId?: string | null;
+};
+
+/** Extracts and sanitizes noteNode entries from a layout `nodes` payload. */
+function extractCanvasNotesFromLayoutNodes(nodesPayload: unknown): CanvasNoteRow[] {
+  const nodes = Array.isArray(nodesPayload) ? nodesPayload : [];
+  const notes: CanvasNoteRow[] = [];
+  for (const raw of nodes) {
+    if (!raw || typeof raw !== 'object') continue;
+    const n = raw as any;
+    if (n.type !== CANVAS_NOTE_NODE_TYPE || typeof n.id !== 'string' || !n.id) continue;
+    const data = n.data && typeof n.data === 'object' ? n.data : {};
+    const x = typeof n.position?.x === 'number' && Number.isFinite(n.position.x) ? n.position.x : 0;
+    const y = typeof n.position?.y === 'number' && Number.isFinite(n.position.y) ? n.position.y : 0;
+    const width = typeof n.dimensions?.width === 'number' && n.dimensions.width > 0 ? n.dimensions.width : undefined;
+    const height = typeof n.dimensions?.height === 'number' && n.dimensions.height > 0 ? n.dimensions.height : undefined;
+    notes.push({
+      id: n.id,
+      kind: data.kind === 'callout' ? 'callout' : 'sticky',
+      text: typeof data.text === 'string' ? data.text : '',
+      color: typeof data.color === 'string' && data.color ? data.color : 'amber',
+      position: { x, y },
+      ...(width !== undefined && height !== undefined ? { dimensions: { width, height } } : {}),
+      attachedToClassId:
+        typeof data.attachedToClassId === 'string' && data.attachedToClassId
+          ? data.attachedToClassId
+          : null,
+    });
+  }
+  return notes;
+}
+
+/** Maps a note row to a layout `nodes` entry (mapNodesForLayoutSave shape). */
+function canvasNoteToLayoutNode(note: CanvasNoteRow) {
+  return {
+    id: note.id,
+    type: CANVAS_NOTE_NODE_TYPE,
+    position: note.position,
+    ...(note.dimensions ? { dimensions: note.dimensions } : {}),
+    data: {
+      kind: note.kind,
+      text: note.text,
+      color: note.color,
+      attachedToClassId: note.attachedToClassId ?? null,
+    },
+  };
+}
+
+/**
+ * Reads canvas notes for a version from its default canvas layout
+ * (user-specific default first, then the shared default).
+ *
+ * @returns JSON `{ success, notes: CanvasNoteRow[] }`
+ */
+export async function getCanvasNotesForVersion(versionId: string, userId?: string) {
+  try {
+    const layoutRes = JSON.parse(await getDefaultCanvasLayout(versionId, userId));
+    if (!layoutRes.success) {
+      return errorResponse(layoutRes.error || 'Failed to load default canvas layout');
+    }
+    const notes = layoutRes.layout ? extractCanvasNotesFromLayoutNodes(layoutRes.layout.nodes) : [];
+    return successResponse({ notes });
+  } catch (error: any) {
+    console.error('Error fetching canvas notes for version:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
+ * Restores imported canvas annotations (from x-apiome-note / x-apiome-canvas
+ * extensions) into the version's default canvas layout.
+ *
+ * Notes attached by class NAME are re-linked to the class ID in this version;
+ * names that do not resolve import as freeform notes so nothing is dropped.
+ * Existing notes with the same ID are replaced; imported IDs are kept so a
+ * re-import stays idempotent.
+ *
+ * @param notes Array of `{ id, kind, text, color, position, dimensions?, attachedTo? }`
+ * @returns JSON `{ success, restored }`
+ */
+export async function saveImportedCanvasNotes(
+  versionId: string,
+  userId: string | null,
+  notes: unknown[]
+) {
+  try {
+    if (!Array.isArray(notes) || notes.length === 0) {
+      return successResponse({ restored: 0 });
+    }
+
+    const classRows = await connectionPool.query(
+      `SELECT id, name FROM apiome.classes WHERE version_id = $1 AND deleted_at IS NULL`,
+      [versionId]
+    );
+    const classIdByName = new Map<string, string>(
+      classRows.rows.map((r: { id: string; name: string }) => [r.name, r.id])
+    );
+
+    const noteRows: CanvasNoteRow[] = [];
+    for (const raw of notes) {
+      if (!raw || typeof raw !== 'object') continue;
+      const n = raw as any;
+      if (typeof n.id !== 'string' || !n.id) continue;
+      const x = typeof n.position?.x === 'number' && Number.isFinite(n.position.x) ? n.position.x : 0;
+      const y = typeof n.position?.y === 'number' && Number.isFinite(n.position.y) ? n.position.y : 0;
+      const width = typeof n.dimensions?.width === 'number' && n.dimensions.width > 0 ? n.dimensions.width : undefined;
+      const height = typeof n.dimensions?.height === 'number' && n.dimensions.height > 0 ? n.dimensions.height : undefined;
+      const attachedName = typeof n.attachedTo === 'string' ? n.attachedTo : null;
+      noteRows.push({
+        id: n.id,
+        kind: n.kind === 'callout' ? 'callout' : 'sticky',
+        text: typeof n.text === 'string' ? n.text : '',
+        color: typeof n.color === 'string' && n.color ? n.color : 'amber',
+        position: { x, y },
+        ...(width !== undefined && height !== undefined ? { dimensions: { width, height } } : {}),
+        attachedToClassId: attachedName ? (classIdByName.get(attachedName) ?? null) : null,
+      });
+    }
+
+    if (noteRows.length === 0) {
+      return successResponse({ restored: 0 });
+    }
+
+    const layoutRes = JSON.parse(await getDefaultCanvasLayout(versionId, userId ?? undefined));
+    const existingLayout = layoutRes.success ? layoutRes.layout : null;
+
+    const importedIds = new Set(noteRows.map((n) => n.id));
+    const noteLayoutNodes = noteRows.map(canvasNoteToLayoutNode);
+
+    if (existingLayout) {
+      const currentNodes = Array.isArray(existingLayout.nodes) ? existingLayout.nodes : [];
+      const keptNodes = currentNodes.filter(
+        (n: any) => !(n && n.type === CANVAS_NOTE_NODE_TYPE && importedIds.has(n.id))
+      );
+      const updateRes = JSON.parse(
+        await updateCanvasLayout(existingLayout.id, {
+          nodes: [...keptNodes, ...noteLayoutNodes],
+        })
+      );
+      if (!updateRes.success) {
+        return errorResponse(updateRes.error || 'Failed to update default canvas layout');
+      }
+    } else {
+      const createRes = JSON.parse(
+        await createCanvasLayout(
+          versionId,
+          userId,
+          'Default',
+          true,
+          { x: 0, y: 0, zoom: 1 },
+          noteLayoutNodes,
+          [],
+          null,
+          { enabled: true, size: 20, snapToGrid: true, showGrid: true },
+          { enabled: true, position: 'bottom-right', size: 'medium' },
+          {}
+        )
+      );
+      if (!createRes.success) {
+        return errorResponse(createRes.error || 'Failed to create default canvas layout');
+      }
+    }
+
+    return successResponse({ restored: noteRows.length });
+  } catch (error: any) {
+    console.error('Error restoring imported canvas notes:', error);
+    return errorResponse(error.message);
+  }
+}
+
+// ============================================================================
 // GROUPS MANAGEMENT
 // Functions for managing canvas groups stored in dedicated tables
 // ============================================================================
@@ -5627,6 +5816,12 @@ export type BuildOpenApiSpecForVersionOptions = {
   versionLabel?: string;
   description?: string | null;
   openapiVersion?: string;
+  /**
+   * Embed canvas sticky notes / callouts as x-apiome-note / x-apiome-canvas
+   * extensions (#2394 DUX-2.1). Defaults to true; notes come from the
+   * version's default canvas layout for the session user.
+   */
+  includeCanvasAnnotations?: boolean;
   metadata?: {
     summary?: string;
     termsOfService?: string;
@@ -5689,6 +5884,29 @@ export async function buildOpenApiSpecForVersion(
     console.error('[buildOpenApiSpecForVersion] Exception while loading servers:', error);
   }
 
+  // Canvas annotations (#2394): load notes from the default canvas layout and
+  // re-key class attachments from IDs to names for portable export.
+  let canvasAnnotations: Array<Record<string, unknown>> | undefined;
+  if (options.includeCanvasAnnotations !== false) {
+    try {
+      const session = await getAuthSession();
+      const sessionUserId = (session?.user as any)?.user_id as string | undefined;
+      const notesRes = JSON.parse(await getCanvasNotesForVersion(versionId, sessionUserId));
+      if (notesRes.success && Array.isArray(notesRes.notes) && notesRes.notes.length > 0) {
+        const classNameById = new Map<string, string>(
+          classesWithProperties.map((cls: { id: string; name: string }) => [cls.id, cls.name])
+        );
+        canvasAnnotations = notesRes.notes.map((note: any) => {
+          const { attachedToClassId, ...rest } = note;
+          const attachedTo = attachedToClassId ? classNameById.get(attachedToClassId) : undefined;
+          return { ...rest, ...(attachedTo ? { attachedTo } : {}) };
+        });
+      }
+    } catch (error) {
+      console.error('[buildOpenApiSpecForVersion] Exception while loading canvas notes:', error);
+    }
+  }
+
   const hasSecuritySchemes = Object.keys(securitySchemes).length > 0;
   const specJson = await generateOpenApiSpec(
     classesWithProperties,
@@ -5703,6 +5921,7 @@ export async function buildOpenApiSpecForVersion(
         ? Object.keys(securitySchemes).map((name) => ({ [name]: [] }))
         : undefined,
       externalDocs: undefined,
+      canvasAnnotations: canvasAnnotations as any,
       metadata: options.metadata,
     },
     pathsObject,

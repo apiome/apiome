@@ -2,6 +2,7 @@
   "openapi": "{{openapi}}",
   "info": {{{json info}}},
 {{#if xMetadata}}  "x-metadata": {{{json xMetadata}}},
+{{/if}}{{#if xApiomeCanvas}}  "x-apiome-canvas": {{{json xApiomeCanvas}}},
 {{/if}}{{#if servers}}  "servers": {{{json servers}}},
 {{/if}}{{#if tags}}  "tags": {{{json tags}}},
 {{/if}}{{#if security}}  "security": {{{json security}}},

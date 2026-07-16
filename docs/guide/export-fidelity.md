@@ -195,6 +195,46 @@ Four situations you will actually meet, one per kind of outcome:
    does not support HTTP paths"*) with a link to the Avro specification; the record
    types themselves are `retained` and the tier is `types-only`.
 
+## Canvas annotations (`x-apiome-note` / `x-apiome-canvas`)
+
+Sticky notes and callouts drawn on the Studio schema canvas are part of the design
+record, so the Studio generators serialize them into exported specs as vendor
+extensions and restore them on import (Designer DUX-2.1,
+[apiome/private-suite#2394](https://github.com/apiome/private-suite/issues/2394)):
+
+- **`x-apiome-note`** — schema-level. An **array** of notes attached to that class;
+  attachment is implicit from the location (no IDs), so it survives systems that assign
+  new class identifiers.
+- **`x-apiome-canvas`** — document-level. `{ formatVersion, notes: [...] }` carrying
+  freeform notes (and, as a fallback, notes attached to classes that were not part of
+  the export, with their `attachedTo` class name preserved).
+
+Each note object:
+
+```json
+{
+  "id": "note-1721117493-h2k9x4q1a",
+  "kind": "sticky",            // "sticky" | "callout"
+  "text": "Confirm rounding rules with billing",
+  "color": "amber",            // preset name or "#RRGGBB"
+  "position": { "x": 120, "y": 240 },
+  "dimensions": { "width": 220, "height": 140 },
+  "attachedTo": "Invoice"      // document-level fallback only; omitted when schema-level
+}
+```
+
+The round trip is **lossless** for position, size, color, text, kind, and attachment.
+
+**Where it applies:**
+
+| Destination | Behavior |
+|---|---|
+| OpenAPI 3.x, JSON Schema | Extensions emitted and re-imported (`retained`). |
+| AsyncAPI 3 | Extension-capable; emitter support tracked (`emitter_unsupported` until it lands). |
+| GraphQL SDL, SQL DDL, Proto3, Avro, Thrift | No vendor-extension mechanism — annotations are skipped (`dropped` / `destination_unsupported`). |
+| Diagram/code exports (Mermaid, PlantUML, GraphML, DOT) | No extension slot — skipped (`destination_unsupported`). |
+| PNG / JPEG / SVG / PDF canvas images | Notes render as drawn; the Export Wizard's **Include notes** overlay toggle includes or excludes them. |
+
 ## REST endpoints
 
 | Purpose | Route |
