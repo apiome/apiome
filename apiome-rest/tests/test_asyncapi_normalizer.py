@@ -388,6 +388,97 @@ def test_empty_document_normalizes_to_empty_model() -> None:
     assert api.servers == []
 
 
+def test_v2_channel_failure_marks_parse_error_without_aborting(monkeypatch) -> None:
+    """REPO-3.3: a single bad channel becomes parse_error; siblings still import."""
+    normalizer = AsyncApiNormalizer()
+    original = normalizer._channel_v2
+
+    def flaky(address, spec, coercer):
+        if address == "bad/topic":
+            raise ValueError("channel boom")
+        return original(address, spec, coercer)
+
+    monkeypatch.setattr(normalizer, "_channel_v2", flaky)
+    doc = {
+        "asyncapi": "2.6.0",
+        "info": {"title": "Partial", "version": "1.0.0"},
+        "channels": {
+            "bad/topic": {
+                "publish": {
+                    "message": {
+                        "name": "Bad",
+                        "payload": {"type": "object"},
+                    }
+                }
+            },
+            "good/topic": {
+                "publish": {
+                    "operationId": "onGood",
+                    "message": {
+                        "name": "Good",
+                        "payload": {"type": "object", "properties": {"ok": {"type": "boolean"}}},
+                    },
+                },
+                "bindings": {"mqtt": {"qos": 1}},
+            },
+        },
+    }
+    api = normalizer.normalize(doc)
+    by_key = {c.key: c for c in api.channels}
+    assert by_key["bad/topic"].extras["status"] == "parse_error"
+    assert "channel boom" in by_key["bad/topic"].extras["parse_error"]
+    assert by_key["good/topic"].bindings["mqtt"]["qos"] == 1
+    assert any(op.name == "onGood" for op in api.operations())
+
+
+def test_v2_and_v3_actions_normalize_into_extras_action() -> None:
+    """v2 publish/subscribe and v3 send/receive both land on Operation.extras.action."""
+    v2 = AsyncApiNormalizer().normalize(
+        {
+            "asyncapi": "2.6.0",
+            "info": {"title": "V2", "version": "1.0.0"},
+            "channels": {
+                "a": {
+                    "publish": {"message": {"name": "P", "payload": {"type": "object"}}},
+                    "subscribe": {"message": {"name": "S", "payload": {"type": "object"}}},
+                }
+            },
+        }
+    )
+    v2_actions = {op.extras.get("action") for op in v2.operations()}
+    assert v2_actions == {"publish", "subscribe"}
+
+    v3 = AsyncApiNormalizer().normalize(
+        {
+            "asyncapi": "3.0.0",
+            "info": {"title": "V3", "version": "1.0.0"},
+            "channels": {
+                "userSignedUp": {
+                    "address": "user/signedup",
+                    "messages": {
+                        "UserSignedUp": {
+                            "name": "UserSignedUp",
+                            "payload": {"type": "object"},
+                        }
+                    },
+                }
+            },
+            "operations": {
+                "sendUserSignedUp": {
+                    "action": "send",
+                    "channel": {"address": "user/signedup"},
+                },
+                "onUserSignedUp": {
+                    "action": "receive",
+                    "channel": {"address": "user/signedup"},
+                },
+            },
+        }
+    )
+    v3_actions = {op.extras.get("action") for op in v3.operations()}
+    assert v3_actions == {"send", "receive"}
+
+
 # ===========================================================================
 # End-to-end: the real MFI-8.1 parser feeding the normalizer (gated)
 # ===========================================================================

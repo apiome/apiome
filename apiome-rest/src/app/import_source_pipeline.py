@@ -410,6 +410,19 @@ def persist_adapter_import(
         format_metadata=format_metadata,
     )
 
+    # REPO-3.3 (#2772): AsyncAPI imports also land Channels/Operations/Messages in the
+    # MFI-2.2 tables and promote message payloads/headers into designer Classes.
+    if model.format in {"asyncapi-2", "asyncapi-3"} and creator_id:
+        from .asyncapi_class_promotion import promote_asyncapi_message_classes
+
+        promote_asyncapi_message_classes(db, version_record_id, model)
+        db.persist_canonical_api(
+            tenant_id=tenant_id,
+            creator_id=creator_id,
+            version_id=version_record_id,
+            model=model,
+        )
+
     return SpecImportJobResult(
         project_id=project_id,
         project_slug=project_slug,
