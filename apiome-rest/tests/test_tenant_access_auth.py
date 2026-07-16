@@ -41,21 +41,35 @@ def test_validate_user_tenant_access_denies_when_no_membership():
 
 
 def test_validate_authentication_returns_404_for_missing_tenant():
+    from unittest.mock import MagicMock
+
+    req = MagicMock()
+    req.method = "GET"
+    req.url.path = "/v1/projects/missing-tenant"
     with patch("app.auth.decode_jwt") as mjwt, patch("app.auth.db") as mdb:
         mjwt.return_value = {"user_id": _USER_ID, "sub": _USER_ID}
         mdb.get_active_tenant_auth_row.return_value = None
         with pytest.raises(HTTPException) as exc:
-            validate_authentication("missing-tenant", authorization="Bearer token")
+            validate_authentication(
+                req, "missing-tenant", authorization="Bearer token"
+            )
     assert exc.value.status_code == 404
 
 
 def test_validate_authentication_returns_403_when_not_member_or_admin():
+    from unittest.mock import MagicMock
+
+    req = MagicMock()
+    req.method = "GET"
+    req.url.path = "/v1/projects/apis-guru"
     with patch("app.auth.decode_jwt") as mjwt, patch("app.auth.db") as mdb:
         mjwt.return_value = {"user_id": _USER_ID, "sub": _USER_ID}
         mdb.get_active_tenant_auth_row.return_value = _TENANT_ROW
         with patch("app.auth.validate_user_tenant_access", return_value=None):
             with pytest.raises(HTTPException) as exc:
-                validate_authentication("apis-guru", authorization="Bearer token")
+                validate_authentication(
+                    req, "apis-guru", authorization="Bearer token"
+                )
     assert exc.value.status_code == 403
     assert "apis-guru" in str(exc.value.detail)
 

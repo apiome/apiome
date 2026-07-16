@@ -388,7 +388,7 @@ apiome diff ./openapi.yaml --against payments-api@latest --format md
 | `--fail-on` | `breaking` | Exit `1` when `maxSeverity` is at least this level. `warn` also fails on `non-breaking`. `docs-only` alone never fails. |
 | `--format` | `text` | `text` human summary, `json` ClassifiedDiffResponse, `md` CTG-1.3 markdown changelog (`Accept: text/markdown`). |
 
-**Exit codes (this command only):** `0` = gate passed, `1` = threshold met (breaking/warn findings), `2` = auth/network/parse/oversize. Requires API key + tenant scope. Read-only CI tokens with `diff:read` (CTG-2.3) work once issued.
+**Exit codes (this command only):** `0` = gate passed, `1` = threshold met (breaking/warn findings), `2` = auth/network/parse/oversize. Requires API key + tenant scope. Read-only CI tokens with `diff:read` (CTG-2.3) are supported.
 
 For GitHub pull requests, prefer the copy-paste Action
 [`apiome/apiome/diff-action`](../diff-action/) — it runs this command, fails the check on
