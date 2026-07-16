@@ -1,0 +1,59 @@
+name: Apiome Diff Gate
+description: >
+  Run apiome diff against a published project version, fail the check on
+  breaking (or warn-level) changes, and upsert one sticky PR comment with the
+  markdown changelog.
+author: Apiome
+
+branding:
+  icon: git-pull-request
+  color: blue
+
+inputs:
+  spec:
+    description: Path to the candidate OpenAPI YAML/JSON file (workspace-relative).
+    required: true
+  project:
+    description: Baseline as project@version|latest (e.g. payments-api@latest).
+    required: true
+  fail-on:
+    description: Gate threshold — breaking (default) or warn.
+    required: false
+    default: breaking
+  api-key:
+    description: Apiome API key (X-API-Key). Prefer a repository secret.
+    required: true
+  tenant:
+    description: Tenant slug or UUID (APIOME_TENANT_ID).
+    required: true
+  base-url:
+    description: Apiome REST base URL (APIOME_BASE_URL).
+    required: false
+    default: https://api.apiome.dev
+  github-token:
+    description: Token used to create/update the sticky PR comment.
+    required: false
+    default: ${{ github.token }}
+  comment:
+    description: When true, upsert a sticky PR comment with the markdown changelog.
+    required: false
+    default: "true"
+
+outputs:
+  exit-code:
+    description: Exit code from apiome diff (0 = pass, 1 = gate failed, 2 = error).
+  changelog-path:
+    description: Path to the written markdown changelog file inside the workspace.
+
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    INPUT_SPEC: ${{ inputs.spec }}
+    INPUT_PROJECT: ${{ inputs.project }}
+    INPUT_FAIL_ON: ${{ inputs.fail-on }}
+    INPUT_API_KEY: ${{ inputs.api-key }}
+    INPUT_TENANT: ${{ inputs.tenant }}
+    INPUT_BASE_URL: ${{ inputs.base-url }}
+    INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+    INPUT_COMMENT: ${{ inputs.comment }}

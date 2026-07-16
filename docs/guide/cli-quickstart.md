@@ -102,4 +102,5 @@ Useful global flags: `--json` (raw JSON for scripting), `--tenant`, `--api-key`,
 
 - [import-a-spec.md](import-a-spec.md), [lint-and-quality.md](lint-and-quality.md),
   [export-a-spec.md](export-a-spec.md) — the spine, from the CLI
+- [ci-diff-gate.md](ci-diff-gate.md) — GitHub Action wrapping `apiome diff` for PR gates
 - [api-reference.md](api-reference.md) — the routes behind these commands
