@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "non-breaking",
+  "counts": {
+    "breaking": 0,
+    "non-breaking": 1,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.optional_param_added",
+      "severity": "non-breaking",
+      "pointer": "/paths/~1pets/get/parameters/query:q",
+      "unclassified": false,
+      "change_kind": "optional_param_added",
+      "before": null,
+      "after": {
+        "name": "q",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

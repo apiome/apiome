@@ -1,0 +1,72 @@
+openapi: 3.1.0
+info:
+  title: Pets
+  version: 1.0.0
+  description: Pet store
+servers:
+- url: https://api.example.com
+- url: https://staging.example.com
+tags:
+- name: pets
+  description: Pets
+paths:
+  /pets:
+    get:
+      summary: List pets
+      operationId: listPets
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetList'
+        '404':
+          description: missing
+  /pets/{id}:
+    get:
+      operationId: getPet
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: ok
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - available
+          - pending
+          - sold
+      required:
+      - id
+    PetList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pet'
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key

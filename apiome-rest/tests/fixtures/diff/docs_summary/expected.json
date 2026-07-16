@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "docs-only",
+  "counts": {
+    "breaking": 0,
+    "non-breaking": 0,
+    "docs-only": 1,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.docs_summary",
+      "severity": "docs-only",
+      "pointer": "/paths/~1pets/get/summary",
+      "unclassified": false,
+      "change_kind": "docs_summary",
+      "before": "List pets",
+      "after": "List all pets"
+    }
+  ]
+}

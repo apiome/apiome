@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "totally_unknown_kind",
+    "pointer": "/x",
+    "before": 1,
+    "after": 2
+  }
+]

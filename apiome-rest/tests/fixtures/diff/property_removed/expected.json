@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.property_removed",
+      "severity": "breaking",
+      "pointer": "/components/schemas/Pet/properties/name",
+      "unclassified": false,
+      "change_kind": "property_removed",
+      "before": {
+        "type": "string"
+      },
+      "after": null
+    }
+  ]
+}

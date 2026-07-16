@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.required_param_added",
+      "severity": "breaking",
+      "pointer": "/paths/~1pets/get/parameters/header:api_version",
+      "unclassified": false,
+      "change_kind": "required_param_added",
+      "before": null,
+      "after": {
+        "name": "api_version",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

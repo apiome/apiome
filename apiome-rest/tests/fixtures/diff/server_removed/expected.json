@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.server_removed",
+      "severity": "breaking",
+      "pointer": "/servers/https:~1~1api.example.com",
+      "unclassified": false,
+      "change_kind": "server_removed",
+      "before": {
+        "url": "https://api.example.com"
+      },
+      "after": null
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "non-breaking",
+  "counts": {
+    "breaking": 0,
+    "non-breaking": 1,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.property_added",
+      "severity": "non-breaking",
+      "pointer": "/components/schemas/Pet/properties/tag",
+      "unclassified": false,
+      "change_kind": "property_added",
+      "before": null,
+      "after": {
+        "type": "string"
+      }
+    }
+  ]
+}

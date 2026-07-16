@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "mode": "raw"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 1,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.unclassified",
+      "severity": "breaking",
+      "pointer": "/x",
+      "unclassified": true,
+      "change_kind": "totally_unknown_kind",
+      "before": 1,
+      "after": 2
+    }
+  ]
+}

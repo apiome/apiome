@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.optional_to_required",
+      "severity": "breaking",
+      "pointer": "/components/schemas/Pet/required/name",
+      "unclassified": false,
+      "change_kind": "optional_to_required",
+      "before": false,
+      "after": true
+    }
+  ]
+}

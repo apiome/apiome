@@ -1,0 +1,43 @@
+{
+  "meta": {
+    "mode": "openapi"
+  },
+  "max_severity": "breaking",
+  "counts": {
+    "breaking": 1,
+    "non-breaking": 0,
+    "docs-only": 0,
+    "unclassified": 0,
+    "total": 1
+  },
+  "changes": [
+    {
+      "rule_id": "ctg.path_removed",
+      "severity": "breaking",
+      "pointer": "/paths/~1pets~1{id}",
+      "unclassified": false,
+      "change_kind": "path_removed",
+      "before": {
+        "get": {
+          "operationId": "getPet",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "ok"
+            }
+          }
+        }
+      },
+      "after": null
+    }
+  ]
+}
