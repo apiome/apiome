@@ -6,6 +6,7 @@ import { AppShell } from '../../../components/AppShell';
 import { Breadcrumb } from '../../../components/Breadcrumb';
 import { EntityHeader } from '../../../components/EntityHeader';
 import { VersionTimeline } from '../../../components/VersionTimeline';
+import type { Severity } from '../../../../../lib/changelog/types';
 
 interface Project {
   id: string;
@@ -29,6 +30,8 @@ interface Version {
 interface ProjectClientProps {
   project: Project;
   versions: Version[];
+  /** Classified max severity per version label, when a changelog row exists (CTG-3.2, #4476). */
+  changelogSeverities: Record<string, Severity>;
   tenantSlug: string;
   projectSlug: string;
 }
@@ -53,11 +56,13 @@ function relativeTime(iso?: string): string | undefined {
 export function ProjectClient({
   project,
   versions,
+  changelogSeverities,
   tenantSlug,
   projectSlug,
 }: ProjectClientProps) {
   const latest = versions[0];
   const [copied, setCopied] = useState(false);
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
   const onCopyShareUrl = async () => {
     try {
@@ -162,6 +167,27 @@ export function ProjectClient({
                   </>
                 )}
               </button>
+              {/* Subscribe links: plain anchors (route handlers, not pages), basePath-prefixed. */}
+              <a
+                href={`${basePath}/tenant/${tenantSlug}/${projectSlug}/changelog.xml`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                title="Subscribe to the changelog RSS feed"
+              >
+                <svg className="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6.18 15.64a2.18 2.18 0 110 4.36 2.18 2.18 0 010-4.36zM4 10.1a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1zM4 4a16 16 0 0116 16h-2.83A13.17 13.17 0 004 6.83V4z" />
+                </svg>
+                RSS
+              </a>
+              <a
+                href={`${basePath}/tenant/${tenantSlug}/${projectSlug}/changelog.json`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                title="Subscribe to the changelog JSON Feed"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                </svg>
+                JSON Feed
+              </a>
             </>
           }
         />
@@ -182,6 +208,7 @@ export function ProjectClient({
 
           <VersionTimeline
             versions={versions}
+            changelogSeverities={changelogSeverities}
             tenantSlug={tenantSlug}
             projectSlug={projectSlug}
             latestVersionId={latest?.version_id}

@@ -52,6 +52,7 @@ from .mcp_credential_crypto import validate_credential_encryption_keys
 from .push_webhook_crypto import validate_webhook_signing_key
 from .change_report_routes import router as change_report_router
 from .version_change_report_routes import router as version_change_report_router
+from .version_changelog_routes import router as version_changelog_router
 from .change_report_template_routes import router as change_report_template_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
@@ -87,7 +88,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.16.0",
+    version="1.17.0",
 )
 
 
@@ -240,6 +241,10 @@ app.include_router(lint_workspace_router)
 app.include_router(style_guide_router)
 app.include_router(version_merge_router)
 app.include_router(workflow_audit_router)
+# version_changelog_router before versions_router so its literal
+# /{tenant_slug}/{project_id}/changelogs route wins over the versions
+# /{tenant_slug}/{project_id}/{version_record_id} parameter route (CTG-3.2, #4476).
+app.include_router(version_changelog_router)
 app.include_router(versions_router)
 app.include_router(properties_router)
 app.include_router(project_tags_router)

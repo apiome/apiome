@@ -10821,6 +10821,66 @@ class Database:
         """
         return self.execute_query(q, tuple(params) if params else None)
 
+    def list_version_changelogs_for_project(
+        self,
+        project_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Changelog summary rows for every published revision of a project (CTG-3.2, #4476).
+
+        One row per published revision, newest publish first. Revisions that have no
+        ``version_changelogs`` row yet (classification pending or pre-V178) still appear
+        with NULL changelog columns so callers can render a "pending" state. The heavy
+        ``changelog_json`` payload is reduced to its ``counts`` object; use
+        :meth:`get_version_changelog` for full entries.
+
+        Args:
+            project_id: Owning project UUID.
+            tenant_id: Authenticated tenant UUID.
+            limit: Optional max rows (most recent first).
+
+        Returns:
+            Rows with ``published_revision_id``, ``version_label``, ``published_at``,
+            ``baseline_revision_id``, ``baseline_version_label``, ``max_severity``,
+            ``status``, ``error``, ``counts``, and ``updated_at``.
+        """
+        lim_sql = ""
+        params: List[Any] = [tenant_id, project_id]
+        if limit is not None and int(limit) > 0:
+            lim_sql = " LIMIT %s"
+            params.append(int(limit))
+        q = f"""
+            SELECT
+                v.id::text AS published_revision_id,
+                v.version_id AS version_label,
+                v.published_at,
+                vc.baseline_revision_id::text AS baseline_revision_id,
+                bl.version_id AS baseline_version_label,
+                vc.max_severity,
+                vc.status,
+                vc.error,
+                vc.changelog_json -> 'counts' AS counts,
+                vc.updated_at
+            FROM apiome.versions v
+            INNER JOIN apiome.projects p
+                ON v.project_id = p.id
+               AND p.tenant_id = %s::uuid
+               AND p.deleted_at IS NULL
+            LEFT JOIN apiome.version_changelogs vc
+                ON vc.published_revision_id = v.id
+            LEFT JOIN apiome.versions bl
+                ON bl.id = vc.baseline_revision_id
+            WHERE v.project_id = %s::uuid
+              AND v.deleted_at IS NULL
+              AND v.published IS TRUE
+            ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+            {lim_sql}
+        """
+        return self.execute_query(q, tuple(params))
+
     def insert_change_report_if_absent(
         self,
         tenant_id: str,

@@ -118,6 +118,16 @@ import { VersionMergeConflictList } from '../../../components/ade/dashboard/Vers
 import { CompatibilityReportPanel } from '../../../components/ade/dashboard/CompatibilityReportPanel';
 import { ExternalCompatEvidencePanel } from '../../../components/ade/dashboard/ExternalCompatEvidencePanel';
 import { VersionChangeReportPanel } from './VersionChangeReportPanel';
+import { VersionChangesPanel } from './VersionChangesPanel';
+import {
+  breakingStableIds,
+  changelogMatchesComparedPair,
+  countsSummary,
+  severityBadgeVariant,
+  severityLabel,
+  stableIdForPointer,
+  type VersionChangelog,
+} from '@lib/version-changelog';
 import ExportDialog, { type ExportedArtifactSummary } from '../../../components/ade/dashboard/export/ExportDialog';
 import VersionExportPanel from '../../../components/ade/dashboard/export/VersionExportPanel';
 import { recordRecentExport } from '../../../components/ade/dashboard/export/recentExports';
@@ -440,8 +450,8 @@ const Versions = () => {
     toVersionLabel?: string;
   } | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-  /** Timeline vs publication change report (CR-05, #2703); gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`. */
-  const [versionsMainTab, setVersionsMainTab] = useState<'timeline' | 'change-report'>('timeline');
+  /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476). */
+  const [versionsMainTab, setVersionsMainTab] = useState<'timeline' | 'change-report' | 'changes'>('timeline');
   /* Change reports are part of the git-like publication flow, so the UI gate
      is the union of the env opt-out and the master git-like feature flag.
      When git-like is off, all change-report panels, tabs, and publish-preview
@@ -506,6 +516,10 @@ const Versions = () => {
   const [activeCompareTab, setActiveCompareTab] = useState<
     'diff' | 'summary' | 'breaking' | 'migration' | 'canvas'
   >('diff');
+  /** Stored publish-time classification for the compared pair (CTG-3.2, #4476); null when the pair has none. */
+  const [compareStoredChangelog, setCompareStoredChangelog] = useState<VersionChangelog | null>(null);
+  /** Pending deep-link target inside the compare dialog (a `ctg.changelog.v1` JSON Pointer). */
+  const [compareFocusPointer, setCompareFocusPointer] = useState<string | null>(null);
   const [canvasCompareLeft, setCanvasCompareLeft] = useState<LayoutState | null>(null);
   const [canvasCompareRight, setCanvasCompareRight] = useState<LayoutState | null>(null);
   const [canvasCompareDiff, setCanvasCompareDiff] = useState<LayoutDiffSummary | null>(null);
@@ -1663,6 +1677,28 @@ const Versions = () => {
     );
   };
 
+  /**
+   * Best-effort fetch of the stored publish-time classification for the head of a
+   * compared pair. Badges only render when the stored baseline matches the pair's
+   * base (CTG-3.2, #4476); missing rows (404) are a normal state, not an error.
+   */
+  const loadStoredChangelogForPair = async (baseId: string, targetId: string) => {
+    const head = versions.find((v) => v.id === targetId);
+    const projectId = head?.project_id ?? selectedProjectId;
+    if (!projectId || !head?.published) return;
+    try {
+      const qs = new URLSearchParams({ projectId });
+      const res = await fetch(`/api/versions/${encodeURIComponent(targetId)}/changelog?${qs.toString()}`);
+      const json = (await res.json()) as { success?: boolean; changelog?: VersionChangelog };
+      const stored = json?.success && json.changelog ? json.changelog : null;
+      setCompareStoredChangelog(
+        changelogMatchesComparedPair(stored, baseId, targetId) ? stored : null,
+      );
+    } catch {
+      setCompareStoredChangelog(null);
+    }
+  };
+
   const runCompareBetween = async (baseId: string, targetId: string) => {
     if (!baseId || !targetId) {
       toast.warning('Please select two versions');
@@ -1675,11 +1711,13 @@ const Versions = () => {
     setDiffResult([]);
     setSchemaDiffSummary(null);
     setClassDiffRows(null);
+    setCompareStoredChangelog(null);
     setCanvasCompareLeft(null);
     setCanvasCompareRight(null);
     setCanvasCompareDiff(null);
     setCanvasComparePairKey('');
     setIsLoadingComparison(true);
+    void loadStoredChangelogForPair(baseId, targetId);
     try {
       const [spec1, spec2] = await Promise.all([loadVersionSpec(baseId), loadVersionSpec(targetId)]);
       setCompareSpec1(spec1);
@@ -1708,6 +1746,8 @@ const Versions = () => {
     if (params.get('compareOpen') !== '1') return;
     const compareBase = params.get('compareBase');
     const compareHead = params.get('compareHead');
+    /** Optional changelog JSON Pointer to focus inside the diff (CTG-3.2, #4476). */
+    const comparePointer = params.get('comparePointer');
     if (!compareBase?.trim() || !compareHead?.trim()) return;
     if (compareBase.trim() === compareHead.trim()) return;
     const pid = params.get('projectId');
@@ -1726,6 +1766,7 @@ const Versions = () => {
     params.delete('compareOpen');
     params.delete('compareBase');
     params.delete('compareHead');
+    params.delete('comparePointer');
     if (pid) params.delete('projectId');
     const qs = params.toString();
     window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
@@ -1739,6 +1780,9 @@ const Versions = () => {
     setCompareVersion2Id(h);
     setCompareBaseTagId('');
     setCompareToTagId('');
+    if (comparePointer?.trim()) {
+      setCompareFocusPointer(comparePointer.trim());
+    }
     setActiveCompareTab('diff');
     setShowCompareDialog(true);
     void runCompareBetweenRef.current?.(b, h);
@@ -1796,6 +1840,46 @@ const Versions = () => {
     await runCompareBetween(compareVersion1Id, compareVersion2Id);
   };
 
+  /** Deep link from the Changes tab: open the diff for the classified pair at a changelog pointer (CTG-3.2, #4476). */
+  const handleOpenDiffFromChanges = async (baseId: string, headId: string, pointer: string) => {
+    setCompareBaseTagId('');
+    setCompareToTagId('');
+    setCompareVersion1Id(baseId);
+    setCompareVersion2Id(headId);
+    setCompareFocusPointer(pointer);
+    setActiveCompareTab('diff');
+    setShowCompareDialog(true);
+    await runCompareBetween(baseId, headId);
+  };
+
+  /**
+   * Resolve a pending changelog deep link once the comparison is loaded: schema
+   * pointers land on the expanded class row in "Schema Changes" (expansion turns
+   * off list virtualization, so the row is in the DOM); everything else falls
+   * back to the text diff tab.
+   */
+  useEffect(() => {
+    if (!compareFocusPointer || !showCompareDialog || isLoadingComparison || diffResult.length === 0) {
+      return;
+    }
+    const pointer = compareFocusPointer;
+    setCompareFocusPointer(null);
+    const stableId = stableIdForPointer(pointer);
+    if (stableId && classDiffRows?.some((r) => r.stableId === stableId)) {
+      setActiveCompareTab('summary');
+      setClassDiffSearch('');
+      setClassDiffShowUnchanged(true);
+      setExpandedClassDiffId(stableId);
+      window.setTimeout(() => {
+        document
+          .getElementById(`class-diff-row-${stableId}`)
+          ?.scrollIntoView({ block: 'center' });
+      }, 120);
+    } else {
+      setActiveCompareTab('diff');
+    }
+  }, [compareFocusPointer, showCompareDialog, isLoadingComparison, diffResult, classDiffRows]);
+
   const handleHistoryGraphCompareToParent = async (revisionId: string) => {
     const v = versions.find((x) => x.id === revisionId);
     if (!v?.parent_version_id?.trim()) {
@@ -1838,6 +1922,7 @@ const Versions = () => {
     setShowCompareDialog(true); setCompareVersion1Id(''); setCompareVersion2Id('');
     setCompareSpec1(''); setCompareSpec2(''); setCompareFormat('json');
     setDiffResult([]); setSchemaDiffSummary(null); setClassDiffRows(null);
+    setCompareStoredChangelog(null); setCompareFocusPointer(null);
     setClassDiffSearch(''); setClassDiffShowUnchanged(true); setExpandedClassDiffId(null);
     setPropDrillShowAllByClass({});
     setClassListScrollTop(0); setDiffViewMode('overlay');
@@ -1954,6 +2039,12 @@ const Versions = () => {
       total,
     };
   }, [filteredClassDiffRows, classListScrollTop]);
+
+  /** Class-diff rows with at least one stored breaking entry (badges sourced from the stored classification, #4476). */
+  const storedBreakingIds = useMemo(
+    () => breakingStableIds(compareStoredChangelog?.changelog?.entries),
+    [compareStoredChangelog],
+  );
 
   const classDiffCounts = useMemo(() => {
     if (!classDiffRows) return null;
@@ -2844,6 +2935,14 @@ const Versions = () => {
   };
 
   const showChangeReportTab = changeReportUiEnabled && Boolean(selectedProjectId);
+  /** Stored classified changelogs (CTG-3.2, #4476) — available for any selected project, no feature flag. */
+  const showChangesTab = Boolean(selectedProjectId);
+  /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
+  const effectiveMainTab =
+    (versionsMainTab === 'change-report' && !showChangeReportTab) ||
+    (versionsMainTab === 'changes' && !showChangesTab)
+      ? 'timeline'
+      : versionsMainTab;
 
   if (!session) {
     return (
@@ -2984,7 +3083,7 @@ const Versions = () => {
 
       <main className={dashboardMainClass}>
         <div className={dashboardContentStackClass}>
-      {showChangeReportTab ? (
+      {showChangeReportTab || showChangesTab ? (
         <div
           className={`${dashboardPanelClass} px-3 py-2 flex flex-wrap items-center gap-2`}
           data-testid="versions-main-tab"
@@ -2996,10 +3095,10 @@ const Versions = () => {
           >
             <button
               type="button"
-              aria-pressed={versionsMainTab === 'timeline'}
+              aria-pressed={effectiveMainTab === 'timeline'}
               data-testid="versions-tab-timeline"
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                versionsMainTab === 'timeline'
+                effectiveMainTab === 'timeline'
                   ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
@@ -3010,27 +3109,47 @@ const Versions = () => {
                 Timeline
               </span>
             </button>
-            <button
-              type="button"
-              aria-pressed={versionsMainTab === 'change-report'}
-              data-testid="versions-tab-change-report"
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                versionsMainTab === 'change-report'
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              onClick={() => setVersionsMainTab('change-report')}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <FileText className="h-4 w-4 shrink-0" aria-hidden />
-                Change report
-              </span>
-            </button>
+            {showChangesTab ? (
+              <button
+                type="button"
+                aria-pressed={effectiveMainTab === 'changes'}
+                data-testid="versions-tab-changes"
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  effectiveMainTab === 'changes'
+                    ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+                onClick={() => setVersionsMainTab('changes')}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <GitCompareArrows className="h-4 w-4 shrink-0" aria-hidden />
+                  Changes
+                </span>
+              </button>
+            ) : null}
+            {showChangeReportTab ? (
+              <button
+                type="button"
+                aria-pressed={effectiveMainTab === 'change-report'}
+                data-testid="versions-tab-change-report"
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  effectiveMainTab === 'change-report'
+                    ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+                onClick={() => setVersionsMainTab('change-report')}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 shrink-0" aria-hidden />
+                  Change report
+                </span>
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
 
-      {showChangeReportTab && versionsMainTab === 'change-report' ? (
+      {showChangeReportTab && effectiveMainTab === 'change-report' ? (
         <VersionChangeReportPanel
           projectId={selectedProjectId}
           versions={versions}
@@ -3039,11 +3158,19 @@ const Versions = () => {
         />
       ) : null}
 
+      {showChangesTab && effectiveMainTab === 'changes' ? (
+        <VersionChangesPanel
+          projectId={selectedProjectId}
+          versions={versions}
+          onOpenDiff={handleOpenDiffFromChanges}
+        />
+      ) : null}
+
       {selectedProjectId ? (
         <ProjectRelatedArtifactsSection projectId={selectedProjectId} />
       ) : null}
 
-      {FEATURE_GITLIKE && (!showChangeReportTab || versionsMainTab === 'timeline') && selectedProjectId && versionTags.length > 0 && (
+      {FEATURE_GITLIKE && effectiveMainTab === 'timeline' && selectedProjectId && versionTags.length > 0 && (
         <div className={dashboardPanelPaddedClass}>
           <div className="flex items-center gap-2 mb-3">
             <Tag className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -3105,7 +3232,7 @@ const Versions = () => {
         </div>
       )}
 
-      {FEATURE_GITLIKE && (!showChangeReportTab || versionsMainTab === 'timeline') && selectedProjectId && versionBranches.length > 0 && (
+      {FEATURE_GITLIKE && effectiveMainTab === 'timeline' && selectedProjectId && versionBranches.length > 0 && (
         <div id="ade-named-branches-panel" className={dashboardPanelPaddedClass}>
           <div className="flex items-center gap-2 mb-3">
             <GitBranch className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
@@ -3166,7 +3293,7 @@ const Versions = () => {
       )}
 
       {/* Versions List — lifecycle (and related) filters stay visible when filters yield zero rows */}
-      {(!showChangeReportTab || versionsMainTab === 'timeline') ? (
+      {effectiveMainTab === 'timeline' ? (
       versions.length === 0 && !lifecycleFilter ? (
         <EmptyState
           icon={<Package className="h-10 w-10" />}
@@ -4637,6 +4764,20 @@ const Versions = () => {
                           )}
                         </div>
                       </div>
+                      {compareStoredChangelog?.maxSeverity ? (
+                        <div
+                          className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400"
+                          data-testid="compare-stored-severity"
+                        >
+                          <span className="font-medium">Published classification:</span>
+                          <Badge variant={severityBadgeVariant(compareStoredChangelog.maxSeverity)}>
+                            {severityLabel(compareStoredChangelog.maxSeverity)}
+                          </Badge>
+                          {countsSummary(compareStoredChangelog.changelog?.counts) ? (
+                            <span>{countsSummary(compareStoredChangelog.changelog?.counts)}</span>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })()}
@@ -4906,7 +5047,11 @@ const Versions = () => {
                                 ? drill
                                 : drill.slice(0, CLASS_PROP_DRILL_LIMIT);
                             return (
-                              <div key={row.stableId} className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+                              <div
+                                key={row.stableId}
+                                id={`class-diff-row-${row.stableId}`}
+                                className="border-b border-gray-100 dark:border-gray-800 last:border-b-0"
+                              >
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -4932,6 +5077,11 @@ const Versions = () => {
                                   <span className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
                                     {row.stableId}
                                   </span>
+                                  {storedBreakingIds.has(row.stableId) && (
+                                    <Badge variant="error" data-testid={`class-diff-breaking-${row.stableId}`}>
+                                      Breaking
+                                    </Badge>
+                                  )}
                                   {row.status === 'modified' && (
                                     <span className="text-[10px] text-gray-600 dark:text-gray-400 shrink-0 hidden sm:inline">
                                       {row.propertyAdded ? `+${row.propertyAdded} ` : ''}

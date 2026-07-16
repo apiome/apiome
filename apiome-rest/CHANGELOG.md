@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.137.0] - 2026-07-15
+
+### Added
+- **Changelog read APIs (CTG-3.2, #4476)** — expose the CTG-3.1 stored
+  classifications to the dashboard:
+  `GET /v1/versions/{tenant}/{project}/changelogs` (one summary row per
+  published revision — status, max severity, counts — including revisions with
+  no stored row yet) and
+  `GET /v1/versions/{tenant}/{project}/{revision}/changelog` (full
+  `ctg.changelog.v1` payload with baseline labels). OpenAPI 1.16.0 → 1.17.0.
+
 ## [1.136.0] - 2026-07-15
 
 ### Added

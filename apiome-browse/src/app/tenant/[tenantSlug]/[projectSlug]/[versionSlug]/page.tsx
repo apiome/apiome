@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import {
+  getPublicVersionChangelog,
   getPublicVersionDetails,
   getPublicVersionsForProject,
 } from '../../../../../../lib/db/helper';
@@ -12,9 +13,10 @@ export default async function VersionPage({
   params: Promise<{ tenantSlug: string; projectSlug: string; versionSlug: string }>;
 }) {
   const { tenantSlug, projectSlug, versionSlug } = await params;
-  const [version, versions] = await Promise.all([
+  const [version, versions, changelog] = await Promise.all([
     getPublicVersionDetails(tenantSlug, projectSlug, versionSlug),
     getPublicVersionsForProject(tenantSlug, projectSlug),
+    getPublicVersionChangelog(tenantSlug, projectSlug, versionSlug),
   ]);
 
   if (!version) {
@@ -36,6 +38,7 @@ export default async function VersionPage({
     <VersionClient
       version={version}
       versions={versions}
+      changelog={changelog}
       tenantSlug={tenantSlug}
       projectSlug={projectSlug}
       versionSlug={versionSlug}

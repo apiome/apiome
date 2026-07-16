@@ -13,6 +13,12 @@ import type {
   McpPublicEndpointDetail,
   McpPublicSearchHit,
 } from '../types';
+import type {
+  ChangelogPayload,
+  ChangelogStatus,
+  PublicVersionChangelogRow,
+  Severity,
+} from '../changelog/types';
 
 interface PgError {
   message?: string;
@@ -134,6 +140,108 @@ export async function getPublicVersionDetails(
   } catch (err) {
     logError('getPublicVersionDetails', err);
     return null;
+  }
+}
+
+/**
+ * Columns shared by the two changelog reads (CTG-3.2, #4476): the version's identity plus its
+ * (optional) classification row and baseline label. The private `error` column is deliberately
+ * never selected — a failed row surfaces publicly only as `status = 'failed'`.
+ */
+const VERSION_CHANGELOG_SELECT = `
+       SELECT v.id AS published_revision_id, v.version_id AS version_label, v.published_at,
+              bl.version_id AS baseline_version_label,
+              vc.max_severity, vc.status, vc.changelog_json
+       FROM apiome.versions v
+       JOIN apiome.projects p ON v.project_id = p.id
+       JOIN apiome.tenants t ON p.tenant_id = t.id
+       LEFT JOIN apiome.version_changelogs vc ON vc.published_revision_id = v.id
+       LEFT JOIN apiome.versions bl ON bl.id = vc.baseline_revision_id`;
+
+/** Map one snake_case changelog query row to the camelCase public shape. */
+function mapChangelogRow(row: {
+  published_revision_id: string;
+  version_label: string;
+  published_at: string | Date | null;
+  baseline_version_label: string | null;
+  max_severity: string | null;
+  status: string | null;
+  changelog_json: unknown;
+}): PublicVersionChangelogRow {
+  return {
+    publishedRevisionId: row.published_revision_id,
+    versionLabel: row.version_label,
+    publishedAt: row.published_at,
+    baselineVersionLabel: row.baseline_version_label,
+    maxSeverity: (row.max_severity as Severity | null) ?? null,
+    status: (row.status as ChangelogStatus | null) ?? null,
+    changelog: (row.changelog_json as ChangelogPayload | null) ?? null,
+  };
+}
+
+/**
+ * The stored publish changelog for one published public version (CTG-3.2, #4476).
+ *
+ * Returns null when the version itself is not publicly visible (same gates as
+ * `getPublicVersionDetails`); a visible version with no classification row yet returns a row with
+ * null `status`/`changelog` so the caller can render a "pending" state.
+ */
+export async function getPublicVersionChangelog(
+  tenantSlug: string,
+  projectSlug: string,
+  versionSlug: string
+): Promise<PublicVersionChangelogRow | null> {
+  noStore();
+  try {
+    const result = await connectionPool.query(
+      `${VERSION_CHANGELOG_SELECT}
+       WHERE t.slug = $1
+         AND p.slug = $2
+         AND v.version_id = $3
+         AND v.published = true
+         AND v.visibility = 'public'
+         AND t.deleted_at IS NULL
+         AND p.deleted_at IS NULL
+         AND v.deleted_at IS NULL`,
+      [tenantSlug, projectSlug, versionSlug]
+    );
+    return result.rows.length > 0 ? mapChangelogRow(result.rows[0]) : null;
+  } catch (err) {
+    logError('getPublicVersionChangelog', err);
+    return null;
+  }
+}
+
+/**
+ * Stored publish changelogs for every published public version of a project, newest
+ * `published_at` first (one row per version via LEFT JOIN, so versions without a classification
+ * row still appear as "pending"). Powers the changelog feeds, the project timeline severity
+ * pills, and the compare page's severity chips (CTG-3.2, #4476).
+ */
+export async function getPublicChangelogsForProject(
+  tenantSlug: string,
+  projectSlug: string,
+  limit = 50
+): Promise<PublicVersionChangelogRow[]> {
+  noStore();
+  try {
+    const result = await connectionPool.query(
+      `${VERSION_CHANGELOG_SELECT}
+       WHERE t.slug = $1
+         AND p.slug = $2
+         AND v.published = true
+         AND v.visibility = 'public'
+         AND t.deleted_at IS NULL
+         AND p.deleted_at IS NULL
+         AND v.deleted_at IS NULL
+       ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+       LIMIT $3`,
+      [tenantSlug, projectSlug, limit]
+    );
+    return result.rows.map(mapChangelogRow);
+  } catch (err) {
+    logError('getPublicChangelogsForProject', err);
+    return [];
   }
 }
 
