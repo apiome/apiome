@@ -82,3 +82,11 @@ def test_agents_documents_mock_commands(agents: str) -> None:
     assert "src/apiome_cli/client/mock_settings.py" in agents
     assert "PUT /v1/versions/{tenant}/{project}/{version_record_id}/mock" in agents
     assert "GET /v1/mocks/{tenant}/usage" in agents
+
+
+def test_agents_documents_diff_command(agents: str) -> None:
+    """AGENTS.md documents the classified-diff CI gate command (CTG-2.1)."""
+    assert "`diff`" in agents
+    assert "src/apiome_cli/output_diff.py" in agents
+    assert "POST /v1/diff/{tenant_slug}/classified" in agents
+    assert "--fail-on" in agents

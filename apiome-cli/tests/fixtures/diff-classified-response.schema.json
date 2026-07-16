@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apiome.dev/schemas/ctg.classified-diff.v1.json",
+  "title": "ClassifiedDiffResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["changes", "counts", "base", "head"],
+  "properties": {
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ruleId", "severity", "pointer"],
+        "properties": {
+          "ruleId": { "type": "string", "minLength": 1 },
+          "severity": {
+            "type": "string",
+            "enum": ["breaking", "non-breaking", "docs-only"]
+          },
+          "pointer": { "type": "string" },
+          "before": {},
+          "after": {},
+          "unclassified": { "type": "boolean" },
+          "changeKind": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "maxSeverity": {
+      "type": ["string", "null"],
+      "enum": ["breaking", "non-breaking", "docs-only", null]
+    },
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "projectSlug", "versionRecordId", "versionLabel"],
+      "properties": {
+        "projectId": { "type": "string" },
+        "projectSlug": { "type": "string" },
+        "versionRecordId": { "type": "string" },
+        "versionLabel": { "type": "string" }
+      }
+    },
+    "head": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": { "type": "string", "enum": ["stored", "inline"] },
+        "projectId": { "type": ["string", "null"] },
+        "projectSlug": { "type": ["string", "null"] },
+        "versionRecordId": { "type": ["string", "null"] },
+        "versionLabel": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

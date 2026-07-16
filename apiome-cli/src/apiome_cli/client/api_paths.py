@@ -321,6 +321,15 @@ def version_lint(
     return f"{version_record(tenant_slug, project_id, version_record_id)}/lint"
 
 
+def classified_diff(tenant_slug: str) -> str:
+    """POST classified OpenAPI diff (CTG-1.2 / CTG-2.1 CI gate).
+
+    Body: ``{base: {project, version}, head: {inline}|{project, version}}``.
+    Default JSON; ``Accept: text/markdown`` returns the CTG-1.3 changelog.
+    """
+    return f"{V1}/diff/{tenant_slug}/classified"
+
+
 def version_compatibility_evidence(
     tenant_slug: str,
     project_id: str | UUID,

@@ -3,17 +3,21 @@
 ``POST /v1/diff/{tenant_slug}/classified`` compares a stored base revision to either
 another stored revision or an uploaded (inline) candidate OpenAPI document, and
 returns the CTG-1.1 classified change list with summary counts and max severity.
+
+When ``Accept`` requests ``text/markdown`` (or ``text/md``), the response is the
+CTG-1.3 markdown changelog instead of JSON (CTG-2.1 / #4471).
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, Literal, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import validate_authentication
 from .change_taxonomy import ClassifiedDiff, classify_openapi_changes
+from .changelog_generator import build_changelog, render_changelog_markdown
 from .compatibility_engine import openapi_for_revision
 from .database import db
 from .import_ingestion import IngestionError, parse_document
@@ -24,6 +28,16 @@ router = APIRouter(prefix="/v1/diff", tags=["classified-diff"])
 
 #: Hard cap on UTF-8 size of an inline OpenAPI document (acceptance: 10MB).
 INLINE_SPEC_MAX_BYTES = 10 * 1024 * 1024
+
+_MARKDOWN_ACCEPT_TOKENS = ("text/markdown", "text/md")
+
+
+def _wants_markdown(accept: Optional[str]) -> bool:
+    """Return True when the client prefers CTG-1.3 markdown over JSON."""
+    if not accept:
+        return False
+    lowered = accept.lower()
+    return any(token in lowered for token in _MARKDOWN_ACCEPT_TOKENS)
 
 
 class ClassifiedDiffStoredRef(BaseModel):
@@ -297,17 +311,38 @@ def _response_from_classified(
     )
 
 
-@router.post("/{tenant_slug}/classified", response_model=ClassifiedDiffResponse)
+@router.post(
+    "/{tenant_slug}/classified",
+    response_model=ClassifiedDiffResponse,
+    responses={
+        200: {
+            "description": (
+                "Classified JSON by default, or CTG-1.3 markdown when "
+                "``Accept: text/markdown`` (or ``text/md``) is sent."
+            ),
+            "content": {
+                "text/markdown": {
+                    "schema": {"type": "string", "contentMediaType": "text/markdown"}
+                },
+            },
+        }
+    },
+)
 async def post_classified_diff(
     tenant_slug: str,
     body: ClassifiedDiffRequest,
+    accept: Optional[str] = Header(None),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
-) -> ClassifiedDiffResponse:
+) -> Union[ClassifiedDiffResponse, Response]:
     """Classify changes between a stored base revision and a stored or inline head.
 
     Supports **stored-vs-stored** (``head: {project, version}``) and
     **inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline
     documents larger than 10MB UTF-8 are rejected with ``413``.
+
+    Default response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``
+    includes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown
+    changelog for the same classification (used by ``apiome diff --format md``).
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = str(auth_data["tenant_id"])
@@ -330,4 +365,15 @@ async def post_classified_diff(
         )
 
     result = classify_openapi_changes(base_doc, head_doc)
+
+    if _wants_markdown(accept):
+        to_version = head_meta.version_label or "inline"
+        changelog = build_changelog(
+            result,
+            from_version=base_meta.version_label,
+            to_version=to_version,
+        )
+        md = render_changelog_markdown(changelog)
+        return Response(content=md, media_type="text/markdown; charset=utf-8")
+
     return _response_from_classified(result, base_meta=base_meta, head_meta=head_meta)
