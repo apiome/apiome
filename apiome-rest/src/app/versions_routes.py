@@ -47,6 +47,7 @@ from .publication_change_report import (
     generate_change_report_on_publish,
     validate_manual_baseline_revision,
 )
+from .publication_changelog import generate_version_changelog_on_publish
 from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
 from .revision_deprecation import (
@@ -2058,6 +2059,14 @@ async def publish_version(
         actor_id=user_id,
         change_report_baseline_mode=request.change_report_baseline_mode,
         change_report_baseline_revision_id=request.change_report_baseline_revision_id,
+    )
+    background_tasks.add_task(
+        generate_version_changelog_on_publish,
+        tenant_slug=tenant_slug,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        published_revision_id=version_record_id,
+        actor_id=user_id,
     )
 
     return VersionSchema(**version)

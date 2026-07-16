@@ -1,8 +1,8 @@
 # Changelog generator (CTG-1.3)
 
-> **Status:** Library surface (markdown + JSON renderers + since-version aggregation)  
-> **Issue:** [#4469](https://github.com/apiome/apiome/issues/4469)  
-> **Epic:** CTG-EPIC-1 (#4459)  
+> **Status:** Library + publish persistence (`version_changelogs`, CTG-3.1)  
+> **Issue:** [#4469](https://github.com/apiome/apiome/issues/4469) (renderer), [#4475](https://github.com/apiome/apiome/issues/4475) (publish persist)  
+> **Epic:** CTG-EPIC-1 (#4459), CTG-EPIC-3 (#4461)  
 > **Depends on:** CTG-1.1 classifier (`app.change_taxonomy`)
 
 Turns a :class:`~app.change_taxonomy.ClassifiedDiff` into an ordered, grouped,
@@ -133,5 +133,14 @@ _2 change(s): 1 breaking, 1 non-breaking, 0 docs-only._
 |--------|------|
 | `app.changelog_generator` | Types, ordering, aggregation, md/json renderers |
 | `app.change_taxonomy` | Classifier input (`ClassifiedDiff`) |
+| `app.publication_changelog` | Publish-time persist into `version_changelogs` (CTG-3.1) |
 
-Persist/publish wiring is **CTG-3.1** (`version_changelogs`); this ticket is the pure renderer only.
+**Publish persistence (CTG-3.1 / #4475):** after `db.publish_version` succeeds,
+`generate_version_changelog_on_publish` runs as a FastAPI `BackgroundTasks`
+hook (alongside the Mustache change-report pipeline). It reuses
+`get_prior_published_baseline_revision_id`, classifies via CTG-1.1, renders
+`ctg.changelog.v1`, and upserts `apiome.version_changelogs` (`ready` |
+`initial` | `failed`). Failures never raise out of the hook. After V178,
+backfill latest published revisions with
+`PYTHONPATH=src python scripts/backfill_version_changelogs.py`.
+Public GET changelog API and UI remain CTG-3.2+.

@@ -10704,6 +10704,123 @@ class Database:
         rows = self.execute_query(q, (published_revision_id, tenant_id, project_id))
         return dict(rows[0]) if rows else None
 
+    def get_version_changelog(
+        self,
+        published_revision_id: str,
+        tenant_id: str,
+        project_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Return the persisted CTG-3.1 changelog row for a published revision, if any."""
+        q = """
+            SELECT id, tenant_id, project_id, published_revision_id, baseline_revision_id,
+                   changelog_json, max_severity, status, error, created_at, updated_at
+            FROM apiome.version_changelogs
+            WHERE published_revision_id = %s::uuid
+              AND tenant_id = %s::uuid
+              AND project_id = %s::uuid
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (published_revision_id, tenant_id, project_id))
+        return dict(rows[0]) if rows else None
+
+    def upsert_version_changelog(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        published_revision_id: str,
+        baseline_revision_id: Optional[str],
+        changelog_json: Optional[Dict[str, Any]],
+        max_severity: Optional[str],
+        status: str,
+        error: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Insert or replace the classified changelog for ``published_revision_id``.
+
+        Retries and failure paths overwrite the prior row (ON CONFLICT DO UPDATE) so a
+        ``failed`` row can become ``ready`` / ``initial`` on re-run.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.version_changelogs (
+                        tenant_id, project_id, published_revision_id, baseline_revision_id,
+                        changelog_json, max_severity, status, error
+                    ) VALUES (
+                        %s::uuid, %s::uuid, %s::uuid, %s::uuid,
+                        %s, %s, %s, %s
+                    )
+                    ON CONFLICT (published_revision_id) DO UPDATE SET
+                        baseline_revision_id = EXCLUDED.baseline_revision_id,
+                        changelog_json = EXCLUDED.changelog_json,
+                        max_severity = EXCLUDED.max_severity,
+                        status = EXCLUDED.status,
+                        error = EXCLUDED.error,
+                        updated_at = CURRENT_TIMESTAMP
+                    RETURNING id, tenant_id, project_id, published_revision_id, baseline_revision_id,
+                              changelog_json, max_severity, status, error, created_at, updated_at
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        published_revision_id,
+                        baseline_revision_id,
+                        Json(changelog_json) if changelog_json is not None else None,
+                        max_severity,
+                        status,
+                        error,
+                    ),
+                )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_projects_needing_changelog_backfill(
+        self, *, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Latest published revision per project that has no ``version_changelogs`` row yet.
+
+        Returns rows with ``tenant_id``, ``tenant_slug``, ``project_id``, ``published_revision_id``.
+        """
+        lim_sql = ""
+        params: List[Any] = []
+        if limit is not None and int(limit) > 0:
+            lim_sql = " LIMIT %s"
+            params.append(int(limit))
+        q = f"""
+            WITH latest AS (
+                SELECT DISTINCT ON (v.project_id)
+                       v.id AS published_revision_id,
+                       v.project_id,
+                       p.tenant_id,
+                       t.slug AS tenant_slug
+                FROM apiome.versions v
+                INNER JOIN apiome.projects p
+                    ON v.project_id = p.id AND p.deleted_at IS NULL
+                INNER JOIN apiome.tenants t
+                    ON p.tenant_id = t.id AND t.deleted_at IS NULL
+                WHERE v.deleted_at IS NULL
+                  AND v.published = true
+                ORDER BY v.project_id, v.published_at DESC NULLS LAST, v.created_at DESC
+            )
+            SELECT latest.tenant_id, latest.tenant_slug, latest.project_id,
+                   latest.published_revision_id
+            FROM latest
+            LEFT JOIN apiome.version_changelogs vc
+                ON vc.published_revision_id = latest.published_revision_id
+            WHERE vc.id IS NULL
+            ORDER BY latest.tenant_slug, latest.project_id
+            {lim_sql}
+        """
+        return self.execute_query(q, tuple(params) if params else None)
+
     def insert_change_report_if_absent(
         self,
         tenant_id: str,
