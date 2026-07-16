@@ -35,7 +35,7 @@ wheels = [
 
 [[package]]
 name = "apiome-cli"
-version = "0.31.3"
+version = "0.31.4"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

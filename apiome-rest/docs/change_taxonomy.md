@@ -61,6 +61,8 @@ classify_openapi_changes(base, head, overrides={"ctg.path_removed": "non-breakin
 
 Response: `changes` (rule id, pointer, before/after, severity), `counts`, `maxSeverity`, plus resolved `base` / `head` metadata. Implementation: `app.classified_diff_routes`.
 
+**Content negotiation (CTG-2.1):** send `Accept: text/markdown` (or `text/md`) to receive the CTG-1.3 markdown changelog for the same classification instead of JSON. Default remains `application/json`.
+
 ## Severities
 
 | Severity | Meaning |

@@ -237,3 +237,67 @@ def test_classified_diff_invalid_inline_400(mock_auth):
         )
     assert r.status_code == 400
     assert "not valid" in r.json()["detail"].lower() or "yaml" in r.json()["detail"].lower()
+
+
+_HEAD_REMOVED_PROPERTY_YAML = yaml.dump(
+    {
+        "openapi": "3.1.0",
+        "info": {"title": "Pets", "version": "1.1.0"},
+        "paths": {},
+        "components": {
+            "schemas": {
+                "Pet": {
+                    "type": "object",
+                    "properties": {"id": {"type": "string"}},
+                }
+            }
+        },
+    }
+)
+
+_BASE_WITH_PROPERTY = {
+    "openapi": "3.1.0",
+    "info": {"title": "Pets", "version": "1.0.0"},
+    "paths": {},
+    "components": {
+        "schemas": {
+            "Pet": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"},
+                },
+            }
+        }
+    },
+}
+
+
+def test_classified_diff_accept_markdown_changelog(mock_auth):
+    """CTG-2.1: Accept text/markdown returns CTG-1.3 changelog with rule ids."""
+    with (
+        patch("app.classified_diff_routes.db") as mock_db,
+        patch(
+            "app.classified_diff_routes.openapi_for_revision",
+            return_value=_BASE_WITH_PROPERTY,
+        ),
+    ):
+        mock_db.user_has_permission.return_value = True
+        mock_db.get_project_by_slug.return_value = _FAKE_PROJECT
+        mock_db.get_version_by_version_id.return_value = _FAKE_BASE_VER
+        r = client.post(
+            "/v1/diff/acme/classified",
+            json={
+                "base": {"project": "pets", "version": "1.0.0"},
+                "head": {"inline": _HEAD_REMOVED_PROPERTY_YAML},
+            },
+            headers={
+                "Authorization": "Bearer x",
+                "Accept": "text/markdown",
+            },
+        )
+    assert r.status_code == 200, r.text
+    assert "text/markdown" in r.headers.get("content-type", "")
+    body = r.text
+    assert body.startswith("# Changelog")
+    assert "ctg.property_removed" in body

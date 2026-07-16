@@ -37,6 +37,7 @@ Key REST surfaces used by the CLI:
 | Emitter-registry export | `GET /v1/export/{tenant}/targets?artifact=&version=`, `POST /v1/export/{tenant}/preview` (fidelity only, no artifact; accepts `options`), `POST /v1/export/{tenant}/projection-evidence` (bounded cursor-paginated projection evidence, EFP-2.1), `POST /v1/export/{tenant}/document` (emit through the SPI → document bytes, JSON/YAML per `Accept`; API key + tenant scope), `POST /v1/export/{tenant}/jobs` (async export job → poll `GET …/jobs/{id}` → download `GET …/jobs/{id}/download`; API key + tenant scope) |
 | Import provenance | `GET /versions/{id}/import-source`, `GET /versions/{id}/import-fidelity-diff` (API key) |
 | Hosted mock | `PUT /v1/versions/{tenant}/{project}/{version_record_id}/mock` (SIM-2.1 toggle; published versions only), `GET /v1/versions/{tenant}/{project}/{version_record_id}` (mock state via `mockEnabled`/`mockBaseUrl`), `GET /v1/mocks/{tenant}/usage?days=&project_slug=&version_label=` (SIM-1.5 usage; best-effort) |
+| Classified diff | `POST /v1/diff/{tenant_slug}/classified` (CTG-1.2 / CTG-2.1); inline candidate vs stored base; `Accept: text/markdown` returns CTG-1.3 changelog |
 
 Tier 2 commands require `X-API-Key` (see **Auth** below). Tier 1 `GET /health` does not.
 
@@ -78,7 +79,8 @@ Follow [Command Line Interface Guidelines](https://clig.dev/):
 | `src/apiome_cli/client/mock_settings.py` | Hosted-mock toggle/status client and output for `mock` (SIM-2.4) |
 | `src/apiome_cli/client/spec_download.py` | Browse spec and import-source HTTP download helpers |
 | `src/apiome_cli/spec_output.py` | Write document bytes; emit metadata on stdout/stderr per clig.dev |
-| `src/apiome_cli/commands/` | Typer subcommands (`auth`, `api-keys`, `integrations`, `config`, `doctor`, `health`, `projects`, `properties`, `schemas`, `types`, `tokens`, `versions`, `paths`, `operations`, `workflows`, `spec`, `import`, `export`, `convert`, `repos`, `mcp`, `mcp_governance`, `mock`) |
+| `src/apiome_cli/commands/` | Typer subcommands (`auth`, `api-keys`, `integrations`, `config`, `doctor`, `health`, `projects`, `properties`, `schemas`, `types`, `tokens`, `versions`, `paths`, `operations`, `workflows`, `spec`, `import`, `export`, `convert`, `diff`, `repos`, `mcp`, `mcp_governance`, `mock`) |
+| `src/apiome_cli/output_diff.py` | Against-ref parse, `--fail-on` threshold, text/json formatting for `diff` (CTG-2.1) |
 | `src/apiome_cli/client/conversion_output.py` | Fidelity summary + mandatory-warning formatting and low-tier detection for `convert` (MFI-22.6) |
 | `src/apiome_cli/client/export_registry.py` | Emitter-registry export client: targets discovery (`GET /export/targets`) + dry-run fidelity preview (`POST /export/preview`) + projection evidence paging (`POST /export/projection-evidence`, EFP-2.1) + target resolution for generic export (MFX-9.4 / MFX-8.1) |
 | `src/apiome_cli/client/export_jobs.py` | Async export job client: submit (`POST /export/jobs`), poll (`GET …/jobs/{id}`), download (`GET …/download`) for generic `export <format>` (MFX-8.1) |
@@ -114,6 +116,7 @@ Registered in `main.py`:
 | `paths` | `list`, `show` (`GET /versions/{version_id}/paths`, filters: `--method`, `--tag`, `--q`) |
 | `lint` | Quality score + findings for a version (`GET /versions/{tenant}/{project}/{version}/lint`); `--base-version` folds breaking-change risk; `--min-grade A..F` gates CI exit code; `--fail-on-policy` fetches `GET …/lint/policy` and exits non-zero when style-guide gates fail; when the score persisted at import time is out of date (`scoreIsStale`) it also prints the stored `capturedScore`/`capturedGrade` |
 | `compat` | Independent oasdiff compatibility evidence (`POST …/compatibility/evidence`); requires `--project`, `--version`, `--base-version`; `--format json\|sarif\|junit`; `--fail-on breaking\|dangerous\|info` (default breaking) |
+| `diff` | CI classified-diff gate (`POST /v1/diff/{tenant}/classified` inline mode): `apiome diff <file> --against <project>@<version\|latest>`; `--fail-on breaking\|warn` (default `breaking`); `--format text\|json\|md` (`md` re-fetches with `Accept: text/markdown` for the CTG-1.3 changelog). Exit codes for this command: `0` = gate passed, `1` = threshold met, `2` = auth/network/parse/oversize. API key + tenant scope (CTG-2.1 / #4471) |
 | `operations` | `show` (resolve by operation UUID or `operationId`) |
 | `workflows` | `list`, `show` (`GET /versions/{version_id}/workflows`, steps sub-resource) |
 | `spec` | `export` (browse reconstructed OpenAPI/Arazzo), `download-original` (`GET /versions/{id}/import-source`) |

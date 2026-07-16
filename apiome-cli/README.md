@@ -339,6 +339,12 @@ apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --format sarif
 apiome compat --project payments-api --version 1.1.0 --base-version 1.0.0 --fail-on dangerous
 
+# Classified diff CI gate (inline candidate vs published contract)
+# Exit 0 = pass, 1 = threshold met, 2 = auth/network/parse/oversize
+apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking
+apiome diff ./openapi.yaml --against payments-api@1.0.0 --fail-on warn --format json
+apiome diff ./openapi.yaml --against payments-api@latest --format md
+
 # Arazzo workflows (after arazzo import)
 apiome workflows list --project checkout-flow --version 1.0.0
 apiome workflows show checkout --project checkout-flow --version 1.0.0
@@ -364,7 +370,25 @@ apiome --json operations show createPayment --project payments-api --version 1.0
 apiome --json workflows list --project <uuid> --version <uuid>
 ```
 
-Post-MVP verification commands (`spec fidelity`, `spec diff`, `spec verify-attestation`) are documented when they land in the CLI.
+Post-MVP verification commands (`spec fidelity`, `spec verify-attestation`) are documented when they land in the CLI.
+
+### Classified diff CI gate
+
+Compare a local OpenAPI file to a published project version (`POST /v1/diff/{tenant}/classified` inline mode). Useful in PR pipelines:
+
+```bash
+apiome diff ./openapi.yaml --against payments-api@latest
+apiome diff ./openapi.yaml --against payments-api@1.0.0 --fail-on warn
+apiome diff ./openapi.yaml --against payments-api@latest --format json
+apiome diff ./openapi.yaml --against payments-api@latest --format md
+```
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--fail-on` | `breaking` | Exit `1` when `maxSeverity` is at least this level. `warn` also fails on `non-breaking`. `docs-only` alone never fails. |
+| `--format` | `text` | `text` human summary, `json` ClassifiedDiffResponse, `md` CTG-1.3 markdown changelog (`Accept: text/markdown`). |
+
+**Exit codes (this command only):** `0` = gate passed, `1` = threshold met (breaking/warn findings), `2` = auth/network/parse/oversize. Requires API key + tenant scope. Read-only CI tokens with `diff:read` (CTG-2.3) work once issued.
 
 ### Inspect paths and operations
 

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.13.0
+  version: 1.14.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -4944,7 +4944,14 @@ paths:
 
         **inline-vs-stored** (``head: {inline}``) for the CI PR use case. Inline
 
-        documents larger than 10MB UTF-8 are rejected with ``413``.'
+        documents larger than 10MB UTF-8 are rejected with ``413``.
+
+
+        Default response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``
+
+        includes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown
+
+        changelog for the same classification (used by ``apiome diff --format md``).'
       operationId: post_classified_diff_v1_diff__tenant_slug__classified_post
       parameters:
       - name: tenant_slug
@@ -4955,6 +4962,18 @@ paths:
           title: Tenant Slug
           description: Tenant Slug schema.
         description: URL-safe tenant slug that scopes the request.
+      - name: accept
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Post Classified Diffaccept schema.
+          - type: 'null'
+            description: Post Classified Diffaccept schema.
+          title: Accept
+          description: Accept schema.
+        description: Requested response content type (``Accept`` header).
       - name: authorization
         in: header
         required: false
@@ -4990,11 +5009,17 @@ paths:
         description: Request body for post classified diff.
       responses:
         '200':
-          description: Successful response for post classified diff.
+          description: 'Classified JSON by default, or CTG-1.3 markdown when ``Accept:
+            text/markdown`` (or ``text/md``) is sent.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClassifiedDiffResponse'
+                description: Response payload for post classified diffresponse200.
+            text/markdown:
+              schema:
+                type: string
+                contentMediaType: text/markdown
                 description: Response payload for post classified diffresponse200.
         '422':
           description: Validation Error
