@@ -59,6 +59,9 @@ interface LoginClientProps {
   /**
    * The deployment's enabled SSO providers (provider registry, OLO-2.3), resolved server-side
    * by the login page. Exactly one button renders per entry; an empty list hides the SSO block.
+   * When any provider is listed, SSO is the primary path and the credentials form starts
+   * collapsed beneath the "or" divider (OLO-3.1); with an empty list the form is the only path
+   * and renders expanded.
    */
   ssoProviders?: ProviderSummary[];
 }
@@ -72,6 +75,13 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
   const [signInEnabled, setSignInEnabled] = useState(true);
   const [signupMessage, setSignupMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [isSSOLoading, setIsSSOLoading] = useState(false);
+  // SSO is the primary path (OLO-3.1): the credentials form starts collapsed beneath the "or"
+  // divider whenever SSO buttons render. It starts expanded when credentials are the only path
+  // (no enabled providers) or when the user just failed a credentials attempt and needs the
+  // form back to retry. Expansion is one-way — the form never re-collapses.
+  const [showCredentials, setShowCredentials] = useState(
+    ssoProviders.length === 0 || error === 'CredentialsSignin'
+  );
   const isDark = useDarkMode();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -312,22 +322,41 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                 )
               )}
 
-              {/* Divider (only when SSO renders above the email form) */}
+              {/* Divider (only when SSO renders above the email form). While the credentials
+                  form is collapsed it doubles as the expand control. */}
               {ssoProviders.length > 0 && (
                 <div className="relative my-8">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-200 dark:border-white/10" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
-                      or use your email
-                    </span>
+                    {showCredentials ? (
+                      <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
+                        or use your email
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowCredentials(true)}
+                        disabled={isSSOLoading}
+                        aria-expanded={false}
+                        aria-controls="credentials-form"
+                        className="cursor-pointer px-4 font-medium text-indigo-600 bg-white/80 rounded-full
+                          transition-colors hover:text-indigo-500 hover:underline
+                          disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline
+                          dark:bg-slate-900/70 dark:text-indigo-300 dark:hover:text-indigo-200"
+                      >
+                        or use your email
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Credentials form — collapsed (hidden) until requested when SSO is available
+                  (OLO-3.1). Tailwind preflight gives [hidden] display:none, and hidden fields
+                  are neither focusable nor submittable, so the collapsed form is fully inert. */}
+              <form id="credentials-form" hidden={!showCredentials} onSubmit={handleSubmit} className="space-y-5">
                 {isSignUp && (
                   <div>
                     <label htmlFor="name" className={labelClasses}>
@@ -425,7 +454,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
 
                 <button
                   type="submit"
-                  disabled={!signInEnabled}
+                  disabled={!signInEnabled || isSSOLoading}
                   className={`${styles.shine} group w-full cursor-pointer rounded-2xl py-3.5 font-semibold text-white
                     bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-[length:150%_auto]
                     shadow-lg shadow-indigo-500/25 transition-all duration-300
@@ -445,7 +474,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                   {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button
                     type="button"
-                    disabled={!signInEnabled}
+                    disabled={!signInEnabled || isSSOLoading}
                     onClick={() => {
                       setIsSignUp(!isSignUp);
                       setSignupMessage(null);
