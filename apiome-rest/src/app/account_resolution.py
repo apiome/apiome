@@ -23,8 +23,9 @@ matrix.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from typing import FrozenSet, Optional
+from typing import Any, FrozenSet, Mapping, Optional
 
 from .database import normalize_email
 
@@ -130,6 +131,127 @@ class ResolutionDecision:
     user_id: Optional[str] = None
     email: Optional[str] = None
     code: Optional[str] = None
+
+
+def _canonical_email(email: Optional[str]) -> Optional[str]:
+    """Canonicalize an address defensively, returning None for empty/absent input."""
+    if not isinstance(email, str):
+        return None
+    canonical = normalize_email(email)
+    return canonical or None
+
+
+def _read_claim_flag(value: Any) -> Optional[bool]:
+    """Tri-state reading of a boolean-ish token claim.
+
+    Returns True / False when the token explicitly asserts the value (boolean, ``"true"`` /
+    ``"false"``, or the 0/1 forms Entra emits for optional claims), and None when the claim is
+    absent or unrecognizable. The distinction matters because an explicit False is stronger
+    evidence than a missing claim — it must veto, not merely fail to prove.
+
+    Args:
+        value: The raw claim value from the token/profile.
+
+    Returns:
+        True, False, or None (absent/unrecognized).
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+        return None
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("true", "1"):
+            return True
+        if normalized in ("false", "0"):
+            return False
+    return None
+
+
+#: Minimal email shape gate for the UPN rule: ``local@domain.tld``, no whitespace.
+_EMAIL_SHAPE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+#: Sentinel distinguishing "caller did not supply email_in_use" from an explicit None.
+_UNSET: Any = object()
+
+
+def resolve_entra_email_verified(
+    profile: Optional[Mapping[str, Any]],
+    account: Optional[Mapping[str, Any]] = None,
+    email_in_use: Optional[str] = _UNSET,
+) -> bool:
+    """Entra ID (azure) verified-email evidence — the nOAuth hardening rules (OLO-1.4, #4189).
+
+    Mirror of ``resolveEntraEmailVerified`` in ``apiome-ui/lib/auth/account-resolution.ts`` —
+    any behavioural change here MUST be made there as well.
+
+    Entra ID's ``email`` claim is attacker-controlled in multi-tenant app registrations: any
+    tenant admin can set an arbitrary address on the mutable ``mail`` attribute (the published
+    **nOAuth** account-takeover pattern), so for ``azure`` the generic ``email_verified`` handling
+    is not enough. The email is treated as verified only when the token carries acceptable
+    evidence:
+
+      - ``xms_edov`` ("email domain owner verified") — the optional claim the app registration
+        must request — is explicitly true, or
+      - ``email_verified`` is explicitly true, or
+      - the email equals the token's ``upn`` claim: member UPNs (no ``#EXT#`` guest marker) can
+        only carry domains verified in the issuing tenant, which an attacker cannot forge for a
+        domain they do not own.
+
+    Fail-closed rules: an explicitly-false ``xms_edov`` or ``email_verified`` claim vetoes
+    everything (a contradictory token is never trusted), claim-based evidence only attests the
+    token's own ``email`` claim (never a different address the caller ended up with), and anything
+    unrecognized resolves to unverified.
+
+    Args:
+        profile: The OIDC profile / id-token claims from the provider.
+        account: Optional secondary claims source (fallback for ``xms_edov`` /
+            ``email_verified``).
+        email_in_use: The canonical address the sign-in will actually use, when the caller derived
+            it from somewhere other than the profile's email claim; defaults to the profile's own
+            email claim. Pass None explicitly to signal "no usable address" (always False).
+
+    Returns:
+        True only when the token proves the address is verified; False otherwise.
+    """
+    profile = profile or {}
+    account = account or {}
+
+    claimed_email = _canonical_email(profile.get("email"))
+    email = claimed_email if email_in_use is _UNSET else _canonical_email(email_in_use)
+    if not email:
+        return False
+
+    def claim(name: str) -> Optional[bool]:
+        value = profile.get(name)
+        if value is None:
+            value = account.get(name)
+        return _read_claim_flag(value)
+
+    domain_owner_verified = claim("xms_edov")
+    email_verified_claim = claim("email_verified")
+
+    # An explicit negative claim is the strongest signal in the token — it vetoes every other rule.
+    if domain_owner_verified is False or email_verified_claim is False:
+        return False
+
+    # Positive claims attest the token's own email claim, never a different address.
+    if (domain_owner_verified is True or email_verified_claim is True) and claimed_email == email:
+        return True
+
+    # UPN rule: a member UPN's domain is enforced-verified in the issuing tenant. Guest UPNs
+    # (marked ``#EXT#``) are rewritten onto the host tenant's domain and prove nothing.
+    upn = profile.get("upn")
+    if isinstance(upn, str) and "#ext#" not in upn.lower():
+        canonical_upn = _canonical_email(upn)
+        if canonical_upn and _EMAIL_SHAPE.match(canonical_upn) and canonical_upn == email:
+            return True
+
+    return False
 
 
 def _rejection_for_user(user: Optional[ResolutionUser]) -> Optional[str]:
