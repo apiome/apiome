@@ -9,6 +9,7 @@ import {
 import {
   resolveOAuthSignIn,
   resolveOAuthEmailVerified,
+  resolveEntraEmailVerified,
   type OAuthSignInResult,
   type ResolutionStore,
   type ResolutionUser,
@@ -17,7 +18,7 @@ import {
 const bcrypt = require('bcrypt');
 
 // Re-exported for existing consumers/tests; the implementation lives with the resolution engine.
-export { resolveOAuthEmailVerified };
+export { resolveOAuthEmailVerified, resolveEntraEmailVerified };
 
 export interface ICredentials {
   email?: string;

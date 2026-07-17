@@ -76,16 +76,97 @@ export function canonicalizeEmail(email: unknown): string | null {
 /**
  * Whether the provider proved the sign-in email is verified.
  *
- * OIDC providers (GitLab `openid`, Azure/Entra ID) expose a boolean/string `email_verified` claim
- * on the profile; we honour that. The default GitHub/GitLab OAuth scopes do not carry a verified
- * signal, so those resolve to unverified (false) until the verified-email parity pass (OLO-2.5)
- * wires in the providers' verified-email endpoints. Never assume verified — that is the
- * account-takeover default the epic forbids.
+ * OIDC providers (GitLab `openid`) expose a boolean/string `email_verified` claim on the profile;
+ * we honour that. The default GitHub/GitLab OAuth scopes do not carry a verified signal, so those
+ * resolve to unverified (false) until the verified-email parity pass (OLO-2.5) wires in the
+ * providers' verified-email endpoints. Never assume verified — that is the account-takeover
+ * default the epic forbids.
+ *
+ * The `azure` provider never goes through this resolver: Entra ID's email claim is subject to the
+ * nOAuth hardening rules instead (see `resolveEntraEmailVerified`, OLO-1.4).
  */
 export function resolveOAuthEmailVerified(profile: any, account: any): boolean {
   const raw = profile?.email_verified ?? account?.email_verified;
   if (raw === true) return true;
   if (typeof raw === 'string') return raw.trim().toLowerCase() === 'true';
+  return false;
+}
+
+/**
+ * Tri-state reading of a boolean-ish token claim: `true` / `false` when the token explicitly
+ * asserts the value (boolean, `"true"`/`"false"`, or the 0/1 forms Entra emits for optional
+ * claims), `null` when the claim is absent or unrecognizable. The distinction matters because an
+ * explicit `false` is stronger evidence than a missing claim — it must veto, not merely fail to
+ * prove.
+ */
+function readClaimFlag(value: unknown): boolean | null {
+  if (value === true || value === 1) return true;
+  if (value === false || value === 0) return false;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return null;
+}
+
+/** Minimal email shape gate for the UPN rule: `local@domain.tld`, no whitespace. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Entra ID (azure) verified-email evidence — the nOAuth hardening rules (OLO-1.4, #4189).
+ *
+ * Entra ID's `email` claim is attacker-controlled in multi-tenant app registrations: any tenant
+ * admin can set an arbitrary address on the mutable `mail` attribute (the published **nOAuth**
+ * account-takeover pattern), so for `azure` the generic `email_verified` handling is not enough.
+ * The email is treated as verified only when the token carries acceptable evidence:
+ *
+ *   - `xms_edov` ("email domain owner verified") — the optional claim the app registration must
+ *     request (see `apiome-ui/docs/ENTRA_ID_APP_REGISTRATION.md`) — is explicitly true, or
+ *   - `email_verified` is explicitly true, or
+ *   - the email equals the token's `upn` claim: member UPNs (no `#EXT#` guest marker) can only
+ *     carry domains verified in the issuing tenant, which an attacker cannot forge for a domain
+ *     they do not own.
+ *
+ * Fail-closed rules: an explicitly-false `xms_edov` or `email_verified` claim vetoes everything
+ * (a contradictory token is never trusted), claim-based evidence only attests the token's own
+ * `email` claim (never a different address the caller ended up with), and anything unrecognized
+ * resolves to unverified.
+ *
+ * @param profile The OIDC profile / id-token claims from the provider.
+ * @param account The NextAuth account object (fallback source for the claims).
+ * @param emailInUse The canonical address the sign-in will actually use, when the caller derived
+ *   it from somewhere other than `profile.email`; defaults to the profile's own email claim.
+ * @returns True only when the token proves the address is verified; false otherwise.
+ */
+export function resolveEntraEmailVerified(
+  profile: any,
+  account: any,
+  emailInUse?: string | null
+): boolean {
+  const claimedEmail = canonicalizeEmail(profile?.email);
+  const email = emailInUse === undefined ? claimedEmail : canonicalizeEmail(emailInUse);
+  if (!email) return false;
+
+  const domainOwnerVerified = readClaimFlag(profile?.xms_edov ?? account?.xms_edov);
+  const emailVerifiedClaim = readClaimFlag(profile?.email_verified ?? account?.email_verified);
+
+  // An explicit negative claim is the strongest signal in the token — it vetoes every other rule.
+  if (domainOwnerVerified === false || emailVerifiedClaim === false) return false;
+
+  // Positive claims attest the token's own email claim, never a different address.
+  if ((domainOwnerVerified === true || emailVerifiedClaim === true) && claimedEmail === email) {
+    return true;
+  }
+
+  // UPN rule: a member UPN's domain is enforced-verified in the issuing tenant. Guest UPNs
+  // (marked `#EXT#`) are rewritten onto the host tenant's domain and prove nothing.
+  const upn = typeof profile?.upn === 'string' ? profile.upn : null;
+  if (upn && !upn.toLowerCase().includes('#ext#')) {
+    const canonicalUpn = canonicalizeEmail(upn);
+    if (canonicalUpn && EMAIL_SHAPE.test(canonicalUpn) && canonicalUpn === email) return true;
+  }
+
   return false;
 }
 
@@ -334,7 +415,12 @@ export async function resolveOAuthSignIn(
   const providerUserId: string | null = account?.providerAccountId ?? null;
   const email =
     canonicalizeEmail(payload?.user?.email) ?? canonicalizeEmail(profile?.email);
-  const emailVerified = resolveOAuthEmailVerified(profile, account);
+  // Azure/Entra email claims are subject to the nOAuth hardening evidence rules (OLO-1.4);
+  // every other provider uses the generic email_verified resolution.
+  const emailVerified =
+    provider === 'azure'
+      ? resolveEntraEmailVerified(profile, account, email)
+      : resolveOAuthEmailVerified(profile, account);
   const details = extractIdentityDetails(provider, payload, email, emailVerified);
 
   // Gather the facts the pure policy decides over.
