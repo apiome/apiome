@@ -274,11 +274,16 @@ export const credentialsSignIn = async (payload: any) => {
   return true;
 };
 
-/** Providers the NextAuth signIn callback knows how to dispatch. */
+/**
+ * Providers the NextAuth signIn callback knows how to dispatch. `azure` is Microsoft Entra ID
+ * (OLO-2.1); its NextAuth provider is only registered when the deployment configures it
+ * (`entra-provider.ts`), so an azure callback can only ever arrive on a configured deployment.
+ */
 export const SUPPORTED_LOGIN_PROVIDERS: ReadonlySet<string> = new Set([
   'credentials',
   'github',
   'gitlab',
+  'azure',
 ]);
 
 /**
