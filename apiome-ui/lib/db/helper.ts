@@ -16,6 +16,7 @@ import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
+import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
@@ -2786,10 +2787,10 @@ export async function getLinkedAccountsForUser(userId: string) {
 /**
  * Links an external OAuth identity to a user, enforcing the OLO-1.2 identity invariants.
  *
- * Rejections carry a stable machine-readable `code` (consumed by the structured auth error
- * contract, OLO-1.5) alongside the human-readable `error`:
+ * Rejections carry a stable machine-readable `code` (the structured auth error contract,
+ * OLO-1.5 — see `apiome-ui/docs/AUTH_ERROR_CODES.md`) alongside the human-readable `error`:
  *   - `provider-already-linked`: this user already has an identity for this provider.
- *   - `provider-identity-claimed`: this provider identity is already bound to a *different* user.
+ *   - `identity-linked-elsewhere`: this provider identity is already bound to a *different* user.
  *
  * @param emailVerified Whether the provider proved the address is verified. Stored on the identity
  *   so the account-resolution engine (1.3) can refuse to auto-link on an unverified email.
@@ -2816,7 +2817,7 @@ export async function linkExternalAccount(
     if (existingLink.rowCount > 0) {
       return JSON.stringify({
         success: false,
-        code: 'provider-already-linked',
+        code: AUTH_ERROR_CODES.PROVIDER_ALREADY_LINKED,
         error: `You have already linked a ${provider} account`
       });
     }
@@ -2831,7 +2832,7 @@ export async function linkExternalAccount(
     if (existingProviderAccount.rowCount > 0) {
       return JSON.stringify({
         success: false,
-        code: 'provider-identity-claimed',
+        code: AUTH_ERROR_CODES.IDENTITY_LINKED_ELSEWHERE,
         error: 'This provider account is already linked to another user'
       });
     }
@@ -2866,7 +2867,7 @@ export async function linkExternalAccount(
     if (error.code === '23505') { // Unique constraint violation
       return JSON.stringify({
         success: false,
-        code: 'provider-identity-claimed',
+        code: AUTH_ERROR_CODES.IDENTITY_LINKED_ELSEWHERE,
         error: 'This account is already linked'
       });
     }

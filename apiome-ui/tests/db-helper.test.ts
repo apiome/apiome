@@ -1587,7 +1587,7 @@ describe('Database Helper - Linked Account Functions', () => {
     const parsed = JSON.parse(result);
 
     expect(parsed.success).toBe(false);
-    expect(parsed.code).toBe('provider-identity-claimed');
+    expect(parsed.code).toBe('identity-linked-elsewhere');
   });
 
   test('linkExternalAccount rejects a duplicate provider for the same user with a stable code', async () => {

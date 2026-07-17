@@ -7,6 +7,8 @@ import {
   credentialsRateLimitKey,
 } from './login-rate-limit';
 import {
+  AUTH_ERROR_CODES,
+  loginErrorRedirect,
   resolveOAuthSignIn,
   resolveOAuthEmailVerified,
   resolveEntraEmailVerified,
@@ -242,12 +244,13 @@ export const credentialsAuthorize = async (credentials: ICredentials) => {
 
 /*
  * Sign-in Steps:
- * 1. User must exist.
- *    If user is null, return 'User account not found'
- * 2. Enabled must be true.
- *    If not enabled, return 'Your account is currently disabled'
- * 3. Verified must be true.
- *    If not verified, return 'You have not yet verified your account e-mail address'
+ * 1. Enabled must be true.
+ *    If not enabled, redirect with the stable `account-disabled` code.
+ * 2. Verified must be true.
+ *    If not verified, redirect with the stable `account-not-verified` code.
+ *
+ * Rejections carry the structured auth error contract codes (OLO-1.5) so the login page renders
+ * the same guidance whether the failure came from credentials or an OAuth provider.
  *
  * If all passes, true is returned.
  */
@@ -255,11 +258,11 @@ export const credentialsSignIn = async (payload: any) => {
   const user = payload.user;
 
   if (!user.enabled) {
-    return '/login?error=Your account is currently disabled';
+    return loginErrorRedirect(AUTH_ERROR_CODES.ACCOUNT_DISABLED);
   }
 
   if (!user.verified) {
-    return '/login?error=You have not yet verified your account e-mail address';
+    return loginErrorRedirect(AUTH_ERROR_CODES.ACCOUNT_NOT_VERIFIED);
   }
 
   if (user.id) {
@@ -269,5 +272,38 @@ export const credentialsSignIn = async (payload: any) => {
   }
 
   return true;
+};
+
+/** Providers the NextAuth signIn callback knows how to dispatch. */
+export const SUPPORTED_LOGIN_PROVIDERS: ReadonlySet<string> = new Set([
+  'credentials',
+  'github',
+  'gitlab',
+]);
+
+/**
+ * Dispatch a NextAuth signIn callback to the matching provider flow (OLO-1.5).
+ *
+ * Credentials sign-ins run the account gates; every supported OAuth provider flows through the
+ * account-resolution engine; anything else — a provider this deployment has not configured — is
+ * refused with the stable `provider-not-configured` code.
+ *
+ * @param provider Provider slug as reported by NextAuth (`payload.account.provider`).
+ * @param payload The NextAuth signIn callback payload.
+ * @returns `true` to admit the sign-in or a redirect path carrying the outcome.
+ */
+export const signInForProvider = async (
+  provider: string,
+  payload: any
+): Promise<OAuthSignInResult> => {
+  if (provider === 'credentials') {
+    return credentialsSignIn(payload);
+  }
+
+  if (SUPPORTED_LOGIN_PROVIDERS.has(provider)) {
+    return oauthProviderSignIn(provider, payload);
+  }
+
+  return loginErrorRedirect(AUTH_ERROR_CODES.PROVIDER_NOT_CONFIGURED);
 };
 

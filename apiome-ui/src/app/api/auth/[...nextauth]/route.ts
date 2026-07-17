@@ -5,8 +5,7 @@ import GitlabProvider from 'next-auth/providers/gitlab';
 import { NextAuthOptions } from 'next-auth';
 import {
   credentialsAuthorize,
-  credentialsSignIn,
-  oauthProviderSignIn,
+  signInForProvider,
   ICredentials,
 } from '../../../../../lib/auth/credentials';
 import {
@@ -54,19 +53,10 @@ export const authOptions: NextAuthOptions = {
         return '/login?error=User account not found';
       }
 
-      // Handle different types of login providers here.
-      if (loginProvider === 'credentials') {
-        return credentialsSignIn(payload);
-      }
-
-      // Every OAuth provider flows through the shared account-resolution engine (OLO-1.3):
-      // explicit link intent → known identity → verified-email auto-link → onboarding signup →
-      // structured rejection for unverified emails.
-      if (loginProvider === 'github' || loginProvider === 'gitlab') {
-        return oauthProviderSignIn(loginProvider, payload);
-      }
-
-      return `/login?error=Your login attempt failed, provider "${loginProvider}" is not yet supported`;
+      // Credentials sign-ins run the account gates; every OAuth provider flows through the shared
+      // account-resolution engine (OLO-1.3); an unconfigured provider is refused with the stable
+      // `provider-not-configured` code (OLO-1.5).
+      return signInForProvider(loginProvider, payload);
     },
     async redirect({ url, baseUrl }) {
       // Default NextAuth behaviour only allows same-origin callback URLs.

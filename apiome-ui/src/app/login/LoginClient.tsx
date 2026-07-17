@@ -7,6 +7,7 @@ import { createSignupRequest } from '../../../lib/db/helper';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { SiGithub, SiGitlab } from "react-icons/si";
 import BetaBackground from './BetaBackground';
+import { getAuthErrorCopy } from './auth-error-copy';
 import styles from './login.module.css';
 
 const FORMAT_CHIPS = ['OpenAPI', 'AsyncAPI', 'GraphQL', 'gRPC', 'Avro', 'WSDL', 'TypeSpec', 'OData'];
@@ -66,95 +67,6 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }
   const [signupMessage, setSignupMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [isSSOLoading, setIsSSOLoading] = useState(false);
   const isDark = useDarkMode();
-
-  // Handle OAuth error from URL
-  const getErrorMessage = (errorCode?: string): { type: 'error' | 'info'; text: string } | null => {
-    if (!errorCode) return null;
-
-    if (errorCode === 'AccessDenied') {
-      return {
-        type: 'error',
-        text: 'An issue occurred with the OAuth provider. Your account may not have been set up properly. Please contact support or try a different sign-in method.'
-      };
-    }
-
-    if (errorCode === 'OAuthAccountExists') {
-      return {
-        type: 'info',
-        text: 'An account with this email already exists. Sign in with your password or use "Continue with GitHub/GitLab" without create-account mode.',
-      };
-    }
-
-    if (errorCode === 'OAuthEmailRequired') {
-      return {
-        type: 'error',
-        text: 'Your Git provider did not share an email address. Set your email to public or add a verified email on GitHub/GitLab, then try again.',
-      };
-    }
-
-    if (errorCode === 'OAuthProfileIncomplete') {
-      return {
-        type: 'error',
-        text: 'We could not read your OAuth profile. Please try again or contact support.',
-      };
-    }
-
-    // Stable codes emitted by the account-resolution engine (OLO-1.3, pre-seeding OLO-1.5).
-    if (errorCode === 'unverified-email') {
-      return {
-        type: 'error',
-        text: 'Your sign-in provider could not confirm that your email address is verified. Verify your email with the provider (e.g. GitHub or GitLab), then try again.',
-      };
-    }
-
-    if (errorCode === 'account-disabled') {
-      return {
-        type: 'error',
-        text: 'Your account is currently disabled. Please contact support if you believe this is a mistake.',
-      };
-    }
-
-    if (errorCode === 'account-not-verified') {
-      return {
-        type: 'error',
-        text: 'You have not yet verified your account e-mail address. Check your inbox for the verification email, then sign in again.',
-      };
-    }
-
-    if (errorCode === 'provider-already-linked') {
-      return {
-        type: 'error',
-        text: 'Your account already has a different identity linked for this provider. Sign in with the originally linked provider account, or manage linked accounts from your dashboard.',
-      };
-    }
-
-    if (errorCode === 'provider-identity-claimed') {
-      return {
-        type: 'error',
-        text: 'This provider account is already linked to another user. Sign in with that account, or use a different provider account.',
-      };
-    }
-
-    if (errorCode === 'SignupSessionExpired') {
-      return {
-        type: 'error',
-        text: 'Your signup session expired. Please start again from Create account.',
-      };
-    }
-
-    if (errorCode === 'CredentialsSignin') {
-      return {
-        type: 'error',
-        text: 'Your account could not be found or the credentials provided were incorrect. Please check your email and password, or sign up for a new account.'
-      };
-    }
-
-    // Generic error message for other error codes
-    return {
-      type: 'error',
-      text: `Authentication error: ${errorCode}. Please try again or contact support if the issue persists.`
-    };
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +143,8 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }
   }
 
   const isBetaMode = process.env.NEXT_PUBLIC_BETA_MODE;
-  const message = signupMessage || getErrorMessage(error);
+  // Distinct guidance per structured auth error code (OLO-1.5) from the NextAuth error redirect.
+  const message = signupMessage || getAuthErrorCopy(error);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
