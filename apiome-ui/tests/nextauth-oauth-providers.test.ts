@@ -8,6 +8,12 @@
  */
 import { configuredOAuthProviders } from '../lib/auth/nextauth-oauth-providers';
 import { enabledProviderIds } from '../lib/auth/provider-registry';
+import {
+  GITHUB_OAUTH_SCOPE,
+  GITLAB_OAUTH_SCOPE,
+  githubUserinfoRequest,
+  gitlabUserinfoRequest,
+} from '../lib/auth/verified-email';
 
 /** The provider-config fields these tests inspect (next-auth's Provider type hides them). */
 interface InspectableProvider {
@@ -16,7 +22,12 @@ interface InspectableProvider {
   checks?: string[];
   clientId?: string;
   clientSecret?: string;
-  options?: { clientId?: string; clientSecret?: string };
+  options?: {
+    clientId?: string;
+    clientSecret?: string;
+    authorization?: { params?: { scope?: string } };
+    userinfo?: { url?: string; request?: unknown };
+  };
 }
 
 const ALL_ENABLED_ENV = {
@@ -62,6 +73,21 @@ describe('configuredOAuthProviders', () => {
     expect(byId.get('gitlab').options).toMatchObject({ clientId: 'gl-id', clientSecret: 'gl-secret' });
     expect(byId.get('azure').clientId).toBe('az-id');
     expect(byId.get('azure').clientSecret).toBe('az-secret');
+  });
+
+  it('pins the verified-email parity scopes and userinfo hooks (OLO-2.5, #4197)', () => {
+    const providers = configuredOAuthProviders(ALL_ENABLED_ENV) as unknown as InspectableProvider[];
+    const byId = new Map(providers.map((p) => [p.id, p]));
+
+    const github = byId.get('github')!.options!;
+    expect(github.authorization?.params?.scope).toBe(GITHUB_OAUTH_SCOPE);
+    expect(github.userinfo?.url).toBe('https://api.github.com/user');
+    expect(github.userinfo?.request).toBe(githubUserinfoRequest);
+
+    const gitlab = byId.get('gitlab')!.options!;
+    expect(gitlab.authorization?.params?.scope).toBe(GITLAB_OAUTH_SCOPE);
+    expect(gitlab.userinfo?.url).toBe('https://gitlab.com/api/v4/user');
+    expect(gitlab.userinfo?.request).toBe(gitlabUserinfoRequest);
   });
 
   it('builds azure via the OLO-2.1 Entra provider (id azure, OIDC checks intact)', () => {
