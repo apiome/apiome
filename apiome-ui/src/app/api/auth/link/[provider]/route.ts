@@ -5,24 +5,21 @@ import {
   AUTH_ERROR_CODES,
   LINKABLE_PROVIDERS,
 } from '../../../../../../lib/auth/account-resolution';
-import { isEntraIdConfigured } from '../../../../../../lib/auth/entra-provider';
+import { isProviderEnabled } from '../../../../../../lib/auth/provider-registry';
 
 /**
  * Whether this deployment can start a link flow for `provider` (OLO-2.2, #4194).
  *
  * The slug must belong to the linkable-provider vocabulary (`github` | `gitlab` | `azure` —
- * the same set V181 pins at the DB level), and `azure` additionally requires the Entra ID
- * env config: an unconfigured deployment registers no `azure` NextAuth provider at all
- * (OLO-2.1), so setting a linking-intent cookie for it would only dead-end at Microsoft.
- * GitHub/GitLab are always registered, so no config gate applies to them.
+ * the same set V181 pins at the DB level) AND be enabled in the provider registry
+ * (OLO-2.3): the NextAuth route only registers env-configured providers, so setting a
+ * linking-intent cookie for a disabled one would only dead-end at the identity provider.
  *
  * @param provider The provider slug from the route path.
  * @returns True when a linking-intent cookie for this provider can lead to a working OAuth flow.
  */
 function isProviderLinkable(provider: string): boolean {
-  if (!LINKABLE_PROVIDERS.has(provider)) return false;
-  if (provider === 'azure' && !isEntraIdConfigured()) return false;
-  return true;
+  return LINKABLE_PROVIDERS.has(provider) && isProviderEnabled(provider);
 }
 
 /**

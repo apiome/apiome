@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isProviderEnabled } from '../../../../../lib/auth/provider-registry';
 
 /**
- * Sets a short-lived cookie so the next GitHub/GitLab OAuth callback is treated as self-signup (new account).
+ * Sets a short-lived cookie so the next OAuth callback is treated as self-signup (new account).
+ * The provider must be enabled in this deployment's provider registry (OLO-2.3) — the same
+ * gate that decides which sign-up buttons the login page renders.
  * Uses POST to prevent CSRF-style flow manipulation via cross-site GET requests.
  */
 export async function POST(request: NextRequest) {
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
   }
   const provider = body?.provider;
-  if (provider !== 'github' && provider !== 'gitlab') {
+  if (typeof provider !== 'string' || !isProviderEnabled(provider)) {
     return NextResponse.json({ error: 'Invalid provider' }, { status: 400 });
   }
 

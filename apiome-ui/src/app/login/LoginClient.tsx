@@ -5,7 +5,8 @@ import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight } from
 import { signIn } from "next-auth/react";
 import { createSignupRequest } from '../../../lib/db/helper';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { SiGithub, SiGitlab } from "react-icons/si";
+import type { ProviderSummary } from '../../../lib/auth/provider-registry';
+import { getProviderBrand } from '../components/auth/provider-brand';
 import BetaBackground from './BetaBackground';
 import { getAuthErrorCopy } from './auth-error-copy';
 import styles from './login.module.css';
@@ -55,9 +56,14 @@ interface LoginClientProps {
   error?: string;
   /** Validated by the login page (resolveCallbackUrl) before being passed in. */
   callbackUrl?: string;
+  /**
+   * The deployment's enabled SSO providers (provider registry, OLO-2.3), resolved server-side
+   * by the login page. Exactly one button renders per entry; an empty list hides the SSO block.
+   */
+  ssoProviders?: ProviderSummary[];
 }
 
-const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }) => {
+const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', ssoProviders = [] }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [payload, setPayload] = useState<Record<string, string>>({
     email: '',
@@ -278,43 +284,47 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }
                 </div>
               )}
 
-              {/* SSO first — the primary path */}
-              {isSSOLoading ? (
-                <div className="py-8 text-center">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              {/* SSO first — the primary path. One button per enabled provider (registry, OLO-2.3). */}
+              {ssoProviders.length > 0 && (
+                isSSOLoading ? (
+                  <div className="py-8 text-center">
+                    <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    </div>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Connecting…</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Redirecting to authentication provider</p>
                   </div>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">Connecting…</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Redirecting to authentication provider</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <SSOButton
-                    provider="GitHub"
-                    icon={<SiGithub size={20} className="text-slate-800 dark:text-slate-100" />}
-                    onClick={() => handleSSOLogin('github')}
-                    isSignUp={isSignUp}
-                  />
-                  <SSOButton
-                    provider="GitLab"
-                    icon={<SiGitlab size={20} className="text-orange-600" />}
-                    onClick={() => handleSSOLogin('gitlab')}
-                    isSignUp={isSignUp}
-                  />
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    {ssoProviders.map((provider) => {
+                      const { Icon, iconClassName } = getProviderBrand(provider.id);
+                      return (
+                        <SSOButton
+                          key={provider.id}
+                          provider={provider.label}
+                          icon={<Icon size={20} className={iconClassName} />}
+                          onClick={() => handleSSOLogin(provider.id)}
+                          isSignUp={isSignUp}
+                        />
+                      );
+                    })}
+                  </div>
+                )
               )}
 
-              {/* Divider */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-white/10" />
+              {/* Divider (only when SSO renders above the email form) */}
+              {ssoProviders.length > 0 && (
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200 dark:border-white/10" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
+                      or use your email
+                    </span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 font-medium text-slate-400 bg-white/80 dark:bg-slate-900/70 dark:text-slate-500 rounded-full">
-                    or use your email
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-5">

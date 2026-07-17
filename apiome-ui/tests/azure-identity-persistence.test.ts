@@ -287,9 +287,11 @@ describe('link route (api/auth/link/[provider]) — source-level contract', () =
     expect(src).toMatch(/LINKABLE_PROVIDERS\.has\(provider\)/);
   });
 
-  test('gates azure on the deployment actually configuring Entra ID', () => {
-    expect(src).toContain('isEntraIdConfigured');
-    expect(src).toMatch(/provider === 'azure' && !isEntraIdConfigured\(\)/);
+  test('gates every provider on the deployment enabling it (provider registry, OLO-2.3)', () => {
+    // Since OLO-2.3 the azure-specific isEntraIdConfigured gate generalized to the registry:
+    // github/gitlab/azure all require their env config before a link flow can start.
+    expect(src).toContain('isProviderEnabled');
+    expect(src).toMatch(/LINKABLE_PROVIDERS\.has\(provider\) && isProviderEnabled\(provider\)/);
   });
 
   test('refuses unknown/unconfigured providers with 400 and the stable contract code', () => {

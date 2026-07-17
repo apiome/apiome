@@ -1,0 +1,99 @@
+/**
+ * Linked-accounts panel provider rendering tests (OLO-2.3, #4195).
+ *
+ * The panel receives provider-registry summaries from its server page and must offer exactly
+ * the enabled providers: enabled ones get a working Link card, `coming-soon` entries render
+ * as disabled teasers, and an available-but-env-disabled provider is hidden entirely. Rows
+ * for accounts linked under a since-disabled provider still render with their label.
+ */
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+
+const mockUseSession = jest.fn();
+const mockGetLinkedAccounts = jest.fn();
+
+jest.mock('next-auth/react', () => ({
+  useSession: () => mockUseSession(),
+  signIn: jest.fn(),
+}));
+
+jest.mock('@/app/components/providers/DialogProvider', () => ({
+  useDialog: () => ({ confirm: jest.fn() }),
+}));
+
+jest.mock('../lib/db/helper', () => ({
+  getLinkedAccountsForUser: (...args: unknown[]) => mockGetLinkedAccounts(...args),
+  unlinkExternalAccount: jest.fn(),
+  updatePersonalAccessToken: jest.fn(),
+  removePersonalAccessToken: jest.fn(),
+}));
+
+import LinkedAccountsClient from '../src/app/ade/dashboard/linked-accounts/LinkedAccountsClient';
+import type { ProviderSummary } from '../lib/auth/provider-registry';
+
+/** Summaries mirroring a deployment with GitHub + GitLab enabled and azure env-disabled. */
+const GITHUB_GITLAB_ENABLED: ProviderSummary[] = [
+  { id: 'github', label: 'GitHub', status: 'available', enabled: true },
+  { id: 'gitlab', label: 'GitLab', status: 'available', enabled: true },
+  { id: 'azure', label: 'Microsoft', status: 'available', enabled: false },
+  { id: 'google', label: 'Google / GCP', status: 'coming-soon', enabled: false },
+  { id: 'aws', label: 'AWS', status: 'coming-soon', enabled: false },
+];
+
+beforeEach(() => {
+  mockUseSession.mockReset();
+  mockGetLinkedAccounts.mockReset();
+  mockUseSession.mockReturnValue({ data: { user: { user_id: 'user-1' } } });
+  mockGetLinkedAccounts.mockResolvedValue('[]');
+});
+
+describe('LinkedAccountsClient — provider cards from the registry (OLO-2.3)', () => {
+  it('offers enabled providers and coming-soon teasers, and hides env-disabled ones', async () => {
+    render(<LinkedAccountsClient providers={GITHUB_GITLAB_ENABLED} />);
+    await waitFor(() => expect(mockGetLinkedAccounts).toHaveBeenCalled());
+
+    expect(screen.getByText('GitHub')).toBeInTheDocument();
+    expect(screen.getByText('GitLab')).toBeInTheDocument();
+    expect(screen.getByText('Google / GCP')).toBeInTheDocument();
+    expect(screen.getByText('AWS')).toBeInTheDocument();
+    // azure is available-but-disabled in this deployment: no card at all.
+    expect(screen.queryByText('Microsoft')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Coming soon')).toHaveLength(2);
+  });
+
+  it('renders the Microsoft card once azure is env-enabled', async () => {
+    const withAzure = GITHUB_GITLAB_ENABLED.map((provider) =>
+      provider.id === 'azure' ? { ...provider, enabled: true } : provider
+    );
+    render(<LinkedAccountsClient providers={withAzure} />);
+    await waitFor(() => expect(mockGetLinkedAccounts).toHaveBeenCalled());
+
+    expect(screen.getByText('Microsoft')).toBeInTheDocument();
+    // Three linkable providers → three enabled Link buttons; teasers stay disabled.
+    const linkButtons = screen.getAllByRole('button', { name: /Link$/ });
+    expect(linkButtons.filter((button) => !button.hasAttribute('disabled'))).toHaveLength(3);
+    expect(linkButtons.filter((button) => button.hasAttribute('disabled'))).toHaveLength(2);
+  });
+
+  it('still labels linked-account rows whose provider was since disabled', async () => {
+    mockGetLinkedAccounts.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'acct-1',
+          provider: 'azure',
+          provider_user_id: 'oid-1',
+          provider_email: 'user@example.com',
+          provider_username: null,
+          created_at: '2026-07-01T00:00:00Z',
+          last_login_at: null,
+        },
+      ])
+    );
+    render(<LinkedAccountsClient providers={GITHUB_GITLAB_ENABLED} />);
+
+    // The row uses the registry label even though azure gets no "Add a provider" card.
+    expect(await screen.findByText('user@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Microsoft')).toBeInTheDocument();
+  });
+});

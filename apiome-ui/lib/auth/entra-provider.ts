@@ -26,6 +26,7 @@
  * (OLO-1.4, `account-resolution.ts`) inside the shared signIn callback — never here.
  */
 import type { OAuthConfig } from 'next-auth/providers/oauth';
+import { isProviderEnabled, readEnvString } from './provider-registry';
 
 /**
  * The provider slug — the value stored in `external_auth_providers.provider` and matched by the
@@ -48,16 +49,11 @@ export interface EntraIdProfile extends Record<string, unknown> {
   preferred_username?: string;
 }
 
-/** Read a trimmed env string, or null when unset/blank. */
-function readEnv(env: Record<string, string | undefined>, key: string): string | null {
-  const raw = env[key];
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
 /**
  * Whether this deployment configured Entra ID sign-in.
+ *
+ * Delegates to the provider registry (OLO-2.3) — the single source of the `azure` env
+ * contract (`AZURE_AD_CLIENT_ID` + `AZURE_AD_CLIENT_SECRET`, both set and non-blank).
  *
  * @param env Environment to read (injectable for tests; defaults to `process.env`).
  * @returns True when both `AZURE_AD_CLIENT_ID` and `AZURE_AD_CLIENT_SECRET` are set and non-blank.
@@ -65,7 +61,7 @@ function readEnv(env: Record<string, string | undefined>, key: string): string |
 export function isEntraIdConfigured(
   env: Record<string, string | undefined> = process.env
 ): boolean {
-  return readEnv(env, 'AZURE_AD_CLIENT_ID') !== null && readEnv(env, 'AZURE_AD_CLIENT_SECRET') !== null;
+  return isProviderEnabled(ENTRA_ID_PROVIDER_ID, env);
 }
 
 /**
@@ -102,8 +98,8 @@ export function entraIdProfile(profile: EntraIdProfile) {
 export function entraIdProvider(
   env: Record<string, string | undefined> = process.env
 ): OAuthConfig<EntraIdProfile> {
-  const clientId = readEnv(env, 'AZURE_AD_CLIENT_ID') ?? '';
-  const tenant = readEnv(env, 'AZURE_AD_TENANT') ?? DEFAULT_TENANT;
+  const clientId = readEnvString(env, 'AZURE_AD_CLIENT_ID') ?? '';
+  const tenant = readEnvString(env, 'AZURE_AD_TENANT') ?? DEFAULT_TENANT;
 
   return {
     id: ENTRA_ID_PROVIDER_ID,
@@ -116,7 +112,7 @@ export function entraIdProvider(
     idToken: true,
     checks: ['pkce', 'state', 'nonce'],
     clientId,
-    clientSecret: readEnv(env, 'AZURE_AD_CLIENT_SECRET') ?? '',
+    clientSecret: readEnvString(env, 'AZURE_AD_CLIENT_SECRET') ?? '',
     profile: entraIdProfile,
   };
 }
