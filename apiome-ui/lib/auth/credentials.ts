@@ -8,6 +8,7 @@ import {
 } from './login-rate-limit';
 import {
   AUTH_ERROR_CODES,
+  LINKABLE_PROVIDERS,
   loginErrorRedirect,
   resolveOAuthSignIn,
   resolveOAuthEmailVerified,
@@ -275,15 +276,15 @@ export const credentialsSignIn = async (payload: any) => {
 };
 
 /**
- * Providers the NextAuth signIn callback knows how to dispatch. `azure` is Microsoft Entra ID
- * (OLO-2.1); its NextAuth provider is only registered when the deployment configures it
- * (`entra-provider.ts`), so an azure callback can only ever arrive on a configured deployment.
+ * Providers the NextAuth signIn callback knows how to dispatch: `credentials` plus every linkable
+ * OAuth provider (`LINKABLE_PROVIDERS` — the single provider vocabulary, OLO-2.2). `azure` is
+ * Microsoft Entra ID (OLO-2.1); its NextAuth provider is only registered when the deployment
+ * configures it (`entra-provider.ts`), so an azure callback can only ever arrive on a configured
+ * deployment.
  */
 export const SUPPORTED_LOGIN_PROVIDERS: ReadonlySet<string> = new Set([
   'credentials',
-  'github',
-  'gitlab',
-  'azure',
+  ...LINKABLE_PROVIDERS,
 ]);
 
 /**

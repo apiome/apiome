@@ -93,6 +93,16 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Providers an already-signed-in user may explicitly link via `api/auth/link/[provider]`
+ * (OLO-2.2, #4194). This is the OAuth-provider vocabulary — `credentials` is a sign-in method,
+ * not a linkable identity, and V181 pins the same slugs at the DB level. The link route refuses
+ * any slug outside this set so a typo'd or unsupported provider never reaches the OAuth flow
+ * with a linking-intent cookie already set. (OLO-2.3 will replace this with the provider
+ * registry; keep the two sets aligned until then.)
+ */
+export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set(['github', 'gitlab', 'azure']);
+
+/**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.
  * Mirror of `normalize_email` in apiome-rest (OLO-1.1): case and surrounding whitespace never
  * distinguish two accounts.
@@ -390,9 +400,37 @@ export interface OAuthIdentityDetails {
 }
 
 /**
+ * The Entra ID token claims persisted into `profile_data` for later re-validation (OLO-2.2,
+ * #4194): the immutable directory identity (`oid`, `tid`), the address claims (`upn`,
+ * `preferred_username`, `email`), and the raw verified-email evidence (`email_verified`,
+ * `xms_edov`) exactly as the token asserted them. Storing the *raw* evidence — not just the
+ * computed boolean — lets a later pass re-run the nOAuth rules (OLO-1.4) against what was
+ * actually presented, and keeps `profile_data->>'email_verified'` readable by the V181 backfill.
+ *
+ * @param profile The raw id-token claims from the Entra ID sign-in.
+ * @returns The claim subset, with `null` for anything the token did not carry (an explicit shape
+ *   so re-validation reads never have to guess which keys exist).
+ */
+function azureRevalidationClaims(
+  profile: Record<string, unknown> | null | undefined
+): Record<string, unknown> {
+  return {
+    oid: typeof profile?.oid === 'string' ? profile.oid : null,
+    tid: typeof profile?.tid === 'string' ? profile.tid : null,
+    upn: typeof profile?.upn === 'string' ? profile.upn : null,
+    preferred_username:
+      typeof profile?.preferred_username === 'string' ? profile.preferred_username : null,
+    email: typeof profile?.email === 'string' ? profile.email : null,
+    email_verified: profile?.email_verified ?? null,
+    xms_edov: profile?.xms_edov ?? null,
+  };
+}
+
+/**
  * Extract the identity details from a NextAuth signIn payload (account + profile). The profile
- * key fallbacks cover both GitHub (`avatar_url`/`html_url`) and GitLab (`image_url`/`web_url`)
- * response shapes.
+ * key fallbacks cover the GitHub (`avatar_url`/`html_url`), GitLab (`image_url`/`web_url`), and
+ * Entra ID (`preferred_username`) response shapes. For `azure`, the stored `profile_data`
+ * additionally carries the re-validation claims (see `azureRevalidationClaims`).
  */
 export function extractIdentityDetails(
   provider: string,
@@ -411,6 +449,7 @@ export function extractIdentityDetails(
     username:
       (typeof profile.login === 'string' && profile.login) ||
       (typeof profile.username === 'string' && profile.username) ||
+      (typeof profile.preferred_username === 'string' && profile.preferred_username) ||
       null,
     accessToken: typeof account.access_token === 'string' ? account.access_token : null,
     refreshToken: typeof account.refresh_token === 'string' ? account.refresh_token : null,
@@ -420,6 +459,7 @@ export function extractIdentityDetails(
       name: profile.name,
       avatar_url: profile.avatar_url || profile.image_url || profile.image || profile.picture || null,
       profile_url: profile.html_url || profile.web_url || profile.url || null,
+      ...(provider === 'azure' ? azureRevalidationClaims(profile) : {}),
     },
   };
 }

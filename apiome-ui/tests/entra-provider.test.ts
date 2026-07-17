@@ -150,7 +150,7 @@ describe('protocol configuration', () => {
     expect(provider.idToken).toBe(true);
     expect(provider.checks).toEqual(expect.arrayContaining(['pkce', 'state', 'nonce']));
     expect((provider.authorization as { params: { scope: string } }).params.scope).toBe(
-      'openid profile email'
+      'openid profile email offline_access'
     );
   });
 });
