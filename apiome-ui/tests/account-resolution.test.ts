@@ -390,7 +390,7 @@ describe('resolveOAuthSignIn — orchestration', () => {
   });
 
   test('a failed explicit link reports back on the linked-accounts page', async () => {
-    const { store } = makeStore({ linkResult: { success: false, code: 'provider-identity-claimed' } });
+    const { store } = makeStore({ linkResult: { success: false, code: 'identity-linked-elsewhere' } });
 
     const result = await resolveOAuthSignIn('gitlab', makePayload(), 'session-user', store);
 

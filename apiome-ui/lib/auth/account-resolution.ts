@@ -25,13 +25,25 @@
  * `credentials.ts` for the production wiring).
  */
 
-/** Stable machine-readable rejection codes (pre-seeds the OLO-1.5 structured error contract). */
+/**
+ * Stable machine-readable auth error codes — the structured auth error contract (OLO-1.5, #4190).
+ *
+ * These strings are a public contract: every login failure rides the NextAuth error redirect as
+ * `/login?error=<code>`, the login page maps each code to distinct guidance
+ * (`src/app/login/auth-error-copy.ts`), and the REST side mirrors the same values in
+ * `apiome-rest/src/app/account_resolution.py`. The full contract — meaning, emitter, and user
+ * copy per code — is documented in `apiome-ui/docs/AUTH_ERROR_CODES.md`.
+ *
+ * Stability rule: never change or reuse an existing value; add a new code instead, and document
+ * it. (`EMAIL_REQUIRED` / `PROFILE_INCOMPLETE` keep their pre-contract PascalCase values for
+ * exactly this reason.)
+ */
 export const AUTH_ERROR_CODES = {
   /** The provider could not prove the email address is verified — never auto-link or sign up. */
   UNVERIFIED_EMAIL: 'unverified-email',
-  /** The provider shared no email address at all (existing login-page copy key). */
+  /** The provider shared no email address at all (pre-contract login-page copy key). */
   EMAIL_REQUIRED: 'OAuthEmailRequired',
-  /** The OAuth response carried no stable provider user id (existing login-page copy key). */
+  /** The OAuth response carried no stable provider user id (pre-contract login-page copy key). */
   PROFILE_INCOMPLETE: 'OAuthProfileIncomplete',
   /** The resolved user account is disabled (or its identity points at a deleted user). */
   ACCOUNT_DISABLED: 'account-disabled',
@@ -40,10 +52,31 @@ export const AUTH_ERROR_CODES = {
   /** The user already has a different identity linked for this provider. */
   PROVIDER_ALREADY_LINKED: 'provider-already-linked',
   /** This provider identity is already bound to a different user. */
-  PROVIDER_IDENTITY_CLAIMED: 'provider-identity-claimed',
+  IDENTITY_LINKED_ELSEWHERE: 'identity-linked-elsewhere',
+  /** The user's tenant membership is suspended (tenant_users.status = 'suspended'). */
+  MEMBERSHIP_SUSPENDED: 'membership-suspended',
+  /** The requested sign-in provider is not configured/supported on this deployment. */
+  PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
+  /** Self-signup is disabled on this deployment (AUTH_SIGNUP_DISABLED). */
+  SIGNUP_DISABLED: 'signup-disabled',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
+
+/**
+ * Whether self-signup is disabled for this deployment (`AUTH_SIGNUP_DISABLED=true|1`).
+ * When disabled, a verified email with no existing account is rejected with the stable
+ * `signup-disabled` code instead of being routed to onboarding.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns True when the flag is explicitly set to `true` or `1`.
+ */
+export function isSignupDisabled(env: Record<string, string | undefined> = process.env): boolean {
+  const raw = env.AUTH_SIGNUP_DISABLED;
+  if (typeof raw !== 'string') return false;
+  const normalized = raw.trim().toLowerCase();
+  return normalized === 'true' || normalized === '1';
+}
 
 /**
  * Providers whose `email_verified` evidence we accept for auto-link / account creation.
@@ -177,6 +210,13 @@ export interface ResolutionUser {
   enabled: boolean;
   /** The account's own email-verification flag (apiome.users.verified). */
   verified: boolean;
+  /**
+   * True when the sign-in surface resolved a tenant context and found the user's membership
+   * suspended (tenant_users.status = 'suspended'). Optional: the plain login flow has no tenant
+   * context and leaves it unset; tenant-scoped surfaces (invitation acceptance, tenant selection —
+   * OLO-3.x/5.x) populate it so the rejection carries the stable `membership-suspended` code.
+   */
+  membershipSuspended?: boolean;
   email?: string | null;
   name?: string | null;
 }
@@ -206,6 +246,11 @@ export interface ResolutionInput {
   identity: { found: boolean; user: ResolutionUser | null };
   /** Existing user whose canonical email equals `email`, if any. */
   emailUser: ResolutionUser | null;
+  /**
+   * True when this deployment refuses self-signup (see `isSignupDisabled`). A verified email with
+   * no existing account is then rejected with `signup-disabled` instead of routed to onboarding.
+   */
+  signupDisabled?: boolean;
 }
 
 /** What the engine decided; `executeResolutionDecision` turns this into effects. */
@@ -224,6 +269,7 @@ function rejectionForUser(user: ResolutionUser | null): AuthErrorCode | null {
   if (!user) return AUTH_ERROR_CODES.ACCOUNT_DISABLED;
   if (!user.enabled) return AUTH_ERROR_CODES.ACCOUNT_DISABLED;
   if (!user.verified) return AUTH_ERROR_CODES.ACCOUNT_NOT_VERIFIED;
+  if (user.membershipSuspended) return AUTH_ERROR_CODES.MEMBERSHIP_SUSPENDED;
   return null;
 }
 
@@ -281,7 +327,11 @@ export function resolveAccountDecision(input: ResolutionInput): ResolutionDecisi
     return { action: 'auto-link', user: input.emailUser };
   }
 
-  // (c) Verified email, no account → create user + identity (routed via onboarding/signup).
+  // (c) Verified email, no account → create user + identity (routed via onboarding/signup),
+  //     unless this deployment refuses self-signup.
+  if (input.signupDisabled) {
+    return { action: 'reject', code: AUTH_ERROR_CODES.SIGNUP_DISABLED };
+  }
   return { action: 'signup', email };
 }
 
@@ -378,7 +428,14 @@ export function extractIdentityDetails(
 const LINKED_ACCOUNTS_PAGE = '/ade/dashboard/linked-accounts';
 const LOGIN_PAGE = '/login';
 
-const loginError = (code: AuthErrorCode) => `${LOGIN_PAGE}?error=${encodeURIComponent(code)}`;
+/**
+ * The transport of the error contract: a login-page redirect carrying the stable code as the
+ * NextAuth `error` query param (`/login?error=<code>`). Every emitter of a contract code —
+ * this engine, the credentials sign-in path, and the provider dispatch — must build its redirect
+ * through this helper so the shape can never drift.
+ */
+export const loginErrorRedirect = (code: AuthErrorCode) =>
+  `${LOGIN_PAGE}?error=${encodeURIComponent(code)}`;
 
 /** Copy the resolved user onto the NextAuth payload so the jwt/session callbacks see it. */
 function adoptUserIntoPayload(payload: any, user: ResolutionUser) {
@@ -444,6 +501,7 @@ export async function resolveOAuthSignIn(
     linkToUserId: linkIntentUserId,
     identity,
     emailUser,
+    signupDisabled: isSignupDisabled(),
   });
 
   switch (decision.action) {
@@ -467,7 +525,7 @@ export async function resolveOAuthSignIn(
       // unrecorded email-match sign-in would bypass the audited invariant.
       const linked = await store.linkIdentity(decision.user.id, details);
       if (!linked.success) {
-        return loginError(linked.code ?? AUTH_ERROR_CODES.PROVIDER_IDENTITY_CLAIMED);
+        return loginErrorRedirect(linked.code ?? AUTH_ERROR_CODES.IDENTITY_LINKED_ELSEWHERE);
       }
       adoptUserIntoPayload(payload, decision.user);
       void store.recordUserLogin(decision.user.id).catch(() => undefined);
@@ -491,6 +549,6 @@ export async function resolveOAuthSignIn(
     }
 
     case 'reject':
-      return loginError(decision.code);
+      return loginErrorRedirect(decision.code);
   }
 }

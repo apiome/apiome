@@ -29,7 +29,13 @@ from typing import Any, FrozenSet, Mapping, Optional
 
 from .database import normalize_email
 
-# --- Stable machine-readable rejection codes (pre-seeds the OLO-1.5 error contract). ---
+# --- Stable machine-readable auth error codes — the structured auth error contract ---
+# (OLO-1.5, #4190). These strings are a public contract shared with the TypeScript engine
+# (``AUTH_ERROR_CODES`` in ``apiome-ui/lib/auth/account-resolution.ts``) and documented — meaning,
+# emitter, and user copy per code — in ``apiome-ui/docs/AUTH_ERROR_CODES.md``. Stability rule:
+# never change or reuse an existing value; add a new code instead, and document it.
+# (``EMAIL_REQUIRED`` / ``PROFILE_INCOMPLETE`` keep their pre-contract PascalCase values for
+# exactly this reason.)
 
 #: The provider could not prove the email address is verified — never auto-link or sign up.
 UNVERIFIED_EMAIL = "unverified-email"
@@ -41,6 +47,32 @@ PROFILE_INCOMPLETE = "OAuthProfileIncomplete"
 ACCOUNT_DISABLED = "account-disabled"
 #: The resolved user account has not completed its own email verification.
 ACCOUNT_NOT_VERIFIED = "account-not-verified"
+#: The user already has a different identity linked for this provider.
+PROVIDER_ALREADY_LINKED = "provider-already-linked"
+#: This provider identity is already bound to a different user.
+IDENTITY_LINKED_ELSEWHERE = "identity-linked-elsewhere"
+#: The user's tenant membership is suspended (``tenant_users.status = 'suspended'``).
+MEMBERSHIP_SUSPENDED = "membership-suspended"
+#: The requested sign-in provider is not configured/supported on this deployment.
+PROVIDER_NOT_CONFIGURED = "provider-not-configured"
+#: Self-signup is disabled on this deployment.
+SIGNUP_DISABLED = "signup-disabled"
+
+#: Every stable code of the contract, for consumers that validate or enumerate codes.
+AUTH_ERROR_CODES: FrozenSet[str] = frozenset(
+    {
+        UNVERIFIED_EMAIL,
+        EMAIL_REQUIRED,
+        PROFILE_INCOMPLETE,
+        ACCOUNT_DISABLED,
+        ACCOUNT_NOT_VERIFIED,
+        PROVIDER_ALREADY_LINKED,
+        IDENTITY_LINKED_ELSEWHERE,
+        MEMBERSHIP_SUSPENDED,
+        PROVIDER_NOT_CONFIGURED,
+        SIGNUP_DISABLED,
+    }
+)
 
 #: Providers whose ``email_verified`` evidence is accepted for auto-link / account creation.
 #: The policy is deliberately provider-gated: any provider outside this set is treated as
@@ -71,11 +103,17 @@ class ResolutionUser:
         id: The user's primary key.
         enabled: Account switch — disabled accounts never authenticate.
         verified: The account's own email-verification flag (``apiome.users.verified``).
+        membership_suspended: True when the sign-in surface resolved a tenant context and found
+            the user's membership suspended (``tenant_users.status = 'suspended'``). The plain
+            login flow has no tenant context and leaves it False; tenant-scoped surfaces
+            (invitation acceptance, tenant selection — OLO-3.x/5.x) populate it so the rejection
+            carries the stable ``membership-suspended`` code.
     """
 
     id: str
     enabled: bool = True
     verified: bool = True
+    membership_suspended: bool = False
 
 
 @dataclass(frozen=True)
@@ -105,6 +143,9 @@ class ResolutionInput:
             provider" action; None for a normal sign-in.
         identity: The existing identity binding, if any.
         email_user: Existing user whose canonical email equals ``email``, if any.
+        signup_disabled: True when this deployment refuses self-signup. A verified email with no
+            existing account is then rejected with the stable ``signup-disabled`` code instead of
+            routed to onboarding.
     """
 
     provider: str
@@ -114,6 +155,7 @@ class ResolutionInput:
     link_to_user_id: Optional[str] = None
     identity: ResolutionIdentity = field(default_factory=ResolutionIdentity)
     email_user: Optional[ResolutionUser] = None
+    signup_disabled: bool = False
 
 
 @dataclass(frozen=True)
@@ -255,11 +297,14 @@ def resolve_entra_email_verified(
 
 
 def _rejection_for_user(user: Optional[ResolutionUser]) -> Optional[str]:
-    """Shared gate refusing disabled / not-yet-verified accounts (or a dangling identity)."""
+    """Shared gate refusing disabled / not-yet-verified / suspended-membership accounts
+    (or a dangling identity)."""
     if user is None or not user.enabled:
         return ACCOUNT_DISABLED
     if not user.verified:
         return ACCOUNT_NOT_VERIFIED
+    if user.membership_suspended:
+        return MEMBERSHIP_SUSPENDED
     return None
 
 
@@ -315,5 +360,8 @@ def resolve_account_decision(facts: ResolutionInput) -> ResolutionDecision:
             return ResolutionDecision(action=ACTION_REJECT, code=rejection)
         return ResolutionDecision(action=ACTION_AUTO_LINK, user_id=facts.email_user.id)
 
-    # (c) Verified email, no account → create user + identity (routed via onboarding/signup).
+    # (c) Verified email, no account → create user + identity (routed via onboarding/signup),
+    #     unless this deployment refuses self-signup.
+    if facts.signup_disabled:
+        return ResolutionDecision(action=ACTION_REJECT, code=SIGNUP_DISABLED)
     return ResolutionDecision(action=ACTION_SIGNUP, email=email)
