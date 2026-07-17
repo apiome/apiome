@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { resolveCallbackUrl } from '@lib/auth/cookie-options';
+import { resolvePostLoginRouteForUser } from '@lib/auth/post-login-routing';
 import { providerSummaries } from '@lib/auth/provider-registry';
 import LoginClient from '@/app/login/LoginClient';
 
@@ -15,6 +16,18 @@ export default async function LoginPage({
 
   const session = await getServerSession(authOptions);
   if (session) {
+    // Post-login routing rules (OLO-3.3): members land on the allowlisted
+    // callbackUrl (or the default tenant dashboard); zero-tenant users land on
+    // the default landing where the first-tenant onboarding guard prompts the
+    // wizard, regardless of the requested callbackUrl.
+    const sessionUser = session.user as { user_id?: string; current_tenant_id?: string };
+    if (sessionUser?.user_id) {
+      const route = await resolvePostLoginRouteForUser(sessionUser.user_id, {
+        lastActiveTenantId: sessionUser.current_tenant_id,
+        callbackUrl: params.callbackUrl,
+      });
+      redirect(route.destination);
+    }
     redirect(callbackUrl);
   }
 

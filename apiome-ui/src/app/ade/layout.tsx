@@ -3,6 +3,7 @@ import "../globals.css";
 import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
 import AuthenticatedLayout from "@/app/components/auth/AuthenticatedLayout";
+import FirstTenantOnboardingGuard from "@/app/components/auth/FirstTenantOnboardingGuard";
 import ConditionalHeader from '@/app/components/ade/ConditionalHeader';
 import { PushConflictBannerProvider } from '@/app/providers/PushConflictBannerProvider';
 import { ThemeProvider } from '@/app/providers/ThemeProvider';
@@ -42,7 +43,11 @@ export default function RootLayout({
                   {/* Viewport shell: header + route content scroll independently of the document. */}
                   <div className="flex h-screen flex-col overflow-hidden">
                     <ConditionalHeader />
-                    <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                      {/* Post-login routing rules (OLO-3.3): tenant-less users get the
+                          first-tenant onboarding prompt in place of any /ade route. */}
+                      <FirstTenantOnboardingGuard>{children}</FirstTenantOnboardingGuard>
+                    </div>
                   </div>
                 </AuthenticatedLayout>
               </PushConflictBannerProvider>
