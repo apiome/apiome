@@ -279,8 +279,10 @@ describe('login-page copy', () => {
     expect(new Set(texts).size).toBe(texts.length);
   });
 
-  test('unknown codes fall back to a generic message embedding the code', () => {
-    expect(getAuthErrorCopy('something-new')?.text).toContain('something-new');
+  test('unknown codes fall back to a safe generic message that never echoes the code (OLO-3.2)', () => {
+    const fallback = getAuthErrorCopy('something-new');
+    expect(fallback?.text).toBeTruthy();
+    expect(fallback?.text).not.toContain('something-new');
     expect(getAuthErrorCopy(undefined)).toBeNull();
   });
 });

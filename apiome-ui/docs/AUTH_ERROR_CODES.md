@@ -55,8 +55,20 @@ Not part of the resolution contract, but they arrive on the same query param:
 | `OAuthAccountExists` | Signup flow (`lib/auth/oauth-signup-actions.ts`) |
 | `SignupSessionExpired` | OAuth signup completion page (`src/app/signup/oauth/page.tsx`) |
 
-Unknown codes fall back to a generic "Authentication error: `<code>`" message — the page never
-breaks on a new code, but every intentional emission should be mapped and documented.
+Unknown codes fall back to a **safe generic banner** (`GENERIC_AUTH_ERROR` in
+`auth-error-copy.ts`) — the page never breaks on a new code, and because the `?error=` value is
+attacker-influenced it is **never echoed back into the page**. Every intentional emission should
+still be mapped and documented.
+
+## Rendering affordances (OLO-3.2, #4200)
+
+Each copy entry may set `retry: true`, which renders a **"Try again"** link in the login banner
+pointing back to a clean `/login` (error cleared, validated `callbackUrl` preserved). It is set
+on codes the user can resolve outside Apiome and then retry (`unverified-email`,
+`account-not-verified`, `OAuthEmailRequired`, `OAuthProfileIncomplete`, `SignupSessionExpired`,
+and the generic fallback). Terminal states — `account-disabled`, `membership-suspended`,
+`signup-disabled`, `provider-not-configured`, link conflicts — deliberately offer none;
+`CredentialsSignin` instead re-expands the credentials form (OLO-3.1).
 
 ## Configuration
 
@@ -68,6 +80,8 @@ breaks on a new code, but every intentional emission should be mapped and docume
 
 - `apiome-ui/tests/auth-error-contract.test.ts` — value stability, an emission test per code, and
   copy coverage/distinctness.
+- `apiome-ui/tests/login-error-rendering.test.tsx` — OLO-3.2 rendering: a banner snapshot per
+  code, safe-generic fallback for unknown codes, and retry-affordance coverage.
 - `apiome-ui/tests/account-resolution.test.ts`, `apiome-rest/tests/test_account_resolution.py` —
   the OLO-1.3 policy matrix.
 - `apiome-rest/tests/test_auth_error_contract.py` — Python parity: values, set membership, and an

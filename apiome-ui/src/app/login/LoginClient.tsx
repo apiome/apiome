@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight, RotateCcw } from 'lucide-react';
 import { signIn } from "next-auth/react";
 import { createSignupRequest } from '../../../lib/db/helper';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -159,8 +159,15 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
   }
 
   const isBetaMode = process.env.NEXT_PUBLIC_BETA_MODE;
-  // Distinct guidance per structured auth error code (OLO-1.5) from the NextAuth error redirect.
-  const message = signupMessage || getAuthErrorCopy(error);
+  // Distinct guidance per structured auth error code (OLO-1.5) from the NextAuth error redirect,
+  // rendered with per-code affordances (OLO-3.2). Unknown codes resolve to the safe generic
+  // banner inside getAuthErrorCopy; in-page signup feedback always outranks the redirect error.
+  const authErrorCopy = getAuthErrorCopy(error);
+  const message = signupMessage || authErrorCopy;
+  // "Try again" returns to a clean login page: the error param is dropped so the banner clears,
+  // while the (already-validated) callbackUrl survives the round trip.
+  const showRetry = !signupMessage && Boolean(authErrorCopy?.retry);
+  const retryHref = `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -278,10 +285,11 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                 )}
               </div>
 
-              {/* Message Display */}
+              {/* Message Display — per-code copy and affordances (OLO-3.2) */}
               {message && (
                 <div
                   aria-live="polite"
+                  data-testid="login-banner"
                   className={`mb-6 rounded-2xl border p-4 backdrop-blur-sm ${
                     message.type === 'success'
                       ? 'border-emerald-200 bg-emerald-50/80 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-900/30 dark:text-emerald-200'
@@ -291,6 +299,19 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                   }`}
                 >
                   <p className="text-sm font-medium">{message.text}</p>
+                  {showRetry && (
+                    <a
+                      href={retryHref}
+                      className={`mt-3 inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                        message.type === 'info'
+                          ? 'border-blue-300 hover:bg-blue-100/80 dark:border-blue-600/60 dark:hover:bg-blue-900/50'
+                          : 'border-red-300 hover:bg-red-100/80 dark:border-red-600/60 dark:hover:bg-red-900/50'
+                      }`}
+                    >
+                      <RotateCcw size={14} aria-hidden="true" />
+                      Try again
+                    </a>
+                  )}
                 </div>
               )}
 
