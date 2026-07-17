@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isUuid, isValidEmail, isValidSlug, slugify } from "../src/util.js";
+import { isUuid, isValidEmail, isValidSlug, normalizeEmail, slugify } from "../src/util.js";
 
 describe("isUuid", () => {
   it("accepts a v4 uuid and rejects non-uuids", () => {
@@ -38,5 +38,17 @@ describe("isValidEmail", () => {
     expect(isValidEmail("a@b.com")).toBe(true);
     expect(isValidEmail("nope")).toBe(false);
     expect(isValidEmail("a@b")).toBe(false);
+  });
+});
+
+describe("normalizeEmail", () => {
+  it("lowercases and trims so casing/whitespace never split an account", () => {
+    expect(normalizeEmail("Ada@Example.com")).toBe("ada@example.com");
+    expect(normalizeEmail("  ADA@EXAMPLE.COM  ")).toBe("ada@example.com");
+    expect(normalizeEmail("ada@example.com")).toBe("ada@example.com");
+  });
+  it("is idempotent", () => {
+    const once = normalizeEmail("Ada@Example.com");
+    expect(normalizeEmail(once)).toBe(once);
   });
 });

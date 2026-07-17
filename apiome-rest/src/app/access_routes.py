@@ -370,7 +370,8 @@ async def invite_member(
     """
     actor_id = enforce_permission(db, auth_data, Resource.MEMBERS, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
-    user = db.get_user_by_email(request.email.strip())
+    # `get_user_by_email` canonicalizes (trim + lowercase), so any casing resolves to one account.
+    user = db.get_user_by_email(request.email)
     if not user:
         raise HTTPException(
             status_code=404,

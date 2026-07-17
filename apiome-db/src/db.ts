@@ -7,7 +7,7 @@
 import pg from "pg";
 
 import { CliError } from "./errors.js";
-import { isUuid } from "./util.js";
+import { isUuid, normalizeEmail } from "./util.js";
 
 export type ConnectionOptions = {
   databaseUrl?: string;
@@ -85,13 +85,14 @@ export async function resolveTenant(client: pg.Client, ref: string): Promise<Ten
   return row;
 }
 
-/** Resolve a user by UUID or email (active rows only). */
+/** Resolve a user by UUID or email (active rows only). Email lookups are case-insensitive. */
 export async function resolveUser(client: pg.Client, ref: string): Promise<UserRow> {
   const value = ref.trim();
   const query = isUuid(value)
     ? "SELECT id, email, name FROM apiome.users WHERE id = $1 AND deleted_at IS NULL"
-    : "SELECT id, email, name FROM apiome.users WHERE email = $1 AND deleted_at IS NULL";
-  const res = await client.query<UserRow>(query, [value]);
+    : "SELECT id, email, name FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL";
+  const param = isUuid(value) ? value : normalizeEmail(value);
+  const res = await client.query<UserRow>(query, [param]);
   const row = res.rows[0];
   if (!row) throw new CliError(`User not found: ${ref}`);
   return row;
