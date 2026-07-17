@@ -11,6 +11,7 @@ import {
   provisionSampleProject,
 } from '../db/admin-helper';
 import { linkExternalAccount } from '../db/helper';
+import { resolveOAuthEmailVerified } from './account-resolution';
 import {
   getOauthSignupPendingById,
   deleteOauthSignupPendingById,
@@ -110,12 +111,7 @@ export async function completeOAuthSignup(
 
   // Honour the provider's verified-email claim from the stored profile/account JSON (OIDC providers
   // set `email_verified`); default to unverified when no signal is present. See OLO-1.2 / 2.5.
-  const verifiedRaw =
-    (profile as { email_verified?: unknown }).email_verified ??
-    (account as { email_verified?: unknown }).email_verified;
-  const emailVerified =
-    verifiedRaw === true ||
-    (typeof verifiedRaw === 'string' && verifiedRaw.trim().toLowerCase() === 'true');
+  const emailVerified = resolveOAuthEmailVerified(profile, account);
 
   const linkRes = await linkExternalAccount(
     userId,

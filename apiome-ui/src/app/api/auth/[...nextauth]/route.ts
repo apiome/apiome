@@ -6,11 +6,7 @@ import { NextAuthOptions } from 'next-auth';
 import {
   credentialsAuthorize,
   credentialsSignIn,
-  credentialsGithub,
-  credentialsGitlab,
-  linkGithubAccount,
-  linkGitlabAccount,
-  checkLinkingIntent,
+  oauthProviderSignIn,
   ICredentials,
 } from '../../../../../lib/auth/credentials';
 import {
@@ -63,48 +59,11 @@ export const authOptions: NextAuthOptions = {
         return credentialsSignIn(payload);
       }
 
-      if (loginProvider === 'github') {
-        // Check if this is an account linking flow
-        const linkIntent = await checkLinkingIntent();
-
-        if (linkIntent && linkIntent.provider === 'github') {
-          // Link the GitHub account to the current user
-          const account = payload.account;
-          const profile = payload.profile || user;
-
-          const linked = await linkGithubAccount(linkIntent.userId, account, profile);
-
-          if (linked) {
-            return '/ade/dashboard/linked-accounts?linked=true';
-          } else {
-            return '/ade/dashboard/linked-accounts?error=Failed to link account. It may already be linked to another user.';
-          }
-        }
-
-        const gh = await credentialsGithub(payload);
-        return gh;
-      }
-
-      if (loginProvider === 'gitlab') {
-        // Check if this is an account linking flow
-        const linkIntent = await checkLinkingIntent();
-
-        if (linkIntent && linkIntent.provider === 'gitlab') {
-          // Link the GitLab account to the current user
-          const account = payload.account;
-          const profile = payload.profile || user;
-
-          const linked = await linkGitlabAccount(linkIntent.userId, account, profile);
-
-          if (linked) {
-            return '/ade/dashboard/linked-accounts?linked=true';
-          } else {
-            return '/ade/dashboard/linked-accounts?error=Failed to link account. It may already be linked to another user.';
-          }
-        }
-
-        const gl = await credentialsGitlab(payload);
-        return gl;
+      // Every OAuth provider flows through the shared account-resolution engine (OLO-1.3):
+      // explicit link intent → known identity → verified-email auto-link → onboarding signup →
+      // structured rejection for unverified emails.
+      if (loginProvider === 'github' || loginProvider === 'gitlab') {
+        return oauthProviderSignIn(loginProvider, payload);
       }
 
       return `/login?error=Your login attempt failed, provider "${loginProvider}" is not yet supported`;
