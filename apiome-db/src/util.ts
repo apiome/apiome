@@ -18,6 +18,15 @@ export function isValidEmail(value: string): boolean {
   return EMAIL_RE.test(value.trim());
 }
 
+/**
+ * Canonicalize an email address to the single form the database stores and indexes: trimmed and
+ * lower-cased. Every read and write path must funnel through this so `Ada@Example.com` and
+ * `ada@example.com` resolve to one account (OLO-1.1, #4186).
+ */
+export function normalizeEmail(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 /** Lowercase, hyphenate, trim — the same shape tenant slugs take elsewhere. */
 export function slugify(value: string): string {
   return value

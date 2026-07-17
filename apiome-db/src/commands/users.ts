@@ -4,7 +4,7 @@ import { CliError } from "../errors.js";
 import { isUniqueViolation, resolveUser } from "../db.js";
 import { note, printRecord, printRows, type OutputMode } from "../output.js";
 import { hashPassword } from "../secrets.js";
-import { confirmDestructive, isValidEmail } from "../util.js";
+import { confirmDestructive, isValidEmail, normalizeEmail } from "../util.js";
 
 export type PasswordInput = { plaintext: string; generated: boolean };
 
@@ -24,13 +24,14 @@ export async function createUser(
   if (!isValidEmail(input.email)) {
     throw new CliError(`Invalid email: ${input.email}`);
   }
+  const email = normalizeEmail(input.email);
   const passwordHash = await hashPassword(input.password.plaintext);
   try {
     const res = await client.query(
       `INSERT INTO apiome.users (name, email, password, verified, enabled)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, name, email, verified, enabled, created_at`,
-      [input.name, input.email.trim(), passwordHash, input.verified, input.enabled],
+      [input.name, email, passwordHash, input.verified, input.enabled],
     );
     const row = res.rows[0] as Record<string, unknown>;
     if (input.password.generated) {

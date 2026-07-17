@@ -45,6 +45,23 @@ from .revision_lifecycle import prepare_version_metadata_update, sql_effective_l
 _logger = logging.getLogger(__name__)
 
 
+def normalize_email(email: str) -> str:
+    """Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.
+
+    Case and surrounding whitespace never distinguish two accounts — ``Ada@Example.com`` and
+    ``ada@example.com`` are one identity (OLO-1.1, #4186). Every read and write path that keys on
+    email must pass user input through here so lookups stay case-insensitive and no duplicate-cased
+    account can be created.
+
+    Args:
+        email: The raw email address as supplied by the caller.
+
+    Returns:
+        The normalized address (``email.strip().lower()``).
+    """
+    return email.strip().lower()
+
+
 def _deep_equal(a: Any, b: Any) -> bool:
     """Recursive equality for JSON-like values."""
     if type(a) != type(b):
@@ -6197,14 +6214,18 @@ class Database:
     # ---- Members -----------------------------------------------------
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Resolve an active user by email (for member invites)."""
+        """Resolve an active user by email (for member invites).
+
+        The lookup is case-insensitive: the input is canonicalized and compared against the
+        normalized stored address so any casing of a known address resolves to its one account.
+        """
         rows = self.execute_query(
             """
             SELECT id::text, name, email FROM apiome.users
-            WHERE lower(email) = lower(%s) AND deleted_at IS NULL
+            WHERE lower(email) = %s AND deleted_at IS NULL
             LIMIT 1
             """,
-            (email,),
+            (normalize_email(email),),
         )
         return rows[0] if rows else None
 
