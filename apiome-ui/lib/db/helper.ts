@@ -2758,7 +2758,7 @@ export async function createSignupRequest(name: string, email: string, password:
 export async function getLinkedAccountsForUser(userId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, provider, provider_user_id, provider_email, provider_username,
+      `SELECT id, provider, provider_user_id, provider_email, email_verified, provider_username,
               (CASE WHEN access_token IS NOT NULL THEN RIGHT(access_token, 6) ELSE NULL END) AS access_token_suffix,
               created_at, last_login_at
        FROM apiome.external_auth_providers
@@ -2774,6 +2774,17 @@ export async function getLinkedAccountsForUser(userId: string) {
   }
 }
 
+/**
+ * Links an external OAuth identity to a user, enforcing the OLO-1.2 identity invariants.
+ *
+ * Rejections carry a stable machine-readable `code` (consumed by the structured auth error
+ * contract, OLO-1.5) alongside the human-readable `error`:
+ *   - `provider-already-linked`: this user already has an identity for this provider.
+ *   - `provider-identity-claimed`: this provider identity is already bound to a *different* user.
+ *
+ * @param emailVerified Whether the provider proved the address is verified. Stored on the identity
+ *   so the account-resolution engine (1.3) can refuse to auto-link on an unverified email.
+ */
 export async function linkExternalAccount(
   userId: string,
   provider: string,
@@ -2783,7 +2794,8 @@ export async function linkExternalAccount(
   accessToken: string | null,
   refreshToken: string | null,
   tokenExpiresAt: Date | null,
-  profileData: any
+  profileData: any,
+  emailVerified: boolean = false
 ) {
   try {
     // Check if this provider is already linked to this user
@@ -2795,11 +2807,13 @@ export async function linkExternalAccount(
     if (existingLink.rowCount > 0) {
       return JSON.stringify({
         success: false,
+        code: 'provider-already-linked',
         error: `You have already linked a ${provider} account`
       });
     }
 
-    // Check if this provider account is already linked to another user
+    // Check if this provider account is already linked to another user. This is the identity-uniqueness
+    // rejection required by OLO-1.2: an identity bound to a different user is never re-bound here.
     const existingProviderAccount = await connectionPool.query(
       'SELECT user_id FROM apiome.external_auth_providers WHERE provider = $1 AND provider_user_id = $2',
       [provider, providerUserId]
@@ -2808,6 +2822,7 @@ export async function linkExternalAccount(
     if (existingProviderAccount.rowCount > 0) {
       return JSON.stringify({
         success: false,
+        code: 'provider-identity-claimed',
         error: 'This provider account is already linked to another user'
       });
     }
@@ -2815,15 +2830,16 @@ export async function linkExternalAccount(
     // Insert the linked account
     const result = await connectionPool.query(
       `INSERT INTO apiome.external_auth_providers (
-        user_id, provider, provider_user_id, provider_email, provider_username,
+        user_id, provider, provider_user_id, provider_email, email_verified, provider_username,
         access_token, refresh_token, token_expires_at, profile_data, last_login_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
-      RETURNING id, provider, provider_username, provider_email`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+      RETURNING id, provider, provider_username, provider_email, email_verified`,
       [
         userId,
         provider,
         providerUserId,
         providerEmail,
+        emailVerified,
         providerUsername,
         accessToken,
         refreshToken,
@@ -2841,6 +2857,7 @@ export async function linkExternalAccount(
     if (error.code === '23505') { // Unique constraint violation
       return JSON.stringify({
         success: false,
+        code: 'provider-identity-claimed',
         error: 'This account is already linked'
       });
     }
@@ -2876,7 +2893,7 @@ export async function unlinkExternalAccount(userId: string, linkedAccountId: str
 export async function getLinkedAccountByProvider(provider: string, providerUserId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, user_id, provider, provider_user_id, provider_email, provider_username,
+      `SELECT id, user_id, provider, provider_user_id, provider_email, email_verified, provider_username,
               access_token, refresh_token, token_expires_at, profile_data,
               created_at, last_login_at
        FROM apiome.external_auth_providers
@@ -2898,7 +2915,7 @@ export async function getLinkedAccountByProvider(provider: string, providerUserI
 export async function getLinkedAccountByProviderForUser(userId: string, provider: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, provider, provider_user_id, provider_email, provider_username,
+      `SELECT id, provider, provider_user_id, provider_email, email_verified, provider_username,
               access_token, refresh_token, token_expires_at, profile_data,
               created_at, last_login_at
        FROM apiome.external_auth_providers
@@ -2917,13 +2934,32 @@ export async function getLinkedAccountByProviderForUser(userId: string, provider
   }
 }
 
-export async function updateLinkedAccountLastLogin(provider: string, providerUserId: string) {
+/**
+ * Refreshes the identity's per-sign-in columns. `last_login_at` is always stamped; when the current
+ * OAuth response carries them, `provider_email` and `email_verified` are refreshed too so these
+ * columns stay populated on *every* sign-in (OLO-1.2), not just the first link. Passing `undefined`
+ * for either leaves the stored value untouched (COALESCE), so a provider response that omits the
+ * email never blanks a previously-known one.
+ */
+export async function updateLinkedAccountLastLogin(
+  provider: string,
+  providerUserId: string,
+  providerEmail?: string | null,
+  emailVerified?: boolean
+) {
   try {
     await connectionPool.query(
-      `UPDATE apiome.external_auth_providers 
-       SET last_login_at = CURRENT_TIMESTAMP
+      `UPDATE apiome.external_auth_providers
+       SET last_login_at = CURRENT_TIMESTAMP,
+           provider_email = COALESCE($3, provider_email),
+           email_verified = COALESCE($4, email_verified)
        WHERE provider = $1 AND provider_user_id = $2`,
-      [provider, providerUserId]
+      [
+        provider,
+        providerUserId,
+        providerEmail === undefined ? null : providerEmail,
+        emailVerified === undefined ? null : emailVerified,
+      ]
     );
 
     return JSON.stringify({ success: true });
@@ -2936,7 +2972,7 @@ export async function updateLinkedAccountLastLogin(provider: string, providerUse
 export async function getLinkedAccountById(accountId: string, userId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT id, user_id, provider, provider_user_id, provider_email, provider_username,
+      `SELECT id, user_id, provider, provider_user_id, provider_email, email_verified, provider_username,
               access_token, refresh_token, token_expires_at, profile_data,
               created_at, last_login_at
        FROM apiome.external_auth_providers

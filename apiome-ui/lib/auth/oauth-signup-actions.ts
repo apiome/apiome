@@ -108,6 +108,15 @@ export async function completeOAuthSignup(
       null,
   };
 
+  // Honour the provider's verified-email claim from the stored profile/account JSON (OIDC providers
+  // set `email_verified`); default to unverified when no signal is present. See OLO-1.2 / 2.5.
+  const verifiedRaw =
+    (profile as { email_verified?: unknown }).email_verified ??
+    (account as { email_verified?: unknown }).email_verified;
+  const emailVerified =
+    verifiedRaw === true ||
+    (typeof verifiedRaw === 'string' && verifiedRaw.trim().toLowerCase() === 'true');
+
   const linkRes = await linkExternalAccount(
     userId,
     pending.provider,
@@ -117,7 +126,8 @@ export async function completeOAuthSignup(
     accessToken,
     refreshToken,
     tokenExpiresAt,
-    profileData
+    profileData,
+    emailVerified
   );
   const linkParsed = JSON.parse(linkRes);
   if (!linkParsed.success) {
