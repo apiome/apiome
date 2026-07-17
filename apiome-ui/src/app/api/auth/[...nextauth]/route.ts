@@ -13,6 +13,7 @@ import {
   canonicalizeCrossAppCallback,
   isAllowedCallbackUrl,
 } from '../../../../../lib/auth/cookie-options';
+import { entraIdProviderIfConfigured } from '../../../../../lib/auth/entra-provider';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -28,6 +29,10 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GITLAB_CLIENT_ID as string,
       clientSecret: process.env.GITLAB_CLIENT_SECRET as string,
     }),
+    // Microsoft Entra ID (provider id `azure`, OLO-2.1) — registered only when
+    // AZURE_AD_CLIENT_ID/SECRET are configured; email trust is decided by the
+    // nOAuth hardening rules inside signInForProvider (OLO-1.4), not here.
+    ...entraIdProviderIfConfigured(),
   // GoogleProvider({
   //     clientId: process.env.GOOGLE_CLIENT_ID as string,
   //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,

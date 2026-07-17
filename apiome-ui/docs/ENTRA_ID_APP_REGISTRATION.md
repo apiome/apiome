@@ -1,4 +1,22 @@
-# Entra ID App Registration — nOAuth Hardening (OLO-1.4, #4189)
+# Entra ID App Registration — Sign-in Setup & nOAuth Hardening (OLO-1.4 #4189, OLO-2.1 #4193)
+
+## Enabling Entra ID sign-in
+
+The `azure` provider (`apiome-ui/lib/auth/entra-provider.ts`) is registered in NextAuth only when
+the deployment configures it:
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `AZURE_AD_CLIENT_ID` | yes | The app registration's *Application (client) ID*. |
+| `AZURE_AD_CLIENT_SECRET` | yes | A client secret from **Certificates & secrets**. |
+| `AZURE_AD_TENANT` | no | Tenant id/domain to restrict sign-in to one directory; defaults to `common` (multi-tenant). |
+
+In the app registration, add the web redirect URI
+`{NEXTAUTH_URL}/api/auth/callback/azure` (e.g. `http://localhost:3000/api/auth/callback/azure`).
+The provider uses the OIDC authorization-code flow with PKCE, `state`, and `nonce` checks, and
+maps the token's immutable `oid` claim to the stored `provider_user_id`.
+
+## nOAuth hardening (why the email claim is not trusted)
 
 Apiome does **not** trust the `email` claim in Microsoft Entra ID (azure) tokens by default. In
 multi-tenant app registrations that claim is attacker-controlled: any admin of any tenant can put
