@@ -13,6 +13,13 @@
 export interface AuthErrorCopy {
   type: 'error' | 'info';
   text: string;
+  /**
+   * Renders a "Try again" affordance in the banner (OLO-3.2): a link back to a clean login
+   * page (error cleared, callbackUrl preserved). Set on codes the user can resolve outside
+   * Apiome and then retry — e.g. verifying their email with the provider. Terminal states
+   * (disabled account, suspended membership, disabled signup) must not offer it.
+   */
+  retry?: boolean;
 }
 
 /** Copy per known error code; codes not listed here fall back to a generic message. */
@@ -21,6 +28,7 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
   'unverified-email': {
     type: 'error',
     text: 'Your sign-in provider could not confirm that your email address is verified. Verify your email with the provider (e.g. GitHub or GitLab), then try again.',
+    retry: true,
   },
   'account-disabled': {
     type: 'error',
@@ -29,6 +37,7 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
   'account-not-verified': {
     type: 'error',
     text: 'You have not yet verified your account e-mail address. Check your inbox for the verification email, then sign in again.',
+    retry: true,
   },
   'provider-already-linked': {
     type: 'error',
@@ -55,10 +64,12 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
   OAuthEmailRequired: {
     type: 'error',
     text: 'Your Git provider did not share an email address. Set your email to public or add a verified email on GitHub/GitLab, then try again.',
+    retry: true,
   },
   OAuthProfileIncomplete: {
     type: 'error',
     text: 'We could not read your OAuth profile. Please try again or contact support.',
+    retry: true,
   },
 
   // --- NextAuth built-ins and flow-specific keys ---
@@ -73,6 +84,7 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
   SignupSessionExpired: {
     type: 'error',
     text: 'Your signup session expired. Please start again from Create account.',
+    retry: true,
   },
   CredentialsSignin: {
     type: 'error',
@@ -81,19 +93,25 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
 };
 
 /**
+ * Safe generic banner for unknown codes (OLO-3.2). The `?error=` value is attacker-influenced
+ * (anyone can craft the URL), so unknown codes are never echoed back into the page — the user
+ * sees only this fixed copy.
+ */
+export const GENERIC_AUTH_ERROR: Readonly<AuthErrorCopy> = {
+  type: 'error',
+  text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',
+  retry: true,
+};
+
+/**
  * Resolve the message to render for a login error code.
  *
  * @param errorCode The `?error=` query-param value from the NextAuth error redirect.
- * @returns The mapped copy, a generic fallback embedding the code for unknown values, or null
- *   when no code is present.
+ * @returns The mapped copy, the safe generic fallback for unknown values, or null when no code
+ *   is present.
  */
 export function getAuthErrorCopy(errorCode?: string): AuthErrorCopy | null {
   if (!errorCode) return null;
 
-  return (
-    AUTH_ERROR_COPY[errorCode] ?? {
-      type: 'error',
-      text: `Authentication error: ${errorCode}. Please try again or contact support if the issue persists.`,
-    }
-  );
+  return AUTH_ERROR_COPY[errorCode] ?? GENERIC_AUTH_ERROR;
 }
