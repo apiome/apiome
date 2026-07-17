@@ -12,6 +12,7 @@ import {
   isAllowedCallbackUrl,
 } from '../../../../../lib/auth/cookie-options';
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
+import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -108,9 +109,20 @@ export const authOptions: NextAuthOptions = {
 
       if (payload.user) {
         token.user_id = payload.user.id;
+        // Seed the session's active tenant per the post-login routing rules
+        // (OLO-3.3): prefer the signup one-time-code tenant, keep the previous
+        // session's tenant when still a membership, else fall back to the user's
+        // default tenant. Tenant-less users carry no current_tenant_id and meet
+        // the first-tenant onboarding guard instead.
         const pendingTenant = (payload.user as { pending_tenant_id?: string }).pending_tenant_id;
-        if (pendingTenant) {
-          token.current_tenant_id = pendingTenant;
+        const activeTenant = await resolveActiveTenantForLogin(
+          payload.user.id,
+          pendingTenant ?? token.current_tenant_id
+        );
+        if (activeTenant) {
+          token.current_tenant_id = activeTenant;
+        } else {
+          delete token.current_tenant_id;
         }
       }
 

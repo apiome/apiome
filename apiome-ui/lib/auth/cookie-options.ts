@@ -1,4 +1,5 @@
-const DEFAULT_LOGIN_LANDING = '/ade';
+/** Where a login lands when no (valid) callbackUrl was requested. */
+export const DEFAULT_LOGIN_LANDING = '/ade';
 
 const TRUSTED_URL_ENVS = [
   'NEXTAUTH_URL',
