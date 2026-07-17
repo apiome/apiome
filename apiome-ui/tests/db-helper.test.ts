@@ -56,17 +56,18 @@ describe('Database Helper - User Functions', () => {
     (serverSession.getAuthSession as jest.Mock).mockResolvedValue(null);
   });
 
-  test('getUserByEmail should query by email', async () => {
+  test('getUserByEmail should query case-insensitively and exclude deleted', async () => {
     const { getUserByEmail } = await import('../lib/db/helper');
 
     mockQuery.mockResolvedValue({
       rows: [{ id: 'user-1', email: 'test@example.com', name: 'Test User' }]
     });
 
-    const result = await getUserByEmail('test@example.com');
+    // Mixed-case, padded input must canonicalize to the stored form (OLO-1.1).
+    const result = await getUserByEmail('  Test@Example.COM ');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM apiome.users WHERE email = $1',
+      'SELECT * FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL',
       ['test@example.com']
     );
     expect(result.rows).toHaveLength(1);
@@ -1813,13 +1814,13 @@ describe('Database Helper - Edge Cases and Boundaries', () => {
 
     mockQuery.mockResolvedValue({ rows: [] });
 
-    // Parameterized queries should handle this safely
+    // Parameterized queries should handle this safely (input is canonicalized to lowercase).
     const maliciousEmail = "'; DROP TABLE users; --";
     const result = await getUserByEmail(maliciousEmail);
 
     expect(mockQuery).toHaveBeenCalledWith(
       expect.any(String),
-      expect.arrayContaining([maliciousEmail])
+      expect.arrayContaining([maliciousEmail.toLowerCase()])
     );
   });
 

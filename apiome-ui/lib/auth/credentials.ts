@@ -6,8 +6,18 @@ import {
   recordLoginSuccess,
   credentialsRateLimitKey,
 } from './login-rate-limit';
+import {
+  resolveOAuthSignIn,
+  resolveOAuthEmailVerified,
+  type OAuthSignInResult,
+  type ResolutionStore,
+  type ResolutionUser,
+} from './account-resolution';
 
 const bcrypt = require('bcrypt');
+
+// Re-exported for existing consumers/tests; the implementation lives with the resolution engine.
+export { resolveOAuthEmailVerified };
 
 export interface ICredentials {
   email?: string;
@@ -15,78 +25,96 @@ export interface ICredentials {
   oneTimeCode?: string;
 }
 
+/** Map a users row onto the account facts the resolution engine decides over. */
+const toResolutionUser = (row: any): ResolutionUser => ({
+  id: row.id,
+  enabled: !!row.enabled,
+  verified: !!row.verified,
+  email: row.email ?? null,
+  name: row.name ?? null,
+});
+
 /**
- * Whether the provider proved the sign-in email is verified.
+ * Production persistence wiring for the account-resolution engine (OLO-1.3). Each operation
+ * delegates to the existing db helpers; the engine itself stays free of database imports so the
+ * policy is testable in isolation.
+ */
+const resolutionStore: ResolutionStore = {
+  async getIdentity(provider, providerUserId) {
+    const parsed = JSON.parse(await helper.getLinkedAccountByProvider(provider, providerUserId));
+    return { found: !!parsed.found, userId: parsed.account?.user_id ?? null };
+  },
+
+  async getUserById(userId) {
+    const results = await helper.getUserById(userId);
+    return results.rowCount > 0 ? toResolutionUser(results.rows[0]) : null;
+  },
+
+  async getUserByEmail(email) {
+    const results = await helper.getUserByEmail(email);
+    return results.rowCount > 0 ? toResolutionUser(results.rows[0]) : null;
+  },
+
+  async linkIdentity(userId, identity) {
+    const parsed = JSON.parse(
+      await helper.linkExternalAccount(
+        userId,
+        identity.provider,
+        identity.providerUserId,
+        identity.email as string,
+        identity.username,
+        identity.accessToken,
+        identity.refreshToken,
+        identity.tokenExpiresAt,
+        identity.profileData,
+        identity.emailVerified
+      )
+    );
+    return { success: !!parsed.success, code: parsed.code };
+  },
+
+  async recordIdentityLogin(provider, providerUserId, email, emailVerified) {
+    await helper.updateLinkedAccountLastLogin(provider, providerUserId, email, emailVerified);
+  },
+
+  async recordUserLogin(userId) {
+    await helper.updateUserLastLoginAt(userId);
+  },
+
+  async createPendingSignup(provider, providerUserId, email, account, profile) {
+    return upsertOauthSignupPending(provider, providerUserId, email, account, profile);
+  },
+};
+
+/**
+ * Shared OAuth sign-in entry point for every provider's NextAuth signIn callback (OLO-1.3).
  *
- * OIDC providers (GitLab `openid`, Azure/Entra ID) expose a boolean/string `email_verified` claim on
- * the profile; we honour that. The default GitHub/GitLab OAuth scopes do not carry a verified signal,
- * so we conservatively treat those as unverified (false) until the verified-email parity pass
- * (OLO-2.5) wires in the providers' verified-email endpoints. Never assume verified — that is the
- * account-takeover default the epic forbids.
+ * Consumes the link/signup intent cookies, then runs the account-resolution engine: known
+ * identity → sign in; verified email match → auto-link + sign in; verified email, no account →
+ * onboarding; unverified email → structured rejection.
+ *
+ * @param provider Provider slug as reported by NextAuth ('github' | 'gitlab' | …).
+ * @param payload The NextAuth signIn callback payload; mutated with the resolved user on success.
+ * @returns `true` to admit the sign-in or a redirect path (error, signup wizard, or the
+ *   linked-accounts page for explicit link flows).
  */
-export const resolveOAuthEmailVerified = (profile: any, account: any): boolean => {
-  const raw = profile?.email_verified ?? account?.email_verified;
-  if (raw === true) return true;
-  if (typeof raw === 'string') return raw.trim().toLowerCase() === 'true';
-  return false;
-};
+export const oauthProviderSignIn = async (
+  provider: string,
+  payload: any
+): Promise<OAuthSignInResult> => {
+  // Both intent cookies are one-shot: read them (which clears them) before resolving. The signup
+  // intent no longer alters the policy — new verified users are always routed to onboarding, and
+  // existing accounts are signed in rather than duplicated — but the cookie must still be consumed.
+  const linkIntent = await checkLinkingIntent();
+  await checkSignupIntent();
 
-/**
- * Helper function to link GitHub account during OAuth flow
- */
-export const linkGithubAccount = async (userId: string, account: any, profile: any) => {
+  const linkToUserId =
+    linkIntent && linkIntent.provider === provider && linkIntent.userId ? linkIntent.userId : null;
+
   try {
-    const result = await helper.linkExternalAccount(
-      userId,
-      'github',
-      account.providerAccountId || profile.id,
-      profile.email,
-      profile.login || profile.username,
-      account.access_token || null,
-      account.refresh_token || null,
-      account.expires_at ? new Date(account.expires_at * 1000) : null,
-      {
-        name: profile.name,
-        avatar_url: profile.avatar_url || profile.picture,
-        profile_url: profile.html_url || profile.url,
-      },
-      resolveOAuthEmailVerified(profile, account)
-    );
-
-    const response = JSON.parse(result);
-    return response.success;
+    return await resolveOAuthSignIn(provider, payload, linkToUserId, resolutionStore);
   } catch (error) {
-    console.error('[linkGithubAccount] Error linking account:', error);
-    return false;
-  }
-};
-
-/**
- * Helper function to link GitLab account during OAuth flow
- */
-export const linkGitlabAccount = async (userId: string, account: any, profile: any) => {
-  try {
-    const result = await helper.linkExternalAccount(
-      userId,
-      'gitlab',
-      account.providerAccountId || profile.id,
-      profile.email,
-      profile.login || profile.username,
-      account.access_token || null,
-      account.refresh_token || null,
-      account.expires_at ? new Date(account.expires_at * 1000) : null,
-      {
-        name: profile.name,
-        avatar_url: profile.image_url || profile.avatar_url || profile.picture,
-        profile_url: profile.web_url || profile.url,
-      },
-      resolveOAuthEmailVerified(profile, account)
-    );
-
-    const response = JSON.parse(result);
-    return response.success;
-  } catch (error) {
-    console.error('[linkGitlabAccount] Error linking account:', error);
+    console.error(`[oauthProviderSignIn] ${provider} resolution failed:`, error);
     return false;
   }
 };
@@ -242,231 +270,3 @@ export const credentialsSignIn = async (payload: any) => {
   return true;
 };
 
-type OAuthSignInResult = boolean | string;
-
-function resolveOAuthEmail(user: any, profile: any): string | null {
-  const fromUser = typeof user?.email === 'string' && user.email.trim() ? user.email.trim().toLowerCase() : '';
-  if (fromUser) return fromUser;
-  const fromProfile = typeof profile?.email === 'string' && profile.email.trim() ? profile.email.trim().toLowerCase() : '';
-  if (fromProfile) return fromProfile;
-  return null;
-}
-
-/*
- * Sign-in Steps for GitHub OAuth:
- * 1. Check if this GitHub account is already linked to a user in external_auth_providers
- *    - If linked, login as that user
- * 2. If signup intent: new users go to pending signup; existing email → error redirect
- * 3. If not linked, check if user exists by email — initial login / auto-link
- * 4. User must be enabled and verified
- */
-export const credentialsGithub = async (payload: any): Promise<OAuthSignInResult> => {
-  const user = payload.user;
-  const account = payload.account;
-  const profile = payload.profile;
-
-  if (account?.providerAccountId) {
-    const linkedAccountResult = await helper.getLinkedAccountByProvider('github', account.providerAccountId);
-    const linkedAccount = JSON.parse(linkedAccountResult);
-
-    if (linkedAccount.found && linkedAccount.account) {
-      const userResults = await helper.getUserById(linkedAccount.account.user_id);
-
-      if (userResults.rowCount > 0) {
-        const userResult = userResults.rows[0];
-
-        if (!userResult.enabled) {
-          return '/login?error=Your account is currently disabled';
-        }
-
-        if (!userResult.verified) {
-          return '/login?error=You have not yet verified your account e-mail address';
-        }
-
-        await helper.updateLinkedAccountLastLogin(
-          'github',
-          account.providerAccountId,
-          resolveOAuthEmail(user, profile),
-          resolveOAuthEmailVerified(profile, account)
-        );
-
-        payload.user.id = userResult.id;
-        payload.user.email = userResult.email;
-        payload.user.name = userResult.name;
-        payload.user.enabled = userResult.enabled;
-        payload.user.verified = userResult.verified;
-
-        void helper.updateUserLastLoginAt(userResult.id).catch((error: any) => {
-          console.error('[credentialsGithub] Failed to update last login timestamp:', error);
-        });
-        return true;
-      }
-    }
-  }
-
-  const signupIntent = await checkSignupIntent();
-  const email = resolveOAuthEmail(user, profile);
-
-  const results = email ? await helper.getUserByEmail(email) : { rowCount: 0, rows: [] as any[] };
-
-  if (signupIntent?.provider === 'github') {
-    if (!email) {
-      return '/login?error=OAuthEmailRequired';
-    }
-    if (results.rowCount > 0) {
-      return '/login?error=OAuthAccountExists';
-    }
-    if (!account?.providerAccountId) {
-      return '/login?error=OAuthProfileIncomplete';
-    }
-    const { id } = await upsertOauthSignupPending(
-      'github',
-      account.providerAccountId,
-      email,
-      {
-        access_token: account.access_token ?? null,
-        refresh_token: account.refresh_token ?? null,
-        expires_at: account.expires_at ?? null,
-        providerAccountId: account.providerAccountId,
-      },
-      { ...(profile || {}), email }
-    );
-    return `/signup/oauth?token=${encodeURIComponent(id)}`;
-  }
-
-  if (results.rowCount > 0) {
-    const userResult = results.rows[0];
-
-    if (!userResult.enabled) {
-      return '/login?error=Your account is currently disabled';
-    }
-
-    if (!userResult.verified) {
-      return '/login?error=You have not yet verified your account e-mail address';
-    }
-
-    if (account?.providerAccountId) {
-      await linkGithubAccount(userResult.id, account, profile || user);
-    }
-
-    payload.user.id = userResult.id;
-    payload.user.email = userResult.email;
-    payload.user.name = userResult.name;
-    payload.user.enabled = userResult.enabled;
-    payload.user.verified = userResult.verified;
-
-    void helper.updateUserLastLoginAt(userResult.id).catch((error: any) => {
-      console.error('[credentialsGithub] Failed to update last login timestamp:', error);
-    });
-    return true;
-  }
-
-  return false;
-};
-
-/*
- * Sign-in Steps for GitLab OAuth (same structure as GitHub).
- */
-export const credentialsGitlab = async (payload: any): Promise<OAuthSignInResult> => {
-  const user = payload.user;
-  const account = payload.account;
-  const profile = payload.profile;
-
-  if (account?.providerAccountId) {
-    const linkedAccountResult = await helper.getLinkedAccountByProvider('gitlab', account.providerAccountId);
-    const linkedAccount = JSON.parse(linkedAccountResult);
-
-    if (linkedAccount.found && linkedAccount.account) {
-      const userResults = await helper.getUserById(linkedAccount.account.user_id);
-
-      if (userResults.rowCount > 0) {
-        const userResult = userResults.rows[0];
-
-        if (!userResult.enabled) {
-          return '/login?error=Your account is currently disabled';
-        }
-
-        if (!userResult.verified) {
-          return '/login?error=You have not yet verified your account e-mail address';
-        }
-
-        await helper.updateLinkedAccountLastLogin(
-          'gitlab',
-          account.providerAccountId,
-          resolveOAuthEmail(user, profile),
-          resolveOAuthEmailVerified(profile, account)
-        );
-
-        payload.user.id = userResult.id;
-        payload.user.email = userResult.email;
-        payload.user.name = userResult.name;
-        payload.user.enabled = userResult.enabled;
-        payload.user.verified = userResult.verified;
-
-        void helper.updateUserLastLoginAt(userResult.id).catch((error: any) => {
-          console.error('[credentialsGitlab] Failed to update last login timestamp:', error);
-        });
-        return true;
-      }
-    }
-  }
-
-  const signupIntent = await checkSignupIntent();
-  const email = resolveOAuthEmail(user, profile);
-
-  const results = email ? await helper.getUserByEmail(email) : { rowCount: 0, rows: [] as any[] };
-
-  if (signupIntent?.provider === 'gitlab') {
-    if (!email) {
-      return '/login?error=OAuthEmailRequired';
-    }
-    if (results.rowCount > 0) {
-      return '/login?error=OAuthAccountExists';
-    }
-    if (!account?.providerAccountId) {
-      return '/login?error=OAuthProfileIncomplete';
-    }
-    const { id } = await upsertOauthSignupPending(
-      'gitlab',
-      account.providerAccountId,
-      email,
-      {
-        access_token: account.access_token ?? null,
-        refresh_token: account.refresh_token ?? null,
-        expires_at: account.expires_at ?? null,
-        providerAccountId: account.providerAccountId,
-      },
-      { ...(profile || {}), email }
-    );
-    return `/signup/oauth?token=${encodeURIComponent(id)}`;
-  }
-
-  if (results.rowCount > 0) {
-    const userResult = results.rows[0];
-
-    if (!userResult.enabled) {
-      return '/login?error=Your account is currently disabled';
-    }
-
-    if (!userResult.verified) {
-      return '/login?error=You have not yet verified your account e-mail address';
-    }
-
-    if (account?.providerAccountId) {
-      await linkGitlabAccount(userResult.id, account, profile || user);
-    }
-
-    payload.user.id = userResult.id;
-    payload.user.email = userResult.email;
-    payload.user.name = userResult.name;
-    payload.user.enabled = userResult.enabled;
-    payload.user.verified = userResult.verified;
-
-    void helper.updateUserLastLoginAt(userResult.id).catch((error: any) => {
-      console.error('[credentialsGitlab] Failed to update last login timestamp:', error);
-    });
-    return true;
-  }
-
-  return false;
-};

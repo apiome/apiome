@@ -99,6 +99,42 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade' }
       };
     }
 
+    // Stable codes emitted by the account-resolution engine (OLO-1.3, pre-seeding OLO-1.5).
+    if (errorCode === 'unverified-email') {
+      return {
+        type: 'error',
+        text: 'Your sign-in provider could not confirm that your email address is verified. Verify your email with the provider (e.g. GitHub or GitLab), then try again.',
+      };
+    }
+
+    if (errorCode === 'account-disabled') {
+      return {
+        type: 'error',
+        text: 'Your account is currently disabled. Please contact support if you believe this is a mistake.',
+      };
+    }
+
+    if (errorCode === 'account-not-verified') {
+      return {
+        type: 'error',
+        text: 'You have not yet verified your account e-mail address. Check your inbox for the verification email, then sign in again.',
+      };
+    }
+
+    if (errorCode === 'provider-already-linked') {
+      return {
+        type: 'error',
+        text: 'Your account already has a different identity linked for this provider. Sign in with the originally linked provider account, or manage linked accounts from your dashboard.',
+      };
+    }
+
+    if (errorCode === 'provider-identity-claimed') {
+      return {
+        type: 'error',
+        text: 'This provider account is already linked to another user. Sign in with that account, or use a different provider account.',
+      };
+    }
+
     if (errorCode === 'SignupSessionExpired') {
       return {
         type: 'error',

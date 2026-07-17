@@ -100,8 +100,17 @@ function sanitizeNamedLayoutAnnotations(input: NamedLayoutAnnotationsInput) {
   return { comment, annotations };
 }
 
+/**
+ * Look up a live user by email address. The input is canonicalized (trim/lowercase) and compared
+ * case-insensitively so lookups match the V180 canonical storage (OLO-1.1: one email, one
+ * account). Soft-deleted rows — including duplicates quarantined by the canonicalization
+ * migration — never match.
+ */
 export const getUserByEmail = async (emailAddress: string) =>
-  connectionPool.query('SELECT * FROM apiome.users WHERE email = $1', [emailAddress]);
+  connectionPool.query(
+    'SELECT * FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL',
+    [String(emailAddress ?? '').trim().toLowerCase()]
+  );
 
 export const getUserById = async (userId: string) =>
   connectionPool.query('SELECT * FROM apiome.users WHERE id = $1 AND deleted_at IS NULL', [userId]);
