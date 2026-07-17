@@ -21,9 +21,6 @@ import {
   ScrollText,
   Network,
   Library,
-  BarChart3,
-  GitCompareArrows,
-  Layers,
   BookOpenCheck,
   ShieldCheck,
 } from 'lucide-react';
@@ -125,25 +122,6 @@ const DashboardSideNav: React.FC = () => {
           icon: Network,
           disabled: !hasTenant,
         },
-        {
-          label: 'Capability Directory',
-          href: '/ade/dashboard/mcp/capabilities',
-          icon: Layers,
-          disabled: !hasTenant,
-        },
-        {
-          label: 'Catalog Analytics',
-          href: '/ade/dashboard/mcp/analytics',
-          icon: BarChart3,
-          disabled: !hasTenant,
-          pill: 'Preview',
-        },
-        {
-          label: 'Server Comparison',
-          href: '/ade/dashboard/mcp/compare',
-          icon: GitCompareArrows,
-          disabled: !hasTenant,
-        },
         { label: 'Sunset timeline', href: '/ade/dashboard/versions/sunset-timeline', icon: Sun, disabled: !hasTenant },
         { label: 'Published', href: '/ade/dashboard/published', icon: Eye, disabled: !hasTenant },
       ],
@@ -168,25 +146,10 @@ const DashboardSideNav: React.FC = () => {
     if (href === '/ade/dashboard/primitives') {
       return pathname === '/ade/dashboard/primitives' || pathname.startsWith('/ade/dashboard/primitives/');
     }
-    if (href === '/ade/dashboard/mcp/analytics') {
-      return pathname === '/ade/dashboard/mcp/analytics';
-    }
-    if (href === '/ade/dashboard/mcp/capabilities') {
-      return pathname === '/ade/dashboard/mcp/capabilities';
-    }
-    if (href === '/ade/dashboard/mcp/compare') {
-      return pathname === '/ade/dashboard/mcp/compare';
-    }
     if (href === '/ade/dashboard/mcp') {
-      // "MCP Servers" owns the catalog + endpoint detail, but not the sibling analytics / comparison
-      // routes, which each have their own nav entry.
-      return (
-        pathname === '/ade/dashboard/mcp' ||
-        (pathname.startsWith('/ade/dashboard/mcp/') &&
-          pathname !== '/ade/dashboard/mcp/analytics' &&
-          pathname !== '/ade/dashboard/mcp/capabilities' &&
-          pathname !== '/ade/dashboard/mcp/compare')
-      );
+      // "MCP Servers" owns the catalog plus its related sections (capabilities, analytics,
+      // comparison), which are reached via the in-page tab bar rather than their own nav entries.
+      return pathname === '/ade/dashboard/mcp' || pathname.startsWith('/ade/dashboard/mcp/');
     }
     if (href === '/ade/dashboard/catalog') {
       return pathname === '/ade/dashboard/catalog' || pathname.startsWith('/ade/dashboard/catalog/');

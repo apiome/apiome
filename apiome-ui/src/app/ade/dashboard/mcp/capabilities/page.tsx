@@ -29,6 +29,7 @@ import {
   dashboardMainClass,
   dashboardTableWrapClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import { McpSectionTabs } from '@/app/components/ade/dashboard/mcp/McpSectionTabs';
 import {
   MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS,
   MCP_CAPABILITY_DIRECTORY_KINDS,
@@ -204,6 +205,7 @@ export default function McpCapabilityDirectoryPage() {
               Refresh
             </Button>
           </div>
+          <McpSectionTabs className="mt-4" />
         </div>
       </header>
 

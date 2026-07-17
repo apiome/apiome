@@ -37,6 +37,7 @@ import {
   type McpCatalogSortKey,
 } from "@/app/components/ade/dashboard/mcp/mcpCatalogUi";
 import { McpCatalogCard } from "@/app/components/ade/dashboard/mcp/McpCatalogCard";
+import { McpSectionTabs } from "@/app/components/ade/dashboard/mcp/McpSectionTabs";
 import { McpCatalogToolbar } from "@/app/components/ade/dashboard/mcp/McpCatalogToolbar";
 import { McpSavedSearchesPanel } from "@/app/components/ade/dashboard/mcp/McpSavedSearchesPanel";
 import { McpCollectionsPanel } from "@/app/components/ade/dashboard/mcp/McpCollectionsPanel";
@@ -181,6 +182,7 @@ export default function McpBrowsePage() {
               </Button>
             </div>
           </div>
+          <McpSectionTabs className="mt-4" />
         </div>
       </header>
 

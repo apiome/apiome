@@ -23,6 +23,7 @@ import {
   dashboardContentStackClass,
   dashboardMainClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import { McpSectionTabs } from '@/app/components/ade/dashboard/mcp/McpSectionTabs';
 import {
   mcpBrowseGroupsFromPayload,
   mcpVersionDetailFromPayload,
@@ -205,6 +206,7 @@ export default function McpServerComparePage() {
               </Button>
             </div>
           </div>
+          <McpSectionTabs className="mt-4" />
         </div>
       </header>
 

@@ -18,6 +18,7 @@ import {
   dashboardContentStackClass,
   dashboardMainClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
+import { McpSectionTabs } from '@/app/components/ade/dashboard/mcp/McpSectionTabs';
 import { CatalogAnalyticsDashboard } from '@/app/components/ui/mcp/CatalogAnalyticsDashboard';
 import {
   mcpCatalogInsightFromPayload,
@@ -88,6 +89,7 @@ export default function McpCatalogAnalyticsPage() {
               </Button>
             </div>
           </div>
+          <McpSectionTabs className="mt-4" />
         </div>
       </header>
 
