@@ -139,6 +139,23 @@ export function buildAuthCookieOverrides() {
   };
 }
 
+/**
+ * True when a callback value is a same-origin relative path that a browser
+ * cannot reinterpret as an absolute URL.
+ *
+ * Rejects protocol-relative forms (`//evil.com`) and their backslash
+ * equivalents (`/\evil.com`) — WHATWG URL parsing treats `\` as `/` in
+ * http(s) URLs, so a redirect to `/\evil.com` lands on `https://evil.com/`.
+ * Backslashes are rejected anywhere in the value; no legitimate app path
+ * contains one.
+ *
+ * @param url The raw callback value to test.
+ * @returns Whether the value is safe to use as a same-origin redirect path.
+ */
+export function isSafeRelativeCallbackPath(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//') && !url.includes('\\');
+}
+
 function hostnameMatchesCookieDomain(hostname: string, cookieDomain: string): boolean {
   const suffix = normalizeCookieDomain(cookieDomain);
   const bare = suffix.slice(1);
@@ -208,7 +225,7 @@ export function canonicalizeCrossAppCallback(url: string): string {
  * .apiome.dev) or configured app URLs — anything else is an open-redirect vector.
  */
 export function isAllowedCallbackUrl(url: string, baseUrl?: string): boolean {
-  if (url.startsWith('/')) return !url.startsWith('//');
+  if (url.startsWith('/')) return isSafeRelativeCallbackPath(url);
 
   let target: URL;
   try {

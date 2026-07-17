@@ -542,7 +542,10 @@ function TopHeaderView({
             </button>
             <div className="h-px bg-gray-200 dark:bg-gray-600 my-1" />
             <button
-              onClick={() => signOut({ callbackUrl: isStudioSurface() ? mainAppPath('/login') : undefined })}
+              // Explicit landing so logout exits cleanly to the login page instead of
+              // bouncing off the protected page's auth guard (OLO-3.4). The studio
+              // shell has no /login route of its own, so it targets the main app's.
+              onClick={() => signOut({ callbackUrl: isStudioSurface() ? mainAppPath('/login') : '/login' })}
               className="w-full text-left block px-3 py-2 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-700 dark:hover:text-red-300 rounded text-sm transition-colors text-gray-700 dark:text-gray-300"
               style={{ border: "none" }}
             >
