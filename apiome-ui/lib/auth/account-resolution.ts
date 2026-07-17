@@ -120,9 +120,11 @@ export function canonicalizeEmail(email: unknown): string | null {
  * Whether the provider proved the sign-in email is verified.
  *
  * OIDC providers (GitLab `openid`) expose a boolean/string `email_verified` claim on the profile;
- * we honour that. The default GitHub/GitLab OAuth scopes do not carry a verified signal, so those
- * resolve to unverified (false) until the verified-email parity pass (OLO-2.5) wires in the
- * providers' verified-email endpoints. Never assume verified — that is the account-takeover
+ * we honour that. For GitHub/GitLab OAuth the verified-email parity pass (OLO-2.5, #4197)
+ * normalizes each provider's own signal — GitHub's `/user/emails` verified flags, GitLab's
+ * `confirmed_at` — onto the raw profile as `email_verified` during the userinfo exchange
+ * (see `verified-email.ts`), so this resolver reads it uniformly. A profile without the claim
+ * still resolves to unverified (false). Never assume verified — that is the account-takeover
  * default the epic forbids.
  *
  * The `azure` provider never goes through this resolver: Entra ID's email claim is subject to the
