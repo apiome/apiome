@@ -16,6 +16,22 @@ export interface ICredentials {
 }
 
 /**
+ * Whether the provider proved the sign-in email is verified.
+ *
+ * OIDC providers (GitLab `openid`, Azure/Entra ID) expose a boolean/string `email_verified` claim on
+ * the profile; we honour that. The default GitHub/GitLab OAuth scopes do not carry a verified signal,
+ * so we conservatively treat those as unverified (false) until the verified-email parity pass
+ * (OLO-2.5) wires in the providers' verified-email endpoints. Never assume verified — that is the
+ * account-takeover default the epic forbids.
+ */
+export const resolveOAuthEmailVerified = (profile: any, account: any): boolean => {
+  const raw = profile?.email_verified ?? account?.email_verified;
+  if (raw === true) return true;
+  if (typeof raw === 'string') return raw.trim().toLowerCase() === 'true';
+  return false;
+};
+
+/**
  * Helper function to link GitHub account during OAuth flow
  */
 export const linkGithubAccount = async (userId: string, account: any, profile: any) => {
@@ -33,7 +49,8 @@ export const linkGithubAccount = async (userId: string, account: any, profile: a
         name: profile.name,
         avatar_url: profile.avatar_url || profile.picture,
         profile_url: profile.html_url || profile.url,
-      }
+      },
+      resolveOAuthEmailVerified(profile, account)
     );
 
     const response = JSON.parse(result);
@@ -62,7 +79,8 @@ export const linkGitlabAccount = async (userId: string, account: any, profile: a
         name: profile.name,
         avatar_url: profile.image_url || profile.avatar_url || profile.picture,
         profile_url: profile.web_url || profile.url,
-      }
+      },
+      resolveOAuthEmailVerified(profile, account)
     );
 
     const response = JSON.parse(result);
@@ -265,7 +283,12 @@ export const credentialsGithub = async (payload: any): Promise<OAuthSignInResult
           return '/login?error=You have not yet verified your account e-mail address';
         }
 
-        await helper.updateLinkedAccountLastLogin('github', account.providerAccountId);
+        await helper.updateLinkedAccountLastLogin(
+          'github',
+          account.providerAccountId,
+          resolveOAuthEmail(user, profile),
+          resolveOAuthEmailVerified(profile, account)
+        );
 
         payload.user.id = userResult.id;
         payload.user.email = userResult.email;
@@ -367,7 +390,12 @@ export const credentialsGitlab = async (payload: any): Promise<OAuthSignInResult
           return '/login?error=You have not yet verified your account e-mail address';
         }
 
-        await helper.updateLinkedAccountLastLogin('gitlab', account.providerAccountId);
+        await helper.updateLinkedAccountLastLogin(
+          'gitlab',
+          account.providerAccountId,
+          resolveOAuthEmail(user, profile),
+          resolveOAuthEmailVerified(profile, account)
+        );
 
         payload.user.id = userResult.id;
         payload.user.email = userResult.email;

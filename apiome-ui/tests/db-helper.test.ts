@@ -1537,6 +1537,73 @@ describe('Database Helper - Linked Account Functions', () => {
     expect(result).toBeDefined();
   });
 
+  test('updateLinkedAccountLastLogin refreshes provider_email + email_verified when provided (OLO-1.2)', async () => {
+    const { updateLinkedAccountLastLogin } = await import('../lib/db/helper');
+
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await updateLinkedAccountLastLogin('github', 'gh-1', 'user@example.com', true);
+
+    const [text, values] = mockQuery.mock.calls[0];
+    expect(text).toContain('email_verified = COALESCE');
+    expect(text).toContain('provider_email = COALESCE');
+    // undefined args must arrive as null so COALESCE leaves the stored value untouched.
+    expect(values).toEqual(['github', 'gh-1', 'user@example.com', true]);
+  });
+
+  test('linkExternalAccount stores email_verified and reports success', async () => {
+    const { linkExternalAccount } = await import('../lib/db/helper');
+
+    mockQuery
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] }) // no existing link for this user
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] }) // identity not claimed elsewhere
+      .mockResolvedValueOnce({ rows: [{ id: 'acc-1', provider: 'github', email_verified: true }] });
+
+    const result = await linkExternalAccount(
+      'user-1', 'github', 'gh-1', 'user@example.com', 'octocat',
+      null, null, null, { name: 'Octo' }, true,
+    );
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(true);
+    const insert = mockQuery.mock.calls[2];
+    expect(insert[0]).toContain('email_verified');
+    // email_verified is the 5th positional value in the INSERT.
+    expect(insert[1][4]).toBe(true);
+  });
+
+  test('linkExternalAccount rejects an identity already bound to a different user with a stable code (OLO-1.2)', async () => {
+    const { linkExternalAccount } = await import('../lib/db/helper');
+
+    mockQuery
+      .mockResolvedValueOnce({ rowCount: 0, rows: [] })                       // no existing link for this user
+      .mockResolvedValueOnce({ rowCount: 1, rows: [{ user_id: 'other' }] });  // claimed by another user
+
+    const result = await linkExternalAccount(
+      'user-1', 'github', 'gh-1', 'user@example.com', 'octocat',
+      null, null, null, {}, false,
+    );
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.code).toBe('provider-identity-claimed');
+  });
+
+  test('linkExternalAccount rejects a duplicate provider for the same user with a stable code', async () => {
+    const { linkExternalAccount } = await import('../lib/db/helper');
+
+    mockQuery.mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'existing' }] });
+
+    const result = await linkExternalAccount(
+      'user-1', 'github', 'gh-1', 'user@example.com', 'octocat',
+      null, null, null, {}, false,
+    );
+    const parsed = JSON.parse(result);
+
+    expect(parsed.success).toBe(false);
+    expect(parsed.code).toBe('provider-already-linked');
+  });
+
   test('getLinkedAccountById should return account by ID', async () => {
     const { getLinkedAccountById } = await import('../lib/db/helper');
 
