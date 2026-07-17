@@ -110,7 +110,9 @@ export function entraIdProvider(
     name: 'Microsoft Entra ID',
     type: 'oauth',
     wellKnown: `https://login.microsoftonline.com/${tenant}/v2.0/.well-known/openid-configuration?appid=${clientId}`,
-    authorization: { params: { scope: 'openid profile email' } },
+    // `offline_access` makes Microsoft issue a refresh token on the code exchange, so the azure
+    // identity row carries token-refresh data like the other providers (OLO-2.2, #4194).
+    authorization: { params: { scope: 'openid profile email offline_access' } },
     idToken: true,
     checks: ['pkce', 'state', 'nonce'],
     clientId,

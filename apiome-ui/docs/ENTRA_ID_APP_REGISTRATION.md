@@ -1,4 +1,4 @@
-# Entra ID App Registration — Sign-in Setup & nOAuth Hardening (OLO-1.4 #4189, OLO-2.1 #4193)
+# Entra ID App Registration — Sign-in Setup & nOAuth Hardening (OLO-1.4 #4189, OLO-2.1 #4193, OLO-2.2 #4194)
 
 ## Enabling Entra ID sign-in
 
@@ -15,6 +15,20 @@ In the app registration, add the web redirect URI
 `{NEXTAUTH_URL}/api/auth/callback/azure` (e.g. `http://localhost:3000/api/auth/callback/azure`).
 The provider uses the OIDC authorization-code flow with PKCE, `state`, and `nonce` checks, and
 maps the token's immutable `oid` claim to the stored `provider_user_id`.
+
+## What gets persisted (OLO-2.2)
+
+A successful azure sign-in or link stores the identity in `apiome.external_auth_providers` under
+provider `azure`, keyed by the immutable `oid` claim. The provider requests the scopes
+`openid profile email offline_access`; `offline_access` makes Microsoft return a refresh token on
+the code exchange, so `access_token`, `refresh_token`, and `token_expires_at` are populated the
+same way as for the other providers. (The scope needs no extra app-registration setup — users
+consent to *Maintain access to data you have given it access to* on first sign-in.)
+
+`profile_data` additionally carries the claims needed to re-validate the identity later without a
+fresh sign-in: `oid`, `tid`, `upn`, `preferred_username`, `email`, and the raw verified-email
+evidence (`email_verified`, `xms_edov`) exactly as the token asserted them. Claims the token did
+not carry are stored as `null`.
 
 ## nOAuth hardening (why the email claim is not trusted)
 
