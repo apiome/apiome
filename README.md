@@ -1,3 +1,5 @@
+![Apiome Logo](docs/apiome.png)
+
 # Apiome
 
 Apiome is an OpenAPI 3.2.0 Specification Application that provides a visual editor
