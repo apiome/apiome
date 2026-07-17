@@ -30,6 +30,8 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@lib/(.*)$': '<rootDir>/lib/$1',
+    // CSS modules resolve to an identity-object mock so styled components render in tests.
+    '\\.module\\.css$': '<rootDir>/tests/__mocks__/css-module.ts',
     '^react-markdown$': '<rootDir>/tests/__mocks__/react-markdown.tsx',
     '^remark-gfm$': '<rootDir>/tests/__mocks__/remark-gfm.ts',
     '^rehype-raw$': '<rootDir>/tests/__mocks__/rehype-raw.ts',

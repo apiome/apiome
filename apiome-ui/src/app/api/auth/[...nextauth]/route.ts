@@ -1,7 +1,5 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import GithubProvider from 'next-auth/providers/github';
-import GitlabProvider from 'next-auth/providers/gitlab';
 import { NextAuthOptions } from 'next-auth';
 import {
   credentialsAuthorize,
@@ -13,7 +11,7 @@ import {
   canonicalizeCrossAppCallback,
   isAllowedCallbackUrl,
 } from '../../../../../lib/auth/cookie-options';
-import { entraIdProviderIfConfigured } from '../../../../../lib/auth/entra-provider';
+import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -21,22 +19,11 @@ export const authOptions: NextAuthOptions = {
   // (e.g. the studio) can share the login session.
   ...buildAuthCookieOverrides(),
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_ID as string,
-      clientSecret: process.env.GITHUB_SECRET as string,
-    }),
-    GitlabProvider({
-      clientId: process.env.GITLAB_CLIENT_ID as string,
-      clientSecret: process.env.GITLAB_CLIENT_SECRET as string,
-    }),
-    // Microsoft Entra ID (provider id `azure`, OLO-2.1) — registered only when
-    // AZURE_AD_CLIENT_ID/SECRET are configured; email trust is decided by the
-    // nOAuth hardening rules inside signInForProvider (OLO-1.4), not here.
-    ...entraIdProviderIfConfigured(),
-  // GoogleProvider({
-  //     clientId: process.env.GOOGLE_CLIENT_ID as string,
-  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-  // }),
+    // Every OAuth provider comes from the provider registry (OLO-2.3): a provider is
+    // registered only when its env vars are configured, so disabling one via env removes
+    // its sign-in route along with its login/link buttons. Email trust is decided by the
+    // resolution engine inside signInForProvider (OLO-1.3/1.4), not here.
+    ...configuredOAuthProviders(),
     CredentialsProvider({
       credentials: {},
       async authorize(credentials: any, req) {
