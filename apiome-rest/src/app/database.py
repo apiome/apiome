@@ -1044,13 +1044,17 @@ class Database:
         1. Enforce the caller's tenant cap (``user_entitlements.max_tenants``,
            Free default when no row) against their current tenant count.
         2. Insert the ``apiome.tenants`` row (enabled, not deleted).
-        3. Seed the built-in RBAC roles (``apiome.seed_builtin_roles``, V118).
-        4. Insert the caller into ``apiome.tenant_users`` with status
+        3. Attach the Free license (``apiome.attach_free_license``, V183,
+           OLO-5.2). The V183 trigger already fires on the insert; the
+           explicit call keeps the endpoint's guarantee visible and holds
+           even if the trigger is ever dropped (idempotent either way).
+        4. Seed the built-in RBAC roles (``apiome.seed_builtin_roles``, V118).
+        5. Insert the caller into ``apiome.tenant_users`` with status
            ``active`` (V121) and assign the built-in **Owner** role in
            ``apiome.tenant_user_roles`` (V119).
-        5. Insert the caller into ``apiome.tenant_administrators`` — the
+        6. Insert the caller into ``apiome.tenant_administrators`` — the
            legacy full-access plane the RBAC guard still honours (V119 note).
-        6. Seed free-tier ``user_entitlements`` for the caller when absent
+        7. Seed free-tier ``user_entitlements`` for the caller when absent
            (idempotent; mirrors the UI's ``insertFreeTierEntitlements``).
 
         Everything commits together or not at all; the sample project is
@@ -1125,6 +1129,8 @@ class Database:
                 )
                 tenant = dict(cursor.fetchone())
                 tenant_id = tenant["id"]
+
+                cursor.execute("SELECT apiome.attach_free_license(%s::uuid)", (tenant_id,))
 
                 cursor.execute("SELECT apiome.seed_builtin_roles(%s::uuid)", (tenant_id,))
 

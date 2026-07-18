@@ -1,7 +1,8 @@
 # Licensing entity model (ER)
 
-How Apiome attaches licenses to tenants and users, as of **V182** (`tenant_licenses`, OLO-5.1,
-#4211). The catalog and feature-flag tables come from **V097**; user entitlements from **V071/V097**.
+How Apiome attaches licenses to tenants and users, as of **V183** (auto-issue Free, OLO-5.2,
+#4212; `tenant_licenses` from **V182**, OLO-5.1, #4211). The catalog and feature-flag tables come
+from **V097**; user entitlements from **V071/V097**.
 
 ## The split: user entitlement vs. tenant license
 
@@ -90,6 +91,12 @@ erDiagram
   removes its license attachment.
 - **Provenance survives admin deletion** — `issued_by` → `users.id` is `ON DELETE SET NULL`;
   system-issued licenses (e.g. auto-issued Free, OLO-5.2) leave it `NULL`.
+- **Every tenant holds a license from birth** (V183, OLO-5.2) —
+  `apiome.attach_free_license(tenant_id)` is the single service function that attaches the Free
+  plan; an `AFTER INSERT` trigger on `tenants` calls it for **every** create path in the same
+  transaction as the insert, and V183 backfilled all pre-existing tenants. The function is
+  idempotent (`ON CONFLICT (tenant_id) DO NOTHING`), so it never downgrades a tenant that already
+  holds a plan.
 
 ## Feature composition (unchanged by V182)
 
@@ -105,7 +112,7 @@ with `user_feature_flags` applying per-user grant/revoke on top. `tenant_license
 
 ## Related work
 
-- **OLO-5.2 (#4212)** — auto-issue Free on tenant creation + backfill existing tenants.
+- **OLO-5.2 (#4212)** — ✅ auto-issue Free on tenant creation + backfill existing tenants (V183).
 - **OLO-5.3 (#4213)** — enforcement guards (seats, tenant caps).
 - **OLO-5.4/5.5 (#4214/#4215)** — REST surface and settings UI reading this model.
 - **#3484** — Platform Foundations & Licensing epic (paid upgrades/billing); reconciled via
