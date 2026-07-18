@@ -5,10 +5,11 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import { usePathname } from 'next/navigation';
-import { ChevronDown, Check, Shield } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronDown, Check, Plus, Shield } from 'lucide-react';
 import WhatsNewDialog from './WhatsNewDialog';
 import ThemeSelector from './ThemeSelector';
+import CreateTenantDialog, { type CreatedTenant } from './CreateTenantDialog';
 import { useTheme } from '../../providers/ThemeProvider';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import packageJson from '../../../../package.json';
@@ -23,7 +24,12 @@ import {
 import { getCommercialAccessForSession } from '../../../../lib/db/commercial-access';
 import { resolveExternalLinkIcon } from '../../../../lib/external-links';
 import type { ExternalNavItem, ExternalNavMenuItem } from '../../../../lib/external-links';
-import { getTenantsAdministratedByUser, getTenantsForUser } from '../../../../lib/db/helper';
+import { loadTenantMembershipContext } from '../../../../lib/auth/tenant-membership-context';
+import { persistLastActiveTenant } from '../../../../lib/auth/last-active-tenant-actions';
+import type {
+  CreateTenantGate,
+  TenantMembershipRow,
+} from '../../../../lib/auth/tenant-membership-context-mapping';
 
 /** Optional CI/build stamp (e.g. `2026.05.05-84a231c`). Otherwise badge uses semver from package.json. */
 const APP_BUILD_LABEL = process.env.NEXT_PUBLIC_APP_BUILD_LABEL?.trim();
@@ -47,19 +53,25 @@ function isNavMenuItemActive(menuItem: ExternalNavMenuItem, pathname: string | n
   );
 }
 
-type TenantRow = { id: string; name: string };
-
-type TenantAdminRow = { tenant_id: string; user_id: string };
+/**
+ * One switcher row. Enrichment fields (role/status/license, OLO-6.1 #4218) are
+ * optional so legacy contexts — e.g. the studio shell's prefetched name-only
+ * rows — keep rendering with the pre-OLO-6.1 admin-badge fallback.
+ */
+type TenantRow = TenantMembershipRow;
 
 export type TopHeaderTenantContext = {
   tenants: TenantRow[];
   adminTenantIds: Set<string>;
+  /** Create-tenant cap gate (OLO-5.3); the entry is hidden when absent. */
+  createTenant?: CreateTenantGate | null;
 };
 
 /** Serializable tenant context for server → client handoff (studio shell). */
 export type SerializableTopHeaderTenantContext = {
   tenants: TenantRow[];
   adminTenantIds: string[];
+  createTenant?: CreateTenantGate | null;
 };
 
 export type TopHeaderSessionBridge = {
@@ -77,18 +89,15 @@ export type TopHeaderProps = {
   onTenantSelected?: (tenantId: string) => void;
 };
 
-async function loadDefaultTenantContext(userId: string): Promise<TopHeaderTenantContext> {
-  const [tenantsJson, adminsJson] = await Promise.all([
-    getTenantsForUser(userId),
-    getTenantsAdministratedByUser(userId),
-  ]);
-  const tenants: TenantRow[] = JSON.parse(tenantsJson);
-  const adminRows: TenantAdminRow[] = JSON.parse(adminsJson);
-  const adminTenantIds = new Set(
-    adminRows.filter((row) => row.user_id === userId).map((row) => row.tenant_id)
-  );
-  tenants.sort((a, b) => a.name.localeCompare(b.name));
-  return { tenants, adminTenantIds };
+/**
+ * Default context loader: the enriched membership listing (OLO-6.2's
+ * `GET /v1/tenants/me` via the `loadTenantMembershipContext` server action,
+ * which resolves the acting user from the server session — so unlike the
+ * injectable `loadTenantContext(userId)` contract, it needs no argument).
+ */
+async function loadDefaultTenantContext(): Promise<TopHeaderTenantContext> {
+  const { tenants, adminTenantIds, createTenant } = await loadTenantMembershipContext();
+  return { tenants, adminTenantIds: new Set(adminTenantIds), createTenant };
 }
 
 type TopHeaderViewProps = Omit<TopHeaderProps, 'sessionBridge'> & TopHeaderSessionBridge;
@@ -121,11 +130,16 @@ function TopHeaderView({
   );
   const [isSwitchingTenant, setIsSwitchingTenant] = useState(false);
   const [tenantSearchQuery, setTenantSearchQuery] = useState('');
+  const [createTenantGate, setCreateTenantGate] = useState<CreateTenantGate | null>(
+    () => initialTenantContext?.createTenant ?? null
+  );
+  const [createTenantOpen, setCreateTenantOpen] = useState(false);
   const [commercialNavItems, setCommercialNavItems] = useState<ExternalNavItem[]>([]);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const tenantMenuRef = useRef<HTMLDivElement | null>(null);
   const navMenuRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const currentTenantId = (session?.user as any)?.current_tenant_id;
   const currentUserId =
     (session?.user as { user_id?: string })?.user_id ??
@@ -188,9 +202,12 @@ function TopHeaderView({
       }
       setIsLoadingTenants(true);
       try {
-        const { tenants, adminTenantIds: admins } = await loadTenantContext(currentUserId ?? '');
+        const { tenants, adminTenantIds: admins, createTenant } = await loadTenantContext(
+          currentUserId ?? ''
+        );
         setUserTenants(tenants);
         setAdminTenantIds(admins);
+        setCreateTenantGate(createTenant ?? null);
         if (currentTenantId) {
           const current = tenants.find((t) => t.id === currentTenantId);
           setCurrentTenantName(current?.name ?? '');
@@ -213,7 +230,9 @@ function TopHeaderView({
   const filteredTenants = React.useMemo(() => {
     const q = tenantSearchQuery.trim().toLowerCase();
     if (!q) return userTenants;
-    return userTenants.filter((t) => t.name.toLowerCase().includes(q));
+    return userTenants.filter(
+      (t) => t.name.toLowerCase().includes(q) || (t.slug ?? '').toLowerCase().includes(q)
+    );
   }, [userTenants, tenantSearchQuery]);
 
   const handleSelectTenant = async (tenantId: string) => {
@@ -225,12 +244,52 @@ function TopHeaderView({
       if (selected) {
         setCurrentTenantName(selected.name);
       }
+      // Durable last-active persistence (OLO-6.1) so the next login restores
+      // this tenant via the OLO-3.3 routing rules. Best-effort — a cookie
+      // write failure must not break the switch itself.
+      persistLastActiveTenant(tenantId).catch((error) => {
+        console.error('Failed to persist last-active tenant:', error);
+      });
       onTenantSelected?.(tenantId);
       setTenantMenuOpen(false);
+      // Re-render server components so tenant-scoped views pick up the new
+      // tenant without a full page reload.
+      router.refresh();
     } catch (error) {
       console.error('Failed to switch tenant:', error);
     } finally {
       setIsSwitchingTenant(false);
+    }
+  };
+
+  /**
+   * A tenant created from the header dialog becomes the active tenant
+   * immediately: activate it in the session, persist last-active, and refresh
+   * so the guard/side-nav render the new tenant's dashboard state.
+   */
+  const handleTenantCreated = async (tenant: CreatedTenant) => {
+    setCreateTenantOpen(false);
+    setUserTenants((current) =>
+      current.some((t) => t.id === tenant.id)
+        ? current
+        : [...current, { id: tenant.id, name: tenant.name, slug: tenant.slug, role: 'owner' }]
+    );
+    // The new tenant consumed one slot of the cap.
+    setCreateTenantGate((gate) =>
+      gate ? { ...gate, used: gate.used + 1, allowed: gate.used + 1 < gate.max } : gate
+    );
+    try {
+      await update({ current_tenant_id: tenant.id });
+      setCurrentTenantName(tenant.name);
+      persistLastActiveTenant(tenant.id).catch((error) => {
+        console.error('Failed to persist last-active tenant:', error);
+      });
+      onTenantSelected?.(tenant.id);
+      router.refresh();
+    } catch (error) {
+      // Non-fatal: the JWT callback re-derives the active tenant on the next
+      // request, so the created tenant is still reachable from the switcher.
+      console.error('Failed to activate created tenant:', error);
     }
   };
 
@@ -450,30 +509,35 @@ function TopHeaderView({
                   ) : (
                     filteredTenants.map((t) => {
                       const isCurrent = t.id === currentTenantId;
-                      const isAdmin = adminTenantIds.has(t.id);
+                      const isSuspended = t.status === 'suspended';
                       return (
                         <button
                           key={t.id}
                           type="button"
                           role="menuitem"
-                          disabled={isSwitchingTenant || isCurrent}
+                          disabled={isSwitchingTenant || isCurrent || isSuspended}
+                          title={
+                            isSuspended
+                              ? 'Your membership in this tenant is suspended'
+                              : undefined
+                          }
                           onClick={() => handleSelectTenant(t.id)}
                           className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm transition-colors ${
                             isCurrent
                               ? 'cursor-default bg-indigo-50 font-medium text-indigo-900 dark:bg-indigo-950/50 dark:text-indigo-100'
-                              : 'cursor-pointer text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                              : isSuspended
+                                ? 'cursor-not-allowed text-gray-400 dark:text-gray-500'
+                                : 'cursor-pointer text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
                           } ${isSwitchingTenant && !isCurrent ? 'opacity-50' : ''}`}
                         >
                           <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                          {isAdmin && (
-                            <span
-                              className="inline-flex shrink-0 items-center gap-0.5 rounded bg-amber-100/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-950/60 dark:text-amber-200"
-                              title="You are an administrator of this tenant"
-                            >
-                              <Shield className="h-3.5 w-3.5" aria-hidden />
-                              Admin
+                          {isSuspended && (
+                            <span className="inline-flex shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                              Suspended
                             </span>
                           )}
+                          <TenantRoleBadge role={t.role} isLegacyAdmin={adminTenantIds.has(t.id)} />
+                          <TenantLicenseChip name={t.licenseName} type={t.licenseType} role={t.role} />
                           {isCurrent && (
                             <Check className="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
                           )}
@@ -482,6 +546,38 @@ function TopHeaderView({
                     })
                   )}
                 </div>
+                {createTenantGate && (
+                  <div className="shrink-0 border-t border-gray-200 p-1 dark:border-gray-600">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid="create-tenant-entry"
+                      disabled={!createTenantGate.allowed}
+                      title={
+                        createTenantGate.allowed
+                          ? undefined
+                          : `Tenant limit reached (${createTenantGate.used} of ${createTenantGate.max} used) — upgrade your plan to create more`
+                      }
+                      onClick={() => {
+                        setTenantMenuOpen(false);
+                        setCreateTenantOpen(true);
+                      }}
+                      className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm transition-colors ${
+                        createTenantGate.allowed
+                          ? 'cursor-pointer text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/40'
+                          : 'cursor-not-allowed text-gray-400 dark:text-gray-500'
+                      }`}
+                    >
+                      <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate">Create tenant</span>
+                      {!createTenantGate.allowed && (
+                        <span className="shrink-0 text-[10px] font-medium text-gray-400 dark:text-gray-500">
+                          {createTenantGate.used}/{createTenantGate.max}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -556,6 +652,13 @@ function TopHeaderView({
         </div>
       </div>
 
+      {/* Create Tenant Dialog (OLO-6.1) */}
+      <CreateTenantDialog
+        open={createTenantOpen}
+        onOpenChange={setCreateTenantOpen}
+        onCreated={handleTenantCreated}
+      />
+
       {/* What's New Dialog */}
       <WhatsNewDialog
         isOpen={showWhatsNew}
@@ -568,6 +671,97 @@ function TopHeaderView({
         onClose={() => setShowThemeSelector(false)}
       />
     </header>
+  );
+}
+
+/** Badge styling per built-in role slug; custom roles use the neutral style. */
+const ROLE_BADGE_CLASSES: Record<string, string> = {
+  owner: 'bg-amber-100/90 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200',
+  admin: 'bg-indigo-100/90 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200',
+  editor: 'bg-emerald-100/90 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200',
+  viewer: 'bg-slate-100 text-slate-600 dark:bg-slate-700/80 dark:text-slate-300',
+};
+
+const ROLE_BADGE_NEUTRAL_CLASS =
+  'bg-slate-100 text-slate-600 dark:bg-slate-700/80 dark:text-slate-300';
+
+/**
+ * Per-tenant effective-role badge (OLO-6.1). With no `role` (legacy name-only
+ * context, e.g. the studio's prefetched rows) it falls back to the pre-OLO-6.1
+ * "Admin" shield driven by `isLegacyAdmin`, so older callers keep their badge.
+ *
+ * @param role Effective RBAC role slug from the enriched listing, if known.
+ * @param isLegacyAdmin Legacy administrator flag for the fallback badge.
+ */
+function TenantRoleBadge({ role, isLegacyAdmin }: { role?: string; isLegacyAdmin: boolean }) {
+  if (!role) {
+    if (!isLegacyAdmin) return null;
+    return (
+      <span
+        className="inline-flex shrink-0 items-center gap-0.5 rounded bg-amber-100/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-950/60 dark:text-amber-200"
+        title="You are an administrator of this tenant"
+      >
+        <Shield className="h-3.5 w-3.5" aria-hidden />
+        Admin
+      </span>
+    );
+  }
+  const showShield = role === 'owner' || role === 'admin';
+  return (
+    <span
+      data-testid="tenant-role-badge"
+      className={`inline-flex shrink-0 items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+        ROLE_BADGE_CLASSES[role] ?? ROLE_BADGE_NEUTRAL_CLASS
+      }`}
+      title={`Your role in this tenant: ${role}`}
+    >
+      {showShield && <Shield className="h-3.5 w-3.5" aria-hidden />}
+      {role}
+    </span>
+  );
+}
+
+/** Chip styling per license billing type (V097: free/paid/sponsor). */
+const LICENSE_CHIP_CLASSES: Record<string, string> = {
+  free: 'text-slate-500 dark:text-slate-400',
+  paid: 'text-indigo-600 dark:text-indigo-400',
+  sponsor: 'text-purple-600 dark:text-purple-400',
+};
+
+/**
+ * Per-tenant license tier chip (OLO-6.1). An unlicensed tenant (no V182 row)
+ * renders as "Free" — the same fallback the OLO-5.3 enforcement applies.
+ * Renders nothing for legacy rows with no enrichment at all (no `role`), so
+ * name-only contexts don't show a misleading tier.
+ *
+ * @param name Plan display name from the enriched listing, if any.
+ * @param type Plan billing type (`free`/`paid`/`sponsor`), if any.
+ * @param role Enrichment marker: chips only render for enriched rows.
+ */
+function TenantLicenseChip({
+  name,
+  type,
+  role,
+}: {
+  name?: string | null;
+  type?: string | null;
+  role?: string;
+}) {
+  if (!role) return null;
+  const label = name || 'Free';
+  const colorClass = LICENSE_CHIP_CLASSES[type ?? 'free'] ?? LICENSE_CHIP_CLASSES.free;
+  return (
+    <span
+      data-testid="tenant-license-chip"
+      className={`inline-flex shrink-0 items-center text-[11px] font-medium ${colorClass}`}
+      title={
+        name
+          ? `License plan: ${name}`
+          : 'No license attached — Free plan defaults apply'
+      }
+    >
+      · {label}
+    </span>
   );
 }
 

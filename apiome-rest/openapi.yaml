@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.26.0
+  version: 1.27.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -16438,13 +16438,13 @@ paths:
       tags:
       - tenants
       summary: List My Tenants
-      description: 'Tenants accessible to the caller.
-
-
-        - JWT: all ``tenant_users`` memberships for the user, with admin vs member
-        role.
-
-        - API key: the key''s tenant only (single-item list).'
+      description: "Tenants accessible to the caller, enriched for the tenant switcher\
+        \ (OLO-6.2, #4219).\n\n- JWT: all memberships for the user, each carrying\
+        \ the effective RBAC role slug\n  (V119 assignment; legacy administrators\
+        \ read as ``owner``; Editor default),\n  the V121 member lifecycle status,\
+        \ and the tenant's attached license plan —\n  resolved in a single query,\
+        \ no per-tenant follow-ups.\n- API key: the key's tenant only (single-item\
+        \ list) with role ``member`` and\n  the tenant's license plan."
       operationId: list_my_tenants_v1_tenants_me_get
       parameters:
       - name: limit
@@ -52110,8 +52110,35 @@ components:
         role:
           type: string
           title: Role
-          description: Role.
+          description: 'Effective RBAC role slug in this tenant: ''owner'', ''admin'',
+            ''editor'', ''viewer'', or a custom role slug. A legacy tenant administrator
+            reads as ''owner''; an API-key principal reads as ''member''.'
           example: example
+        status:
+          type: string
+          title: Status
+          description: 'Member lifecycle status (V121): ''active'', ''pending'' (invited,
+            not yet accepted), or ''suspended'' (access blocked).'
+          default: active
+          example: active
+        license_name:
+          anyOf:
+          - type: string
+            description: Tenant Membership schema.
+          - type: 'null'
+            description: Tenant Membership schema.
+          title: License Name
+          description: Display name of the tenant's attached license plan (e.g. 'Free');
+            null when the tenant has no license row (treated as the Free fallback).
+        license_type:
+          anyOf:
+          - type: string
+            description: Tenant Membership schema.
+          - type: 'null'
+            description: Tenant Membership schema.
+          title: License Type
+          description: 'Billing classification of the attached plan: ''free'', ''paid'',
+            or ''sponsor''; null when the tenant has no license row.'
       type: object
       required:
       - id
@@ -52119,7 +52146,18 @@ components:
       - name
       - role
       title: TenantMembershipSchema
-      description: One tenant the authenticated user may access.
+      description: 'One tenant the authenticated user may access.
+
+
+        Enriched for the tenant switcher (OLO-6.2, #4219): each membership carries
+        the
+
+        caller''s effective RBAC role, the member lifecycle status, and the tenant''s
+
+        attached license plan — all resolved in the same round-trip as the listing
+        so
+
+        the switcher renders without follow-up calls.'
     TenantProvisionedSchema:
       properties:
         id:

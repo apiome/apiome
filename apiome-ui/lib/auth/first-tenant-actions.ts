@@ -65,3 +65,47 @@ export async function provisionFirstTenant(
 
   return result;
 }
+
+/**
+ * Create an additional tenant from the header's tenant switcher (OLO-6.1,
+ * #4218) via the same atomic endpoint as {@link provisionFirstTenant} — REST
+ * explicitly provisions "the first tenant (or next, when the entitlement
+ * allows more than one)".
+ *
+ * The switcher entry is already cap-gated client-side, but the transaction
+ * re-enforces `max_tenants` (OLO-5.3); the 403 `tenant-cap-reached` here is
+ * therefore worded as upgrade guidance rather than the wizard's
+ * "already belongs to a tenant" copy.
+ *
+ * @param orgNameInput Organization display name entered in the dialog.
+ * @param slugInput Optional slug; when blank one is derived from the name.
+ * @returns The created tenant, or a human-readable error.
+ */
+export async function provisionAdditionalTenant(
+  orgNameInput: string,
+  slugInput: string
+): Promise<ProvisionFirstTenantResult> {
+  const session = await getAuthSession();
+  const user = session?.user as
+    | { user_id?: string; email?: string | null; name?: string | null }
+    | undefined;
+  if (!user?.user_id) {
+    return { success: false, error: 'Your session has expired. Please sign in again.' };
+  }
+
+  const result = await provisionFirstTenantViaRest(
+    { user_id: user.user_id, email: user.email, name: user.name },
+    orgNameInput,
+    slugInput
+  );
+
+  if (!result.success && result.code === 'tenant-cap-reached') {
+    return {
+      success: false,
+      error:
+        "You've reached your plan's tenant limit. Upgrade your plan to create more tenants.",
+    };
+  }
+
+  return result;
+}

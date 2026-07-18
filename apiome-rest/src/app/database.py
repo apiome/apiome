@@ -977,12 +977,37 @@ class Database:
         self, user_id: str, limit: int, offset: int
     ) -> List[Dict[str, Any]]:
         """
-        List tenants for a user with role ``admin`` (tenant administrator) or ``member``.
+        List a user's tenant memberships enriched for the tenant switcher (OLO-6.2, #4219).
+
+        One query — no per-tenant follow-ups — returning, per membership row:
+
+        - ``role``: the effective RBAC role slug, resolved exactly like the permission
+          guard (``user_has_permission``): a ``tenant_administrators`` row is
+          Owner-equivalent (V118 rule), otherwise the assigned V119
+          ``tenant_user_roles`` slug, otherwise the built-in Editor default.
+        - ``status``: the V121 member lifecycle status (``active``/``pending``/
+          ``suspended``); an administrator with no ``tenant_users`` row reads as
+          ``active``.
+        - ``license_name`` / ``license_type``: the tenant's attached plan from the
+          V182 ``tenant_licenses`` → V097 catalog join; both NULL when the tenant
+          has no license row (callers treat that as the Free fallback, mirroring
+          ``license_capacity.member_seat_limit``).
+
         Ordered by slug ascending.
+
+        :param user_id: Canonical UUID string of the user.
+        :param limit: Page size.
+        :param offset: Page start.
+        :returns: Rows with ``id``, ``slug``, ``name``, ``role``, ``status``,
+            ``license_name``, ``license_type``.
         """
         query = """
             SELECT t.id::text AS id, t.slug, t.name,
-                   CASE WHEN ta.user_id IS NOT NULL THEN 'admin' ELSE 'member' END AS role
+                   CASE WHEN ta.user_id IS NOT NULL THEN 'owner'
+                        ELSE COALESCE(r.slug, 'editor') END AS role,
+                   COALESCE(tu.status, 'active') AS status,
+                   l.name AS license_name,
+                   l.license_type AS license_type
             FROM apiome.tenants t
             INNER JOIN (
                 SELECT tenant_id, user_id FROM apiome.tenant_users WHERE user_id = %s::uuid
@@ -991,6 +1016,13 @@ class Database:
             ) access ON access.tenant_id = t.id AND access.user_id = %s::uuid
             LEFT JOIN apiome.tenant_administrators ta
               ON ta.tenant_id = t.id AND ta.user_id = access.user_id
+            LEFT JOIN apiome.tenant_users tu
+              ON tu.tenant_id = t.id AND tu.user_id = access.user_id
+            LEFT JOIN apiome.tenant_user_roles tur
+              ON tur.tenant_id = t.id AND tur.user_id = access.user_id
+            LEFT JOIN apiome.roles r ON r.id = tur.role_id
+            LEFT JOIN apiome.tenant_licenses tl ON tl.tenant_id = t.id
+            LEFT JOIN apiome.licenses l ON l.id = tl.license_id
             WHERE t.deleted_at IS NULL AND t.enabled IS TRUE
             ORDER BY t.slug ASC
             LIMIT %s OFFSET %s
