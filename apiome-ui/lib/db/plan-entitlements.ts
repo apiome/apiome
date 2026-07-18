@@ -2,6 +2,7 @@
 
 const connectionPool = require('./db');
 import { entitlementLimitsFromLicenseSeats } from './entitlement-limits-from-license-seats';
+import { DEFAULT_FREE_MAX_TENANTS } from '../auth/tenant-membership-context-mapping';
 
 export type UserEntitlementRow = {
   plan_code: string;
@@ -56,6 +57,27 @@ async function getEntitlements(userId: string, client?: Queryable): Promise<User
     max_projects: row.max_projects,
     max_versions: row.max_versions,
   };
+}
+
+/**
+ * The user's `max_tenants` entitlement for the tenant-cap gate (OLO-6.1, #4218).
+ *
+ * Deliberately mirrors the OLO-5.3 REST enforcement guard (apiome-rest
+ * `provision_first_tenant`) rather than {@link getEntitlements}: the guard reads
+ * the raw `user_entitlements.max_tenants` column (Free default when no row) and
+ * ignores the license-seats JSONB, so the UI gate must do the same — otherwise
+ * the header could invite a "Create tenant" click the transaction would 403.
+ *
+ * @param userId The `apiome.users.id` of the authenticated user.
+ * @returns The maximum tenants the user may belong to/create.
+ */
+export async function getMaxTenantsForUser(userId: string): Promise<number> {
+  const result = await connectionPool.query(
+    `SELECT max_tenants FROM apiome.user_entitlements WHERE user_id = $1`,
+    [userId]
+  );
+  const value = result.rows[0]?.max_tenants;
+  return value === null || value === undefined ? DEFAULT_FREE_MAX_TENANTS : Number(value);
 }
 
 async function countProjectsForUser(userId: string, client?: Queryable): Promise<number> {
