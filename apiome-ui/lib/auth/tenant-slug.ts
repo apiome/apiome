@@ -10,6 +10,22 @@
 /** Allowed shape of a stored tenant slug: lowercase letters, digits, dashes. */
 const SLUG_REGEX = /^[a-z0-9-]+$/;
 
+/** Shortest accepted tenant slug. */
+export const TENANT_SLUG_MIN_LENGTH = 2;
+
+/**
+ * Longest accepted tenant slug — the `apiome.tenants.slug` column is
+ * `VARCHAR(255)` (V001), so anything longer fails at insert time.
+ */
+export const TENANT_SLUG_MAX_LENGTH = 255;
+
+/**
+ * Slugs that collide with REST route segments under `/v1/tenants/*` and would
+ * make the tenant unreachable (`HEAD /v1/tenants/me` is the session's
+ * membership check, never a tenant lookup).
+ */
+const RESERVED_SLUGS = new Set(['me']);
+
 /**
  * Derive a URL-safe slug from a human-readable organization name.
  *
@@ -37,7 +53,13 @@ export function generateTenantSlug(name: string): string {
 export function validateTenantSlug(slug: string): string | null {
   if (!slug?.trim()) return 'Tenant slug is required';
   const s = slug.trim().toLowerCase();
-  if (s.length < 2) return 'Slug must be at least 2 characters';
+  if (s.length < TENANT_SLUG_MIN_LENGTH) {
+    return `Slug must be at least ${TENANT_SLUG_MIN_LENGTH} characters`;
+  }
+  if (s.length > TENANT_SLUG_MAX_LENGTH) {
+    return `Slug must be at most ${TENANT_SLUG_MAX_LENGTH} characters`;
+  }
   if (!SLUG_REGEX.test(s)) return 'Slug must contain only lowercase letters, numbers, and dashes';
+  if (RESERVED_SLUGS.has(s)) return `"${s}" is a reserved word and cannot be used as a slug`;
   return null;
 }

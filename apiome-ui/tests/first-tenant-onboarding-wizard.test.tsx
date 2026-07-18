@@ -30,6 +30,14 @@ jest.mock('@lib/auth/first-tenant-actions', () => ({
   provisionFirstTenant: (name: string, slug: string) => mockProvisionFirstTenant(name, slug),
 }));
 
+// The organization step's live availability probe (OLO-4.2) is covered in
+// depth by onboarding-organization-step.test.tsx; here it always reports the
+// slug free so wizard flows continue past the submit-time check.
+const mockCheckSlugAvailability = jest.fn<Promise<{ status: string }>, [string]>();
+jest.mock('@lib/auth/tenant-slug-availability', () => ({
+  checkTenantSlugAvailability: (slug: string) => mockCheckSlugAvailability(slug),
+}));
+
 import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
 import { FREE_LICENSE_SUMMARY } from '@lib/auth/free-license';
 import {
@@ -43,15 +51,18 @@ beforeEach(() => {
     success: true,
     tenant: { id: 't-1', name: 'Acme Corp', slug: 'acme-corp' },
   });
+  mockCheckSlugAvailability.mockResolvedValue({ status: 'available' });
 });
 
-/** Clicks through welcome → organization with the given form values. */
+/**
+ * Clicks through welcome → organization with the given form values. Submit is
+ * async (availability check); happy-path callers must await the summary step
+ * (`await screen.findByTestId('onboarding-step-summary')`) before continuing.
+ */
 const fillOrganizationStep = (name: string, slug = '') => {
   fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
   fireEvent.change(screen.getByPlaceholderText('Acme, Inc.'), { target: { value: name } });
-  if (slug) {
-    fireEvent.change(screen.getByPlaceholderText('acme-inc'), { target: { value: slug } });
-  }
+  fireEvent.change(screen.getByPlaceholderText('acme-inc'), { target: { value: slug } });
   fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 };
 
@@ -138,10 +149,11 @@ describe('FirstTenantOnboardingWizard: organization step', () => {
     expect(screen.getByText(/could not derive a url slug/i)).toBeInTheDocument();
   });
 
-  it('keeps entered values when navigating back to the welcome step', () => {
+  it('keeps entered values when navigating back to the welcome step', async () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
+    await screen.findByTestId('onboarding-step-summary');
     fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // summary → organization
     fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // organization → welcome
     fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
@@ -152,22 +164,22 @@ describe('FirstTenantOnboardingWizard: organization step', () => {
 });
 
 describe('FirstTenantOnboardingWizard: summary step', () => {
-  it('shows the entered details with the slug derived from the name when blank', () => {
+  it('shows the entered details with the slug derived from the name when blank', async () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme, Inc.');
 
-    expect(screen.getByTestId('onboarding-step-summary')).toBeInTheDocument();
+    expect(await screen.findByTestId('onboarding-step-summary')).toBeInTheDocument();
     expect(screen.getByText('Acme, Inc.')).toBeInTheDocument();
     expect(screen.getByText('acme-inc')).toBeInTheDocument();
   });
 
-  it('renders the Free-license summary before confirm', () => {
+  it('renders the Free-license summary before confirm', async () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp');
 
-    const summary = screen.getByTestId('free-license-summary');
+    const summary = await screen.findByTestId('free-license-summary');
     expect(summary).toHaveTextContent(`${FREE_LICENSE_SUMMARY.planName} plan`);
     for (const limit of FREE_LICENSE_SUMMARY.limits) {
       expect(summary).toHaveTextContent(limit.label);
@@ -183,7 +195,7 @@ describe('FirstTenantOnboardingWizard: summary step', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
 
     expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
     expect(mockProvisionFirstTenant).toHaveBeenCalledWith('Acme Corp', 'acme-corp');
@@ -198,7 +210,7 @@ describe('FirstTenantOnboardingWizard: summary step', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/slug already exists/i);
     expect(screen.getByTestId('onboarding-step-summary')).toBeInTheDocument();
@@ -210,7 +222,7 @@ describe('FirstTenantOnboardingWizard: summary step', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp');
-    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
     consoleError.mockRestore();
@@ -222,7 +234,7 @@ describe('FirstTenantOnboardingWizard: completion', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
     fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
@@ -236,7 +248,7 @@ describe('FirstTenantOnboardingWizard: completion', () => {
     render(<FirstTenantOnboardingWizard />);
 
     fillOrganizationStep('Acme Corp', 'acme-corp');
-    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
     fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
