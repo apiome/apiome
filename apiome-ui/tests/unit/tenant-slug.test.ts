@@ -5,7 +5,11 @@
  * tenant slugs, shared by OAuth self-signup and the first-tenant onboarding
  * wizard — the wizard previews the exact slug the server action will create.
  */
-import { generateTenantSlug, validateTenantSlug } from '../../lib/auth/tenant-slug';
+import {
+  generateTenantSlug,
+  validateTenantSlug,
+  TENANT_SLUG_MAX_LENGTH,
+} from '../../lib/auth/tenant-slug';
 
 describe('generateTenantSlug', () => {
   it('lowercases and dash-joins a plain name', () => {
@@ -48,5 +52,15 @@ describe('validateTenantSlug', () => {
 
   it('normalizes case before checking', () => {
     expect(validateTenantSlug('ACME-INC')).toBeNull();
+  });
+
+  it('rejects slugs longer than the tenants.slug column (OLO-4.2)', () => {
+    expect(validateTenantSlug('a'.repeat(TENANT_SLUG_MAX_LENGTH))).toBeNull();
+    expect(validateTenantSlug('a'.repeat(TENANT_SLUG_MAX_LENGTH + 1))).toMatch(/at most/i);
+  });
+
+  it('rejects the reserved REST route segment "me" (OLO-4.2)', () => {
+    expect(validateTenantSlug('me')).toMatch(/reserved/i);
+    expect(validateTenantSlug('ME')).toMatch(/reserved/i);
   });
 });
