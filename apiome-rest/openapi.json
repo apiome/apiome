@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.21.0",
+    "version": "1.22.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -23483,6 +23483,106 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for get tenant inforesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onboarding/first-tenant": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Provision First Tenant",
+        "description": "Atomically provision the caller's first tenant (or next, when their\nentitlement allows more than one).\n\nAll-or-nothing: any failure rolls back every write. A second call for a\nuser already at their ``max_tenants`` cap returns 409 ``tenant-cap-reached``.",
+        "operationId": "provision_first_tenant_v1_onboarding_first_tenant_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Provision First Tenantauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Provision First Tenantauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Provision First Tenant Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Provision First Tenant Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirstTenantProvisionRequest",
+                "description": "Request body for provision first tenantrequest."
+              }
+            }
+          },
+          "description": "Request body for provision first tenant."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for provision first tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirstTenantProvisionResponse",
+                  "description": "Response payload for provision first tenantresponse201."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid organization name or slug."
+          },
+          "401": {
+            "description": "Missing or invalid session credentials."
+          },
+          "403": {
+            "description": "API-key sessions cannot provision tenants."
+          },
+          "409": {
+            "description": "Structured conflict: ``tenant-cap-reached`` when the caller is at their max-tenants entitlement, ``tenant-slug-taken`` when the slug is already in use."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for provision first tenantresponse422."
                 }
               }
             }
@@ -47506,6 +47606,71 @@
         "title": "ExternalLintAdaptersResponse",
         "description": "Discovery for Spectral / Vacuum / Redocly validation packs (CLX-2.2)."
       },
+      "FirstTenantProvisionRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Organization display name.",
+            "example": "Pet"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for first tenant provision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for first tenant provision."
+              }
+            ],
+            "title": "Slug",
+            "description": "Tenant slug; derived from the name when omitted or blank."
+          },
+          "provision_sample_project": {
+            "type": "boolean",
+            "title": "Provision Sample Project",
+            "description": "Seed the curated sample project into the new tenant (best-effort).",
+            "default": true,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "FirstTenantProvisionRequest",
+        "description": "Body of ``POST /v1/onboarding/first-tenant`` (OLO-4.3, #4207)."
+      },
+      "FirstTenantProvisionResponse": {
+        "properties": {
+          "tenant": {
+            "$ref": "#/components/schemas/TenantProvisionedSchema",
+            "description": "Tenant."
+          },
+          "sample_project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for first tenant provision."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for first tenant provision."
+              }
+            ],
+            "title": "Sample Project Id",
+            "description": "Id of the seeded sample project; null when skipped or unavailable."
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant"
+        ],
+        "title": "FirstTenantProvisionResponse",
+        "description": "Result of ``POST /v1/onboarding/first-tenant``."
+      },
       "FormatCandidateModel": {
         "properties": {
           "format": {
@@ -69387,6 +69552,50 @@
         ],
         "title": "TenantMembershipSchema",
         "description": "One tenant the authenticated user may access."
+      },
+      "TenantProvisionedSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Tenant Provisioned schema."
+              },
+              {
+                "type": "null",
+                "description": "Tenant Provisioned schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ],
+        "title": "TenantProvisionedSchema",
+        "description": "The tenant created by first-tenant provisioning."
       },
       "TenantRepositoriesListResponse": {
         "properties": {
