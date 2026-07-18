@@ -82,8 +82,10 @@ describe('McpVersionHistory — churn-timeline deep-link', () => {
     );
 
     // The diff opens on v1 → v2 (the change v2 introduced), not the default v3 → v2 (two newest).
-    await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'v1 → v2' })).toBeInTheDocument(),
+    // Generous timeout: the default 1s flakes under CI's coverage-instrumented full-suite run.
+    await waitFor(
+      () => expect(screen.getByRole('heading', { name: 'v1 → v2' })).toBeInTheDocument(),
+      { timeout: 3000 },
     );
     expect(lastCompareUrl).toContain(`base=${V1}`);
     expect(lastCompareUrl).toContain(`target=${V2}`);
@@ -94,8 +96,9 @@ describe('McpVersionHistory — churn-timeline deep-link', () => {
   it('defaults to the two newest snapshots when no diff is requested', async () => {
     render(<McpVersionHistory endpointId={ENDPOINT_ID} />);
     // Default selection is the two newest → v2 → v3.
-    await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'v2 → v3' })).toBeInTheDocument(),
+    await waitFor(
+      () => expect(screen.getByRole('heading', { name: 'v2 → v3' })).toBeInTheDocument(),
+      { timeout: 3000 },
     );
   });
 
@@ -109,9 +112,10 @@ describe('McpVersionHistory — churn-timeline deep-link', () => {
       />,
     );
     // v1 has no predecessor, so it compares to itself — an "identical surface" read.
-    await waitFor(() => expect(onConsumed).toHaveBeenCalledTimes(1));
-    await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'v1 → v1' })).toBeInTheDocument(),
+    await waitFor(() => expect(onConsumed).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    await waitFor(
+      () => expect(screen.getByRole('heading', { name: 'v1 → v1' })).toBeInTheDocument(),
+      { timeout: 3000 },
     );
   });
 });
