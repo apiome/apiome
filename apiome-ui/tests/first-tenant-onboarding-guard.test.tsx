@@ -12,10 +12,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-const mockGetTenantsForUser = jest.fn<Promise<string>, [string]>();
+const mockGetTenantMembershipsForUser = jest.fn<Promise<string>, [string]>();
 
 jest.mock('../lib/db/helper', () => ({
-  getTenantsForUser: (userId: string) => mockGetTenantsForUser(userId),
+  getTenantMembershipsForUser: (userId: string) => mockGetTenantMembershipsForUser(userId),
 }));
 
 jest.mock('next-auth/react', () => ({
@@ -45,21 +45,22 @@ import FirstTenantOnboardingGuard from '@/app/components/auth/FirstTenantOnboard
 const mockGetAuthSession = getAuthSession as jest.Mock;
 
 const sessionFor = (userId: string) => ({ user: { user_id: userId } });
-const tenantRows = (...tenants: Array<{ id: string; name: string }>) => JSON.stringify(tenants);
+const tenantRows = (...tenants: Array<{ id: string; name: string; status?: string }>) =>
+  JSON.stringify(tenants);
 
 /** Renders the async server component the way React would: awaited, then mounted. */
 const renderGuard = async (children: React.ReactNode = <div data-testid="route-content" />) =>
   render(await FirstTenantOnboardingGuard({ children }));
 
 beforeEach(() => {
-  mockGetTenantsForUser.mockReset();
+  mockGetTenantMembershipsForUser.mockReset();
   mockGetAuthSession.mockReset();
 });
 
 describe('FirstTenantOnboardingGuard', () => {
   it('prompts the onboarding wizard for an authenticated user with zero memberships', async () => {
     mockGetAuthSession.mockResolvedValueOnce(sessionFor('user-1'));
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows());
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows());
 
     await renderGuard();
 
@@ -70,7 +71,19 @@ describe('FirstTenantOnboardingGuard', () => {
 
   it('renders the route content for a tenant member', async () => {
     mockGetAuthSession.mockResolvedValueOnce(sessionFor('user-1'));
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+
+    await renderGuard();
+
+    expect(screen.getByTestId('route-content')).toBeInTheDocument();
+    expect(screen.queryByTestId('first-tenant-onboarding-wizard')).not.toBeInTheDocument();
+  });
+
+  it('renders the route content for an invited user with only a pending membership (OLO-4.4)', async () => {
+    mockGetAuthSession.mockResolvedValueOnce(sessionFor('user-1'));
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
+      tenantRows({ id: 't1', name: 'Acme', status: 'pending' })
+    );
 
     await renderGuard();
 
@@ -84,13 +97,13 @@ describe('FirstTenantOnboardingGuard', () => {
     await renderGuard();
 
     expect(screen.getByTestId('route-content')).toBeInTheDocument();
-    expect(mockGetTenantsForUser).not.toHaveBeenCalled();
+    expect(mockGetTenantMembershipsForUser).not.toHaveBeenCalled();
   });
 
   it('fails open to the route content when the membership lookup throws', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     mockGetAuthSession.mockResolvedValueOnce(sessionFor('user-1'));
-    mockGetTenantsForUser.mockRejectedValueOnce(new Error('db down'));
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
 
     await renderGuard();
 

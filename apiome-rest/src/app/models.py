@@ -5919,6 +5919,28 @@ class FirstTenantProvisionResponse(BaseModel):
     )
 
 
+class MembershipActivationRequest(BaseModel):
+    """Body of ``POST /v1/onboarding/membership-activation`` (OLO-4.4, #4208)."""
+
+    tenant_id: str = Field(
+        ...,
+        description="Tenant whose pending membership should be activated for the caller.",
+    )
+
+
+class MembershipActivationResponse(BaseModel):
+    """Result of ``POST /v1/onboarding/membership-activation``."""
+
+    status: Literal["activated", "already-active"] = Field(
+        ...,
+        description=(
+            "``activated`` when a pending membership transitioned to active, "
+            "``already-active`` when there was nothing to do."
+        ),
+    )
+    tenant_id: str = Field(..., description="Tenant the membership belongs to.")
+
+
 class BrowseDirectoryStats(BaseModel):
     """Aggregate counts for published public specs (browse directory home)."""
 

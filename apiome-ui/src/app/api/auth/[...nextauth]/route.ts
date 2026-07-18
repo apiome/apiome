@@ -14,6 +14,7 @@ import {
 } from '../../../../../lib/auth/cookie-options';
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
 import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
+import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -124,6 +125,17 @@ export const authOptions: NextAuthOptions = {
         );
         if (activeTenant) {
           token.current_tenant_id = activeTenant;
+          // Invited-user path (OLO-4.4): first arrival in the inviting tenant
+          // transitions a pending membership to active. Never throws — an
+          // activation failure must not break the sign-in.
+          await activatePendingMembershipForLogin(
+            {
+              user_id: payload.user.id,
+              email: payload.user.email,
+              name: payload.user.name,
+            },
+            activeTenant
+          );
         } else {
           delete token.current_tenant_id;
         }

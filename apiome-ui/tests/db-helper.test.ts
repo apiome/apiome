@@ -321,6 +321,28 @@ describe('Database Helper - Tenant Functions', () => {
     expect(tenants[0].name).toBe('Tenant 1');
   });
 
+  test('getTenantMembershipsForUser should return live memberships with status (OLO-4.4)', async () => {
+    const { getTenantMembershipsForUser } = await import('../lib/db/helper');
+
+    mockQuery.mockResolvedValue({
+      rows: [
+        { id: 'tenant-1', name: 'Tenant 1', status: 'active' },
+        { id: 'tenant-2', name: 'Tenant 2', status: 'pending' }
+      ]
+    });
+
+    const result = await getTenantMembershipsForUser('user-1');
+    const memberships = JSON.parse(result);
+
+    expect(memberships.length).toBe(2);
+    expect(memberships[1].status).toBe('pending');
+    // The query itself must be status-aware: pending counts, suspended never
+    // reaches the caller.
+    const sql = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain("status IN ('active', 'pending')");
+    expect(mockQuery.mock.calls[0][1]).toEqual(['user-1']);
+  });
+
   test('getTenantUsers should return users for tenant', async () => {
     const { getTenantUsers } = await import('../lib/db/helper');
 

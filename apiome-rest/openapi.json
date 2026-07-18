@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.22.0",
+    "version": "1.23.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -23583,6 +23583,106 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for provision first tenantresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onboarding/membership-activation": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Activate Membership",
+        "description": "Activate the caller's *pending* membership in a tenant (invited-user\nfirst arrival, OLO-4.4).\n\nIdempotent: an already-active membership returns 200\n``already-active``. Only ``pending`` rows are touched \u2014 a ``suspended``\nmembership returns 403 ``membership-suspended`` and stays suspended.",
+        "operationId": "activate_membership_v1_onboarding_membership_activation_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Activate Membershipauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Activate Membershipauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Activate Membership Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Activate Membership Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MembershipActivationRequest",
+                "description": "Request body for activate membershiprequest."
+              }
+            }
+          },
+          "description": "Request body for activate membership."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for activate membership.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipActivationResponse",
+                  "description": "Response payload for activate membershipresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "``tenant_id`` is missing or not a UUID."
+          },
+          "401": {
+            "description": "Missing or invalid session credentials."
+          },
+          "403": {
+            "description": "API-key sessions cannot activate memberships, or the membership is ``suspended`` (structured code ``membership-suspended``) \u2014 logging in never unsuspends."
+          },
+          "404": {
+            "description": "The caller has no membership in this tenant (structured code ``membership-not-found``)."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for activate membershipresponse422."
                 }
               }
             }
@@ -61098,6 +61198,49 @@
         "type": "object",
         "title": "MemberUpdateRequest",
         "description": "Change a member's role and/or lifecycle status."
+      },
+      "MembershipActivationRequest": {
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant whose pending membership should be activated for the caller.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant_id"
+        ],
+        "title": "MembershipActivationRequest",
+        "description": "Body of ``POST /v1/onboarding/membership-activation`` (OLO-4.4, #4208)."
+      },
+      "MembershipActivationResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "activated",
+              "already-active"
+            ],
+            "title": "Status",
+            "description": "``activated`` when a pending membership transitioned to active, ``already-active`` when there was nothing to do.",
+            "example": "active"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant the membership belongs to.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "tenant_id"
+        ],
+        "title": "MembershipActivationResponse",
+        "description": "Result of ``POST /v1/onboarding/membership-activation``."
       },
       "MergeSessionStatusPatchRequest": {
         "properties": {
