@@ -35,6 +35,7 @@ import {
   dashboardTrHoverClass,
 } from '@/app/components/ade/dashboard/dashboardScreenClasses';
 import TenantMcpSettingsPanel from './TenantMcpSettingsPanel';
+import TenantLicensePanel from './TenantLicensePanel';
 
 interface Tenant {
   id: string;
@@ -698,6 +699,11 @@ const Tenants = () => {
                       </>
                     )}
                   </div>
+
+                  <TenantLicensePanel
+                    isCurrentTenant={Boolean(currentTenantId) && tenant.id === currentTenantId}
+                    tenantName={tenant.name}
+                  />
 
                   <TenantMcpSettingsPanel
                     isCurrentTenant={Boolean(currentTenantId) && tenant.id === currentTenantId}
