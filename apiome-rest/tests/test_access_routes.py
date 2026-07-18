@@ -1,6 +1,6 @@
 """API tests for the Access & IAM routes (#3611): roles, members, audit, platform override."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -148,8 +148,15 @@ def test_delete_custom_role_ok():
 # ---------------------------------------------------------------------------
 
 
+def _seat_available(ldb, used=1, limit=5):
+    """Configure the license-capacity db mock with `used` of `limit` seats occupied."""
+    ldb.get_tenant_license_seats.return_value = {"max_users_per_tenant": limit}
+    ldb.count_member_seats_in_use.return_value = used
+
+
 def test_invite_unknown_account_404():
-    with patch("app.access_routes.db") as mdb:
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb)
         mdb.get_user_by_email.return_value = None
         r = client.post("/v1/access/acme/members", json={"email": "ghost@nowhere.com"})
     assert r.status_code == 404
@@ -157,7 +164,8 @@ def test_invite_unknown_account_404():
 
 
 def test_invite_existing_account_assigns_role():
-    with patch("app.access_routes.db") as mdb:
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb)
         mdb.get_user_by_email.return_value = {"id": "u-9", "email": "noah@partner.com"}
         mdb.get_role.return_value = {**_ROLE_CUSTOM}
         r = client.post(
@@ -170,13 +178,63 @@ def test_invite_existing_account_assigns_role():
     assert mdb.write_access_audit.call_args.kwargs["action"] == "member.invited"
 
 
+def test_invite_blocked_when_seats_exhausted():
+    # OLO-5.3 (#4213): the 6th non-suspended member on a 5-seat license is refused
+    # with the structured code before any lookup or membership write happens.
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=5, limit=5)
+        r = client.post("/v1/access/acme/members", json={"email": "noah@partner.com"})
+    assert r.status_code == 403
+    assert r.json()["detail"]["code"] == "license-seats-exhausted"
+    mdb.get_user_by_email.assert_not_called()
+    mdb.add_member.assert_not_called()
+
+
 def test_suspend_member_audits():
-    with patch("app.access_routes.db") as mdb:
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
         mdb.set_member_status.return_value = 1
         r = client.patch("/v1/access/acme/members/u-9", json={"status": "suspended"})
     assert r.status_code == 200
     mdb.set_member_status.assert_called_once_with(_AUTH["tenant_id"], "u-9", "suspended")
     assert mdb.write_access_audit.call_args.kwargs["action"] == "member.suspended"
+    # Suspending frees a seat; it must never consult the capacity guard.
+    ldb.count_member_seats_in_use.assert_not_called()
+
+
+def test_reinstate_blocked_when_seats_exhausted():
+    # OLO-5.3 (#4213): a suspended member doesn't hold a seat, so reinstating one
+    # consumes a seat and is refused at capacity (blocks the suspend → invite →
+    # reinstate bypass).
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=5, limit=5)
+        mdb.get_member_status.return_value = "suspended"
+        r = client.patch("/v1/access/acme/members/u-9", json={"status": "active"})
+    assert r.status_code == 403
+    assert r.json()["detail"]["code"] == "license-seats-exhausted"
+    mdb.set_member_status.assert_not_called()
+
+
+def test_reinstate_allowed_with_free_seat():
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=4, limit=5)
+        mdb.get_member_status.return_value = "suspended"
+        mdb.set_member_status.return_value = 1
+        r = client.patch("/v1/access/acme/members/u-9", json={"status": "active"})
+    assert r.status_code == 200
+    mdb.set_member_status.assert_called_once_with(_AUTH["tenant_id"], "u-9", "active")
+    assert mdb.write_access_audit.call_args.kwargs["action"] == "member.reinstated"
+
+
+def test_status_change_between_seated_states_skips_capacity_check():
+    # active → pending (or re-asserting active) never consumes a new seat, so the
+    # guard is not consulted even when the tenant is at capacity.
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=5, limit=5)
+        mdb.get_member_status.return_value = "active"
+        mdb.set_member_status.return_value = 1
+        r = client.patch("/v1/access/acme/members/u-9", json={"status": "pending"})
+    assert r.status_code == 200
+    ldb.count_member_seats_in_use.assert_not_called()
 
 
 def test_update_member_rejects_bad_status():

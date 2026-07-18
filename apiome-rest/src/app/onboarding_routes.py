@@ -72,12 +72,17 @@ def _format_created(value: Any) -> Optional[str]:
     responses={
         400: {"description": "Invalid organization name or slug."},
         401: {"description": "Missing or invalid session credentials."},
-        403: {"description": "API-key sessions cannot provision tenants."},
+        403: {
+            "description": (
+                "API-key sessions cannot provision tenants, or (structured, "
+                "OLO-5.3) ``tenant-cap-reached`` when the caller is at their "
+                "max-tenants entitlement."
+            )
+        },
         409: {
             "description": (
-                "Structured conflict: ``tenant-cap-reached`` when the caller is at "
-                "their max-tenants entitlement, ``tenant-slug-taken`` when the slug "
-                "is already in use."
+                "Structured conflict: ``tenant-slug-taken`` when the slug is "
+                "already in use."
             )
         },
     },
@@ -91,7 +96,8 @@ async def provision_first_tenant(
     entitlement allows more than one).
 
     All-or-nothing: any failure rolls back every write. A second call for a
-    user already at their ``max_tenants`` cap returns 409 ``tenant-cap-reached``.
+    user already at their ``max_tenants`` cap returns 403 ``tenant-cap-reached``
+    (the license enforcement guard, OLO-5.3 #4213).
     """
     if session.get("auth_method") != "jwt":
         # API keys are tenant-scoped credentials; only a user session may
@@ -117,7 +123,13 @@ async def provision_first_tenant(
 
     try:
         tenant = db.provision_first_tenant(user_id, name, slug)
-    except (TenantCapReachedError, TenantSlugConflictError) as e:
+    except TenantCapReachedError as e:
+        # License enforcement guard (OLO-5.3, #4213): the caller's tenant count is
+        # at ``user_entitlements.max_tenants`` (Free default when no row) — a 403
+        # with the stable ``tenant-cap-reached`` code, not a 409, so the wizard and
+        # UI can render upgrade guidance alongside the seat-exhausted guard.
+        raise HTTPException(status_code=403, detail={"code": e.code, "message": e.message})
+    except TenantSlugConflictError as e:
         raise HTTPException(status_code=409, detail={"code": e.code, "message": e.message})
     except TenantProvisioningError as e:
         logger.error("first-tenant provisioning failed for user %s: %s", user_id, e.message)

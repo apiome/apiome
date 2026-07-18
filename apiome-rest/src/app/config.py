@@ -210,6 +210,21 @@ class Settings(BaseSettings):
         ),
     )
 
+    # License seat/capacity enforcement (OLO-5.3, #4213). When True (default), the
+    # member-invite route and the suspended-member reinstate path refuse to exceed the
+    # tenant license's ``seats.max_users_per_tenant`` (structured 403, code
+    # ``license-seats-exhausted``). Set to False as an operator kill switch to restore
+    # pre-5.3 behavior without redeploying; the tenant-cap check in first-tenant
+    # provisioning (``user_entitlements.max_tenants``) is transactional and is NOT
+    # affected by this switch.
+    license_enforcement_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_LICENSE_ENFORCEMENT_ENABLED",
+            "license_enforcement_enabled",
+        ),
+    )
+
     # SSRF guard (#3612). When False (default), user-supplied URLs fetched by the
     # import-from-URL and public repository-registration paths are resolved and
     # rejected if they point at non-public addresses (loopback, RFC1918,

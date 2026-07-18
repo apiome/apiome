@@ -29,7 +29,7 @@ export type ProvisionFirstTenantResult =
  * - Name/slug are re-validated server-side, and the endpoint enforces slug
  *   uniqueness and the caller's `max_tenants` entitlement inside the
  *   transaction — a second tab or stale wizard prompt cannot create extra
- *   tenants (409 `tenant-cap-reached`).
+ *   tenants (403 `tenant-cap-reached`, OLO-5.3).
  *
  * @param orgNameInput Organization display name entered in the wizard.
  * @param slugInput Optional slug; when blank one is derived from the name.
