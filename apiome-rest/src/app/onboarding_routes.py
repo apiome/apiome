@@ -20,6 +20,11 @@ These endpoints are the single provisioning path: the onboarding wizard, the
 OAuth-signup server action (``apiome-ui/lib/auth/oauth-signup-actions.ts``),
 and the sign-in arrival hook all call them instead of issuing their own DB
 writes.
+
+Both endpoints sit on the auth surface, so they carry dedicated per-IP and
+per-account rate-limit budgets (OLO-7.1, #4223 — see :mod:`app.auth_rate_limit`)
+on top of the global middleware; over-budget calls get a structured 429 with
+``Retry-After``.
 """
 
 from __future__ import annotations
@@ -32,6 +37,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import normalize_user_id, validate_session_credentials
+from .auth_rate_limit import (
+    enforce_auth_account_rate_limit,
+    enforce_auth_ip_rate_limit,
+)
 from .database import (
     TenantCapReachedError,
     TenantProvisioningError,
@@ -49,7 +58,14 @@ from .tenant_slug import generate_tenant_slug, validate_tenant_slug
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/v1/onboarding", tags=["onboarding"])
+# The per-IP auth budget runs as a router dependency so it fires before the
+# session dependency on every onboarding route (OLO-7.1, #4223); the tighter
+# per-account budget is enforced inside each endpoint once the user id is known.
+router = APIRouter(
+    prefix="/v1/onboarding",
+    tags=["onboarding"],
+    dependencies=[Depends(enforce_auth_ip_rate_limit)],
+)
 
 
 def _format_created(value: Any) -> Optional[str]:
@@ -85,6 +101,13 @@ def _format_created(value: Any) -> Optional[str]:
                 "already in use."
             )
         },
+        429: {
+            "description": (
+                "Structured throttle (OLO-7.1): ``auth-rate-limited`` when the "
+                "caller's per-IP or per-account auth budget is spent; carries "
+                "``Retry-After``."
+            )
+        },
     },
 )
 async def provision_first_tenant(
@@ -110,6 +133,10 @@ async def provision_first_tenant(
     user_id = normalize_user_id(session.get("user_id"))
     if not user_id:
         raise HTTPException(status_code=401, detail="Missing user identifier")
+
+    # Per-account budget (OLO-7.1): the per-IP budget already ran as a router
+    # dependency; this stops one account spraying provisioning from many IPs.
+    enforce_auth_account_rate_limit(user_id)
 
     name = (payload.name or "").strip()
     if not name:
@@ -191,6 +218,13 @@ def _normalize_tenant_id(value: Any) -> Optional[str]:
                 "code ``membership-not-found``)."
             )
         },
+        429: {
+            "description": (
+                "Structured throttle (OLO-7.1): ``auth-rate-limited`` when the "
+                "caller's per-IP or per-account auth budget is spent; carries "
+                "``Retry-After``."
+            )
+        },
     },
 )
 async def activate_membership(
@@ -216,6 +250,9 @@ async def activate_membership(
     user_id = normalize_user_id(session.get("user_id"))
     if not user_id:
         raise HTTPException(status_code=401, detail="Missing user identifier")
+
+    # Per-account budget (OLO-7.1); the per-IP budget ran as a router dependency.
+    enforce_auth_account_rate_limit(user_id)
 
     tenant_id = _normalize_tenant_id(payload.tenant_id)
     if not tenant_id:

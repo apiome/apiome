@@ -1,13 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isProviderEnabled } from '../../../../../lib/auth/provider-registry';
+import { resolveClientIp } from '../../../../../lib/auth/client-ip';
+import {
+  AUTH_RATE_LIMITED_CODE,
+  checkRequestBudget,
+} from '../../../../../lib/auth/login-rate-limit';
 
 /**
  * Sets a short-lived cookie so the next OAuth callback is treated as self-signup (new account).
  * The provider must be enabled in this deployment's provider registry (OLO-2.3) — the same
  * gate that decides which sign-up buttons the login page renders.
  * Uses POST to prevent CSRF-style flow manipulation via cross-site GET requests.
+ *
+ * Signup completion is part of the auth surface, so the route carries a per-IP
+ * request budget (OLO-7.1): over-budget calls get a structured 429
+ * (`auth-rate-limited`) with `Retry-After` before any other work runs.
  */
 export async function POST(request: NextRequest) {
+  const ipBudget = checkRequestBudget(`signup-intent:ip:${resolveClientIp(request.headers)}`);
+  if (!ipBudget.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Too many signup requests. Try again later.',
+        code: AUTH_RATE_LIMITED_CODE,
+      },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.max(1, Math.ceil(ipBudget.retryAfterMs / 1000))) },
+      }
+    );
+  }
+
   // Validate Origin to prevent cross-site requests
   const origin = request.headers.get('origin');
   const host = request.headers.get('host');

@@ -14,6 +14,7 @@ import {
 } from '../../../../../lib/auth/cookie-options';
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
 import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
+import { resolveClientIp } from '../../../../../lib/auth/client-ip';
 import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
 import { readLastActiveTenantId } from '../../../../../lib/auth/last-active-tenant';
 
@@ -32,7 +33,10 @@ export const authOptions: NextAuthOptions = {
       credentials: {},
       async authorize(credentials: any, req) {
         const credentialPayload = JSON.parse(credentials?.payload ?? '{}');
-        return await credentialsAuthorize(credentialPayload as ICredentials);
+        // Per-IP brute-force budget (OLO-7.1): NextAuth hands authorize a plain
+        // header object; resolveClientIp handles both that and Headers.
+        const clientIp = resolveClientIp(req?.headers);
+        return await credentialsAuthorize(credentialPayload as ICredentials, clientIp);
       }
     })
   ],

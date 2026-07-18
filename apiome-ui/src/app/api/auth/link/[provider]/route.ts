@@ -6,6 +6,25 @@ import {
   LINKABLE_PROVIDERS,
 } from '../../../../../../lib/auth/account-resolution';
 import { isProviderEnabled } from '../../../../../../lib/auth/provider-registry';
+import { resolveClientIp } from '../../../../../../lib/auth/client-ip';
+import {
+  AUTH_RATE_LIMITED_CODE,
+  checkRequestBudget,
+} from '../../../../../../lib/auth/login-rate-limit';
+
+/** Structured 429 for an exhausted link-route budget (OLO-7.1, #4223). */
+function rateLimitedResponse(retryAfterMs: number): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'Too many linking requests. Try again later.',
+      code: AUTH_RATE_LIMITED_CODE,
+    },
+    {
+      status: 429,
+      headers: { 'Retry-After': String(Math.max(1, Math.ceil(retryAfterMs / 1000))) },
+    }
+  );
+}
 
 /**
  * Whether this deployment can start a link flow for `provider` (OLO-2.2, #4194).
@@ -28,11 +47,21 @@ function isProviderLinkable(provider: string): boolean {
  *
  * Unknown or unconfigured providers are refused with 400 and the stable
  * `provider-not-configured` code (the structured auth error contract, OLO-1.5).
+ *
+ * The route carries per-IP and per-account request budgets (OLO-7.1): the IP
+ * budget runs before the session lookup so floods stay cheap; the account
+ * budget runs once the caller is known. Over-budget calls get a structured 429
+ * (`auth-rate-limited`) with `Retry-After`.
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> }
 ) {
+  const ipBudget = checkRequestBudget(`link:ip:${resolveClientIp(request.headers)}`);
+  if (!ipBudget.allowed) {
+    return rateLimitedResponse(ipBudget.retryAfterMs);
+  }
+
   const session = await getServerSession(authOptions);
 
   if (!session || !(session.user as any)?.user_id) {
@@ -40,6 +69,14 @@ export async function GET(
       { error: 'Not authenticated' },
       { status: 401 }
     );
+  }
+
+  const userId = (session.user as any).user_id;
+
+  // Per-account budget: one user cannot spray link-intent cookies from many IPs.
+  const accountBudget = checkRequestBudget(`link:acct:${userId}`);
+  if (!accountBudget.allowed) {
+    return rateLimitedResponse(accountBudget.retryAfterMs);
   }
 
   const { provider } = await params;
@@ -53,8 +90,6 @@ export async function GET(
       { status: 400 }
     );
   }
-
-  const userId = (session.user as any).user_id;
 
   // Create response with success status
   const response = NextResponse.json({
