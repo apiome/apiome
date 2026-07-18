@@ -1,31 +1,36 @@
 /**
- * First-tenant onboarding route guard tests (OLO-3.3, #4201).
+ * First-tenant onboarding route guard tests (OLO-3.3 #4201, OLO-4.1 #4205).
  *
  * The guard implements the zero-tenant half of the post-login routing rules on
  * the /ade shell: authenticated users with no tenant memberships see the
- * onboarding prompt in place of any route content (so deep links cannot route
- * around the wizard), while members, signed-out visitors, and membership-store
- * failures all render the route unchanged. Also covers the prompt's two
- * actions: re-checking memberships and signing out.
+ * first-tenant onboarding wizard in place of any route content (so deep links
+ * cannot route around it), while members, signed-out visitors, and
+ * membership-store failures all render the route unchanged. Wizard behavior
+ * itself is covered in `first-tenant-onboarding-wizard.test.tsx`.
  */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockGetTenantsForUser = jest.fn<Promise<string>, [string]>();
-const mockSignOut = jest.fn();
-const mockRefresh = jest.fn();
 
 jest.mock('../lib/db/helper', () => ({
   getTenantsForUser: (userId: string) => mockGetTenantsForUser(userId),
 }));
 
 jest.mock('next-auth/react', () => ({
-  signOut: (...args: unknown[]) => mockSignOut(...args),
+  signOut: jest.fn(),
+  useSession: () => ({ data: null, status: 'authenticated', update: jest.fn() }),
 }));
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+}));
+
+// Mocked so the guard's client-side wizard subtree doesn't pull the db-backed
+// server action module into a jsdom test.
+jest.mock('@lib/auth/first-tenant-actions', () => ({
+  provisionFirstTenant: jest.fn(),
 }));
 
 // Mocked explicitly: the `^@lib/` moduleNameMapper outranks the shared
@@ -36,7 +41,6 @@ jest.mock('@lib/auth/server-session', () => ({
 
 import { getAuthSession } from '@lib/auth/server-session';
 import FirstTenantOnboardingGuard from '@/app/components/auth/FirstTenantOnboardingGuard';
-import FirstTenantOnboardingPrompt from '@/app/components/auth/FirstTenantOnboardingPrompt';
 
 const mockGetAuthSession = getAuthSession as jest.Mock;
 
@@ -49,8 +53,6 @@ const renderGuard = async (children: React.ReactNode = <div data-testid="route-c
 
 beforeEach(() => {
   mockGetTenantsForUser.mockReset();
-  mockSignOut.mockReset();
-  mockRefresh.mockReset();
   mockGetAuthSession.mockReset();
 });
 
@@ -61,7 +63,8 @@ describe('FirstTenantOnboardingGuard', () => {
 
     await renderGuard();
 
-    expect(screen.getByTestId('first-tenant-onboarding-prompt')).toBeInTheDocument();
+    expect(screen.getByTestId('first-tenant-onboarding-wizard')).toBeInTheDocument();
+    expect(screen.getByTestId('onboarding-step-welcome')).toBeInTheDocument();
     expect(screen.queryByTestId('route-content')).not.toBeInTheDocument();
   });
 
@@ -72,7 +75,7 @@ describe('FirstTenantOnboardingGuard', () => {
     await renderGuard();
 
     expect(screen.getByTestId('route-content')).toBeInTheDocument();
-    expect(screen.queryByTestId('first-tenant-onboarding-prompt')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('first-tenant-onboarding-wizard')).not.toBeInTheDocument();
   });
 
   it('renders the route content when there is no authenticated session', async () => {
@@ -93,31 +96,5 @@ describe('FirstTenantOnboardingGuard', () => {
 
     expect(screen.getByTestId('route-content')).toBeInTheDocument();
     consoleError.mockRestore();
-  });
-});
-
-describe('FirstTenantOnboardingPrompt', () => {
-  it('re-checks memberships via a server refresh', () => {
-    render(<FirstTenantOnboardingPrompt />);
-
-    fireEvent.click(screen.getByRole('button', { name: /check again/i }));
-
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
-  });
-
-  it('signs the user out back to the login page', () => {
-    render(<FirstTenantOnboardingPrompt />);
-
-    fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
-
-    expect(mockSignOut).toHaveBeenCalledWith({ callbackUrl: '/login' });
-  });
-
-  it('offers no dismiss control — the prompt is not skippable', () => {
-    render(<FirstTenantOnboardingPrompt />);
-
-    const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(2);
-    expect(screen.getByRole('heading', { name: /set up your first tenant/i })).toBeInTheDocument();
   });
 });

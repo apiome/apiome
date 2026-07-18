@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react';
 import { getAuthSession } from '@lib/auth/server-session';
 import { getMembershipTenantIdsForUser } from '@lib/auth/post-login-routing';
-import FirstTenantOnboardingPrompt from './FirstTenantOnboardingPrompt';
+import FirstTenantOnboardingWizard from './onboarding/FirstTenantOnboardingWizard';
 
 /**
  * Route guard implementing the zero-tenant half of the post-login routing rules
  * (OLO-3.3, #4201): an authenticated user with zero tenant memberships is
- * prompted with the first-tenant onboarding wizard *in place* — the guard swaps
- * the route content for {@link FirstTenantOnboardingPrompt} instead of
- * navigating, so no deep link (callbackUrl or typed URL) can route around it.
+ * prompted with the first-tenant onboarding wizard (OLO-4.1, #4205) *in place*
+ * — the guard swaps the route content for {@link FirstTenantOnboardingWizard}
+ * instead of navigating, so no deep link (callbackUrl or typed URL) can route
+ * around it.
  *
  * Renders `children` unchanged when:
  * - there is no authenticated session (the client-side `AuthenticatedLayout`
@@ -39,7 +40,7 @@ export default async function FirstTenantOnboardingGuard({
   }
 
   if (membershipTenantIds.length === 0) {
-    return <FirstTenantOnboardingPrompt />;
+    return <FirstTenantOnboardingWizard />;
   }
 
   return <>{children}</>;
