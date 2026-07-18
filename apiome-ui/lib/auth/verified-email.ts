@@ -29,8 +29,57 @@ export const GITHUB_OAUTH_SCOPE = 'read:user user:email';
 /** GitLab OAuth scope: read-only user profile including primary email + `confirmed_at`. */
 export const GITLAB_OAUTH_SCOPE = 'read_user';
 
-/** The GitHub emails endpoint unlocked by the `user:email` scope. */
+/** The GitHub emails endpoint unlocked by the `user:email` scope (production default). */
 export const GITHUB_EMAILS_URL = 'https://api.github.com/user/emails';
+
+/** Remove a single trailing slash so `${base}/path` never doubles the separator. */
+function stripTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+}
+
+/**
+ * Base URL of the GitHub REST API (`/user`, `/user/emails`). Overridable via
+ * `GITHUB_API_BASE_URL` for the mocked-provider e2e journey (OLO-7.4); defaults to the
+ * real host.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The base URL without a trailing slash.
+ */
+export function githubApiBaseUrl(
+  env: Record<string, string | undefined> = process.env
+): string {
+  const raw = env.GITHUB_API_BASE_URL;
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return stripTrailingSlash(trimmed.length > 0 ? trimmed : 'https://api.github.com');
+}
+
+/**
+ * Base URL of the GitLab instance (`/oauth/*`, `/api/v4/user`). Overridable via
+ * `GITLAB_BASE_URL` for the mocked-provider e2e journey (OLO-7.4); defaults to gitlab.com.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The base URL without a trailing slash.
+ */
+export function gitlabBaseUrl(
+  env: Record<string, string | undefined> = process.env
+): string {
+  const raw = env.GITLAB_BASE_URL;
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return stripTrailingSlash(trimmed.length > 0 ? trimmed : 'https://gitlab.com');
+}
+
+/**
+ * The GitHub emails endpoint this deployment should call: the production constant unless
+ * `GITHUB_API_BASE_URL` points the API at a mock (OLO-7.4).
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The absolute `/user/emails` URL.
+ */
+export function githubEmailsUrl(
+  env: Record<string, string | undefined> = process.env
+): string {
+  return `${githubApiBaseUrl(env)}/user/emails`;
+}
 
 /** One entry of the GitHub `/user/emails` response. */
 export interface GithubEmailEntry {
@@ -89,7 +138,7 @@ export async function fetchGithubEmailEntries(
   fetchImpl: FetchLike = fetch as unknown as FetchLike
 ): Promise<GithubEmailEntry[] | null> {
   try {
-    const res = await fetchImpl(GITHUB_EMAILS_URL, {
+    const res = await fetchImpl(githubEmailsUrl(), {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: 'application/vnd.github+json',

@@ -18,6 +18,9 @@ import {
   GITHUB_OAUTH_SCOPE,
   GITLAB_OAUTH_SCOPE,
   fetchGithubEmailEntries,
+  githubApiBaseUrl,
+  githubEmailsUrl,
+  gitlabBaseUrl,
   resolveGithubVerifiedEmail,
   resolveGitlabEmailVerified,
   githubUserinfoRequest,
@@ -126,6 +129,37 @@ describe('fetchGithubEmailEntries', () => {
       throw new Error('network down');
     });
     await expect(fetchGithubEmailEntries('t', throwing)).resolves.toBeNull();
+  });
+
+  test('calls the overridden emails URL when GITHUB_API_BASE_URL is set (OLO-7.4)', async () => {
+    process.env.GITHUB_API_BASE_URL = 'http://localhost:8091/github/api';
+    try {
+      const fetchImpl = fetchReturning(true, []);
+      await fetchGithubEmailEntries('tok', fetchImpl);
+      expect(fetchImpl).toHaveBeenCalledWith(
+        'http://localhost:8091/github/api/user/emails',
+        expect.anything()
+      );
+    } finally {
+      delete process.env.GITHUB_API_BASE_URL;
+    }
+  });
+});
+
+describe('mock-provider base URL overrides (OLO-7.4)', () => {
+  test('default to the real hosts when unset or blank', () => {
+    expect(githubApiBaseUrl({})).toBe('https://api.github.com');
+    expect(githubApiBaseUrl({ GITHUB_API_BASE_URL: '  ' })).toBe('https://api.github.com');
+    expect(gitlabBaseUrl({})).toBe('https://gitlab.com');
+    expect(githubEmailsUrl({})).toBe(GITHUB_EMAILS_URL);
+  });
+
+  test('use the override (trailing slash trimmed) when set', () => {
+    expect(githubApiBaseUrl({ GITHUB_API_BASE_URL: 'http://m:1/gh/' })).toBe('http://m:1/gh');
+    expect(gitlabBaseUrl({ GITLAB_BASE_URL: 'http://m:1/gl/' })).toBe('http://m:1/gl');
+    expect(githubEmailsUrl({ GITHUB_API_BASE_URL: 'http://m:1/gh' })).toBe(
+      'http://m:1/gh/user/emails'
+    );
   });
 });
 

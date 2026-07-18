@@ -90,6 +90,40 @@ describe('configuredOAuthProviders', () => {
     expect(gitlab.userinfo?.request).toBe(gitlabUserinfoRequest);
   });
 
+  it('points github/gitlab endpoints at the mock base URLs when overridden (OLO-7.4)', () => {
+    const providers = configuredOAuthProviders({
+      ...ALL_ENABLED_ENV,
+      GITHUB_OAUTH_BASE_URL: 'http://localhost:8091/github/',
+      GITHUB_API_BASE_URL: 'http://localhost:8091/github/api',
+      GITLAB_BASE_URL: 'http://localhost:8091/gitlab',
+    }) as unknown as InspectableProvider[];
+    const byId = new Map(providers.map((p) => [p.id, p]));
+
+    const github = byId.get('github')!.options! as Record<string, any>;
+    expect(github.authorization.url).toBe('http://localhost:8091/github/login/oauth/authorize');
+    expect(github.authorization.params.scope).toBe(GITHUB_OAUTH_SCOPE);
+    expect(github.token).toBe('http://localhost:8091/github/login/oauth/access_token');
+    expect(github.userinfo.url).toBe('http://localhost:8091/github/api/user');
+
+    const gitlab = byId.get('gitlab')!.options! as Record<string, any>;
+    expect(gitlab.authorization.url).toBe('http://localhost:8091/gitlab/oauth/authorize');
+    expect(gitlab.token).toBe('http://localhost:8091/gitlab/oauth/token');
+    expect(gitlab.userinfo.url).toBe('http://localhost:8091/gitlab/api/v4/user');
+  });
+
+  it('keeps the real provider hosts when no override env is set', () => {
+    const providers = configuredOAuthProviders(ALL_ENABLED_ENV) as unknown as InspectableProvider[];
+    const byId = new Map(providers.map((p) => [p.id, p]));
+
+    const github = byId.get('github')!.options! as Record<string, any>;
+    expect(github.authorization.url).toBe('https://github.com/login/oauth/authorize');
+    expect(github.token).toBe('https://github.com/login/oauth/access_token');
+
+    const gitlab = byId.get('gitlab')!.options! as Record<string, any>;
+    expect(gitlab.authorization.url).toBe('https://gitlab.com/oauth/authorize');
+    expect(gitlab.token).toBe('https://gitlab.com/oauth/token');
+  });
+
   it('builds azure via the OLO-2.1 Entra provider (id azure, OIDC checks intact)', () => {
     const [azure] = configuredOAuthProviders({
       AZURE_AD_CLIENT_ID: 'az-id',

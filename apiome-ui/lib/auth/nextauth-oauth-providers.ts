@@ -18,7 +18,9 @@ import { enabledProviders, readEnvString } from './provider-registry';
 import {
   GITHUB_OAUTH_SCOPE,
   GITLAB_OAUTH_SCOPE,
+  githubApiBaseUrl,
   githubUserinfoRequest,
+  gitlabBaseUrl,
   gitlabUserinfoRequest,
 } from './verified-email';
 
@@ -35,28 +37,64 @@ const PROVIDER_FACTORIES: Record<
   // parity pass (OLO-2.5, #4197) — the raw profile reaching the signIn callback always
   // carries a normalized `email_verified`, and GitHub resolves a verified primary address
   // even when the public profile email is null. See `verified-email.ts`.
-  github: (env) =>
-    GithubProvider({
+  //
+  // Endpoint base URLs are overridable via env (`GITHUB_OAUTH_BASE_URL`,
+  // `GITHUB_API_BASE_URL`, `GITLAB_BASE_URL`) so the e2e journey suite (OLO-7.4) can point
+  // sign-in at a local mock provider. Unset (the production default) they resolve to the
+  // real provider hosts — see `githubOauthBaseUrl`/`githubApiBaseUrl`/`gitlabBaseUrl`.
+  github: (env) => {
+    const oauthBase = githubOauthBaseUrl(env);
+    return GithubProvider({
       clientId: readEnvString(env, 'GITHUB_ID') ?? '',
       clientSecret: readEnvString(env, 'GITHUB_SECRET') ?? '',
-      authorization: { params: { scope: GITHUB_OAUTH_SCOPE } },
+      authorization: {
+        url: `${oauthBase}/login/oauth/authorize`,
+        params: { scope: GITHUB_OAUTH_SCOPE },
+      },
+      token: `${oauthBase}/login/oauth/access_token`,
       userinfo: {
-        url: 'https://api.github.com/user',
+        url: `${githubApiBaseUrl(env)}/user`,
         request: githubUserinfoRequest,
       },
-    }),
-  gitlab: (env) =>
-    GitlabProvider({
+    });
+  },
+  gitlab: (env) => {
+    const base = gitlabBaseUrl(env);
+    return GitlabProvider({
       clientId: readEnvString(env, 'GITLAB_CLIENT_ID') ?? '',
       clientSecret: readEnvString(env, 'GITLAB_CLIENT_SECRET') ?? '',
-      authorization: { params: { scope: GITLAB_OAUTH_SCOPE } },
+      authorization: {
+        url: `${base}/oauth/authorize`,
+        params: { scope: GITLAB_OAUTH_SCOPE },
+      },
+      token: `${base}/oauth/token`,
       userinfo: {
-        url: 'https://gitlab.com/api/v4/user',
+        url: `${base}/api/v4/user`,
         request: gitlabUserinfoRequest,
       },
-    }),
+    });
+  },
   azure: (env) => entraIdProvider(env),
 };
+
+/**
+ * Base URL of GitHub's OAuth web endpoints (`/login/oauth/authorize`, `…/access_token`).
+ * Overridable via `GITHUB_OAUTH_BASE_URL` for the mocked-provider e2e journey (OLO-7.4);
+ * defaults to the real host.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The base URL without a trailing slash.
+ */
+export function githubOauthBaseUrl(
+  env: Record<string, string | undefined> = process.env
+): string {
+  return stripTrailingSlash(readEnvString(env, 'GITHUB_OAUTH_BASE_URL') ?? 'https://github.com');
+}
+
+/** Remove a single trailing slash so `${base}/path` never doubles the separator. */
+function stripTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+}
 
 /**
  * Build the NextAuth OAuth provider list for this deployment: one provider config per enabled
