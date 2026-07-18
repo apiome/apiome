@@ -18,24 +18,7 @@ import {
   insertAuthOneTimeCode,
   insertFreeTierEntitlements,
 } from '../db/oauth-signup';
-
-const slugRegex = /^[a-z0-9-]+$/;
-
-const generateSlug = (name: string) =>
-  name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-function validateTenantSlug(slug: string): string | null {
-  if (!slug?.trim()) return 'Tenant slug is required';
-  const s = slug.trim().toLowerCase();
-  if (s.length < 2) return 'Slug must be at least 2 characters';
-  if (!slugRegex.test(s)) return 'Slug must contain only lowercase letters, numbers, and dashes';
-  return null;
-}
+import { generateTenantSlug, validateTenantSlug } from './tenant-slug';
 
 export type CompleteOAuthSignupResult =
   | { success: true; oneTimeCode: string }
@@ -52,7 +35,7 @@ export async function completeOAuthSignup(
 ): Promise<CompleteOAuthSignupResult> {
   const name = displayName?.trim();
   const orgName = tenantDisplayName?.trim();
-  const slugRaw = tenantSlugInput?.trim() ? tenantSlugInput.trim().toLowerCase() : generateSlug(orgName || '');
+  const slugRaw = tenantSlugInput?.trim() ? tenantSlugInput.trim().toLowerCase() : generateTenantSlug(orgName || '');
 
   if (!name) return { success: false, error: 'Name is required' };
   if (!orgName) return { success: false, error: 'Organization name is required' };

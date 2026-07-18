@@ -1,0 +1,245 @@
+/**
+ * First-tenant onboarding wizard tests (OLO-4.1, #4205).
+ *
+ * The wizard is mounted by the onboarding guard for zero-tenant users:
+ * welcome → organization (name/slug) → summary (Free license shown before
+ * confirm) → done. Covers step navigation with value retention, form
+ * validation, the non-dismissible contract, provisioning success/failure, and
+ * completion landing in the new tenant's dashboard (session update + /ade).
+ */
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+
+const mockSignOut = jest.fn();
+const mockUpdate = jest.fn<Promise<unknown>, [unknown]>(async () => null);
+const mockPush = jest.fn();
+const mockRefresh = jest.fn();
+const mockProvisionFirstTenant = jest.fn<Promise<unknown>, [string, string]>();
+
+jest.mock('next-auth/react', () => ({
+  signOut: (...args: unknown[]) => mockSignOut(...args),
+  useSession: () => ({ data: null, status: 'authenticated', update: mockUpdate }),
+}));
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+}));
+
+jest.mock('@lib/auth/first-tenant-actions', () => ({
+  provisionFirstTenant: (name: string, slug: string) => mockProvisionFirstTenant(name, slug),
+}));
+
+import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
+import { FREE_LICENSE_SUMMARY } from '@lib/auth/free-license';
+import {
+  nextWizardStep,
+  previousWizardStep,
+} from '@/app/components/auth/onboarding/wizard-steps';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockProvisionFirstTenant.mockResolvedValue({
+    success: true,
+    tenant: { id: 't-1', name: 'Acme Corp', slug: 'acme-corp' },
+  });
+});
+
+/** Clicks through welcome → organization with the given form values. */
+const fillOrganizationStep = (name: string, slug = '') => {
+  fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
+  fireEvent.change(screen.getByPlaceholderText('Acme, Inc.'), { target: { value: name } });
+  if (slug) {
+    fireEvent.change(screen.getByPlaceholderText('acme-inc'), { target: { value: slug } });
+  }
+  fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+};
+
+describe('wizard step order helpers', () => {
+  it('walks forward welcome → organization → summary → done and clamps at the end', () => {
+    expect(nextWizardStep('welcome')).toBe('organization');
+    expect(nextWizardStep('organization')).toBe('summary');
+    expect(nextWizardStep('summary')).toBe('done');
+    expect(nextWizardStep('done')).toBe('done');
+  });
+
+  it('walks backward and clamps at the start', () => {
+    expect(previousWizardStep('done')).toBe('summary');
+    expect(previousWizardStep('summary')).toBe('organization');
+    expect(previousWizardStep('organization')).toBe('welcome');
+    expect(previousWizardStep('welcome')).toBe('welcome');
+  });
+});
+
+describe('FirstTenantOnboardingWizard: welcome step', () => {
+  it('opens on the welcome step with setup progress shown', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    expect(screen.getByTestId('onboarding-step-welcome')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: /setup progress/i })).toBeInTheDocument();
+  });
+
+  it('offers no dismiss or skip control — the wizard is not skippable', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    const labels = screen
+      .getAllByRole('button')
+      .map((button) => button.textContent?.toLowerCase() ?? '');
+    expect(labels).toHaveLength(3);
+    for (const label of labels) {
+      expect(label).not.toMatch(/skip|close|dismiss|cancel/);
+    }
+  });
+
+  it('re-checks memberships via a server refresh', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fireEvent.click(screen.getByRole('button', { name: /check again/i }));
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('signs the user out back to the login page', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
+
+    expect(mockSignOut).toHaveBeenCalledWith({ callbackUrl: '/login' });
+  });
+});
+
+describe('FirstTenantOnboardingWizard: organization step', () => {
+  it('requires an organization name', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+
+    expect(screen.getByText(/organization name is required/i)).toBeInTheDocument();
+    expect(screen.getByTestId('onboarding-step-organization')).toBeInTheDocument();
+  });
+
+  it('rejects a malformed slug', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'not a slug!');
+
+    expect(
+      screen.getByText(/lowercase letters, numbers, and dashes/i)
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('onboarding-step-organization')).toBeInTheDocument();
+  });
+
+  it('flags the name when no slug can be derived from it', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('!!!');
+
+    expect(screen.getByText(/could not derive a url slug/i)).toBeInTheDocument();
+  });
+
+  it('keeps entered values when navigating back to the welcome step', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // summary → organization
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // organization → welcome
+    fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
+
+    expect(screen.getByPlaceholderText('Acme, Inc.')).toHaveValue('Acme Corp');
+    expect(screen.getByPlaceholderText('acme-inc')).toHaveValue('acme-corp');
+  });
+});
+
+describe('FirstTenantOnboardingWizard: summary step', () => {
+  it('shows the entered details with the slug derived from the name when blank', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme, Inc.');
+
+    expect(screen.getByTestId('onboarding-step-summary')).toBeInTheDocument();
+    expect(screen.getByText('Acme, Inc.')).toBeInTheDocument();
+    expect(screen.getByText('acme-inc')).toBeInTheDocument();
+  });
+
+  it('renders the Free-license summary before confirm', () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp');
+
+    const summary = screen.getByTestId('free-license-summary');
+    expect(summary).toHaveTextContent(`${FREE_LICENSE_SUMMARY.planName} plan`);
+    for (const limit of FREE_LICENSE_SUMMARY.limits) {
+      expect(summary).toHaveTextContent(limit.label);
+      expect(summary).toHaveTextContent(limit.value);
+    }
+    for (const item of FREE_LICENSE_SUMMARY.includes) {
+      expect(summary).toHaveTextContent(item);
+    }
+    expect(mockProvisionFirstTenant).not.toHaveBeenCalled();
+  });
+
+  it('provisions the tenant on confirm and reaches the done step', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+
+    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+    expect(mockProvisionFirstTenant).toHaveBeenCalledWith('Acme Corp', 'acme-corp');
+    expect(screen.getByRole('heading', { name: /acme corp is ready/i })).toBeInTheDocument();
+  });
+
+  it('stays on the summary and shows the error when provisioning fails', async () => {
+    mockProvisionFirstTenant.mockResolvedValue({
+      success: false,
+      error: 'A tenant with this slug already exists',
+    });
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/slug already exists/i);
+    expect(screen.getByTestId('onboarding-step-summary')).toBeInTheDocument();
+  });
+
+  it('shows a generic error when the provisioning call throws', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockProvisionFirstTenant.mockRejectedValue(new Error('network down'));
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp');
+    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
+    consoleError.mockRestore();
+  });
+});
+
+describe('FirstTenantOnboardingWizard: completion', () => {
+  it('activates the new tenant in the session and lands in its dashboard', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
+    expect(mockUpdate).toHaveBeenCalledWith({ current_tenant_id: 't-1' });
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it('lands in the dashboard even when the session update fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockUpdate.mockRejectedValue(new Error('session update failed'));
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(screen.getByRole('button', { name: /create organization/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
+    consoleError.mockRestore();
+  });
+});
