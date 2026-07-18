@@ -10,6 +10,7 @@ import {
   buildAuthCookieOverrides,
   canonicalizeCrossAppCallback,
   isAllowedCallbackUrl,
+  isSafeRelativeCallbackPath,
 } from '../../../../../lib/auth/cookie-options';
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
 import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
@@ -54,8 +55,10 @@ export const authOptions: NextAuthOptions = {
     async redirect({ url, baseUrl }) {
       // Default NextAuth behaviour only allows same-origin callback URLs.
       // Also allow subdomains covered by the shared session cookie so login
-      // can return to e.g. the studio app.
-      if (url.startsWith('/') && !url.startsWith('//')) {
+      // can return to e.g. the studio app. Relative paths go through the
+      // shared safety check so backslash tricks (`/\evil.com`) cannot turn
+      // into a cross-origin redirect (OLO-3.4).
+      if (isSafeRelativeCallbackPath(url)) {
         return `${baseUrl}${url}`;
       }
       const canonical = canonicalizeCrossAppCallback(url);

@@ -3,7 +3,8 @@
 
 import React, { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { buildLoginRedirect } from '@lib/auth/login-return-to';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -14,21 +15,30 @@ interface AuthenticatedLayoutProps {
  * Wrapper component that ensures user is authenticated before rendering children.
  * Automatically redirects to login if no session is found.
  * Provides session context to all children.
+ *
+ * Session lifecycle hygiene (OLO-3.4, #4202): the redirect carries the current
+ * location as `callbackUrl`, so a user whose session expired mid-task returns
+ * to the same page after signing back in. When an explicit `redirectTo` is
+ * given, it is used verbatim (no return-to attached).
  */
 export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   children,
-  redirectTo = '/login'
+  redirectTo
 }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (status === 'loading') return; // Wait for session to load
 
     if (session === null) {
-      router.push(redirectTo);
+      // window.location.search rather than useSearchParams(): reading params
+      // here would force a Suspense boundary around every protected shell.
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      router.push(redirectTo ?? buildLoginRedirect(pathname, search));
     }
-  }, [session, status, router, redirectTo]);
+  }, [session, status, router, redirectTo, pathname]);
 
   // Show loading state while checking authentication
   if (status === 'loading') {
@@ -48,4 +58,3 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
 };
 
 export default AuthenticatedLayout;
-
