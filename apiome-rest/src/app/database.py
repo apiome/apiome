@@ -6701,6 +6701,80 @@ class Database:
             return bool(record["tenant_override"])
         return bool(record["license_grant"])
 
+    def get_tenant_license_info(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return the tenant's attached license plan for the REST surface (OLO-5.4, #4214).
+
+        Reads the one-active-license-per-tenant attachment (``apiome.tenant_licenses``,
+        V182) joined to the V097 catalog, one level up from
+        ``get_tenant_license_seats`` (which returns only the ``seats`` JSON for the
+        enforcement path).
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :returns: A dict with ``name`` (plan display name), ``license_type``
+            (``free``/``paid``/``sponsor``), ``seats`` (the capacity JSON), and
+            ``issued_at``, or ``None`` when the tenant has no license row (a
+            tenant predating the V183 backfill) — callers fall back to the Free
+            defaults, mirroring ``license_capacity.member_seat_limit``.
+        """
+        rows = self.execute_query(
+            """
+            SELECT l.name, l.license_type, l.seats, tl.issued_at
+            FROM apiome.tenant_licenses tl
+            JOIN apiome.licenses l ON l.id = tl.license_id
+            WHERE tl.tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        return rows[0] if rows else None
+
+    def list_tenant_effective_features(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List the feature flags composing a tenant's effective entitlement (OLO-5.4, #4214).
+
+        Returns the union of the tenant license's bundled flags
+        (``apiome.license_feature_flags`` via the V182 ``tenant_licenses``
+        attachment) and the tenant's explicit overrides
+        (``apiome.tenant_feature_flags``), per the V097 composition. Per-user
+        overrides are deliberately excluded — this is the *tenant's* license
+        surface, not any one member's view (``tenant_has_feature_flag`` resolves
+        the per-user answer).
+
+        Each row carries the raw layers; the caller composes the effective state
+        (override beats license default, a disabled master switch beats both):
+
+        * ``name`` / ``label`` / ``description`` / ``is_preview`` — flag metadata.
+        * ``flag_enabled`` — the flag's global master switch
+          (``feature_flags.enabled``).
+        * ``license_grant`` — True when the tenant's license bundles the flag.
+        * ``tenant_override`` — the tenant-level override (True granted, False
+          revoked), or ``None`` when no override row exists.
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :returns: One dict per flag in the union, ordered by flag name. Empty
+            when the tenant has no license row and no overrides.
+        """
+        return self.execute_query(
+            """
+            SELECT
+                ff.name,
+                ff.label,
+                ff.description,
+                ff.is_preview,
+                ff.enabled                        AS flag_enabled,
+                (lff.feature_flag_id IS NOT NULL) AS license_grant,
+                tff.enabled                       AS tenant_override
+            FROM apiome.feature_flags ff
+            LEFT JOIN apiome.tenant_licenses tl
+                   ON tl.tenant_id = %s::uuid
+            LEFT JOIN apiome.license_feature_flags lff
+                   ON lff.feature_flag_id = ff.id AND lff.license_id = tl.license_id
+            LEFT JOIN apiome.tenant_feature_flags tff
+                   ON tff.feature_flag_id = ff.id AND tff.tenant_id = %s::uuid
+            WHERE lff.feature_flag_id IS NOT NULL OR tff.feature_flag_id IS NOT NULL
+            ORDER BY ff.name ASC
+            """,
+            (tenant_id, tenant_id),
+        )
+
     def get_active_tenant_auth_row(self, tenant_slug: str) -> Optional[Dict[str, Any]]:
         """Resolve a non-deleted tenant slug to id/slug/name for auth checks."""
         query = """
