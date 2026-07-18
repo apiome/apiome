@@ -273,6 +273,26 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Auth-surface rate limiting (OLO-7.1, #4223). The onboarding endpoints
+    # (``/v1/onboarding/*``) complete signup and membership activation, so they get
+    # dedicated per-IP and per-account budgets on top of the global middleware.
+    # Both budgets share ``rate_limit_window_seconds`` and honour the global
+    # ``rate_limit_enabled`` kill switch.
+    auth_rate_limit_ip_per_minute: int = Field(
+        default=20,
+        validation_alias=AliasChoices(
+            "APIOME_AUTH_RATE_LIMIT_IP_PER_MINUTE",
+            "auth_rate_limit_ip_per_minute",
+        ),
+    )
+    auth_rate_limit_account_per_minute: int = Field(
+        default=10,
+        validation_alias=AliasChoices(
+            "APIOME_AUTH_RATE_LIMIT_ACCOUNT_PER_MINUTE",
+            "auth_rate_limit_account_per_minute",
+        ),
+    )
+
     # Mock Server (#3615, RC1-2.2). Free-tier mocks auto-expire after a default TTL (capped at a
     # maximum) and are rate limited per instance on the data plane. Set
     # APIOME_MOCK_SERVER_ENABLED=false to disable provisioning + serving entirely.

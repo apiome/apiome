@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.27.0
+  version: 1.28.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -16759,6 +16759,9 @@ paths:
         '409':
           description: 'Structured conflict: ``tenant-slug-taken`` when the slug is
             already in use.'
+        '429':
+          description: 'Structured throttle (OLO-7.1): ``auth-rate-limited`` when
+            the caller''s per-IP or per-account auth budget is spent; carries ``Retry-After``.'
         '422':
           description: Validation Error
           content:
@@ -16835,6 +16838,9 @@ paths:
         '404':
           description: The caller has no membership in this tenant (structured code
             ``membership-not-found``).
+        '429':
+          description: 'Structured throttle (OLO-7.1): ``auth-rate-limited`` when
+            the caller''s per-IP or per-account auth budget is spent; carries ``Retry-After``.'
         '422':
           description: Validation Error
           content:

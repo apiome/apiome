@@ -5,12 +5,11 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
 } from '@lib/auth/login-rate-limit';
+import { resolveClientIp } from '@lib/auth/client-ip';
 
 /** Resolve a best-effort client IP for rate-limiting the super-admin password form. */
 function clientRateLimitKey(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-  return `admin:${ip}`;
+  return `admin:${resolveClientIp(request.headers)}`;
 }
 
 export async function POST(request: NextRequest) {

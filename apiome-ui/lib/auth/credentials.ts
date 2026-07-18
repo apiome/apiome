@@ -5,6 +5,8 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
   credentialsRateLimitKey,
+  credentialsIpRateLimitKey,
+  CREDENTIALS_IP_MAX_ATTEMPTS,
 } from './login-rate-limit';
 import {
   AUTH_ERROR_CODES,
@@ -188,11 +190,29 @@ export const checkSignupIntent = async () => {
  * 4. Failure returns a null, which the next-auth `authorize()` handler will interpret as an invalid account.
  *
  * One-time codes (after OAuth signup completion) are also accepted.
+ *
+ * Brute-force protection (RC1-0.3 + OLO-7.1): failures are counted per account
+ * (`cred:<email>`) and per client IP (`cred-ip:<ip>`, looser cap) — either lock
+ * refuses the attempt before any DB or bcrypt work. One-time-code guesses count
+ * against the IP lock too.
  */
-export const credentialsAuthorize = async (credentials: ICredentials) => {
+export const credentialsAuthorize = async (
+  credentials: ICredentials,
+  clientIp?: string | null
+) => {
+  const ipKey = credentialsIpRateLimitKey(clientIp);
+  if (ipKey && checkLoginRateLimit(ipKey, Date.now(), CREDENTIALS_IP_MAX_ATTEMPTS).blocked) {
+    console.warn('[credentialsAuthorize] Login temporarily locked for this client (too many failed attempts)');
+    return null;
+  }
+
   if (credentials.oneTimeCode?.trim()) {
     const consumed = await consumeAuthOneTimeCode(credentials.oneTimeCode.trim());
     if (!consumed) {
+      // A bad one-time code is a guessable secret: count it against the IP lock.
+      if (ipKey) {
+        recordLoginFailure(ipKey, Date.now(), CREDENTIALS_IP_MAX_ATTEMPTS);
+      }
       return null;
     }
     const userResults = await helper.getUserById(consumed.userId);
@@ -213,8 +233,8 @@ export const credentialsAuthorize = async (credentials: ICredentials) => {
     return null;
   }
 
-  // Brute-force protection: refuse the attempt (without touching the DB or hashing)
-  // once this account has accumulated too many recent failures. See login-rate-limit.ts.
+  // Refuse the attempt (without touching the DB or hashing) once this account has
+  // accumulated too many recent failures. See login-rate-limit.ts.
   const rateLimitKey = credentialsRateLimitKey(email);
   if (rateLimitKey && checkLoginRateLimit(rateLimitKey).blocked) {
     console.warn(`[credentialsAuthorize] Login temporarily locked for ${email} (too many failed attempts)`);
@@ -232,13 +252,20 @@ export const credentialsAuthorize = async (credentials: ICredentials) => {
       if (rateLimitKey) {
         recordLoginSuccess(rateLimitKey);
       }
+      if (ipKey) {
+        recordLoginSuccess(ipKey);
+      }
       return userResult;
     }
   }
 
-  // No user, no stored password, or a bad password — all count as a failed attempt.
+  // No user, no stored password, or a bad password — all count as a failed attempt
+  // against both the account lock and the (looser) per-IP lock.
   if (rateLimitKey) {
     recordLoginFailure(rateLimitKey);
+  }
+  if (ipKey) {
+    recordLoginFailure(ipKey, Date.now(), CREDENTIALS_IP_MAX_ATTEMPTS);
   }
   return null;
 };
