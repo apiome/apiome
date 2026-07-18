@@ -27,7 +27,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from .auth import validate_authentication, validate_session_credentials
+from .config import settings
 from .database import db
+from .license_capacity import assert_member_seat_available, require_member_seat
 from .permissions import (
     ACTIONS,
     RESOURCES,
@@ -361,12 +363,18 @@ async def list_members(
 async def invite_member(
     tenant_slug: str,
     request: MemberInviteRequest,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(require_member_seat),
 ) -> Dict[str, Any]:
     """Invite an existing account into the tenant and optionally assign a role.
 
     The invitee must already have an Apiome account (email-only invites that provision brand-new
     accounts are a later SSO/SCIM ticket). The new membership is created ``active``.
+
+    Seat-gated (OLO-5.3, #4213): when the tenant's license seats
+    (``seats.max_users_per_tenant``) are all occupied by non-suspended members, the
+    request is refused with a structured 403 (code ``license-seats-exhausted``)
+    before any lookup or write happens — including re-invites of existing members,
+    which are inert at capacity anyway.
     """
     actor_id = enforce_permission(db, auth_data, Resource.MEMBERS, Action.CREATE)
     tenant_id = auth_data["tenant_id"]
@@ -427,6 +435,16 @@ async def update_member(
                 status_code=400,
                 detail=f"Invalid status '{request.status}'; expected one of {sorted(_VALID_STATUSES)}",
             )
+        # Seat guard (OLO-5.3, #4213): suspended members don't occupy a license seat,
+        # so reinstating one consumes a seat — re-check capacity before the transition.
+        # Without this, suspend → invite → reinstate would sail past the limit.
+        # Suspending (or re-asserting a non-suspended status) never needs a seat.
+        if (
+            request.status != "suspended"
+            and settings.license_enforcement_enabled
+            and db.get_member_status(tenant_id, user_id) == "suspended"
+        ):
+            assert_member_seat_available(tenant_id)
         updated = db.set_member_status(tenant_id, user_id, request.status)
         if not updated:
             raise HTTPException(status_code=404, detail=f"Member not found: {user_id}")

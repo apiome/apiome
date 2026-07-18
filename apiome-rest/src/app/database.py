@@ -156,8 +156,9 @@ class TenantProvisioningError(Exception):
     """Base error for first-tenant provisioning (OLO-4.3, #4207).
 
     Carries a machine-readable ``code`` (stable, kebab-case) alongside the
-    human-readable message so the REST layer can emit structured 409 payloads
-    and the UI can map codes to friendly copy.
+    human-readable message so the REST layer can emit structured 403/409
+    payloads and the UI can map codes to friendly copy (409 for slug
+    conflicts, 403 for the tenant-cap license guard — OLO-5.3, #4213).
     """
 
     code = "tenant-provisioning-failed"
@@ -183,6 +184,12 @@ class TenantCapReachedError(TenantProvisioningError):
 # allows a single tenant (matches the V097 Free license seats and the free-tier
 # entitlement seed used at signup).
 DEFAULT_FREE_MAX_TENANTS = 1
+
+# Fallback when a tenant has no ``tenant_licenses`` row (or its license ``seats``
+# JSON is missing/malformed): the Free tier allows five members per tenant
+# (matches the V097 Free license seats; every tenant should hold a license since
+# the V183 auto-issue trigger + backfill, so this is a defensive default).
+DEFAULT_FREE_MAX_USERS_PER_TENANT = 5
 
 
 class Database:
@@ -6475,6 +6482,70 @@ class Database:
             """,
             (tenant_id,),
         )
+
+    def get_tenant_license_seats(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return the ``seats`` JSON of the tenant's attached license (OLO-5.3, #4213).
+
+        Reads the one-active-license-per-tenant attachment (``apiome.tenant_licenses``,
+        V182) joined to the V097 catalog. Every tenant should hold a license since the
+        V183 auto-issue trigger + backfill.
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :returns: The license ``seats`` dict (e.g. ``{"max_tenants": 1,
+            "max_users_per_tenant": 5}``), or ``None`` when the tenant has no
+            license row or the stored value is not a JSON object — callers fall
+            back to the Free defaults.
+        """
+        rows = self.execute_query(
+            """
+            SELECT l.seats
+            FROM apiome.tenant_licenses tl
+            JOIN apiome.licenses l ON l.id = tl.license_id
+            WHERE tl.tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        seats = rows[0].get("seats") if rows else None
+        return seats if isinstance(seats, dict) else None
+
+    def count_member_seats_in_use(self, tenant_id: str) -> int:
+        """Count the tenant members currently occupying license seats (OLO-5.3, #4213).
+
+        A seat is occupied by every membership row whose lifecycle status is not
+        ``suspended`` (so ``active`` and ``pending`` both count — an outstanding
+        invite reserves its seat) and whose user account is not soft-deleted
+        (``users.deleted_at``). Suspended members (V121) deliberately do **not**
+        count, so suspending frees a seat and reinstating consumes one again.
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :returns: The number of seats in use (0 when the tenant has no members).
+        """
+        rows = self.execute_query(
+            """
+            SELECT COUNT(*)::int AS c
+            FROM apiome.tenant_users tu
+            JOIN apiome.users u ON u.id = tu.user_id
+            WHERE tu.tenant_id = %s::uuid
+              AND tu.status <> 'suspended'
+              AND u.deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        return int(rows[0]["c"]) if rows and rows[0].get("c") is not None else 0
+
+    def get_member_status(self, tenant_id: str, user_id: str) -> Optional[str]:
+        """Return a member's lifecycle status (``active``/``pending``/``suspended``).
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :param user_id: The member's user id.
+        :returns: The membership status string, or ``None`` when the user has no
+            membership row in the tenant.
+        """
+        rows = self.execute_query(
+            "SELECT status FROM apiome.tenant_users WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+            (tenant_id, user_id),
+        )
+        return str(rows[0]["status"]) if rows and rows[0].get("status") is not None else None
 
     def add_member(self, tenant_id: str, user_id: str, status: str = "active") -> None:
         """Add (or reactivate) a tenant membership with the given lifecycle status."""

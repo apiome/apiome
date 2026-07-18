@@ -166,14 +166,16 @@ def test_sample_project_failure_does_not_fail_provisioning():
     assert r.json()["sample_project_id"] is None
 
 
-def test_tenant_cap_returns_409_with_code():
+def test_tenant_cap_returns_403_with_code():
+    # OLO-5.3 (#4213): the tenant-cap guard is a license-enforcement 403 (the
+    # slug conflict below stays a 409).
     with patch("app.onboarding_routes.db") as mdb:
         mdb.provision_first_tenant.side_effect = TenantCapReachedError(
             "Tenant limit reached (1/1 tenants used)"
         )
         r = _post({"name": "Second Org", "slug": "second-org"})
 
-    assert r.status_code == 409
+    assert r.status_code == 403
     detail = r.json()["detail"]
     assert detail["code"] == "tenant-cap-reached"
     assert "limit" in detail["message"].lower()

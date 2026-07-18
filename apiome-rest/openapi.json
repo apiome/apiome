@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.24.0",
+    "version": "1.25.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -23496,7 +23496,7 @@
           "onboarding"
         ],
         "summary": "Provision First Tenant",
-        "description": "Atomically provision the caller's first tenant (or next, when their\nentitlement allows more than one).\n\nAll-or-nothing: any failure rolls back every write. A second call for a\nuser already at their ``max_tenants`` cap returns 409 ``tenant-cap-reached``.",
+        "description": "Atomically provision the caller's first tenant (or next, when their\nentitlement allows more than one).\n\nAll-or-nothing: any failure rolls back every write. A second call for a\nuser already at their ``max_tenants`` cap returns 403 ``tenant-cap-reached``\n(the license enforcement guard, OLO-5.3 #4213).",
         "operationId": "provision_first_tenant_v1_onboarding_first_tenant_post",
         "parameters": [
           {
@@ -23571,10 +23571,10 @@
             "description": "Missing or invalid session credentials."
           },
           "403": {
-            "description": "API-key sessions cannot provision tenants."
+            "description": "API-key sessions cannot provision tenants, or (structured, OLO-5.3) ``tenant-cap-reached`` when the caller is at their max-tenants entitlement."
           },
           "409": {
-            "description": "Structured conflict: ``tenant-cap-reached`` when the caller is at their max-tenants entitlement, ``tenant-slug-taken`` when the slug is already in use."
+            "description": "Structured conflict: ``tenant-slug-taken`` when the slug is already in use."
           },
           "422": {
             "description": "Validation Error",
@@ -28914,7 +28914,7 @@
           "access"
         ],
         "summary": "Invite Member",
-        "description": "Invite an existing account into the tenant and optionally assign a role.\n\nThe invitee must already have an Apiome account (email-only invites that provision brand-new\naccounts are a later SSO/SCIM ticket). The new membership is created ``active``.",
+        "description": "Invite an existing account into the tenant and optionally assign a role.\n\nThe invitee must already have an Apiome account (email-only invites that provision brand-new\naccounts are a later SSO/SCIM ticket). The new membership is created ``active``.\n\nSeat-gated (OLO-5.3, #4213): when the tenant's license seats\n(``seats.max_users_per_tenant``) are all occupied by non-suspended members, the\nrequest is refused with a structured 403 (code ``license-seats-exhausted``)\nbefore any lookup or write happens \u2014 including re-invites of existing members,\nwhich are inert at capacity anyway.",
         "operationId": "invite_member_v1_access__tenant_slug__members_post",
         "parameters": [
           {
