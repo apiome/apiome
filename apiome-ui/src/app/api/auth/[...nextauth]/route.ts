@@ -15,6 +15,7 @@ import {
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
 import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
 import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
+import { readLastActiveTenantId } from '../../../../../lib/auth/last-active-tenant';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -119,9 +120,20 @@ export const authOptions: NextAuthOptions = {
         // default tenant. Tenant-less users carry no current_tenant_id and meet
         // the first-tenant onboarding guard instead.
         const pendingTenant = (payload.user as { pending_tenant_id?: string }).pending_tenant_id;
+        // A fresh login has no previous token, so the durable last-active
+        // cookie (written by the tenant switcher, OLO-6.1) supplies the
+        // candidate; pickActiveTenantId re-validates it against memberships.
+        let lastActiveCookieTenant: string | null = null;
+        if (!pendingTenant && !token.current_tenant_id) {
+          try {
+            lastActiveCookieTenant = await readLastActiveTenantId();
+          } catch (error) {
+            console.error('[nextauth] last-active tenant cookie read failed:', error);
+          }
+        }
         const activeTenant = await resolveActiveTenantForLogin(
           payload.user.id,
-          pendingTenant ?? token.current_tenant_id
+          pendingTenant ?? token.current_tenant_id ?? lastActiveCookieTenant
         );
         if (activeTenant) {
           token.current_tenant_id = activeTenant;
