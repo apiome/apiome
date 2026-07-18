@@ -7,7 +7,9 @@
  *   The wizard is *prompted* via a route guard on the protected shell
  *   ({@link decidePostLoginRoute} returns `kind: 'onboarding'`), not navigated to —
  *   any requested `callbackUrl` is deliberately ignored so the user cannot deep-link
- *   past the prompt.
+ *   past the prompt. Memberships are status-aware per V121 (OLO-4.4, #4208):
+ *   `active` and `pending` rows count (an invited user is a member, not a
+ *   wizard candidate); `suspended` rows do not.
  * - **One or more memberships** → the last-active tenant when it is still a valid
  *   membership, otherwise the user's default tenant (first membership, sorted by
  *   tenant name — the same ordering the tenant switcher shows). The landing page is
@@ -82,23 +84,53 @@ export function decidePostLoginRoute(input: PostLoginRouteInput): PostLoginRoute
   };
 }
 
+/** A live tenant membership per the V121 lifecycle (active or pending). */
+export interface TenantMembership {
+  /** Tenant id. */
+  id: string;
+  /** Tenant display name (used for default-tenant ordering). */
+  name: string | null;
+  /** Membership lifecycle status; suspended rows are never returned. */
+  status: 'active' | 'pending';
+}
+
 /**
- * Load the user's tenant memberships, default tenant first (sorted by tenant
- * name, matching the tenant switcher).
+ * Load the user's *live* tenant memberships, default tenant first (sorted by
+ * tenant name, matching the tenant switcher).
+ *
+ * Status-aware per V121 (OLO-4.4, #4208): `active` and `pending` memberships
+ * both count — an invited user with only a pending membership is a member for
+ * routing purposes and must not meet the first-tenant wizard. Suspended
+ * memberships are excluded by the query.
  *
  * The db helper is imported lazily so the pure rules above stay importable
  * without a database module in scope (e.g. in unit tests).
  *
  * @param userId The `apiome.users.id` of the authenticated user.
+ * @returns Ordered memberships; empty when the user belongs to no tenant.
+ */
+export async function getTenantMembershipsForUser(userId: string): Promise<TenantMembership[]> {
+  const helper = await import('../db/helper');
+  const rows: Array<{ id: string; name?: string | null; status?: string | null }> = JSON.parse(
+    await helper.getTenantMembershipsForUser(userId)
+  );
+  rows.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name ?? null,
+    status: row.status === 'pending' ? 'pending' : 'active',
+  }));
+}
+
+/**
+ * Load the user's live membership tenant ids, default tenant first (see
+ * {@link getTenantMembershipsForUser} for the status rules).
+ *
+ * @param userId The `apiome.users.id` of the authenticated user.
  * @returns Ordered tenant ids; empty when the user belongs to no tenant.
  */
 export async function getMembershipTenantIdsForUser(userId: string): Promise<string[]> {
-  const helper = await import('../db/helper');
-  const rows: Array<{ id: string; name?: string | null }> = JSON.parse(
-    await helper.getTenantsForUser(userId)
-  );
-  rows.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-  return rows.map((row) => row.id);
+  return (await getTenantMembershipsForUser(userId)).map((membership) => membership.id);
 }
 
 /**

@@ -6488,6 +6488,39 @@ class Database:
             (status, tenant_id, user_id),
         )
 
+    def activate_pending_membership(self, tenant_id: str, user_id: str) -> str:
+        """Activate a user's *pending* membership in a tenant (OLO-4.4, #4208).
+
+        Status-aware per V121: only a ``pending`` row transitions to
+        ``active``. An already-active membership is a no-op, and a
+        ``suspended`` membership is deliberately never reactivated here —
+        unsuspending is an admin action (``set_member_status``), not a
+        side effect of the member logging in.
+
+        :param tenant_id: Tenant whose membership should be activated.
+        :param user_id: The member's user id.
+        :returns: One of ``'activated'`` (pending row became active),
+            ``'already-active'`` (nothing to do), ``'suspended'`` (row exists
+            but was left untouched), or ``'none'`` (no membership row).
+        """
+        updated = self._modify(
+            """
+            UPDATE apiome.tenant_users SET status = 'active', updated_at = NOW()
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND status = 'pending'
+            """,
+            (tenant_id, user_id),
+        )
+        if updated:
+            return "activated"
+        rows = self.execute_query(
+            "SELECT status FROM apiome.tenant_users WHERE tenant_id = %s::uuid AND user_id = %s::uuid",
+            (tenant_id, user_id),
+        )
+        if not rows:
+            return "none"
+        status = str(rows[0].get("status") or "active")
+        return "already-active" if status == "active" else status
+
     def assign_member_role(self, tenant_id: str, user_id: str, role_id: str) -> None:
         """Assign (replacing any existing) a role to a tenant member."""
         self._modify(

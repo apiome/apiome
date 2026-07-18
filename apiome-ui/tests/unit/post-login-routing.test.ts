@@ -9,25 +9,27 @@
  * behavior on membership-store errors.
  */
 
-const mockGetTenantsForUser = jest.fn<Promise<string>, [string]>();
+const mockGetTenantMembershipsForUser = jest.fn<Promise<string>, [string]>();
 
 jest.mock('../../lib/db/helper', () => ({
-  getTenantsForUser: (userId: string) => mockGetTenantsForUser(userId),
+  getTenantMembershipsForUser: (userId: string) => mockGetTenantMembershipsForUser(userId),
 }));
 
 import { DEFAULT_LOGIN_LANDING } from '@lib/auth/cookie-options';
 import {
   decidePostLoginRoute,
   getMembershipTenantIdsForUser,
+  getTenantMembershipsForUser,
   pickActiveTenantId,
   resolveActiveTenantForLogin,
   resolvePostLoginRouteForUser,
 } from '@lib/auth/post-login-routing';
 
-const tenantRows = (...tenants: Array<{ id: string; name: string }>) => JSON.stringify(tenants);
+const tenantRows = (...tenants: Array<{ id: string; name: string; status?: string }>) =>
+  JSON.stringify(tenants);
 
 beforeEach(() => {
-  mockGetTenantsForUser.mockReset();
+  mockGetTenantMembershipsForUser.mockReset();
 });
 
 describe('pickActiveTenantId', () => {
@@ -106,43 +108,72 @@ describe('decidePostLoginRoute', () => {
   });
 });
 
+describe('getTenantMembershipsForUser', () => {
+  it('returns memberships with their V121 status, sorted by tenant name', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
+      tenantRows({ id: 'tz', name: 'Zeta', status: 'pending' }, { id: 'ta', name: 'Acme', status: 'active' })
+    );
+
+    await expect(getTenantMembershipsForUser('user-1')).resolves.toEqual([
+      { id: 'ta', name: 'Acme', status: 'active' },
+      { id: 'tz', name: 'Zeta', status: 'pending' },
+    ]);
+  });
+
+  it('defaults a missing status to active (pre-V121 rows)', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+
+    await expect(getTenantMembershipsForUser('user-1')).resolves.toEqual([
+      { id: 't1', name: 'Acme', status: 'active' },
+    ]);
+  });
+});
+
 describe('getMembershipTenantIdsForUser', () => {
+  it('counts a pending membership as a membership (invited user, OLO-4.4)', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
+      tenantRows({ id: 't1', name: 'Acme', status: 'pending' })
+    );
+
+    await expect(getMembershipTenantIdsForUser('user-1')).resolves.toEqual(['t1']);
+  });
+
   it('returns tenant ids sorted by tenant name (default tenant first)', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
       tenantRows({ id: 'tz', name: 'Zeta' }, { id: 'ta', name: 'Acme' })
     );
 
     await expect(getMembershipTenantIdsForUser('user-1')).resolves.toEqual(['ta', 'tz']);
-    expect(mockGetTenantsForUser).toHaveBeenCalledWith('user-1');
+    expect(mockGetTenantMembershipsForUser).toHaveBeenCalledWith('user-1');
   });
 
   it('returns an empty list for a tenant-less user', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows());
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows());
     await expect(getMembershipTenantIdsForUser('user-1')).resolves.toEqual([]);
   });
 });
 
 describe('resolveActiveTenantForLogin', () => {
   it('keeps a candidate tenant that is a real membership', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
       tenantRows({ id: 't1', name: 'Acme' }, { id: 't2', name: 'Beta' })
     );
     await expect(resolveActiveTenantForLogin('user-1', 't2')).resolves.toBe('t2');
   });
 
   it('replaces a candidate that is not a membership with the default tenant', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
     await expect(resolveActiveTenantForLogin('user-1', 'revoked')).resolves.toBe('t1');
   });
 
   it('resolves null for a tenant-less user', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows());
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows());
     await expect(resolveActiveTenantForLogin('user-1', 'stale')).resolves.toBeNull();
   });
 
   it('fails open to the candidate when the membership lookup throws', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    mockGetTenantsForUser.mockRejectedValueOnce(new Error('db down'));
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
     await expect(resolveActiveTenantForLogin('user-1', 't9')).resolves.toBe('t9');
     consoleError.mockRestore();
   });
@@ -150,7 +181,7 @@ describe('resolveActiveTenantForLogin', () => {
 
 describe('resolvePostLoginRouteForUser', () => {
   it('prompts onboarding for a user with zero memberships', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(tenantRows());
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows());
     await expect(
       resolvePostLoginRouteForUser('user-1', { callbackUrl: '/ade/dashboard/projects' })
     ).resolves.toEqual({
@@ -160,8 +191,19 @@ describe('resolvePostLoginRouteForUser', () => {
     });
   });
 
+  it('routes an invited user with only a pending membership into that tenant, no wizard (OLO-4.4)', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
+      tenantRows({ id: 't-inviting', name: 'Acme', status: 'pending' })
+    );
+    await expect(resolvePostLoginRouteForUser('user-1', {})).resolves.toEqual({
+      kind: 'dashboard',
+      destination: DEFAULT_LOGIN_LANDING,
+      activeTenantId: 't-inviting',
+    });
+  });
+
   it('routes a member to their last-active tenant and requested callbackUrl', async () => {
-    mockGetTenantsForUser.mockResolvedValueOnce(
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
       tenantRows({ id: 't1', name: 'Acme' }, { id: 't2', name: 'Beta' })
     );
     await expect(
@@ -178,7 +220,7 @@ describe('resolvePostLoginRouteForUser', () => {
 
   it('fails open to a dashboard route when the membership lookup throws', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    mockGetTenantsForUser.mockRejectedValueOnce(new Error('db down'));
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
     await expect(
       resolvePostLoginRouteForUser('user-1', { lastActiveTenantId: 't1' })
     ).resolves.toEqual({

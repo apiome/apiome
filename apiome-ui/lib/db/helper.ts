@@ -192,6 +192,34 @@ export async function getTenantsForUser(userId: string) {
   return JSON.stringify(result.rows);
 }
 
+/**
+ * Tenants where the user holds a *live* membership per the V121 lifecycle
+ * (OLO-4.4, #4208): a `tenant_users` row with status `active` or `pending`,
+ * or a legacy `tenant_administrators` entry (admins count as active).
+ * Suspended memberships are excluded — a suspended row must neither route the
+ * user into the tenant nor count as a membership for onboarding.
+ *
+ * @param userId The `apiome.users.id` to look up.
+ * @returns JSON array of `{ id, name, status }` rows; when a user has both an
+ *   admin entry and a member row, `active` wins over `pending`.
+ */
+export async function getTenantMembershipsForUser(userId: string) {
+  const result = await connectionPool.query(
+    `SELECT DISTINCT ON (a.id) a.id, a.name, access.status
+     FROM apiome.tenants a
+     INNER JOIN (
+       SELECT tenant_id, status FROM apiome.tenant_users
+        WHERE user_id = $1 AND status IN ('active', 'pending')
+       UNION
+       SELECT tenant_id, 'active' AS status FROM apiome.tenant_administrators WHERE user_id = $1
+     ) access ON access.tenant_id = a.id
+     WHERE a.deleted_at IS NULL
+     ORDER BY a.id, access.status`,
+    [userId]
+  );
+  return JSON.stringify(result.rows);
+}
+
 export async function getTenantById(tenantId: string) {
   const result = await connectionPool.query(
     'SELECT id, name, slug, description, enabled FROM apiome.tenants WHERE id = $1 AND deleted_at IS NULL',

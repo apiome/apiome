@@ -1,21 +1,31 @@
 """
-Atomic first-tenant provisioning (OLO-4.3, #4207).
+Onboarding endpoints: first-tenant provisioning and invited-member arrival.
 
-``POST /v1/onboarding/first-tenant`` creates the authenticated user's tenant in
-one transaction: tenant row, active ``tenant_users`` membership, built-in
-**Owner** role assignment (V118 seed), legacy ``tenant_administrators`` entry,
-and free-tier ``user_entitlements`` — then best-effort seeds the curated sample
-project. The caller's ``user_entitlements.max_tenants`` cap is enforced inside
-the same transaction (409 ``tenant-cap-reached`` when exceeded).
+``POST /v1/onboarding/first-tenant`` (OLO-4.3, #4207) creates the
+authenticated user's tenant in one transaction: tenant row, active
+``tenant_users`` membership, built-in **Owner** role assignment (V118 seed),
+legacy ``tenant_administrators`` entry, and free-tier ``user_entitlements`` —
+then best-effort seeds the curated sample project. The caller's
+``user_entitlements.max_tenants`` cap is enforced inside the same transaction
+(409 ``tenant-cap-reached`` when exceeded).
 
-This endpoint is the single provisioning path: the onboarding wizard and the
-OAuth-signup server action (``apiome-ui/lib/auth/oauth-signup-actions.ts``)
-both call it instead of issuing their own DB writes.
+``POST /v1/onboarding/membership-activation`` (OLO-4.4, #4208) covers the
+invited-user path: a user invited to an existing tenant arrives with a
+``pending`` membership (V121) and must not create a tenant — on first arrival
+the UI calls this endpoint to transition that pending membership to
+``active``. Only the caller's own membership can be activated, and a
+``suspended`` membership is never reactivated by logging in.
+
+These endpoints are the single provisioning path: the onboarding wizard, the
+OAuth-signup server action (``apiome-ui/lib/auth/oauth-signup-actions.ts``),
+and the sign-in arrival hook all call them instead of issuing their own DB
+writes.
 """
 
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import date, datetime
 from typing import Any, Dict, Optional
 
@@ -31,6 +41,8 @@ from .database import (
 from .models import (
     FirstTenantProvisionRequest,
     FirstTenantProvisionResponse,
+    MembershipActivationRequest,
+    MembershipActivationResponse,
     TenantProvisionedSchema,
 )
 from .tenant_slug import generate_tenant_slug, validate_tenant_slug
@@ -131,3 +143,108 @@ async def provision_first_tenant(
         ),
         sample_project_id=sample_project_id,
     )
+
+
+def _normalize_tenant_id(value: Any) -> Optional[str]:
+    """Return the canonical UUID string for a tenant id, or None when invalid.
+
+    Guarding here keeps malformed ids out of the ``::uuid`` casts in the
+    database layer (which would raise on a non-UUID string).
+    """
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return str(uuid.UUID(text))
+    except ValueError:
+        return None
+
+
+@router.post(
+    "/membership-activation",
+    response_model=MembershipActivationResponse,
+    responses={
+        400: {"description": "``tenant_id`` is missing or not a UUID."},
+        401: {"description": "Missing or invalid session credentials."},
+        403: {
+            "description": (
+                "API-key sessions cannot activate memberships, or the "
+                "membership is ``suspended`` (structured code "
+                "``membership-suspended``) — logging in never unsuspends."
+            )
+        },
+        404: {
+            "description": (
+                "The caller has no membership in this tenant (structured "
+                "code ``membership-not-found``)."
+            )
+        },
+    },
+)
+async def activate_membership(
+    payload: MembershipActivationRequest,
+    session: Dict[str, Any] = Depends(validate_session_credentials),
+) -> MembershipActivationResponse:
+    """
+    Activate the caller's *pending* membership in a tenant (invited-user
+    first arrival, OLO-4.4).
+
+    Idempotent: an already-active membership returns 200
+    ``already-active``. Only ``pending`` rows are touched — a ``suspended``
+    membership returns 403 ``membership-suspended`` and stays suspended.
+    """
+    if session.get("auth_method") != "jwt":
+        # API keys are tenant-scoped credentials; membership lifecycle belongs
+        # to the user's own session.
+        raise HTTPException(
+            status_code=403,
+            detail="Membership activation requires a user session, not an API key",
+        )
+
+    user_id = normalize_user_id(session.get("user_id"))
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Missing user identifier")
+
+    tenant_id = _normalize_tenant_id(payload.tenant_id)
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="tenant_id must be a UUID")
+
+    try:
+        outcome = db.activate_pending_membership(tenant_id, user_id)
+    except Exception as e:
+        logger.error(
+            "membership activation failed for user %s in tenant %s: %s",
+            user_id,
+            tenant_id,
+            e,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "membership-activation-failed",
+                "message": "Could not activate the membership",
+            },
+        )
+
+    if outcome == "none":
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "membership-not-found",
+                "message": "You are not a member of this tenant",
+            },
+        )
+    if outcome not in ("activated", "already-active"):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "membership-suspended",
+                "message": "This membership is suspended and cannot be activated by signing in",
+            },
+        )
+
+    if outcome == "activated":
+        logger.info(
+            "activated pending membership for user %s in tenant %s", user_id, tenant_id
+        )
+    return MembershipActivationResponse(status=outcome, tenant_id=tenant_id)
