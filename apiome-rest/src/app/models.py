@@ -5854,12 +5854,46 @@ class TenantRepositoryFileContentResponse(BaseModel):
 
 
 class TenantMembershipSchema(BaseModel):
-    """One tenant the authenticated user may access."""
+    """One tenant the authenticated user may access.
+
+    Enriched for the tenant switcher (OLO-6.2, #4219): each membership carries the
+    caller's effective RBAC role, the member lifecycle status, and the tenant's
+    attached license plan — all resolved in the same round-trip as the listing so
+    the switcher renders without follow-up calls.
+    """
 
     id: str
     slug: str
     name: str
-    role: str
+    role: str = Field(
+        ...,
+        description=(
+            "Effective RBAC role slug in this tenant: 'owner', 'admin', 'editor', "
+            "'viewer', or a custom role slug. A legacy tenant administrator reads "
+            "as 'owner'; an API-key principal reads as 'member'."
+        ),
+    )
+    status: str = Field(
+        "active",
+        description=(
+            "Member lifecycle status (V121): 'active', 'pending' (invited, not "
+            "yet accepted), or 'suspended' (access blocked)."
+        ),
+    )
+    license_name: Optional[str] = Field(
+        None,
+        description=(
+            "Display name of the tenant's attached license plan (e.g. 'Free'); "
+            "null when the tenant has no license row (treated as the Free fallback)."
+        ),
+    )
+    license_type: Optional[str] = Field(
+        None,
+        description=(
+            "Billing classification of the attached plan: 'free', 'paid', or "
+            "'sponsor'; null when the tenant has no license row."
+        ),
+    )
 
 
 class TenantsMeResponse(BaseModel):

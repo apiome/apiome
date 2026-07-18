@@ -1,7 +1,8 @@
 """
 Session-scoped tenant discovery for the CLI (#3198).
 
-``GET /v1/tenants/me`` lists tenants for the authenticated principal.
+``GET /v1/tenants/me`` lists tenants for the authenticated principal, enriched with
+role, member status, and license tier for the tenant switcher (OLO-6.2, #4219).
 ``HEAD /v1/tenants/{slug}`` verifies access without a response body (#3199).
 ``GET /v1/tenants/{slug}`` returns aggregate tenant details when the caller has access.
 """
@@ -76,22 +77,35 @@ async def list_my_tenants(
     offset: int = Query(0, ge=0),
 ) -> TenantsMeResponse:
     """
-    Tenants accessible to the caller.
+    Tenants accessible to the caller, enriched for the tenant switcher (OLO-6.2, #4219).
 
-    - JWT: all ``tenant_users`` memberships for the user, with admin vs member role.
-    - API key: the key's tenant only (single-item list).
+    - JWT: all memberships for the user, each carrying the effective RBAC role slug
+      (V119 assignment; legacy administrators read as ``owner``; Editor default),
+      the V121 member lifecycle status, and the tenant's attached license plan —
+      resolved in a single query, no per-tenant follow-ups.
+    - API key: the key's tenant only (single-item list) with role ``member`` and
+      the tenant's license plan.
     """
     if session.get("auth_method") == "api_key":
         slug = session.get("tenant_slug")
         name = session.get("tenant_name") or ""
         if not isinstance(slug, str) or slug.strip() == "":
             raise HTTPException(status_code=500, detail="API key session missing tenant slug")
+        tenant_id = str(session.get("tenant_id") or "")
+        license_info = db.get_tenant_license_info(tenant_id) if tenant_id else None
         all_items = [
             TenantMembershipSchema(
-                id=str(session.get("tenant_id") or ""),
+                id=tenant_id,
                 slug=slug,
                 name=str(name),
                 role="member",
+                status="active",
+                license_name=(
+                    str(license_info.get("name") or "") or None if license_info else None
+                ),
+                license_type=(
+                    str(license_info.get("license_type") or "") or None if license_info else None
+                ),
             )
         ]
         items = all_items[offset : offset + limit]
@@ -108,7 +122,10 @@ async def list_my_tenants(
             id=str(r["id"]),
             slug=str(r["slug"]),
             name=str(r["name"] or ""),
-            role=str(r.get("role") or "member"),
+            role=str(r.get("role") or "editor"),
+            status=str(r.get("status") or "active"),
+            license_name=r.get("license_name"),
+            license_type=r.get("license_type"),
         )
         for r in rows
     ]
