@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.25.0
+  version: 1.26.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -16621,6 +16621,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get tenant inforesponse422.
+  /v1/tenants/{tenant_slug}/license:
+    get:
+      tags:
+      - license
+      summary: Get Tenant License
+      description: "Read the tenant's plan, seat usage, and effective features (OLO-5.4).\n\
+        \nArgs:\n    tenant_slug: Tenant slug from the path; membership is validated\
+        \ by\n        ``validate_authentication``.\n    auth_data: The authenticated\
+        \ principal (tenant_id resolved from the slug).\n\nReturns:\n    The tenant's\
+        \ license summary. ``plan`` is null for a tenant with no\n    license row;\
+        \ ``seats.max`` then falls back to the Free default so the\n    numbers always\
+        \ match what the OLO-5.3 guard enforces."
+      operationId: get_tenant_license_v1_tenants__tenant_slug__license_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Tenant Licenseauthorization schema.
+          - type: 'null'
+            description: Get Tenant Licenseauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Tenant License Xapikey schema.
+          - type: 'null'
+            description: Get Tenant License Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get tenant license.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantLicenseResponse'
+                description: Response payload for get tenant licenseresponse200.
+        '401':
+          description: Missing or invalid credentials.
+        '403':
+          description: Caller is not a member, or lacks billing:view.
+        '404':
+          description: Tenant not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get tenant licenseresponse422.
   /v1/onboarding/first-tenant:
     post:
       tags:
@@ -35192,6 +35260,87 @@ components:
         Drives which input panel the UI shows (MFI-1.3) and which flags the CLI offers
 
         (MFI-1.4): an adapter declares the subset it accepts.'
+    LicenseFeatureSchema:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Machine slug, e.g. 'designer'.
+          example: Pet
+        label:
+          type: string
+          title: Label
+          description: Human-readable label.
+          example: example
+        description:
+          anyOf:
+          - type: string
+            description: License Feature schema.
+          - type: 'null'
+            description: License Feature schema.
+          title: Description
+          description: What the feature does.
+        is_preview:
+          type: boolean
+          title: Is Preview
+          description: Show a 'Preview' badge when true.
+          default: false
+          example: true
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Effective state after composition.
+          example: true
+        source:
+          type: string
+          title: Source
+          description: 'Where the effective state came from: ''license'' (bundled
+            in the plan) or ''tenant-override'' (explicit per-tenant grant/revoke).'
+          example: human
+      type: object
+      required:
+      - name
+      - label
+      - enabled
+      - source
+      title: LicenseFeatureSchema
+      description: One feature flag in the tenant's effective composition.
+    LicensePlanSchema:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Plan display name, e.g. 'Free'.
+          example: Pet
+        type:
+          type: string
+          title: Type
+          description: 'Billing classification: free, paid, or sponsor.'
+          example: example
+      type: object
+      required:
+      - name
+      - type
+      title: LicensePlanSchema
+      description: The tenant's attached license plan (V097 catalog via V182 attachment).
+    LicenseSeatsSchema:
+      properties:
+        used:
+          type: integer
+          title: Used
+          description: Seats occupied (active + pending members).
+          example: 1
+        max:
+          type: integer
+          title: Max
+          description: Seat limit from the license (Free default when unlicensed).
+          example: 1
+      type: object
+      required:
+      - used
+      - max
+      title: LicenseSeatsSchema
+      description: Member-seat usage against the license limit.
     LinkArtifactsRequest:
       properties:
         projectId:
@@ -51718,6 +51867,30 @@ components:
       - name
       title: TenantInfoResponse
       description: Tenant summary for ``GET /v1/tenants/{slug}``.
+    TenantLicenseResponse:
+      properties:
+        plan:
+          anyOf:
+          - $ref: '#/components/schemas/LicensePlanSchema'
+          - type: 'null'
+            description: Response payload for tenant license.
+          description: Attached plan; null when the tenant has no license row (pre-V183
+            tenant).
+        seats:
+          $ref: '#/components/schemas/LicenseSeatsSchema'
+          description: Seats.
+        features:
+          items:
+            $ref: '#/components/schemas/LicenseFeatureSchema'
+          type: array
+          title: Features
+          description: Features.
+          maxItems: 1000
+      type: object
+      required:
+      - seats
+      title: TenantLicenseResponse
+      description: Payload of ``GET /v1/tenants/{tenant_slug}/license``.
     TenantMcpPolicyChangeEntry:
       properties:
         id:
