@@ -11,7 +11,10 @@
  *   - the login page renders one SSO button per enabled provider (OLO-3.1, `login/page.tsx`);
  *   - the linked-accounts panel offers exactly the enabled providers for linking (OLO-2.4);
  *   - the signup-intent and link routes refuse providers that are not enabled;
- *   - setup docs list each provider's env contract (OLO-7.2).
+ *   - setup docs list each provider's env contract (OLO-7.2, `docs/AUTH_PROVIDER_SETUP.md`);
+ *   - boot-time validation (`validateProviderEnv`, called from `src/instrumentation.ts`)
+ *     fails startup — or warns, per `AUTH_PROVIDER_VALIDATION` — when a provider's env is
+ *     only partially configured (OLO-7.2).
  *
  * Adding a provider later (Okta #241, AWS #68, Google) means: one entry here, one NextAuth
  * factory in `nextauth-oauth-providers.ts`, one brand icon in
@@ -189,4 +192,125 @@ export function providerSummaries(
     status: provider.status,
     enabled: isProviderEnabled(provider.id, env),
   }));
+}
+
+/* ── Boot-time env validation (OLO-7.2, #4224) ──────────────────────────────────────────── */
+
+/**
+ * How boot-time validation reacts to a partially-configured provider:
+ *   - `strict` (default): the server refuses to start — misconfiguration fails loud at boot,
+ *     not silently at first login.
+ *   - `warn`: the issue is logged and the provider stays cleanly disabled (a provider with
+ *     any required env var missing is never enabled — see {@link isProviderEnabled}).
+ */
+export type ProviderValidationMode = 'strict' | 'warn';
+
+/** Env var selecting the {@link ProviderValidationMode}. */
+export const PROVIDER_VALIDATION_ENV_KEY = 'AUTH_PROVIDER_VALIDATION';
+
+/** Setup guide referenced by every validation message. */
+const SETUP_DOC = 'apiome-ui/docs/AUTH_PROVIDER_SETUP.md';
+
+/** A provider whose env is partially configured (some, but not all, required vars set). */
+export interface ProviderEnvIssue {
+  /** Provider slug (e.g. `github`). */
+  providerId: string;
+  /** Human-readable provider name (e.g. `GitHub`). */
+  label: string;
+  /** Required env vars that are set and non-blank. */
+  presentKeys: string[];
+  /** Required env vars that are unset or blank. */
+  missingKeys: string[];
+  /** Actionable, operator-facing description of the problem and both ways to fix it. */
+  message: string;
+}
+
+/**
+ * Find every partially-configured provider.
+ *
+ * A provider with all required vars set is enabled; one with none set is cleanly disabled —
+ * both are valid deployments. Some-but-not-all is always operator error (a typo'd var name,
+ * a secret that never landed), so each such provider yields one issue.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns One issue per partially-configured provider, in registry display order.
+ */
+export function providerEnvIssues(
+  env: Record<string, string | undefined> = process.env
+): ProviderEnvIssue[] {
+  const issues: ProviderEnvIssue[] = [];
+  for (const { id, label, status, requiredEnvKeys } of PROVIDER_REGISTRY) {
+    if (status !== 'available' || requiredEnvKeys.length === 0) continue;
+    const presentKeys = requiredEnvKeys.filter((key) => readEnvString(env, key) !== null);
+    const missingKeys = requiredEnvKeys.filter((key) => readEnvString(env, key) === null);
+    if (presentKeys.length === 0 || missingKeys.length === 0) continue;
+    issues.push({
+      providerId: id,
+      label,
+      presentKeys,
+      missingKeys,
+      message:
+        `Sign-in provider '${label}' (${id}) is partially configured: ` +
+        `${missingKeys.join(', ')} ${missingKeys.length === 1 ? 'is' : 'are'} unset or blank ` +
+        `while ${presentKeys.join(', ')} ${presentKeys.length === 1 ? 'is' : 'are'} set. ` +
+        `Set all of ${requiredEnvKeys.join(', ')} to enable ${label} sign-in, ` +
+        `or unset all of them to disable it. Setup guide: ${SETUP_DOC}`,
+    });
+  }
+  return issues;
+}
+
+/**
+ * Resolve the validation mode from `AUTH_PROVIDER_VALIDATION`.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns `strict` when unset (the default), otherwise the configured mode.
+ * @throws Error when the var is set to anything other than `strict` or `warn`, so a typo'd
+ *   mode cannot silently weaken (or accidentally re-enable) validation.
+ */
+export function providerValidationMode(
+  env: Record<string, string | undefined> = process.env
+): ProviderValidationMode {
+  const raw = readEnvString(env, PROVIDER_VALIDATION_ENV_KEY);
+  if (raw === null) return 'strict';
+  const mode = raw.toLowerCase();
+  if (mode === 'strict' || mode === 'warn') return mode;
+  throw new Error(
+    `${PROVIDER_VALIDATION_ENV_KEY}='${raw}' is not a valid validation mode; ` +
+      `use 'strict' (fail startup on partial provider config, the default) or ` +
+      `'warn' (log and leave the provider disabled). Setup guide: ${SETUP_DOC}`
+  );
+}
+
+/**
+ * Validate provider env config at boot (OLO-7.2 acceptance: misconfiguration fails loud at
+ * startup, not at first login). Called from `src/instrumentation.ts` when the Node.js server
+ * starts; also safe to call from tests or scripts.
+ *
+ * In `strict` mode (default) any partially-configured provider aborts startup with one
+ * message per issue. In `warn` mode the issues are logged via `console.warn` and the
+ * offending providers stay cleanly disabled.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The issues found (empty when the deployment's provider env is coherent).
+ * @throws Error in `strict` mode when any provider is partially configured, or for an
+ *   invalid `AUTH_PROVIDER_VALIDATION` value in any mode.
+ */
+export function validateProviderEnv(
+  env: Record<string, string | undefined> = process.env
+): ProviderEnvIssue[] {
+  const mode = providerValidationMode(env);
+  const issues = providerEnvIssues(env);
+  if (issues.length === 0) return issues;
+  if (mode === 'strict') {
+    throw new Error(
+      `Refusing to start: ${issues.length} sign-in provider(s) partially configured.\n` +
+        issues.map((issue) => `  - ${issue.message}`).join('\n') +
+        `\nSet ${PROVIDER_VALIDATION_ENV_KEY}=warn to log instead and leave the provider(s) disabled.`
+    );
+  }
+  for (const issue of issues) {
+    console.warn(`[provider-registry] ${issue.message} (provider disabled)`);
+  }
+  return issues;
 }
