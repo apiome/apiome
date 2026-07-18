@@ -189,7 +189,10 @@ export default function MembersClient() {
       <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
         <div className="space-y-8">
           {error && (
-            <div className="p-4 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300 flex items-start gap-3">
+            <div
+              data-testid="members-error"
+              className="p-4 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300 flex items-start gap-3"
+            >
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <p className="text-sm">{error}</p>
             </div>
@@ -199,6 +202,7 @@ export default function MembersClient() {
           {canInvite && (
             <form
               onSubmit={handleInvite}
+              data-testid="members-invite-form"
               className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 flex flex-col sm:flex-row gap-3 sm:items-end"
             >
               <div className="flex-1">
@@ -270,7 +274,12 @@ export default function MembersClient() {
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                       {members.map((member) => (
-                        <tr key={member.user_id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <tr
+                          key={member.user_id}
+                          data-testid="member-row"
+                          data-member-email={member.email}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800"
+                        >
                           <td className="px-6 py-4">
                             <div className="font-medium text-gray-900 dark:text-white">{member.name || member.email}</div>
                             <div className="text-xs text-gray-400 font-mono">{member.email}</div>

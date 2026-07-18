@@ -15,6 +15,7 @@
 
 # playwright
 /playwright-report/
+/playwright-report-journey/
 /playwright/.cache/
 /test-results/
 /e2e/**/*.png

@@ -142,3 +142,19 @@ AZURE_AD_CLIENT_SECRET=<client secret Value>
   update the env var and restart — sessions already issued stay valid.
 - Docker deployments: see [`.env.docker`](../.env.docker) and
   [`DOCKER_README.md`](./DOCKER_README.md) for where these variables are injected.
+
+## Test-only endpoint overrides (OLO-7.4)
+
+The end-to-end journey suite (`e2e/journey/`, #4226) points every provider at a local
+mock server via base-URL override env vars:
+
+| Variable | Overrides | Production default |
+| --- | --- | --- |
+| `GITHUB_OAUTH_BASE_URL` | GitHub authorize/token endpoints | `https://github.com` |
+| `GITHUB_API_BASE_URL` | GitHub `/user` + `/user/emails` API | `https://api.github.com` |
+| `GITLAB_BASE_URL` | GitLab authorize/token/userinfo | `https://gitlab.com` |
+| `AZURE_AD_AUTHORITY_BASE_URL` | Entra ID OIDC discovery authority | `https://login.microsoftonline.com` |
+
+**Never set these in a real deployment** — they redirect the entire sign-in flow to the
+named host. Unset (the default) the real provider endpoints are used; the boot-time
+validation matrix above is unaffected by them.

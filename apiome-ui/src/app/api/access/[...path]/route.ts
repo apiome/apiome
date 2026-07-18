@@ -123,8 +123,21 @@ async function forward(
 
     const data = await response.json();
     if (!response.ok) {
+      // REST errors arrive either as a plain-string `detail` or as the structured
+      // `{code, message}` shape (e.g. `license-seats-exhausted`, OLO-5.3). Flatten to a
+      // human-readable `error` string and surface the stable machine code separately so
+      // client UIs can branch on it without parsing prose.
+      const detail = data?.detail;
+      const errorMessage =
+        typeof detail === 'string'
+          ? detail
+          : detail && typeof detail.message === 'string'
+            ? detail.message
+            : (typeof data?.error === 'string' && data.error) || 'Request failed';
+      const errorCode =
+        detail && typeof detail.code === 'string' ? { code: detail.code } : {};
       return NextResponse.json(
-        { success: false, error: (data && (data.detail || data.error)) || 'Request failed' },
+        { success: false, error: errorMessage, ...errorCode },
         { status: response.status },
       );
     }

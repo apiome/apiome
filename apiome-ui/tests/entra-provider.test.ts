@@ -144,6 +144,17 @@ describe('protocol configuration', () => {
     );
   });
 
+  test('AZURE_AD_AUTHORITY_BASE_URL points discovery at a mock authority (OLO-7.4)', () => {
+    const provider = entraIdProvider({
+      ...CONFIGURED_ENV,
+      AZURE_AD_AUTHORITY_BASE_URL: 'http://localhost:8091/azure/',
+      AZURE_AD_TENANT: 'mock-tenant',
+    });
+    expect(provider.wellKnown).toBe(
+      'http://localhost:8091/azure/mock-tenant/v2.0/.well-known/openid-configuration?appid=client-id-123'
+    );
+  });
+
   test('authorization-code + PKCE with state and nonce checks, reading the id token', () => {
     const provider = entraIdProvider(CONFIGURED_ENV);
     expect(provider.type).toBe('oauth');

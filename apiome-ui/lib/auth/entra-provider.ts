@@ -38,6 +38,24 @@ export const ENTRA_ID_PROVIDER_ID = 'azure';
 /** Multi-tenant app registrations sign in through the `common` endpoint. */
 const DEFAULT_TENANT = 'common';
 
+/** The real Entra ID authority host (production default for {@link entraAuthorityBaseUrl}). */
+const DEFAULT_AUTHORITY_BASE_URL = 'https://login.microsoftonline.com';
+
+/**
+ * Base URL of the Entra ID authority the OIDC discovery document is fetched from.
+ * Overridable via `AZURE_AD_AUTHORITY_BASE_URL` for the mocked-provider e2e journey
+ * (OLO-7.4); defaults to the real Microsoft host.
+ *
+ * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @returns The authority base URL without a trailing slash.
+ */
+export function entraAuthorityBaseUrl(
+  env: Record<string, string | undefined> = process.env
+): string {
+  const raw = readEnvString(env, 'AZURE_AD_AUTHORITY_BASE_URL') ?? DEFAULT_AUTHORITY_BASE_URL;
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+}
+
 /** The Entra ID id-token claims this module reads (all others pass through untouched). */
 export interface EntraIdProfile extends Record<string, unknown> {
   /** Immutable directory object id — the stable provider_user_id (never use `sub`). */
@@ -105,7 +123,7 @@ export function entraIdProvider(
     id: ENTRA_ID_PROVIDER_ID,
     name: 'Microsoft Entra ID',
     type: 'oauth',
-    wellKnown: `https://login.microsoftonline.com/${tenant}/v2.0/.well-known/openid-configuration?appid=${clientId}`,
+    wellKnown: `${entraAuthorityBaseUrl(env)}/${tenant}/v2.0/.well-known/openid-configuration?appid=${clientId}`,
     // `offline_access` makes Microsoft issue a refresh token on the code exchange, so the azure
     // identity row carries token-refresh data like the other providers (OLO-2.2, #4194).
     authorization: { params: { scope: 'openid profile email offline_access' } },
