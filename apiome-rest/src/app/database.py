@@ -152,6 +152,39 @@ def _compute_delta(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     return delta
 
 
+class TenantProvisioningError(Exception):
+    """Base error for first-tenant provisioning (OLO-4.3, #4207).
+
+    Carries a machine-readable ``code`` (stable, kebab-case) alongside the
+    human-readable message so the REST layer can emit structured 409 payloads
+    and the UI can map codes to friendly copy.
+    """
+
+    code = "tenant-provisioning-failed"
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class TenantSlugConflictError(TenantProvisioningError):
+    """The requested tenant slug is already in use by an active tenant."""
+
+    code = "tenant-slug-taken"
+
+
+class TenantCapReachedError(TenantProvisioningError):
+    """The caller already has as many tenants as their entitlement allows."""
+
+    code = "tenant-cap-reached"
+
+
+# Fallback when a user has no ``user_entitlements`` row yet: the Free tier
+# allows a single tenant (matches the V097 Free license seats and the free-tier
+# entitlement seed used at signup).
+DEFAULT_FREE_MAX_TENANTS = 1
+
+
 class Database:
     """Database connection and query manager."""
 
@@ -994,6 +1027,191 @@ class Database:
                 "published_versions_count": 0,
             }
         return dict(rows[0])
+
+    # ---- First-tenant provisioning (OLO-4.3, #4207) -------------------
+
+    def provision_first_tenant(
+        self,
+        user_id: str,
+        name: str,
+        slug: str,
+        description: str = "",
+    ) -> Dict[str, Any]:
+        """Atomically provision a tenant for ``user_id`` (OLO-4.3, #4207).
+
+        One transaction performs, in order:
+
+        1. Enforce the caller's tenant cap (``user_entitlements.max_tenants``,
+           Free default when no row) against their current tenant count.
+        2. Insert the ``apiome.tenants`` row (enabled, not deleted).
+        3. Seed the built-in RBAC roles (``apiome.seed_builtin_roles``, V118).
+        4. Insert the caller into ``apiome.tenant_users`` with status
+           ``active`` (V121) and assign the built-in **Owner** role in
+           ``apiome.tenant_user_roles`` (V119).
+        5. Insert the caller into ``apiome.tenant_administrators`` — the
+           legacy full-access plane the RBAC guard still honours (V119 note).
+        6. Seed free-tier ``user_entitlements`` for the caller when absent
+           (idempotent; mirrors the UI's ``insertFreeTierEntitlements``).
+
+        Everything commits together or not at all; the sample project is
+        deliberately *not* part of the transaction (best-effort, see
+        ``provision_sample_project``).
+
+        Args:
+            user_id: Canonical UUID string of the authenticated caller.
+            name: Tenant display name (already trimmed and non-empty).
+            slug: Validated, normalized tenant slug.
+            description: Optional tenant description; empty by default.
+
+        Returns:
+            The created tenant row: ``id`` (text), ``name``, ``slug``,
+            ``created_at``.
+
+        Raises:
+            TenantCapReachedError: The caller is at their max-tenants cap.
+            TenantSlugConflictError: An active tenant already uses ``slug``.
+            TenantProvisioningError: The owner role could not be resolved.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT max_tenants FROM apiome.user_entitlements WHERE user_id = %s::uuid",
+                    (user_id,),
+                )
+                ent_row = cursor.fetchone()
+                max_tenants = (
+                    int(ent_row["max_tenants"])
+                    if ent_row and ent_row.get("max_tenants") is not None
+                    else DEFAULT_FREE_MAX_TENANTS
+                )
+
+                cursor.execute(
+                    """
+                    SELECT COUNT(DISTINCT t.id)::int AS c
+                    FROM apiome.tenants t
+                    INNER JOIN (
+                        SELECT tenant_id FROM apiome.tenant_users WHERE user_id = %s::uuid
+                        UNION
+                        SELECT tenant_id FROM apiome.tenant_administrators WHERE user_id = %s::uuid
+                    ) access ON access.tenant_id = t.id
+                    WHERE t.deleted_at IS NULL
+                      AND t.enabled IS TRUE
+                    """,
+                    (user_id, user_id),
+                )
+                count_row = cursor.fetchone()
+                current = int(count_row["c"]) if count_row and count_row.get("c") is not None else 0
+                if current >= max_tenants:
+                    raise TenantCapReachedError(
+                        f"Tenant limit reached ({current}/{max_tenants} tenants used)"
+                    )
+
+                cursor.execute(
+                    "SELECT 1 FROM apiome.tenants WHERE slug = %s AND deleted_at IS NULL",
+                    (slug,),
+                )
+                if cursor.fetchone():
+                    raise TenantSlugConflictError("A tenant with this slug already exists")
+
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenants (name, description, slug, enabled)
+                    VALUES (%s, %s, %s, true)
+                    RETURNING id::text AS id, name, slug, created_at
+                    """,
+                    (name, description, slug),
+                )
+                tenant = dict(cursor.fetchone())
+                tenant_id = tenant["id"]
+
+                cursor.execute("SELECT apiome.seed_builtin_roles(%s::uuid)", (tenant_id,))
+
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenant_users (tenant_id, user_id, status)
+                    VALUES (%s::uuid, %s::uuid, 'active')
+                    ON CONFLICT (tenant_id, user_id) DO UPDATE SET status = 'active'
+                    """,
+                    (tenant_id, user_id),
+                )
+
+                cursor.execute(
+                    "SELECT id::text AS id FROM apiome.roles WHERE tenant_id = %s::uuid AND slug = 'owner'",
+                    (tenant_id,),
+                )
+                owner_row = cursor.fetchone()
+                if not owner_row:
+                    raise TenantProvisioningError(
+                        "Built-in owner role missing after seeding (V118)"
+                    )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenant_user_roles (tenant_id, user_id, role_id)
+                    VALUES (%s::uuid, %s::uuid, %s::uuid)
+                    ON CONFLICT (tenant_id, user_id) DO UPDATE SET role_id = EXCLUDED.role_id
+                    """,
+                    (tenant_id, user_id, owner_row["id"]),
+                )
+
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenant_administrators (tenant_id, user_id)
+                    VALUES (%s::uuid, %s::uuid)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (tenant_id, user_id),
+                )
+
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.user_entitlements
+                        (user_id, plan_code, max_tenants, max_projects, max_versions, license_id)
+                    SELECT %s::uuid, l.license_type, 1, 1, 3, l.id
+                    FROM apiome.licenses l
+                    WHERE l.name = 'Free' AND l.license_type = 'free'
+                    LIMIT 1
+                    ON CONFLICT (user_id) DO NOTHING
+                    """,
+                    (user_id,),
+                )
+            conn.commit()
+            return tenant
+        except psycopg2.errors.UniqueViolation as e:
+            # Lost a slug race to a concurrent insert: the pre-check passed but
+            # the tenants slug unique index rejected the row.
+            conn.rollback()
+            raise TenantSlugConflictError("A tenant with this slug already exists") from e
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    def provision_sample_project(self, tenant_id: str, user_id: str) -> Optional[str]:
+        """Seed the curated Petstore sample project for a fresh tenant.
+
+        Thin wrapper over ``apiome.provision_sample_project`` (V122), which is
+        idempotent and returns NULL when the tenant already has the sample.
+        Callers treat this as best-effort — a fresh tenant may simply start
+        empty — so failures should be caught and logged, never re-raised into
+        the provisioning response.
+
+        Args:
+            tenant_id: UUID string of the tenant to seed.
+            user_id: UUID string of the creating user (recorded as creator).
+
+        Returns:
+            The created sample project id, or ``None`` when skipped.
+        """
+        rows = self.execute_query(
+            "SELECT apiome.provision_sample_project(%s::uuid, %s::uuid) AS project_id",
+            (tenant_id, user_id),
+        )
+        if rows and rows[0].get("project_id"):
+            return str(rows[0]["project_id"])
+        return None
 
     def get_tag_by_id(self, tag_id: str) -> Optional[Dict[str, Any]]:
         """Get a single project tag by ID."""

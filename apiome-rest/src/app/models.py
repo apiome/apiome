@@ -5886,6 +5886,39 @@ class TenantInfoResponse(BaseModel):
     storage_quota_bytes: Optional[int] = None
 
 
+class FirstTenantProvisionRequest(BaseModel):
+    """Body of ``POST /v1/onboarding/first-tenant`` (OLO-4.3, #4207)."""
+
+    name: str = Field(..., description="Organization display name.")
+    slug: Optional[str] = Field(
+        None,
+        description="Tenant slug; derived from the name when omitted or blank.",
+    )
+    provision_sample_project: bool = Field(
+        True,
+        description="Seed the curated sample project into the new tenant (best-effort).",
+    )
+
+
+class TenantProvisionedSchema(BaseModel):
+    """The tenant created by first-tenant provisioning."""
+
+    id: str
+    name: str
+    slug: str
+    created_at: Optional[str] = None
+
+
+class FirstTenantProvisionResponse(BaseModel):
+    """Result of ``POST /v1/onboarding/first-tenant``."""
+
+    tenant: TenantProvisionedSchema
+    sample_project_id: Optional[str] = Field(
+        None,
+        description="Id of the seeded sample project; null when skipped or unavailable.",
+    )
+
+
 class BrowseDirectoryStats(BaseModel):
     """Aggregate counts for published public specs (browse directory home)."""
 

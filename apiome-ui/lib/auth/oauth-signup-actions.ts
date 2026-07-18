@@ -1,23 +1,15 @@
 'use server';
 
 import crypto from 'crypto';
-import {
-  createUser,
-  createTenant,
-  addUserToTenant,
-  addTenantAdministrator,
-  deleteUser,
-  deleteTenant,
-  provisionSampleProject,
-} from '../db/admin-helper';
+import { createUser, deleteUser } from '../db/admin-helper';
 import { linkExternalAccount } from '../db/helper';
 import { resolveOAuthEmailVerified } from './account-resolution';
 import {
   getOauthSignupPendingById,
   deleteOauthSignupPendingById,
   insertAuthOneTimeCode,
-  insertFreeTierEntitlements,
 } from '../db/oauth-signup';
+import { provisionFirstTenantViaRest } from './first-tenant-provisioning';
 import { generateTenantSlug, validateTenantSlug } from './tenant-slug';
 
 export type CompleteOAuthSignupResult =
@@ -25,7 +17,11 @@ export type CompleteOAuthSignupResult =
   | { success: false; error: string };
 
 /**
- * Completes OAuth self-signup: creates user, tenant, free-tier entitlements, links the provider, returns a one-time login code.
+ * Completes OAuth self-signup: creates the user, links the provider, then
+ * provisions the tenant (with Owner role, free-tier entitlements, and sample
+ * project) through the atomic REST endpoint `POST /v1/onboarding/first-tenant`
+ * (OLO-4.3, #4207) — the same single provisioning path the onboarding wizard
+ * uses. Returns a one-time login code on success.
  */
 export async function completeOAuthSignup(
   pendingId: string,
@@ -114,36 +110,21 @@ export async function completeOAuthSignup(
     return { success: false, error: linkParsed.error || 'Could not link OAuth account' };
   }
 
-  const tenantRes = await createTenant(orgName, '', slugRaw, true);
-  const tenantParsed = JSON.parse(tenantRes);
-  if (!tenantParsed.success || !tenantParsed.tenant?.id) {
+  // Atomic tenant provisioning (tenant + membership + Owner role + free-tier
+  // entitlements + best-effort sample project). All-or-nothing on the REST
+  // side, so the only compensation ever needed here is removing the
+  // just-created user.
+  const provisionRes = await provisionFirstTenantViaRest(
+    { user_id: userId, email, name },
+    orgName,
+    slugRaw
+  );
+  if (!provisionRes.success) {
     await deleteUser(userId);
-    return { success: false, error: tenantParsed.error || 'Could not create organization' };
+    return { success: false, error: provisionRes.error };
   }
 
-  const tenantId: string = tenantParsed.tenant.id;
-
-  const addMemberRes = await addUserToTenant(tenantId, userId);
-  const addMemberParsed = JSON.parse(addMemberRes);
-  if (!addMemberParsed.success) {
-    await deleteTenant(tenantId);
-    await deleteUser(userId);
-    return { success: false, error: addMemberParsed.error || 'Could not add you to the organization' };
-  }
-
-  const addAdminRes = await addTenantAdministrator(tenantId, userId);
-  const addAdminParsed = JSON.parse(addAdminRes);
-  if (!addAdminParsed.success) {
-    await deleteTenant(tenantId);
-    await deleteUser(userId);
-    return { success: false, error: addAdminParsed.error || 'Could not grant organization access' };
-  }
-
-  await insertFreeTierEntitlements(userId);
-
-  // Best-effort: seed the curated sample project so the new tenant isn't empty. Never block signup
-  // if this fails — the user/tenant are already committed and a fresh tenant can simply start empty.
-  await provisionSampleProject(tenantId, userId);
+  const tenantId: string = provisionRes.tenant.id;
 
   await deleteOauthSignupPendingById(pendingId);
 
