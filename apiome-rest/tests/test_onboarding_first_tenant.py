@@ -229,6 +229,7 @@ def test_tx_commits_once_on_full_success():
     executed_sql = " ".join(str(c.args[0]) for c in cursor.execute.call_args_list)
     for fragment in (
         "INSERT INTO apiome.tenants",
+        "attach_free_license",
         "seed_builtin_roles",
         "INSERT INTO apiome.tenant_users",
         "INSERT INTO apiome.tenant_user_roles",
@@ -236,6 +237,41 @@ def test_tx_commits_once_on_full_success():
         "INSERT INTO apiome.user_entitlements",
     ):
         assert fragment in executed_sql
+
+
+def test_tx_attaches_free_license_in_same_transaction():
+    """OLO-5.2 (#4212): the Free license attach runs inside the provisioning
+    transaction — after the tenant insert, before the single commit — so a new
+    tenant always has its tenant_licenses row or does not exist at all."""
+    conn, cursor = _mock_connection()
+    cursor.fetchone.side_effect = [
+        {"max_tenants": 1},
+        {"c": 0},
+        None,
+        dict(_TENANT_ROW),
+        {"id": "880e8400-e29b-41d4-a716-446655440008"},
+    ]
+    dbi = _database_with(conn)
+
+    dbi.provision_first_tenant(_USER_ID, "Acme Corp", "acme-corp")
+
+    license_calls = [
+        c
+        for c in cursor.execute.call_args_list
+        if "attach_free_license" in str(c.args[0])
+    ]
+    assert len(license_calls) == 1
+    assert license_calls[0].args[1] == (_TENANT_ID,)
+    # The attach happened strictly before the transaction committed.
+    conn.commit.assert_called_once()
+    statements = [str(c.args[0]) for c in cursor.execute.call_args_list]
+    insert_idx = next(
+        i for i, s in enumerate(statements) if "INSERT INTO apiome.tenants" in s
+    )
+    attach_idx = next(
+        i for i, s in enumerate(statements) if "attach_free_license" in s
+    )
+    assert insert_idx < attach_idx
 
 
 def test_tx_rolls_back_when_cap_reached():
