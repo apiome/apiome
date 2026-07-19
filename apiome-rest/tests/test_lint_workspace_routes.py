@@ -232,6 +232,16 @@ def test_summary_reports_posture_rollup(mdb):
 # --- GET /trends -----------------------------------------------------------------------------------
 
 
+class _FrozenDatetime(datetime):
+    """datetime whose ``now`` is pinned to NOW so the trend window is stable."""
+
+    @classmethod
+    def now(cls, tz=None):
+        return NOW if tz else NOW.replace(tzinfo=None)
+
+
+@patch("app.lint_workspace.datetime", _FrozenDatetime)
+@patch("app.lint_workspace_routes.datetime", _FrozenDatetime)
 @patch("app.lint_workspace.db")
 def test_trends_route_shapes_series(mdb):
     day1 = NOW - timedelta(days=1)

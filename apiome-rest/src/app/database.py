@@ -155,6 +155,26 @@ class SourceApplyConflictError(Exception):
         super().__init__(code)
 
 
+class ComponentLibraryConflictError(Exception):
+    """Structured failure inside a component-library transaction (DCW-3.1, private-suite#2353).
+
+    Carries a machine-readable ``code`` plus a structured ``payload`` so the
+    REST layer can emit precise 404/409 bodies. Raising this always rolls the
+    transaction back — a failed lifecycle or pin mutation changes nothing.
+
+    Codes: ``component_not_found``, ``revision_not_found``, ``version_not_found``,
+    ``pin_not_found``, ``duplicate_component``, ``duplicate_revision``,
+    ``duplicate_pin``, ``published_immutable``, ``revision_downgrade``,
+    ``revision_not_published``, ``component_in_use``, ``revision_in_use``,
+    ``published_version``, ``schema_ref_required``, ``schema_ref_not_found``.
+    """
+
+    def __init__(self, code: str, payload: Optional[Dict[str, Any]] = None):
+        self.code = code
+        self.payload = payload or {}
+        super().__init__(code)
+
+
 def _compute_delta(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compute top-level delta: keys added, removed, or changed.
@@ -20240,6 +20260,961 @@ class Database:
                 conn.autocommit = prev_autocommit
             except Exception:
                 pass
+
+    # ------------------------------------------------------------------
+    # Operational component library — DCW-3.1 (private-suite#2353)
+    # ------------------------------------------------------------------
+
+    def _component_audit(
+        self,
+        cursor,
+        tenant_id: str,
+        *,
+        action: str,
+        component_id: Optional[str] = None,
+        revision_id: Optional[str] = None,
+        version_id: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append one component-library audit row on the caller's cursor.
+
+        Runs inside the caller's transaction so the mutation and its ledger
+        entry commit or roll back together (the DCW-0.2
+        ``failure-injection-no-partial-mutation`` rule).
+        """
+        cursor.execute(
+            """
+            INSERT INTO apiome.component_library_audit
+              (tenant_id, component_id, revision_id, version_id, actor_id,
+               action, outcome, detail)
+            VALUES (%s, %s, %s, %s, %s, %s, 'success', %s)
+            """,
+            (
+                tenant_id,
+                component_id,
+                revision_id,
+                version_id,
+                actor_id,
+                action,
+                Json(detail or {}),
+            ),
+        )
+
+    def _cursor_component_row(
+        self, cursor, tenant_id: str, component_id: str, *, for_update: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant-scoped live component row (optionally locked), or ``None``."""
+        cursor.execute(
+            """
+            SELECT c.id, c.tenant_id, c.name, c.kind, c.description, c.owner_id
+            FROM apiome.operational_components c
+            WHERE c.id = %s::uuid AND c.tenant_id = %s AND c.deleted_at IS NULL
+            """
+            + (" FOR UPDATE" if for_update else ""),
+            (component_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def _cursor_component_revision_row(
+        self, cursor, tenant_id: str, component_id: str, revision_id: str, *, for_update: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant-scoped revision row joined to its live component, or ``None``."""
+        cursor.execute(
+            """
+            SELECT r.id, r.component_id, r.revision, r.state, r.schema_primitive_id,
+                   c.name AS component_name, c.kind
+            FROM apiome.operational_component_revisions r
+            JOIN apiome.operational_components c ON r.component_id = c.id
+            WHERE r.id = %s::uuid AND r.component_id = %s::uuid
+              AND r.tenant_id = %s AND c.deleted_at IS NULL
+            """
+            + (" FOR UPDATE OF r" if for_update else ""),
+            (revision_id, component_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def _cursor_check_schema_reference(
+        self,
+        cursor,
+        tenant_id: str,
+        kind: str,
+        schema_primitive_id: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Enforce the schema-kind Type Registry pin inside the transaction.
+
+        Schema entries are pinned references to existing Type Registry rows
+        (tenant-scoped or system core); operational kinds must not carry one.
+
+        Returns:
+            The referenced primitive row (``id``, ``schema``) for schema-kind
+            components, so the caller can snapshot its JSON Schema; ``None``
+            for operational kinds.
+
+        Raises:
+            ComponentLibraryConflictError: ``schema_ref_required`` or
+                ``schema_ref_not_found``.
+        """
+        if kind != "schema":
+            if schema_primitive_id:
+                raise ComponentLibraryConflictError(
+                    "schema_ref_required",
+                    {"message": "Only schema-kind components pin a Type Registry entry."},
+                )
+            return None
+        if not schema_primitive_id:
+            raise ComponentLibraryConflictError("schema_ref_required")
+        cursor.execute(
+            """
+            SELECT id, schema FROM apiome.primitives
+            WHERE id = %s::uuid AND (tenant_id = %s OR is_system = true)
+              AND deleted_at IS NULL
+            """,
+            (schema_primitive_id, tenant_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            raise ComponentLibraryConflictError("schema_ref_not_found")
+        return row
+
+    @staticmethod
+    def _snapshot_schema_payload(
+        primitive: Optional[Dict[str, Any]], payload: Any, digest: str
+    ) -> Tuple[Any, str]:
+        """Snapshot a pinned Type Registry schema as the revision payload.
+
+        Schema-kind revisions store the registry entry's JSON Schema at
+        draft/update time; publishing then freezes it, so later registry-head
+        changes never mutate projects pinned to the published revision.
+        Operational kinds keep the caller-supplied payload/digest untouched.
+        """
+        if primitive is None:
+            return payload, digest
+        snapshot = primitive.get("schema")
+        if isinstance(snapshot, str):
+            try:
+                snapshot = json.loads(snapshot)
+            except (TypeError, ValueError):
+                snapshot = {}
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+        from .component_library import payload_digest as compute_payload_digest
+
+        return snapshot, compute_payload_digest(snapshot)
+
+    def list_operational_components(
+        self, tenant_id: str, kind: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """List the tenant's live components with revision/publication summary.
+
+        Args:
+            tenant_id: The caller's tenant.
+            kind: Optional kind filter.
+
+        Returns:
+            Component rows ordered by kind then name, each carrying
+            ``revision_count``, ``published_count``, and ``head_revision``
+            (the highest published semver, or ``None``).
+        """
+        params: List[Any] = [tenant_id]
+        kind_filter = ""
+        if kind:
+            kind_filter = " AND c.kind = %s"
+            params.append(kind)
+        rows = self.execute_query(
+            """
+            SELECT c.id, c.name, c.kind, c.description, c.owner_id,
+                   c.created_by, c.created_at, c.updated_at,
+                   COUNT(r.id) AS revision_count,
+                   COUNT(r.id) FILTER (WHERE r.state = 'published') AS published_count
+            FROM apiome.operational_components c
+            LEFT JOIN apiome.operational_component_revisions r ON r.component_id = c.id
+            WHERE c.tenant_id = %s AND c.deleted_at IS NULL"""
+            + kind_filter
+            + """
+            GROUP BY c.id, c.name, c.kind, c.description, c.owner_id,
+                     c.created_by, c.created_at, c.updated_at
+            ORDER BY c.kind, c.name
+            """,
+            tuple(params),
+        )
+        from .component_library import parse_semver
+
+        for row in rows:
+            published = self.execute_query(
+                """
+                SELECT revision FROM apiome.operational_component_revisions
+                WHERE component_id = %s::uuid AND state = 'published'
+                """,
+                (str(row["id"]),),
+            )
+            revisions = [p["revision"] for p in published if parse_semver(p.get("revision"))]
+            row["head_revision"] = (
+                max(revisions, key=parse_semver) if revisions else None
+            )
+        return rows
+
+    def get_operational_component(
+        self, tenant_id: str, component_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant-scoped live component row, or ``None`` (scope misses read as 404)."""
+        rows = self.execute_query(
+            """
+            SELECT c.id, c.name, c.kind, c.description, c.owner_id,
+                   c.created_by, c.created_at, c.updated_at
+            FROM apiome.operational_components c
+            WHERE c.id = %s::uuid AND c.tenant_id = %s AND c.deleted_at IS NULL
+            """,
+            (component_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_component_revisions(
+        self, tenant_id: str, component_id: str
+    ) -> List[Dict[str, Any]]:
+        """The component's revisions, highest semver first."""
+        rows = self.execute_query(
+            """
+            SELECT r.id, r.revision, r.state, r.canonical_payload, r.schema_primitive_id,
+                   r.payload_digest, r.published_at, r.published_by,
+                   r.created_by, r.created_at, r.updated_at
+            FROM apiome.operational_component_revisions r
+            WHERE r.component_id = %s::uuid AND r.tenant_id = %s
+            """,
+            (component_id, tenant_id),
+        )
+        from .component_library import parse_semver
+
+        return sorted(
+            rows,
+            key=lambda row: parse_semver(row.get("revision")) or (0, 0, 0),
+            reverse=True,
+        )
+
+    def create_operational_component(
+        self,
+        tenant_id: str,
+        *,
+        name: str,
+        kind: str,
+        description: Optional[str],
+        owner_id: Optional[str],
+        revision: str,
+        payload: Any,
+        payload_digest: str,
+        schema_primitive_id: Optional[str],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Create a component and its initial draft revision in one transaction.
+
+        Args:
+            tenant_id: The caller's tenant (scopes every statement).
+            name: The stable library name (validated by the route).
+            kind: One of the DCW-3.1 kinds.
+            description: Optional description.
+            owner_id: The accountable member (defaults to the actor).
+            revision: The initial draft's semver.
+            payload: The canonical payload (schema kind: the snapshotted schema).
+            payload_digest: ``sha256:<hex>`` of the canonical payload.
+            schema_primitive_id: The pinned Type Registry row (schema kind only).
+            actor_id: The acting user for attribution/audit.
+
+        Returns:
+            ``{"componentId": ..., "revisionId": ...}``.
+
+        Raises:
+            ComponentLibraryConflictError: ``duplicate_component``,
+                ``schema_ref_required``, or ``schema_ref_not_found``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id FROM apiome.operational_components
+                    WHERE tenant_id = %s AND kind = %s AND name = %s
+                      AND deleted_at IS NULL
+                    """,
+                    (tenant_id, kind, name),
+                )
+                if cursor.fetchone():
+                    raise ComponentLibraryConflictError(
+                        "duplicate_component", {"name": name, "kind": kind}
+                    )
+                primitive = self._cursor_check_schema_reference(
+                    cursor, tenant_id, kind, schema_primitive_id
+                )
+                payload, payload_digest = self._snapshot_schema_payload(
+                    primitive, payload, payload_digest
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.operational_components
+                      (tenant_id, name, kind, description, owner_id, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (tenant_id, name, kind, description, owner_id or actor_id, actor_id),
+                )
+                component_id = str(cursor.fetchone()["id"])
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.operational_component_revisions
+                      (tenant_id, component_id, revision, state, canonical_payload,
+                       schema_primitive_id, payload_digest, created_by)
+                    VALUES (%s, %s::uuid, %s, 'draft', %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        component_id,
+                        revision,
+                        Json(payload),
+                        schema_primitive_id,
+                        payload_digest,
+                        actor_id,
+                    ),
+                )
+                revision_id = str(cursor.fetchone()["id"])
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="component.create",
+                    component_id=component_id,
+                    revision_id=revision_id,
+                    actor_id=actor_id,
+                    detail={"name": name, "kind": kind, "revision": revision},
+                )
+                conn.commit()
+                return {"componentId": component_id, "revisionId": revision_id}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def create_component_revision(
+        self,
+        tenant_id: str,
+        component_id: str,
+        *,
+        revision: str,
+        payload: Any,
+        payload_digest: str,
+        schema_primitive_id: Optional[str],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Add a draft revision to an existing component in one transaction.
+
+        Raises:
+            ComponentLibraryConflictError: ``component_not_found``,
+                ``duplicate_revision``, ``schema_ref_required``, or
+                ``schema_ref_not_found``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                component = self._cursor_component_row(
+                    cursor, tenant_id, component_id, for_update=True
+                )
+                if not component:
+                    raise ComponentLibraryConflictError("component_not_found")
+                cursor.execute(
+                    """
+                    SELECT id FROM apiome.operational_component_revisions
+                    WHERE component_id = %s::uuid AND revision = %s
+                    """,
+                    (component_id, revision),
+                )
+                if cursor.fetchone():
+                    raise ComponentLibraryConflictError(
+                        "duplicate_revision", {"revision": revision}
+                    )
+                primitive = self._cursor_check_schema_reference(
+                    cursor, tenant_id, str(component["kind"]), schema_primitive_id
+                )
+                payload, payload_digest = self._snapshot_schema_payload(
+                    primitive, payload, payload_digest
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.operational_component_revisions
+                      (tenant_id, component_id, revision, state, canonical_payload,
+                       schema_primitive_id, payload_digest, created_by)
+                    VALUES (%s, %s::uuid, %s, 'draft', %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        component_id,
+                        revision,
+                        Json(payload),
+                        schema_primitive_id,
+                        payload_digest,
+                        actor_id,
+                    ),
+                )
+                revision_id = str(cursor.fetchone()["id"])
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="revision.draft",
+                    component_id=component_id,
+                    revision_id=revision_id,
+                    actor_id=actor_id,
+                    detail={"revision": revision, "payloadDigest": payload_digest},
+                )
+                conn.commit()
+                return {"revisionId": revision_id}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def update_component_revision(
+        self,
+        tenant_id: str,
+        component_id: str,
+        revision_id: str,
+        *,
+        payload: Any,
+        payload_digest: str,
+        schema_primitive_id: Optional[str],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Replace a draft revision's canonical payload in one transaction.
+
+        Published revisions are immutable: the state is rechecked under lock
+        inside the transaction and the update rolls back with
+        ``published_immutable``.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found``,
+                ``published_immutable``, ``schema_ref_required``, or
+                ``schema_ref_not_found``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                row = self._cursor_component_revision_row(
+                    cursor, tenant_id, component_id, revision_id, for_update=True
+                )
+                if not row:
+                    raise ComponentLibraryConflictError("revision_not_found")
+                if row.get("state") == "published":
+                    raise ComponentLibraryConflictError(
+                        "published_immutable", {"revision": row.get("revision")}
+                    )
+                primitive = self._cursor_check_schema_reference(
+                    cursor, tenant_id, str(row["kind"]), schema_primitive_id
+                )
+                payload, payload_digest = self._snapshot_schema_payload(
+                    primitive, payload, payload_digest
+                )
+                cursor.execute(
+                    """
+                    UPDATE apiome.operational_component_revisions
+                    SET canonical_payload = %s, payload_digest = %s,
+                        schema_primitive_id = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (Json(payload), payload_digest, schema_primitive_id, revision_id),
+                )
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="revision.update",
+                    component_id=component_id,
+                    revision_id=revision_id,
+                    actor_id=actor_id,
+                    detail={
+                        "revision": row.get("revision"),
+                        "payloadDigest": payload_digest,
+                    },
+                )
+                conn.commit()
+                return {"revisionId": revision_id}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def publish_component_revision(
+        self,
+        tenant_id: str,
+        component_id: str,
+        revision_id: str,
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Publish a draft revision (immutable from then on) in one transaction.
+
+        The no-unsafe-downgrade rule is enforced under lock: the revision must
+        be strictly greater than the component's highest already-published
+        revision. Republishing an already-published revision is an idempotent
+        no-op.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found`` or
+                ``revision_downgrade`` (payload carries ``headRevision``).
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                row = self._cursor_component_revision_row(
+                    cursor, tenant_id, component_id, revision_id, for_update=True
+                )
+                if not row:
+                    raise ComponentLibraryConflictError("revision_not_found")
+                if row.get("state") == "published":
+                    conn.rollback()
+                    return {
+                        "published": True,
+                        "alreadyPublished": True,
+                        "revision": row.get("revision"),
+                    }
+                cursor.execute(
+                    """
+                    SELECT revision FROM apiome.operational_component_revisions
+                    WHERE component_id = %s::uuid AND state = 'published'
+                    """,
+                    (component_id,),
+                )
+                from .component_library import parse_semver, semver_greater
+
+                published = [
+                    r["revision"]
+                    for r in cursor.fetchall()
+                    if parse_semver(r.get("revision"))
+                ]
+                head = max(published, key=parse_semver) if published else None
+                if not semver_greater(str(row.get("revision")), head):
+                    raise ComponentLibraryConflictError(
+                        "revision_downgrade",
+                        {"revision": row.get("revision"), "headRevision": head},
+                    )
+                cursor.execute(
+                    """
+                    UPDATE apiome.operational_component_revisions
+                    SET state = 'published', published_at = CURRENT_TIMESTAMP,
+                        published_by = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (actor_id, revision_id),
+                )
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="revision.publish",
+                    component_id=component_id,
+                    revision_id=revision_id,
+                    actor_id=actor_id,
+                    detail={"revision": row.get("revision"), "previousHead": head},
+                )
+                conn.commit()
+                return {
+                    "published": True,
+                    "alreadyPublished": False,
+                    "revision": row.get("revision"),
+                }
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def delete_operational_component(
+        self, tenant_id: str, component_id: str, actor_id: Optional[str]
+    ) -> Dict[str, Any]:
+        """Soft-delete a component unless any live pin still uses it.
+
+        Raises:
+            ComponentLibraryConflictError: ``component_not_found`` or
+                ``component_in_use`` (payload carries ``pinCount``).
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                component = self._cursor_component_row(
+                    cursor, tenant_id, component_id, for_update=True
+                )
+                if not component:
+                    raise ComponentLibraryConflictError("component_not_found")
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) AS pin_count
+                    FROM apiome.version_component_pins p
+                    JOIN apiome.operational_component_revisions r
+                      ON p.component_revision_id = r.id
+                    WHERE r.component_id = %s::uuid AND p.deleted_at IS NULL
+                    """,
+                    (component_id,),
+                )
+                counts = cursor.fetchone() or {}
+                pin_count = int(counts.get("pin_count") or 0)
+                if pin_count > 0:
+                    raise ComponentLibraryConflictError(
+                        "component_in_use", {"pinCount": pin_count}
+                    )
+                cursor.execute(
+                    """
+                    UPDATE apiome.operational_components
+                    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (component_id,),
+                )
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="component.delete",
+                    component_id=component_id,
+                    actor_id=actor_id,
+                    detail={"name": component.get("name"), "kind": component.get("kind")},
+                )
+                conn.commit()
+                return {"deleted": True}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def delete_component_revision(
+        self, tenant_id: str, component_id: str, revision_id: str, actor_id: Optional[str]
+    ) -> Dict[str, Any]:
+        """Delete a draft revision; published or in-use revisions are protected.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found``,
+                ``published_immutable``, or ``revision_in_use``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                row = self._cursor_component_revision_row(
+                    cursor, tenant_id, component_id, revision_id, for_update=True
+                )
+                if not row:
+                    raise ComponentLibraryConflictError("revision_not_found")
+                if row.get("state") == "published":
+                    raise ComponentLibraryConflictError(
+                        "published_immutable", {"revision": row.get("revision")}
+                    )
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) AS pin_count
+                    FROM apiome.version_component_pins p
+                    WHERE p.component_revision_id = %s::uuid AND p.deleted_at IS NULL
+                    """,
+                    (revision_id,),
+                )
+                counts = cursor.fetchone() or {}
+                if int(counts.get("pin_count") or 0) > 0:
+                    raise ComponentLibraryConflictError("revision_in_use")
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.operational_component_revisions
+                    WHERE id = %s::uuid
+                    """,
+                    (revision_id,),
+                )
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="revision.delete",
+                    component_id=component_id,
+                    revision_id=revision_id,
+                    actor_id=actor_id,
+                    detail={"revision": row.get("revision")},
+                )
+                conn.commit()
+                return {"deleted": True}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def _cursor_pin_version_row(
+        self, cursor, tenant_id: str, project_id: str, version_record_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant/project-scoped version row locked FOR UPDATE, or ``None``.
+
+        The lock plus the rechecks below implement the DCW-0.2 rule that
+        draft mutability is verified inside the pin transaction; a scope miss
+        reads as ``version_not_found`` (404 — never 403) upstream.
+        """
+        cursor.execute(
+            """
+            SELECT v.id, v.published
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND p.id = %s::uuid AND p.tenant_id = %s
+              AND v.deleted_at IS NULL
+            FOR UPDATE OF v
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def create_version_component_pin(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_record_id: str,
+        *,
+        component_revision_id: str,
+        local_name: Optional[str],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Pin one published library revision to a draft version, transactionally.
+
+        Rechecked under lock: version scope, draft mutability (published
+        versions never mutate), the revision's tenant scope (cross-tenant
+        reads as ``revision_not_found``), its published state, and pin
+        uniqueness.
+
+        Raises:
+            ComponentLibraryConflictError: ``version_not_found``,
+                ``published_version``, ``revision_not_found``,
+                ``revision_not_published``, or ``duplicate_pin``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                version = self._cursor_pin_version_row(
+                    cursor, tenant_id, project_id, version_record_id
+                )
+                if not version:
+                    raise ComponentLibraryConflictError("version_not_found")
+                if version.get("published"):
+                    raise ComponentLibraryConflictError("published_version")
+                cursor.execute(
+                    """
+                    SELECT r.id, r.state, r.revision, c.name AS component_name, c.kind
+                    FROM apiome.operational_component_revisions r
+                    JOIN apiome.operational_components c ON r.component_id = c.id
+                    WHERE r.id = %s::uuid AND r.tenant_id = %s AND c.deleted_at IS NULL
+                    """,
+                    (component_revision_id, tenant_id),
+                )
+                revision = cursor.fetchone()
+                if not revision:
+                    raise ComponentLibraryConflictError("revision_not_found")
+                if revision.get("state") != "published":
+                    raise ComponentLibraryConflictError(
+                        "revision_not_published", {"revision": revision.get("revision")}
+                    )
+                cursor.execute(
+                    """
+                    SELECT id FROM apiome.version_component_pins
+                    WHERE version_id = %s::uuid AND component_revision_id = %s::uuid
+                      AND deleted_at IS NULL
+                    """,
+                    (version_record_id, component_revision_id),
+                )
+                if cursor.fetchone():
+                    raise ComponentLibraryConflictError("duplicate_pin")
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.version_component_pins
+                      (tenant_id, version_id, component_revision_id, local_name, created_by)
+                    VALUES (%s, %s::uuid, %s::uuid, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        version_record_id,
+                        component_revision_id,
+                        local_name,
+                        actor_id,
+                    ),
+                )
+                pin_id = str(cursor.fetchone()["id"])
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="pin.create",
+                    revision_id=component_revision_id,
+                    version_id=version_record_id,
+                    actor_id=actor_id,
+                    detail={
+                        "pinId": pin_id,
+                        "componentName": revision.get("component_name"),
+                        "revision": revision.get("revision"),
+                        "localName": local_name,
+                    },
+                )
+                conn.commit()
+                return {"pinId": pin_id}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def delete_version_component_pin(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_record_id: str,
+        pin_id: str,
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Soft-delete (unpin) one live pin from a draft version, transactionally.
+
+        Raises:
+            ComponentLibraryConflictError: ``version_not_found``,
+                ``published_version``, or ``pin_not_found``.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                version = self._cursor_pin_version_row(
+                    cursor, tenant_id, project_id, version_record_id
+                )
+                if not version:
+                    raise ComponentLibraryConflictError("version_not_found")
+                if version.get("published"):
+                    raise ComponentLibraryConflictError("published_version")
+                cursor.execute(
+                    """
+                    SELECT id, component_revision_id
+                    FROM apiome.version_component_pins
+                    WHERE id = %s::uuid AND version_id = %s::uuid
+                      AND tenant_id = %s AND deleted_at IS NULL
+                    """,
+                    (pin_id, version_record_id, tenant_id),
+                )
+                pin = cursor.fetchone()
+                if not pin:
+                    raise ComponentLibraryConflictError("pin_not_found")
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_component_pins
+                    SET deleted_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (pin_id,),
+                )
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="pin.remove",
+                    revision_id=str(pin.get("component_revision_id") or "") or None,
+                    version_id=version_record_id,
+                    actor_id=actor_id,
+                    detail={"pinId": pin_id},
+                )
+                conn.commit()
+                return {"deleted": True}
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def get_component_pins_for_version(
+        self, tenant_id: str, version_record_id: str
+    ) -> List[Dict[str, Any]]:
+        """The version's live pins joined to component/revision identity."""
+        return self.execute_query(
+            """
+            SELECT p.id, p.local_name, p.created_at, p.created_by,
+                   r.id AS revision_id, r.revision, r.payload_digest,
+                   c.id AS component_id, c.name AS component_name, c.kind
+            FROM apiome.version_component_pins p
+            JOIN apiome.operational_component_revisions r
+              ON p.component_revision_id = r.id
+            JOIN apiome.operational_components c ON r.component_id = c.id
+            WHERE p.version_id = %s::uuid AND p.tenant_id = %s
+              AND p.deleted_at IS NULL
+            ORDER BY c.kind, c.name, r.revision
+            """,
+            (version_record_id, tenant_id),
+        )
+
+    def get_materializable_pins_for_version(
+        self, version_db_id: str
+    ) -> List[Dict[str, Any]]:
+        """The materializer's input rows for one version's live pins.
+
+        Consumed by :func:`app.openapi_generator.generate_openapi_spec`;
+        the version id is already tenant-scoped by every caller, and pinned
+        payloads are immutable published snapshots, so this read needs no
+        additional scoping.
+        """
+        return self.execute_query(
+            """
+            SELECT c.kind, c.name AS component_name, p.local_name,
+                   r.revision, r.canonical_payload AS payload,
+                   c.id AS component_id, r.id AS revision_id
+            FROM apiome.version_component_pins p
+            JOIN apiome.operational_component_revisions r
+              ON p.component_revision_id = r.id
+            JOIN apiome.operational_components c ON r.component_id = c.id
+            WHERE p.version_id = %s::uuid AND p.deleted_at IS NULL
+            """,
+            (version_db_id,),
+        )
 
 
 # Global database instance

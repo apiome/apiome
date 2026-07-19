@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.149.0] - 2026-07-18
+
+### Added
+- **Operational component library data model (DCW-3.1, private-suite#2353)** —
+  the tenant-scoped library of reusable operational components (parameters,
+  headers, request bodies, responses, security bundles) plus schema entries
+  pinned to existing Type Registry (`apiome.primitives`) rows, with the
+  minimal MVP lifecycle and deterministic single-file materialization:
+  - `apiome-db` V186: `apiome.operational_components` (identity),
+    `apiome.operational_component_revisions` (semver revisions,
+    draft→published, payload digest, snapshotted Type-Registry schema pins),
+    `apiome.version_component_pins` (a draft project revision pins one
+    published library revision; `ON DELETE RESTRICT` backstops the in-use
+    rule), and the append-only `apiome.component_library_audit` ledger.
+  - `/v1/component-library/{tenant}` routes: component list/create/detail/
+    delete, draft revision create/update/delete, authorized
+    `revisions/{id}/publish` (TYPES/PUBLISH) with the in-transaction
+    no-unsafe-downgrade rule and idempotent republish, version pin
+    list/create/delete (VERSIONS/EDIT, draft versions only), and the
+    deterministic `…/materialization` preview. Scope misses answer 404,
+    published revisions answer 409 `PUBLISHED_IMMUTABLE`, in-use
+    components/revisions answer 409 and cannot be deleted, and every
+    mutation commits with its audit row in one transaction.
+  - `app/component_library.py` — pure domain module: per-kind payload
+    validation, semver ordering, canonical payload digests, and the
+    deterministic materializer that projects pinned published revisions into
+    standard local `components` sections with collision-safe naming (local
+    components are never overwritten) and optional, strippable
+    `x-apiome-origin` provenance. Exported documents resolve with plain
+    local `$ref` values and no Apiome services; library-head changes never
+    mutate versions pinned to older revisions.
+  - `generate_openapi_spec` materializes a version's live pins (injectable
+    `component_pin_rows` like the security-scheme/server rows), so browse,
+    preservation, source review, diff, and export all see the same
+    deterministic document. OpenAPI 1.31.0 → 1.32.0.
+
 ## [1.148.0] - 2026-07-18
 
 ### Added
