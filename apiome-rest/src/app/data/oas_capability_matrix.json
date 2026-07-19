@@ -1,0 +1,130 @@
+{
+  "$schema": "./oas-capability-matrix.schema.json",
+  "matrixVersion": "1.0.0",
+  "description": "Versioned OAS dialect capability and fidelity contract (DCW-0.1, #2418). Single machine-readable source of truth consumed by import, Designer, Paths, source validation, preview, and export.",
+  "supportedDialects": ["3.1.0", "3.2.0"],
+  "unsupportedDialects": [
+    { "dialect": "2.0", "reason": "Swagger 2.0 must be converted on import; it is never an editable dialect." },
+    { "dialect": "3.0.x", "reason": "OpenAPI 3.0.x must be converted on import; it is never an editable dialect." }
+  ],
+  "defaultCapability": "preserved-read-only",
+  "extensionCapability": "preserved-read-only",
+  "fidelity": {
+    "semantic": {
+      "promised": true,
+      "statement": "Supported canonical values, unsupported-but-valid values, and x-* extensions survive import, edit, and export unchanged in meaning. Semantic fingerprints over the canonical form detect unintended changes."
+    },
+    "lexical": {
+      "promised": false,
+      "exclusions": ["comments", "anchors", "key-order", "quoting", "whitespace", "multi-file-layout"],
+      "statement": "Lexical characteristics are explicitly reported as excluded from the fidelity promise unless a source adapter proves preservation for a specific document."
+    }
+  },
+  "mutationPolicy": {
+    "publishedVersionsImmutable": true,
+    "conversionWriteTarget": "authorized-draft",
+    "statement": "Published versions are never mutated. Every dialect conversion writes to an authorized draft after its incompatibility and loss report has been reviewed."
+  },
+  "dialects": {
+    "3.1.0": {
+      "dialect": "3.1.0",
+      "pointerFamilies": [
+        { "family": "document-dialect", "pointerPrefix": "/openapi", "capability": "converted-with-review", "notes": "Changing the dialect is a reviewed conversion with an incompatibility/loss report, never an ordinary metadata edit." },
+        { "family": "info", "pointerPrefix": "/info", "capability": "visual-edit" },
+        { "family": "json-schema-dialect", "pointerPrefix": "/jsonSchemaDialect", "capability": "raw-edit" },
+        { "family": "servers", "pointerPrefix": "/servers", "capability": "raw-edit" },
+        { "family": "paths", "pointerPrefix": "/paths", "capability": "visual-edit" },
+        { "family": "webhooks", "pointerPrefix": "/webhooks", "capability": "preserved-read-only", "notes": "Webhooks are out of the MVP editing surface but must survive the semantic round trip." },
+        { "family": "components-schemas", "pointerPrefix": "/components/schemas", "capability": "visual-edit" },
+        { "family": "components-parameters", "pointerPrefix": "/components/parameters", "capability": "visual-edit" },
+        { "family": "components-headers", "pointerPrefix": "/components/headers", "capability": "visual-edit" },
+        { "family": "components-request-bodies", "pointerPrefix": "/components/requestBodies", "capability": "visual-edit" },
+        { "family": "components-responses", "pointerPrefix": "/components/responses", "capability": "visual-edit" },
+        { "family": "components-security-schemes", "pointerPrefix": "/components/securitySchemes", "capability": "visual-edit" },
+        { "family": "components-examples", "pointerPrefix": "/components/examples", "capability": "raw-edit" },
+        { "family": "components-links", "pointerPrefix": "/components/links", "capability": "preserved-read-only" },
+        { "family": "components-callbacks", "pointerPrefix": "/components/callbacks", "capability": "preserved-read-only", "notes": "Callbacks are out of the MVP editing surface but must survive the semantic round trip." },
+        { "family": "components-path-items", "pointerPrefix": "/components/pathItems", "capability": "raw-edit" },
+        { "family": "security", "pointerPrefix": "/security", "capability": "raw-edit" },
+        { "family": "tags", "pointerPrefix": "/tags", "capability": "raw-edit" },
+        { "family": "external-docs", "pointerPrefix": "/externalDocs", "capability": "raw-edit" }
+      ]
+    },
+    "3.2.0": {
+      "dialect": "3.2.0",
+      "pointerFamilies": [
+        { "family": "document-dialect", "pointerPrefix": "/openapi", "capability": "converted-with-review", "notes": "Changing the dialect is a reviewed conversion with an incompatibility/loss report, never an ordinary metadata edit." },
+        { "family": "document-self", "pointerPrefix": "/$self", "capability": "raw-edit", "notes": "OAS 3.2 document identity URI; no OAS 3.1 equivalent." },
+        { "family": "info", "pointerPrefix": "/info", "capability": "visual-edit" },
+        { "family": "json-schema-dialect", "pointerPrefix": "/jsonSchemaDialect", "capability": "raw-edit" },
+        { "family": "servers", "pointerPrefix": "/servers", "capability": "raw-edit" },
+        { "family": "paths", "pointerPrefix": "/paths", "capability": "visual-edit" },
+        { "family": "webhooks", "pointerPrefix": "/webhooks", "capability": "preserved-read-only", "notes": "Webhooks are out of the MVP editing surface but must survive the semantic round trip." },
+        { "family": "components-schemas", "pointerPrefix": "/components/schemas", "capability": "visual-edit" },
+        { "family": "components-parameters", "pointerPrefix": "/components/parameters", "capability": "visual-edit" },
+        { "family": "components-headers", "pointerPrefix": "/components/headers", "capability": "visual-edit" },
+        { "family": "components-request-bodies", "pointerPrefix": "/components/requestBodies", "capability": "visual-edit" },
+        { "family": "components-responses", "pointerPrefix": "/components/responses", "capability": "visual-edit" },
+        { "family": "components-security-schemes", "pointerPrefix": "/components/securitySchemes", "capability": "visual-edit" },
+        { "family": "components-examples", "pointerPrefix": "/components/examples", "capability": "raw-edit" },
+        { "family": "components-links", "pointerPrefix": "/components/links", "capability": "preserved-read-only" },
+        { "family": "components-callbacks", "pointerPrefix": "/components/callbacks", "capability": "preserved-read-only", "notes": "Callbacks are out of the MVP editing surface but must survive the semantic round trip." },
+        { "family": "components-path-items", "pointerPrefix": "/components/pathItems", "capability": "raw-edit" },
+        { "family": "security", "pointerPrefix": "/security", "capability": "raw-edit" },
+        { "family": "tags", "pointerPrefix": "/tags", "capability": "raw-edit", "notes": "OAS 3.2 tag hierarchy fields (parent, kind) are included in this family." },
+        { "family": "external-docs", "pointerPrefix": "/externalDocs", "capability": "raw-edit" }
+      ]
+    }
+  },
+  "conversions": [
+    {
+      "fromDialect": "3.1.0",
+      "toDialect": "3.2.0",
+      "review": "required",
+      "findings": [
+        {
+          "pointerPrefix": "/openapi",
+          "kind": "incompatibility",
+          "disposition": "rewrite",
+          "severity": "info",
+          "detail": "The document dialect marker is rewritten from 3.1.0 to 3.2.0."
+        }
+      ]
+    },
+    {
+      "fromDialect": "3.2.0",
+      "toDialect": "3.1.0",
+      "review": "required",
+      "findings": [
+        {
+          "pointerPrefix": "/openapi",
+          "kind": "incompatibility",
+          "disposition": "rewrite",
+          "severity": "info",
+          "detail": "The document dialect marker is rewritten from 3.2.0 to 3.1.0."
+        },
+        {
+          "pointerPrefix": "/$self",
+          "kind": "loss",
+          "disposition": "drop",
+          "severity": "warn",
+          "detail": "OAS 3.1 has no document identity URI; $self is dropped."
+        },
+        {
+          "pointerPrefix": "/tags",
+          "kind": "loss",
+          "disposition": "drop",
+          "severity": "warn",
+          "detail": "OAS 3.2 tag hierarchy fields (parent, kind) have no OAS 3.1 equivalent and are dropped."
+        },
+        {
+          "pointerPrefix": "/paths",
+          "kind": "loss",
+          "disposition": "drop",
+          "severity": "critical",
+          "detail": "OAS 3.2 additional operations (for example the QUERY method) cannot be represented in OAS 3.1 path items."
+        }
+      ]
+    }
+  ]
+}

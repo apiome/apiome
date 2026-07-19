@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.147.0] - 2026-07-18
+
+### Added
+- **Round-trip preservation envelope (DCW-2.1, private-suite#2352)** — the
+  backend half of the Designer's lossless hybrid source workspace:
+  - `apiome.version_preservation_claims` + `apiome.preservation_audit` (V184):
+    version-scoped JSONB preservation payload keyed by RFC 6901 JSON Pointer
+    with optional source-file/digest provenance, soft-delete retention with a
+    `purge_preservation_claims` sweep, and an append-only envelope audit
+    written in the same transaction as every envelope change.
+  - `GET/PUT /v1/versions/{tenant}/{project}/{revision}/preservation` —
+    tenant/version-scoped envelope reads/writes. Writes validate against the
+    server-generated canonical document and the DCW-0.1 capability matrix:
+    canonical/preserved claims for the same pointer, duplicate or nested
+    pointers, unsupported dialects, and oversized envelopes are rejected with
+    deterministic structured errors and no mutation; published revisions
+    answer 409. Responses carry a semantic fingerprint that reports the
+    intentionally excluded lexical differences.
+  - `app.preservation_envelope` — pure extract/validate/apply engine with
+    deterministic array insertion/reordering, pointer moves, canonical
+    deletions (with array-index rebasing), and collision behavior; golden
+    OAS 3.1/3.2 corpus covers unknown fields under arrays, `$ref` siblings,
+    move/delete, and null/false/empty extension values.
+  - `app.safe_oas_parse` + `app.oas_resource_limits` — field-for-field mirror
+    of the designer's DCW-0.2 resource-limits artifact: duplicate keys
+    (YAML **and** JSON — closing the documented JSON gap), alias-expansion,
+    nesting-depth, document-size, multi-document, and circular-alias
+    violations all fail with structured, non-mutating diagnostics.
+  - OpenAPI 1.29.0 → 1.30.0.
+
 ## [1.138.0] - 2026-07-15
 
 ### Added

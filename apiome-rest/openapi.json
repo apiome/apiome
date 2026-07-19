@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.29.0",
+    "version": "1.30.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -21656,6 +21656,234 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for force release draft lockresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/preservation": {
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Preservation Envelope",
+        "description": "Return the revision's live preservation envelope and semantic fingerprint.",
+        "operationId": "get_preservation_envelope_v1_versions__tenant_slug___project_id___version_record_id__preservation_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Preservation Envelopeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Preservation Envelopeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Preservation Envelope Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Preservation Envelope Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get preservation envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreservationEnvelopeResponse",
+                  "description": "Response payload for get preservation enveloperesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get preservation enveloperesponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Put Preservation Envelope",
+        "description": "Validate and replace a draft revision's preservation envelope.\n\nResponses:\n    * **200** \u2014 envelope stored; body echoes the live envelope + fingerprint.\n    * **404** \u2014 revision not in the caller's tenant/project scope.\n    * **409** \u2014 revision is published (immutable); nothing mutated.\n    * **422** \u2014 structured validation errors; nothing mutated.",
+        "operationId": "put_preservation_envelope_v1_versions__tenant_slug___project_id___version_record_id__preservation_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Preservation Envelopeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Preservation Envelopeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Put Preservation Envelope Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Put Preservation Envelope Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreservationEnvelopePutRequest",
+                "description": "Request body for put preservation enveloperequest."
+              }
+            }
+          },
+          "description": "Request body for put preservation envelope."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for put preservation envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreservationEnvelopeResponse",
+                  "description": "Response payload for put preservation enveloperesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for put preservation enveloperesponse422."
                 }
               }
             }
@@ -62681,6 +62909,117 @@
         "title": "PlatformOverrideRequest",
         "description": "A platform-admin override action to record against a tenant's audit ledger."
       },
+      "PreservationClaimBody": {
+        "properties": {
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "RFC 6901 JSON Pointer of the preserved value.",
+            "example": "example"
+          },
+          "value": {
+            "title": "Value",
+            "description": "The preserved subtree verbatim."
+          },
+          "sourceFile": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for preservation claim."
+              },
+              {
+                "type": "null",
+                "description": "Request body for preservation claim."
+              }
+            ],
+            "title": "Sourcefile",
+            "description": "Provenance file path."
+          },
+          "sourceDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for preservation claim."
+              },
+              {
+                "type": "null",
+                "description": "Request body for preservation claim."
+              }
+            ],
+            "title": "Sourcedigest",
+            "description": "Algorithm-prefixed provenance digest (sha256:<hex>)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "pointer"
+        ],
+        "title": "PreservationClaimBody",
+        "description": "One claim in the request/response payload."
+      },
+      "PreservationEnvelopePutRequest": {
+        "properties": {
+          "dialect": {
+            "type": "string",
+            "title": "Dialect",
+            "description": "OAS dialect the claims target (e.g. 3.1.0).",
+            "example": "example"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/PreservationClaimBody"
+            },
+            "type": "array",
+            "title": "Claims",
+            "description": "The full new set of claims (empty clears).",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "dialect"
+        ],
+        "title": "PreservationEnvelopePutRequest",
+        "description": "Replace a draft revision's preservation envelope."
+      },
+      "PreservationEnvelopeResponse": {
+        "properties": {
+          "envelopeVersion": {
+            "type": "string",
+            "title": "Envelopeversion",
+            "description": "Envelope payload contract version.",
+            "example": "1.0.0"
+          },
+          "dialect": {
+            "type": "string",
+            "title": "Dialect",
+            "description": "OAS dialect the claims were validated under.",
+            "example": "example"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/PreservationClaimBody"
+            },
+            "type": "array",
+            "title": "Claims",
+            "description": "Claims.",
+            "maxItems": 1000
+          },
+          "fingerprint": {
+            "$ref": "#/components/schemas/SemanticFingerprint",
+            "description": "Semantic fingerprint of the merged (canonical + preserved) document, reporting the intentionally excluded lexical differences."
+          }
+        },
+        "type": "object",
+        "required": [
+          "envelopeVersion",
+          "dialect",
+          "claims",
+          "fingerprint"
+        ],
+        "title": "PreservationEnvelopeResponse",
+        "description": "A revision's live preservation envelope plus its semantic fingerprint."
+      },
       "PrimitiveCreateRequest": {
         "properties": {
           "name": {
@@ -66763,6 +67102,40 @@
         ],
         "title": "SchemasChangeSection",
         "description": "Component schema name changes (``components.schemas``)."
+      },
+      "SemanticFingerprint": {
+        "properties": {
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "64-char lowercase hex SHA-256 digest.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "default": "sha256-oas-semantic-v1",
+            "description": "Algorithm.",
+            "example": "example"
+          },
+          "lexicalExclusions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lexicalexclusions",
+            "description": "Lexical characteristics intentionally excluded from the comparison (DCW-0.1 fidelity contract): equal fingerprints do NOT promise these were preserved.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fingerprint",
+          "lexicalExclusions"
+        ],
+        "title": "SemanticFingerprint",
+        "description": "A semantic fingerprint plus the lexical differences it does not see."
       },
       "SharedParameterCreateRequest": {
         "properties": {

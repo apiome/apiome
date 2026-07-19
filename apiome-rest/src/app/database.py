@@ -19148,6 +19148,166 @@ class Database:
         rows = self.execute_query(query, (job_id,))
         return bool(rows and rows[0].get("cancel_requested"))
 
+    # ------------------------------------------------------------------
+    # Round-trip preservation envelope (DCW-2.1, private-suite#2352, V184)
+    # ------------------------------------------------------------------
+
+    def _preservation_version_row(
+        self, cursor, tenant_id: str, project_id: str, version_record_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant/project-scoped version row (id, published) locked FOR UPDATE, or None."""
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            return None
+        cursor.execute(
+            """
+            SELECT v.id, v.published, v.published_immutable
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND v.project_id = %s AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            FOR UPDATE OF v
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def get_preservation_claims(
+        self, tenant_id: str, project_id: str, version_record_id: str
+    ) -> List[Dict[str, Any]]:
+        """Live preservation claims for a revision, deterministically ordered.
+
+        Returns:
+            One dict per live claim (pointer, payload, source_file, source_digest,
+            created_at, updated_at), ordered by pointer.
+
+        Raises:
+            ValueError: ``version_not_found`` when the revision does not exist in
+                this tenant/project scope (preferred over leaking existence).
+        """
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            raise ValueError("version_not_found")
+        version_rows = self.execute_query(
+            """
+            SELECT v.id
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND v.project_id = %s AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        if not version_rows:
+            raise ValueError("version_not_found")
+        return self.execute_query(
+            """
+            SELECT pointer, payload, source_file, source_digest, created_at, updated_at
+            FROM apiome.version_preservation_claims
+            WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+            ORDER BY pointer ASC
+            """,
+            (tenant_id, version_record_id),
+        )
+
+    def replace_preservation_claims(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_record_id: str,
+        claims: List[Dict[str, Any]],
+        actor_id: Optional[str],
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Replace a draft revision's preservation envelope in one transaction.
+
+        The previous live claims are soft-deleted (retention: purged later by
+        ``apiome.purge_preservation_claims``), the new claims inserted, and the
+        audit row written — all in a single transaction, so the envelope and its
+        audit commit or roll back together (the DCW-0.2
+        ``failure-injection-no-partial-mutation`` transaction rule).
+
+        Args:
+            tenant_id: The caller's tenant (scopes every statement).
+            project_id: The project the revision belongs to.
+            version_record_id: The revision's record UUID.
+            claims: Dicts with ``pointer``, ``value``, optional ``source_file`` /
+                ``source_digest``. An empty list clears the envelope.
+            actor_id: The acting user's id, when attributable.
+            detail: Extra structured audit context (envelope version, dialect).
+
+        Returns:
+            The number of live claims after the replace.
+
+        Raises:
+            ValueError: ``version_not_found`` (tenant/project scope miss) or
+                ``published_version`` (published revisions are immutable).
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                vrow = self._preservation_version_row(
+                    cursor, tenant_id, project_id, version_record_id
+                )
+                if not vrow:
+                    conn.rollback()
+                    raise ValueError("version_not_found")
+                if vrow.get("published"):
+                    conn.rollback()
+                    raise ValueError("published_version")
+
+                vid = str(vrow["id"])
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_preservation_claims
+                    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+                    """,
+                    (tenant_id, vid),
+                )
+                for claim in claims:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.version_preservation_claims
+                          (tenant_id, version_id, pointer, payload,
+                           source_file, source_digest, created_by)
+                        VALUES (%s, %s::uuid, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            tenant_id,
+                            vid,
+                            claim["pointer"],
+                            Json(claim.get("value")),
+                            claim.get("source_file"),
+                            claim.get("source_digest"),
+                            actor_id,
+                        ),
+                    )
+                action = "envelope.replace" if claims else "envelope.clear"
+                audit_detail = {"claimCount": len(claims)}
+                if detail:
+                    audit_detail.update(detail)
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.preservation_audit
+                      (tenant_id, version_id, actor_id, action, outcome, detail)
+                    VALUES (%s, %s::uuid, %s, %s, 'success', %s)
+                    """,
+                    (tenant_id, vid, actor_id, action, Json(audit_detail)),
+                )
+                conn.commit()
+                return len(claims)
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
 
 # Global database instance
 db = Database()

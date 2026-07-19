@@ -1,0 +1,25 @@
+# DCW-2.1 golden fixture (private-suite#2352): canonical projection of
+# golden-3.2-source.yaml. The $self URI, the additional QUERY operation, the tag
+# hierarchy fields, and every x-* extension must land in the envelope.
+openapi: 3.2.0
+info:
+  title: Golden Preservation 3.2
+  version: 1.2.0
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      responses:
+        '200':
+          description: OK
+tags:
+  - name: widgets
+    description: Widget operations
+  - name: widgets-admin
+components:
+  schemas:
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
