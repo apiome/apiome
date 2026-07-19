@@ -1,9 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  BarChart3,
   Box,
+  Compass,
   Globe,
   LayoutDashboard,
   Palette,
+  Rocket,
   Route,
   Sparkles,
   Layers,
@@ -39,6 +42,18 @@ export type ExternalLinkEntry = {
   anyFeatureFlags?: string[];
   /** Dropdown destinations shown from the nav item (box menu). */
   menuItems?: ExternalNavMenuItem[];
+  /** Ordered group headings for `menuItems`; items reference these by id. */
+  menuGroups?: ExternalNavMenuGroup[];
+};
+
+/**
+ * A labeled heading that groups destinations inside a nav dropdown.
+ * Headings are announced to assistive technology but are never focusable
+ * menu actions (UXE-1.1).
+ */
+export type ExternalNavMenuGroup = {
+  id: string;
+  label: string;
 };
 
 /** One destination inside a nav dropdown (box menu) — e.g. a suite product. */
@@ -54,6 +69,29 @@ export type ExternalNavMenuItem = {
   opensNewBrowser?: boolean;
   featureFlag?: string;
   anyFeatureFlags?: string[];
+  /** Id of the {@link ExternalNavMenuGroup} this destination belongs to. */
+  group?: string;
+  /** Short status chip beside the label, e.g. `Preview` or `Coming soon`. */
+  badge?: string;
+  /** `false` when the destination has not shipped yet — rendered non-navigable. */
+  enabled?: boolean;
+  /**
+   * One sentence explaining how to obtain access. Shown in place of the
+   * description when the viewer is not entitled or the destination is disabled.
+   */
+  accessNote?: string;
+  /**
+   * Resolved by {@link getCommercialNavItems}: `false` when the viewer lacks
+   * the required license flags. Unentitled destinations keep their label so
+   * access can be explained, but their `href` is cleared so no resource URL
+   * reaches the client.
+   */
+  entitled?: boolean;
+};
+
+/** A group heading paired with the destinations that belong to it. */
+export type ResolvedNavMenuGroup = ExternalNavMenuGroup & {
+  items: ExternalNavMenuItem[];
 };
 
 export type ExternalNavItem = {
@@ -67,6 +105,8 @@ export type ExternalNavItem = {
   anyFeatureFlags?: string[];
   /** When present the nav item renders as a dropdown (box menu) of these destinations. */
   menuItems?: ExternalNavMenuItem[];
+  /** Ordered group headings for `menuItems`; items reference these by id. */
+  menuGroups?: ExternalNavMenuGroup[];
 };
 
 export type ExternalHomeCard = {
@@ -87,16 +127,22 @@ export type ExternalHomeCard = {
 };
 
 const KNOWN_ICONS: Record<string, LucideIcon> = {
+  BarChart3,
   Box,
+  Compass,
   Globe,
   LayoutDashboard,
   Palette,
+  Rocket,
   Route,
   Sparkles,
   Layers,
   PenTool,
   Workflow,
 };
+
+/** Fallback heading used for destinations that declare no group. */
+const UNGROUPED_ID = '';
 
 function normalizeEntry(entry: ExternalLinkEntry): ExternalLinkEntry {
   return {
@@ -152,6 +198,7 @@ export function getExternalNavItems(): ExternalNavItem[] {
       featureFlag: link.featureFlag,
       anyFeatureFlags: link.anyFeatureFlags,
       menuItems: link.menuItems,
+      menuGroups: link.menuGroups,
     }));
 }
 
@@ -180,7 +227,17 @@ export function getCommercialHomeCards(entitledFlags: Set<string>): ExternalHome
   return getExternalHomeCards().filter((card) => isEntitledToEntry(card, entitledFlags));
 }
 
-/** Nav items limited to flags the user is entitled to via license/admin overrides. */
+/**
+ * Nav items limited to flags the user is entitled to via license/admin overrides.
+ *
+ * Top-level products the viewer cannot reach are removed outright. Dropdown
+ * destinations are *kept* but annotated (UXE-1.1): the menu explains how to get
+ * access rather than silently hiding the product, while the `href` is cleared so
+ * no unentitled resource URL is serialized to the client.
+ *
+ * @param entitledFlags - License flags granted to the current session.
+ * @returns Nav items whose `menuItems` each carry a resolved `entitled` flag.
+ */
 export function getCommercialNavItems(entitledFlags: Set<string>): ExternalNavItem[] {
   return getExternalNavItems()
     .filter((item) => isEntitledToEntry(item, entitledFlags))
@@ -188,12 +245,47 @@ export function getCommercialNavItems(entitledFlags: Set<string>): ExternalNavIt
       item.menuItems
         ? {
             ...item,
-            menuItems: item.menuItems.filter((menuItem) =>
-              isEntitledToEntry(menuItem, entitledFlags)
-            ),
+            menuItems: item.menuItems.map((menuItem) => {
+              const entitled = isEntitledToEntry(menuItem, entitledFlags);
+              return entitled ? { ...menuItem, entitled } : { ...menuItem, entitled, href: '' };
+            }),
           }
         : item
     );
+}
+
+/**
+ * Split a nav item's destinations into its declared group order.
+ *
+ * Destinations with no `group` (or one that matches no declared heading) fall
+ * into a single leading group with an empty label, so legacy flat menus keep
+ * rendering unchanged. Groups that end up with no destinations are dropped.
+ *
+ * @param item - Nav item whose dropdown should be grouped.
+ * @returns Ordered groups, each with at least one destination.
+ */
+export function groupNavMenuItems(item: ExternalNavItem): ResolvedNavMenuGroup[] {
+  const menuItems = item.menuItems ?? [];
+  const declared = item.menuGroups ?? [];
+  const declaredIds = new Set(declared.map((group) => group.id));
+
+  const ordered: ResolvedNavMenuGroup[] = [
+    { id: UNGROUPED_ID, label: '', items: [] },
+    ...declared.map((group) => ({ ...group, items: [] as ExternalNavMenuItem[] })),
+  ];
+  const byId = new Map(ordered.map((group) => [group.id, group]));
+
+  for (const menuItem of menuItems) {
+    const groupId = menuItem.group && declaredIds.has(menuItem.group) ? menuItem.group : UNGROUPED_ID;
+    byId.get(groupId)!.items.push(menuItem);
+  }
+
+  return ordered.filter((group) => group.items.length > 0);
+}
+
+/** True when a destination can be navigated to (shipped and entitled). */
+export function isNavMenuItemNavigable(menuItem: ExternalNavMenuItem): boolean {
+  return menuItem.enabled !== false && menuItem.entitled !== false && menuItem.href !== '';
 }
 
 function hasSuiteEntitlement(entitledFlags?: Set<string>): boolean {

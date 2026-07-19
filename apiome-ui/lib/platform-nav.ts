@@ -1,24 +1,12 @@
+import { getMainAppUrl, normalizeAppOrigin } from './app-urls';
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
-import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
+import { STUDIO_APP_ROUTES, UI_AUTHORING_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
-const DEFAULT_MAIN_APP_URL = 'https://main.apiome.dev';
-
-export function normalizeAppOrigin(url: string, fallback: string): string {
-  const trimmed = url.trim();
-  if (!trimmed) return fallback.replace(/\/+$/, '');
-  return trimmed.replace(/\/+$/, '');
-}
+export { getMainAppUrl, normalizeAppOrigin };
 
 /** True when this Next.js app is the standalone studio surface. */
 export function isStudioSurface(): boolean {
   return process.env.NEXT_PUBLIC_APP_SURFACE === 'studio';
-}
-
-export function getMainAppUrl(): string {
-  return normalizeAppOrigin(
-    process.env.NEXT_PUBLIC_MAIN_APP_URL || '',
-    DEFAULT_MAIN_APP_URL
-  );
 }
 
 /** @deprecated Prefer getMainAppUrl() — resolved at call time for correct env in tests and SSR. */
@@ -79,6 +67,20 @@ function isStudioAppPathActive(pathname: string): boolean {
   );
 }
 
+/**
+ * Authoring lives on the main app only, so the studio surface never matches.
+ *
+ * @param pathname - Current route.
+ * @returns True on `/ade/authoring` or any route beneath it.
+ */
+function isAuthoringPathActive(pathname: string): boolean {
+  if (isStudioSurface()) return false;
+  return (
+    pathname === UI_AUTHORING_ROUTES.root ||
+    pathname.startsWith(`${UI_AUTHORING_ROUTES.root}/`)
+  );
+}
+
 export function platformNavItemIsActive(item: ExternalNavItem, pathname: string | null): boolean {
   if (!pathname) return false;
 
@@ -88,8 +90,10 @@ export function platformNavItemIsActive(item: ExternalNavItem, pathname: string 
   if (item.id === 'control-panel') {
     return !isStudioSurface() && pathname.startsWith('/ade/dashboard');
   }
+  // The Designer trigger stays the single entry point for the suite: it is
+  // active for both design and authoring routes (UXE-1.1).
   if (item.id === 'suite') {
-    return isStudioAppPathActive(pathname);
+    return isStudioAppPathActive(pathname) || isAuthoringPathActive(pathname);
   }
 
   if (item.external || item.href.startsWith('http://') || item.href.startsWith('https://')) {
