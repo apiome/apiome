@@ -149,16 +149,24 @@ describe('SuiteNavMenu', () => {
       expect(designer).not.toHaveAttribute('aria-disabled');
     });
 
-    it('badges unreleased authoring destinations and states how access is obtained', () => {
+    it('links an entitled authoring destination now that the route group ships', () => {
+      // Before UXE-1.2 every authoring destination was `enabled: false` so the
+      // menu could not link to a 404. The /ade/authoring route group now
+      // exists, so an entitled destination is navigable.
       renderMenu({ flags: ['designer', 'paths', 'scribe'] });
 
       const scribe = screen.getByRole('menuitem', { name: /Scribe/ });
       expect(scribe).toHaveTextContent('Preview');
-      expect(scribe).toHaveAttribute('aria-disabled', 'true');
+      expect(scribe).not.toHaveAttribute('aria-disabled', 'true');
+      expect(scribe).toHaveAttribute('href', expect.stringContaining('/ade/authoring/scribe'));
+    });
+
+    it('still explains access for an unentitled authoring destination', () => {
+      renderMenu({ flags: ['designer', 'paths', 'scribe'] });
 
       const releases = screen.getByRole('menuitem', { name: /Releases/ });
-      expect(releases).toHaveTextContent('Coming soon');
       expect(releases).toHaveTextContent('Contact your account team to upgrade.');
+      // An unentitled destination keeps its label but emits no resource URL.
       expect(releases).not.toHaveAttribute('href');
     });
   });

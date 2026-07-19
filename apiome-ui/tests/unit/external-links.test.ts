@@ -135,6 +135,21 @@ describe('external-links (commercial products)', () => {
       ]);
     });
 
+    it('makes every authoring destination navigable now the route group ships (UXE-1.2)', () => {
+      const suite = getCommercialNavItems(
+        new Set(['designer', 'paths', 'scribe', 'slate', 'hosted'])
+      )[0]!;
+      const authoring = groupNavMenuItems(suite)[1].items;
+
+      // Every destination now resolves to a real page under /ade/authoring, so
+      // none of them is held back with `enabled: false`.
+      for (const item of authoring) {
+        expect(item.enabled).not.toBe(false);
+        expect(isNavMenuItemNavigable(item)).toBe(true);
+        expect(item.href).toContain('/ade/authoring');
+      }
+    });
+
     it('keeps ungrouped destinations in one unlabeled leading group', () => {
       const groups = groupNavMenuItems({
         id: 'legacy',

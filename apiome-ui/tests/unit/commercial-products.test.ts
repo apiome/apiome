@@ -76,16 +76,19 @@ describe('commercial-products', () => {
     ]);
   });
 
-  it('marks unreleased authoring destinations disabled and explains access', () => {
+  it('enables authoring destinations and gates them by license flag', () => {
     const authoring = getBuiltinCommercialProducts()[0]?.menuItems?.filter(
       (item) => item.group === 'authoring'
     );
 
     for (const menuItem of authoring ?? []) {
-      // UXE-1.1 ships the contract only; /ade/authoring lands with UXE-1.2.
-      expect(menuItem.enabled).toBe(false);
-      expect(menuItem.badge).toBeTruthy();
-      expect(menuItem.accessNote).toBeTruthy();
+      // UXE-1.1 shipped the contract with every destination held back; UXE-1.2
+      // delivers the /ade/authoring route group, so each one now resolves.
+      expect(menuItem.enabled).not.toBe(false);
+      expect(menuItem.href).toContain('/ade/authoring');
+      // Only a gated destination needs to explain how access is obtained;
+      // Overview is ungated and shipped, so it has nothing to explain.
+      if (menuItem.featureFlag) expect(menuItem.accessNote).toBeTruthy();
     }
     expect(authoring?.find((item) => item.id === 'authoring-scribe')?.featureFlag).toBe('scribe');
     expect(authoring?.find((item) => item.id === 'authoring-slate')?.featureFlag).toBe('slate');
