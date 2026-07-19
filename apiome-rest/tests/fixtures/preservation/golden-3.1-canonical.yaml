@@ -1,0 +1,44 @@
+# DCW-2.1 golden fixture (private-suite#2352): the canonical projection of
+# golden-3.1-source.yaml — exactly what the canonical model absorbs. Everything
+# in the source but not here must land in the preservation envelope.
+openapi: 3.1.0
+info:
+  title: Golden Preservation 3.1
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+    description: Production
+  - url: https://staging.example.com/v1
+    description: Staging
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Widget'
+tags:
+  - name: widgets
+    description: Widget operations
+  - name: internal
+components:
+  schemas:
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+        legacyRef:
+          $ref: '#/components/schemas/WidgetId'
+          description: Sibling description next to $ref
+      required:
+        - id
+    WidgetId:
+      type: string

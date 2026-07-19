@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.29.0
+  version: 1.31.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -15347,6 +15347,321 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for force release draft lockresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/preservation:
+    get:
+      tags:
+      - versions
+      summary: Get Preservation Envelope
+      description: Return the revision's live preservation envelope and semantic fingerprint.
+      operationId: get_preservation_envelope_v1_versions__tenant_slug___project_id___version_record_id__preservation_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Preservation Envelopeauthorization schema.
+          - type: 'null'
+            description: Get Preservation Envelopeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Preservation Envelope Xapikey schema.
+          - type: 'null'
+            description: Get Preservation Envelope Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get preservation envelope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreservationEnvelopeResponse'
+                description: Response payload for get preservation enveloperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get preservation enveloperesponse422.
+    put:
+      tags:
+      - versions
+      summary: Put Preservation Envelope
+      description: "Validate and replace a draft revision's preservation envelope.\n\
+        \nResponses:\n    * **200** — envelope stored; body echoes the live envelope\
+        \ + fingerprint.\n    * **404** — revision not in the caller's tenant/project\
+        \ scope.\n    * **409** — revision is published (immutable); nothing mutated.\n\
+        \    * **422** — structured validation errors; nothing mutated."
+      operationId: put_preservation_envelope_v1_versions__tenant_slug___project_id___version_record_id__preservation_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Put Preservation Envelopeauthorization schema.
+          - type: 'null'
+            description: Put Preservation Envelopeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Put Preservation Envelope Xapikey schema.
+          - type: 'null'
+            description: Put Preservation Envelope Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreservationEnvelopePutRequest'
+              description: Request body for put preservation enveloperequest.
+        description: Request body for put preservation envelope.
+      responses:
+        '200':
+          description: Successful response for put preservation envelope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreservationEnvelopeResponse'
+                description: Response payload for put preservation enveloperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for put preservation enveloperesponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/source-review:
+    post:
+      tags:
+      - versions
+      summary: Review Source Changes
+      description: Classify a candidate source text against the revision. Never mutates.
+      operationId: review_source_changes_v1_versions__tenant_slug___project_id___version_record_id__source_review_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Review Source Changesauthorization schema.
+          - type: 'null'
+            description: Review Source Changesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Review Source Changes Xapikey schema.
+          - type: 'null'
+            description: Review Source Changes Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceReviewRequest'
+              description: Request body for review source changesrequest.
+        description: Request body for review source changes.
+      responses:
+        '200':
+          description: Successful response for review source changes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceReviewResponse'
+                description: Response payload for review source changesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for review source changesresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/source-apply:
+    post:
+      tags:
+      - versions
+      summary: Apply Source Changes
+      description: Apply a reviewed candidate once, in a single transaction.
+      operationId: apply_source_changes_v1_versions__tenant_slug___project_id___version_record_id__source_apply_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Apply Source Changesauthorization schema.
+          - type: 'null'
+            description: Apply Source Changesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Apply Source Changes Xapikey schema.
+          - type: 'null'
+            description: Apply Source Changes Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceApplyRequest'
+              description: Request body for apply source changesrequest.
+        description: Request body for apply source changes.
+      responses:
+        '200':
+          description: Successful response for apply source changes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceApplyResponse'
+                description: Response payload for apply source changesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for apply source changesresponse422.
   /v1/push-webhook-subscriptions/{tenant_slug}/deliveries/dead-letter:
     get:
       tags:
@@ -46576,6 +46891,87 @@ components:
       title: PlatformOverrideRequest
       description: A platform-admin override action to record against a tenant's audit
         ledger.
+    PreservationClaimBody:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: RFC 6901 JSON Pointer of the preserved value.
+          example: example
+        value:
+          title: Value
+          description: The preserved subtree verbatim.
+        sourceFile:
+          anyOf:
+          - type: string
+            description: Request body for preservation claim.
+          - type: 'null'
+            description: Request body for preservation claim.
+          title: Sourcefile
+          description: Provenance file path.
+        sourceDigest:
+          anyOf:
+          - type: string
+            description: Request body for preservation claim.
+          - type: 'null'
+            description: Request body for preservation claim.
+          title: Sourcedigest
+          description: Algorithm-prefixed provenance digest (sha256:<hex>).
+      type: object
+      required:
+      - pointer
+      title: PreservationClaimBody
+      description: One claim in the request/response payload.
+    PreservationEnvelopePutRequest:
+      properties:
+        dialect:
+          type: string
+          title: Dialect
+          description: OAS dialect the claims target (e.g. 3.1.0).
+          example: example
+        claims:
+          items:
+            $ref: '#/components/schemas/PreservationClaimBody'
+          type: array
+          title: Claims
+          description: The full new set of claims (empty clears).
+          maxItems: 1000
+      type: object
+      required:
+      - dialect
+      title: PreservationEnvelopePutRequest
+      description: Replace a draft revision's preservation envelope.
+    PreservationEnvelopeResponse:
+      properties:
+        envelopeVersion:
+          type: string
+          title: Envelopeversion
+          description: Envelope payload contract version.
+          example: 1.0.0
+        dialect:
+          type: string
+          title: Dialect
+          description: OAS dialect the claims were validated under.
+          example: example
+        claims:
+          items:
+            $ref: '#/components/schemas/PreservationClaimBody'
+          type: array
+          title: Claims
+          description: Claims.
+          maxItems: 1000
+        fingerprint:
+          $ref: '#/components/schemas/SemanticFingerprint'
+          description: Semantic fingerprint of the merged (canonical + preserved)
+            document, reporting the intentionally excluded lexical differences.
+      type: object
+      required:
+      - envelopeVersion
+      - dialect
+      - claims
+      - fingerprint
+      title: PreservationEnvelopeResponse
+      description: A revision's live preservation envelope plus its semantic fingerprint.
     PrimitiveCreateRequest:
       properties:
         name:
@@ -49704,6 +50100,36 @@ components:
       - modified
       title: SchemasChangeSection
       description: Component schema name changes (``components.schemas``).
+    SemanticFingerprint:
+      properties:
+        fingerprint:
+          type: string
+          title: Fingerprint
+          description: 64-char lowercase hex SHA-256 digest.
+          example: a1b2c3d4e5f6789012345678901234ab
+        algorithm:
+          type: string
+          title: Algorithm
+          default: sha256-oas-semantic-v1
+          description: Algorithm.
+          example: example
+        lexicalExclusions:
+          items:
+            type: string
+          type: array
+          title: Lexicalexclusions
+          description: 'Lexical characteristics intentionally excluded from the comparison
+            (DCW-0.1 fidelity contract): equal fingerprints do NOT promise these were
+            preserved.'
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - fingerprint
+      - lexicalExclusions
+      title: SemanticFingerprint
+      description: A semantic fingerprint plus the lexical differences it does not
+        see.
     SharedParameterCreateRequest:
       properties:
         name:
@@ -50036,6 +50462,310 @@ components:
       - status_code
       title: SharedResponseSchema
       description: SharedResponseSchema schema.
+    SourceApplyRequest:
+      properties:
+        sourceText:
+          type: string
+          title: Sourcetext
+          description: The full candidate source text.
+          example: example
+        sourceFormat:
+          type: string
+          enum:
+          - yaml
+          - json
+          title: Sourceformat
+          description: Serialization of source_text.
+          default: yaml
+          example: openapi
+        baseDigest:
+          type: string
+          title: Basedigest
+          description: The baseDigest the review endpoint returned; the apply is rejected
+            as stale when the revision no longer fingerprints to it.
+          example: example
+        changeSetDigest:
+          type: string
+          title: Changesetdigest
+          description: The changeSetDigest the review endpoint returned for this candidate
+            against that base.
+          example: example
+      type: object
+      required:
+      - sourceText
+      - baseDigest
+      - changeSetDigest
+      title: SourceApplyRequest
+      description: Apply a reviewed candidate under optimistic concurrency.
+    SourceApplyResponse:
+      properties:
+        applied:
+          type: boolean
+          title: Applied
+          description: Applied.
+          example: false
+        alreadyApplied:
+          type: boolean
+          title: Alreadyapplied
+          default: false
+          description: Already Applied.
+          example: false
+        noChanges:
+          type: boolean
+          title: Nochanges
+          default: false
+          description: No Changes.
+          example: false
+        resultDigest:
+          type: string
+          title: Resultdigest
+          description: Result Digest.
+          example: example
+        auditId:
+          anyOf:
+          - type: string
+            description: Response payload for source apply.
+          - type: 'null'
+            description: Response payload for source apply.
+          title: Auditid
+          description: Audit ID.
+        counts:
+          anyOf:
+          - $ref: '#/components/schemas/SourceChangeCounts'
+          - type: 'null'
+            description: Response payload for source apply.
+          description: Counts.
+        enrichments:
+          items:
+            type: string
+          type: array
+          title: Enrichments
+          description: Pointers the generator deterministically added during the apply
+            (reported, never silent).
+          maxItems: 1000
+        claimCount:
+          type: integer
+          title: Claimcount
+          description: Preservation claims live after the apply.
+          default: 0
+          example: 1
+      type: object
+      required:
+      - applied
+      - resultDigest
+      title: SourceApplyResponse
+      description: 'Apply outcome: exactly one revision mutation, or an idempotent
+        no-op.'
+    SourceChange:
+      properties:
+        kind:
+          type: string
+          enum:
+          - addition
+          - update
+          - deletion
+          - unsupported-preserved
+          title: Kind
+          description: addition | update | deletion | unsupported-preserved.
+          example: addition
+        scope:
+          type: string
+          enum:
+          - document
+          - path
+          - operation
+          - component
+          - schema
+          title: Scope
+          description: 'Grouping surface: document, path, operation, component, or
+            schema.'
+          example: document
+        group:
+          type: string
+          title: Group
+          description: Stable group key within the scope (e.g. 'GET /pets').
+          example: example
+        pointer:
+          type: string
+          title: Pointer
+          description: RFC 6901 JSON Pointer of the changed value.
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Human-readable one-line description of the change.
+          example: example
+        before:
+          title: Before
+          description: Base value (updates and deletions).
+        after:
+          title: After
+          description: Candidate value (additions and updates).
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - scope
+      - group
+      - pointer
+      - label
+      title: SourceChange
+      description: One reviewed difference between the base document and the candidate.
+    SourceChangeBlocker:
+      properties:
+        code:
+          type: string
+          enum:
+          - REFERENCED_COMPONENT_DELETION
+          - MODEL_OWNED_VALUE
+          - SHARED_RESPONSE_COLLISION
+          - SHARED_PARAMETER_COLLISION
+          title: Code
+          description: Machine-readable blocker class.
+          example: REFERENCED_COMPONENT_DELETION
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer of the blocked change.
+          example: example
+        message:
+          type: string
+          title: Message
+          description: Human-readable explanation of the blocker.
+          example: Example validation message.
+        referencedBy:
+          items:
+            type: string
+          type: array
+          title: Referencedby
+          description: 'For referenced-component deletions: every pointer that still
+            references the deleted component.'
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - pointer
+      - message
+      title: SourceChangeBlocker
+      description: A structural reason the candidate cannot be applied as-is.
+    SourceChangeCounts:
+      properties:
+        additions:
+          type: integer
+          title: Additions
+          default: 0
+          description: Additions.
+          example: 1
+        updates:
+          type: integer
+          title: Updates
+          default: 0
+          description: Updates.
+          example: 1
+        deletions:
+          type: integer
+          title: Deletions
+          default: 0
+          description: Deletions.
+          example: 1
+        unsupportedPreserved:
+          type: integer
+          title: Unsupportedpreserved
+          default: 0
+          description: Unsupported Preserved.
+          example: 1
+        total:
+          type: integer
+          title: Total
+          default: 0
+          description: Total.
+          example: 1
+      additionalProperties: false
+      type: object
+      title: SourceChangeCounts
+      description: Per-kind change totals for at-a-glance review.
+    SourceChangeSetBody:
+      properties:
+        baseDigest:
+          type: string
+          title: Basedigest
+          description: Base Digest.
+          example: example
+        candidateDigest:
+          type: string
+          title: Candidatedigest
+          description: Candidate Digest.
+          example: example
+        changeSetDigest:
+          type: string
+          title: Changesetdigest
+          description: Change Set Digest.
+          example: example
+        changes:
+          items:
+            $ref: '#/components/schemas/SourceChange'
+          type: array
+          title: Changes
+          description: Changes.
+          maxItems: 1000
+        counts:
+          $ref: '#/components/schemas/SourceChangeCounts'
+          description: Counts.
+        blockers:
+          items:
+            $ref: '#/components/schemas/SourceChangeBlocker'
+          type: array
+          title: Blockers
+          description: Blockers.
+          maxItems: 1000
+      type: object
+      required:
+      - baseDigest
+      - candidateDigest
+      - changeSetDigest
+      - changes
+      - counts
+      - blockers
+      title: SourceChangeSetBody
+      description: The classified diff in the review response.
+    SourceReviewRequest:
+      properties:
+        sourceText:
+          type: string
+          title: Sourcetext
+          description: The full candidate source text.
+          example: example
+        sourceFormat:
+          type: string
+          enum:
+          - yaml
+          - json
+          title: Sourceformat
+          description: Serialization of source_text.
+          default: yaml
+          example: openapi
+      type: object
+      required:
+      - sourceText
+      title: SourceReviewRequest
+      description: A candidate source text to classify against the revision.
+    SourceReviewResponse:
+      properties:
+        dialect:
+          type: string
+          title: Dialect
+          description: Dialect.
+          example: example
+        changeSet:
+          $ref: '#/components/schemas/SourceChangeSetBody'
+          description: Change Set.
+      type: object
+      required:
+      - dialect
+      - changeSet
+      title: SourceReviewResponse
+      description: 'Review outcome: the classified change set, nothing mutated.'
     SpecImportCommitResponse:
       properties:
         job_id:

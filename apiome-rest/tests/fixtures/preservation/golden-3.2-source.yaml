@@ -1,0 +1,38 @@
+# DCW-2.1 golden fixture (private-suite#2352): supported OAS 3.2 subset source.
+# Exercises 3.2-only constructs (document $self, additional QUERY operation, tag
+# hierarchy fields) alongside x-* extensions, against golden-3.2-canonical.yaml.
+openapi: 3.2.0
+$self: https://specs.example.com/widgets/1.2.0
+info:
+  title: Golden Preservation 3.2
+  version: 1.2.0
+  x-team: platform
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      responses:
+        '200':
+          description: OK
+    # OAS 3.2 additional operation: valid 3.2, unrepresentable in 3.1.
+    query:
+      operationId: queryWidgets
+      responses:
+        '200':
+          description: OK
+tags:
+  - name: widgets
+    description: Widget operations
+    # OAS 3.2 tag hierarchy fields.
+    kind: nav
+  - name: widgets-admin
+    parent: widgets
+components:
+  schemas:
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+      # x-* with a null value under 3.2.
+      x-storage-hint: null

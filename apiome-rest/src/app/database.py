@@ -137,6 +137,24 @@ class BranchDefaultConflictError(Exception):
     """Concurrent default-branch promotion conflicted with unique default-per-project invariant."""
 
 
+class SourceApplyConflictError(Exception):
+    """Structured failure inside the source-apply transaction (DCW-2.3, private-suite#2360).
+
+    Carries a machine-readable ``code`` plus a structured ``payload`` so the
+    REST layer can emit precise 409/422 bodies. Raising this always rolls the
+    transaction back — a failed apply leaves the revision unchanged.
+
+    Codes: ``version_not_found``, ``published_version``, ``draft_lock_conflict``,
+    ``permission_denied``, ``stale_base``, ``change_set_mismatch``, ``blocked``,
+    ``apply_fidelity``, ``apply_lossy``.
+    """
+
+    def __init__(self, code: str, payload: Optional[Dict[str, Any]] = None):
+        self.code = code
+        self.payload = payload or {}
+        super().__init__(code)
+
+
 def _compute_delta(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compute top-level delta: keys added, removed, or changed.
@@ -19147,6 +19165,1081 @@ class Database:
         query = "SELECT cancel_requested FROM apiome.async_job WHERE job_id = %s"
         rows = self.execute_query(query, (job_id,))
         return bool(rows and rows[0].get("cancel_requested"))
+
+    # ------------------------------------------------------------------
+    # Round-trip preservation envelope (DCW-2.1, private-suite#2352, V184)
+    # ------------------------------------------------------------------
+
+    def _preservation_version_row(
+        self, cursor, tenant_id: str, project_id: str, version_record_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant/project-scoped version row (id, published) locked FOR UPDATE, or None."""
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            return None
+        cursor.execute(
+            """
+            SELECT v.id, v.published, v.published_immutable
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND v.project_id = %s AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            FOR UPDATE OF v
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def get_preservation_claims(
+        self, tenant_id: str, project_id: str, version_record_id: str
+    ) -> List[Dict[str, Any]]:
+        """Live preservation claims for a revision, deterministically ordered.
+
+        Returns:
+            One dict per live claim (pointer, payload, source_file, source_digest,
+            created_at, updated_at), ordered by pointer.
+
+        Raises:
+            ValueError: ``version_not_found`` when the revision does not exist in
+                this tenant/project scope (preferred over leaking existence).
+        """
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            raise ValueError("version_not_found")
+        version_rows = self.execute_query(
+            """
+            SELECT v.id
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND v.project_id = %s AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        if not version_rows:
+            raise ValueError("version_not_found")
+        return self.execute_query(
+            """
+            SELECT pointer, payload, source_file, source_digest, created_at, updated_at
+            FROM apiome.version_preservation_claims
+            WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+            ORDER BY pointer ASC
+            """,
+            (tenant_id, version_record_id),
+        )
+
+    def replace_preservation_claims(
+        self,
+        tenant_id: str,
+        project_id: str,
+        version_record_id: str,
+        claims: List[Dict[str, Any]],
+        actor_id: Optional[str],
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Replace a draft revision's preservation envelope in one transaction.
+
+        The previous live claims are soft-deleted (retention: purged later by
+        ``apiome.purge_preservation_claims``), the new claims inserted, and the
+        audit row written — all in a single transaction, so the envelope and its
+        audit commit or roll back together (the DCW-0.2
+        ``failure-injection-no-partial-mutation`` transaction rule).
+
+        Args:
+            tenant_id: The caller's tenant (scopes every statement).
+            project_id: The project the revision belongs to.
+            version_record_id: The revision's record UUID.
+            claims: Dicts with ``pointer``, ``value``, optional ``source_file`` /
+                ``source_digest``. An empty list clears the envelope.
+            actor_id: The acting user's id, when attributable.
+            detail: Extra structured audit context (envelope version, dialect).
+
+        Returns:
+            The number of live claims after the replace.
+
+        Raises:
+            ValueError: ``version_not_found`` (tenant/project scope miss) or
+                ``published_version`` (published revisions are immutable).
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                vrow = self._preservation_version_row(
+                    cursor, tenant_id, project_id, version_record_id
+                )
+                if not vrow:
+                    conn.rollback()
+                    raise ValueError("version_not_found")
+                if vrow.get("published"):
+                    conn.rollback()
+                    raise ValueError("published_version")
+
+                vid = str(vrow["id"])
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_preservation_claims
+                    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+                    """,
+                    (tenant_id, vid),
+                )
+                for claim in claims:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.version_preservation_claims
+                          (tenant_id, version_id, pointer, payload,
+                           source_file, source_digest, created_by)
+                        VALUES (%s, %s::uuid, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            tenant_id,
+                            vid,
+                            claim["pointer"],
+                            Json(claim.get("value")),
+                            claim.get("source_file"),
+                            claim.get("source_digest"),
+                            actor_id,
+                        ),
+                    )
+                action = "envelope.replace" if claims else "envelope.clear"
+                audit_detail = {"claimCount": len(claims)}
+                if detail:
+                    audit_detail.update(detail)
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.preservation_audit
+                      (tenant_id, version_id, actor_id, action, outcome, detail)
+                    VALUES (%s, %s::uuid, %s, %s, 'success', %s)
+                    """,
+                    (tenant_id, vid, actor_id, action, Json(audit_detail)),
+                )
+                conn.commit()
+                return len(claims)
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    # ------------------------------------------------------------------
+    # Source-to-model change review apply — DCW-2.3 (private-suite#2360)
+    # ------------------------------------------------------------------
+
+    def _source_apply_version_row(
+        self, cursor, tenant_id: str, project_id: str, version_record_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Tenant/project-scoped version + project row locked FOR UPDATE, or None.
+
+        The row lock plus the in-transaction rechecks below implement the
+        DCW-0.2 rule that authorization and draft mutability are verified
+        inside the apply transaction, not only at the UI boundary.
+        """
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            return None
+        cursor.execute(
+            """
+            SELECT v.id, v.published, v.published_immutable, v.version_id, v.metadata,
+                   p.id AS project_id, p.name AS project_name, p.slug AS project_slug,
+                   p.description AS project_description, p.metadata AS project_metadata
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.id = %s::uuid AND v.project_id = %s AND p.tenant_id = %s
+              AND v.deleted_at IS NULL AND p.deleted_at IS NULL
+            FOR UPDATE OF v
+            """,
+            (version_record_id, project_id, tenant_id),
+        )
+        return cursor.fetchone()
+
+    def _cursor_actor_can_edit_versions(self, cursor, tenant_id: str, user_id: Optional[str]) -> bool:
+        """In-transaction replica of the ``versions:edit`` permission predicate.
+
+        Mirrors ``user_has_permission`` (tenant admins pass; else the assigned
+        role — or the built-in Editor default for a member with no explicit
+        role — must grant versions:edit) but runs on the transaction cursor,
+        because the shared helpers commit and would break the open transaction.
+        """
+        if not user_id or not is_uuid_string(str(user_id)):
+            return False
+        cursor.execute(
+            """
+            SELECT 1 FROM apiome.tenant_administrators
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid LIMIT 1
+            """,
+            (tenant_id, user_id),
+        )
+        if cursor.fetchone():
+            return True
+        cursor.execute(
+            """
+            SELECT 1
+            FROM apiome.tenant_user_roles tur
+            JOIN apiome.role_permissions rp ON rp.role_id = tur.role_id
+            WHERE tur.tenant_id = %s::uuid AND tur.user_id = %s::uuid
+              AND rp.resource = 'versions' AND rp.action = 'edit'
+            LIMIT 1
+            """,
+            (tenant_id, user_id),
+        )
+        if cursor.fetchone():
+            return True
+        cursor.execute(
+            """
+            SELECT 1 FROM apiome.tenant_user_roles
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid LIMIT 1
+            """,
+            (tenant_id, user_id),
+        )
+        if cursor.fetchone():
+            # Explicit roles assigned, none of them grants versions:edit.
+            return False
+        cursor.execute(
+            """
+            SELECT 1 FROM apiome.tenant_users
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid AND status <> 'suspended'
+            LIMIT 1
+            """,
+            (tenant_id, user_id),
+        )
+        if not cursor.fetchone():
+            return False
+        cursor.execute(
+            """
+            SELECT 1
+            FROM apiome.roles r
+            JOIN apiome.role_permissions rp ON rp.role_id = r.id
+            WHERE r.tenant_id = %s::uuid AND r.slug = 'editor'
+              AND rp.resource = 'versions' AND rp.action = 'edit'
+            LIMIT 1
+            """,
+            (tenant_id,),
+        )
+        return bool(cursor.fetchone())
+
+    def _cursor_draft_lock_owner(self, cursor, version_id: str) -> Optional[str]:
+        """The user holding an unexpired draft lock on the revision, if any."""
+        cursor.execute(
+            """
+            SELECT owner_user_id FROM apiome.version_draft_lock
+            WHERE version_id = %s::uuid AND expires_at > CURRENT_TIMESTAMP
+            """,
+            (version_id,),
+        )
+        row = cursor.fetchone()
+        owner = row.get("owner_user_id") if row else None
+        return str(owner) if owner else None
+
+    def _cursor_paths_data(self, cursor, version_id: str) -> List[Dict[str, Any]]:
+        """In-transaction replica of ``openapi_generator._load_paths_for_version``."""
+        cursor.execute(
+            """
+            SELECT id, pathname,
+                   metadata->>'summary' as summary,
+                   metadata->>'description' as description
+            FROM apiome.version_path
+            WHERE version_id = %s
+            ORDER BY pathname
+            """,
+            (version_id,),
+        )
+        path_rows = cursor.fetchall()
+        paths: List[Dict[str, Any]] = []
+        for path_row in path_rows:
+            cursor.execute(
+                """
+                SELECT id, version_path_id, operation, metadata, created_at, updated_at
+                FROM apiome.path_operation
+                WHERE version_path_id = %s
+                ORDER BY CASE operation
+                    WHEN 'GET' THEN 1 WHEN 'POST' THEN 2 WHEN 'PUT' THEN 3
+                    WHEN 'PATCH' THEN 4 WHEN 'DELETE' THEN 5 ELSE 6
+                END
+                """,
+                (path_row["id"],),
+            )
+            op_rows = cursor.fetchall()
+            operations: List[Dict[str, Any]] = []
+            for op_row in op_rows:
+                cursor.execute(
+                    """
+                    SELECT id, summary, description, operation_id,
+                           metadata->'tags' as tags,
+                           (metadata->>'deprecated')::boolean as deprecated,
+                           (metadata->>'x-private')::boolean as x_private,
+                           metadata->'external_docs' as external_docs,
+                           metadata
+                    FROM apiome.path_operation_description
+                    WHERE path_operation_id = %s
+                    LIMIT 1
+                    """,
+                    (op_row["id"],),
+                )
+                desc_rows = cursor.fetchall()
+                cursor.execute(
+                    """
+                    SELECT spp.id, spp.name, spp.in_location, spp.summary, spp.description, spp.data
+                    FROM apiome.shared_path_parameter spp
+                    INNER JOIN apiome.path_operation_parameter_link popl
+                        ON spp.id = popl.shared_path_parameter_id
+                    WHERE popl.path_operation_id = %s
+                    ORDER BY CASE spp.in_location
+                        WHEN 'path' THEN 1 WHEN 'query' THEN 2 WHEN 'header' THEN 3 ELSE 4
+                    END, spp.name
+                    """,
+                    (op_row["id"],),
+                )
+                parameters = cursor.fetchall()
+                cursor.execute(
+                    """
+                    SELECT rb.id, rb.name, rb.description, rb.required,
+                        COALESCE(json_agg(json_build_object(
+                            'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id,
+                            'class_name', c.name, 'inline_schema', rbc.inline_schema,
+                            'encoding', rbc.encoding, 'examples', rbc.examples
+                        )) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types
+                    FROM apiome.shared_path_request_body rb
+                    INNER JOIN apiome.path_operation_request_body_link link
+                        ON rb.id = link.shared_path_request_body_id
+                    LEFT JOIN apiome.shared_path_request_body_content rbc
+                        ON rb.id = rbc.shared_path_request_body_id
+                    LEFT JOIN apiome.classes c ON rbc.class_id = c.id
+                    WHERE link.path_operation_id = %s
+                    GROUP BY rb.id
+                    """,
+                    (op_row["id"],),
+                )
+                request_bodies = cursor.fetchall()
+                cursor.execute(
+                    """
+                    SELECT spr.id, spr.status_code, spr.description, spr.data,
+                           spr.class_id, c.name as class_name, spr.inline_schema,
+                           COALESCE(json_agg(json_build_object(
+                               'id', rc.id, 'media_type', rc.media_type, 'class_id', rc.class_id,
+                               'class_name', rc_class.name, 'inline_schema', rc.inline_schema,
+                               'examples', rc.examples
+                           )) FILTER (WHERE rc.id IS NOT NULL), '[]') as content_types
+                    FROM apiome.shared_path_response spr
+                    INNER JOIN apiome.path_operation_response_link porl
+                        ON spr.id = porl.shared_path_response_id
+                    LEFT JOIN apiome.classes c ON spr.class_id = c.id
+                    LEFT JOIN apiome.shared_path_response_content rc
+                        ON spr.id = rc.shared_path_response_id
+                    LEFT JOIN apiome.classes rc_class ON rc.class_id = rc_class.id
+                    WHERE porl.path_operation_id = %s
+                    GROUP BY spr.id, spr.status_code, spr.description, spr.data,
+                             spr.class_id, c.name, spr.inline_schema
+                    ORDER BY spr.status_code
+                    """,
+                    (op_row["id"],),
+                )
+                responses = cursor.fetchall()
+                operations.append(
+                    {
+                        "id": op_row["id"],
+                        "operation": op_row["operation"],
+                        "description": desc_rows[0] if desc_rows else None,
+                        "parameters": parameters,
+                        "requestBody": request_bodies[0] if request_bodies else None,
+                        "responses": responses,
+                    }
+                )
+            paths.append(
+                {
+                    "id": path_row["id"],
+                    "pathname": path_row["pathname"],
+                    "summary": path_row.get("summary"),
+                    "description": path_row.get("description"),
+                    "operations": operations,
+                }
+            )
+        return paths
+
+    def _cursor_current_merged_document(
+        self,
+        cursor,
+        tenant_id: str,
+        tenant_slug: str,
+        version_row: Dict[str, Any],
+        dialect: str,
+    ):
+        """The revision's current canonical + envelope, loaded on the tx cursor.
+
+        Returns:
+            ``(merged_document, current_fingerprint, live_claim_rows)``.
+        """
+        from .openapi_generator import generate_openapi_spec
+        from .preservation_envelope import (
+            PreservationClaim,
+            PreservationEnvelope,
+            apply_envelope,
+            semantic_fingerprint,
+        )
+
+        version_id = str(version_row["id"])
+        cursor.execute(
+            """
+            SELECT id, version_id, name, description, schema, enabled
+            FROM apiome.classes
+            WHERE version_id = %s AND deleted_at IS NULL
+            ORDER BY name ASC
+            """,
+            (version_id,),
+        )
+        classes = cursor.fetchall()
+        all_properties: Dict[str, List[Dict[str, Any]]] = {}
+        for class_row in classes:
+            cursor.execute(
+                """
+                SELECT cp.id, cp.class_id, cp.property_id, cp.name, cp.description,
+                       cp.data, cp.parent_id, cp.primitive_id, cp.primitive_ref
+                FROM apiome.class_properties cp
+                WHERE cp.class_id = %s
+                ORDER BY cp.parent_id NULLS FIRST, cp.name ASC
+                """,
+                (class_row["id"],),
+            )
+            all_properties[class_row["id"]] = cursor.fetchall()
+        cursor.execute(
+            """
+            SELECT id, version_id, scheme_name, scheme_type, in_location,
+                   param_name, http_scheme, description, data
+            FROM apiome.version_security_scheme
+            WHERE version_id = %s
+            ORDER BY scheme_name
+            """,
+            (version_id,),
+        )
+        scheme_rows = cursor.fetchall()
+        cursor.execute(
+            """
+            SELECT id, version_id, name, url, description, sort_order, variables, environment
+            FROM apiome.version_server
+            WHERE version_id = %s
+            ORDER BY sort_order, url
+            """,
+            (version_id,),
+        )
+        server_rows = cursor.fetchall()
+        paths_data = self._cursor_paths_data(cursor, version_id)
+        canonical = generate_openapi_spec(
+            tenant_slug,
+            str(version_row.get("project_slug") or version_row["project_id"]),
+            str(version_row["version_id"]),
+            classes,
+            all_properties,
+            version_row.get("project_description"),
+            revision_metadata=version_row.get("metadata"),
+            project_metadata=version_row.get("project_metadata"),
+            paths_data=paths_data,
+            security_scheme_rows=scheme_rows,
+            server_rows=server_rows,
+        )
+        cursor.execute(
+            """
+            SELECT pointer, payload, source_file, source_digest
+            FROM apiome.version_preservation_claims
+            WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+            ORDER BY pointer ASC
+            """,
+            (tenant_id, version_id),
+        )
+        claim_rows = cursor.fetchall()
+        envelope = PreservationEnvelope(
+            dialect=dialect,
+            claims=[
+                PreservationClaim(
+                    pointer=row["pointer"],
+                    value=row["payload"],
+                    source_file=row.get("source_file"),
+                    source_digest=row.get("source_digest"),
+                )
+                for row in claim_rows
+            ],
+        )
+        merged, _merge_errors = apply_envelope(canonical, envelope)
+        return merged, semantic_fingerprint(merged).fingerprint, claim_rows
+
+    def _cursor_write_canonical_rows(
+        self, cursor, project_id: str, version_id: str, writes
+    ) -> None:
+        """Rewrite the revision's canonical rows from a candidate write plan.
+
+        Runs entirely on the transaction cursor: soft-deletes live classes,
+        recreates classes/properties, and delete-and-recreates paths, security
+        schemes, and servers. Committing or rolling back is the caller's job.
+        """
+        from .source_change_apply import parameter_key, path_shared_parameters
+
+        def _stable_json(value: Any) -> str:
+            return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+        # Classes: soft-delete live rows (retention parity with delete_class),
+        # then insert the candidate's schemas fresh.
+        cursor.execute(
+            """
+            UPDATE apiome.classes
+            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE version_id = %s AND deleted_at IS NULL
+            """,
+            (version_id,),
+        )
+        cursor.execute(
+            "SELECT id, data FROM apiome.properties WHERE project_id = %s",
+            (project_id,),
+        )
+        library: Dict[str, str] = {}
+        for row in cursor.fetchall():
+            data = row.get("data")
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+            library.setdefault(_stable_json(data), str(row["id"]))
+        class_ids: Dict[str, str] = {}
+        for class_write in writes.classes:
+            cursor.execute(
+                """
+                INSERT INTO apiome.classes (version_id, name, description, schema, enabled)
+                VALUES (%s, %s, %s, %s, TRUE)
+                RETURNING id
+                """,
+                (
+                    version_id,
+                    class_write.name,
+                    class_write.description,
+                    json.dumps(class_write.schema_fields),
+                ),
+            )
+            class_id = str(cursor.fetchone()["id"])
+            class_ids[class_write.name] = class_id
+            for prop in class_write.properties:
+                property_id: Optional[str] = None
+                if not prop.is_reference:
+                    signature = _stable_json(prop.data)
+                    property_id = library.get(signature)
+                    if property_id is None:
+                        cursor.execute(
+                            """
+                            INSERT INTO apiome.properties (project_id, name, description, data)
+                            VALUES (%s, %s, %s, %s)
+                            RETURNING id
+                            """,
+                            (project_id, prop.name, prop.description, json.dumps(prop.data)),
+                        )
+                        property_id = str(cursor.fetchone()["id"])
+                        library[signature] = property_id
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.class_properties
+                        (class_id, property_id, name, description, data)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (class_id, property_id, prop.name, prop.description, json.dumps(prop.data)),
+                )
+
+        # Paths: hard delete-and-recreate; children cascade from version_path.
+        cursor.execute(
+            "DELETE FROM apiome.version_path WHERE version_id = %s", (version_id,)
+        )
+        for path in writes.paths:
+            path_metadata: Dict[str, Any] = {}
+            if path.summary is not None:
+                path_metadata["summary"] = path.summary
+            if path.description is not None:
+                path_metadata["description"] = path.description
+            cursor.execute(
+                """
+                INSERT INTO apiome.version_path (version_id, pathname, metadata)
+                VALUES (%s, %s, %s)
+                RETURNING id
+                """,
+                (version_id, path.pathname, json.dumps(path_metadata) if path_metadata else None),
+            )
+            version_path_id = str(cursor.fetchone()["id"])
+            shared_params = path_shared_parameters(path)
+            parameter_ids: Dict[Any, str] = {}
+            for key, parameter in shared_params.items():
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.shared_path_parameter
+                        (version_path_id, name, in_location, summary, description, data)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        version_path_id,
+                        parameter.name,
+                        parameter.in_location,
+                        parameter.summary,
+                        parameter.description,
+                        json.dumps(parameter.data),
+                    ),
+                )
+                parameter_ids[key] = str(cursor.fetchone()["id"])
+            response_ids: Dict[str, str] = {}
+            for response in path.responses:
+                if response.data:
+                    data_value: Optional[str] = json.dumps(response.data)
+                elif not response.contents:
+                    data_value = json.dumps({})
+                else:
+                    data_value = None
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.shared_path_response
+                        (version_path_id, status_code, description, data,
+                         class_id, inline_schema, schema_mode)
+                    VALUES (%s, %s, %s, %s, NULL, NULL, 'object')
+                    RETURNING id
+                    """,
+                    (version_path_id, response.status_code, response.description, data_value),
+                )
+                response_id = str(cursor.fetchone()["id"])
+                response_ids[response.status_code] = response_id
+                for content in response.contents:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.shared_path_response_content
+                            (shared_path_response_id, media_type, class_id, inline_schema, examples)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (
+                            response_id,
+                            content.media_type,
+                            class_ids.get(content.ref_class_name)
+                            if content.ref_class_name
+                            else None,
+                            json.dumps(content.inline_schema)
+                            if content.inline_schema is not None
+                            else None,
+                            json.dumps(content.examples)
+                            if content.examples is not None
+                            else None,
+                        ),
+                    )
+            for op in path.operations:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.path_operation (version_path_id, operation, metadata)
+                    VALUES (%s, %s, '{}')
+                    RETURNING id
+                    """,
+                    (version_path_id, op.method.upper()),
+                )
+                path_operation_id = str(cursor.fetchone()["id"])
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.path_operation_description
+                        (path_operation_id, summary, description, operation_id, metadata)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        path_operation_id,
+                        op.summary,
+                        op.description,
+                        op.operation_id,
+                        json.dumps(op.description_metadata)
+                        if op.description_metadata
+                        else None,
+                    ),
+                )
+                for parameter in op.parameters:
+                    shared_id = parameter_ids.get(parameter_key(parameter))
+                    if shared_id:
+                        cursor.execute(
+                            """
+                            INSERT INTO apiome.path_operation_parameter_link
+                                (path_operation_id, shared_path_parameter_id)
+                            VALUES (%s, %s)
+                            ON CONFLICT (path_operation_id, shared_path_parameter_id) DO NOTHING
+                            """,
+                            (path_operation_id, shared_id),
+                        )
+                if op.request_body is not None:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.shared_path_request_body
+                            (version_path_id, name, description, required)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING id
+                        """,
+                        (
+                            version_path_id,
+                            op.request_body.name,
+                            op.request_body.description,
+                            op.request_body.required,
+                        ),
+                    )
+                    request_body_id = str(cursor.fetchone()["id"])
+                    for content in op.request_body.contents:
+                        cursor.execute(
+                            """
+                            INSERT INTO apiome.shared_path_request_body_content
+                                (shared_path_request_body_id, media_type, class_id,
+                                 inline_schema, encoding, examples)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            (
+                                request_body_id,
+                                content.media_type,
+                                class_ids.get(content.ref_class_name)
+                                if content.ref_class_name
+                                else None,
+                                json.dumps(content.inline_schema)
+                                if content.inline_schema is not None
+                                else None,
+                                json.dumps(content.encoding)
+                                if content.encoding is not None
+                                else None,
+                                json.dumps(content.examples)
+                                if content.examples is not None
+                                else None,
+                            ),
+                        )
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.path_operation_request_body_link
+                            (path_operation_id, shared_path_request_body_id, metadata)
+                        VALUES (%s, %s, NULL)
+                        ON CONFLICT (path_operation_id) DO UPDATE SET
+                            shared_path_request_body_id = EXCLUDED.shared_path_request_body_id
+                        """,
+                        (path_operation_id, request_body_id),
+                    )
+                for status in op.response_status_codes:
+                    response_id = response_ids.get(status)
+                    if response_id:
+                        cursor.execute(
+                            """
+                            INSERT INTO apiome.path_operation_response_link
+                                (path_operation_id, shared_path_response_id, metadata)
+                            VALUES (%s, %s, NULL)
+                            ON CONFLICT (path_operation_id, shared_path_response_id) DO NOTHING
+                            """,
+                            (path_operation_id, response_id),
+                        )
+
+        # Security schemes and servers: delete-and-recreate.
+        cursor.execute(
+            "DELETE FROM apiome.version_security_scheme WHERE version_id = %s",
+            (version_id,),
+        )
+        for scheme in writes.security_schemes:
+            cursor.execute(
+                """
+                INSERT INTO apiome.version_security_scheme
+                    (version_id, scheme_name, scheme_type, in_location,
+                     param_name, http_scheme, description, data)
+                VALUES (%s, %s, %s, %s, %s, NULL, %s, '{}')
+                """,
+                (
+                    version_id,
+                    scheme.scheme_name,
+                    scheme.scheme_type,
+                    scheme.in_location,
+                    scheme.param_name,
+                    scheme.description,
+                ),
+            )
+        cursor.execute(
+            "DELETE FROM apiome.version_server WHERE version_id = %s", (version_id,)
+        )
+        for server in writes.servers:
+            cursor.execute(
+                """
+                INSERT INTO apiome.version_server
+                    (version_id, name, url, description, sort_order, variables)
+                VALUES (%s, NULL, %s, %s, %s, %s)
+                """,
+                (
+                    version_id,
+                    server.url,
+                    server.description,
+                    server.sort_order,
+                    json.dumps(server.variables) if server.variables is not None else None,
+                ),
+            )
+
+    def apply_source_change_set(
+        self,
+        tenant_id: str,
+        tenant_slug: str,
+        project_id: str,
+        version_record_id: str,
+        *,
+        actor_id: Optional[str],
+        candidate_document: Dict[str, Any],
+        source_format: str,
+        source_digest: Optional[str],
+        base_digest: str,
+        change_set_digest_value: str,
+        dialect: str,
+    ) -> Dict[str, Any]:
+        """Apply a reviewed candidate to a draft revision in one transaction.
+
+        Everything the DCW-0.2 gates demand happens inside a single
+        transaction on one locked version row: tenant/project scope (404
+        semantics), published-immutability, draft-lock ownership, and the
+        ``versions:edit`` permission are rechecked after the FOR UPDATE lock;
+        the base digest is compared against the *current* merged document for
+        optimistic concurrency; and the canonical rows, preservation payload,
+        and audit entry commit or roll back together. A failed apply leaves
+        the revision unchanged.
+
+        Idempotent replay: when the most recent successful apply recorded the
+        same change-set digest and the revision still fingerprints to its
+        result, the recorded outcome is returned without mutating anything.
+
+        Args:
+            tenant_id: The caller's tenant (scopes every statement).
+            tenant_slug: Tenant slug used in canonical-document generation.
+            project_id: The project the revision belongs to.
+            version_record_id: The revision's record UUID.
+            actor_id: The acting user (JWT identity), rechecked in-tx.
+            candidate_document: The parsed, validated candidate document.
+            source_format: 'yaml' or 'json' (audit context only).
+            source_digest: Algorithm-prefixed digest of the raw source text,
+                recorded as claim provenance.
+            base_digest: Semantic fingerprint of the merged document the
+                candidate was reviewed against.
+            change_set_digest_value: The digest the review endpoint issued for
+                this (base, candidate) pair.
+            dialect: The revision's stored OAS dialect.
+
+        Returns:
+            On mutation: ``{"applied": True, "resultDigest", "auditId",
+            "counts", "enrichments", "claimCount"}``. On idempotent replay or
+            an empty change set: ``{"applied": False, "alreadyApplied"/"noChanges",
+            "resultDigest"}``.
+
+        Raises:
+            SourceApplyConflictError: With a structured code/payload; the
+                transaction is always rolled back first.
+        """
+        from .source_change_apply import (
+            build_canonical_writes,
+            compare_candidate_to_merged,
+            regenerate_document,
+        )
+        from .source_change_review import build_source_change_set, change_set_digest
+        from .preservation_envelope import (
+            apply_envelope,
+            extract_envelope,
+            semantic_fingerprint,
+            validate_envelope,
+        )
+
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                vrow = self._source_apply_version_row(
+                    cursor, tenant_id, project_id, version_record_id
+                )
+                if not vrow:
+                    conn.rollback()
+                    raise SourceApplyConflictError("version_not_found")
+                if vrow.get("published"):
+                    conn.rollback()
+                    raise SourceApplyConflictError("published_version")
+                lock_owner = self._cursor_draft_lock_owner(cursor, str(vrow["id"]))
+                if lock_owner and (not actor_id or str(actor_id) != lock_owner):
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "draft_lock_conflict", {"ownerUserId": lock_owner}
+                    )
+                if not self._cursor_actor_can_edit_versions(cursor, tenant_id, actor_id):
+                    conn.rollback()
+                    raise SourceApplyConflictError("permission_denied")
+
+                merged_current, current_fp, _claims = self._cursor_current_merged_document(
+                    cursor, tenant_id, tenant_slug, vrow, dialect
+                )
+
+                cursor.execute(
+                    """
+                    SELECT id, change_set_digest, result_digest
+                    FROM apiome.source_change_audit
+                    WHERE version_id = %s::uuid AND outcome = 'success'
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT 1
+                    """,
+                    (str(vrow["id"]),),
+                )
+                last_apply = cursor.fetchone()
+                if (
+                    last_apply
+                    and last_apply["change_set_digest"] == change_set_digest_value
+                    and last_apply["result_digest"] == current_fp
+                ):
+                    conn.rollback()
+                    return {
+                        "applied": False,
+                        "alreadyApplied": True,
+                        "resultDigest": current_fp,
+                        "auditId": str(last_apply["id"]),
+                    }
+
+                if current_fp != base_digest:
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "stale_base", {"currentDigest": current_fp}
+                    )
+
+                candidate_fp = semantic_fingerprint(candidate_document).fingerprint
+                if change_set_digest(base_digest, candidate_fp) != change_set_digest_value:
+                    conn.rollback()
+                    raise SourceApplyConflictError("change_set_mismatch")
+
+                change_set = build_source_change_set(
+                    merged_current, candidate_document, dialect
+                )
+                if change_set.blockers:
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "blocked",
+                        {
+                            "blockers": [
+                                b.model_dump(by_alias=True) for b in change_set.blockers
+                            ]
+                        },
+                    )
+                if change_set.counts.total == 0:
+                    conn.rollback()
+                    return {
+                        "applied": False,
+                        "noChanges": True,
+                        "resultDigest": current_fp,
+                    }
+
+                writes = build_canonical_writes(candidate_document)
+                regenerated = regenerate_document(
+                    writes,
+                    tenant_slug=tenant_slug,
+                    project_slug=str(vrow.get("project_slug") or vrow["project_id"]),
+                    version_string=str(vrow["version_id"]),
+                    project_description=vrow.get("project_description"),
+                    revision_metadata=vrow.get("metadata"),
+                    project_metadata=vrow.get("project_metadata"),
+                )
+                envelope = extract_envelope(
+                    candidate_document,
+                    regenerated,
+                    dialect,
+                    source_digest=source_digest,
+                )
+                report = validate_envelope(envelope, regenerated)
+                if not report.ok:
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "apply_fidelity",
+                        {"errors": [e.model_dump(by_alias=True) for e in report.errors]},
+                    )
+                merged_next, merge_errors = apply_envelope(regenerated, envelope)
+                if merge_errors:
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "apply_fidelity",
+                        {"errors": [e.model_dump(by_alias=True) for e in merge_errors]},
+                    )
+                fidelity = compare_candidate_to_merged(candidate_document, merged_next)
+                if not fidelity.ok:
+                    conn.rollback()
+                    raise SourceApplyConflictError(
+                        "apply_lossy",
+                        {
+                            "losses": fidelity.losses,
+                            "valueChanges": fidelity.value_changes,
+                            "enrichments": fidelity.enrichments,
+                        },
+                    )
+
+                self._cursor_write_canonical_rows(
+                    cursor, str(vrow["project_id"]), str(vrow["id"]), writes
+                )
+
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_preservation_claims
+                    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE tenant_id = %s AND version_id = %s::uuid AND deleted_at IS NULL
+                    """,
+                    (tenant_id, str(vrow["id"])),
+                )
+                for claim in envelope.claims:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.version_preservation_claims
+                          (tenant_id, version_id, pointer, payload,
+                           source_file, source_digest, created_by)
+                        VALUES (%s, %s::uuid, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            tenant_id,
+                            str(vrow["id"]),
+                            claim.pointer,
+                            Json(claim.value),
+                            claim.source_file,
+                            claim.source_digest,
+                            actor_id,
+                        ),
+                    )
+
+                result_fp = semantic_fingerprint(merged_next).fingerprint
+                counts = change_set.counts.model_dump(by_alias=True)
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.source_change_audit
+                        (tenant_id, version_id, actor_id, action, outcome,
+                         base_digest, result_digest, change_set_digest, counts, detail)
+                    VALUES (%s, %s::uuid, %s, 'source.apply', 'success', %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        str(vrow["id"]),
+                        actor_id,
+                        base_digest,
+                        result_fp,
+                        change_set_digest_value,
+                        Json(counts),
+                        Json(
+                            {
+                                "dialect": dialect,
+                                "sourceFormat": source_format,
+                                "claimCount": len(envelope.claims),
+                                "enrichments": fidelity.enrichments,
+                            }
+                        ),
+                    ),
+                )
+                audit_id = str(cursor.fetchone()["id"])
+                conn.commit()
+                return {
+                    "applied": True,
+                    "resultDigest": result_fp,
+                    "auditId": audit_id,
+                    "counts": counts,
+                    "enrichments": fidelity.enrichments,
+                    "claimCount": len(envelope.claims),
+                }
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
 
 
 # Global database instance

@@ -1,0 +1,39 @@
+{
+  "$schema": "./oas-resource-limits.schema.json",
+  "limitsVersion": "1.0.0",
+  "description": "Versioned parser and resource limits for every OpenAPI source surface (DCW-0.2, #2419). Consumed by the designer safe-parse wrapper now and mirrored field-for-field by the DCW-2.1 backend parser (#2352) and the DCW-2.2 editable source workspace (#2356).",
+  "appliesTo": ["source-validation", "paths", "designer", "import", "export", "backend-parse"],
+  "onViolation": {
+    "behavior": "structured-diagnostics",
+    "mutation": "none",
+    "statement": "A document violating any limit is rejected with structured diagnostics; no partial parse result is returned and no stored version or draft is mutated."
+  },
+  "limits": {
+    "maxDocumentBytes": {
+      "value": 10485760,
+      "diagnosticCode": "OAS_LIMIT_DOCUMENT_BYTES",
+      "statement": "UTF-8 byte-length ceiling checked before parsing; 10 MiB covers the large commercial tier (~5 MB) with 2x headroom."
+    },
+    "maxAliasCount": {
+      "value": 100,
+      "diagnosticCode": "OAS_LIMIT_ALIAS_COUNT",
+      "statement": "Passed to the yaml library's toJS maxAliasCount option. The library bounds count * aliasCount per anchor (an expansion-cost product, not a literal count of alias occurrences); this is the documented anti-billion-laughs bound."
+    },
+    "maxNestingDepth": {
+      "value": 256,
+      "diagnosticCode": "OAS_LIMIT_NESTING_DEPTH",
+      "statement": "Maximum collection nesting depth. The yaml library has no built-in depth option, so the safe-parse wrapper enforces this with a conservative pre-parse scan plus an exact iterative post-parse check."
+    },
+    "maxYamlDocumentsPerSource": {
+      "value": 1,
+      "diagnosticCode": "OAS_MULTIPLE_DOCUMENTS",
+      "statement": "Multi-document YAML streams are rejected; an OpenAPI source is exactly one document."
+    }
+  },
+  "duplicateKeyPolicy": {
+    "policy": "reject",
+    "appliesToFormats": ["yaml"],
+    "diagnosticCode": "OAS_DUPLICATE_KEY",
+    "statement": "Duplicate mapping keys are rejected with line/column diagnostics (yaml uniqueKeys). JSON.parse silently keeps the last duplicate; JSON duplicate detection is a documented gap owned by the DCW-2.1 backend parser (#2352)."
+  }
+}

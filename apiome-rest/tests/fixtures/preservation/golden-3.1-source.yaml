@@ -1,0 +1,91 @@
+# DCW-2.1 golden fixture (private-suite#2352): OAS 3.1 source document containing
+# supported canonical values, unsupported-but-valid values, and x-* extensions.
+# tests/test_preservation_envelope.py extracts the preservation envelope against
+# golden-3.1-canonical.yaml and asserts the merge round-trips this document
+# semantically unchanged.
+openapi: 3.1.0
+info:
+  title: Golden Preservation 3.1
+  version: 1.0.0
+  # x-* extension with a null value: must round-trip as null, not disappear.
+  x-audience: null
+  # unknown-but-valid vendor field on a canonical node.
+  x-lifecycle:
+    stage: beta
+    reviewed: false
+servers:
+  - url: https://api.example.com/v1
+    description: Production
+    # unknown field under an array element.
+    x-region: us-east-1
+  - url: https://staging.example.com/v1
+    description: Staging
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      # x-* with a false value: distinct from absent.
+      x-internal: false
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Widget'
+      # unsupported-but-valid: callbacks are preserved-read-only in the matrix.
+      callbacks:
+        onEvent:
+          '{$request.body#/callbackUrl}':
+            post:
+              responses:
+                '204':
+                  description: received
+tags:
+  - name: widgets
+    description: Widget operations
+    # unknown fields inside an array element (tags array).
+    x-display-order: 1
+  - name: internal
+webhooks:
+  # unsupported-but-valid top-level family (preserved-read-only).
+  widgetCreated:
+    post:
+      operationId: widgetCreatedHook
+      responses:
+        '202':
+          description: accepted
+components:
+  schemas:
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+        legacyRef:
+          # $ref with sibling keys (legal in OAS 3.1 JSON Schema dialect).
+          $ref: '#/components/schemas/WidgetId'
+          description: Sibling description next to $ref
+          x-deprecated-alias: legacy_ref
+      required:
+        - id
+      # x-* with an empty-object value: must survive as {}.
+      x-empty-annotations: {}
+      # x-* with an empty-array value: must survive as [].
+      x-empty-list: []
+    WidgetId:
+      type: string
+  links:
+    WidgetById:
+      operationId: listWidgets
+      parameters:
+        id: $response.body#/id
+# unknown-but-valid top-level field.
+x-sdk-config:
+  package: example-widgets
+  languages:
+    - python
+    - typescript

@@ -5,6 +5,70 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.148.0] - 2026-07-18
+
+### Added
+- **Source-to-model change review (DCW-2.3, private-suite#2360)** — the
+  transactional review/apply surface for the Designer's editable source
+  workspace:
+  - `POST /v1/versions/{tenant}/{project}/{revision}/source-review` — parse a
+    candidate source text (DCW-0.2 safe parser + the same dialect meta-schema
+    and local `$ref` integrity checks as export) and classify it against the
+    revision's current merged document into additions/updates/deletions/
+    unsupported-preserved changes grouped by document, path, operation,
+    component, and schema, with structural blockers (referenced-component
+    deletions listing every referencing pointer, model-owned `/openapi`,
+    `/info`, `/x-metadata` values, unrepresentable shared response/parameter
+    shapes). Never mutates. Returns the base digest and a change-set digest.
+  - `POST /v1/versions/{tenant}/{project}/{revision}/source-apply` — apply a
+    reviewed candidate once in a single transaction
+    (`Database.apply_source_change_set`): tenant scope, published
+    immutability, draft-lock ownership, and the versions:edit permission are
+    rechecked inside the transaction after a FOR UPDATE row lock; stale base
+    digests answer 409 `STALE_BASE` with the current digest and resolution
+    choices (never last-write-wins); replaying an applied change set is
+    idempotent; canonical class/property/path/security-scheme/server rows,
+    the preservation envelope, and the `apiome.source_change_audit` entry
+    (V185) commit or roll back together.
+  - `app/source_change_review.py` — pure classification engine (deep diff,
+    pointer→scope grouping, capability-driven unsupported-preserved
+    classification, blockers, `$ref` integrity, change-set digest).
+  - `app/source_change_apply.py` — pure write planning with a DCW-2.1
+    fidelity loop: the plan's predicted regeneration re-extracts the
+    preservation envelope so unabsorbed constructs round-trip losslessly, and
+    `compare_candidate_to_merged` rejects any lost or altered value while
+    reporting deterministic generator enrichments. OpenAPI 1.30.0 → 1.31.0.
+
+## [1.147.0] - 2026-07-18
+
+### Added
+- **Round-trip preservation envelope (DCW-2.1, private-suite#2352)** — the
+  backend half of the Designer's lossless hybrid source workspace:
+  - `apiome.version_preservation_claims` + `apiome.preservation_audit` (V184):
+    version-scoped JSONB preservation payload keyed by RFC 6901 JSON Pointer
+    with optional source-file/digest provenance, soft-delete retention with a
+    `purge_preservation_claims` sweep, and an append-only envelope audit
+    written in the same transaction as every envelope change.
+  - `GET/PUT /v1/versions/{tenant}/{project}/{revision}/preservation` —
+    tenant/version-scoped envelope reads/writes. Writes validate against the
+    server-generated canonical document and the DCW-0.1 capability matrix:
+    canonical/preserved claims for the same pointer, duplicate or nested
+    pointers, unsupported dialects, and oversized envelopes are rejected with
+    deterministic structured errors and no mutation; published revisions
+    answer 409. Responses carry a semantic fingerprint that reports the
+    intentionally excluded lexical differences.
+  - `app.preservation_envelope` — pure extract/validate/apply engine with
+    deterministic array insertion/reordering, pointer moves, canonical
+    deletions (with array-index rebasing), and collision behavior; golden
+    OAS 3.1/3.2 corpus covers unknown fields under arrays, `$ref` siblings,
+    move/delete, and null/false/empty extension values.
+  - `app.safe_oas_parse` + `app.oas_resource_limits` — field-for-field mirror
+    of the designer's DCW-0.2 resource-limits artifact: duplicate keys
+    (YAML **and** JSON — closing the documented JSON gap), alias-expansion,
+    nesting-depth, document-size, multi-document, and circular-alias
+    violations all fail with structured, non-mutating diagnostics.
+  - OpenAPI 1.29.0 → 1.30.0.
+
 ## [1.138.0] - 2026-07-15
 
 ### Added
