@@ -25,6 +25,41 @@ if (!g.crypto?.subtle) {
   });
 }
 
+/*
+ * jsdom implements neither the Pointer Events capture API, `ResizeObserver`,
+ * nor `scrollIntoView`. Radix primitives and cmdk call all three during normal
+ * open/close behavior, so without these any test that opens a Select, a Dialog
+ * or the command palette throws instead of failing on its actual assertion
+ * (UXE-1.2). Each is installed only when missing, so a future jsdom that
+ * supplies them wins.
+ */
+const elementPrototype = globalThis.Element?.prototype as
+  | (Element & Record<string, unknown>)
+  | undefined;
+
+if (elementPrototype) {
+  if (!elementPrototype.hasPointerCapture) {
+    elementPrototype.hasPointerCapture = () => false;
+  }
+  if (!elementPrototype.setPointerCapture) {
+    elementPrototype.setPointerCapture = () => undefined;
+  }
+  if (!elementPrototype.releasePointerCapture) {
+    elementPrototype.releasePointerCapture = () => undefined;
+  }
+  if (!elementPrototype.scrollIntoView) {
+    elementPrototype.scrollIntoView = () => undefined;
+  }
+}
+
+if (!(globalThis as { ResizeObserver?: unknown }).ResizeObserver) {
+  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // Extend Jest matchers
 expect.extend({
   toBeValidSchema(received: any) {

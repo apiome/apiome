@@ -123,10 +123,8 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           href: authoringHref(UI_AUTHORING_ROUTES.root),
           icon: 'Compass',
           group: 'authoring',
-          // Flipped on when the /ade/authoring route group ships (UXE-1.2).
-          enabled: false,
-          badge: 'Coming soon',
-          accessNote: 'Arriving in the next Authoring release.',
+          // Enabled by UXE-1.2: the /ade/authoring route group now renders the
+          // shared Authoring shell, so this destination resolves.
           external: isStudioSurface(),
         },
         {
@@ -136,7 +134,6 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           href: authoringHref(UI_AUTHORING_ROUTES.scribe),
           icon: 'PenTool',
           group: 'authoring',
-          enabled: false,
           badge: 'Preview',
           featureFlag: 'scribe',
           accessNote: 'Available in the Scribe preview. Contact your account team to join.',
@@ -149,7 +146,6 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           href: authoringHref(UI_AUTHORING_ROUTES.slate),
           icon: 'Layers',
           group: 'authoring',
-          enabled: false,
           badge: 'Preview',
           featureFlag: 'slate',
           accessNote: 'Available in the Slate preview. Contact your account team to join.',
@@ -162,8 +158,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           href: authoringHref(UI_AUTHORING_ROUTES.releases),
           icon: 'Rocket',
           group: 'authoring',
-          enabled: false,
-          badge: 'Coming soon',
+          badge: 'Preview',
           featureFlag: 'hosted',
           accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
           external: isStudioSurface(),
@@ -175,8 +170,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           href: authoringHref(UI_AUTHORING_ROUTES.insights),
           icon: 'BarChart3',
           group: 'authoring',
-          enabled: false,
-          badge: 'Coming soon',
+          badge: 'Preview',
           featureFlag: 'hosted',
           accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
           external: isStudioSurface(),
