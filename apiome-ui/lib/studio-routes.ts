@@ -15,6 +15,8 @@ export const UI_AUTHORING_ROUTES = {
   slate: '/ade/authoring/slate',
   releases: '/ade/authoring/releases',
   insights: '/ade/authoring/insights',
+  /** Primitive reference gallery (UXE-1.3). Not a suite destination. */
+  reference: '/ade/authoring/reference',
 } as const;
 
 export const STUDIO_APP_ROUTES = {
