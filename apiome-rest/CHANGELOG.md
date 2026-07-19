@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.148.0] - 2026-07-18
+
+### Added
+- **Source-to-model change review (DCW-2.3, private-suite#2360)** — the
+  transactional review/apply surface for the Designer's editable source
+  workspace:
+  - `POST /v1/versions/{tenant}/{project}/{revision}/source-review` — parse a
+    candidate source text (DCW-0.2 safe parser + the same dialect meta-schema
+    and local `$ref` integrity checks as export) and classify it against the
+    revision's current merged document into additions/updates/deletions/
+    unsupported-preserved changes grouped by document, path, operation,
+    component, and schema, with structural blockers (referenced-component
+    deletions listing every referencing pointer, model-owned `/openapi`,
+    `/info`, `/x-metadata` values, unrepresentable shared response/parameter
+    shapes). Never mutates. Returns the base digest and a change-set digest.
+  - `POST /v1/versions/{tenant}/{project}/{revision}/source-apply` — apply a
+    reviewed candidate once in a single transaction
+    (`Database.apply_source_change_set`): tenant scope, published
+    immutability, draft-lock ownership, and the versions:edit permission are
+    rechecked inside the transaction after a FOR UPDATE row lock; stale base
+    digests answer 409 `STALE_BASE` with the current digest and resolution
+    choices (never last-write-wins); replaying an applied change set is
+    idempotent; canonical class/property/path/security-scheme/server rows,
+    the preservation envelope, and the `apiome.source_change_audit` entry
+    (V185) commit or roll back together.
+  - `app/source_change_review.py` — pure classification engine (deep diff,
+    pointer→scope grouping, capability-driven unsupported-preserved
+    classification, blockers, `$ref` integrity, change-set digest).
+  - `app/source_change_apply.py` — pure write planning with a DCW-2.1
+    fidelity loop: the plan's predicted regeneration re-extracts the
+    preservation envelope so unabsorbed constructs round-trip losslessly, and
+    `compare_candidate_to_merged` rejects any lost or altered value while
+    reporting deterministic generator enrichments. OpenAPI 1.30.0 → 1.31.0.
+
 ## [1.147.0] - 2026-07-18
 
 ### Added
