@@ -6,17 +6,19 @@ export const UI_STUDIO_ROUTES = {
 } as const;
 
 /**
- * Authoring destinations (UXE-1.1). These always live on the main app surface,
- * so the studio surface links to them with an absolute main-app URL.
+ * Authoring destinations (UXE-1.1).
+ *
+ * Authoring is a commercial suite product, so it is implemented and served by
+ * the studio app, not here. These are studio-surface paths: the main app only
+ * links to them, gated by the `scribe`, `slate` and `hosted` license flags, and
+ * never renders an Authoring route itself.
  */
-export const UI_AUTHORING_ROUTES = {
-  root: '/ade/authoring',
-  scribe: '/ade/authoring/scribe',
-  slate: '/ade/authoring/slate',
-  releases: '/ade/authoring/releases',
-  insights: '/ade/authoring/insights',
-  /** Primitive reference gallery (UXE-1.3). Not a suite destination. */
-  reference: '/ade/authoring/reference',
+export const STUDIO_AUTHORING_ROUTES = {
+  root: '/authoring',
+  scribe: '/authoring/scribe',
+  slate: '/authoring/slate',
+  releases: '/authoring/releases',
+  insights: '/authoring/insights',
 } as const;
 
 export const STUDIO_APP_ROUTES = {

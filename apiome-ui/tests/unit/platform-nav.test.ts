@@ -55,26 +55,30 @@ describe('platform-nav', () => {
   describe('Designer trigger active routes (UXE-1.1)', () => {
     const suite = { id: 'suite', label: 'Designer', href: '/ade/studio' };
 
-    it('stays active across both design and authoring routes', () => {
-      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+    it('stays active across both design and authoring routes on the studio surface', () => {
+      process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
 
-      expect(platformNavItemIsActive(suite, '/ade/studio')).toBe(true);
-      expect(platformNavItemIsActive(suite, '/ade/authoring')).toBe(true);
-      expect(platformNavItemIsActive(suite, '/ade/authoring/scribe')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/editor')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/authoring')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/authoring/scribe')).toBe(true);
     });
 
     it('does not treat unrelated or lookalike routes as authoring', () => {
-      delete process.env.NEXT_PUBLIC_APP_SURFACE;
-
-      expect(platformNavItemIsActive(suite, '/ade/dashboard')).toBe(false);
-      expect(platformNavItemIsActive(suite, '/ade/authoring-archive')).toBe(false);
-      expect(platformNavItemIsActive(suite, null)).toBe(false);
-    });
-
-    it('never matches authoring routes on the studio surface, which does not host them', () => {
       process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
 
-      expect(platformNavItemIsActive(suite, '/ade/authoring')).toBe(false);
+      expect(platformNavItemIsActive(suite, '/authoring-archive')).toBe(false);
+      expect(platformNavItemIsActive(suite, null)).toBe(false);
+
+      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+      expect(platformNavItemIsActive(suite, '/ade/dashboard')).toBe(false);
+    });
+
+    it('never matches authoring routes on the main surface, which does not host them', () => {
+      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+
+      // The main app still highlights the trigger on its own studio routes.
+      expect(platformNavItemIsActive(suite, '/ade/studio')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/authoring')).toBe(false);
     });
   });
 });

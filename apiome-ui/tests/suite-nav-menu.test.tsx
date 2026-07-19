@@ -56,8 +56,8 @@ describe('SuiteNavMenu', () => {
   const originalSurface = process.env.NEXT_PUBLIC_APP_SURFACE;
 
   beforeEach(() => {
-    // Studio surface: Design destinations are in-app paths and Authoring
-    // destinations are absolute main-app URLs, so both link kinds are covered.
+    // Studio surface: the studio app serves both Design and Authoring, so
+    // every suite destination resolves to an in-app path here.
     process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
   });
 
@@ -151,14 +151,14 @@ describe('SuiteNavMenu', () => {
 
     it('links an entitled authoring destination now that the route group ships', () => {
       // Before UXE-1.2 every authoring destination was `enabled: false` so the
-      // menu could not link to a 404. The /ade/authoring route group now
-      // exists, so an entitled destination is navigable.
+      // menu could not link to a 404. The studio-served /authoring route group
+      // now exists, so an entitled destination is navigable.
       renderMenu({ flags: ['designer', 'paths', 'scribe'] });
 
       const scribe = screen.getByRole('menuitem', { name: /Scribe/ });
       expect(scribe).toHaveTextContent('Preview');
       expect(scribe).not.toHaveAttribute('aria-disabled', 'true');
-      expect(scribe).toHaveAttribute('href', expect.stringContaining('/ade/authoring/scribe'));
+      expect(scribe).toHaveAttribute('href', expect.stringContaining('/authoring/scribe'));
     });
 
     it('still explains access for an unentitled authoring destination', () => {

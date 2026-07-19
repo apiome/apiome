@@ -1,6 +1,6 @@
 import { getMainAppUrl, normalizeAppOrigin } from './app-urls';
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
-import { STUDIO_APP_ROUTES, UI_AUTHORING_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
+import { STUDIO_APP_ROUTES, STUDIO_AUTHORING_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
 export { getMainAppUrl, normalizeAppOrigin };
 
@@ -68,16 +68,17 @@ function isStudioAppPathActive(pathname: string): boolean {
 }
 
 /**
- * Authoring lives on the main app only, so the studio surface never matches.
+ * Authoring is served by the studio app, so the main app never matches: from
+ * here its destinations are absolute studio URLs, not routes we render.
  *
  * @param pathname - Current route.
- * @returns True on `/ade/authoring` or any route beneath it.
+ * @returns True on `/authoring` or any route beneath it, on the studio surface.
  */
 function isAuthoringPathActive(pathname: string): boolean {
-  if (isStudioSurface()) return false;
+  if (!isStudioSurface()) return false;
   return (
-    pathname === UI_AUTHORING_ROUTES.root ||
-    pathname.startsWith(`${UI_AUTHORING_ROUTES.root}/`)
+    pathname === STUDIO_AUTHORING_ROUTES.root ||
+    pathname.startsWith(`${STUDIO_AUTHORING_ROUTES.root}/`)
   );
 }
 

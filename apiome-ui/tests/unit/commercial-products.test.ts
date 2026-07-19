@@ -83,9 +83,9 @@ describe('commercial-products', () => {
 
     for (const menuItem of authoring ?? []) {
       // UXE-1.1 shipped the contract with every destination held back; UXE-1.2
-      // delivers the /ade/authoring route group, so each one now resolves.
+      // delivers the studio-served /authoring route group, so each resolves.
       expect(menuItem.enabled).not.toBe(false);
-      expect(menuItem.href).toContain('/ade/authoring');
+      expect(menuItem.href).toContain('/authoring');
       // Only a gated destination needs to explain how access is obtained;
       // Overview is ungated and shipped, so it has nothing to explain.
       if (menuItem.featureFlag) expect(menuItem.accessNote).toBeTruthy();
@@ -113,18 +113,19 @@ describe('commercial-products', () => {
       'http://localhost:3003/editor',
       'http://localhost:3003/paths',
     ]);
-    // Authoring lives on this (main) surface, so its links stay in-app paths.
+    // Authoring is served by the studio app, so from here it links out exactly
+    // like the Design destinations do.
     expect(
       products[0]?.menuItems?.filter((item) => item.group === 'authoring').map((item) => item.href)
     ).toEqual([
-      '/ade/authoring',
-      '/ade/authoring/scribe',
-      '/ade/authoring/slate',
-      '/ade/authoring/releases',
-      '/ade/authoring/insights',
+      'http://localhost:3003/authoring',
+      'http://localhost:3003/authoring/scribe',
+      'http://localhost:3003/authoring/slate',
+      'http://localhost:3003/authoring/releases',
+      'http://localhost:3003/authoring/insights',
     ]);
     expect(
-      products[0]?.menuItems?.every((item) => item.group !== 'authoring' || item.external === false)
+      products[0]?.menuItems?.every((item) => item.group !== 'authoring' || item.external === true)
     ).toBe(true);
   });
 
@@ -141,20 +142,20 @@ describe('commercial-products', () => {
     ).toEqual(['/', '/editor', '/paths']);
   });
 
-  it('links authoring to the main app with absolute URLs from the studio surface', () => {
+  it('keeps authoring in-app on the studio surface, which serves it', () => {
     process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
-    process.env.NEXT_PUBLIC_MAIN_APP_URL = 'http://localhost:3000';
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'http://localhost:3003';
 
     const authoring = getBuiltinCommercialProducts()[0]?.menuItems?.filter(
       (item) => item.group === 'authoring'
     );
     expect(authoring?.map((item) => item.href)).toEqual([
-      'http://localhost:3000/ade/authoring',
-      'http://localhost:3000/ade/authoring/scribe',
-      'http://localhost:3000/ade/authoring/slate',
-      'http://localhost:3000/ade/authoring/releases',
-      'http://localhost:3000/ade/authoring/insights',
+      '/authoring',
+      '/authoring/scribe',
+      '/authoring/slate',
+      '/authoring/releases',
+      '/authoring/insights',
     ]);
-    expect(authoring?.every((item) => item.external === true)).toBe(true);
+    expect(authoring?.every((item) => item.external === false)).toBe(true);
   });
 });

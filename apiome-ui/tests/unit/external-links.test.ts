@@ -141,12 +141,12 @@ describe('external-links (commercial products)', () => {
       )[0]!;
       const authoring = groupNavMenuItems(suite)[1].items;
 
-      // Every destination now resolves to a real page under /ade/authoring, so
-      // none of them is held back with `enabled: false`.
+      // Every destination now resolves to a real page under the studio-served
+      // /authoring group, so none is held back with `enabled: false`.
       for (const item of authoring) {
         expect(item.enabled).not.toBe(false);
         expect(isNavMenuItemNavigable(item)).toBe(true);
-        expect(item.href).toContain('/ade/authoring');
+        expect(item.href).toContain('/authoring');
       }
     });
 

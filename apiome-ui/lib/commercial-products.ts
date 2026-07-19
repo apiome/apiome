@@ -1,6 +1,6 @@
-import { getMainAppUrl, getStudioAppUrl } from './app-urls';
+import { getStudioAppUrl } from './app-urls';
 import type { ExternalLinkEntry, ExternalNavMenuGroup } from './external-links';
-import { STUDIO_APP_ROUTES, UI_AUTHORING_ROUTES } from './studio-routes';
+import { STUDIO_APP_ROUTES, STUDIO_AUTHORING_ROUTES } from './studio-routes';
 
 /**
  * Feature-flag slugs that map to first-party commercial applications.
@@ -41,15 +41,6 @@ function resolveStudioEditorHref(): string {
   return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.editor);
 }
 
-/**
- * Resolve a main-app path for the current surface: the studio surface needs an
- * absolute main-app URL, the main surface keeps the in-app path.
- */
-function resolveMainSurfaceHref(path: string): string {
-  if (isStudioSurface()) return `${getMainAppUrl()}${path}`;
-  return path;
-}
-
 function isAbsoluteHref(href: string): boolean {
   return href.startsWith('http://') || href.startsWith('https://');
 }
@@ -63,7 +54,14 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
   const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
-  const authoringHref = (path: string) => resolveMainSurfaceHref(path);
+  // Authoring is served by the studio app, so these resolve exactly like the
+  // Design destinations above: an in-app path on the studio surface, an
+  // absolute studio URL from the main app.
+  const authoringOverviewHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.root);
+  const authoringScribeHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.scribe);
+  const authoringSlateHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.slate);
+  const authoringReleasesHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.releases);
+  const authoringInsightsHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.insights);
 
   return [
     {
@@ -120,60 +118,58 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           id: 'authoring-overview',
           label: 'Authoring Overview',
           description: 'Coverage, releases, delivery and next actions',
-          href: authoringHref(UI_AUTHORING_ROUTES.root),
+          href: authoringOverviewHref,
           icon: 'Compass',
           group: 'authoring',
-          // Enabled by UXE-1.2: the /ade/authoring route group now renders the
-          // shared Authoring shell, so this destination resolves.
-          external: isStudioSurface(),
+          external: isAbsoluteHref(authoringOverviewHref),
         },
         {
           id: 'authoring-scribe',
           label: 'Scribe',
           description: 'AI-assisted content and guide workspace',
-          href: authoringHref(UI_AUTHORING_ROUTES.scribe),
+          href: authoringScribeHref,
           icon: 'PenTool',
           group: 'authoring',
           badge: 'Preview',
           featureFlag: 'scribe',
           accessNote: 'Available in the Scribe preview. Contact your account team to join.',
-          external: isStudioSurface(),
+          external: isAbsoluteHref(authoringScribeHref),
         },
         {
           id: 'authoring-slate',
           label: 'Slate',
           description: 'Portal design, preview and publishing',
-          href: authoringHref(UI_AUTHORING_ROUTES.slate),
+          href: authoringSlateHref,
           icon: 'Layers',
           group: 'authoring',
           badge: 'Preview',
           featureFlag: 'slate',
           accessNote: 'Available in the Slate preview. Contact your account team to join.',
-          external: isStudioSurface(),
+          external: isAbsoluteHref(authoringSlateHref),
         },
         {
           id: 'authoring-releases',
           label: 'Releases',
           description: 'Previews, production, promotion and rollback',
-          href: authoringHref(UI_AUTHORING_ROUTES.releases),
+          href: authoringReleasesHref,
           icon: 'Rocket',
           group: 'authoring',
           badge: 'Preview',
           featureFlag: 'hosted',
           accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
-          external: isStudioSurface(),
+          external: isAbsoluteHref(authoringReleasesHref),
         },
         {
           id: 'authoring-insights',
           label: 'Insights',
           description: 'Content, search, API, delivery and cost signals',
-          href: authoringHref(UI_AUTHORING_ROUTES.insights),
+          href: authoringInsightsHref,
           icon: 'BarChart3',
           group: 'authoring',
           badge: 'Preview',
           featureFlag: 'hosted',
           accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
-          external: isStudioSurface(),
+          external: isAbsoluteHref(authoringInsightsHref),
         },
       ],
     },
