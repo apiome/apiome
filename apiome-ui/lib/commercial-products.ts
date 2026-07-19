@@ -1,9 +1,25 @@
-import { getStudioAppUrl } from './app-urls';
-import type { ExternalLinkEntry } from './external-links';
-import { STUDIO_APP_ROUTES } from './studio-routes';
+import { getMainAppUrl, getStudioAppUrl } from './app-urls';
+import type { ExternalLinkEntry, ExternalNavMenuGroup } from './external-links';
+import { STUDIO_APP_ROUTES, UI_AUTHORING_ROUTES } from './studio-routes';
 
-/** Feature-flag slugs that map to first-party commercial applications on the home grid. */
-export const COMMERCIAL_PRODUCT_FLAG_NAMES = ['designer', 'paths'] as const;
+/**
+ * Feature-flag slugs that map to first-party commercial applications.
+ * `designer`/`paths` gate the Design group; `scribe`/`slate`/`hosted` gate the
+ * Authoring group (UXE-1.1).
+ */
+export const COMMERCIAL_PRODUCT_FLAG_NAMES = [
+  'designer',
+  'paths',
+  'scribe',
+  'slate',
+  'hosted',
+] as const;
+
+/** Ordered group headings for the Designer suite dropdown. */
+export const SUITE_MENU_GROUPS: ExternalNavMenuGroup[] = [
+  { id: 'design', label: 'Design' },
+  { id: 'authoring', label: 'Authoring' },
+];
 
 export type CommercialProductFlagName = (typeof COMMERCIAL_PRODUCT_FLAG_NAMES)[number];
 
@@ -25,6 +41,15 @@ function resolveStudioEditorHref(): string {
   return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.editor);
 }
 
+/**
+ * Resolve a main-app path for the current surface: the studio surface needs an
+ * absolute main-app URL, the main surface keeps the in-app path.
+ */
+function resolveMainSurfaceHref(path: string): string {
+  if (isStudioSurface()) return `${getMainAppUrl()}${path}`;
+  return path;
+}
+
 function isAbsoluteHref(href: string): boolean {
   return href.startsWith('http://') || href.startsWith('https://');
 }
@@ -38,6 +63,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
   const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
+  const authoringHref = (path: string) => resolveMainSurfaceHref(path);
 
   return [
     {
@@ -57,32 +83,103 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
       enabled: true,
       showInNav: true,
       showOnHome: true,
+      menuGroups: SUITE_MENU_GROUPS,
       menuItems: [
         {
           id: 'suite-home',
-          label: 'Home',
-          description: 'Suite home dashboard',
+          label: 'Suite Home',
+          description: 'Projects, activity and resume cards',
           href: suiteHref,
           icon: 'LayoutDashboard',
+          group: 'design',
           external: isAbsoluteHref(suiteHref),
         },
         {
           id: 'suite-designer',
           label: 'Designer',
-          description: 'Model schemas on the canvas',
+          description: 'Model schemas and reusable types',
           href: editorHref,
           icon: 'Palette',
+          group: 'design',
           featureFlag: 'designer',
+          accessNote: 'Included with the Designer plan. Ask a tenant admin to enable it.',
           external: isAbsoluteHref(editorHref),
         },
         {
           id: 'suite-paths',
           label: 'Paths Editor',
-          description: 'Author OpenAPI paths and operations',
+          description: 'Design operations and contracts',
           href: pathsHref,
           icon: 'Route',
+          group: 'design',
           featureFlag: 'paths',
+          accessNote: 'Included with the Paths plan. Ask a tenant admin to enable it.',
           external: isAbsoluteHref(pathsHref),
+        },
+        {
+          id: 'authoring-overview',
+          label: 'Authoring Overview',
+          description: 'Coverage, releases, delivery and next actions',
+          href: authoringHref(UI_AUTHORING_ROUTES.root),
+          icon: 'Compass',
+          group: 'authoring',
+          // Flipped on when the /ade/authoring route group ships (UXE-1.2).
+          enabled: false,
+          badge: 'Coming soon',
+          accessNote: 'Arriving in the next Authoring release.',
+          external: isStudioSurface(),
+        },
+        {
+          id: 'authoring-scribe',
+          label: 'Scribe',
+          description: 'AI-assisted content and guide workspace',
+          href: authoringHref(UI_AUTHORING_ROUTES.scribe),
+          icon: 'PenTool',
+          group: 'authoring',
+          enabled: false,
+          badge: 'Preview',
+          featureFlag: 'scribe',
+          accessNote: 'Available in the Scribe preview. Contact your account team to join.',
+          external: isStudioSurface(),
+        },
+        {
+          id: 'authoring-slate',
+          label: 'Slate',
+          description: 'Portal design, preview and publishing',
+          href: authoringHref(UI_AUTHORING_ROUTES.slate),
+          icon: 'Layers',
+          group: 'authoring',
+          enabled: false,
+          badge: 'Preview',
+          featureFlag: 'slate',
+          accessNote: 'Available in the Slate preview. Contact your account team to join.',
+          external: isStudioSurface(),
+        },
+        {
+          id: 'authoring-releases',
+          label: 'Releases',
+          description: 'Previews, production, promotion and rollback',
+          href: authoringHref(UI_AUTHORING_ROUTES.releases),
+          icon: 'Rocket',
+          group: 'authoring',
+          enabled: false,
+          badge: 'Coming soon',
+          featureFlag: 'hosted',
+          accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
+          external: isStudioSurface(),
+        },
+        {
+          id: 'authoring-insights',
+          label: 'Insights',
+          description: 'Content, search, API, delivery and cost signals',
+          href: authoringHref(UI_AUTHORING_ROUTES.insights),
+          icon: 'BarChart3',
+          group: 'authoring',
+          enabled: false,
+          badge: 'Coming soon',
+          featureFlag: 'hosted',
+          accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
+          external: isStudioSurface(),
         },
       ],
     },

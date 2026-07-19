@@ -51,4 +51,30 @@ describe('platform-nav', () => {
     expect(platformNavItemIsActive(items[2]!, '/paths')).toBe(true);
     expect(isStudioSurface()).toBe(true);
   });
+
+  describe('Designer trigger active routes (UXE-1.1)', () => {
+    const suite = { id: 'suite', label: 'Designer', href: '/ade/studio' };
+
+    it('stays active across both design and authoring routes', () => {
+      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+
+      expect(platformNavItemIsActive(suite, '/ade/studio')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/ade/authoring')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/ade/authoring/scribe')).toBe(true);
+    });
+
+    it('does not treat unrelated or lookalike routes as authoring', () => {
+      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+
+      expect(platformNavItemIsActive(suite, '/ade/dashboard')).toBe(false);
+      expect(platformNavItemIsActive(suite, '/ade/authoring-archive')).toBe(false);
+      expect(platformNavItemIsActive(suite, null)).toBe(false);
+    });
+
+    it('never matches authoring routes on the studio surface, which does not host them', () => {
+      process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+
+      expect(platformNavItemIsActive(suite, '/ade/authoring')).toBe(false);
+    });
+  });
 });

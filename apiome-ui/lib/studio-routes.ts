@@ -5,6 +5,18 @@ export const UI_STUDIO_ROUTES = {
   code: '/ade/studio/code',
 } as const;
 
+/**
+ * Authoring destinations (UXE-1.1). These always live on the main app surface,
+ * so the studio surface links to them with an absolute main-app URL.
+ */
+export const UI_AUTHORING_ROUTES = {
+  root: '/ade/authoring',
+  scribe: '/ade/authoring/scribe',
+  slate: '/ade/authoring/slate',
+  releases: '/ade/authoring/releases',
+  insights: '/ade/authoring/insights',
+} as const;
+
 export const STUDIO_APP_ROUTES = {
   root: '/',
   editor: '/editor',
