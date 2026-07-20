@@ -5,6 +5,86 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.151.0] - 2026-07-19
+
+### Added
+- **Slate Edge WAF, DDoS, bot and rate-limit security control (UXE-3.2,
+  private-suite#2474)** — the security control plane the authoring Security
+  surface consumes:
+  - `GET  /v1/slate/security/presets` and `.../managed-groups` — the managed WAF
+    tiers, bot and rate presets, and the curated WAF group catalog as data. Each
+    states its expected impact and what it is unsafe for, because a preset an
+    operator cannot reason about is one they will turn off during an incident
+    and never turn back on.
+  - `GET  /v1/slate/environments/{environment_id}/security` — the lane's tier,
+    presets, group modes, custom rules, exceptions and concurrency token, plus
+    an `enforcement` block stating that no delivery tier is attached.
+  - `PUT  .../security/presets` and `PUT .../security/managed-groups/{group_id}`
+    — change posture. Weakening carries a required reason: disabling the WAF
+    with no stated cause is the change nobody can explain afterwards.
+  - `POST|PUT|DELETE .../security/rules[/{rule_id}]` — custom rules with an
+    explicit precedence. Every write records the prior body to
+    `slate_security_rule_revisions` first, so a revert applies a stored document
+    rather than reconstructing intent from an audit sentence.
+  - `POST .../security/rules/{rule_id}/rollout` and `.../revert`, and
+    `GET .../revisions` — staged rollout and the revert path. A rule in
+    `simulate` records what it would have done and acts on nothing, so reaching
+    enforcement is a deliberate sequence of audited writes rather than one
+    checkbox. A rule that never simulated cannot be enforced.
+  - `POST .../security/exceptions` and `DELETE .../exceptions/{exception_id}` —
+    scoped carve-outs. Every exception expires; one that cannot lapse stops
+    being an exception and becomes the policy.
+  - `POST .../security/approvals` — dual control. Unlike V186's release
+    approvals, the author cannot be the approver, and that is a CHECK constraint
+    rather than a convention. It compares immutable identity keys rather than
+    the nullable user ids, so offboarding an author cannot retroactively weaken
+    a recorded two-person approval.
+  - `POST .../security/simulate` — evaluates a test request against the stored
+    policy deterministically and answers the action, the deciding rule, and
+    every rule that lost and why. That last part is what makes "every block can
+    be investigated" true rather than aspirational.
+  - `GET  .../security/events[/{event_id}]` — security events joined to rule,
+    route, release, region and action, with redacted request evidence.
+  - `GET  .../security/audit` and `.../audit/export` — the append-only policy
+    audit, and a CSV export for review evidence. The export neutralizes CSV
+    injection (an actor display name is attacker-influenced text), does not
+    silently truncate, and writes its own audit row: who read the evidence is
+    itself audit-worthy.
+- **Deterministic, query-free policy evaluation** — `slate_security.py` holds
+  the catalogs, the refusal and warning vocabulary and the simulator, with no
+  database import and no clock: `now` is always a parameter. The same inputs
+  always produce the same verdict, which is what lets a recorded simulation be
+  re-checked later rather than merely believed.
+- **Lockout is what the server refuses**, and it owns that policy rather than
+  sharing it with the UI: a rule that would block the whole site or the
+  documentation root, an enforcing rule that never simulated, an enforcing block
+  with no second-person approval, an unbounded or non-expiring exception, and a
+  rate budget below the floor ordinary reading needs each have a named refusal
+  and no acknowledgement path. Breadth, shadowing and a 0→100 rollout jump warn
+  instead and can be acknowledged.
+- **Request evidence is redacted by allowlist, not filtered by denylist** — a
+  denylist fails open on the field nobody thought of. `redact_evidence` drops
+  every unlisted key, flattens each surviving value to a scalar, and reduces a
+  client address to a `/24` or `/48` network prefix. The database agrees
+  independently: `evidence - <allowed keys> = '{}'` is a CHECK constraint, so
+  storing a cookie or an authorization header is impossible rather than merely
+  discouraged. Every event carries a `retain_until`, because request data is a
+  liability, and the audit row rather than the captured user agent is the thing
+  that should live forever.
+
+### Notes
+- **Nothing is blocked.** `deploy/` remains a single Caddyfile with no WAF, no
+  bot management and no CDN, so these rules inspect no requests and challenge
+  and block nobody. The boundary is enforced rather than documented:
+  `slate_security_events.mitigated` cannot be true and `source` cannot be
+  `edge-observed` while `edge_attached` is false — both CHECK constraints — and
+  no code path sets `edge_attached`. Simulation responses carry
+  `basis: policy-simulation` and `observed: false` as literal defaults the
+  handlers never assign, so the response is structurally unable to lie. DDoS
+  status reports *unavailable* rather than any protection state, because with
+  nothing in the request path a green badge would be a false statement rather
+  than an inert one.
+
 ## [1.150.0] - 2026-07-19
 
 ### Added
