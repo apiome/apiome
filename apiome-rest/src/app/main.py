@@ -51,6 +51,7 @@ from .source_review_routes import router as source_review_router
 from .slate_routes import router as slate_router
 from .slate_cache_routes import router as slate_cache_router
 from .slate_security_routes import router as slate_security_router
+from .slate_functions_routes import router as slate_functions_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
 from .mcp_credential_crypto import validate_credential_encryption_keys
@@ -268,6 +269,9 @@ app.include_router(slate_cache_router)
 # Same reasoning one surface over: /environments/{id}/security* sits alongside the cache plane
 # and the existing environment routes (UXE-3.2, private-suite#2474).
 app.include_router(slate_security_router)
+# Same reasoning one surface further on: /environments/{id}/functions* sits alongside the cache and
+# security planes and the existing environment routes (UXE-3.3, private-suite#2475).
+app.include_router(slate_functions_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)
 app.include_router(version_change_report_router)

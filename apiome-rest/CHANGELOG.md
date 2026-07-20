@@ -5,6 +5,72 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.152.0] - 2026-07-19
+
+### Added
+- **Slate edge functions and safe personalization control plane (UXE-3.3,
+  private-suite#2475)** — the control plane the authoring Edge surface consumes:
+  - `GET  /v1/slate/functions/presets`, `.../runtimes` and `.../capabilities` —
+    the runtime, limit and capability catalogs as data, each entry carrying its
+    own expected impact and the condition that makes it unsafe, so a preset is
+    its fields rather than its name.
+  - `GET  /v1/slate/environments/{environment_id}/functions` — the lane: policy,
+    functions, versions, secret references, capability grants, egress rules,
+    personalization variants, `policyVersion`, `functionsDigest` and an
+    `enforcement` block.
+  - `POST|PUT|DELETE .../functions[/{function_id}]` plus `.../versions`,
+    `.../rollout`, `.../revert` and `GET .../revisions` — every function write
+    stores its prior body first, so a revert applies a stored document rather
+    than reconstructing intent from a sentence.
+  - `PUT|DELETE .../functions/{function_id}/secrets`, `.../capabilities` and
+    `.../egress` — grants are rows, and absence is denial.
+  - `POST|PUT|DELETE .../functions/variants[/{variant_id}]` — a personalization
+    variant states its audience, fallback, cache-key effect, analytics dimension
+    and privacy classification together, or it is refused.
+  - `POST .../functions/approvals`, `POST .../functions/simulate`,
+    `GET .../functions/invocations[/{invocation_id}]` and
+    `GET .../functions/audit[/export]`.
+- **Deterministic, query-free policy evaluation** — `simulate` answers a test
+  request against the stored policy with no database access and no clock of its
+  own, reporting the deciding function, the resolved variant and its fallback,
+  the cache-key effect, and **every candidate that lost and why**. A recorded
+  simulation can be re-checked later rather than merely believed.
+- **Secrets are references, and that is a schema fact rather than a rule.**
+  `slate_function_secret_refs` has no column capable of holding a value, so
+  storing one is not discouraged but impossible.
+- **Capabilities and egress are deny-by-default, modelled as the absence of a
+  row.** There is no `granted` boolean, so a bug that fails to write cannot
+  accidentally grant. Every grant carries a reason, because the question at
+  review is never what was granted but why.
+- **Reach is what the server refuses**, and it owns that policy: a secret
+  referenced across a project boundary, an unapproved egress destination, an
+  enforcing function with no prior simulation, no approval from a second person
+  or no active version, a variant with no fallback, a variant that varies a
+  shared cache key on an identity credential, a personal-class variant claiming
+  no consent was needed, a residency violation, and a limit above the lane's
+  ceiling each have a named refusal and no acknowledgement path. Breadth, cache
+  fragmentation, a 0→100 rollout jump, a missing analytics dimension and a limit
+  near the ceiling warn instead and can be acknowledged. The UI renders those
+  sentences verbatim rather than restating them, so the two cannot drift.
+
+### Notes
+- **Nothing executes.** `deploy/` remains a single Caddyfile with no edge runtime
+  behind it, so a recorded function inspects no requests and runs no code. That
+  boundary is enforced rather than documented:
+  `slate_function_invocations.executed` can never be true and `source` can never
+  be `edge-observed` while `edge_attached` is false — both CHECK constraints, and
+  no code path sets `edge_attached`. `record_invocation` writes those three
+  values as SQL literals rather than parameters, so it offers no way to pass a
+  dishonest one; every policy response carries an `enforcement` block saying so;
+  and `basis`, `observed`, `executed` and `enforced` are literal pydantic
+  defaults no handler can assign. This matters more than it did for cache or
+  WAF: an unenforced cache rule wastes a purge and an unenforced WAF rule fails
+  to stop an attacker, while an unenforced capability policy means somebody
+  believes their function cannot reach the internet and it can.
+- Two thresholds here are invented rather than derived, and should be replaced if
+  the product has real numbers: a 0.9 near-ceiling ratio for resource limits and
+  a 90-day maximum capability grant window.
+
 ## [1.151.0] - 2026-07-19
 
 ### Added
