@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.auth import validate_authentication
+from app.slate_auth import validate_slate_authentication
 from app.config import settings
 from app.main import app
 from app.slate_artifacts import (
@@ -121,9 +121,12 @@ EMPTY_EVIDENCE = {
 
 @pytest.fixture(autouse=True)
 def _auth():
-    app.dependency_overrides[validate_authentication] = lambda: dict(_MOCK_JWT)
+    # Overriding the dependency substitutes the signature under test, so this fixture cannot
+    # see the tenant_slug binding defect it once hid. That is covered by
+    # tests/test_slate_tenant_auth.py, which deliberately overrides nothing.
+    app.dependency_overrides[validate_slate_authentication] = lambda: dict(_MOCK_JWT)
     yield
-    app.dependency_overrides.pop(validate_authentication, None)
+    app.dependency_overrides.pop(validate_slate_authentication, None)
 
 
 @pytest.fixture(autouse=True)
