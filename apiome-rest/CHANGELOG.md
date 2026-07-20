@@ -5,6 +5,84 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.153.0] - 2026-07-20
+
+### Added
+- **Slate unified observability, residency, usage and budget control plane
+  (UXE-3.4, private-suite#2476)** — the control plane the authoring Insights
+  surface consumes:
+  - `GET  /v1/slate/insights/metric-families`, `.../insights/services` and
+    `.../insights/residency-stages` — the catalogs as data. Every metric family
+    carries the question it *cannot* answer, every service carries what drives
+    its number, and every one of the six residency stages carries the gap its
+    promise leaves, so the UI prints what the API returns rather than holding a
+    second copy.
+  - `GET  /v1/slate/environments/{environment_id}/insights` — the lane: policy,
+    all six residency lanes, OTLP export destinations, budgets, synthetic
+    checks, `policyVersion`, `signalsDigest`, `updatedBy` and an `enforcement`
+    block.
+  - `PUT  .../insights/policy` — retention, sampling, tail ceilings and the
+    privacy threshold.
+  - `PUT  .../insights/residency/{stage}` — one processing stage, its regions
+    and what its promise does not cover.
+  - `POST|PUT|DELETE .../insights/exports[/{export_id}]` — OTLP destinations.
+  - `POST|PUT|DELETE .../insights/budgets[/{budget_id}]` — spend budgets and
+    their alert thresholds.
+  - `POST|PUT|DELETE .../insights/checks[/{check_id}]` — synthetic probes.
+  - `POST|GET .../insights/tail` and `DELETE .../insights/tail/{session_id}` —
+    live tail sessions.
+  - `POST .../insights/alerts/{alert_id}/acknowledge` — budget alert
+    acknowledgement, written as a person and a time together or not at all.
+  - `GET  .../insights/metrics`, `.../logs`, `.../traces[/{trace_id}]`,
+    `.../usage`, `.../alerts`, `.../synthetic-results` and `.../audit` — the
+    read surface, correlated on release, environment and region through the
+    same three columns on every signal table.
+  - `GET  .../insights/audit/export` and `.../insights/usage/export` — CSV
+    evidence.
+- **Honesty is a property of the response types, not of handler discipline.**
+  `basis`, `observed`, `metered` and `billable` are `Literal` pydantic defaults
+  that no handler can assign: constructing a usage rollup with `billable=true`
+  is a validation error rather than a code review finding. `enforcement.enforced`
+  and a tail session's `eventsDelivered` are literals for the same reason.
+  V190's CHECKs and `slate_insights_store`'s SQL literals say the same thing one
+  and two layers down.
+- **Every policy read and every policy write states that no collector is
+  attached**, in a sentence rather than a flag.
+- **Correlation is a precondition.** A metric point that cannot be keyed to a
+  release, environment and region is dropped and *reported* under `dropped`
+  rather than emitted unkeyed, because a chart whose drill-down lands somewhere
+  else is worse than a chart with a gap in it.
+- **A forecast is never summed into a total**, and measured cache savings are
+  reported only when every contributing row was metered.
+- **CSV evidence cannot run code and cannot lie by omission** — formula-leading
+  cells are apostrophe-prefixed, truncation is stated in words rather than left
+  as an inference, both exports write their own audit row, and every usage row
+  carries `basis`, `metered` and `billable` as constants so a forwarded
+  spreadsheet says what it is without the page around it.
+
+### Changed
+- `main.py` registers `slate_insights_router` after `slate_functions_router`, so
+  `/environments/{id}/insights*` sits alongside the cache, security and function
+  planes. Literal path segments are registered before every sibling path
+  parameter — `/tail` before `/tail/{session_id}`, `/traces` before
+  `/traces/{trace_id}` — because FastAPI matches in registration order; the
+  resolved table is asserted in the test suite rather than trusted to reading
+  order.
+
+### Security
+- Refusals are HTTP 409 carrying `{code, message, reason}`, the message being
+  the domain module's own sentence character for character. Reads require
+  `VERSIONS/VIEW` and writes `VERSIONS/PUBLISH`; both CSV exports are VIEW, so
+  an auditor is not gated behind the permission to change observability. A
+  scope miss answers 404 rather than 403, so a cross-tenant probe cannot confirm
+  a lane exists.
+- A live tail is refused without a stated reason, above the lane's sampling or
+  event ceilings, or with an allowlist widened beyond the redaction allowlist —
+  and a refused attempt is audited even when the caller set `dryRun`.
+- An OTLP export supplying an inline header value is refused by name rather than
+  having the value silently dropped, so an operator who pasted a bearer token
+  cannot come away believing it was stored and used.
+
 ## [1.152.0] - 2026-07-19
 
 ### Added
