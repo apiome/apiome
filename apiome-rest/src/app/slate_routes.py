@@ -57,7 +57,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from .auth import get_authenticated_user_id, validate_authentication
+from .auth import get_authenticated_user_id
+from .slate_auth import validate_slate_authentication
 from .config import settings
 from .database import db
 from .permissions import Action, Resource, enforce_permission
@@ -505,7 +506,7 @@ async def list_managed_sites(
     project_id: Optional[str] = Query(
         default=None, alias="projectId", description="Restrict to one project's sites."
     ),
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> SiteListResponse:
     """List the tenant's managed sites with their environment lanes.
 
@@ -562,7 +563,7 @@ async def list_site_releases(
         description="Restrict the timeline to one environment.",
     ),
     limit: int = Query(default=50, ge=1, le=200, description="Maximum releases to return."),
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ReleaseListResponse:
     """List a site's release timeline, newest first."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
@@ -582,7 +583,7 @@ async def list_site_releases(
 )
 async def get_release_detail(
     release_id: str,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ReleaseBody:
     """Load one release with its full evidence."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
@@ -605,7 +606,7 @@ async def get_release_detail(
 async def create_site_release(
     site_id: str,
     request: CreateReleaseRequest,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ReleaseBody:
     """Record a built release, refusing an artifact whose signature does not verify.
 
@@ -690,7 +691,7 @@ async def create_site_release(
 )
 async def get_environment_state(
     environment_id: str,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> EnvironmentResponse:
     """Report what a lane is serving, how far it reached, and against what budget."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
@@ -802,7 +803,7 @@ def _run_activation(
 async def promote_release(
     environment_id: str,
     request: ActivationRequest,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ActivationResponse:
     """Route a lane to an already-built artifact. Never rebuilds.
 
@@ -869,7 +870,7 @@ async def promote_release(
 async def rollback_environment(
     environment_id: str,
     request: ActivationRequest,
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ActivationResponse:
     """Route a lane back to its most recent retained artifact.
 
@@ -920,7 +921,7 @@ async def run_retention(
     environment_id: str = Query(
         alias="environmentId", description="Environment whose history to sweep."
     ),
-    auth_data: Dict[str, Any] = Depends(validate_authentication),
+    auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> RetentionResponse:
     """Reap artifacts that have fallen outside the site's rollback window.
 

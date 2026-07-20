@@ -5,6 +5,67 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.150.0] - 2026-07-19
+
+### Added
+- **Slate Edge cache presets, expert rules, trace and purge control (UXE-3.1,
+  private-suite#2473)** — the cache control plane the authoring Cache surface
+  consumes:
+  - `GET  /v1/slate/cache/presets` — the four roadmap §29.3 presets as data:
+    every TTL, eligibility, rationale and what each preset forbids. The UI
+    prints what this returns rather than holding a second copy of the numbers.
+  - `GET  /v1/slate/environments/{environment_id}/cache` — the lane's preset,
+    overrides, expert rules and concurrency token, plus an `enforcement` block
+    stating that no delivery tier is attached.
+  - `PUT  /v1/slate/environments/{environment_id}/cache/preset` — change the
+    preset. Bypass without an expiry is refused, because an incident mode that
+    outlives its incident becomes the configuration.
+  - `POST`/`PUT`/`DELETE .../cache/rules[/{rule_id}]` — expert rules with route
+    matchers, eligibility, browser/edge TTL, stale-while-revalidate,
+    stale-if-error, cache key, query/header/cookie variation, tags and bypass
+    conditions.
+  - `POST .../cache/trace` — evaluate a test request and explain the result:
+    eligibility, cache key and its components, TTLs, bypass and winning rule,
+    plus every rule considered and why it did not win.
+  - `POST .../cache/purge` — estimate and record a purge by release, tag,
+    prefix, host or URL, with the estimate's basis named on the wire.
+  - `GET  .../cache/purges` and `.../cache/audit` — purge history and the
+    append-only audit trail.
+  - Every mutating route accepts `dryRun`, which runs every gate and writes
+    nothing. A refused action still writes audit when it is not a dry run.
+- **Deterministic presets and evaluation** — `app/slate_cache.py` is pure: the
+  preset table is literals, evaluation injects its clock, and rules sort by a
+  total order that `UNIQUE (environment_id, ordinal)` in V187 enforces.
+  `rules_digest` content-addresses the evaluated ruleset, so a trace is
+  reproducible from its recorded inputs.
+- **The server is the authority on unsafe cache variants.** Varying a shared
+  cache key on an identity credential, serving stale personalized content, a
+  `private` route with an edge TTL and `no-store` with a TTL are refused with
+  named reasons and no acknowledgement path — each would serve one reader's
+  content to another. Fragmentation and cost concerns warn instead and can be
+  acknowledged.
+
+### Fixed
+- **`/v1/slate/*` answered 422 for every request** (private-suite#2473).
+  `validate_authentication` declares `tenant_slug: str` with no default; other
+  routers satisfy it as a path parameter, but the Slate routers deliberately
+  read tenancy from the credential, so FastAPI bound it as a *required query
+  parameter*. The existing route tests could not see this because they override
+  the dependency wholesale, substituting the signature that was wrong. New
+  `app/slate_auth.py` resolves the slug from an explicit `tenantSlug`, the JWT
+  `current_tenant_id` claim or the API key, then delegates to the unchanged
+  `validate_authentication` so no authorization logic is duplicated.
+  `tests/test_slate_tenant_auth.py` overrides nothing and sweeps every Slate
+  route for a required `tenant_slug` query parameter.
+
+### Notes
+- Nothing here evicts anything. `deploy/` is a single Caddyfile with no CDN
+  behind it, so a purge records intent, scope, estimate and actor — real,
+  auditable evidence — and says so. `outcome` is never `dispatched`; V187's
+  `outcome <> 'dispatched' OR edge_attached` CHECK makes that a database
+  guarantee. The trace carries `basis: policy-evaluation` and `observed: false`.
+  The delivery tier is APX-3.2; this is the control plane it will report into.
+
 ## [1.149.0] - 2026-07-19
 
 ### Added

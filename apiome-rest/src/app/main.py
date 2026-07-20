@@ -49,6 +49,7 @@ from .draft_lock_routes import router as draft_lock_router
 from .preservation_routes import router as preservation_router
 from .source_review_routes import router as source_review_router
 from .slate_routes import router as slate_router
+from .slate_cache_routes import router as slate_cache_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
 from .mcp_credential_crypto import validate_credential_encryption_keys
@@ -93,7 +94,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.32.0",
+    version="1.33.0",
 )
 
 
@@ -260,6 +261,9 @@ app.include_router(draft_lock_router)
 app.include_router(preservation_router)
 app.include_router(source_review_router)
 app.include_router(slate_router)
+# Registered after slate_router so the existing surface's precedence stays unambiguous:
+# /environments/{id}/cache* sits alongside /environments/{id} (UXE-3.1, private-suite#2473).
+app.include_router(slate_cache_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)
 app.include_router(version_change_report_router)

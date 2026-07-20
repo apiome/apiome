@@ -6836,6 +6836,35 @@ class Database:
         rows = self.execute_query(query, (tenant_slug,))
         return rows[0] if rows else None
 
+    def get_active_tenant_auth_row_by_id(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Resolve a non-deleted tenant id to id/slug/name for auth checks.
+
+        The by-slug sibling above serves routes that carry ``{tenant_slug}`` in their path.
+        Routes that deliberately do not — ``/v1/slate/*`` reads tenancy from the JWT, so the
+        browser is never handed a slug it has no reason to know — need the same row starting
+        from the ``current_tenant_id`` claim instead.
+
+        Args:
+            tenant_id: Tenant UUID, as carried by the JWT's ``current_tenant_id`` claim.
+
+        Returns:
+            The tenant's id, slug and name, or ``None`` when no active tenant has that id.
+        """
+        query = """
+            SELECT id::text AS tenant_id, slug AS tenant_slug, name AS tenant_name
+            FROM apiome.tenants
+            WHERE id = %s::uuid AND deleted_at IS NULL
+            LIMIT 1
+        """
+        try:
+            rows = self.execute_query(query, (tenant_id,))
+        except Exception:
+            # A malformed claim is a failed lookup, not a 500. The caller turns this into the
+            # same 401 an absent claim produces, so a forged id leaks nothing about which
+            # tenants exist.
+            return None
+        return rows[0] if rows else None
+
     def user_has_tenant_access(self, user_id: str, tenant_id: str) -> bool:
         """
         True when the user is a tenant member or tenant administrator.
