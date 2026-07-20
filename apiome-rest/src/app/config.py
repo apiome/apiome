@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 # outside production; production fails closed instead — see Settings.effective_jwt_secret.
 INSECURE_JWT_SECRET_FALLBACK = "your-secret-key-here"
 
+# Insecure development-only Slate artifact signing key (APX-3.1, private-suite#2456). Used
+# (with a warning) outside production; production fails closed instead — see
+# Settings.effective_slate_artifact_signing_key.
+INSECURE_SLATE_SIGNING_KEY_FALLBACK = "slate-artifact-signing-key-development-only"
+
 # Default CORS allow-list applied when APIOME_CORS_ALLOWED_ORIGINS is unset.
 DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",  # apiome-ui (main app)
@@ -101,6 +106,24 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "APIOME_MCP_AI_DIGEST_ENABLED",
             "mcp_ai_digest_enabled",
+        ),
+    )
+    # Key used to sign Slate deployment artifacts (APX-3.1, private-suite#2456). Deliberately
+    # separate from the JWT secret: see effective_slate_artifact_signing_key. Never logged.
+    slate_artifact_signing_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_ARTIFACT_SIGNING_KEY",
+            "slate_artifact_signing_key",
+        ),
+    )
+    # Identifier recorded next to every signature so stored artifacts stay verifiable across
+    # key rotation: an artifact signed before a rotation names the key that signed it.
+    slate_artifact_signing_key_id: str = Field(
+        default="slate-local-dev",
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_ARTIFACT_SIGNING_KEY_ID",
+            "slate_artifact_signing_key_id",
         ),
     )
     # Claude API key used only for the server-digest generation above. Read from the environment; never
@@ -843,6 +866,37 @@ class Settings(BaseSettings):
             "for any non-local deployment."
         )
         return INSECURE_JWT_SECRET_FALLBACK
+
+    @property
+    def effective_slate_artifact_signing_key(self) -> str:
+        """
+        Get the key used to sign Slate deployment artifacts (APX-3.1, private-suite#2456).
+
+        Deliberately *not* the JWT secret. An artifact signature answers "these are the bytes
+        the build produced"; a JWT answers "this caller is who they claim". Sharing one key
+        between them would mean a leaked session secret also lets an attacker mint artifact
+        signatures that the activation gate accepts.
+
+        Fail-closed in production, matching effective_jwt_secret: signing every artifact with
+        a well-known value would make verification theatre, so we refuse to start instead. In
+        development the built-in key is returned with a warning so local setups keep working.
+
+        Raises:
+            RuntimeError: in production when no artifact signing key is configured.
+        """
+        if self.slate_artifact_signing_key:
+            return self.slate_artifact_signing_key
+        if self.is_production:
+            raise RuntimeError(
+                "Slate artifact signing key is not configured. Set "
+                "APIOME_SLATE_ARTIFACT_SIGNING_KEY before starting apiome-rest in production; "
+                "refusing to sign deployment artifacts with the insecure default."
+            )
+        logger.warning(
+            "Using the insecure built-in Slate artifact signing key. Set "
+            "APIOME_SLATE_ARTIFACT_SIGNING_KEY for any non-local deployment."
+        )
+        return INSECURE_SLATE_SIGNING_KEY_FALLBACK
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:

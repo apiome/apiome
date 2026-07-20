@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.31.4",
+    "version": "1.32.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22133,6 +22133,771 @@
         }
       }
     },
+    "/v1/slate/sites/{site_id}/releases": {
+      "get": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "List Site Releases",
+        "description": "List a site's release timeline, newest first.",
+        "operationId": "list_site_releases_v1_slate_sites__site_id__releases_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Site Id",
+              "description": "Site Id schema."
+            },
+            "description": "Path parameter identifying the site id segment."
+          },
+          {
+            "name": "environmentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Site Releasesenvironment ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Site Releasesenvironment ID schema."
+                }
+              ],
+              "description": "Restrict the timeline to one environment.",
+              "title": "Environmentid"
+            },
+            "description": "Restrict the timeline to one environment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Maximum releases to return.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum releases to return."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Site Releasesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Site Releasesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Site Releases Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Site Releases Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list site releases.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseListResponse",
+                  "description": "Response payload for list site releasesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list site releasesresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Create Site Release",
+        "description": "Record a built release, refusing an artifact whose signature does not verify.\n\nVerification happens at *record* time as well as at activation. Storing an\nunverifiable artifact and only discovering it during an incident promotion would put\nthe discovery at the worst possible moment.",
+        "operationId": "create_site_release_v1_slate_sites__site_id__releases_post",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Site Id",
+              "description": "Site Id schema."
+            },
+            "description": "Path parameter identifying the site id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Site Releaseauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Site Releaseauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Site Release Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Site Release Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReleaseRequest",
+                "description": "Request body for create site releaserequest."
+              }
+            }
+          },
+          "description": "Request body for create site release."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create site release.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseBody",
+                  "description": "Response payload for create site releaseresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create site releaseresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/slate/releases/{release_id}": {
+      "get": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Get Release Detail",
+        "description": "Load one release with its full evidence.",
+        "operationId": "get_release_detail_v1_slate_releases__release_id__get",
+        "parameters": [
+          {
+            "name": "release_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Release Id",
+              "description": "Release Id schema."
+            },
+            "description": "Path parameter identifying the release id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Release Detailauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Release Detailauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Release Detail Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Release Detail Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get release detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseBody",
+                  "description": "Response payload for get release detailresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get release detailresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/slate/environments/{environment_id}": {
+      "get": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Get Environment State",
+        "description": "Report what a lane is serving, how far it reached, and against what budget.",
+        "operationId": "get_environment_state_v1_slate_environments__environment_id__get",
+        "parameters": [
+          {
+            "name": "environment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Environment Id",
+              "description": "Environment Id schema."
+            },
+            "description": "Path parameter identifying the environment id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Environment Stateauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Environment Stateauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Environment State Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Environment State Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get environment state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvironmentResponse",
+                  "description": "Response payload for get environment stateresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get environment stateresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/slate/environments/{environment_id}/promote": {
+      "post": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Promote Release",
+        "description": "Route a lane to an already-built artifact. Never rebuilds.\n\nA refused promotion still records an audit entry naming the reason, so an operator can\nlater see what was attempted and why it was stopped.",
+        "operationId": "promote_release_v1_slate_environments__environment_id__promote_post",
+        "parameters": [
+          {
+            "name": "environment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Environment Id",
+              "description": "Environment Id schema."
+            },
+            "description": "Path parameter identifying the environment id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Promote Releaseauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Promote Releaseauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Promote Release Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Promote Release Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest",
+                "description": "Request body for promote releaserequest."
+              }
+            }
+          },
+          "description": "Request body for promote release."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for promote release.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivationResponse",
+                  "description": "Response payload for promote releaseresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for promote releaseresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/slate/environments/{environment_id}/rollback": {
+      "post": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Rollback Environment",
+        "description": "Route a lane back to its most recent retained artifact.\n\nDeliberately does not consult approval freshness: requiring fresh sign-off to *stop*\nserving a bad release would make the approval policy an outage amplifier.",
+        "operationId": "rollback_environment_v1_slate_environments__environment_id__rollback_post",
+        "parameters": [
+          {
+            "name": "environment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Environment Id",
+              "description": "Environment Id schema."
+            },
+            "description": "Path parameter identifying the environment id segment."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Rollback Environmentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Rollback Environmentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Rollback Environment Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Rollback Environment Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest",
+                "description": "Request body for rollback environmentrequest."
+              }
+            }
+          },
+          "description": "Request body for rollback environment."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for rollback environment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivationResponse",
+                  "description": "Response payload for rollback environmentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for rollback environmentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/slate/sites/{site_id}/retention": {
+      "post": {
+        "tags": [
+          "slate"
+        ],
+        "summary": "Run Retention",
+        "description": "Reap artifacts that have fallen outside the site's rollback window.\n\nRetention and rollback capability are the same setting, so the sweep is deliberately\nconservative: the active release is never reaped, and only releases that once served\nare candidates.",
+        "operationId": "run_retention_v1_slate_sites__site_id__retention_post",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Site Id",
+              "description": "Site Id schema."
+            },
+            "description": "Path parameter identifying the site id segment."
+          },
+          {
+            "name": "environmentId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Environment whose history to sweep.",
+              "title": "Environmentid"
+            },
+            "description": "Environment whose history to sweep."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Run Retentionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Run Retentionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Run Retention Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Run Retention Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for run retention.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionResponse",
+                  "description": "Response payload for run retentionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for run retentionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/push-webhook-subscriptions/{tenant_slug}/deliveries/dead-letter": {
       "get": {
         "tags": [
@@ -42865,6 +43630,113 @@
   },
   "components": {
     "schemas": {
+      "ActivationRequest": {
+        "properties": {
+          "releaseId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for activation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for activation."
+              }
+            ],
+            "title": "Releaseid",
+            "description": "Release to promote. Ignored by rollback, which selects its own target."
+          },
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "description": "Run every gate and return the plan without changing routing.",
+            "default": false,
+            "example": false
+          },
+          "requireApproval": {
+            "type": "boolean",
+            "title": "Requireapproval",
+            "description": "Enforce this lane's approval policy for the promotion.",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "title": "ActivationRequest",
+        "description": "Promote or roll back a lane."
+      },
+      "ActivationResponse": {
+        "properties": {
+          "applied": {
+            "type": "boolean",
+            "title": "Applied",
+            "description": "Applied.",
+            "example": false
+          },
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "description": "Dry Run.",
+            "example": false
+          },
+          "plan": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Plan",
+            "description": "Plan."
+          },
+          "activationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for activation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for activation."
+              }
+            ],
+            "title": "Activationid",
+            "description": "Activation ID."
+          },
+          "routingVersion": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for activation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for activation."
+              }
+            ],
+            "title": "Routingversion",
+            "description": "Routing Version."
+          },
+          "activatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for activation."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for activation."
+              }
+            ],
+            "title": "Activatedat",
+            "description": "Activated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "applied",
+          "dryRun",
+          "plan"
+        ],
+        "title": "ActivationResponse",
+        "description": "Outcome of a promotion or rollback."
+      },
       "ApiParadigm": {
         "type": "string",
         "enum": [
@@ -45669,6 +46541,113 @@
         "title": "CopyClassToInlineSchemaRequest",
         "description": "Request model for copying class properties to inline schema."
       },
+      "CreateReleaseRequest": {
+        "properties": {
+          "environmentId": {
+            "type": "string",
+            "title": "Environmentid",
+            "description": "Lane the release targets.",
+            "example": "example"
+          },
+          "releaseRef": {
+            "type": "string",
+            "title": "Releaseref",
+            "description": "Short human-quotable id, unique per site.",
+            "example": "example"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ReleaseSourceBody",
+            "description": "Provenance source for the record (for example human or imported)."
+          },
+          "contentDigest": {
+            "type": "string",
+            "title": "Contentdigest",
+            "description": "Digest of the rendered bytes.",
+            "example": "example"
+          },
+          "sourceDigest": {
+            "type": "string",
+            "title": "Sourcedigest",
+            "description": "Digest of the source inputs.",
+            "example": "example"
+          },
+          "configDigest": {
+            "type": "string",
+            "title": "Configdigest",
+            "description": "Digest of the build configuration.",
+            "example": "example"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature",
+            "description": "Detached signature over the three digests.",
+            "example": "example"
+          },
+          "signatureKeyId": {
+            "type": "string",
+            "title": "Signaturekeyid",
+            "description": "Id of the signing key.",
+            "example": "example"
+          },
+          "storageUri": {
+            "type": "string",
+            "title": "Storageuri",
+            "description": "Where the artifact bytes live.",
+            "example": "example"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Manifest",
+            "description": "Build manifest / SBOM."
+          },
+          "pageCount": {
+            "type": "integer",
+            "title": "Pagecount",
+            "description": "Rendered page count.",
+            "default": 0,
+            "example": 1
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "title": "Sizebytes",
+            "description": "Total artifact size in bytes.",
+            "default": 0,
+            "example": 50
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "review"
+            ],
+            "title": "Status",
+            "description": "Initial state of the built release.",
+            "default": "ready",
+            "example": "active"
+          },
+          "impact": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Impact",
+            "description": "Cache/security consequences of activation."
+          }
+        },
+        "type": "object",
+        "required": [
+          "environmentId",
+          "releaseRef",
+          "source",
+          "contentDigest",
+          "sourceDigest",
+          "configDigest",
+          "signature",
+          "signatureKeyId",
+          "storageUri"
+        ],
+        "title": "CreateReleaseRequest",
+        "description": "Record a built release and its artifact."
+      },
       "CustomRuleOut": {
         "properties": {
           "ruleId": {
@@ -46436,6 +47415,115 @@
         ],
         "title": "EmitterDescriptor",
         "description": "Self-description of an export target for UI/CLI/REST enumeration (MFX-1.1)."
+      },
+      "EnvironmentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "siteId": {
+            "type": "string",
+            "title": "Siteid",
+            "description": "Site ID.",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "activeReleaseId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for environment."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for environment."
+              }
+            ],
+            "title": "Activereleaseid",
+            "description": "Active Release ID."
+          },
+          "routingVersion": {
+            "type": "integer",
+            "title": "Routingversion",
+            "description": "Routing Version.",
+            "example": 1
+          },
+          "robotsExcluded": {
+            "type": "boolean",
+            "title": "Robotsexcluded",
+            "description": "Robots Excluded.",
+            "example": false
+          },
+          "accessPolicy": {
+            "type": "string",
+            "title": "Accesspolicy",
+            "description": "Access Policy.",
+            "example": "example"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for environment."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for environment."
+              }
+            ],
+            "title": "Expiresat",
+            "description": "Expires At."
+          },
+          "rollout": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rollout",
+            "description": "Rollout."
+          },
+          "activationSlo": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Activationslo",
+            "description": "Activation Slo."
+          },
+          "domains": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Domains",
+            "description": "Domains.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "siteId",
+          "kind",
+          "name",
+          "activeReleaseId",
+          "routingVersion",
+          "robotsExcluded",
+          "accessPolicy"
+        ],
+        "title": "EnvironmentResponse",
+        "description": "Lane state: what is serving, how far it reached, and against what budget."
       },
       "ExportAdvisory": {
         "properties": {
@@ -66560,6 +67648,381 @@
         "title": "RelatedArtifactRef",
         "description": "One related artifact in a cross-format API identity group (MFI-6.4, #4410).\n\nProjects linked manually or via conversion provenance share an ``api_identity`` group; each member\ncarries enough catalog/project metadata for the Related artifacts panel (format pills, name, link\ntarget) without a second round-trip."
       },
+      "ReleaseActorBody": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release actor."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release actor."
+              }
+            ],
+            "title": "Id",
+            "description": "Acting user id, when a person acted."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name of the actor.",
+            "example": "Pet"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "user",
+              "automation"
+            ],
+            "title": "Kind",
+            "description": "Whether a person or a system acted.",
+            "example": "user"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "ReleaseActorBody",
+        "description": "Who or what caused the release to exist."
+      },
+      "ReleaseArtifactBody": {
+        "properties": {
+          "digest": {
+            "type": "string",
+            "title": "Digest",
+            "description": "Content digest; the artifact identity.",
+            "example": "example"
+          },
+          "sourceDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release artifact."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release artifact."
+              }
+            ],
+            "title": "Sourcedigest",
+            "description": "Digest of the source inputs the build consumed."
+          },
+          "configDigest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release artifact."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release artifact."
+              }
+            ],
+            "title": "Configdigest",
+            "description": "Digest of the build configuration applied."
+          },
+          "pageCount": {
+            "type": "integer",
+            "title": "Pagecount",
+            "description": "Rendered page count.",
+            "default": 0,
+            "example": 1
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "title": "Sizebytes",
+            "description": "Total artifact size in bytes.",
+            "default": 0,
+            "example": 50
+          },
+          "builtAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release artifact."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release artifact."
+              }
+            ],
+            "title": "Builtat",
+            "description": "When the build finished; absent while still building."
+          },
+          "signatureVerified": {
+            "type": "boolean",
+            "title": "Signatureverified",
+            "description": "Whether the stored signature verifies against the stored digests.",
+            "default": false,
+            "example": false
+          },
+          "retained": {
+            "type": "boolean",
+            "title": "Retained",
+            "description": "False once retention has reaped the bytes; a reaped artifact is not a rollback target.",
+            "default": true,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "digest"
+        ],
+        "title": "ReleaseArtifactBody",
+        "description": "The built, content-addressed artifact a release routes to."
+      },
+      "ReleaseBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "releaseRef": {
+            "type": "string",
+            "title": "Releaseref",
+            "description": "Release Ref.",
+            "example": "example"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Environment.",
+            "example": "example"
+          },
+          "environmentId": {
+            "type": "string",
+            "title": "Environmentid",
+            "description": "Environment ID.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ReleaseSourceBody",
+            "description": "Provenance source for the record (for example human or imported)."
+          },
+          "artifact": {
+            "$ref": "#/components/schemas/ReleaseArtifactBody",
+            "description": "Artifact."
+          },
+          "actor": {
+            "$ref": "#/components/schemas/ReleaseActorBody",
+            "description": "Actor."
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat",
+            "description": "Created At.",
+            "example": "example"
+          },
+          "activatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release."
+              }
+            ],
+            "title": "Activatedat",
+            "description": "Activated At."
+          },
+          "activationCompletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release."
+              }
+            ],
+            "title": "Activationcompletedat",
+            "description": "Activation Completed At."
+          },
+          "deactivatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for release."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release."
+              }
+            ],
+            "title": "Deactivatedat",
+            "description": "Deactivated At."
+          },
+          "traffic": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Request body for release."
+              },
+              {
+                "type": "null",
+                "description": "Request body for release."
+              }
+            ],
+            "title": "Traffic",
+            "description": "Traffic."
+          },
+          "impact": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Impact",
+            "description": "Impact."
+          },
+          "domains": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Domains",
+            "description": "Domains.",
+            "maxItems": 1000
+          },
+          "checks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Checks",
+            "description": "Checks.",
+            "maxItems": 1000
+          },
+          "phases": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Phases",
+            "description": "Phases.",
+            "maxItems": 1000
+          },
+          "approvals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Approvals",
+            "description": "Approvals.",
+            "maxItems": 1000
+          },
+          "changedPages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Changedpages",
+            "description": "Changed Pages.",
+            "maxItems": 100
+          },
+          "logs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Logs",
+            "description": "Logs.",
+            "maxItems": 1000
+          },
+          "audit": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Audit",
+            "description": "Audit.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "releaseRef",
+          "environment",
+          "environmentId",
+          "status",
+          "source",
+          "artifact",
+          "actor",
+          "createdAt"
+        ],
+        "title": "ReleaseBody",
+        "description": "One immutable release, shaped to the Release Center's release record."
+      },
+      "ReleaseListResponse": {
+        "properties": {
+          "releases": {
+            "items": {
+              "$ref": "#/components/schemas/ReleaseBody"
+            },
+            "type": "array",
+            "title": "Releases",
+            "description": "Releases.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "releases"
+        ],
+        "title": "ReleaseListResponse",
+        "description": "The release timeline."
+      },
+      "ReleaseSourceBody": {
+        "properties": {
+          "commit": {
+            "type": "string",
+            "title": "Commit",
+            "description": "Full commit sha.",
+            "example": "example"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref",
+            "description": "Branch or tag the commit was taken from.",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "First line of the commit message.",
+            "example": "Example validation message."
+          }
+        },
+        "type": "object",
+        "required": [
+          "commit",
+          "ref",
+          "message"
+        ],
+        "title": "ReleaseSourceBody",
+        "description": "Where the release was built from."
+      },
       "RepositoryImportSpecRead": {
         "properties": {
           "spec_schema_version": {
@@ -67165,6 +68628,39 @@
         ],
         "title": "ResponseContentTypeRequest",
         "description": "Request model for adding a content type to a response."
+      },
+      "RetentionResponse": {
+        "properties": {
+          "reaped": {
+            "type": "integer",
+            "title": "Reaped",
+            "description": "Reaped.",
+            "example": 1
+          },
+          "reapedReleaseIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reapedreleaseids",
+            "description": "Reaped Release IDs.",
+            "maxItems": 1000
+          },
+          "retainedReleases": {
+            "type": "integer",
+            "title": "Retainedreleases",
+            "description": "Retained Releases.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "reaped",
+          "reapedReleaseIds",
+          "retainedReleases"
+        ],
+        "title": "RetentionResponse",
+        "description": "Outcome of a retention sweep."
       },
       "RevisionDeprecationWarningOut": {
         "properties": {

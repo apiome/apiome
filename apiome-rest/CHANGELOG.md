@@ -5,6 +5,51 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.149.0] - 2026-07-19
+
+### Added
+- **Managed Slate hosting and immutable versioned deployment (APX-3.1,
+  private-suite#2456)** — the deployment control plane the Release Center
+  (UXE-2.4) consumes:
+  - `GET  /v1/slate/sites/{site_id}/releases` — the release timeline, newest
+    first, optionally scoped to one environment. Every row carries the nine
+    facts blueprint §28.3 requires: status, environment, source commit/branch,
+    artifact digest, actor, checks, created/active time, domains and traffic.
+  - `GET  /v1/slate/releases/{release_id}` — one release with its full
+    evidence: checks, phases, logs, changed pages, approvals, regions and
+    append-only audit.
+  - `POST /v1/slate/sites/{site_id}/releases` — record a built release. The
+    artifact signature is verified at record time, so unverifiable bytes never
+    become routable.
+  - `GET  /v1/slate/environments/{environment_id}` — lane state: active
+    release, routing version, region rollout and the measured activation SLO.
+  - `POST /v1/slate/environments/{environment_id}/promote` — route a lane to an
+    already-built artifact. Never rebuilds; refusals are named reasons carrying
+    operator-facing sentences, and a refused promotion still writes audit.
+  - `POST /v1/slate/environments/{environment_id}/rollback` — route back to the
+    most recent retained artifact. Deliberately ignores approval freshness, so
+    the approval policy cannot become an outage amplifier.
+  - `POST /v1/slate/sites/{site_id}/retention` — reap artifacts that have
+    fallen outside the site's rollback window; the active release is never
+    reaped.
+  - Both mutating routes accept `dryRun`, which runs every gate and returns the
+    plan without changing routing, so the impact sheet describes a validated
+    action rather than a guess.
+- **Content-addressed, signed artifacts** — `app/slate_artifacts.py` computes
+  domain-separated content/source/config digests (the content digest is a
+  Merkle-style fold over sorted, length-prefixed paths, so an identical rebuild
+  on another machine lands on the same identity) and signs them with a
+  dedicated key, separate from the JWT secret and fail-closed in production.
+- **Atomic activation** — a routing change is one conditional `UPDATE` on the
+  environment row guarded by a `routing_version` token, so a concurrent
+  promotion is recorded as a `conflict` and refused rather than silently
+  overwriting the winner. There is no last-write-wins path.
+
+### Changed
+- `Settings` gains `APIOME_SLATE_ARTIFACT_SIGNING_KEY` and
+  `APIOME_SLATE_ARTIFACT_SIGNING_KEY_ID`. Production refuses to start without a
+  configured signing key rather than signing artifacts with a known default.
+
 ## [1.148.0] - 2026-07-18
 
 ### Added
