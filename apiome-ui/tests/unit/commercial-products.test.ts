@@ -2,6 +2,8 @@ import {
   COMMERCIAL_PRODUCT_FLAG_NAMES,
   SUITE_MENU_GROUPS,
   getBuiltinCommercialProducts,
+  getCommercialProductFlagNames,
+  isCommercialProductFlag,
 } from '../../lib/commercial-products';
 import {
   clearAuthoringSuiteFixture,
@@ -46,13 +48,38 @@ describe('commercial-products', () => {
     expect(products[1]?.name).toBe('Developer Suite');
     expect(products[1]?.showInNav).toBe(true);
     expect(products[1]?.menuItems).toEqual([]);
-    expect(COMMERCIAL_PRODUCT_FLAG_NAMES).toEqual([
+    // The open-source builtins name only the Design group; commercial
+    // (Authoring) slugs are never hardcoded here (#2466).
+    expect(COMMERCIAL_PRODUCT_FLAG_NAMES).toEqual(['designer', 'paths']);
+  });
+
+  it('resolves only the Design builtins as product flags without a host', () => {
+    expect(getCommercialProductFlagNames()).toEqual(['designer', 'paths']);
+    expect(isCommercialProductFlag('designer')).toBe(true);
+    expect(isCommercialProductFlag('paths')).toBe(true);
+    // No commercial host linked: authoring slugs are not product flags here.
+    expect(isCommercialProductFlag('scribe')).toBe(false);
+    expect(isCommercialProductFlag('slate')).toBe(false);
+    expect(isCommercialProductFlag('hosted')).toBe(false);
+    expect(isCommercialProductFlag('unknown')).toBe(false);
+  });
+
+  it('merges contributed commercial slugs from the suite host at runtime', () => {
+    registerAuthoringSuiteFixture();
+
+    // Builtins first, then the host-contributed Authoring slugs, de-duplicated.
+    expect(getCommercialProductFlagNames()).toEqual([
       'designer',
       'paths',
       'scribe',
       'slate',
       'hosted',
     ]);
+    expect(isCommercialProductFlag('scribe')).toBe(true);
+    expect(isCommercialProductFlag('slate')).toBe(true);
+    expect(isCommercialProductFlag('hosted')).toBe(true);
+    // The static builtin list is unchanged by a contribution.
+    expect(COMMERCIAL_PRODUCT_FLAG_NAMES).toEqual(['designer', 'paths']);
   });
 
   it('merges a suite-contract contribution into the Designer dropdown', () => {

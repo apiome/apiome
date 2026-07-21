@@ -31,6 +31,7 @@ export function buildAuthoringSuiteContribution(): SuiteMenuContribution {
 
   return {
     menuGroups: [{ id: 'authoring', label: 'Authoring' }],
+    featureFlagNames: ['scribe', 'slate', 'hosted'],
     menuItems: [
       {
         id: 'authoring-overview',
