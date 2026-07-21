@@ -1,6 +1,7 @@
 import { getMainAppUrl, normalizeAppOrigin } from './app-urls';
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
-import { STUDIO_APP_ROUTES, STUDIO_AUTHORING_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
+import { getSuiteTriggerIsActive } from './suite-contract';
+import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
 export { getMainAppUrl, normalizeAppOrigin };
 
@@ -67,21 +68,6 @@ function isStudioAppPathActive(pathname: string): boolean {
   );
 }
 
-/**
- * Authoring is served by the studio app, so the main app never matches: from
- * here its destinations are absolute studio URLs, not routes we render.
- *
- * @param pathname - Current route.
- * @returns True on `/authoring` or any route beneath it, on the studio surface.
- */
-function isAuthoringPathActive(pathname: string): boolean {
-  if (!isStudioSurface()) return false;
-  return (
-    pathname === STUDIO_AUTHORING_ROUTES.root ||
-    pathname.startsWith(`${STUDIO_AUTHORING_ROUTES.root}/`)
-  );
-}
-
 export function platformNavItemIsActive(item: ExternalNavItem, pathname: string | null): boolean {
   if (!pathname) return false;
 
@@ -91,10 +77,11 @@ export function platformNavItemIsActive(item: ExternalNavItem, pathname: string 
   if (item.id === 'control-panel') {
     return !isStudioSurface() && pathname.startsWith('/ade/dashboard');
   }
-  // The Designer trigger stays the single entry point for the suite: it is
-  // active for both design and authoring routes (UXE-1.1).
+  // Designer trigger: built-in studio routes, plus any contributed active check
+  // from a commercial suite host (no product-specific paths live here).
   if (item.id === 'suite') {
-    return isStudioAppPathActive(pathname) || isAuthoringPathActive(pathname);
+    const contributed = getSuiteTriggerIsActive();
+    return isStudioAppPathActive(pathname) || (contributed?.(pathname) ?? false);
   }
 
   if (item.external || item.href.startsWith('http://') || item.href.startsWith('https://')) {
