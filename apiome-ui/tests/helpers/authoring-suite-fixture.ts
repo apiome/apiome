@@ -31,7 +31,7 @@ export function buildAuthoringSuiteContribution(): SuiteMenuContribution {
 
   return {
     menuGroups: [{ id: 'authoring', label: 'Authoring' }],
-    featureFlagNames: ['scribe', 'slate', 'hosted'],
+    featureFlagNames: ['authoring', 'scribe', 'slate', 'hosted'],
     menuItems: [
       {
         id: 'authoring-overview',
@@ -40,6 +40,8 @@ export function buildAuthoringSuiteContribution(): SuiteMenuContribution {
         href: overview,
         icon: 'Compass',
         group: 'authoring',
+        featureFlag: 'authoring',
+        accessNote: 'Included with the Authoring suite. Ask a tenant admin to enable it.',
         external: isAbsoluteHref(overview),
       },
       {
