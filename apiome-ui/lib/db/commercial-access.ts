@@ -7,7 +7,7 @@ import {
   type ExternalHomeCard,
   type ExternalNavItem,
 } from '../external-links';
-import { COMMERCIAL_PRODUCT_FLAG_NAMES } from '../commercial-products';
+import { getCommercialProductFlagNames } from '../commercial-products';
 import { getEntitledFeatureFlagNames } from './feature-entitlements';
 
 export type CommercialAccessSnapshot = {
@@ -30,7 +30,7 @@ export async function getCommercialAccessForSession(): Promise<CommercialAccessS
   const entitledFlags = await getEntitledFeatureFlagNames(
     userId,
     tenantId,
-    [...COMMERCIAL_PRODUCT_FLAG_NAMES]
+    getCommercialProductFlagNames()
   );
   const flagSet = new Set(entitledFlags);
 
