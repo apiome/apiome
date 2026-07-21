@@ -14,6 +14,11 @@ import {
   Workflow,
 } from 'lucide-react';
 import { getBuiltinCommercialProducts } from './commercial-products';
+import {
+  getSuiteMenuContribution,
+  type SuiteHomeCard,
+  type SuiteNavMenuItem,
+} from './suite-contract';
 
 /** One commercial application surfaced in nav and/or the ADE home grid. */
 export type ExternalLinkEntry = {
@@ -154,11 +159,52 @@ function normalizeEntry(entry: ExternalLinkEntry): ExternalLinkEntry {
   };
 }
 
+/**
+ * Merge a commercial suite host contribution into the built-in suite entry.
+ *
+ * @param entry - Built-in commercial catalog entry.
+ * @returns Entry with contributed groups/items appended when `id === 'suite'`.
+ */
+function applySuiteContribution(entry: ExternalLinkEntry): ExternalLinkEntry {
+  const contrib = getSuiteMenuContribution();
+  if (!contrib || entry.id !== 'suite') return entry;
+
+  const contributedItems = (contrib.menuItems ?? []) as SuiteNavMenuItem[];
+  return {
+    ...entry,
+    menuGroups: [...(entry.menuGroups ?? []), ...(contrib.menuGroups ?? [])],
+    menuItems: [...(entry.menuItems ?? []), ...contributedItems],
+  };
+}
+
 function loadLinks(): ExternalLinkEntry[] {
-  return getBuiltinCommercialProducts()
+  const builtins = getBuiltinCommercialProducts()
+    .map(applySuiteContribution)
     .map(normalizeEntry)
     // Keep disabled catalog entries that still appear on the home grid (e.g. Coming Soon).
     .filter((link) => link.enabled !== false || link.showOnHome);
+
+  const contrib = getSuiteMenuContribution();
+  const extraCards = (contrib?.homeCards ?? []).map((card: SuiteHomeCard): ExternalLinkEntry => ({
+    id: card.id,
+    navLabel: card.name,
+    name: card.name,
+    tagline: card.tagline,
+    description: card.description,
+    href: card.href,
+    icon: card.icon,
+    accent: card.accent,
+    glow: card.glow,
+    enabled: card.enabled,
+    external: card.external,
+    opensNewBrowser: card.opensNewBrowser,
+    featureFlag: card.featureFlag,
+    anyFeatureFlags: card.anyFeatureFlags,
+    showInNav: false,
+    showOnHome: true,
+  }));
+
+  return [...builtins, ...extraCards.map(normalizeEntry)];
 }
 
 function isEntitledToEntry(

@@ -1,11 +1,13 @@
 import { getStudioAppUrl } from './app-urls';
 import type { ExternalLinkEntry, ExternalNavMenuGroup } from './external-links';
-import { STUDIO_APP_ROUTES, STUDIO_AUTHORING_ROUTES } from './studio-routes';
+import { STUDIO_APP_ROUTES } from './studio-routes';
+import { tryLoadOptionalSuiteHost } from './suite-contract';
 
 /**
  * Feature-flag slugs that map to first-party commercial applications.
- * `designer`/`paths` gate the Design group; `scribe`/`slate`/`hosted` gate the
- * Authoring group (UXE-1.1).
+ * Product-specific destinations may contribute additional opaque flag names
+ * via the suite contract; these builtins gate the Design group and remain
+ * available for license entitlement lookups.
  */
 export const COMMERCIAL_PRODUCT_FLAG_NAMES = [
   'designer',
@@ -15,11 +17,8 @@ export const COMMERCIAL_PRODUCT_FLAG_NAMES = [
   'hosted',
 ] as const;
 
-/** Ordered group headings for the Designer suite dropdown. */
-export const SUITE_MENU_GROUPS: ExternalNavMenuGroup[] = [
-  { id: 'design', label: 'Design' },
-  { id: 'authoring', label: 'Authoring' },
-];
+/** Ordered group headings for the built-in Designer suite dropdown (Design only). */
+export const SUITE_MENU_GROUPS: ExternalNavMenuGroup[] = [{ id: 'design', label: 'Design' }];
 
 export type CommercialProductFlagName = (typeof COMMERCIAL_PRODUCT_FLAG_NAMES)[number];
 
@@ -49,19 +48,16 @@ function isAbsoluteHref(href: string): boolean {
  * Built-in commercial applications shipped with apiome-ui.
  * Designer Suite visibility is gated by license feature flags (`designer` or `paths`).
  * Developer Suite is always listed on the home grid as coming soon.
+ *
+ * Additional suite destinations are contributed at runtime via
+ * {@link contributeSuiteMenu} from a commercial host package.
  */
 export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
+  tryLoadOptionalSuiteHost();
+
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
   const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
-  // Authoring is served by the studio app, so these resolve exactly like the
-  // Design destinations above: an in-app path on the studio surface, an
-  // absolute studio URL from the main app.
-  const authoringOverviewHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.root);
-  const authoringScribeHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.scribe);
-  const authoringSlateHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.slate);
-  const authoringReleasesHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.releases);
-  const authoringInsightsHref = resolveStudioSurfaceHref(STUDIO_AUTHORING_ROUTES.insights);
 
   return [
     {
@@ -113,63 +109,6 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           featureFlag: 'paths',
           accessNote: 'Included with the Paths plan. Ask a tenant admin to enable it.',
           external: isAbsoluteHref(pathsHref),
-        },
-        {
-          id: 'authoring-overview',
-          label: 'Authoring Overview',
-          description: 'Coverage, releases, delivery and next actions',
-          href: authoringOverviewHref,
-          icon: 'Compass',
-          group: 'authoring',
-          external: isAbsoluteHref(authoringOverviewHref),
-        },
-        {
-          id: 'authoring-scribe',
-          label: 'Scribe',
-          description: 'AI-assisted content and guide workspace',
-          href: authoringScribeHref,
-          icon: 'PenTool',
-          group: 'authoring',
-          badge: 'Preview',
-          featureFlag: 'scribe',
-          accessNote: 'Available in the Scribe preview. Contact your account team to join.',
-          external: isAbsoluteHref(authoringScribeHref),
-        },
-        {
-          id: 'authoring-slate',
-          label: 'Slate',
-          description: 'Portal design, preview and publishing',
-          href: authoringSlateHref,
-          icon: 'Layers',
-          group: 'authoring',
-          badge: 'Preview',
-          featureFlag: 'slate',
-          accessNote: 'Available in the Slate preview. Contact your account team to join.',
-          external: isAbsoluteHref(authoringSlateHref),
-        },
-        {
-          id: 'authoring-releases',
-          label: 'Releases',
-          description: 'Previews, production, promotion and rollback',
-          href: authoringReleasesHref,
-          icon: 'Rocket',
-          group: 'authoring',
-          badge: 'Preview',
-          featureFlag: 'hosted',
-          accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
-          external: isAbsoluteHref(authoringReleasesHref),
-        },
-        {
-          id: 'authoring-insights',
-          label: 'Insights',
-          description: 'Content, search, API, delivery and cost signals',
-          href: authoringInsightsHref,
-          icon: 'BarChart3',
-          group: 'authoring',
-          badge: 'Preview',
-          featureFlag: 'hosted',
-          accessNote: 'Included with a hosted plan. Contact your account team to upgrade.',
-          external: isAbsoluteHref(authoringInsightsHref),
         },
       ],
     },

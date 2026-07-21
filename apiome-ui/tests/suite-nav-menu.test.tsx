@@ -1,5 +1,5 @@
 /**
- * UXE-1.1 — grouped Designer suite navigation.
+ * Grouped Designer suite navigation — shell + suite-contract contribution.
  *
  * Covers the navigation contract as rendered: group headings, entitlement and
  * release badges, unentitled destinations that explain access without exposing
@@ -10,6 +10,10 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SuiteNavMenu from '../src/app/components/ade/SuiteNavMenu';
 import { getCommercialNavItems, type ExternalNavItem } from '../lib/external-links';
+import {
+  clearAuthoringSuiteFixture,
+  registerAuthoringSuiteFixture,
+} from './helpers/authoring-suite-fixture';
 
 jest.mock('next/link', () => ({
   __esModule: true,
@@ -56,12 +60,13 @@ describe('SuiteNavMenu', () => {
   const originalSurface = process.env.NEXT_PUBLIC_APP_SURFACE;
 
   beforeEach(() => {
-    // Studio surface: the studio app serves both Design and Authoring, so
-    // every suite destination resolves to an in-app path here.
+    // Studio surface: the studio app serves both Design and contributed destinations.
     process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+    registerAuthoringSuiteFixture();
   });
 
   afterEach(() => {
+    clearAuthoringSuiteFixture();
     process.env.NEXT_PUBLIC_APP_SURFACE = originalSurface;
     jest.clearAllMocks();
   });
@@ -149,10 +154,7 @@ describe('SuiteNavMenu', () => {
       expect(designer).not.toHaveAttribute('aria-disabled');
     });
 
-    it('links an entitled authoring destination now that the route group ships', () => {
-      // Before UXE-1.2 every authoring destination was `enabled: false` so the
-      // menu could not link to a 404. The studio-served /authoring route group
-      // now exists, so an entitled destination is navigable.
+    it('links an entitled contributed destination', () => {
       renderMenu({ flags: ['designer', 'paths', 'scribe'] });
 
       const scribe = screen.getByRole('menuitem', { name: /Scribe/ });
@@ -161,7 +163,7 @@ describe('SuiteNavMenu', () => {
       expect(scribe).toHaveAttribute('href', expect.stringContaining('/authoring/scribe'));
     });
 
-    it('still explains access for an unentitled authoring destination', () => {
+    it('still explains access for an unentitled contributed destination', () => {
       renderMenu({ flags: ['designer', 'paths', 'scribe'] });
 
       const releases = screen.getByRole('menuitem', { name: /Releases/ });

@@ -4,12 +4,17 @@ import {
   platformNavItemIsActive,
   resolvePlatformNavHref,
 } from '../../lib/platform-nav';
+import {
+  clearAuthoringSuiteFixture,
+  registerAuthoringSuiteFixture,
+} from '../helpers/authoring-suite-fixture';
 
 describe('platform-nav', () => {
   const originalSurface = process.env.NEXT_PUBLIC_APP_SURFACE;
   const originalStudioUrl = process.env.NEXT_PUBLIC_STUDIO_URL;
 
   afterEach(() => {
+    clearAuthoringSuiteFixture();
     process.env.NEXT_PUBLIC_APP_SURFACE = originalSurface;
     if (originalStudioUrl === undefined) {
       delete process.env.NEXT_PUBLIC_STUDIO_URL;
@@ -52,19 +57,21 @@ describe('platform-nav', () => {
     expect(isStudioSurface()).toBe(true);
   });
 
-  describe('Designer trigger active routes (UXE-1.1)', () => {
+  describe('Designer trigger active routes', () => {
     const suite = { id: 'suite', label: 'Designer', href: '/ade/studio' };
 
-    it('stays active across both design and authoring routes on the studio surface', () => {
+    it('stays active across design routes; contributed paths extend the trigger', () => {
       process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+      registerAuthoringSuiteFixture();
 
       expect(platformNavItemIsActive(suite, '/editor')).toBe(true);
       expect(platformNavItemIsActive(suite, '/authoring')).toBe(true);
       expect(platformNavItemIsActive(suite, '/authoring/scribe')).toBe(true);
     });
 
-    it('does not treat unrelated or lookalike routes as authoring', () => {
+    it('does not treat lookalike routes as contributed destinations', () => {
       process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+      registerAuthoringSuiteFixture();
 
       expect(platformNavItemIsActive(suite, '/authoring-archive')).toBe(false);
       expect(platformNavItemIsActive(suite, null)).toBe(false);
@@ -73,11 +80,18 @@ describe('platform-nav', () => {
       expect(platformNavItemIsActive(suite, '/ade/dashboard')).toBe(false);
     });
 
-    it('never matches authoring routes on the main surface, which does not host them', () => {
+    it('never matches contributed studio-only routes on the main surface', () => {
       delete process.env.NEXT_PUBLIC_APP_SURFACE;
+      registerAuthoringSuiteFixture();
 
-      // The main app still highlights the trigger on its own studio routes.
       expect(platformNavItemIsActive(suite, '/ade/studio')).toBe(true);
+      expect(platformNavItemIsActive(suite, '/authoring')).toBe(false);
+    });
+
+    it('without a contribution, only built-in studio routes activate the trigger', () => {
+      process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+
+      expect(platformNavItemIsActive(suite, '/editor')).toBe(true);
       expect(platformNavItemIsActive(suite, '/authoring')).toBe(false);
     });
   });

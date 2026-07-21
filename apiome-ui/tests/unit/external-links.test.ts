@@ -10,12 +10,17 @@ import {
   isNavMenuItemNavigable,
   resolveExternalLinkIcon,
 } from '../../lib/external-links';
+import {
+  clearAuthoringSuiteFixture,
+  registerAuthoringSuiteFixture,
+} from '../helpers/authoring-suite-fixture';
 
 describe('external-links (commercial products)', () => {
   const originalStudioUrl = process.env.NEXT_PUBLIC_STUDIO_URL;
   const originalSurface = process.env.NEXT_PUBLIC_APP_SURFACE;
 
   afterEach(() => {
+    clearAuthoringSuiteFixture();
     if (originalStudioUrl === undefined) {
       delete process.env.NEXT_PUBLIC_STUDIO_URL;
     } else {
@@ -49,6 +54,7 @@ describe('external-links (commercial products)', () => {
   });
 
   it('filters home cards and nav by license entitlements', () => {
+    registerAuthoringSuiteFixture();
     const entitled = new Set(['designer']);
     expect(getCommercialHomeCards(entitled).map((card) => card.id)).toEqual([
       'suite',
@@ -60,7 +66,7 @@ describe('external-links (commercial products)', () => {
       'developer-suite',
     ]);
     // Suite dropdown destinations are kept but annotated, so the menu can
-    // explain access (UXE-1.1) instead of silently hiding products.
+    // explain access instead of silently hiding products.
     const suiteMenu = getCommercialNavItems(entitled)[0]?.menuItems ?? [];
     expect(suiteMenu.filter((item) => item.entitled).map((item) => item.id)).toEqual([
       'suite-home',
@@ -115,8 +121,9 @@ describe('external-links (commercial products)', () => {
     expect(resolveExternalLinkIcon('Palette')).toBe(Palette);
   });
 
-  describe('groupNavMenuItems (UXE-1.1)', () => {
-    it('splits suite destinations into declared group order', () => {
+  describe('groupNavMenuItems', () => {
+    it('splits suite destinations into declared group order when contributed', () => {
+      registerAuthoringSuiteFixture();
       const suite = getCommercialNavItems(new Set(['designer', 'paths']))[0]!;
       const groups = groupNavMenuItems(suite);
 
@@ -135,19 +142,25 @@ describe('external-links (commercial products)', () => {
       ]);
     });
 
-    it('makes every authoring destination navigable now the route group ships (UXE-1.2)', () => {
+    it('makes every contributed destination navigable when entitled', () => {
+      registerAuthoringSuiteFixture();
       const suite = getCommercialNavItems(
         new Set(['designer', 'paths', 'scribe', 'slate', 'hosted'])
       )[0]!;
       const authoring = groupNavMenuItems(suite)[1].items;
 
-      // Every destination now resolves to a real page under the studio-served
-      // /authoring group, so none is held back with `enabled: false`.
       for (const item of authoring) {
         expect(item.enabled).not.toBe(false);
         expect(isNavMenuItemNavigable(item)).toBe(true);
         expect(item.href).toContain('/authoring');
       }
+    });
+
+    it('keeps Design-only when no contribution is registered', () => {
+      const suite = getCommercialNavItems(new Set(['designer', 'paths']))[0]!;
+      const groups = groupNavMenuItems(suite);
+      expect(groups.map((group) => group.label)).toEqual(['Design']);
+      expect(groups[0].items).toHaveLength(3);
     });
 
     it('keeps ungrouped destinations in one unlabeled leading group', () => {
