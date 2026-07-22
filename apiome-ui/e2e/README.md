@@ -13,6 +13,7 @@ e2e/
 ├── fixtures/
 │   └── test-fixtures.ts    # Custom test fixtures and page objects
 ├── login.spec.ts           # Login page tests
+├── login-a11y.spec.ts      # Login a11y + visual snapshots (OLO-3.5) — axe/keyboard/screenshots
 ├── navigation.spec.ts      # Navigation and routing tests
 ├── visual-regression.spec.ts # Visual regression tests with screenshots
 ├── accessibility.spec.ts   # Accessibility (a11y) tests
@@ -20,6 +21,26 @@ e2e/
 ├── authenticated.spec.ts   # Tests requiring login (dashboard, studio)
 └── README.md               # This file
 ```
+
+### Login a11y + visual suite (OLO-3.5)
+
+`login-a11y.spec.ts` runs under its own config (`playwright.a11y.config.ts`) which boots a
+dedicated dev server on `:3200` with a **pinned** environment — GitHub + GitLab SSO enabled
+(dummy credentials) and the beta background disabled — so the login "front door" renders
+identically in every environment and its committed visual snapshots stay pixel-stable. It
+covers WCAG 2.1 A/AA axe scans (default / credentials-expanded / error), a keyboard-only
+sign-in flow, and screenshots of the auth card in its default, loading, and error states.
+
+```bash
+# Run the login a11y + visual suite
+yarn test:e2e:a11y
+
+# Refresh the committed visual baselines after an intentional login redesign
+yarn test:e2e:a11y --update-snapshots
+```
+
+Structural a11y (label association, landmark, announcement roles) is additionally pinned in
+jsdom by `tests/login-a11y.test.tsx`, which runs in the fast `yarn test` (jest) suite.
 
 ## Running Tests
 
