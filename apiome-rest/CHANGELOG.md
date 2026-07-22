@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.155.0] - 2026-07-22
+
+### Added
+- **Agent outputs: `llms.txt`, catalog and release manifests (APX-3.4,
+  private-suite#2459)** — deterministic, machine-readable portal metadata generated
+  from a published version's approved canonical content, so coding agents can discover
+  and consume an Apiome portal safely. New pure generator `app/slate_agent_outputs.py`
+  and read API under the existing `/v1/versions` prefix:
+  - `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/agent-outputs` —
+    returns the JSON **index** (the versioned metadata listing every output with its
+    stable URL, media type, ETag and size) by default, or one raw output via
+    `?output=llms.txt|robots.txt|catalog|release` served with that output's real
+    media type.
+  - The **catalog / format-capability manifest** (`slate.catalog.v1`) inventories every
+    operation, schema and channel with a stable fragment id and canonical human-page URL,
+    plus the capabilities Slate actually supports for the source format (Try It and code
+    samples are REST-only at the commercial-MVP boundary; reference, search and changelog
+    apply to every native format).
+  - The **release manifest** (`slate.release.v1`) carries the version label, publish time,
+    content digest, canonical/changelog URLs, latest/deprecated flags and linked change
+    counts from the stored changelog.
+  - Outputs are deterministic (pure, no clock — every timestamp caller-supplied — with
+    total, stable ordering and content-addressed ETags) and cacheable (`Cache-Control`
+    + `If-None-Match` → `304`). Only **published** revisions are eligible (400 otherwise),
+    reads are tenant-scoped by token, and a published-but-private portal withholds every
+    API name, description, URL and count — `robots.txt` disallows all crawling and the
+    manifests carry `contentWithheld: true`, so private content is never emitted.
+  - New setting `APIOME_SLATE_PORTAL_BASE_URL` (default `https://portal.apiome.app`)
+    configures the portal base the human-page and agent-output URLs are built under.
+
 ## [1.154.0] - 2026-07-22
 
 ### Added
