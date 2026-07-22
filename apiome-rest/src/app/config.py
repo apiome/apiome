@@ -365,6 +365,18 @@ class Settings(BaseSettings):
         ),
         description="Public base URL for hosted mock runtime (no trailing slash).",
     )
+    slate_portal_base_url: str = Field(
+        default="https://portal.apiome.app",
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_PORTAL_BASE_URL",
+            "slate_portal_base_url",
+        ),
+        description=(
+            "Canonical base URL of published Slate documentation portals, used to build "
+            "the human-page and agent-output URLs a project's portal is served under "
+            "(no trailing slash). A project's portal root is this value plus '/<project_slug>'."
+        ),
+    )
 
     # MCP test harness (#3689, V2-MCP-22.3 / MCAT-8.3). Each live test invocation against a
     # cataloged endpoint hits a real external server, so the test console is rate limited

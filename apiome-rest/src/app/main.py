@@ -1,91 +1,93 @@
-from fastapi import FastAPI, HTTPException, Request, Response, Header, Query
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.encoders import jsonable_encoder
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from typing import Dict, Any, Optional
 import asyncio
 import json
 import logging
-import yaml
+from typing import Any, Dict, Optional
 
-from .config import settings
-from .database import db, Database
-from .logging_config import configure_logging, get_logger
-from .observability import ObservabilityMiddleware, build_error_envelope
-from .ops_routes import health_router, ops_router
-from .rate_limit import RateLimitMiddleware
-from .openapi_generator import generate_openapi_spec, generate_class_openapi_spec
-from .openapi_enrichment import enrich_openapi_spec
+import yaml
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from .access_routes import platform_router as access_platform_router
+from .access_routes import router as access_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
-from .jsonschema_generator import generate_jsonschema_spec, generate_class_jsonschema_spec
-from .models import OpenAPIResponse
-from .primitives_routes import router as primitives_router
-from .registry_audit_routes import router as registry_audit_router
-from .type_namespaces_routes import router as type_namespaces_router
-from .classes_routes import router as classes_router
-from .projects_routes import router as projects_router
+from .browse_export_routes import router as browse_export_router
+from .browse_public_routes import router as browse_public_router
 from .catalog_routes import router as catalog_router
-from .identity_routes import router as identity_router
-from .workflow_audit_routes import router as workflow_audit_router
-from .versions_routes import router as versions_router
-from .version_merge_routes import router as version_merge_router
-from .properties_routes import router as properties_router
-from .project_tags_routes import router as project_tags_router
-from .paths_routes import router as paths_router
-from .data_routes import router as data_router
-from .migration_plans_routes import router as migration_plans_router
-from .version_tags_routes import router as version_tags_router
-from .compatibility_routes import router as compatibility_router
+from .change_report_routes import router as change_report_router
+from .change_report_template_routes import router as change_report_template_router
+from .classes_routes import router as classes_router
 from .classified_diff_routes import router as classified_diff_router
+from .compatibility_routes import router as compatibility_router
+from .config import settings
+from .data_routes import router as data_router
+from .database import Database, db
+from .draft_lock_routes import router as draft_lock_router
+from .export_job_routes import router as export_job_router
+from .export_routes import router as export_router
+from .identity_routes import router as identity_router
+from .import_sources_routes import router as import_sources_router
+from .jsonschema_generator import generate_class_jsonschema_spec, generate_jsonschema_spec
+from .license_routes import router as license_router
+from .lint_routes import decisions_router as lint_decisions_router
 from .lint_routes import router as lint_router
 from .lint_routes import rules_router as lint_rules_router
-from .lint_routes import decisions_router as lint_decisions_router
 from .lint_workspace_routes import router as lint_workspace_router
-from .style_guide_routes import router as style_guide_router
-from .draft_lock_routes import router as draft_lock_router
+from .logging_config import configure_logging, get_logger
+from .mcp_badge_routes import router as mcp_badge_router
+from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
+from .mcp_catalog_routes import mcp_endpoints_router
+from .mcp_collection_routes import router as mcp_collection_router
+from .mcp_credential_crypto import validate_credential_encryption_keys
+from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
+from .mcp_feed_routes import router as mcp_feed_router
+from .mcp_key_routes import router as mcp_key_router
+from .mcp_policy_routes import router as mcp_policy_router
+from .mcp_probe_routes import router as mcp_probe_router
+from .mcp_saved_search_routes import router as mcp_saved_search_router
+from .mcp_tool_routes import router as mcp_tool_router
+from .mcp_trust_baseline_routes import router as mcp_trust_baseline_router
+from .migration_plans_routes import router as migration_plans_router
+from .mock_routes import data_router as mock_data_router
+from .mock_routes import router as mock_router
+from .observability import ObservabilityMiddleware, build_error_envelope
+from .onboarding_routes import router as onboarding_router
+from .openapi_enrichment import enrich_openapi_spec
+from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
+from .ops_routes import health_router, ops_router
+from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
-from .source_review_routes import router as source_review_router
-from .slate_routes import router as slate_router
-from .slate_cache_routes import router as slate_cache_router
-from .slate_security_routes import router as slate_security_router
-from .slate_functions_routes import router as slate_functions_router
-from .slate_insights_routes import router as slate_insights_router
-from .slate_git_preview_routes import router as slate_git_preview_router
+from .primitives_routes import router as primitives_router
+from .project_tags_routes import router as project_tags_router
+from .projects_routes import router as projects_router
+from .properties_routes import router as properties_router
+from .push_webhook_crypto import validate_webhook_signing_key
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
-from .mcp_credential_crypto import validate_credential_encryption_keys
-from .push_webhook_crypto import validate_webhook_signing_key
-from .change_report_routes import router as change_report_router
-from .version_change_report_routes import router as version_change_report_router
-from .version_changelog_routes import router as version_changelog_router
-from .change_report_template_routes import router as change_report_template_router
+from .rate_limit import RateLimitMiddleware
+from .registry_audit_routes import router as registry_audit_router
+from .slate_agent_outputs_routes import router as slate_agent_outputs_router
+from .slate_cache_routes import router as slate_cache_router
+from .slate_functions_routes import router as slate_functions_router
+from .slate_git_preview_routes import router as slate_git_preview_router
+from .slate_insights_routes import router as slate_insights_router
+from .slate_routes import router as slate_router
+from .slate_security_routes import router as slate_security_router
+from .source_review_routes import router as source_review_router
+from .spec_import_routes import router as spec_import_router
+from .style_guide_routes import router as style_guide_router
 from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
-from .license_routes import router as license_router
-from .onboarding_routes import router as onboarding_router
-from .browse_public_routes import router as browse_public_router
-from .browse_export_routes import router as browse_export_router
-from .spec_import_routes import router as spec_import_router
-from .import_sources_routes import router as import_sources_router
-from .export_routes import router as export_router
-from .export_job_routes import router as export_job_router
-from .access_routes import router as access_router, platform_router as access_platform_router
-from .mock_routes import router as mock_router, data_router as mock_data_router
-from .mcp_catalog_routes import mcp_endpoints_router
-from .mcp_probe_routes import router as mcp_probe_router
-from .mcp_trust_baseline_routes import router as mcp_trust_baseline_router
-from .mcp_badge_routes import router as mcp_badge_router
-from .mcp_feed_routes import router as mcp_feed_router
-from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
-from .mcp_saved_search_routes import router as mcp_saved_search_router
-from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
-from .mcp_collection_routes import router as mcp_collection_router
-from .mcp_tool_routes import router as mcp_tool_router
-from .mcp_policy_routes import router as mcp_policy_router
-from .mcp_key_routes import router as mcp_key_router
+from .type_namespaces_routes import router as type_namespaces_router
+from .version_change_report_routes import router as version_change_report_router
+from .version_changelog_routes import router as version_changelog_router
+from .version_merge_routes import router as version_merge_router
+from .version_tags_routes import router as version_tags_router
+from .versions_routes import router as versions_router
+from .workflow_audit_routes import router as workflow_audit_router
 
 # Configure structured JSON logging before anything else logs, so every line (including library
 # loggers) is emitted in the consistent observability shape (RC1-3.2, #3617).
@@ -98,7 +100,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.33.0",
+    version="1.34.0",
 )
 
 
@@ -255,6 +257,10 @@ app.include_router(workflow_audit_router)
 # /{tenant_slug}/{project_id}/changelogs route wins over the versions
 # /{tenant_slug}/{project_id}/{version_record_id} parameter route (CTG-3.2, #4476).
 app.include_router(version_changelog_router)
+# Registered before versions_router for the same reason: the literal
+# /{tenant_slug}/{project_id}/{version_record_id}/agent-outputs suffix stays unambiguous
+# against the versions parameter routes (APX-3.4, private-suite#2459).
+app.include_router(slate_agent_outputs_router)
 app.include_router(versions_router)
 app.include_router(properties_router)
 app.include_router(project_tags_router)
