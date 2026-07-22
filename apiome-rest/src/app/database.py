@@ -6398,6 +6398,185 @@ class Database:
             tuple(params),
         )
 
+    # ---- Auth events (sign-in / sign-up / link audit ledger, OLO-1.6, #4191) -----
+
+    def write_auth_event(
+        self,
+        *,
+        event_type: str,
+        outcome: str,
+        provider: Optional[str] = None,
+        user_id: Optional[str] = None,
+        user_label: Optional[str] = None,
+        error_code: Optional[str] = None,
+        ip_hash: Optional[str] = None,
+        user_agent_hash: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append a hash-chained row to ``apiome.auth_events`` (best-effort — logs and swallows).
+
+        Records one authentication outcome (see :mod:`app.auth_events`). Best-effort by design: a
+        failed audit write can never fail or block the sign-in it records, so DB errors are logged
+        and swallowed rather than raised. Unlike :meth:`write_access_audit` the chain is global
+        (auth happens before any tenant context), so ``prev_hash`` links to the newest row in the
+        whole table.
+
+        Args:
+            event_type: One of ``app.auth_events.AUTH_EVENT_TYPES`` (sign_in/sign_up/link/unlink).
+            outcome: ``success`` or ``failure`` (matches the ``auth_events_outcome_check`` constraint).
+            provider: OAuth provider slug, or None when unknown.
+            user_id: Resolved user id, or None for failures / pre-account sign-ups.
+            user_label: Canonical email retained independent of the users row.
+            error_code: Stable auth error code on failure.
+            ip_hash: Salted SHA-256 of the client IP — never the raw address.
+            user_agent_hash: Salted SHA-256 of the client User-Agent — never the raw header.
+            detail: Structured JSON context (e.g. ``{"auto_linked": True}``).
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT entry_hash FROM apiome.auth_events
+                    ORDER BY created_at DESC, id DESC LIMIT 1
+                    """
+                )
+                prev_row = cursor.fetchone()
+                prev_hash = prev_row["entry_hash"] if prev_row else None
+                detail_json = (
+                    json.dumps(detail, sort_keys=True, default=str)
+                    if detail is not None
+                    else None
+                )
+                payload = "|".join(
+                    [
+                        prev_hash or "",
+                        event_type,
+                        outcome,
+                        provider or "",
+                        str(user_id or ""),
+                        user_label or "",
+                        error_code or "",
+                        ip_hash or "",
+                        user_agent_hash or "",
+                        detail_json or "",
+                    ]
+                )
+                entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.auth_events
+                        (event_type, user_id, user_label, provider, outcome, error_code,
+                         ip_hash, user_agent_hash, detail, prev_hash, entry_hash)
+                    VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+                    """,
+                    (
+                        event_type,
+                        user_id,
+                        user_label,
+                        provider,
+                        outcome,
+                        error_code,
+                        ip_hash,
+                        user_agent_hash,
+                        detail_json,
+                        prev_hash,
+                        entry_hash,
+                    ),
+                )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("write_auth_event failed: %s", e)
+
+    def log_auth_event(
+        self,
+        event: "AuthEvent",
+        *,
+        ip_hash: Optional[str] = None,
+        user_agent_hash: Optional[str] = None,
+    ) -> None:
+        """Persist an :class:`app.auth_events.AuthEvent` (from ``event_from_decision``).
+
+        Thin adapter over :meth:`write_auth_event` so callers can map a 1.3 resolution outcome to an
+        event once and hand it straight to the ledger, attaching the request's hashed IP / UA.
+
+        Args:
+            event: The event to record.
+            ip_hash: Salted SHA-256 of the client IP for this request, when available.
+            user_agent_hash: Salted SHA-256 of the client User-Agent for this request, when available.
+        """
+        self.write_auth_event(
+            event_type=event.event_type,
+            outcome=event.outcome,
+            provider=event.provider,
+            user_id=event.user_id,
+            user_label=event.user_label,
+            error_code=event.error_code,
+            ip_hash=ip_hash,
+            user_agent_hash=user_agent_hash,
+            detail=dict(event.detail) if event.detail else None,
+        )
+
+    def list_auth_events_for_user(
+        self, user_id: str, *, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Return a user's authentication events, newest first (the login-history read path).
+
+        Feeds the Profile login-history surface (#1607/#534/#2418). Only rows still attributed to
+        the user are returned; failed sign-ins with no resolved user are intentionally excluded.
+
+        Args:
+            user_id: The user to fetch history for.
+            limit: Max rows (clamped to 1..1000).
+
+        Returns:
+            Auth-event rows (id, event_type, provider, outcome, error_code, ip_hash,
+            user_agent_hash, detail, created_at), newest first.
+        """
+        return self.execute_query(
+            """
+            SELECT id::text, event_type, provider, outcome, error_code,
+                   ip_hash, user_agent_hash, detail, created_at
+            FROM apiome.auth_events
+            WHERE user_id = %s::uuid
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+            """,
+            (user_id, max(1, min(int(limit), 1000))),
+        )
+
+    def prune_auth_events(self, *, retention_days: int) -> int:
+        """Delete auth events older than ``retention_days`` (tail retention); return rows removed.
+
+        Retention prunes only the oldest rows, so the retained suffix of the hash chain stays
+        contiguous and independently verifiable. See ``apiome-rest/docs/AUTH_EVENTS.md``.
+
+        Args:
+            retention_days: Age threshold in days; rows strictly older are deleted. Must be >= 1.
+
+        Returns:
+            The number of rows deleted.
+        """
+        days = max(1, int(retention_days))
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.auth_events
+                    WHERE created_at < CURRENT_TIMESTAMP - make_interval(days => %s)
+                    """,
+                    (days,),
+                )
+                deleted = cursor.rowcount
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("prune_auth_events failed: %s", e)
+            return 0
+
     # ---- Roles -------------------------------------------------------
 
     def list_roles(self, tenant_id: str) -> List[Dict[str, Any]]:

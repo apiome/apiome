@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.156.0] - 2026-07-22
+
+### Added
+- **Sign-in/sign-up/link audit events (OLO-1.6, #4191)** — a durable, append-only record of
+  authentication outcomes so support and security review can answer *who signed in/up, with which
+  provider, and which identities were linked*. New migration `apiome-db/V193` adds the hash-chained
+  `apiome.auth_events` ledger (event type, user, provider, salted IP/User-Agent hashes, outcome,
+  stable error code), reusing the `access_audit` (V120) pattern. New pure seam
+  `app/auth_events.py` maps an OLO-1.3 resolution decision to an `AuthEvent`
+  (`event_from_decision`) and reduces client IP/UA to salted SHA-256 (`hash_client_value` — the raw
+  values are never stored). New `Database` methods: `write_auth_event` / `log_auth_event`
+  (best-effort append — a failed audit write never blocks the sign-in it records),
+  `list_auth_events_for_user` (the login-history read path feeding #1607/#534/#2418), and
+  `prune_auth_events` (documented tail retention). Retention policy and usage documented in
+  `docs/AUTH_EVENTS.md`.
+
 ## [1.155.0] - 2026-07-22
 
 ### Added
