@@ -53,6 +53,7 @@ from .slate_cache_routes import router as slate_cache_router
 from .slate_security_routes import router as slate_security_router
 from .slate_functions_routes import router as slate_functions_router
 from .slate_insights_routes import router as slate_insights_router
+from .slate_git_preview_routes import router as slate_git_preview_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
 from .mcp_credential_crypto import validate_credential_encryption_keys
@@ -276,6 +277,10 @@ app.include_router(slate_functions_router)
 # Same reasoning one surface further on: /environments/{id}/insights* sits alongside the cache,
 # security and function planes and the existing environment routes (UXE-3.4, private-suite#2476).
 app.include_router(slate_insights_router)
+# The git-triggered preview plane: /git/connections, /git/events and /git/previews sit under
+# the same /v1/slate prefix, disjoint from the /environments and /sites surfaces above
+# (APX-3.3, private-suite#2458).
+app.include_router(slate_git_preview_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)
 app.include_router(version_change_report_router)

@@ -5,6 +5,37 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.154.0] - 2026-07-22
+
+### Added
+- **Git-triggered immutable preview builds and provider status (APX-3.3,
+  private-suite#2458)** — the preview control plane on top of the APX-3.1
+  routing tables (migration `V191`), under the existing `/v1/slate` prefix:
+  - `POST /v1/slate/git/connections` and `GET /v1/slate/git/connections` —
+    register and list a site's git provider connection. The webhook secret is
+    Fernet-sealed and the repository token is envelope-sealed at rest; neither is
+    ever returned — a read reports only *whether* they are set.
+  - `POST /v1/slate/git/events` — the signature-verified webhook receiver. It
+    verifies `X-Hub-Signature-256` over the **raw** body, resolves the connection
+    from the payload's repository, and creates exactly **one preview per source
+    digest** (`UNIQUE (connection_id, source_digest)`), so a redelivered event is
+    a no-op. A ping, a tag push and a branch deletion are accepted and ignored; a
+    bad signature is 401.
+  - `GET /v1/slate/git/previews[/{id}]` — previews with their immutable commit
+    URL, moving branch alias, changed-page deep links, expiry/access state and
+    the provider-status payload.
+  - `POST /v1/slate/git/previews/{id}/checks` — record a check outcome; a pass is
+    the only path that advances the branch alias (optimistic-concurrency token).
+  - `POST /v1/slate/git/previews/{id}/retry` and
+    `POST /v1/slate/git/connections/{id}/cleanup` — retry and expiry cleanup,
+    each appended to an append-only preview audit.
+  - Honest boundary, enforced in SQL: there is no Slate build worker (7.3,
+    #3419) and no first-party provider check-run adapter, so `build_dispatched`
+    is FALSE for every row (`CHECK (NOT build_dispatched)`) and a status can
+    never claim `outcome = 'dispatched'` (`CHECK (outcome <> 'dispatched' OR
+    dispatch_enabled)`). The wire payload reports both as not dispatched, each
+    naming the tier that will attach it.
+
 ## [1.153.0] - 2026-07-20
 
 ### Added

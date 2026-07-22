@@ -126,6 +126,16 @@ class Settings(BaseSettings):
             "slate_artifact_signing_key_id",
         ),
     )
+    # Lifetime of an ephemeral git-triggered preview lane, in hours (APX-3.3, private-suite#2458).
+    # A preview is a review aid, not a durable deployment, so it expires and is reaped rather than
+    # lingering as an unbounded set of half-finished branches. One week by default.
+    slate_preview_default_ttl_hours: int = Field(
+        default=168,
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_PREVIEW_DEFAULT_TTL_HOURS",
+            "slate_preview_default_ttl_hours",
+        ),
+    )
     # Claude API key used only for the server-digest generation above. Read from the environment; never
     # logged. When unset the feature stays a no-op even if the flag is on.
     anthropic_api_key: Optional[str] = Field(
