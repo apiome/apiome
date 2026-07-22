@@ -1,7 +1,7 @@
 'use server';
 
 import crypto from 'crypto';
-import { createUser, deleteUser } from '../db/admin-helper';
+import { createUser, deleteUser, clearUserPassword } from '../db/admin-helper';
 import { linkExternalAccount } from '../db/helper';
 import { resolveOAuthEmailVerified } from './account-resolution';
 import {
@@ -51,6 +51,9 @@ export async function completeOAuthSignup(
   const account = pending.account_json || {};
   const profile = pending.profile_json || {};
 
+  // A throwaway password satisfies the NOT NULL column during creation; it is cleared immediately
+  // below so the OAuth-only account is genuinely password-less — its linked identity is its only
+  // sign-in method, which is what the OLO-2.4 last-sign-in-method unlink guard relies on.
   const randomPassword = `${crypto.randomBytes(32).toString('hex')}!Aa1`;
 
   const userRes = await createUser(name, email, randomPassword, true, true);
@@ -60,6 +63,9 @@ export async function completeOAuthSignup(
   }
 
   const userId: string = userParsed.user.id;
+
+  // Mark the freshly-created OAuth account as password-less (no usable credentials login).
+  await clearUserPassword(userId);
 
   const accessToken = typeof account.access_token === 'string' ? account.access_token : null;
   const refreshToken = typeof account.refresh_token === 'string' ? account.refresh_token : null;

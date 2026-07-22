@@ -9,6 +9,7 @@
  */
 const mockCreateUser = jest.fn<Promise<string>, unknown[]>();
 const mockDeleteUser = jest.fn<Promise<string>, unknown[]>();
+const mockClearUserPassword = jest.fn<Promise<string>, unknown[]>();
 const mockLinkExternalAccount = jest.fn<Promise<string>, unknown[]>();
 const mockGetPending = jest.fn<Promise<unknown>, [string]>();
 const mockDeletePending = jest.fn<Promise<void>, [string]>();
@@ -18,6 +19,7 @@ const mockProvisionViaRest = jest.fn<Promise<unknown>, unknown[]>();
 jest.mock('../../lib/db/admin-helper', () => ({
   createUser: (...args: unknown[]) => mockCreateUser(...args),
   deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
+  clearUserPassword: (...args: unknown[]) => mockClearUserPassword(...args),
 }));
 
 jest.mock('../../lib/db/helper', () => ({
@@ -51,6 +53,7 @@ const PENDING = {
 const primeHappyPath = () => {
   mockGetPending.mockResolvedValue({ ...PENDING });
   mockCreateUser.mockResolvedValue(ok({ user: { id: 'user-1' } }));
+  mockClearUserPassword.mockResolvedValue(ok({ id: 'user-1' }));
   mockLinkExternalAccount.mockResolvedValue(ok({}));
   mockProvisionViaRest.mockResolvedValue({
     success: true,
@@ -79,6 +82,9 @@ describe('completeOAuthSignup', () => {
     expect(mockInsertOneTimeCode).toHaveBeenCalledWith('user-1', 't-1');
     expect(mockDeletePending).toHaveBeenCalledWith('pending-1');
     expect(mockDeleteUser).not.toHaveBeenCalled();
+    // OAuth accounts are provisioned password-less so their identity is the sole sign-in method
+    // the OLO-2.4 unlink guard protects.
+    expect(mockClearUserPassword).toHaveBeenCalledWith('user-1');
   });
 
   it('deletes the just-created user when tenant provisioning fails', async () => {

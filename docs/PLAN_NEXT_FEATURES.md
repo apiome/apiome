@@ -363,7 +363,6 @@ Filter: [`milestone:RC4 is:open`](https://github.com/apiome/apiome/milestone/1).
 | # | Title |
 |---|---|
 | 4191 | OLO-1.6 Sign-in/sign-up/link audit events |
-| 4196 | OLO-2.4 Link/unlink Azure in profile settings |
 | 4203 | OLO-3.5 Login a11y + visual tests |
 | 4209 | OLO-4.5 Onboarding resumability + telemetry |
 | 4216 | OLO-5.6 Reconcile licensing with #3484 / #64 |

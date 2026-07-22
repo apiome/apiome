@@ -51,6 +51,9 @@ ACCOUNT_NOT_VERIFIED = "account-not-verified"
 PROVIDER_ALREADY_LINKED = "provider-already-linked"
 #: This provider identity is already bound to a different user.
 IDENTITY_LINKED_ELSEWHERE = "identity-linked-elsewhere"
+#: Unlink refused: the identity is the user's last remaining sign-in method (no other linked
+#: identity and no usable password). Emitted by the UI ``unlinkExternalAccount`` guard (OLO-2.4).
+LAST_SIGN_IN_METHOD = "last-sign-in-method"
 #: The user's tenant membership is suspended (``tenant_users.status = 'suspended'``).
 MEMBERSHIP_SUSPENDED = "membership-suspended"
 #: The requested sign-in provider is not configured/supported on this deployment.
@@ -68,6 +71,7 @@ AUTH_ERROR_CODES: FrozenSet[str] = frozenset(
         ACCOUNT_NOT_VERIFIED,
         PROVIDER_ALREADY_LINKED,
         IDENTITY_LINKED_ELSEWHERE,
+        LAST_SIGN_IN_METHOD,
         MEMBERSHIP_SUSPENDED,
         PROVIDER_NOT_CONFIGURED,
         SIGNUP_DISABLED,

@@ -41,6 +41,7 @@ describe('AUTH_ERROR_CODES — value stability', () => {
       ACCOUNT_NOT_VERIFIED: 'account-not-verified',
       PROVIDER_ALREADY_LINKED: 'provider-already-linked',
       IDENTITY_LINKED_ELSEWHERE: 'identity-linked-elsewhere',
+      LAST_SIGN_IN_METHOD: 'last-sign-in-method',
       MEMBERSHIP_SUSPENDED: 'membership-suspended',
       PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
       SIGNUP_DISABLED: 'signup-disabled',

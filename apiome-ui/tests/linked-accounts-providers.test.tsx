@@ -12,6 +12,7 @@ import '@testing-library/jest-dom';
 
 const mockUseSession = jest.fn();
 const mockGetLinkedAccounts = jest.fn();
+const mockGetHasPassword = jest.fn();
 
 jest.mock('next-auth/react', () => ({
   useSession: () => mockUseSession(),
@@ -24,6 +25,7 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
 
 jest.mock('../lib/db/helper', () => ({
   getLinkedAccountsForUser: (...args: unknown[]) => mockGetLinkedAccounts(...args),
+  getUserHasPassword: (...args: unknown[]) => mockGetHasPassword(...args),
   unlinkExternalAccount: jest.fn(),
   updatePersonalAccessToken: jest.fn(),
   removePersonalAccessToken: jest.fn(),
@@ -41,11 +43,27 @@ const GITHUB_GITLAB_ENABLED: ProviderSummary[] = [
   { id: 'aws', label: 'AWS', status: 'coming-soon', enabled: false },
 ];
 
+/** One azure identity linked — used by the last-sign-in-method guard tests. */
+const ONE_AZURE_ACCOUNT = JSON.stringify([
+  {
+    id: 'acct-1',
+    provider: 'azure',
+    provider_user_id: 'oid-1',
+    provider_email: 'user@example.com',
+    provider_username: null,
+    created_at: '2026-07-01T00:00:00Z',
+    last_login_at: null,
+  },
+]);
+
 beforeEach(() => {
   mockUseSession.mockReset();
   mockGetLinkedAccounts.mockReset();
+  mockGetHasPassword.mockReset();
   mockUseSession.mockReturnValue({ data: { user: { user_id: 'user-1' } } });
   mockGetLinkedAccounts.mockResolvedValue('[]');
+  // Default: the user also has a password, so no unlink is the "last" sign-in method.
+  mockGetHasPassword.mockResolvedValue(JSON.stringify({ hasPassword: true }));
 });
 
 describe('LinkedAccountsClient — provider cards from the registry (OLO-2.3)', () => {
@@ -95,5 +113,29 @@ describe('LinkedAccountsClient — provider cards from the registry (OLO-2.3)', 
     // The row uses the registry label even though azure gets no "Add a provider" card.
     expect(await screen.findByText('user@example.com')).toBeInTheDocument();
     expect(screen.getByText('Microsoft')).toBeInTheDocument();
+  });
+});
+
+describe('LinkedAccountsClient — last-sign-in-method guard (OLO-2.4)', () => {
+  it('disables Unlink and explains why when it is the only sign-in method (no password)', async () => {
+    mockGetLinkedAccounts.mockResolvedValue(ONE_AZURE_ACCOUNT);
+    mockGetHasPassword.mockResolvedValue(JSON.stringify({ hasPassword: false }));
+
+    render(<LinkedAccountsClient providers={GITHUB_GITLAB_ENABLED} />);
+
+    const unlink = await screen.findByRole('button', { name: /Unlink/ });
+    expect(unlink).toBeDisabled();
+    expect(screen.getByText(/Only sign-in method/i)).toBeInTheDocument();
+  });
+
+  it('keeps Unlink enabled for the only identity when the user has a password', async () => {
+    mockGetLinkedAccounts.mockResolvedValue(ONE_AZURE_ACCOUNT);
+    mockGetHasPassword.mockResolvedValue(JSON.stringify({ hasPassword: true }));
+
+    render(<LinkedAccountsClient providers={GITHUB_GITLAB_ENABLED} />);
+
+    const unlink = await screen.findByRole('button', { name: /Unlink/ });
+    expect(unlink).toBeEnabled();
+    expect(screen.queryByText(/Only sign-in method/i)).not.toBeInTheDocument();
   });
 });

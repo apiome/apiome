@@ -35,6 +35,7 @@ auth failure.
 | `signup-disabled` | Self-signup is disabled on this deployment (`AUTH_SIGNUP_DISABLED=true|1`); a verified email with no existing account is refused instead of routed to onboarding. | Resolution engine step (c) |
 | `account-not-verified` | The resolved account exists but has not completed its own email verification (`users.verified = false`). | Resolution engine, credentials sign-in |
 | `provider-already-linked` | The user already has a different identity linked for this provider (link flow). | `linkExternalAccount` (`lib/db/helper.ts`) |
+| `last-sign-in-method` | Unlink refused: the identity is the user's last remaining sign-in method — no other linked identity and no usable password (`users.password` empty) — so removing it would lock them out (OLO-2.4). | `unlinkExternalAccount` (`lib/db/helper.ts`) |
 
 ## Pre-contract stable copy keys
 

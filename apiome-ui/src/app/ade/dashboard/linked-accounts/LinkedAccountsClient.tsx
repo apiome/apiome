@@ -33,7 +33,7 @@ import { cn } from '../../../../../lib/utils';
 import type { ProviderSummary } from '../../../../../lib/auth/provider-registry';
 import { getProviderBrand } from '../../../components/auth/provider-brand';
 import { useDialog } from '@/app/components/providers/DialogProvider';
-import { getLinkedAccountsForUser, unlinkExternalAccount, updatePersonalAccessToken, removePersonalAccessToken } from '../../../../../lib/db/helper';
+import { getLinkedAccountsForUser, getUserHasPassword, unlinkExternalAccount, updatePersonalAccessToken, removePersonalAccessToken } from '../../../../../lib/db/helper';
 import {
   dashboardContentStackClass,
   dashboardMainClass,
@@ -70,6 +70,8 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
   const { data: session } = useSession();
   const { confirm: confirmDialog } = useDialog();
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
+  /** Whether the user has a usable password sign-in method (OLO-2.4 last-method guard). */
+  const [hasPassword, setHasPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -108,14 +110,26 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
     if (!userId) return;
     setIsLoading(true);
     try {
-      const result = await getLinkedAccountsForUser(userId);
-      setLinkedAccounts(JSON.parse(result));
+      const [accountsResult, passwordResult] = await Promise.all([
+        getLinkedAccountsForUser(userId),
+        getUserHasPassword(userId),
+      ]);
+      setLinkedAccounts(JSON.parse(accountsResult));
+      setHasPassword(!!JSON.parse(passwordResult).hasPassword);
     } catch (error: any) {
       setErrorMessage('Failed to load linked accounts');
     } finally {
       setIsLoading(false);
     }
   };
+
+  /**
+   * True when unlinking `account` would strip the user's last sign-in method: it is their only
+   * linked identity and they have no usable password. The server enforces this too
+   * (`unlinkExternalAccount`); disabling the button here just makes the guard visible up front.
+   */
+  const isLastSignInMethod = (account: LinkedAccount) =>
+    !hasPassword && linkedAccounts.length === 1 && linkedAccounts[0]?.id === account.id;
 
   const handleLinkAccount = async (provider: string) => {
     try {
@@ -312,6 +326,11 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
                             <div>
                               <div className="text-sm font-semibold text-gray-900 dark:text-white">{displayName}</div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">{account.provider_username || account.provider_email}</div>
+                              {isLastSignInMethod(account) && (
+                                <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                  Only sign-in method — set a password or link another provider to remove it.
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -322,10 +341,26 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
                           {account.last_login_at ? formatDate(account.last_login_at) : '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <Button variant="outline" size="sm" onClick={() => handleUnlinkAccount(account)} disabled={isLoading} className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300">
-                            <Trash2 className="h-4 w-4" />
-                            Unlink
-                          </Button>
+                          {(() => {
+                            const lastMethod = isLastSignInMethod(account);
+                            return (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnlinkAccount(account)}
+                                disabled={isLoading || lastMethod}
+                                title={
+                                  lastMethod
+                                    ? 'This is your only sign-in method. Set a password or link another provider before unlinking it.'
+                                    : undefined
+                                }
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Unlink
+                              </Button>
+                            );
+                          })()}
                         </td>
                       </tr>
                     );
