@@ -1,6 +1,21 @@
 @import "tailwindcss";
 @import "./components/ade/canvas/canvas.css";
 
+/*
+ * Explicitly scan apiome-ui's own source for Tailwind classes.
+ *
+ * Tailwind v4 auto-detects content from the *building* project's tree. When a
+ * sibling app imports this stylesheet (e.g. the private-suite Studio/designer
+ * app, which renders apiome-ui's TopHeader/SuiteNavMenu via the `@` alias),
+ * auto-detection is rooted at that app and never sees apiome-ui, so classes
+ * used only by apiome-ui components (e.g. the Designer dropdown's
+ * `w-[min(92vw,36rem)]` / `max-h-[min(70vh,26rem)]`) are never emitted and the
+ * popover collapses. Paths are relative to this file (apiome-ui/src/app).
+ * `@source` is additive — the consumer's own auto-detection still runs.
+ */
+@source "../";
+@source "../../lib";
+
 /* Configure dark mode to use .dark class on html element */
 @custom-variant dark (&:where(.dark, .dark *));
 

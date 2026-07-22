@@ -116,10 +116,16 @@ export function getSuiteTriggerIsActive(): ((pathname: string) => boolean) | nul
  */
 export function tryLoadOptionalSuiteHost(): void {
   if (contribution) return;
+  // `require` is a server-only Node primitive; there is nothing to load in the
+  // browser bundle, so skip it there entirely.
+  if (typeof window !== 'undefined') return;
   try {
     // Optional peer: present only when the commercial suite package is linked.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('@suite/host/register');
+    // Resolve `require` indirectly through `eval` so bundlers (Turbopack in dev,
+    // webpack in `next build`) don't statically resolve — and warn about — this
+    // specifier, which is intentionally absent from open-source installs.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, no-eval
+    (eval('require') as NodeRequire)('@suite/host/register');
   } catch {
     // OSS / main-app without the commercial package — Design-only builtins.
   }
