@@ -17,6 +17,7 @@ from app.account_resolution import (
     AUTH_ERROR_CODES,
     EMAIL_REQUIRED,
     IDENTITY_LINKED_ELSEWHERE,
+    LAST_SIGN_IN_METHOD,
     MEMBERSHIP_SUSPENDED,
     PROFILE_INCOMPLETE,
     PROVIDER_ALREADY_LINKED,
@@ -58,6 +59,7 @@ def test_every_code_keeps_its_documented_value():
     assert ACCOUNT_NOT_VERIFIED == "account-not-verified"
     assert PROVIDER_ALREADY_LINKED == "provider-already-linked"
     assert IDENTITY_LINKED_ELSEWHERE == "identity-linked-elsewhere"
+    assert LAST_SIGN_IN_METHOD == "last-sign-in-method"
     assert MEMBERSHIP_SUSPENDED == "membership-suspended"
     assert PROVIDER_NOT_CONFIGURED == "provider-not-configured"
     assert SIGNUP_DISABLED == "signup-disabled"
@@ -73,6 +75,7 @@ def test_the_enumeration_lists_exactly_the_contract():
             "account-not-verified",
             "provider-already-linked",
             "identity-linked-elsewhere",
+            "last-sign-in-method",
             "membership-suspended",
             "provider-not-configured",
             "signup-disabled",

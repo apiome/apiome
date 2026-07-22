@@ -95,6 +95,35 @@ export async function createUser(
 }
 
 /**
+ * Clears a user's password to the empty-string "no usable credential" sentinel.
+ *
+ * `apiome.users.password` is `NOT NULL`, so an account with no password login is represented by
+ * an empty string (credentials login treats a falsy password as "no password"). OAuth self-signup
+ * provisions the user with a throwaway random password to satisfy the column, then calls this to
+ * mark the account password-less — which is what lets the OLO-2.4 last-sign-in-method guard tell a
+ * genuine credentials user (who may unlink their last identity) from an OAuth-only user (who may
+ * not). A user can later establish a real password through the normal credential flow.
+ *
+ * @param userId The user to mark password-less.
+ * @returns JSON string `{ success: boolean, error? }`.
+ */
+export async function clearUserPassword(userId: string) {
+  try {
+    const result = await connectionPool.query(
+      "UPDATE apiome.users SET password = '', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
+      [userId]
+    );
+    if (result.rowCount === 0) {
+      return errorResponse('User not found');
+    }
+    return successResponse({ id: result.rows[0].id });
+  } catch (error: any) {
+    console.error('Error clearing user password:', error);
+    return errorResponse(error.message);
+  }
+}
+
+/**
  * Update user details
  */
 export async function updateUser(

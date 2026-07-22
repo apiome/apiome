@@ -1,7 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn, Copy, Check } from 'lucide-react';
+import Link from 'next/link';
+import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn, Copy, Check, Link as LinkIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -369,6 +370,31 @@ const Profile = () => {
                   <Button size="sm" className="w-full" onClick={handlePasswordChangeClick}>
                     <Key className="h-4 w-4 mr-2" />
                     Change password
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Sign-in methods — manage linked identity providers (OLO-2.4) */}
+              <Card className={cn(dashboardPanelClass, 'shadow-none')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5 text-cyan-500" />
+                    Sign-in methods
+                  </CardTitle>
+                  <CardDescription>Linked identity providers</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Link providers like GitHub, GitLab, or Microsoft for single sign-on, and manage
+                    or unlink them at any time.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild size="sm" variant="outline" className="w-full">
+                    <Link href="/ade/dashboard/linked-accounts">
+                      <LinkIcon className="h-4 w-4 mr-2" />
+                      Manage linked accounts
+                    </Link>
                   </Button>
                 </CardFooter>
               </Card>

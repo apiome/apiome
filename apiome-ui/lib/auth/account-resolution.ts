@@ -53,6 +53,12 @@ export const AUTH_ERROR_CODES = {
   PROVIDER_ALREADY_LINKED: 'provider-already-linked',
   /** This provider identity is already bound to a different user. */
   IDENTITY_LINKED_ELSEWHERE: 'identity-linked-elsewhere',
+  /**
+   * Unlink was refused because the identity is the user's last remaining sign-in method
+   * (no other linked identity and no usable password). Emitted by `unlinkExternalAccount`
+   * (`lib/db/helper.ts`) to guard against locking a user out of their own account (OLO-2.4).
+   */
+  LAST_SIGN_IN_METHOD: 'last-sign-in-method',
   /** The user's tenant membership is suspended (tenant_users.status = 'suspended'). */
   MEMBERSHIP_SUSPENDED: 'membership-suspended',
   /** The requested sign-in provider is not configured/supported on this deployment. */

@@ -47,6 +47,10 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'error',
     text: 'This provider account is already linked to another user. Sign in with that account, or use a different provider account.',
   },
+  'last-sign-in-method': {
+    type: 'error',
+    text: 'That account is your only way to sign in. Set a password or link another provider before unlinking it, so you keep access to your account.',
+  },
   'membership-suspended': {
     type: 'error',
     text: 'Your membership in this workspace has been suspended. Contact your workspace administrator to restore access.',

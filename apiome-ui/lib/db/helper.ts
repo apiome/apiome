@@ -2903,28 +2903,122 @@ export async function linkExternalAccount(
   }
 }
 
-export async function unlinkExternalAccount(userId: string, linkedAccountId: string) {
+/**
+ * Whether the user has a usable password sign-in method.
+ *
+ * `apiome.users.password` is `NOT NULL`, but OAuth-provisioned accounts are stored with an
+ * empty string (no usable credential — see `oauth-signup-actions.ts`), and credentials login
+ * treats a falsy password as "no password" (`lib/auth/credentials.ts`). So "has a usable
+ * password" means the column is a non-empty value. Used by the last-sign-in-method guard
+ * (OLO-2.4) and surfaced to the linked-accounts panel so it can pre-disable the final unlink.
+ *
+ * @param userId The user whose credential state to check.
+ * @returns JSON string `{ hasPassword: boolean }`; `hasPassword` is false on error (fail-safe:
+ *   the guard then treats the account as password-less and refuses the last unlink).
+ */
+export async function getUserHasPassword(userId: string) {
   try {
-    // Verify the linked account belongs to this user before deleting
     const result = await connectionPool.query(
-      'DELETE FROM apiome.external_auth_providers WHERE id = $1 AND user_id = $2 RETURNING provider',
+      "SELECT (password IS NOT NULL AND password <> '') AS has_password FROM apiome.users WHERE id = $1",
+      [userId]
+    );
+    if (result.rowCount === 0) {
+      return JSON.stringify({ hasPassword: false });
+    }
+    return JSON.stringify({ hasPassword: !!result.rows[0].has_password });
+  } catch (error: any) {
+    console.error('Error checking user password state:', error);
+    return JSON.stringify({ hasPassword: false });
+  }
+}
+
+/**
+ * Unlinks an external OAuth identity from a user, guarding the last sign-in method (OLO-2.4).
+ *
+ * A user must always retain at least one way to sign in. Sign-in methods are the user's linked
+ * external identities plus a usable password (`getUserHasPassword`). The unlink is refused —
+ * with the stable `last-sign-in-method` code — when it would remove the user's only remaining
+ * method (their last linked identity and they have no usable password), because that would lock
+ * them out of their own account.
+ *
+ * The check and delete run in one transaction with `SELECT ... FOR UPDATE` on the user row, so
+ * two concurrent unlinks of a user's last two identities cannot both pass the count check and
+ * strand the account.
+ *
+ * @param userId The owning user.
+ * @param linkedAccountId The `external_auth_providers.id` of the identity to remove.
+ * @returns JSON string. On success `{ success: true, provider }`. On refusal
+ *   `{ success: false, code, error }` (`code` is `last-sign-in-method` for the guard; other
+ *   failures — not found / not owned — carry only `error`).
+ */
+export async function unlinkExternalAccount(userId: string, linkedAccountId: string) {
+  const client = await connectionPool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Lock the user row so concurrent unlinks for this user serialize through the same lock —
+    // this is what makes the "keep at least one method" count race-free.
+    const userResult = await client.query(
+      'SELECT password FROM apiome.users WHERE id = $1 FOR UPDATE',
+      [userId]
+    );
+    if (userResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return JSON.stringify({
+        success: false,
+        error: 'Linked account not found or does not belong to you'
+      });
+    }
+    const storedPassword = userResult.rows[0].password;
+    const hasUsablePassword = typeof storedPassword === 'string' && storedPassword.length > 0;
+
+    // Confirm the identity exists and belongs to this user before we count anything.
+    const ownership = await client.query(
+      'SELECT id FROM apiome.external_auth_providers WHERE id = $1 AND user_id = $2',
       [linkedAccountId, userId]
     );
-
-    if (result.rowCount === 0) {
+    if (ownership.rowCount === 0) {
+      await client.query('ROLLBACK');
       return JSON.stringify({
         success: false,
         error: 'Linked account not found or does not belong to you'
       });
     }
 
+    // Count the user's linked identities. When the password is not a usable method, the linked
+    // identities are the only sign-in methods, so the last one must not be removed.
+    const countResult = await client.query(
+      'SELECT COUNT(*)::int AS count FROM apiome.external_auth_providers WHERE user_id = $1',
+      [userId]
+    );
+    const identityCount = countResult.rows[0].count as number;
+
+    if (identityCount <= 1 && !hasUsablePassword) {
+      await client.query('ROLLBACK');
+      return JSON.stringify({
+        success: false,
+        code: AUTH_ERROR_CODES.LAST_SIGN_IN_METHOD,
+        error:
+          'This is your only sign-in method. Set a password or link another provider before unlinking it, so you keep access to your account.'
+      });
+    }
+
+    const deleted = await client.query(
+      'DELETE FROM apiome.external_auth_providers WHERE id = $1 AND user_id = $2 RETURNING provider',
+      [linkedAccountId, userId]
+    );
+    await client.query('COMMIT');
+
     return JSON.stringify({
       success: true,
-      provider: result.rows[0].provider
+      provider: deleted.rows[0].provider
     });
   } catch (error: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
     console.error('Error unlinking external account:', error);
     return JSON.stringify({ success: false, error: error.message });
+  } finally {
+    client.release();
   }
 }
 
