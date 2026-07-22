@@ -2,9 +2,10 @@
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for AccessDenied 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -16,9 +17,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for CredentialsSignin 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -33,6 +35,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
   aria-live="polite"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-blue-200 bg-blue-50/80 text-blue-800 dark:border-blue-700/60 dark:bg-blue-900/30 dark:text-blue-200"
   data-testid="login-banner"
+  role="status"
 >
   <p
     class="text-sm font-medium"
@@ -44,9 +47,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for OAuthEmailRequired 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -84,9 +88,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for OAuthProfileIncomplete 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -124,9 +129,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for SignupSessionExpired 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -164,9 +170,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for account-disabled 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -178,9 +185,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for account-not-verified 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -218,9 +226,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for identity-linked-elsewhere 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -230,11 +239,27 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 </div>
 `;
 
-exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for membership-suspended 1`] = `
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for last-sign-in-method 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
+>
+  <p
+    class="text-sm font-medium"
+  >
+    That account is your only way to sign in. Set a password or link another provider before unlinking it, so you keep access to your account.
+  </p>
+</div>
+`;
+
+exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for membership-suspended 1`] = `
+<div
+  aria-live="assertive"
+  class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
+  data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -246,9 +271,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for provider-already-linked 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -260,9 +286,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for provider-not-configured 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -277,6 +304,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
   aria-live="polite"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-blue-200 bg-blue-50/80 text-blue-800 dark:border-blue-700/60 dark:bg-blue-900/30 dark:text-blue-200"
   data-testid="login-banner"
+  role="status"
 >
   <p
     class="text-sm font-medium"
@@ -288,9 +316,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`every known auth error code renders its own banner (OLO-3.2) renders the banner for unverified-email 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -328,9 +357,10 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
 
 exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for "   " without echoing the code: generic banner 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -368,9 +398,10 @@ exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for
 
 exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for "<script>alert(1)</script>" without echoing the code: generic banner 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"
@@ -408,9 +439,10 @@ exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for
 
 exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for "some-code-from-the-future" without echoing the code: generic banner 1`] = `
 <div
-  aria-live="polite"
+  aria-live="assertive"
   class="mb-6 rounded-2xl border p-4 backdrop-blur-sm border-red-200 bg-red-50/80 text-red-800 dark:border-red-700/60 dark:bg-red-900/30 dark:text-red-200"
   data-testid="login-banner"
+  role="alert"
 >
   <p
     class="text-sm font-medium"

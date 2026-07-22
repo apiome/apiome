@@ -46,7 +46,9 @@ const SSOButton: React.FC<SSOButtonProps> = ({ provider, icon, onClick, isSignUp
         dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200
         dark:hover:border-indigo-400/40 dark:hover:bg-white/[0.08] dark:hover:shadow-indigo-950/40`}
     >
-      <span className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">{icon}</span>
+      {/* Decorative brand mark — the button's text label carries the accessible name, so the
+          icon is hidden from assistive tech (some react-icons set role="img" without a title). */}
+      <span aria-hidden="true" className="flex-shrink-0 transition-transform duration-200 group-hover:scale-110">{icon}</span>
       <span className="font-semibold">{label}</span>
     </button>
   );
@@ -195,7 +197,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
       {/* Beta Background */}
       {isBetaMode && <BetaBackground />}
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-16 px-6 py-12 lg:grid lg:grid-cols-[1.05fr_1fr]">
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-16 px-6 py-12 lg:grid lg:grid-cols-[1.05fr_1fr]">
         {/* Brand hero (desktop) */}
         <div className={`${styles.enterSlow} hidden lg:flex flex-col justify-center select-none`}>
           <img
@@ -240,7 +242,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
         </div>
 
         {/* Auth card */}
-        <div className={`${styles.enter} w-full max-w-md lg:justify-self-end`}>
+        <div data-testid="login-card" className={`${styles.enter} w-full max-w-md lg:justify-self-end`}>
           <div
             className="rounded-[28px] p-px shadow-2xl shadow-indigo-500/10 dark:shadow-black/50
               bg-gradient-to-b from-white/90 via-slate-200/70 to-slate-200/40
@@ -285,10 +287,13 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                 )}
               </div>
 
-              {/* Message Display — per-code copy and affordances (OLO-3.2) */}
+              {/* Message Display — per-code copy and affordances (OLO-3.2).
+                  Errors announce assertively via role="alert" so a screen reader interrupts
+                  with the failure; success/info updates stay polite (OLO-3.5, a11y). */}
               {message && (
                 <div
-                  aria-live="polite"
+                  role={message.type === 'error' ? 'alert' : 'status'}
+                  aria-live={message.type === 'error' ? 'assertive' : 'polite'}
                   data-testid="login-banner"
                   className={`mb-6 rounded-2xl border p-4 backdrop-blur-sm ${
                     message.type === 'success'
@@ -388,11 +393,13 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                         <User size={18} className={fieldIconClasses} />
                       </div>
                       <input
+                        id="name"
                         type="text"
                         name={'name'}
                         value={payload['name']}
                         onChange={handleChange}
                         required
+                        autoComplete="name"
                         className={inputClasses}
                         placeholder="John Doe"
                       />
@@ -409,11 +416,13 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                       <Mail size={18} className={fieldIconClasses} />
                     </div>
                     <input
+                      id="email"
                       type="email"
                       name={'email'}
                       value={payload['email']}
                       onChange={handleChange}
                       required
+                      autoComplete="email"
                       className={inputClasses}
                       placeholder="you@example.com"
                     />
@@ -429,11 +438,13 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                       <Lock size={18} className={fieldIconClasses} />
                     </div>
                     <input
+                      id="password"
                       type="password"
                       name={'password'}
                       value={payload['password']}
                       onChange={handleChange}
                       required
+                      autoComplete={isSignUp ? 'new-password' : 'current-password'}
                       className={inputClasses}
                       placeholder="••••••••"
                     />
@@ -451,6 +462,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
                         <Info size={18} className={fieldIconClasses} />
                       </div>
                       <input
+                        id="signupSource"
                         type="text"
                         name={'signupSource'}
                         value={payload['signupSource'] || ''}
@@ -539,7 +551,7 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
             </a>
           </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
