@@ -1,49 +1,81 @@
 # PLAN — Next Features for RC4
 
-> **Status:** Assessment & execution plan (2026-07-22)  
+> **Status:** Execution plan (updated 2026-07-22 after backlog triage)  
 > **Audience:** release planning for **Apiome 07-2026 RC4**  
-> **Sources:** open GitHub issues on `apiome/apiome` (+ Designer issues on `apiome/private-suite`), `private-suite/docs/roadmaps/ROADMAP_NEXT_PRODUCT_SEQUENCE.md`, `ROADMAP_FINAL_RC2.md`, and recent completion evidence (MTG / CLX / EFP / SIM / GOV / CTG / DCW).  
-> **This document files no new issues** — it sequences already-filed work.
+> **Sources:** open GitHub issues on `apiome/apiome` (+ Designer issues on `apiome/private-suite`), `private-suite/docs/roadmaps/ROADMAP_NEXT_PRODUCT_SEQUENCE.md`, `ROADMAP_FINAL_RC2.md`, and completion evidence (MTG / CLX / EFP / SIM / GOV / CTG / DCW).  
+> **GitHub milestones:** [RC4](https://github.com/apiome/apiome/milestone/1) · [RC5](https://github.com/apiome/apiome/milestone/2) · [Future](https://github.com/apiome/apiome/milestone/3)
 
 ---
 
 ## 1. Assessment summary
 
-| Metric | Count (approx.) | Notes |
+| Metric | Count | Notes |
 |---|---:|---|
-| Open issues (`apiome/apiome`) | ~841 | No GitHub milestones assigned |
-| Open `mvp`-labeled issues | ~140 | Primary RC sequencing input |
-| Dominant open backlog | MFX (~198) + MFI (~117) | Mostly long-tail emitters / adapters — **not** all RC4 |
-| Recently completed themes (RC3 window) | MTG, CLX, EFP | Tenant MCP governance, catalog/MCP lint excellence, export fidelity projection |
-| Hosted Mock / Try-It (SIM) | MVP children closed | Umbrella #4411 still open administratively |
-| Governance style guides (GOV) | MVP closed | Remaining = Spectral importer / v2 cross-format |
-| Breaking-change gates (CTG) | MVP closed | Remaining = consumer/live/scheduled v2 |
-| Designer Contract Workbench (DCW) | MVP closed in private-suite | Remaining = v2 (0.5, 1.5, 2.4–2.5, 3.4) |
+| Open issues (`apiome/apiome`) | **823** | Was ~841 before triage; −30 closed, +12 new epics |
+| Milestone coverage | **100%** | Every open issue is on RC4, RC5, or Future |
+| `mvp` / `v2` label coverage | **100%** | No open issue lacks an MVP/V2 band label |
+| [RC4](https://github.com/apiome/apiome/milestone/1) open | **79** (~78 `mvp`) | Critical path for this release |
+| [RC5](https://github.com/apiome/apiome/milestone/2) open | **124** (~83 `mvp`) | COL / GNC / AGX and near-term leftovers |
+| [Future](https://github.com/apiome/apiome/milestone/3) open | **620** | Long-tail MFX/MFI, conceptual backlog, true v2 |
+| Dominant Future backlog | MFX + MFI long-tail | Emitters/adapters — not RC4 |
 
-**Verdict:** RC3 closed the *evidence and governance substrate* (lint posture, export fidelity, tenant MCP policy). RC4 should convert that substrate into the next golden-path outcomes: **honest catalog conversion evidence**, **portable/executable contracts**, and the **first paid client artifacts (SDKs)** — without absorbing the entire MFX/MFI long tail.
+**Verdict:** RC3 closed the *evidence and governance substrate* (lint posture, export fidelity, tenant MCP policy). Backlog triage then made the remaining work schedulable. RC4 converts that substrate into **honest catalog conversion evidence**, **portable/executable contracts**, and the **first paid client artifacts (SDKs)** — without absorbing the MFX/MFI long tail.
 
-### 1.1 What RC3 effectively shipped (do not re-plan)
+### 1.1 Ticket triage completed (2026-07-22)
+
+Housekeeping that Phase 0 of this plan called for is **done**:
+
+| Action | Result |
+|---|---|
+| Create milestones | **RC4**, **RC5**, **Future** created and assigned to all open issues |
+| Fill missing `mvp` / `v2` labels | Applied across the backlog (0 unlabeled remaining) |
+| Create missing epics | **ECA** #4941–#4944 · **PMR** #4945–#4948 · **GNC** #4949–#4951 · **SGD** #4952 |
+| Close completed umbrellas/epics | SIM #4411, MTG #4759, GOV-EPIC-2 #4425, CTG-EPIC-1 #4459, RC1 Phases 0–3 (#3603–#3606) |
+| Close superseded duplicates | 22 conceptual `[Epic]` tickets replaced by modern roadmaps (mock/SDK/COL/CTG/GOV/MFI-MFX) |
+
+**Closed as completed (MVP shipped):**
+
+| # | Title |
+|---|---|
+| 4411 | [SIM] Hosted Mock Servers & Portal Try-It Console (umbrella) |
+| 4759 | [MTG] MCP Configurability in Tenants (umbrella) — leftover: #4764 v2 |
+| 4425 | [GOV-EPIC-2] Governance UI |
+| 4459 | [CTG-EPIC-1] Breaking-Change Semantics |
+| 3603–3606 | RC1 Phases 0–3 |
+
+**Closed as duplicate / superseded (representative):** #956, #1005, #1011, #1126–#1144, #1150–#1169, #1294, #1318–#1319, #1331, #1372, #1384, #1410, #1422, #1438, #1478, #1737 — each comments pointing at the owning modern umbrella (SIM/PMR, SDK/SGD, COL, CTG/ECA, GOV/CLX, MFI/MFX).
+
+**New epic parents (use these in boards and PR links):**
+
+| Track | Umbrella | Child epics |
+|---|---|---|
+| Executable contracts | [ECA #4941](https://github.com/apiome/apiome/issues/4941) | #4942 Foundation · #4943 Runners/CI · #4944 Evidence/Gates |
+| Portable mock | [PMR #4945](https://github.com/apiome/apiome/issues/4945) | #4946 Runtime · #4947 Fixtures · #4948 CI/attestation |
+| Git-native collab | [GNC #4949](https://github.com/apiome/apiome/issues/4949) (RC5) | #4950 Sync · #4951 Team flow |
+| SDK compatibility | [SGD #4952](https://github.com/apiome/apiome/issues/4952) | owns #4735 (MVP) / #4736 (v2) |
+
+### 1.2 What RC3 effectively shipped (do not re-plan)
 
 | Theme | Umbrella / label | Evidence |
 |---|---|---|
-| Tenant MCP governance | MTG #4759 | MVP epics closed; WHATS_NEW RC3; only #4764 (v2 profiles/ops) + umbrella remain |
+| Tenant MCP governance | MTG **#4759 closed** | MVP shipped; WHATS_NEW RC3; leftover **#4764** (Future/v2) |
 | Catalog & MCP lint excellence | CLX | All CLX-1…4 epics closed (2026-07-14/15) |
-| Export fidelity projection | EFP #4807–#4809 | All EFP issues closed (2026-07-15) |
-| Hosted mock + Try-It | SIM #4411 | SIM-1/2/3 (+ most v2) children closed |
-| Style guides MVP | GOV #4423 | GOV-1.x / GOV-2.x closed |
-| Breaking-change CI MVP | CTG #4458 | CTG-1.x / 2.x / 3.1–3.3 closed |
+| Export fidelity projection | EFP | All EFP issues closed (2026-07-15) |
+| Hosted mock + Try-It | SIM **#4411 closed** | Children closed; portable work continues under PMR #4945 |
+| Style guides MVP | GOV | GOV-2.x / GOV-EPIC-2 closed; #4431/#4432 + GOV-3.x remain (RC5/Future) |
+| Breaking-change CI MVP | CTG | CTG-1.x / CTG-EPIC-1 closed; CI/publish leftovers on RC5; CTG-4.x Future |
 | Designer workbench MVP | DCW (private-suite) | DCW-0.1–0.4 and DCW-1.1–3.3 closed |
 
-### 1.2 Remaining portfolio (grouped)
+### 1.3 Remaining portfolio (grouped by milestone)
 
-| Band | Initiatives | RC4 posture |
+| Band | Initiatives | Milestone |
 |---|---|---|
-| **A — Foundation closeout** | OLO remaining polish; CPDO; MFI-22.7 passthrough; MFI-29.3–29.6 intake safety | **In RC4** (core) |
-| **B — Make contracts executable everywhere** | PMR portable mock; ECA suite/runner/policy | **In RC4** (core) |
-| **C — Monetizable consumption** | SDK jobs + TS/Python + UI/CLI + SGD manifest | **In RC4** if capacity after A+B |
-| **D — Team workflows** | COL comments/review; GNC Git binding | **RC5 candidate** |
-| **E — Category bet** | AGX managed invocation | **After** PMR + SDK + COL basics |
-| **F — Breadth / defer** | MFX long-tail emitters, MFI-31/32 collections, GOV/CTG v2, MTG-5, Authoring APX polish | **Out of RC4** unless a specific demo needs one emitter fix |
+| **A — Foundation closeout** | OLO remaining polish; CPDO; MFI-22.7; MFI-29.3–29.6 | **RC4** |
+| **B — Executable everywhere** | PMR (#4945); ECA (#4941) | **RC4** |
+| **C — Monetizable consumption** | SDK jobs + TS/Python + UI/CLI + SGD #4952 | **RC4** (stretch after A+B) |
+| **D — Team workflows** | COL; GNC (#4949) | **RC5** |
+| **E — Category bet** | AGX managed invocation | **RC5** (after PMR + COL basics) |
+| **F — Breadth / defer** | MFX/MFI long-tail, GOV-3, CTG-4, MTG-5, Authoring polish | **Future** |
 
 ```mermaid
 flowchart TB
@@ -57,18 +89,18 @@ flowchart TB
     DCW[DCW workbench MVP]
   end
 
-  subgraph rc4 [RC4]
+  subgraph rc4 [RC4 milestone]
     OLO[OLO closeout]
     CPDO[CPDO catalog evidence]
     MFI[MFI passthrough + intake safety]
-    PMR[PMR portable mock]
-    ECA[ECA executable assurance]
-    SDK[SDK TS/Python MVP]
+    PMR[PMR portable mock #4945]
+    ECA[ECA executable assurance #4941]
+    SDK[SDK TS/Python + SGD #4952]
   end
 
-  subgraph later [Later]
+  subgraph rc5 [RC5 milestone]
     COL[COL review]
-    GNC[GNC Git-native]
+    GNC[GNC Git-native #4949]
     AGX[AGX governed agents]
   end
 
@@ -89,20 +121,25 @@ flowchart TB
 
 That continues the suite thesis from `ROADMAP_NEXT_PRODUCT_SEQUENCE.md`: *heterogeneous definitions → trusted, governed, executable contracts → human / SDK / agent consumption.*
 
+**Board filter:** `milestone:RC4 is:open` (prefer `label:mvp` for the critical path).
+
 ---
 
 ## 3. Ordered execution plan
 
-Phases are dependency-ordered. Within a phase, **MVP tickets ship before v2**. Parallel tracks are called out explicitly.
+Phases are dependency-ordered. Within a phase, **MVP tickets ship before v2**. Parallel tracks are called out explicitly. All tickets below are on milestone **RC4** unless noted.
 
-### Phase 0 — Housekeeping & umbrella hygiene (½–1 day)
+### Phase 0 — Housekeeping & umbrella hygiene — **DONE**
 
-Close or update umbrellas whose MVP children are done so RC4 planning stays honest:
-
-| Order | Action | Issues |
+| Order | Action | Status |
 |---:|---|---|
-| 0.1 | Close or mark “MVP complete / tracking leftovers” | SIM #4411, GOV #4423 (MVP), CTG #4458 (MVP), MTG #4759 (MVP), DCW epics in private-suite |
-| 0.2 | Leave open for RC4/v2 | MTG-EPIC-5 #4764, GOV-1.5/1.6/3.x, CTG-3.4/4.x, MFX studio polish |
+| 0.1 | Close completed umbrellas (SIM, MTG, GOV-EPIC-2, CTG-EPIC-1, RC1 0–3) | **Done** |
+| 0.2 | Close superseded conceptual epics | **Done** (22 duplicates) |
+| 0.3 | Create RC4 / RC5 / Future milestones and assign all open issues | **Done** |
+| 0.4 | Ensure `mvp` / `v2` labels on every open issue | **Done** |
+| 0.5 | Create ECA / PMR / GNC / SGD epic parents | **Done** (#4941–#4952) |
+
+Remaining open leftovers intentionally **not** closed: MTG-EPIC-5 #4764, GOV-1.5/1.6/3.x, CTG-2.4/3.4/4.x, MFX studio polish (RC4), long-tail MFX/MFI (Future).
 
 ---
 
@@ -123,7 +160,7 @@ Close or update umbrellas whose MVP children are done so RC4 planning stays hone
 
 **Exit evidence:** new user → OAuth → first tenant → Free license enforced → tenant switch → journey test green; epics #4185–#4222 closed or reduced to docs-only leftovers.
 
-**Defer:** full Stripe billing, SCIM/SSO enterprise (Phase 7 enterprise readiness).
+**Defer:** full Stripe billing, SCIM/SSO enterprise (portfolio enterprise readiness).
 
 ---
 
@@ -151,13 +188,13 @@ Close or update umbrellas whose MVP children are done so RC4 planning stays hone
 
 **Exit evidence:** catalog item shows immutable analysis; Convert-to-OpenAPI shows retained/inferred/dropped/unavailable nodes with source pointers; API/CLI/UI agree for a fixed revision.
 
-**Related but sequenced adjacent (not all required for CPDO demo):**
+**Related but sequenced adjacent:**
 
 | Issue | Title | RC4 note |
 |---|---|---|
-| **#4008** MFI-22.7 | OpenAPI-native passthrough detection | **Include** — unlocks honest “already OpenAPI” path in conversion |
+| **#4008** MFI-22.7 | OpenAPI-native passthrough detection | **Include** — honest “already OpenAPI” path |
 | **#4009** MFI-22.8 | Per-format conversion packs | Stretch / partial — only packs needed for CPDO fixtures |
-| MFI-EPIC-25/26 leftovers | Catalog UI parity | Only if they block CPDO tabs |
+| MFI-EPIC-25/26 leftovers | Catalog UI parity | Only if they block CPDO tabs (mostly RC5/`mvp` residual) |
 
 ---
 
@@ -172,7 +209,7 @@ MVP slices 29.1/29.2 are closed. Remaining tickets harden real-world intake and 
 | 3.3 | Git-repo intake for adapter formats | **#4390** MFI-29.3 | Should |
 | 3.4 | Bulk import of independent specs | **#4392** MFI-29.5 | Should |
 
-**Defer:** MFI-EPIC-31 drift (#4386), MFI-EPIC-32 collections/HAR (#4387) → post-RC4 (pair with CTG/ECA alerting later).
+**Defer (Future):** MFI-EPIC-31 drift (#4386), MFI-EPIC-32 collections/HAR (#4387).
 
 ---
 
@@ -187,50 +224,50 @@ Five MVP emitters’ core tickets are largely closed; epics remain open for opti
 | 4.3 | Mockup/design/a11y parity | **#4352** MFX-41.5 |
 | 4.4 | Large-output guards (if blocking demos) | **#4365** MFX-43.5 |
 
-**Defer:** MFX-EPIC-37…46 breadth (Orchestra, delivery channels, batch schedules, test-drive tooling, viz modes) unless a customer demo requires a specific target.
+**Defer (Future):** MFX-EPIC-37…46 breadth (Orchestra, delivery channels, batch schedules, test-drive tooling, viz modes) unless a customer demo requires a specific target.
 
-**Optional emitter polish (only if a target is broken in the RC4 demo script):** OpenAPI 3.2 option #4342; GraphQL federation #4344; Connect-RPC flavor #4343 — treat as hotfix track, not a phase.
+**Optional emitter polish (hotfix track only):** OpenAPI 3.2 #4342; GraphQL federation #4344; Connect-RPC flavor #4343.
 
 ---
 
-### Phase 5 — Portable Mock Runtime (PMR) · follows SIM
+### Phase 5 — Portable Mock Runtime (PMR) · umbrella **#4945**
 
-Hosted mock is done. Package the same semantics for CLI/Docker/CI so ECA and SDK validation have a deterministic offline target.
+Hosted SIM is closed. Package the same semantics for CLI/Docker/CI so ECA and SDK validation have a deterministic offline target.
 
-| Order | Work | Issues | MVP? |
-|---:|---|---|---|
-| 5.1 | Mock bundle format (version-pinned, secret-free) | **#4741** PMR-1.1 | Y |
-| 5.2 | CLI + Docker mock runtime | **#4742** PMR-1.2 | Y |
-| 5.3 | Declarative matching & templates | **#4744** PMR-2.1 | Y |
-| 5.4 | Fixture packs & data lifecycle | **#4745** PMR-2.2 | Y |
-| 5.5 | Mock CI action + conformance corpus | **#4748** PMR-3.1 | Y |
+| Order | Work | Issues | Epic | MVP? |
+|---:|---|---|---|---|
+| 5.1 | Mock bundle format (version-pinned, secret-free) | **#4741** PMR-1.1 | #4946 | Y |
+| 5.2 | CLI + Docker mock runtime | **#4742** PMR-1.2 | #4946 | Y |
+| 5.3 | Declarative matching & templates | **#4744** PMR-2.1 | #4947 | Y |
+| 5.4 | Fixture packs & data lifecycle | **#4745** PMR-2.2 | #4947 | Y |
+| 5.5 | Mock CI action + conformance corpus | **#4748** PMR-3.1 | #4948 | Y |
 
-**Defer:** serverless adapter #4743, callbacks #4746, proxy capture #4747, attestation #4749.
+**Defer (Future):** serverless #4743, callbacks #4746, proxy capture #4747, attestation #4749.
 
 **Exit evidence:** same fixture corpus passes against hosted SIM and `apiome mock` / Docker; CI job starts pinned mock, runs corpus, tears down.
 
 ---
 
-### Phase 6 — Executable Contract Assurance (ECA)
+### Phase 6 — Executable Contract Assurance (ECA) · umbrella **#4941**
 
 CTG already classifies and gates diffs. ECA makes a published version *runnable* and policy-backed.
 
-| Order | Work | Issues | Depends on |
-|---:|---|---|---|
-| 6.1 | Version contract-suite compiler | **#4729** ECA-1.1 | Published canonical model |
-| 6.2 | Environment & target registry | **#4730** ECA-1.2 | Secrets/SSRF patterns from MFI-29.4 |
-| 6.3 | Verification evidence schema | **#4731** ECA-1.3 | 6.1 + 6.2 |
-| 6.4 | HTTP contract runner | **#4732** ECA-2.1 | Prefer PMR/SIM as first target |
-| 6.5 | CLI `apiome verify contract` | **#4733** ECA-2.2 | 6.4 |
-| 6.6 | Evidence-backed policy evaluator | **#4734** ECA-3.1 | 6.3 + existing CTG publish classification |
+| Order | Work | Issues | Epic | Depends on |
+|---:|---|---|---|---|
+| 6.1 | Version contract-suite compiler | **#4729** ECA-1.1 | #4942 | Published canonical model |
+| 6.2 | Environment & target registry | **#4730** ECA-1.2 | #4942 | Secrets/SSRF from MFI-29.4 |
+| 6.3 | Verification evidence schema | **#4731** ECA-1.3 | #4942 | 6.1 + 6.2 |
+| 6.4 | HTTP contract runner | **#4732** ECA-2.1 | #4943 | Prefer PMR/SIM as first target |
+| 6.5 | CLI `apiome verify contract` | **#4733** ECA-2.2 | #4943 | 6.4 |
+| 6.6 | Evidence-backed policy evaluator | **#4734** ECA-3.1 | #4944 | 6.3 + CTG publish classification |
 
-**Stretch (not required to call RC4 ECA-complete):** CTG-3.4 breaking-publish guardrail #4478; CTG-4.x consumer/live/scheduled.
+**Stretch / RC5:** CTG-3.4 breaking-publish guardrail #4478; CTG-4.x consumer/live/scheduled (Future).
 
 **Exit evidence:** compile suite → run vs PMR mock → deliberate break fails → JUnit/JSON evidence → policy decision cites evidence IDs.
 
 ---
 
-### Phase 7 — SDK Generation MVP (capacity-gated) · umbrella **#4457**
+### Phase 7 — SDK Generation MVP (capacity-gated) · umbrellas **#4457** + **#4952**
 
 Only start after Phases 5–6 have a stable mock + verify loop (generators reuse export/job patterns and should be proven against the contract suite).
 
@@ -242,33 +279,32 @@ Only start after Phases 5–6 have a stable mock + verify loop (generators reuse
 | 7.4 | Fixture corpus & snapshot CI | **#4484** SDK-1.4 (grows with 7.5–7.6) |
 | 7.5 | TypeScript client generator | **#4485** SDK-2.1 |
 | 7.6 | Python client generator | **#4486** SDK-2.2 |
-| 7.7 | Generator compatibility manifest | **#4735** SGD-2.1 |
+| 7.7 | Generator compatibility manifest | **#4735** SGD-2.1 (under #4952) |
 | 7.8 | CLI `apiome generate sdk` | **#4492** SDK-3.2 |
 | 7.9 | Generate SDK dialog | **#4491** SDK-3.1 |
 
-**Defer:** Go/stubs/snippets (#4487–#4490), package publishing (#4495+), Browse Get SDK (#4493), Terraform/MCP artifact (#4498–#4499), SGD beacon #4736.
+**Defer (RC5/Future):** Go/stubs/snippets (#4487–#4490), package publishing (#4495+), Browse Get SDK (#4493), Terraform/MCP artifact (#4498–#4499), SGD beacon #4736.
 
 **Exit evidence:** regenerate TS+Python for pinned corpus with stable digests; clients pass ECA suite against PMR mock; unsupported constructs appear in SGD manifest (never silent).
 
 ---
 
-## 4. Explicitly out of RC4 (next candidates)
+## 4. Explicitly out of RC4 (milestone RC5 / Future)
 
-Keep these filed but **do not** pull them into the RC4 critical path:
+| Initiative | Entry points | Milestone | Why wait |
+|---|---|---|---|
+| Collaboration MVP | COL #4508 / #4513–#4522 | **RC5** | Durable review before Git sync |
+| Git-native collaboration | GNC #4949 / #4737–#4740 | **RC5** | Depends on COL + three-way sync risk |
+| Agent Experience | AGX #4503 / #4529–#4540 | **RC5** | Needs PMR, secrets, quotas; MTG ceilings already shipped |
+| GOV leftovers | #4431–#4432; GOV-3 #4438–#4442 | **RC5** / **Future** | Spectral import near-term; cross-format after CPDO |
+| CTG leftovers | #4474, #4478; CTG-4.x | **RC5** / **Future** | Recipes/guardrail near-term; consumer/live later |
+| MFX delivery/batch/MCP export | #4327–#4341 | **Future** | After Studio MVP polish |
+| MFI drift & collections | #4386, #4387 | **Future** | After intake safety + ECA alerting |
+| MTG profiles/ops | #4764 | **Future** | v2 after MTG MVP close |
+| Authoring APX/UXE leftovers | private-suite | n/a (suite) | Do not block OSS RC4 golden path |
+| Enterprise SSO/SCIM / air-gap | portfolio Phase 7 | **Future** | After team workflows exist |
 
-| Initiative | Issues (entry points) | Why wait |
-|---|---|---|
-| Collaboration MVP | COL #4508 / #4513–#4522 | Needs durable review before Git sync; after SDK proves artifact value |
-| Git-native collaboration | GNC #4737–#4740 | Depends on COL + three-way sync risk |
-| Agent Experience | AGX #4503 / #4529–#4540 | Needs PMR, secrets, quotas, and stable contracts; MTG already supplies tenant ceilings |
-| GOV v2 | #4431–#4432, #4438–#4442 | Spectral import & cross-format rules after CPDO/canonical evidence |
-| CTG v2 | #4478–#4480, #4489, #4501–#4502 | Consumer/live/scheduled after ECA on-demand evidence |
-| MFX delivery/batch/MCP export | #4327–#4341, #4338+ | Enterprise ops after Studio MVP polish |
-| MFI drift & collections | #4386, #4387 | After intake safety + ECA alerting rail |
-| Authoring Platform APX/UXE leftovers | private-suite | Parallel suite product — do not block OSS RC4 golden path |
-| Enterprise SSO/SCIM / air-gap | portfolio Phase 7 | After team workflows exist |
-
-**Suggested RC5 opener:** COL-1/2 MVP → GNC-2.1/2.2 → AGX-1/2/3 MVP.
+**RC5 opener (now milestone-backed):** COL-1/2 MVP → GNC-2.1/2.2 (#4950) → AGX-1/2/3 MVP.
 
 ---
 
@@ -280,9 +316,9 @@ Keep these filed but **do not** pull them into the RC4 critical path:
 | **Catalog evidence** | 2 (+ #4008) | apiome-rest, apiome-ui, apiome-cli, apiome-db |
 | **Intake security** | 3 | apiome-rest, apiome-cli |
 | **Export Studio polish** | 4 | apiome-ui (thin rest) |
-| **Mock portability** | 5 | apiome-mock, apiome-cli, CI |
-| **Contract runtime** | 6 | apiome-rest, apiome-cli, apiome-db |
-| **Codegen** | 7 | apiome-rest, generators, apiome-ui, apiome-cli |
+| **Mock portability** | 5 · #4945 | apiome-mock, apiome-cli, CI |
+| **Contract runtime** | 6 · #4941 | apiome-rest, apiome-cli, apiome-db |
+| **Codegen** | 7 · #4457 + #4952 | apiome-rest, generators, apiome-ui, apiome-cli |
 
 Safe concurrency:
 
@@ -298,20 +334,29 @@ Unsafe concurrency: AGX with unfinished secret/SSRF rails; SDK packaging before 
 
 ## 6. RC4 release checklist
 
+### Backlog hygiene
+- [x] GitHub milestones RC4 / RC5 / Future created and assigned
+- [x] Every open issue has `mvp` or `v2` (or `v2-enterprise`)
+- [x] Stale completed umbrellas closed (SIM / MTG / GOV-EPIC-2 / CTG-EPIC-1 / RC1 0–3)
+- [x] Superseded conceptual epics closed as duplicates
+- [x] ECA / PMR / GNC / SGD epic parents filed (#4941–#4952)
+
+### Product exit
 - [ ] OLO remaining tickets closed or waived with documented risk
 - [ ] CPDO epics #4790–#4793 meet MVP definition in their roadmap
 - [ ] MFI-29.4 + 29.6 closed; no secrets in catalog/analysis defaults
 - [ ] Export Studio deep-link + re-verify polish demoable
-- [ ] PMR MVP (#4741, #4742, #4744, #4745, #4748) green in CI
-- [ ] ECA MVP (#4729–#4734) green against PMR
-- [ ] (Stretch) SDK TS+Python + SGD-2.1 + CLI/UI retrieve same artifact
+- [ ] PMR MVP under #4945 (#4741, #4742, #4744, #4745, #4748) green in CI
+- [ ] ECA MVP under #4941 (#4729–#4734) green against PMR
+- [ ] (Stretch) SDK TS+Python + SGD-2.1 (#4735 / #4952) + CLI/UI retrieve same artifact
 - [ ] OpenAPI version bumped for all REST contract changes (`AGENTS.md`)
 - [ ] `apiome-ui/public/WHATS_NEW.md` updated for **RC4**
-- [ ] Stale umbrellas closed or annotated (SIM/GOV/CTG/MTG MVP)
 
 ---
 
 ## 7. Ticket index (RC4-critical)
+
+Filter: [`milestone:RC4 is:open`](https://github.com/apiome/apiome/milestone/1). Prefer `label:mvp`.
 
 ### Must-ship
 
@@ -355,6 +400,16 @@ Unsafe concurrency: AGX with unfinished secret/SSRF rails; SDK packaging before 
 | 4733 | ECA-2.2 CLI contract verification command |
 | 4734 | ECA-3.1 Evidence-backed policy evaluator |
 
+### Epic parents (tracking)
+
+| # | Title |
+|---|---|
+| 4941 | [ECA] Executable Contract Assurance (umbrella) |
+| 4942–4944 | ECA-EPIC-1…3 |
+| 4945 | [PMR] Portable Mock Runtime (umbrella) |
+| 4946–4948 | PMR-EPIC-1…3 |
+| 4952 | [SGD] SDK Generation Delivery & Compatibility (umbrella) |
+
 ### Should-ship
 
 | # | Title |
@@ -364,14 +419,14 @@ Unsafe concurrency: AGX with unfinished secret/SSRF rails; SDK packaging before 
 | 4352 | MFX-41.5 Mockup extension + design/a11y parity pass |
 | 4365 | MFX-43.5 Large-output guards + viewer actions |
 
-### Stretch (RC4 if capacity; otherwise RC5 opener)
+### Stretch (RC4 if capacity; otherwise start of RC5)
 
 | # | Title |
 |---|---|
 | 4481–4486 | SDK-1.x + TS/Python generators |
 | 4735 | SGD-2.1 Generator compatibility manifest |
 | 4491–4492 | SDK UI + CLI |
-| 4478 | CTG-3.4 Breaking-publish guardrail |
+| 4478 | CTG-3.4 Breaking-publish guardrail (**RC5**) |
 
 ---
 
@@ -379,10 +434,11 @@ Unsafe concurrency: AGX with unfinished secret/SSRF rails; SDK packaging before 
 
 | Document | Role vs this plan |
 |---|---|
-| `ROADMAP_FINAL_RC2.md` | Historical RC2→GA sequence; early phases are partially stale (SIM/GOV/CTG MVP now done) |
-| `ROADMAP_NEXT_PRODUCT_SEQUENCE.md` | Authoritative portfolio order — RC4 implements Phase 0 remainder + Phase 2 PMR + Phase 3 ECA (+ Phase 4 SDK stretch) |
-| Individual `ROADMAP_*.md` files | Implementation detail / acceptance criteria — execute against those, not this summary |
+| GitHub milestones RC4 / RC5 / Future | **Scheduling source of truth** after 2026-07-22 triage |
+| `ROADMAP_FINAL_RC2.md` | Historical RC2→GA sequence; early phases stale (SIM/GOV/CTG MVP done) |
+| `ROADMAP_NEXT_PRODUCT_SEQUENCE.md` | Authoritative portfolio order — RC4 = Phase 0 remainder + PMR + ECA (+ SDK stretch) |
+| Individual `ROADMAP_*.md` files | Implementation detail / acceptance criteria — execute against those for ticket scope |
 
 ---
 
-*Last updated: 2026-07-22 · Target release: Apiome RC4*
+*Last updated: 2026-07-22 · Target release: Apiome RC4 · Triage applied same day*
