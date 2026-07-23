@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .access_routes import platform_router as access_platform_router
 from .access_routes import router as access_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
+from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
 from .catalog_routes import router as catalog_router
@@ -100,7 +101,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.36.0",
+    version="1.37.0",
 )
 
 
@@ -367,6 +368,7 @@ async def startup_event():
             )
     validate_webhook_signing_key()
     validate_credential_encryption_keys()
+    validate_auth_config_encryption_keys()
 
     # Log data API routes so we can confirm POST /v1/data/{tenant_slug}/records is registered
     for route in app.routes:
