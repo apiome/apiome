@@ -11,6 +11,7 @@
 const mockHandler = jest.fn();
 const mockBetterAuth = jest.fn(() => ({ handler: mockHandler }));
 const mockNextCookies = jest.fn(() => ({ id: 'next-cookies' }));
+const mockGenericOAuth = jest.fn(() => ({ id: 'generic-oauth' }));
 const mockCreateAuthClient = jest.fn(() => ({
   signIn: jest.fn(),
   signOut: jest.fn(),
@@ -21,6 +22,10 @@ const mockCreateAuthClient = jest.fn(() => ({
 jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/react', () => ({ createAuthClient: mockCreateAuthClient }));
+// `better-auth/plugins/generic-oauth` is ESM-only and is registered by auth.ts for the OLO-10.7 OAuth
+// providers; stub the plugin factory so the instance loads (the provider construction itself is
+// covered by `better-auth-oauth-providers.test.ts`).
+jest.mock('better-auth/plugins/generic-oauth', () => ({ genericOAuth: mockGenericOAuth }));
 // `better-auth/api` is ESM-only (ts-jest's CommonJS transform cannot require it). The credential
 // wiring (`better-auth-credentials.ts`, transitively imported by auth.ts) calls createAuthMiddleware
 // at module load, so stub it to return the handler unchanged and provide a minimal APIError.
@@ -80,9 +85,21 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(config.baseURL).toBe('https://app.example.test');
     expect(config.basePath).toBe('/api/auth');
     expect(config.database).toBeDefined();
-    // nextCookies must be registered (as the sole baseline plugin) so server actions can set cookies.
+    // Two plugins: the OLO-10.7 genericOAuth (the four OAuth providers) then nextCookies — which must
+    // stay LAST so Better Auth can set cookies from Next.js server actions.
+    expect(mockGenericOAuth).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(1);
+    expect(config.plugins).toHaveLength(2);
+    expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
+    // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
+    // the resolution engine has already admitted a verified sign-in (OLO-10.7).
+    expect(config.account.accountLinking.enabled).toBe(true);
+    expect([...config.account.accountLinking.trustedProviders].sort()).toEqual([
+      'azure',
+      'github',
+      'gitlab',
+      'google',
+    ]);
     expect(auth).toBeDefined();
   });
 
