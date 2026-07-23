@@ -47,6 +47,12 @@ const PROVIDER_FACTORIES: Record<
     return GithubProvider({
       clientId: readEnvString(env, 'GITHUB_ID') ?? '',
       clientSecret: readEnvString(env, 'GITHUB_SECRET') ?? '',
+      // CSRF `state` is enforced explicitly rather than left to NextAuth's default so a future
+      // refactor or dependency bump cannot silently drop it (OLO-7.3 regression insurance).
+      // GitHub OAuth Apps do not support PKCE; this is a confidential client that authenticates
+      // the code exchange with GITHUB_SECRET, so state + client_secret is the correct posture.
+      // (GitLab keeps its built-in `['pkce','state']` and Entra sets `['pkce','state','nonce']`.)
+      checks: ['state'],
       authorization: {
         url: `${oauthBase}/login/oauth/authorize`,
         params: { scope: GITHUB_OAUTH_SCOPE },

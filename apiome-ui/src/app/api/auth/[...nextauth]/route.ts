@@ -13,7 +13,11 @@ import {
   isSafeRelativeCallbackPath,
 } from '../../../../../lib/auth/cookie-options';
 import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
-import { resolveActiveTenantForLogin } from '../../../../../lib/auth/post-login-routing';
+import { AUTH_ERROR_CODES, loginErrorRedirect } from '../../../../../lib/auth/account-resolution';
+import {
+  resolveActiveTenantForLogin,
+  validateTenantSwitch,
+} from '../../../../../lib/auth/post-login-routing';
 import { resolveClientIp } from '../../../../../lib/auth/client-ip';
 import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
 import { readLastActiveTenantId } from '../../../../../lib/auth/last-active-tenant';
@@ -50,7 +54,10 @@ export const authOptions: NextAuthOptions = {
       const loginProvider = payload.account?.provider ?? '';
 
       if (!user) {
-        return '/login?error=User account not found';
+        // Defensive fallback: emit the stable, generic on-contract code (OLO-1.5/7.3) instead of
+        // a free-text "account not found" phrase so the redirect can neither drift from the
+        // contract nor hint at whether an account exists.
+        return loginErrorRedirect(AUTH_ERROR_CODES.SIGN_IN_FAILED);
       }
 
       // Credentials sign-ins run the account gates; every OAuth provider flows through the shared
@@ -111,8 +118,19 @@ export const authOptions: NextAuthOptions = {
           token.name = payload.session.user.name;
         }
 
-        if (payload.session?.current_tenant_id) {
-          token.current_tenant_id = payload.session.current_tenant_id;
+        // The requested tenant comes from the client (the tenant switcher calls
+        // update({ current_tenant_id })), so — like the login path — it must be
+        // re-validated against the user's live memberships before it enters the
+        // signed token (OLO-7.3 threat-model fix). Without this, a tampered
+        // update() could point server-side, tenant-scoped queries at a tenant the
+        // user does not belong to. validateTenantSwitch fails closed, so on any
+        // lookup failure the current tenant is left unchanged.
+        const requestedTenantId = payload.session?.current_tenant_id;
+        if (requestedTenantId && token.user_id) {
+          const validatedTenantId = await validateTenantSwitch(token.user_id, requestedTenantId);
+          if (validatedTenantId) {
+            token.current_tenant_id = validatedTenantId;
+          }
         }
       }
 

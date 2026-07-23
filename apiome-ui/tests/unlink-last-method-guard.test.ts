@@ -20,6 +20,12 @@ jest.mock('../lib/db/plan-entitlements', () => ({
   getPlanBlockMessageForNewVersion: jest.fn(async () => null),
 }));
 
+// These actions bind to the server session (OLO-7.3): they only act when the requested `userId`
+// matches the authenticated caller. The mock defaults to a session for USER; tests that exercise
+// the cross-user/anonymous refusal override it per-call.
+const getAuthSessionMock = jest.fn(async () => ({ user: { user_id: 'user-1' } }) as any);
+jest.mock('../lib/auth/server-session', () => ({ getAuthSession: () => getAuthSessionMock() }));
+
 const USER = 'user-1';
 const ACCOUNT = 'acct-1';
 
@@ -156,5 +162,84 @@ describe('getUserHasPassword', () => {
     const { getUserHasPassword } = await import('../lib/db/helper');
     const parsed = JSON.parse(await getUserHasPassword(USER));
     expect(parsed.hasPassword).toBe(false);
+  });
+});
+
+/**
+ * OLO-7.3 threat-model fix: the linked-account server actions receive `userId` as a client-supplied
+ * argument, so each must bind to the authenticated session and refuse when the caller is not that
+ * user. A cross-user or anonymous call must touch no database and disclose nothing beyond a generic
+ * not-found / fail-safe response.
+ */
+describe('linked-account actions — session binding (OLO-7.3 IDOR guard)', () => {
+  const ATTACKER_SESSION = { user: { user_id: 'attacker' } } as any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('unlinkExternalAccount refuses when the session user differs from the requested userId', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { unlinkExternalAccount } = await import('../lib/db/helper');
+    const res = JSON.parse(await unlinkExternalAccount(USER, ACCOUNT));
+    expect(res.success).toBe(false);
+    expect(res.error).toMatch(/not found or does not belong/i);
+    // No transaction is opened for a victim's account.
+    expect(db.connect).not.toHaveBeenCalled();
+  });
+
+  test('unlinkExternalAccount refuses when unauthenticated', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(null as any);
+    const db = require('../lib/db/db');
+    const { unlinkExternalAccount } = await import('../lib/db/helper');
+    const res = JSON.parse(await unlinkExternalAccount(USER, ACCOUNT));
+    expect(res.success).toBe(false);
+    expect(db.connect).not.toHaveBeenCalled();
+  });
+
+  test('getLinkedAccountsForUser discloses nothing for another user', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { getLinkedAccountsForUser } = await import('../lib/db/helper');
+    const res = JSON.parse(await getLinkedAccountsForUser(USER));
+    expect(res).toEqual([]);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  test('getUserHasPassword fails safe for another user', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { getUserHasPassword } = await import('../lib/db/helper');
+    const res = JSON.parse(await getUserHasPassword(USER));
+    expect(res.hasPassword).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  test('updatePersonalAccessToken refuses to overwrite another user\'s token', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { updatePersonalAccessToken } = await import('../lib/db/helper');
+    const res = JSON.parse(await updatePersonalAccessToken(USER, ACCOUNT, 'ghp_attacker'));
+    expect(res.success).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  test('removePersonalAccessToken refuses to wipe another user\'s token', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { removePersonalAccessToken } = await import('../lib/db/helper');
+    const res = JSON.parse(await removePersonalAccessToken(USER, ACCOUNT));
+    expect(res.success).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
+  });
+
+  test('addPersonalAccessToken refuses to write to another user\'s account', async () => {
+    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
+    const db = require('../lib/db/db');
+    const { addPersonalAccessToken } = await import('../lib/db/helper');
+    const res = JSON.parse(await addPersonalAccessToken(USER, ACCOUNT, 'ghp_attacker'));
+    expect(res.success).toBe(false);
+    expect(db.query).not.toHaveBeenCalled();
   });
 });

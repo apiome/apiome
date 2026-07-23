@@ -45,6 +45,7 @@ describe('AUTH_ERROR_CODES — value stability', () => {
       MEMBERSHIP_SUSPENDED: 'membership-suspended',
       PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
       SIGNUP_DISABLED: 'signup-disabled',
+      SIGN_IN_FAILED: 'sign-in-failed',
     });
   });
 

@@ -65,6 +65,13 @@ export const AUTH_ERROR_CODES = {
   PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
   /** Self-signup is disabled on this deployment (AUTH_SIGNUP_DISABLED). */
   SIGNUP_DISABLED: 'signup-disabled',
+  /**
+   * Generic sign-in failure with no user-actionable detail. Used by the NextAuth `signIn`
+   * callback's defensive fallback when a provider yields no resolvable user, so the redirect
+   * stays on-contract and does not leak an "account exists / not found" signal (OLO-7.3). Renders
+   * the generic banner copy.
+   */
+  SIGN_IN_FAILED: 'sign-in-failed',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];

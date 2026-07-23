@@ -63,6 +63,11 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'info',
     text: 'New account sign-ups are currently disabled on this server. Contact your administrator to request an account or an invitation.',
   },
+  'sign-in-failed': {
+    type: 'error',
+    text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',
+    retry: true,
+  },
 
   // --- Pre-contract stable copy keys still emitted by the engine ---
   OAuthEmailRequired: {

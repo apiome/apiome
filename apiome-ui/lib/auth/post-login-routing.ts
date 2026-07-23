@@ -134,6 +134,34 @@ export async function getMembershipTenantIdsForUser(userId: string): Promise<str
 }
 
 /**
+ * Re-validate a client-requested active tenant against the user's live memberships (OLO-7.3).
+ *
+ * The tenant switcher (OLO-6.1) changes the active tenant with a NextAuth
+ * `update({ current_tenant_id })`, whose argument is fully client-controlled. Like the login path,
+ * that value must be confirmed against the user's memberships before it is written into the signed
+ * session token — otherwise a tampered `update()` could point server-side, tenant-scoped queries at
+ * a tenant the user does not belong to.
+ *
+ * @param userId The authenticated user's id (read from the existing signed token, not the client).
+ * @param requestedTenantId The tenant id the client asked to switch to.
+ * @returns The requested tenant id when the user is a live member of it; otherwise `null` — an
+ *   unknown/foreign tenant, or a membership-lookup failure (fail closed: keep the current tenant
+ *   rather than trust the unvalidated value).
+ */
+export async function validateTenantSwitch(
+  userId: string,
+  requestedTenantId: string
+): Promise<string | null> {
+  try {
+    const membershipTenantIds = await getMembershipTenantIdsForUser(userId);
+    return membershipTenantIds.includes(requestedTenantId) ? requestedTenantId : null;
+  } catch (error) {
+    console.error('[post-login-routing] tenant-switch membership check failed:', error);
+    return null;
+  }
+}
+
+/**
  * Resolve the tenant to activate for a fresh sign-in (used by the NextAuth JWT
  * callback to seed `current_tenant_id`).
  *

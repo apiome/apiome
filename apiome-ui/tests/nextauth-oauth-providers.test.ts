@@ -25,6 +25,7 @@ interface InspectableProvider {
   options?: {
     clientId?: string;
     clientSecret?: string;
+    checks?: string[];
     authorization?: { params?: { scope?: string } };
     userinfo?: { url?: string; request?: unknown };
   };
@@ -88,6 +89,19 @@ describe('configuredOAuthProviders', () => {
     expect(gitlab.authorization?.params?.scope).toBe(GITLAB_OAUTH_SCOPE);
     expect(gitlab.userinfo?.url).toBe('https://gitlab.com/api/v4/user');
     expect(gitlab.userinfo?.request).toBe(gitlabUserinfoRequest);
+  });
+
+  it('enforces CSRF checks per provider capability (OLO-7.3)', () => {
+    const providers = configuredOAuthProviders(ALL_ENABLED_ENV) as unknown as InspectableProvider[];
+    const byId = new Map(providers.map((p) => [p.id, p]));
+
+    // GitHub: state explicit (regression insurance) — GitHub OAuth Apps don't support PKCE, and
+    // this is a confidential client exchanging the code with GITHUB_SECRET.
+    expect(byId.get('github')!.options!.checks).toEqual(['state']);
+    // GitLab keeps its built-in PKCE+state (the factory deliberately doesn't override `checks`).
+    expect(byId.get('gitlab')!.checks ?? byId.get('gitlab')!.options!.checks).toEqual(['pkce', 'state']);
+    // Entra is the strongest: PKCE + state + OIDC nonce.
+    expect(byId.get('azure')!.checks).toEqual(['pkce', 'state', 'nonce']);
   });
 
   it('points github/gitlab endpoints at the mock base URLs when overridden (OLO-7.4)', () => {

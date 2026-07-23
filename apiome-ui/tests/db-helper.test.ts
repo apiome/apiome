@@ -1647,13 +1647,13 @@ describe('Database Helper - Personal Access Token Functions', () => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
     mockQuery.mockClear();
+    // These actions bind to the authenticated session (OLO-7.3): the first argument is the
+    // acting user and must match the session for the action to proceed.
+    mockAuthenticatedSession('user-1');
   });
 
   test('addPersonalAccessToken should create token', async () => {
     const { addPersonalAccessToken } = await import('../lib/db/helper');
-    const crypto = require('crypto');
-
-    crypto.randomBytes.mockReturnValue(Buffer.from('test-token-data'));
 
     mockQuery.mockResolvedValue({
       rows: [{
@@ -1663,7 +1663,7 @@ describe('Database Helper - Personal Access Token Functions', () => {
       }]
     });
 
-    const result = await addPersonalAccessToken('user-1', 'API Token', 'For API access', 90);
+    const result = await addPersonalAccessToken('user-1', 'account-1', 'ghp_token_value');
 
     expect(result).toBeDefined();
     expect(typeof result).toBe('string');
@@ -1676,7 +1676,7 @@ describe('Database Helper - Personal Access Token Functions', () => {
       rows: [{ id: 'token-1', name: 'Updated Token' }]
     });
 
-    const result = await updatePersonalAccessToken('token-1', 'user-1', 'Updated Token', 'New description');
+    const result = await updatePersonalAccessToken('user-1', 'account-1', 'ghp_new_token_value');
     const parsed = JSON.parse(result);
 
     expect(parsed.success).toBe(true);
@@ -1688,7 +1688,7 @@ describe('Database Helper - Personal Access Token Functions', () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ id: 'token-1', provider: 'github' }] }) // Get token
       .mockResolvedValueOnce({ rows: [] }); // Delete token
 
-    const result = await removePersonalAccessToken('token-1', 'user-1');
+    const result = await removePersonalAccessToken('user-1', 'account-1');
 
     expect(result).toBeDefined();
     expect(typeof result).toBe('string');
