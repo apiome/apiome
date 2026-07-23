@@ -246,6 +246,30 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Super-admin session verification (OLO-8.4, #4970). The provider-config admin surface
+    # (GET/PUT /v1/admin/auth-providers) is gated by the SAME HMAC-signed session the Next.js
+    # `/admin` portal mints (OLO-8.1, lib/auth/admin-session.ts). REST verifies that token
+    # server-side, so the signing key MUST match the UI's. Resolution mirrors the UI exactly:
+    # the dedicated ``ADMIN_SESSION_SECRET`` is preferred; otherwise a key is derived from
+    # ``ADMIN_PASSWORD`` (the admin login already requires it). With neither set the surface
+    # fails closed — no token can be verified, so every caller is rejected.
+    admin_session_secret: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_ADMIN_SESSION_SECRET",
+            "ADMIN_SESSION_SECRET",
+            "admin_session_secret",
+        ),
+    )
+    admin_password: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_ADMIN_PASSWORD",
+            "ADMIN_PASSWORD",
+            "admin_password",
+        ),
+    )
+
     # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
     # in apiome.tenant_repositories.refresh_interval_seconds; these set the default
     # applied when a repo has no explicit value and the global minimum floor that
