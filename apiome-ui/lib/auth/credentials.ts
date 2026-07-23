@@ -1,5 +1,5 @@
 import * as helper from '../db/helper';
-import { upsertOauthSignupPending, consumeAuthOneTimeCode } from '../db/oauth-signup';
+import { consumeAuthOneTimeCode } from '../db/oauth-signup';
 import {
   checkLoginRateLimit,
   recordLoginFailure,
@@ -16,9 +16,8 @@ import {
   resolveOAuthEmailVerified,
   resolveEntraEmailVerified,
   type OAuthSignInResult,
-  type ResolutionStore,
-  type ResolutionUser,
 } from './account-resolution';
+import { resolutionStore } from './resolution-store';
 
 const bcrypt = require('bcrypt');
 
@@ -40,67 +39,6 @@ export interface ICredentials {
   password?: string;
   oneTimeCode?: string;
 }
-
-/** Map a users row onto the account facts the resolution engine decides over. */
-const toResolutionUser = (row: any): ResolutionUser => ({
-  id: row.id,
-  enabled: !!row.enabled,
-  verified: !!row.verified,
-  email: row.email ?? null,
-  name: row.name ?? null,
-});
-
-/**
- * Production persistence wiring for the account-resolution engine (OLO-1.3). Each operation
- * delegates to the existing db helpers; the engine itself stays free of database imports so the
- * policy is testable in isolation.
- */
-const resolutionStore: ResolutionStore = {
-  async getIdentity(provider, providerUserId) {
-    const parsed = JSON.parse(await helper.getLinkedAccountByProvider(provider, providerUserId));
-    return { found: !!parsed.found, userId: parsed.account?.user_id ?? null };
-  },
-
-  async getUserById(userId) {
-    const results = await helper.getUserById(userId);
-    return results.rowCount > 0 ? toResolutionUser(results.rows[0]) : null;
-  },
-
-  async getUserByEmail(email) {
-    const results = await helper.getUserByEmail(email);
-    return results.rowCount > 0 ? toResolutionUser(results.rows[0]) : null;
-  },
-
-  async linkIdentity(userId, identity) {
-    const parsed = JSON.parse(
-      await helper.linkExternalAccount(
-        userId,
-        identity.provider,
-        identity.providerUserId,
-        identity.email as string,
-        identity.username,
-        identity.accessToken,
-        identity.refreshToken,
-        identity.tokenExpiresAt,
-        identity.profileData,
-        identity.emailVerified
-      )
-    );
-    return { success: !!parsed.success, code: parsed.code };
-  },
-
-  async recordIdentityLogin(provider, providerUserId, email, emailVerified) {
-    await helper.updateLinkedAccountLastLogin(provider, providerUserId, email, emailVerified);
-  },
-
-  async recordUserLogin(userId) {
-    await helper.updateUserLastLoginAt(userId);
-  },
-
-  async createPendingSignup(provider, providerUserId, email, account, profile) {
-    return upsertOauthSignupPending(provider, providerUserId, email, account, profile);
-  },
-};
 
 /**
  * Shared OAuth sign-in entry point for every provider's NextAuth signIn callback (OLO-1.3).

@@ -94,15 +94,20 @@ function rateLimitKeysFromContext(ctx: CredentialMiddlewareContext): {
 }
 
 /**
- * `hooks.before` middleware: refuse a locked credential sign-in before any password work.
+ * `hooks.before` handler: refuse a locked credential sign-in before any password work.
  *
  * Runs only for `POST /sign-in/email`. Checks the per-IP lock first (the looser, host-wide cap) then
  * the per-account lock; either being engaged throws a structured `TOO_MANY_REQUESTS` carrying
  * {@link AUTH_RATE_LIMITED_CODE} — the same code the REST surface and NextAuth path return, so clients
  * handle the throttle identically. Non-sign-in requests pass through untouched.
+ *
+ * Exported as a bare handler (not just the wrapped middleware) so `auth.ts` can compose it with the
+ * OAuth account-resolution hook (OLO-10.6) into a single `hooks.before` middleware.
+ *
+ * @param ctx The Better Auth middleware context (`createAuthMiddleware` handler argument).
  */
-export const credentialRateLimitBefore = createAuthMiddleware(async (ctx) => {
-  const context = ctx as unknown as CredentialMiddlewareContext;
+export async function credentialRateLimitBeforeHandler(ctx: unknown): Promise<void> {
+  const context = ctx as CredentialMiddlewareContext;
   if (context.path !== SIGN_IN_EMAIL_PATH) {
     return;
   }
@@ -121,19 +126,24 @@ export const credentialRateLimitBefore = createAuthMiddleware(async (ctx) => {
       code: AUTH_RATE_LIMITED_CODE,
     });
   }
-});
+}
+
+/** `hooks.before` middleware wrapping {@link credentialRateLimitBeforeHandler}. */
+export const credentialRateLimitBefore = createAuthMiddleware(credentialRateLimitBeforeHandler);
 
 /**
- * `hooks.after` middleware: record the credential sign-in outcome against both limiters.
+ * `hooks.after` handler: record the credential sign-in outcome against both limiters.
  *
  * Runs only for `POST /sign-in/email`, after the endpoint has executed. Better Auth converts a failed
  * sign-in (bad password, unknown/unverified account) into a returned `APIError` rather than an
  * unhandled throw, so this hook fires on both outcomes: a successful sign-in (`ctx.context.newSession`
  * is set) clears both keys; any other outcome records a failure against the per-account lock and the
  * looser per-IP lock — matching the NextAuth path's accounting exactly.
+ *
+ * @param ctx The Better Auth middleware context (`createAuthMiddleware` handler argument).
  */
-export const credentialRateLimitAfter = createAuthMiddleware(async (ctx) => {
-  const context = ctx as unknown as CredentialMiddlewareContext;
+export async function credentialRateLimitAfterHandler(ctx: unknown): Promise<void> {
+  const context = ctx as CredentialMiddlewareContext;
   if (context.path !== SIGN_IN_EMAIL_PATH) {
     return;
   }
@@ -148,7 +158,10 @@ export const credentialRateLimitAfter = createAuthMiddleware(async (ctx) => {
 
   if (accountKey) recordLoginFailure(accountKey);
   if (ipKey) recordLoginFailure(ipKey, Date.now(), CREDENTIALS_IP_MAX_ATTEMPTS);
-});
+}
+
+/** `hooks.after` middleware wrapping {@link credentialRateLimitAfterHandler}. */
+export const credentialRateLimitAfter = createAuthMiddleware(credentialRateLimitAfterHandler);
 
 /**
  * The Better Auth `emailAndPassword` block for the migrated credential login (OLO-10.5).

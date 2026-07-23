@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import {
   buildBetterAuthAdvancedOptions,
@@ -8,9 +9,10 @@ import {
 } from './better-auth-session';
 import {
   betterAuthEmailAndPassword,
-  credentialRateLimitAfter,
-  credentialRateLimitBefore,
+  credentialRateLimitAfterHandler,
+  credentialRateLimitBeforeHandler,
 } from './better-auth-credentials';
+import { oauthResolutionHandler } from './better-auth-account-resolution';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
 // migrated session/account read hits the same database as the REST API. `lib/db/db` is a CommonJS
@@ -74,12 +76,23 @@ export const auth = betterAuth({
   // accounts still flow through apiome's signup/admin path, which dual-writes the credential account).
   // See `better-auth-credentials.ts` and docs/BETTER_AUTH_MIGRATION.md §2.3.
   emailAndPassword: betterAuthEmailAndPassword,
-  // Preserve the per-account + per-IP brute-force limiting around credential sign-in exactly as the
-  // NextAuth path does (`login-rate-limit.ts`): the `before` hook refuses a locked attempt before any
-  // password work; the `after` hook records the outcome. Both no-op for non-`/sign-in/email` requests.
+  // Two invariants re-homed onto Better Auth's sign-in/callback hooks:
+  //  - Credential brute-force limiting (OLO-10.5): the `before` handler refuses a locked
+  //    `/sign-in/email` attempt before any password work; the `after` handler records the outcome.
+  //  - OAuth account-resolution / nOAuth (OLO-10.6): the `before` handler runs the shared resolution
+  //    engine on the OAuth callback so a forged/unverified identity is rejected with the structured
+  //    code before any user/session is created (`better-auth-account-resolution.ts`).
+  // Each handler is path-gated and no-ops for requests it does not own, so composing them is safe;
+  // the OAuth handler stays inert until social providers are configured (10.7 #5002, which this
+  // ticket gates).
   hooks: {
-    before: credentialRateLimitBefore,
-    after: credentialRateLimitAfter,
+    before: createAuthMiddleware(async (ctx) => {
+      await credentialRateLimitBeforeHandler(ctx);
+      await oauthResolutionHandler(ctx);
+    }),
+    after: createAuthMiddleware(async (ctx) => {
+      await credentialRateLimitAfterHandler(ctx);
+    }),
   },
   plugins: [nextCookies()],
 });
