@@ -163,6 +163,18 @@ The store is layered **over** env, field by field:
 The table is created empty and rows are written lazily on first save, so a fresh deployment
 behaves exactly as if the store did not exist.
 
+### Admin configuration screen (OLO-8.7)
+
+The store is edited at **`/admin/dashboard/settings`** ("System Configuration" in the admin
+sidebar), behind the signed super-admin session (OLO-8.1). The screen shows one card per
+provider with an enablement control (**Enabled / Disabled / Use .env**, mapping to
+`true`/`false`/`NULL`), the client id, a **write-only** secret field (only "set / not set" is
+ever shown), and the provider extras above. Every field that has no DB value carries a
+"using .env fallback" badge, and a **Validate** button reports whether the DB row is complete
+enough to enable. Forcing a provider **Enabled** requires its client id *and* secret to be
+stored in the DB (env values do not count toward that check); saves take effect at the next
+login without a restart (OLO-8.5/8.6).
+
 ## Test-only endpoint overrides (OLO-7.4)
 
 The end-to-end journey suite (`e2e/journey/`, #4226) points every provider at a local
