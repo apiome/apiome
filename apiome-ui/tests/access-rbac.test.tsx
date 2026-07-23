@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, screen, within, findByText } from '@testing-library/react';
+import { render, screen, within, findByText, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
@@ -162,6 +162,122 @@ describe('MembersClient (#3611)', () => {
     // Disabled (non-functional) controls.
     expect(screen.getByRole('button', { name: 'Configure SSO' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Enable SCIM' })).toBeDisabled();
+  });
+});
+
+/**
+ * OLO-6.3 (#4220): member management surfaces license seat usage, gates invite
+ * at capacity, and renders the OLO-5.3 `license-seats-exhausted` 403 gracefully.
+ */
+describe('MembersClient — license/seat alignment (OLO-6.3)', () => {
+  const FRIENDLY_EXHAUSTED = /All member seats included in this tenant's license/i;
+
+  /** Build a `{ success, data }` license response for the `/api/tenants/license` proxy. */
+  function licenseResponse(seats: { used: number; max: number }) {
+    return jsonResponse({
+      plan: { name: 'Free', type: 'free' },
+      seats,
+      quotas: { max_projects: 1, max_versions: 3, max_ai_requests: 0 },
+      features: [],
+    });
+  }
+
+  /**
+   * Mock `global.fetch` for the member screen.
+   *
+   * @param seats Seat usage returned by the license proxy.
+   * @param invite Optional override for the invite POST (`/api/access/members`,
+   *   method POST) — used to simulate the OLO-5.3 seats-exhausted 403.
+   */
+  function mockMembersFetch(
+    seats: { used: number; max: number },
+    invite?: () => Promise<Response>,
+  ) {
+    const fn = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/tenants/license')) return licenseResponse(seats);
+      if (url.includes('/api/access/permissions/me')) return jsonResponse(PERMS_ADMIN);
+      if (url.includes('/api/access/roles')) return jsonResponse(ROLES);
+      if (url.includes('/api/access/members')) {
+        if (init?.method === 'POST' && invite) return invite();
+        return jsonResponse(MEMBERS);
+      }
+      return jsonResponse([]);
+    });
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = fn;
+    return fn;
+  }
+
+  it('surfaces seat usage proactively with a meter', async () => {
+    mockMembersFetch({ used: 2, max: 5 });
+    render(<MembersClient />);
+
+    expect(await screen.findByText('2 of 5 seats used')).toBeInTheDocument();
+    const meter = screen.getByRole('meter', { name: /Member seats used/i });
+    expect(meter).toHaveAttribute('aria-valuenow', '2');
+    expect(meter).toHaveAttribute('aria-valuemax', '5');
+
+    // Below capacity, invite stays enabled.
+    expect(screen.getByRole('button', { name: /Invite member/i })).toBeEnabled();
+  });
+
+  it('disables invite and shows upgrade guidance at capacity', async () => {
+    mockMembersFetch({ used: 5, max: 5 });
+    render(<MembersClient />);
+
+    expect(await screen.findByText('5 of 5 seats used')).toBeInTheDocument();
+    // The at-capacity guidance is visible before any failed action.
+    expect(screen.getByText(FRIENDLY_EXHAUSTED)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Invite member/i })).toBeDisabled();
+  });
+
+  it('renders the seats-exhausted 403 as friendly guidance, not a raw error', async () => {
+    // Not yet at capacity locally, so the form is enabled; the server rejects.
+    mockMembersFetch({ used: 4, max: 5 }, () =>
+      Promise.resolve({
+        status: 403,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: "This tenant's license allows 5 member seat(s) and all 5 are in use.",
+            code: 'license-seats-exhausted',
+          }),
+      } as Response),
+    );
+    render(<MembersClient />);
+
+    const emailInput = await screen.findByLabelText(/Email address/i);
+    fireEvent.change(emailInput, { target: { value: 'new@acme.io' } });
+    fireEvent.click(screen.getByRole('button', { name: /Invite member/i }));
+
+    const banner = await screen.findByTestId('members-error');
+    await waitFor(() => expect(banner).toHaveTextContent(FRIENDLY_EXHAUSTED));
+  });
+
+  it('renders the roster even when the license read fails', async () => {
+    // License proxy returns a failure envelope; the roster must still load.
+    const fn = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/tenants/license')) {
+        return Promise.resolve({
+          status: 500,
+          json: () => Promise.resolve({ success: false, error: 'boom' }),
+        } as Response);
+      }
+      if (url.includes('/api/access/permissions/me')) return jsonResponse(PERMS_ADMIN);
+      if (url.includes('/api/access/roles')) return jsonResponse(ROLES);
+      if (url.includes('/api/access/members')) return jsonResponse(MEMBERS);
+      return jsonResponse([]);
+    });
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = fn;
+
+    render(<MembersClient />);
+
+    expect(await screen.findByText('Dana Okoro')).toBeInTheDocument();
+    // No seat indicator when the license read failed.
+    expect(screen.queryByTestId('member-seat-usage')).not.toBeInTheDocument();
   });
 });
 
