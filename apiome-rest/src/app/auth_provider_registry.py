@@ -16,11 +16,14 @@ per the UI registry's own doc). The slugs here MUST stay in lockstep with ``PROV
 the UI and with the ``auth_provider_config_provider_id_check`` CHECK in migration V196.
 
 Required-field completeness (``required_fields``): to be *enabled* through the DB, a provider must
-have a ``client_id`` and a ``client_secret`` available in its stored row. REST cannot see the UI
-process's env, so it validates completeness against the DB row only — an operator enabling a
-provider supplies both there (the secret is write-only and sealed via OLO-8.3). A provider left
-with ``enabled = null`` is governed by env-derived enablement (OLO-8.5) and is not completeness-
-checked here.
+have every required field available in its stored row. Historically that is just ``client_id`` and
+``client_secret``; issuer-based providers (Okta, Cognito, Keycloak, Auth0, generic OIDC — OLO-9.3–
+9.7) additionally require an ``issuer``/``domain`` URL, expressed as a ``config``-kind required
+field stored in the ``config`` JSONB (OLO-9.1). REST cannot see the UI process's env, so it
+validates completeness against the DB row only — an operator enabling a provider supplies each
+field there (the secret is write-only and sealed via OLO-8.3). A provider left with
+``enabled = null`` is governed by env-derived enablement (OLO-8.5) and is not completeness-checked
+here.
 """
 
 from __future__ import annotations
@@ -34,11 +37,56 @@ from typing import Dict, List, Optional, Tuple
 STATUS_AVAILABLE = "available"
 STATUS_COMING_SOON = "coming-soon"
 
-# Config fields required for a provider to be enabled through the DB. Both are stored on the
-# ``auth_provider_config`` row: ``client_id`` (a column) and ``client_secret`` (the sealed
-# ``client_secret_encrypted``/``enc_key_id`` pair). Kept as a shared constant so the routes and
-# tests reference one definition.
-REQUIRED_FIELDS: Tuple[str, ...] = ("client_id", "client_secret")
+# Where a required field's value lives in the stored ``auth_provider_config`` row — the fact the
+# completeness check needs to know which DB location proves a field present. Mirrors
+# ``RequiredFieldKind`` in the UI registry (provider-registry.ts).
+#   * FIELD_KIND_CLIENT_ID     — the ``client_id`` column.
+#   * FIELD_KIND_CLIENT_SECRET — the sealed secret (``client_secret_encrypted``/``enc_key_id`` pair).
+#   * FIELD_KIND_CONFIG        — a key inside the ``config`` JSONB extras (e.g. an OIDC ``issuer``).
+FIELD_KIND_CLIENT_ID = "client_id"
+FIELD_KIND_CLIENT_SECRET = "client_secret"
+FIELD_KIND_CONFIG = "config"
+
+
+@dataclass(frozen=True)
+class RequiredField:
+    """One field a provider requires to be enabled (OLO-9.1) — mirror of ``RequiredField`` in the
+    UI registry (provider-registry.ts).
+
+    Attributes:
+        field: Semantic field name (``client_id``, ``client_secret``, ``issuer``, …) — the value
+            surfaced in the admin completeness list, so it stays human-meaningful.
+        kind: Which stored location proves the field present — one of :data:`FIELD_KIND_CLIENT_ID`,
+            :data:`FIELD_KIND_CLIENT_SECRET`, or :data:`FIELD_KIND_CONFIG`.
+        env_key: The env var this field maps to (used at boot on the UI side and by the OLO-8.5
+            overlay). For a ``config``-kind field this is *also* its key inside the ``config`` JSONB
+            (extras are env-var-keyed), which is what the DB completeness check reads.
+    """
+
+    field: str
+    kind: str
+    env_key: str
+
+
+def client_credential_fields(
+    client_id_env_key: str, client_secret_env_key: str
+) -> Tuple[RequiredField, ...]:
+    """The standard ``client_id`` + ``client_secret`` pair every OAuth provider requires.
+
+    Issuer-based providers append ``config``-kind fields on top of this pair (OLO-9.1);
+    ``coming-soon`` entries require nothing.
+
+    Args:
+        client_id_env_key: Env var holding the OAuth client id (e.g. ``GITHUB_ID``).
+        client_secret_env_key: Env var holding the OAuth client secret (e.g. ``GITHUB_SECRET``).
+
+    Returns:
+        The two-field ``(client_id, client_secret)`` requirement tuple.
+    """
+    return (
+        RequiredField("client_id", FIELD_KIND_CLIENT_ID, client_id_env_key),
+        RequiredField("client_secret", FIELD_KIND_CLIENT_SECRET, client_secret_env_key),
+    )
 
 
 @dataclass(frozen=True)
@@ -50,22 +98,38 @@ class ProviderDescriptor:
             ``external_auth_providers.provider``, and the V196 CHECK. Never rename an id.
         label: Human-readable name used on admin cards ("GitHub", "Microsoft").
         status: :data:`STATUS_AVAILABLE` or :data:`STATUS_COMING_SOON`.
-        required_fields: Config fields that must be present for the provider to be enabled;
-            empty for ``coming-soon`` providers (nothing can enable them).
+        required_fields: Every field that must be present for the provider to be enabled, in order;
+            empty for ``coming-soon`` providers (nothing can enable them). See :class:`RequiredField`.
     """
 
     id: str
     label: str
     status: str
-    required_fields: Tuple[str, ...]
+    required_fields: Tuple[RequiredField, ...]
+
+    def required_field_names(self) -> List[str]:
+        """The semantic names of every required field, in order (the admin-facing ``required_fields``)."""
+        return [f.field for f in self.required_fields]
 
 
 # Every provider this codebase knows about, in display order — the server-side projection of
 # ``PROVIDER_REGISTRY`` (provider-registry.ts). ``google``/``aws`` are ``coming-soon`` placeholders.
 PROVIDER_REGISTRY: Tuple[ProviderDescriptor, ...] = (
-    ProviderDescriptor("github", "GitHub", STATUS_AVAILABLE, REQUIRED_FIELDS),
-    ProviderDescriptor("gitlab", "GitLab", STATUS_AVAILABLE, REQUIRED_FIELDS),
-    ProviderDescriptor("azure", "Microsoft", STATUS_AVAILABLE, REQUIRED_FIELDS),
+    ProviderDescriptor(
+        "github", "GitHub", STATUS_AVAILABLE, client_credential_fields("GITHUB_ID", "GITHUB_SECRET")
+    ),
+    ProviderDescriptor(
+        "gitlab",
+        "GitLab",
+        STATUS_AVAILABLE,
+        client_credential_fields("GITLAB_CLIENT_ID", "GITLAB_CLIENT_SECRET"),
+    ),
+    ProviderDescriptor(
+        "azure",
+        "Microsoft",
+        STATUS_AVAILABLE,
+        client_credential_fields("AZURE_AD_CLIENT_ID", "AZURE_AD_CLIENT_SECRET"),
+    ),
     ProviderDescriptor("google", "Google / GCP", STATUS_COMING_SOON, ()),
     ProviderDescriptor("aws", "AWS", STATUS_COMING_SOON, ()),
 )

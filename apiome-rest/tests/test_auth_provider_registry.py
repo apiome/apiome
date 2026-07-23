@@ -1,16 +1,28 @@
-"""Tests for the server-side provider registry (OLO-8.4, #4970).
+"""Tests for the server-side provider registry (OLO-8.4, #4970; OLO-9.1, #4984).
 
 The Python registry (:mod:`app.auth_provider_registry`) is a deliberate projection of the canonical
 UI registry (``provider-registry.ts``). These pin the facts the REST layer depends on and, crucially,
-that the two never silently drift: the slugs, order, and status must match the UI and the V196 CHECK.
+that the two never silently drift: the slugs, order, status, and per-field requirements must match
+the UI registry, the canonical snapshot, and the V196 CHECK.
 """
 
+import json
+from pathlib import Path
+
 from app.auth_provider_registry import (
+    FIELD_KIND_CLIENT_ID,
+    FIELD_KIND_CLIENT_SECRET,
     PROVIDER_REGISTRY,
     STATUS_AVAILABLE,
     STATUS_COMING_SOON,
+    client_credential_fields,
     get_provider_descriptor,
     known_provider_ids,
+)
+
+# The single source-of-truth snapshot both language registries are asserted against (OLO-9.1).
+_SNAPSHOT_PATH = (
+    Path(__file__).resolve().parents[2] / "scripts" / "auth_providers" / "registry.json"
 )
 
 
@@ -33,12 +45,46 @@ def test_available_providers_require_client_id_and_secret():
     """Available providers require client_id + client_secret; coming-soon require nothing."""
     for provider in PROVIDER_REGISTRY:
         if provider.status == STATUS_AVAILABLE:
-            assert provider.required_fields == ("client_id", "client_secret")
+            assert provider.required_field_names() == ["client_id", "client_secret"]
+            kinds = [f.kind for f in provider.required_fields]
+            assert kinds == [FIELD_KIND_CLIENT_ID, FIELD_KIND_CLIENT_SECRET]
         else:
             assert provider.required_fields == ()
+
+
+def test_client_credential_fields_helper():
+    """The shared helper maps the id/secret env vars onto the standard required-field pair."""
+    fields = client_credential_fields("A_ID", "A_SECRET")
+    assert [(f.field, f.kind, f.env_key) for f in fields] == [
+        ("client_id", FIELD_KIND_CLIENT_ID, "A_ID"),
+        ("client_secret", FIELD_KIND_CLIENT_SECRET, "A_SECRET"),
+    ]
 
 
 def test_lookup_known_and_unknown():
     """Lookup returns the descriptor for a known slug and None otherwise."""
     assert get_provider_descriptor("github").label == "GitHub"
     assert get_provider_descriptor("okta") is None
+
+
+def test_registry_mirrors_canonical_snapshot():
+    """The Python registry serializes to the canonical snapshot (drift guard, TS ⇄ Python).
+
+    The mirror on the TypeScript side (``provider-registry-mirror.test.ts``) asserts the same for the
+    UI registry, so either registry drifting from ``scripts/auth_providers/registry.json`` turns one
+    suite red.
+    """
+    snapshot = json.loads(_SNAPSHOT_PATH.read_text())
+    projected = [
+        {
+            "id": p.id,
+            "label": p.label,
+            "status": p.status,
+            "required_fields": [
+                {"field": f.field, "kind": f.kind, "env_key": f.env_key}
+                for f in p.required_fields
+            ],
+        }
+        for p in PROVIDER_REGISTRY
+    ]
+    assert projected == snapshot["providers"]

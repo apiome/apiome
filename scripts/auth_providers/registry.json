@@ -1,0 +1,44 @@
+{
+  "_comment": "Canonical sign-in provider registry (OLO-9.1, #4984) — the single source of truth the TypeScript (apiome-ui/lib/auth/provider-registry.ts) and Python (apiome-rest/src/app/auth_provider_registry.py) registries are both asserted against so they cannot silently drift. Mirror tests: apiome-ui/tests/provider-registry-mirror.test.ts and apiome-rest/tests/test_auth_provider_registry.py. Keep ids/order/labels/statuses in lockstep with the V196 provider_id CHECK; env_key names must be the real env vars the auth stack reads.",
+  "providers": [
+    {
+      "id": "github",
+      "label": "GitHub",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "GITHUB_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "GITHUB_SECRET" }
+      ]
+    },
+    {
+      "id": "gitlab",
+      "label": "GitLab",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "GITLAB_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "GITLAB_CLIENT_SECRET" }
+      ]
+    },
+    {
+      "id": "azure",
+      "label": "Microsoft",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "AZURE_AD_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "AZURE_AD_CLIENT_SECRET" }
+      ]
+    },
+    {
+      "id": "google",
+      "label": "Google / GCP",
+      "status": "coming-soon",
+      "required_fields": []
+    },
+    {
+      "id": "aws",
+      "label": "AWS",
+      "status": "coming-soon",
+      "required_fields": []
+    }
+  ]
+}

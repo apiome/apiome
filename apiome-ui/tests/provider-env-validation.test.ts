@@ -22,6 +22,8 @@ import * as path from 'path';
 import {
   PROVIDER_REGISTRY,
   PROVIDER_VALIDATION_ENV_KEY,
+  ProviderDescriptor,
+  clientCredentialFields,
   providerEnvIssues,
   providerValidationMode,
   validateProviderEnv,
@@ -87,6 +89,66 @@ describe('providerEnvIssues', () => {
     expect(issue.message).toContain('Set all of AZURE_AD_CLIENT_ID, AZURE_AD_CLIENT_SECRET');
     expect(issue.message).toContain('or unset all of them to disable it');
     expect(issue.message).toContain('docs/AUTH_PROVIDER_SETUP.md');
+  });
+});
+
+describe('issuer-aware required fields (OLO-9.1)', () => {
+  // A representative issuer-based provider (Okta/Auth0/OIDC shape, OLO-9.3–9.7): client id +
+  // secret plus a config-kind `issuer` field. Injected into the validation so the capability is
+  // exercised without shipping a half-built provider entry in the real registry.
+  const OKTA: ProviderDescriptor = {
+    id: 'okta',
+    label: 'Okta',
+    status: 'available',
+    requiredFields: [
+      ...clientCredentialFields('OKTA_CLIENT_ID', 'OKTA_CLIENT_SECRET'),
+      { field: 'issuer', kind: 'config', envKey: 'OKTA_ISSUER' },
+    ],
+    requiredEnvKeys: ['OKTA_CLIENT_ID', 'OKTA_CLIENT_SECRET', 'OKTA_ISSUER'],
+  };
+  const ISSUER_REGISTRY = [OKTA];
+
+  const FULL_TRIO = {
+    OKTA_CLIENT_ID: 'id',
+    OKTA_CLIENT_SECRET: 'secret',
+    OKTA_ISSUER: 'https://example.okta.com',
+  };
+
+  it('derives requiredEnvKeys from requiredFields, including the issuer var', () => {
+    // The registry helper materializes the env-var list from the structured fields, so the two
+    // can never drift within an entry (see clientCredentialFields / buildDescriptor).
+    expect(clientCredentialFields('A_ID', 'A_SECRET')).toEqual([
+      { field: 'client_id', kind: 'client_id', envKey: 'A_ID' },
+      { field: 'client_secret', kind: 'client_secret', envKey: 'A_SECRET' },
+    ]);
+  });
+
+  it('treats the id+secret set / issuer missing trio as partial config, naming the issuer var', () => {
+    const [issue] = providerEnvIssues(
+      { OKTA_CLIENT_ID: 'id', OKTA_CLIENT_SECRET: 'secret' },
+      ISSUER_REGISTRY
+    );
+
+    expect(issue).toMatchObject({
+      providerId: 'okta',
+      presentKeys: ['OKTA_CLIENT_ID', 'OKTA_CLIENT_SECRET'],
+      missingKeys: ['OKTA_ISSUER'],
+    });
+    expect(issue.message).toContain('OKTA_ISSUER is unset or blank');
+  });
+
+  it('is silent once the whole trio (including the issuer) is set', () => {
+    expect(providerEnvIssues(FULL_TRIO, ISSUER_REGISTRY)).toEqual([]);
+  });
+
+  it('strict-mode boot fails on the partial issuer trio', () => {
+    expect(() =>
+      validateProviderEnv({ OKTA_CLIENT_ID: 'id', OKTA_CLIENT_SECRET: 'secret' }, ISSUER_REGISTRY)
+    ).toThrow(/OKTA_ISSUER is unset or blank/);
+  });
+
+  it('strict-mode boot passes once the issuer is also set', () => {
+    expect(validateProviderEnv(FULL_TRIO, ISSUER_REGISTRY)).toEqual([]);
   });
 });
 
