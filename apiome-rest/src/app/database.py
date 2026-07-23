@@ -2626,6 +2626,136 @@ class Database:
             conn.rollback()
             raise e
 
+    # ==================== Auth Provider Config (OLO-8.2/8.4) ====================
+
+    #: Columns returned for an ``auth_provider_config`` row (V196). ``client_secret_encrypted`` is
+    #: deliberately NOT selected on the read paths below: the ciphertext never needs to leave the
+    #: DB for the admin CRUD surface (secrets are write-only there), so only its *presence* is
+    #: reported via ``enc_key_id``/a boolean flag. The two secret columns are written together to
+    #: satisfy the V196 both-or-neither CHECK.
+    AUTH_PROVIDER_CONFIG_READ_COLUMNS = (
+        "provider_id",
+        "enabled",
+        "client_id",
+        "enc_key_id",
+        "config",
+        "updated_at",
+        "updated_by",
+    )
+
+    #: Columns the admin surface may write. ``client_secret_encrypted``/``enc_key_id`` travel as a
+    #: pair (both set to store/rotate a secret, both NULL to clear it and fall back to env).
+    AUTH_PROVIDER_CONFIG_WRITABLE_COLUMNS = (
+        "enabled",
+        "client_id",
+        "client_secret_encrypted",
+        "enc_key_id",
+        "config",
+    )
+
+    def list_auth_provider_config(self) -> List[Dict[str, Any]]:
+        """List every stored provider-config row (server-global; OLO-8.2/8.4, #4970).
+
+        The table is server-wide (one row per provider), not tenant-scoped, so this takes no
+        tenant. Only providers with a saved row appear; a provider with no row is governed entirely
+        by env (OLO-8.5) and is surfaced by the route layer from the registry instead.
+
+        The encrypted secret is never selected — only ``enc_key_id`` is, so the caller can report
+        "secret set / not set" without the ciphertext ever leaving the database.
+
+        Returns:
+            One dict per stored provider row, ordered by ``provider_id`` for a stable listing.
+        """
+        select_cols = ", ".join(self.AUTH_PROVIDER_CONFIG_READ_COLUMNS)
+        query = f"""
+            SELECT {select_cols}
+            FROM apiome.auth_provider_config
+            ORDER BY provider_id
+        """
+        return self.execute_query(query)
+
+    def get_auth_provider_config(self, provider_id: str) -> Optional[Dict[str, Any]]:
+        """Read one stored provider-config row (OLO-8.2/8.4, #4970).
+
+        Args:
+            provider_id: Provider slug (e.g. ``"github"``).
+
+        Returns:
+            The stored row (without the encrypted secret; ``enc_key_id`` signals its presence), or
+            ``None`` when the provider has no row (fall back to env for the whole provider).
+        """
+        select_cols = ", ".join(self.AUTH_PROVIDER_CONFIG_READ_COLUMNS)
+        query = f"""
+            SELECT {select_cols}
+            FROM apiome.auth_provider_config
+            WHERE provider_id = %s
+        """
+        results = self.execute_query(query, (provider_id,))
+        return results[0] if results else None
+
+    def upsert_auth_provider_config(
+        self, provider_id: str, updates: Dict[str, Any], updated_by: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Insert or partially update a provider-config row (OLO-8.4, #4970).
+
+        Partial-update semantics, mirroring :meth:`upsert_type_registry_settings`: only the columns
+        present in ``updates`` are written. An omitted column keeps its stored value on update (or
+        falls to the table default on the first insert) — this is what lets the admin surface clear
+        one field to env-fallback (pass it explicitly as ``None``) without disturbing the others
+        (omit them). ``updated_at`` is maintained by the V196 BEFORE UPDATE trigger on the update
+        path and by the column default on insert, so it is never written here.
+
+        The secret columns ``client_secret_encrypted`` and ``enc_key_id`` must be supplied together
+        (both set to store/rotate, both ``None`` to clear) so the V196 both-or-neither CHECK always
+        holds — the caller (the route layer) is responsible for pairing them.
+
+        Args:
+            provider_id: Provider slug — the primary key. Assumed already validated against the
+                registry by the caller; the V196 CHECK is the final backstop against a bad slug.
+            updates: Subset of :data:`AUTH_PROVIDER_CONFIG_WRITABLE_COLUMNS` to persist. ``config``,
+                when present, must be a JSON-serializable dict (wrapped in ``Json`` here).
+            updated_by: Identity of the super-admin making the change (recorded in ``updated_by``).
+
+        Returns:
+            The persisted row (read columns only — no ciphertext), or ``None`` if the write somehow
+            returned nothing.
+        """
+        supplied = [col for col in self.AUTH_PROVIDER_CONFIG_WRITABLE_COLUMNS if col in updates]
+
+        def _bind(col: str) -> Any:
+            value = updates[col]
+            # JSONB extras must be adapted so psycopg2 sends valid JSON, not a Python-repr string.
+            return Json(value) if col == "config" and value is not None else value
+
+        insert_cols = ["provider_id", "updated_by", *supplied]
+        insert_vals: List[Any] = [provider_id, updated_by, *(_bind(col) for col in supplied)]
+
+        # On conflict, update ONLY the supplied columns (never COALESCE over EXCLUDED: for a column
+        # absent from the INSERT list EXCLUDED.<col> is that column's DEFAULT, so touching it would
+        # reset an untouched field). ``updated_at`` is left to the BEFORE UPDATE trigger.
+        set_clauses = [f"{col} = EXCLUDED.{col}" for col in supplied]
+        set_clauses.append("updated_by = EXCLUDED.updated_by")
+
+        placeholders = ", ".join(["%s"] * len(insert_vals))
+        select_cols = ", ".join(self.AUTH_PROVIDER_CONFIG_READ_COLUMNS)
+        query = f"""
+            INSERT INTO apiome.auth_provider_config ({", ".join(insert_cols)})
+            VALUES ({placeholders})
+            ON CONFLICT (provider_id) DO UPDATE SET {", ".join(set_clauses)}
+            RETURNING {select_cols}
+        """
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, tuple(insert_vals))
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     # ==================== Project CRUD Operations ====================
     # NOTE: queries below select `change_report_template_version_id`, which requires
     # migration 20260414-150000.sql. Ensure that migration is applied before deploying.

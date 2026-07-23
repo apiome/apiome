@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .access_routes import platform_router as access_platform_router
 from .access_routes import router as access_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
+from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
@@ -101,7 +102,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.37.0",
+    version="1.38.0",
 )
 
 
@@ -329,6 +330,9 @@ app.include_router(mcp_tool_router)
 # Observability & ops (#3617): liveness/readiness probes + platform-admin ops dashboard.
 app.include_router(health_router)
 app.include_router(ops_router)
+# Super-admin OAuth provider config CRUD (OLO-8.4, #4970): GET/PUT /v1/admin/auth-providers,
+# gated by the signed super-admin session (OLO-8.1); secrets are write-only and never returned.
+app.include_router(auth_provider_config_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None
