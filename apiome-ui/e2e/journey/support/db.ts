@@ -15,6 +15,8 @@
  */
 import { Pool } from 'pg';
 import { randomBytes } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { databaseUrl } from './env';
 
 let pool: Pool | null = null;
@@ -53,6 +55,37 @@ export async function seedVerifiedUser(email: string, name: string): Promise<str
     [name, email.toLowerCase(), randomBytes(32).toString('hex')]
   );
   return result.rows[0].id as string;
+}
+
+/**
+ * Path to the canonical multi-tenant dev-seed fixture (OLO-6.4, #4221), resolved relative to
+ * this file so it works regardless of the working directory the tests run from.
+ */
+const MULTITENANT_SEED = resolve(
+  __dirname,
+  '../../../../apiome-db/seed/dev/007_multitenant.sql'
+);
+
+/** The three tenants the multi-tenant fixture creates, in the order the switcher lists them. */
+export const MULTITENANT_FIXTURE = {
+  user: { email: 'grace@example.com', name: 'Grace Hopper' },
+  tenants: [
+    { slug: 'aurora-labs', name: 'Aurora Labs', role: 'owner', license: 'Free' },
+    { slug: 'borealis-studio', name: 'Borealis Studio', role: 'editor', license: 'Paid' },
+    { slug: 'cascade-foundation', name: 'Cascade Foundation', role: 'viewer', license: 'Sponsor' },
+  ],
+} as const;
+
+/**
+ * Apply the multi-tenant dev-seed fixture (`apiome-db/seed/dev/007_multitenant.sql`): one verified
+ * user (Grace) in three tenants with diverging roles (owner/editor/viewer) and license tiers
+ * (Free/Paid/Sponsor). The SQL is idempotent (fixed ids + ON CONFLICT), so running it against a
+ * shared stack is safe and repeatable. Exercising the *actual* seed file — not a hand-built copy —
+ * keeps this test honest about "fixtures in seed/dev".
+ */
+export async function seedMultiTenantFixture(): Promise<void> {
+  const sql = await readFile(MULTITENANT_SEED, 'utf8');
+  await getPool().query(sql);
 }
 
 /**

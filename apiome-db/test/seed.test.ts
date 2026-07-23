@@ -16,6 +16,7 @@ describe("listSeedFiles", () => {
       "004_license.sql",
       "005_api_key.sql",
       "006_sample_project.sql",
+      "007_multitenant.sql",
     ]);
   });
 });
@@ -35,5 +36,31 @@ describe("dev seed contents", () => {
 
     const license = await readFile(`${SEED_DIR}/004_license.sql`, "utf8");
     expect(license).toContain("INSERT INTO apiome.licenses");
+  });
+
+  it("seeds the multi-tenant fixture: one user in three tenants with diverging roles/licenses", async () => {
+    const fixture = await readFile(`${SEED_DIR}/007_multitenant.sql`, "utf8");
+
+    // One user across three distinct tenants (OLO-6.4, #4221).
+    expect(fixture).toContain("grace@example.com");
+    expect(fixture).toContain("aurora-labs");
+    expect(fixture).toContain("borealis-studio");
+    expect(fixture).toContain("cascade-foundation");
+
+    // Built-in roles must be seeded before the granular role assignments resolve.
+    expect(fixture).toContain("apiome.seed_builtin_roles");
+    expect(fixture).toContain("INSERT INTO apiome.tenant_user_roles");
+
+    // Owner is expressed via the authoritative tenant_administrators signal.
+    expect(fixture).toContain("INSERT INTO apiome.tenant_administrators");
+
+    // Distinct license tiers attached per tenant (Free / Paid / Sponsor).
+    expect(fixture).toContain("INSERT INTO apiome.tenant_licenses");
+    expect(fixture).toMatch(/l\.name = 'Free'/);
+    expect(fixture).toMatch(/l\.name = 'Paid'/);
+    expect(fixture).toMatch(/l\.name = 'Sponsor'/);
+
+    // Idempotent, like every other dev seed file.
+    expect(fixture).toContain("ON CONFLICT");
   });
 });
