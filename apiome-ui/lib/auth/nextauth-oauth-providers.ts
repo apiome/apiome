@@ -15,6 +15,7 @@ import GithubProvider from 'next-auth/providers/github';
 import GitlabProvider from 'next-auth/providers/gitlab';
 import { entraIdProvider } from './entra-provider';
 import { enabledProviders, readEnvString } from './provider-registry';
+import { resolveProviderEnv, type EnvMap } from './provider-config-resolver';
 import {
   GITHUB_OAUTH_SCOPE,
   GITLAB_OAUTH_SCOPE,
@@ -125,4 +126,30 @@ export function configuredOAuthProviders(
     providers.push(factory(env));
   }
   return providers;
+}
+
+/**
+ * Build the OAuth provider list from the **DB-over-env merged config** (OLO-8.6, #4972).
+ *
+ * This is the per-request variant of {@link configuredOAuthProviders}: it first resolves the merged
+ * env via `resolveProviderEnv` (8.5) — DB value where an operator has set one, else the process env —
+ * then maps the enabled set to NextAuth provider configs. Called on every sign-in request by the
+ * `[...nextauth]` handler so a DB toggle changes the enabled provider set on the next request (within
+ * the resolver's TTL cache) with no redeploy.
+ *
+ * Never throws on DB trouble: `resolveProviderEnv` degrades to the base env when the resolved endpoint
+ * is unset/unreachable/errors, so a DB outage falls back to env config rather than breaking sign-in.
+ *
+ * @param baseEnv Base environment to merge the DB config over (injectable for tests; defaults to
+ *   `process.env`).
+ * @param now Current epoch ms, forwarded to the resolver's TTL cache (injectable for tests).
+ * @returns Provider configs to spread into `authOptions.providers`, reflecting the merged config.
+ */
+export async function resolveOAuthProviders(
+  baseEnv: EnvMap = process.env,
+  now?: number
+): Promise<Provider[]> {
+  const mergedEnv =
+    now === undefined ? await resolveProviderEnv(baseEnv) : await resolveProviderEnv(baseEnv, now);
+  return configuredOAuthProviders(mergedEnv);
 }
