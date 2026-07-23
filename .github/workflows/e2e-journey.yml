@@ -41,15 +41,50 @@ jobs:
     runs-on: self-hosted
 
     env:
-      # Matches the root docker-compose defaults (docker-compose.env.example).
-      DATABASE_URL: postgresql://postgres:apiome_local_dev@localhost:5432/apiome
-      NEXT_PUBLIC_REST_API_BASE_URL: http://localhost:8000/v1
+      # DATABASE_URL and NEXT_PUBLIC_REST_API_BASE_URL are computed at runtime
+      # from free host ports (see "Pick free host ports"); the runner is shared
+      # with local dev, so the compose defaults (5432/8000) are often taken.
       NEXTAUTH_SECRET: olo-journey-ci-secret
       NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Pick free host ports
+        run: |
+          set -euo pipefail
+
+          # Ask the OS for a currently-free port. python3 binding to port 0 is the
+          # most reliable ("check ahead of time"); fall back to a random high port
+          # verified as not-listening if python3 is unavailable.
+          pick_free_port() {
+            if command -v python3 >/dev/null 2>&1; then
+              python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+            else
+              while :; do
+                p=$(( (RANDOM % 20000) + 20000 ))
+                if ! (exec 3<>/dev/tcp/127.0.0.1/"$p") 2>/dev/null; then
+                  echo "$p"; return
+                fi
+              done
+            fi
+          }
+
+          # Published host ports for the compose stack. Service-to-service traffic
+          # stays on the compose network (postgres:5432), so only the host-facing
+          # ports need to dodge whatever local dev already has bound.
+          pg_port="$(pick_free_port)"
+          rest_port="$(pick_free_port)"
+          while [ "$rest_port" = "$pg_port" ]; do rest_port="$(pick_free_port)"; done
+          echo "postgres -> ${pg_port}, rest -> ${rest_port}"
+
+          {
+            echo "POSTGRES_PUBLISH_PORT=${pg_port}"
+            echo "APIOME_REST_HTTP_PORT=${rest_port}"
+            echo "DATABASE_URL=postgresql://postgres:apiome_local_dev@localhost:${pg_port}/apiome"
+            echo "NEXT_PUBLIC_REST_API_BASE_URL=http://localhost:${rest_port}/v1"
+          } >> "$GITHUB_ENV"
 
       - name: Bring up the spine (postgres -> migrate -> rest)
         run: docker compose up --build --wait postgres migrate rest
