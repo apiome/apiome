@@ -17,6 +17,7 @@ import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
 import { AUTH_ERROR_CODES } from '../auth/account-resolution';
+import { upsertCredentialAccountPassword } from './credential-account';
 
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
@@ -424,6 +425,10 @@ export async function updateUserPassword(userId: string, currentPassword: string
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await connectionPool.query('UPDATE apiome.users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [newPasswordHash, userId]);
+    // Mirror the new bcrypt hash into the Better Auth credential account row (OLO-10.5) so a cutover
+    // to Better Auth authenticates against the just-changed password. Best-effort; users.password
+    // above stays the authoritative rollback source.
+    await upsertCredentialAccountPassword(userId, newPasswordHash);
     return successResponse();
   } catch (error: any) {
     return errorResponse(error.message);

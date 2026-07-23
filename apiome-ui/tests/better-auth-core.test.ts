@@ -21,6 +21,21 @@ const mockCreateAuthClient = jest.fn(() => ({
 jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/react', () => ({ createAuthClient: mockCreateAuthClient }));
+// `better-auth/api` is ESM-only (ts-jest's CommonJS transform cannot require it). The credential
+// wiring (`better-auth-credentials.ts`, transitively imported by auth.ts) calls createAuthMiddleware
+// at module load, so stub it to return the handler unchanged and provide a minimal APIError.
+jest.mock('better-auth/api', () => ({
+  createAuthMiddleware: (handler: unknown) => handler,
+  APIError: class APIError extends Error {
+    status: string;
+    body: unknown;
+    constructor(status: string, body?: { message?: string }) {
+      super(body?.message);
+      this.status = status;
+      this.body = body;
+    }
+  },
+}));
 // Stub the shared Postgres pool so importing the server instance never opens a real connection.
 jest.mock('@lib/db/db', () => ({ query: jest.fn() }));
 
@@ -91,6 +106,47 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       crossSubDomainCookies: { enabled: true, domain: '.apiome.dev' },
     });
     expect(config.trustedOrigins).toContain('https://*.apiome.dev');
+  });
+
+  it('keeps apiome.users as the user model via field mapping (design §2.1)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    const config = mockBetterAuth.mock.calls[0][0];
+    expect(config.user).toEqual({
+      modelName: 'users',
+      fields: {
+        emailVerified: 'verified',
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+      },
+    });
+  });
+
+  it('enables credential sign-in with bcrypt hashing/verification (OLO-10.5)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    const config = mockBetterAuth.mock.calls[0][0];
+    expect(config.emailAndPassword.enabled).toBe(true);
+    // Self-service sign-up stays off (new users flow through apiome's own path), email verification on.
+    expect(config.emailAndPassword.disableSignUp).toBe(true);
+    expect(config.emailAndPassword.requireEmailVerification).toBe(true);
+    // Custom bcrypt hash/verify replaces Better Auth's default scrypt so relocated hashes validate.
+    expect(typeof config.emailAndPassword.password.hash).toBe('function');
+    expect(typeof config.emailAndPassword.password.verify).toBe('function');
+  });
+
+  it('wires the per-account/per-IP credential rate-limit hooks (OLO-10.5)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    const config = mockBetterAuth.mock.calls[0][0];
+    expect(typeof config.hooks.before).toBe('function');
+    expect(typeof config.hooks.after).toBe('function');
   });
 
   it('falls back to NEXTAUTH_URL for the base URL when BETTER_AUTH_URL is unset', async () => {

@@ -190,6 +190,14 @@ password in one `account` table, keyed by `providerId`.
 | `createdAt`/`updatedAt` | datetime | `external_auth_providers.created_at/updated_at` | |
 | — | — | `external_auth_providers.provider_email`, `email_verified`, `profile_data` | **carry into `account`** (extra columns) — the resolution engine needs `email_verified` and `profile_data` for nOAuth re-validation (§3.2); do **not** drop them |
 
+> **✅ Credential relocation implemented (10.5 #5000).** `V200__better_auth_credential_password_relocation_5000.sql`
+> copies each usable `users.password` bcrypt hash into an `account` row (`providerId='credential'`,
+> `accountId=userId`) verbatim. Better Auth's `emailAndPassword.password` is overridden with bcrypt
+> `hash`/`verify` (`apiome-ui/lib/auth/better-auth-credentials.ts`) so the relocated hashes validate
+> under Better Auth (default scrypt), the per-account/per-IP limiter is re-applied via sign-in hooks,
+> and `apiome-ui/lib/db/credential-account.ts` dual-writes the row on every password write.
+> `users.password` stays the rollback source; rollback = `DELETE FROM apiome.account WHERE "providerId" = 'credential';`.
+
 **Uniqueness must be re-expressed on `account`:** today `external_auth_providers` enforces
 `UNIQUE(provider, provider_user_id)` and `UNIQUE(user_id, provider)` (V181). The equivalent on
 `account` is `UNIQUE(providerId, accountId)` and `UNIQUE(userId, providerId)` (§3.1). This is the

@@ -6,6 +6,11 @@ import {
   buildBetterAuthTrustedOrigins,
   resolveBetterAuthSecret,
 } from './better-auth-session';
+import {
+  betterAuthEmailAndPassword,
+  credentialRateLimitAfter,
+  credentialRateLimitBefore,
+} from './better-auth-credentials';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
 // migrated session/account read hits the same database as the REST API. `lib/db/db` is a CommonJS
@@ -50,6 +55,32 @@ export const auth = betterAuth({
   trustedOrigins: buildBetterAuthTrustedOrigins(),
   session: buildBetterAuthSessionOptions(),
   advanced: buildBetterAuthAdvancedOptions(),
+  // Keep apiome's existing `users` table as Better Auth's `user` model (design §2.1): map the model
+  // name (plural table) and the columns that differ from Better Auth's camelCase defaults —
+  // `emailVerified → verified` (already boolean, no timestamp conversion) and the snake_case
+  // `created_at`/`updated_at`. The reused `users.id` (UUID) is the FK the `session`/`account` tables
+  // created by V199 point at. Without this mapping the credential login (below) cannot read the user.
+  user: {
+    modelName: 'users',
+    fields: {
+      emailVerified: 'verified',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
+  },
+  // Credential (email/password) sign-in on the relocated `account` password (OLO-10.5): bcrypt
+  // hash/verify so the migrated bcrypt hashes validate under Better Auth (which defaults to scrypt),
+  // email verification required (mapped onto `users.verified`), self-service sign-up disabled (new
+  // accounts still flow through apiome's signup/admin path, which dual-writes the credential account).
+  // See `better-auth-credentials.ts` and docs/BETTER_AUTH_MIGRATION.md §2.3.
+  emailAndPassword: betterAuthEmailAndPassword,
+  // Preserve the per-account + per-IP brute-force limiting around credential sign-in exactly as the
+  // NextAuth path does (`login-rate-limit.ts`): the `before` hook refuses a locked attempt before any
+  // password work; the `after` hook records the outcome. Both no-op for non-`/sign-in/email` requests.
+  hooks: {
+    before: credentialRateLimitBefore,
+    after: credentialRateLimitAfter,
+  },
   plugins: [nextCookies()],
 });
 
