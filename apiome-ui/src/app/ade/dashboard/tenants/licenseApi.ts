@@ -22,6 +22,16 @@ export interface TenantLicenseSeats {
   max: number;
 }
 
+/** The plan quota limits stored on the license (#64). `-1` means unlimited. */
+export interface TenantLicenseQuotas {
+  /** Projects the plan allows (-1 = unlimited, Free default 1). */
+  max_projects: number;
+  /** Published versions per project the plan allows (-1 = unlimited, Free default 3). */
+  max_versions: number;
+  /** AI-assistant requests the plan allows (-1 = unlimited, 0 = none, Free default 0). */
+  max_ai_requests: number;
+}
+
 /** One feature flag in the tenant's effective composition. */
 export interface TenantLicenseFeature {
   /** Machine slug, e.g. 'designer'. */
@@ -42,6 +52,7 @@ export interface TenantLicenseFeature {
 export interface TenantLicenseResponse {
   plan: TenantLicensePlan | null;
   seats: TenantLicenseSeats;
+  quotas: TenantLicenseQuotas;
   features: TenantLicenseFeature[];
 }
 

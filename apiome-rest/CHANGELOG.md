@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.158.0] - 2026-07-22
+
+### Added
+- **License plan quota limits: projects, versions, AI (#64)** — the license catalog now
+  carries the three quota limits a plan grants, so paid tiers differentiate from free.
+  New apiome-db migration `V195` populates `max_projects`, `max_versions` and the new
+  `max_ai_requests` keys on the seeded Free/Paid/Sponsor `licenses.seats` (Free unchanged
+  at 1/3/0, Sponsor unlimited via `-1`) and documents the canonical key set. New
+  `license_capacity.license_quotas` resolves those keys from the tenant's license (Free
+  defaults when unlicensed; `-1` = unlimited), and `GET /v1/tenants/{tenant_slug}/license`
+  gains a `quotas` block (`LicenseQuotasSchema`) reporting them alongside seats. Project
+  and version quotas are enforced by apiome-ui on the write paths; the AI cap is stored and
+  reported only (no usage meter yet), mirroring how V097 seat *storage* preceded OLO-5.3
+  seat *enforcement*.
+
 ## [1.156.0] - 2026-07-22
 
 ### Added

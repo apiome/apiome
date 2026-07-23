@@ -38,12 +38,29 @@ from fastapi import Depends, HTTPException
 
 from .auth import validate_authentication
 from .config import settings
-from .database import DEFAULT_FREE_MAX_USERS_PER_TENANT, db
+from .database import (
+    DEFAULT_FREE_MAX_AI_REQUESTS,
+    DEFAULT_FREE_MAX_PROJECTS,
+    DEFAULT_FREE_MAX_USERS_PER_TENANT,
+    DEFAULT_FREE_MAX_VERSIONS,
+    db,
+)
 
 # Stable machine-readable code for the structured 403 emitted when a tenant's
 # member-seat limit is exhausted (consumed by the OLO-5.5 license panel and the
 # member-invite UI).
 LICENSE_SEATS_EXHAUSTED_CODE = "license-seats-exhausted"
+
+# The plan quota keys #64 stores in ``licenses.seats``, paired with their
+# Free-tier fallback. Read by ``license_quotas`` and surfaced on the license
+# REST surface. A negative stored value means "unlimited" (kept as ``-1``),
+# matching the apiome-ui enforcement convention
+# (``entitlement-limits-from-license-seats.ts``).
+_QUOTA_DEFAULTS: Dict[str, int] = {
+    "max_projects": DEFAULT_FREE_MAX_PROJECTS,
+    "max_versions": DEFAULT_FREE_MAX_VERSIONS,
+    "max_ai_requests": DEFAULT_FREE_MAX_AI_REQUESTS,
+}
 
 
 def member_seat_limit(tenant_id: str) -> int:
@@ -63,6 +80,44 @@ def member_seat_limit(tenant_id: str) -> int:
     except (TypeError, ValueError):
         return DEFAULT_FREE_MAX_USERS_PER_TENANT
     return limit if limit >= 0 else DEFAULT_FREE_MAX_USERS_PER_TENANT
+
+
+def _quota_from_seats(seats: Dict[str, Any], key: str, default: int) -> int:
+    """Resolve one quota key from a license ``seats`` dict.
+
+    Args:
+        seats: The license ``seats`` JSON (may be missing keys).
+        key: The quota key to read (e.g. ``"max_projects"``).
+        default: Free-tier fallback when the key is absent or non-numeric.
+
+    Returns:
+        The stored integer limit, ``-1`` when the stored value is negative
+        (unlimited), or ``default`` when the key is missing or not a number.
+    """
+    try:
+        value = int(seats.get(key))
+    except (TypeError, ValueError):
+        return default
+    return -1 if value < 0 else value
+
+
+def license_quotas(tenant_id: str) -> Dict[str, int]:
+    """Resolve a tenant's stored plan quotas from its attached license (#64).
+
+    Reads the same ``seats`` JSON the seat guard uses and projects the quota
+    keys #64 stores on the license — ``max_projects``, ``max_versions`` and
+    ``max_ai_requests``. A tenant with no license row (or a malformed value)
+    falls back to the Free-tier defaults, mirroring ``member_seat_limit``.
+
+    Args:
+        tenant_id: Canonical UUID string of the tenant.
+
+    Returns:
+        A dict with one entry per quota key. Each value is the stored limit,
+        ``-1`` for unlimited, or the Free default when unset.
+    """
+    seats = db.get_tenant_license_seats(tenant_id) or {}
+    return {key: _quota_from_seats(seats, key, default) for key, default in _QUOTA_DEFAULTS.items()}
 
 
 def assert_member_seat_available(tenant_id: str) -> None:

@@ -12,6 +12,10 @@ one call:
   the same helpers the enforcement guard uses (``license_capacity.member_seat_limit``
   and ``Database.count_member_seats_in_use``), so the surface always reports
   exactly what enforcement enforces.
+* **Quotas** — the plan's stored project / published-version / AI-request limits
+  (#64), read from the license ``seats`` JSON via ``license_capacity.license_quotas``
+  (Free defaults when unlicensed; ``-1`` = unlimited). Project and version quotas
+  are enforced by apiome-ui on the write paths; the AI cap is stored/reported only.
 * **Features** — the V097 composition: the license's bundled flags
   (``license_feature_flags``) unioned with per-tenant overrides
   (``tenant_feature_flags``). An override beats the license default; a flag whose
@@ -33,7 +37,7 @@ from pydantic import BaseModel, Field
 
 from .auth import validate_authentication
 from .database import db
-from .license_capacity import member_seat_limit
+from .license_capacity import license_quotas, member_seat_limit
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/tenants", tags=["license"])
@@ -62,6 +66,27 @@ class LicenseSeatsSchema(BaseModel):
     max: int = Field(..., description="Seat limit from the license (Free default when unlicensed).")
 
 
+class LicenseQuotasSchema(BaseModel):
+    """The plan quota limits stored on the license (#64).
+
+    Values are the tenant's effective limits from its license ``seats`` JSON,
+    falling back to the Free-tier defaults when unlicensed. ``-1`` means
+    unlimited (Sponsor tier). Storage/reporting only — project and version
+    quotas are enforced by apiome-ui on the write paths; the AI cap has no
+    usage meter yet.
+    """
+
+    max_projects: int = Field(
+        ..., description="Projects the plan allows (-1 = unlimited, Free default 1)."
+    )
+    max_versions: int = Field(
+        ..., description="Published versions per project the plan allows (-1 = unlimited, Free default 3)."
+    )
+    max_ai_requests: int = Field(
+        ..., description="AI-assistant requests the plan allows (-1 = unlimited, 0 = none, Free default 0)."
+    )
+
+
 class LicenseFeatureSchema(BaseModel):
     """One feature flag in the tenant's effective composition."""
 
@@ -87,6 +112,7 @@ class TenantLicenseResponse(BaseModel):
         description="Attached plan; null when the tenant has no license row (pre-V183 tenant).",
     )
     seats: LicenseSeatsSchema
+    quotas: LicenseQuotasSchema
     features: List[LicenseFeatureSchema] = Field(default_factory=list)
 
 
@@ -181,5 +207,7 @@ async def get_tenant_license(
         max=member_seat_limit(tenant_id),
     )
 
+    quotas = LicenseQuotasSchema(**license_quotas(tenant_id))
+
     features = compose_effective_features(db.list_tenant_effective_features(tenant_id))
-    return TenantLicenseResponse(plan=plan, seats=seats, features=features)
+    return TenantLicenseResponse(plan=plan, seats=seats, quotas=quotas, features=features)
