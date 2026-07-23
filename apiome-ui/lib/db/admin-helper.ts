@@ -3,6 +3,10 @@
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
 import { entitlementLimitsFromLicenseSeats } from './entitlement-limits-from-license-seats';
+import {
+  upsertCredentialAccountPassword,
+  clearCredentialAccountPassword,
+} from './credential-account';
 
 // Helper to standardize error responses
 const errorResponse = (error: string) => JSON.stringify({ success: false, error });
@@ -87,6 +91,10 @@ export async function createUser(
       [name, email, hashedPassword, verified, enabled]
     );
 
+    // Mirror the credential password into the Better Auth account model (OLO-10.5). An empty hash
+    // (OAuth-provisioned user) clears the row rather than creating a credential login. Best-effort.
+    await upsertCredentialAccountPassword(result.rows[0].id, hashedPassword);
+
     return successResponse({ user: result.rows[0] });
   } catch (error: any) {
     console.error('Error creating user:', error);
@@ -116,6 +124,9 @@ export async function clearUserPassword(userId: string) {
     if (result.rowCount === 0) {
       return errorResponse('User not found');
     }
+    // Mark the account password-less on the Better Auth model too (OLO-10.5): remove the credential
+    // account row so no email/password login survives the relocation. Best-effort.
+    await clearCredentialAccountPassword(result.rows[0].id);
     return successResponse({ id: result.rows[0].id });
   } catch (error: any) {
     console.error('Error clearing user password:', error);
@@ -302,6 +313,9 @@ export async function createUserFromSignup(
        RETURNING id, name, email, verified, enabled, created_at`,
       [signup.name, signup.email_address, signup.password, verified, enabled]
     );
+
+    // Mirror the signup's credential password into the Better Auth account model (OLO-10.5).
+    await upsertCredentialAccountPassword(userResult.rows[0].id, signup.password);
 
     // Delete the signup entry
     await connectionPool.query(
