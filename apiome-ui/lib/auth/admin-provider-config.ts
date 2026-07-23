@@ -109,7 +109,8 @@ export interface ProviderExtraField {
  *     `githubApiBaseUrl`);
  *   - GitLab self-hosted base URL: `nextauth-oauth-providers.ts` (`GITLAB_BASE_URL`);
  *   - Azure tenant + authority: `entra-provider.ts` (`AZURE_AD_TENANT`,
- *     `AZURE_AD_AUTHORITY_BASE_URL`).
+ *     `AZURE_AD_AUTHORITY_BASE_URL`);
+ *   - Google Workspace domain restriction: `google-provider.ts` (`GOOGLE_WORKSPACE_DOMAIN`).
  *
  * Providers without an entry (and coming-soon placeholders) simply render no extras.
  */
@@ -148,6 +149,14 @@ export const PROVIDER_EXTRA_FIELDS: Record<string, readonly ProviderExtraField[]
       label: 'Authority base URL',
       defaultValue: 'https://login.microsoftonline.com',
       help: 'Authority endpoint base — rarely changed outside sovereign clouds.',
+    },
+  ],
+  google: [
+    {
+      envKey: 'GOOGLE_WORKSPACE_DOMAIN',
+      label: 'Workspace domain',
+      defaultValue: '(any Google account)',
+      help: 'Restrict sign-in to one Workspace domain (e.g. example.com); blank allows any account.',
     },
   ],
 };

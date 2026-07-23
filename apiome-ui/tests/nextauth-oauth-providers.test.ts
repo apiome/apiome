@@ -38,12 +38,14 @@ const ALL_ENABLED_ENV = {
   GITLAB_CLIENT_SECRET: 'gl-secret',
   AZURE_AD_CLIENT_ID: 'az-id',
   AZURE_AD_CLIENT_SECRET: 'az-secret',
+  GOOGLE_CLIENT_ID: 'gg-id',
+  GOOGLE_CLIENT_SECRET: 'gg-secret',
 };
 
 describe('configuredOAuthProviders', () => {
   it('registers exactly the registry-enabled providers, in registry order', () => {
     const providers = configuredOAuthProviders(ALL_ENABLED_ENV);
-    expect(providers.map((p) => p.id)).toEqual(['github', 'gitlab', 'azure']);
+    expect(providers.map((p) => p.id)).toEqual(['github', 'gitlab', 'azure', 'google']);
     expect(providers.map((p) => p.id)).toEqual(enabledProviderIds(ALL_ENABLED_ENV));
   });
 
@@ -55,13 +57,18 @@ describe('configuredOAuthProviders', () => {
     ['github', { GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' }],
     ['gitlab', { GITLAB_CLIENT_ID: 'gl-id', GITLAB_CLIENT_SECRET: 'gl-secret' }],
     ['azure', { AZURE_AD_CLIENT_ID: 'az-id', AZURE_AD_CLIENT_SECRET: 'az-secret' }],
+    ['google', { GOOGLE_CLIENT_ID: 'gg-id', GOOGLE_CLIENT_SECRET: 'gg-secret' }],
   ])('registers only %s when only its env pair is set', (id, env) => {
     expect(configuredOAuthProviders(env).map((p) => p.id)).toEqual([id]);
   });
 
   it('drops a provider when its env is unset — no code changes needed', () => {
     const withoutGithub = { ...ALL_ENABLED_ENV, GITHUB_ID: '' };
-    expect(configuredOAuthProviders(withoutGithub).map((p) => p.id)).toEqual(['gitlab', 'azure']);
+    expect(configuredOAuthProviders(withoutGithub).map((p) => p.id)).toEqual([
+      'gitlab',
+      'azure',
+      'google',
+    ]);
   });
 
   it('passes each provider its client id/secret from env', () => {
@@ -147,5 +154,16 @@ describe('configuredOAuthProviders', () => {
     expect(azure.id).toBe('azure');
     expect(azure.name).toBe('Microsoft Entra ID');
     expect(azure.checks).toEqual(['pkce', 'state', 'nonce']);
+  });
+
+  it('builds google via the OLO-9.2 provider (id google, PKCE, client id/secret)', () => {
+    const [google] = configuredOAuthProviders({
+      GOOGLE_CLIENT_ID: 'gg-id',
+      GOOGLE_CLIENT_SECRET: 'gg-secret',
+    }) as unknown as InspectableProvider[];
+
+    expect(google.id).toBe('google');
+    expect(google.checks).toEqual(['pkce', 'state']);
+    expect(google.options).toMatchObject({ clientId: 'gg-id', clientSecret: 'gg-secret' });
   });
 });

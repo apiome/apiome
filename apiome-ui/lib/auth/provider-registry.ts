@@ -16,9 +16,10 @@
  *     fails startup — or warns, per `AUTH_PROVIDER_VALIDATION` — when a provider's env is
  *     only partially configured (OLO-7.2).
  *
- * Adding a provider later (Okta #241, AWS #68, Google) means: one entry here, one NextAuth
+ * Adding a provider later (Okta #241, AWS #68) means: one entry here, one NextAuth
  * factory in `nextauth-oauth-providers.ts`, one brand icon in
- * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces.
+ * `src/app/components/auth/provider-brand.tsx` — no archaeology across surfaces. Google
+ * Workspace sign-in (OLO-9.2, #4985) followed exactly that path.
  *
  * This module is intentionally free of React and next-auth imports so both server code
  * (routes, server components) and client components can import it.
@@ -167,9 +168,9 @@ const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvK
   },
   {
     id: 'google',
-    label: 'Google / GCP',
-    status: 'coming-soon',
-    requiredFields: [],
+    label: 'Google',
+    status: 'available',
+    requiredFields: clientCredentialFields('GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'),
   },
   {
     id: 'aws',

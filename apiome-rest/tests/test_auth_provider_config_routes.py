@@ -158,10 +158,10 @@ def test_list_returns_all_registry_providers(admin_headers):
     assert gh["secret_set"] is False
     assert gh["secret_source"] == "env-fallback"
     # coming-soon providers can never be enabled.
-    google = next(p for p in providers if p["provider_id"] == "google")
-    assert google["status"] == "coming-soon"
-    assert google["can_enable"] is False
-    assert google["required_fields"] == []
+    aws = next(p for p in providers if p["provider_id"] == "aws")
+    assert aws["status"] == "coming-soon"
+    assert aws["can_enable"] is False
+    assert aws["required_fields"] == []
 
 
 def test_list_overlays_stored_row_and_masks_secret(admin_headers):
@@ -243,7 +243,7 @@ def test_put_enable_coming_soon_rejected(admin_headers):
     with patch("app.auth_provider_config_routes.db") as mock_db:
         mock_db.get_auth_provider_config.return_value = None
         resp = client.put(
-            "/v1/admin/auth-providers/google", json={"enabled": True}, headers=admin_headers
+            "/v1/admin/auth-providers/aws", json={"enabled": True}, headers=admin_headers
         )
     assert resp.status_code == 422
     assert resp.json()["detail"]["error"] == "provider_not_available"

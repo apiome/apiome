@@ -61,10 +61,7 @@ const AZURE = makeView({
 });
 const GOOGLE = makeView({
   provider_id: 'google',
-  label: 'Google / GCP',
-  status: 'coming-soon',
-  required_fields: [],
-  missing_for_enable: [],
+  label: 'Google',
 });
 const AWS = makeView({
   provider_id: 'aws',
@@ -137,7 +134,7 @@ describe('AuthProviderSettingsClient — rendering', () => {
     expect(
       await screen.findByRole('region', { name: 'GitLab provider configuration' })
     ).toBeInTheDocument();
-    for (const label of ['GitHub', 'Microsoft', 'Google / GCP', 'AWS']) {
+    for (const label of ['GitHub', 'Microsoft', 'Google', 'AWS']) {
       expect(
         screen.queryByRole('region', { name: `${label} provider configuration` })
       ).not.toBeInTheDocument();
@@ -166,7 +163,8 @@ describe('AuthProviderSettingsClient — rendering', () => {
     expect(menu.queryByRole('menuitem', { name: /GitLab/ })).not.toBeInTheDocument();
     expect(menu.getByRole('menuitem', { name: /GitHub/ })).toBeEnabled();
     expect(menu.getByRole('menuitem', { name: /Microsoft/ })).toBeEnabled();
-    expect(menu.getByRole('menuitem', { name: /Google \/ GCP/ })).toBeDisabled();
+    // Google is available (OLO-9.2), so it is selectable; only aws stays coming-soon/disabled.
+    expect(menu.getByRole('menuitem', { name: /Google/ })).toBeEnabled();
     expect(menu.getByRole('menuitem', { name: /AWS/ })).toBeDisabled();
   });
 

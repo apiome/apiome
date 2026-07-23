@@ -35,6 +35,8 @@ const ALL_ENABLED_ENV = {
   GITLAB_CLIENT_SECRET: 'gl-secret',
   AZURE_AD_CLIENT_ID: 'az-id',
   AZURE_AD_CLIENT_SECRET: 'az-secret',
+  GOOGLE_CLIENT_ID: 'gg-id',
+  GOOGLE_CLIENT_SECRET: 'gg-secret',
 };
 
 describe('registry vocabulary', () => {
@@ -52,7 +54,7 @@ describe('registry vocabulary', () => {
     expect(getProviderDescriptor('github')?.label).toBe('GitHub');
     expect(getProviderDescriptor('gitlab')?.label).toBe('GitLab');
     expect(getProviderDescriptor('azure')?.label).toBe('Microsoft');
-    expect(getProviderDescriptor('google')?.label).toBe('Google / GCP');
+    expect(getProviderDescriptor('google')?.label).toBe('Google');
     expect(getProviderDescriptor('aws')?.label).toBe('AWS');
   });
 
@@ -66,10 +68,14 @@ describe('registry vocabulary', () => {
       'AZURE_AD_CLIENT_ID',
       'AZURE_AD_CLIENT_SECRET',
     ]);
+    expect(getProviderDescriptor('google')?.requiredEnvKeys).toEqual([
+      'GOOGLE_CLIENT_ID',
+      'GOOGLE_CLIENT_SECRET',
+    ]);
   });
 
-  it('marks google and aws as coming-soon (advertised but never enabled)', () => {
-    expect(getProviderDescriptor('google')?.status).toBe('coming-soon');
+  it('marks google available (OLO-9.2) and aws still coming-soon', () => {
+    expect(getProviderDescriptor('google')?.status).toBe('available');
     expect(getProviderDescriptor('aws')?.status).toBe('coming-soon');
   });
 
@@ -95,6 +101,7 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('github', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('gitlab', ALL_ENABLED_ENV)).toBe(true);
     expect(isProviderEnabled('azure', ALL_ENABLED_ENV)).toBe(true);
+    expect(isProviderEnabled('google', ALL_ENABLED_ENV)).toBe(true);
   });
 
   it('requires every env var — a missing secret disables the provider', () => {
@@ -106,8 +113,14 @@ describe('isProviderEnabled', () => {
     expect(isProviderEnabled('github', { GITHUB_ID: 'gh-id', GITHUB_SECRET: '   ' })).toBe(false);
   });
 
+  it('enables google once its client id + secret are set (OLO-9.2)', () => {
+    expect(
+      isProviderEnabled('google', { GOOGLE_CLIENT_ID: 'x', GOOGLE_CLIENT_SECRET: 'y' })
+    ).toBe(true);
+    expect(isProviderEnabled('google', { GOOGLE_CLIENT_ID: 'x' })).toBe(false);
+  });
+
   it('never enables coming-soon providers, regardless of env', () => {
-    expect(isProviderEnabled('google', { GOOGLE_CLIENT_ID: 'x', GOOGLE_CLIENT_SECRET: 'y' })).toBe(false);
     expect(isProviderEnabled('aws', ALL_ENABLED_ENV)).toBe(false);
   });
 
@@ -118,18 +131,23 @@ describe('isProviderEnabled', () => {
 
 describe('acceptance: env alone adds/removes providers everywhere', () => {
   it('renders exactly the enabled providers', () => {
-    expect(enabledProviderIds(ALL_ENABLED_ENV)).toEqual(['github', 'gitlab', 'azure']);
+    expect(enabledProviderIds(ALL_ENABLED_ENV)).toEqual(['github', 'gitlab', 'azure', 'google']);
     expect(enabledProviderIds({ GITHUB_ID: 'gh-id', GITHUB_SECRET: 'gh-secret' })).toEqual(['github']);
     expect(enabledProviderIds({})).toEqual([]);
   });
 
   it('disabling a provider via env removes it without code changes', () => {
     const withoutGitlab = { ...ALL_ENABLED_ENV, GITLAB_CLIENT_ID: '' };
-    expect(enabledProviderIds(withoutGitlab)).toEqual(['github', 'azure']);
+    expect(enabledProviderIds(withoutGitlab)).toEqual(['github', 'azure', 'google']);
   });
 
   it('enabledProviders preserves registry display order', () => {
-    expect(enabledProviders(ALL_ENABLED_ENV).map((p) => p.id)).toEqual(['github', 'gitlab', 'azure']);
+    expect(enabledProviders(ALL_ENABLED_ENV).map((p) => p.id)).toEqual([
+      'github',
+      'gitlab',
+      'azure',
+      'google',
+    ]);
   });
 });
 
@@ -141,7 +159,7 @@ describe('providerSummaries', () => {
       { id: 'github', label: 'GitHub', status: 'available', enabled: true },
       { id: 'gitlab', label: 'GitLab', status: 'available', enabled: false },
       { id: 'azure', label: 'Microsoft', status: 'available', enabled: false },
-      { id: 'google', label: 'Google / GCP', status: 'coming-soon', enabled: false },
+      { id: 'google', label: 'Google', status: 'available', enabled: false },
       { id: 'aws', label: 'AWS', status: 'coming-soon', enabled: false },
     ]);
     // Server → client props must survive serialization untouched.

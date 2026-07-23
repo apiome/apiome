@@ -1,8 +1,8 @@
 # Sign-in Provider Setup & Secrets Guide (OLO-7.2)
 
 How to register the OAuth applications Apiome signs users in with (GitHub, GitLab,
-Microsoft Entra ID), which environment variables each provider needs, and how boot-time
-validation reacts when a provider is misconfigured.
+Microsoft Entra ID, Google Workspace), which environment variables each provider needs, and how
+boot-time validation reacts when a provider is misconfigured.
 
 The single source of truth for the provider list and each provider's env contract is the
 provider registry: [`lib/auth/provider-registry.ts`](../lib/auth/provider-registry.ts)
@@ -23,6 +23,9 @@ linked-accounts panel, NextAuth sign-in route). No code changes are needed eithe
 | `AZURE_AD_CLIENT_ID` | Entra ID | To enable Microsoft | App registration **Application (client) ID** |
 | `AZURE_AD_CLIENT_SECRET` | Entra ID | To enable Microsoft | Client secret **value** (not its ID) |
 | `AZURE_AD_TENANT` | Entra ID | No (default `common`) | Tenant id/domain to restrict sign-in to one directory |
+| `GOOGLE_CLIENT_ID` | Google | To enable Google | OAuth client **Client ID** |
+| `GOOGLE_CLIENT_SECRET` | Google | To enable Google | OAuth client **Client secret** |
+| `GOOGLE_WORKSPACE_DOMAIN` | Google | No (default: any account) | Restrict sign-in to one Workspace domain (`hd` param + verified claim) |
 | `AUTH_PROVIDER_VALIDATION` | validation | No (default `strict`) | `strict` fails startup on partial provider config; `warn` logs and disables |
 
 Rules that apply to every provider:
@@ -144,6 +147,36 @@ AZURE_AD_CLIENT_SECRET=<client secret Value>
 # AZURE_AD_TENANT=<tenant id or domain>
 ```
 
+## Google — OAuth client (Workspace sign-in)
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials), pick (or
+   create) a project, then go to **APIs & Services → Credentials**. Configure the **OAuth consent
+   screen** first if prompted — **Internal** for a single Workspace org, **External** otherwise.
+2. Click **Create credentials → OAuth client ID**:
+   - **Application type:** **Web application**
+   - **Authorized redirect URI:** `{NEXTAUTH_URL}/api/auth/callback/google`
+     (e.g. `http://localhost:3000/api/auth/callback/google` for local dev)
+3. Click **Create**, then copy the **Client ID** and **Client secret**.
+4. Set the env vars:
+
+```bash
+GOOGLE_CLIENT_ID=<Client ID>
+GOOGLE_CLIENT_SECRET=<Client secret>
+# Optional: restrict sign-in to one Google Workspace domain (defaults to any Google account)
+# GOOGLE_WORKSPACE_DOMAIN=example.com
+```
+
+The sign-in flow requests the `openid email profile` scopes and reads Google's native
+`email_verified` claim, so a verified Google address auto-joins its account exactly like the other
+providers (OLO-2.5). No extra scopes need configuring on the OAuth client.
+
+**Workspace domain restriction.** When `GOOGLE_WORKSPACE_DOMAIN` is set, the flow adds Google's
+`hd` ("hosted domain") authorization parameter *and* verifies the `hd` claim on the returned id
+token, rejecting any account outside that domain. The `hd` parameter alone is only advisory — a
+user can still complete the flow with a personal or foreign-domain account — so the claim check is
+the real boundary (per Google's OIDC docs). Leave the variable unset to allow any Google account,
+including personal `@gmail.com` addresses.
+
 ## Secrets handling
 
 - Never commit client secrets — `.env` files are gitignored; the checked-in
@@ -198,6 +231,7 @@ mock server via base-URL override env vars:
 | `GITHUB_API_BASE_URL` | GitHub `/user` + `/user/emails` API | `https://api.github.com` |
 | `GITLAB_BASE_URL` | GitLab authorize/token/userinfo | `https://gitlab.com` |
 | `AZURE_AD_AUTHORITY_BASE_URL` | Entra ID OIDC discovery authority | `https://login.microsoftonline.com` |
+| `GOOGLE_ISSUER` | Google OIDC discovery issuer | `https://accounts.google.com` |
 
 **Never set these in a real deployment** — they redirect the entire sign-in flow to the
 named host. Unset (the default) the real provider endpoints are used; the boot-time

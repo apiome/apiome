@@ -97,12 +97,15 @@ export function isSignupDisabled(env: Record<string, string | undefined> = proce
  * The auto-link policy is deliberately provider-gated: a provider outside this set is treated as
  * unverified no matter what its profile claims. `azure` is pre-listed for OLO-2.x but its claims
  * are additionally subject to the nOAuth hardening rules (OLO-1.4) before `emailVerified` may be
- * set true.
+ * set true. `google` (OLO-9.2) is trusted through the generic path: Google's id token carries a
+ * native `email_verified` claim, and any Workspace-domain restriction is already enforced upstream
+ * in the provider's profile callback (`google-provider.ts`).
  */
 export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
   'github',
   'gitlab',
   'azure',
+  'google',
 ]);
 
 /**
@@ -113,7 +116,12 @@ export const AUTO_LINK_TRUSTED_PROVIDERS: ReadonlySet<string> = new Set([
  * with a linking-intent cookie already set. (OLO-2.3 will replace this with the provider
  * registry; keep the two sets aligned until then.)
  */
-export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set(['github', 'gitlab', 'azure']);
+export const LINKABLE_PROVIDERS: ReadonlySet<string> = new Set([
+  'github',
+  'gitlab',
+  'azure',
+  'google',
+]);
 
 /**
  * Canonicalize an email address to the stored/indexed form: trimmed and lower-cased.

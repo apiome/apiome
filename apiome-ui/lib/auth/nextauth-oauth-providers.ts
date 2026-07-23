@@ -14,6 +14,7 @@ import type { Provider } from 'next-auth/providers/index';
 import GithubProvider from 'next-auth/providers/github';
 import GitlabProvider from 'next-auth/providers/gitlab';
 import { entraIdProvider } from './entra-provider';
+import { googleProvider } from './google-provider';
 import { enabledProviders, readEnvString } from './provider-registry';
 import { resolveProviderEnv, type EnvMap } from './provider-config-resolver';
 import {
@@ -82,6 +83,9 @@ const PROVIDER_FACTORIES: Record<
     });
   },
   azure: (env) => entraIdProvider(env),
+  // google: built-in next-auth GoogleProvider wrapped for optional Workspace-domain restriction
+  // (the `hd` authorization param + id-token `hd`-claim gate). See `google-provider.ts` (OLO-9.2).
+  google: (env) => googleProvider(env),
 };
 
 /**
