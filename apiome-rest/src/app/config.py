@@ -210,6 +210,42 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for server-global OAuth provider secrets (OLO-8.3, #4969). The
+    # key-encryption-key (KEK) that seals the client secret stored in
+    # apiome.auth_provider_config.client_secret_encrypted (V196, OLO-8.2). The KEK lives in the
+    # environment — never in the DB — so ciphertext at rest is useless without it. See
+    # app.auth_provider_secret_crypto.
+    #
+    # Two accepted forms:
+    #   * A single base64-encoded 32-byte (AES-256) key — the common case:
+    #       AUTH_CONFIG_ENC_KEY=<base64 key>
+    #     sealed under the key id in auth_config_enc_active_key_id (default "default").
+    #   * A JSON object mapping a string key id to a base64 key, for flag-day-free rotation:
+    #       AUTH_CONFIG_ENC_KEY={"v1": "<base64 key>", "v2": "<base64 key>"}
+    #     Several ids may be configured at once so the active key can be rotated while older rows
+    #     stay decryptable under the id (enc_key_id) that sealed them.
+    # Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    auth_config_enc_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_AUTH_CONFIG_ENC_KEY",
+            "AUTH_CONFIG_ENC_KEY",
+            "auth_config_enc_key",
+        ),
+    )
+    # Which key id new provider secrets are sealed under (written to enc_key_id). Optional. For the
+    # single-key form it defaults to "default"; for the JSON-map form it defaults to the sole id
+    # when exactly one is configured, otherwise it must be set explicitly so rotation is unambiguous.
+    auth_config_enc_active_key_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_AUTH_CONFIG_ENC_ACTIVE_KEY_ID",
+            "AUTH_CONFIG_ENC_ACTIVE_KEY_ID",
+            "auth_config_enc_active_key_id",
+        ),
+    )
+
     # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
     # in apiome.tenant_repositories.refresh_interval_seconds; these set the default
     # applied when a repo has no explicit value and the global minimum floor that
