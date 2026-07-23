@@ -34,7 +34,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from .auth import normalize_user_id, validate_session_credentials
 from .auth_rate_limit import (
@@ -53,10 +53,22 @@ from .models import (
     MembershipActivationRequest,
     MembershipActivationResponse,
     TenantProvisionedSchema,
+    WizardStateResponse,
+    WizardStateUpsertRequest,
 )
 from .tenant_slug import generate_tenant_slug, validate_tenant_slug
 
 logger = logging.getLogger(__name__)
+
+# The wizard's own step vocabulary (apiome-ui wizard-steps.ts). Persisting and
+# reporting are gated to these so a malformed client cannot store an arbitrary
+# resume target or pollute the funnel with junk step names.
+_VALID_WIZARD_STEPS = frozenset({"welcome", "organization", "summary", "done"})
+
+# Defensive length caps mirroring the column widths (VARCHAR(255)); the values
+# are also validated properly at provisioning time, this only stops an oversized
+# blob reaching the resume row.
+_WIZARD_TEXT_MAX_LEN = 255
 
 # The per-IP auth budget runs as a router dependency so it fires before the
 # session dependency on every onboarding route (OLO-7.1, #4223); the tighter
@@ -297,3 +309,145 @@ async def activate_membership(
             "activated pending membership for user %s in tenant %s", user_id, tenant_id
         )
     return MembershipActivationResponse(status=outcome, tenant_id=tenant_id)
+
+
+def _require_wizard_user(session: Dict[str, Any]) -> str:
+    """Resolve the caller's user id for a wizard-state route, or raise.
+
+    The onboarding wizard is a user-session surface: an API key is a
+    tenant-scoped credential with no wizard to resume, so it is rejected the
+    same way the provisioning routes reject it.
+
+    Args:
+        session: The validated session credentials.
+
+    Returns:
+        The caller's canonical UUID string.
+
+    Raises:
+        HTTPException: 403 for API-key sessions, 401 for a missing user id.
+    """
+    if session.get("auth_method") != "jwt":
+        raise HTTPException(
+            status_code=403,
+            detail="Onboarding wizard state requires a user session, not an API key",
+        )
+    user_id = normalize_user_id(session.get("user_id"))
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Missing user identifier")
+    return user_id
+
+
+def _clean_wizard_text(value: Optional[str]) -> Optional[str]:
+    """Trim wizard free-text and cap it to the column width, or None when blank."""
+    if value is None:
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    return text[:_WIZARD_TEXT_MAX_LEN]
+
+
+@router.get(
+    "/wizard-state",
+    response_model=WizardStateResponse,
+    responses={
+        200: {"description": "The caller's saved onboarding-wizard resume state."},
+        204: {"description": "No saved state (nothing to resume)."},
+        401: {"description": "Missing or invalid session credentials."},
+        403: {"description": "API-key sessions have no wizard to resume."},
+        429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
+    },
+)
+async def get_wizard_state(
+    session: Dict[str, Any] = Depends(validate_session_credentials),
+):
+    """Return the caller's saved onboarding-wizard state, or 204 when none.
+
+    Called when the wizard mounts so an abandoned-then-resumed session reopens
+    on the step the user left off, with any entered organization name/slug
+    pre-filled (OLO-4.5, #4209). An expired row reads as absent.
+    """
+    user_id = _require_wizard_user(session)
+    enforce_auth_account_rate_limit(user_id)
+
+    state = db.get_onboarding_wizard_state(user_id)
+    if not state or state.get("step") not in _VALID_WIZARD_STEPS:
+        # No row, or a step this build no longer understands — nothing safe to
+        # resume onto, so report "start fresh".
+        return Response(status_code=204)
+
+    return WizardStateResponse(
+        step=state["step"],
+        org_name=state.get("org_name"),
+        slug=state.get("slug"),
+        updated_at=state.get("updated_at"),
+    )
+
+
+@router.put(
+    "/wizard-state",
+    status_code=204,
+    responses={
+        204: {"description": "Resume state saved (and funnel event recorded when supplied)."},
+        400: {"description": "``step`` is not a recognized wizard step."},
+        401: {"description": "Missing or invalid session credentials."},
+        403: {"description": "API-key sessions cannot drive the onboarding wizard."},
+        429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
+    },
+)
+async def put_wizard_state(
+    payload: WizardStateUpsertRequest,
+    session: Dict[str, Any] = Depends(validate_session_credentials),
+) -> Response:
+    """Persist the caller's wizard resume position and record a funnel event.
+
+    Called on every wizard step change: the resume row is upserted so a
+    logout/login reopens here, and — when ``event`` is supplied (``reached`` on
+    forward navigation, ``completed`` at the end) — a funnel telemetry event is
+    appended for onboarding metrics. Back navigation persists without an event
+    so a step is not double-counted (OLO-4.5, #4209).
+    """
+    user_id = _require_wizard_user(session)
+    enforce_auth_account_rate_limit(user_id)
+
+    step = (payload.step or "").strip()
+    if step not in _VALID_WIZARD_STEPS:
+        raise HTTPException(status_code=400, detail="Unknown wizard step")
+
+    org_name = _clean_wizard_text(payload.org_name)
+    slug = _clean_wizard_text(payload.slug)
+
+    db.upsert_onboarding_wizard_state(user_id, step, org_name, slug)
+
+    if payload.event is not None:
+        # Best-effort at the DB layer: telemetry never fails the step it records.
+        db.record_onboarding_funnel_event(user_id, step, payload.event)
+
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/wizard-state",
+    status_code=204,
+    responses={
+        204: {"description": "Resume state cleared (or already absent)."},
+        401: {"description": "Missing or invalid session credentials."},
+        403: {"description": "API-key sessions cannot drive the onboarding wizard."},
+        429: {"description": "Structured throttle (OLO-7.1): ``auth-rate-limited``."},
+    },
+)
+async def delete_wizard_state(
+    session: Dict[str, Any] = Depends(validate_session_credentials),
+) -> Response:
+    """Clear the caller's saved wizard state (called once the wizard completes).
+
+    A provisioned tenant means the wizard no longer shows, so its resume row is
+    removed rather than left to expire. Idempotent: clearing an already-absent
+    state is a no-op 204 (OLO-4.5, #4209).
+    """
+    user_id = _require_wizard_user(session)
+    enforce_auth_account_rate_limit(user_id)
+
+    db.delete_onboarding_wizard_state(user_id)
+    return Response(status_code=204)

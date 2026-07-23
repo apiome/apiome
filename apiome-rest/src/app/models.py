@@ -5975,6 +5975,40 @@ class MembershipActivationResponse(BaseModel):
     tenant_id: str = Field(..., description="Tenant the membership belongs to.")
 
 
+class WizardStateUpsertRequest(BaseModel):
+    """Body of ``PUT /v1/onboarding/wizard-state`` (OLO-4.5, #4209).
+
+    Persists the caller's onboarding-wizard resume position and, when ``event``
+    is supplied, records a funnel telemetry event for the step. ``org_name`` and
+    ``slug`` carry whatever the user has entered so far so a resumed wizard can
+    pre-fill them; both are null until the organization step.
+    """
+
+    step: str = Field(..., description="Wizard step the user is now on (welcome, organization, summary, done).")
+    org_name: Optional[str] = Field(
+        None, description="Organization display name entered so far; null before the organization step."
+    )
+    slug: Optional[str] = Field(
+        None, description="Tenant slug entered so far; null before the organization step."
+    )
+    event: Optional[Literal["reached", "completed", "abandoned"]] = Field(
+        None,
+        description=(
+            "Funnel event to record for this step: ``reached`` on forward navigation, "
+            "omitted when only persisting the resume position (e.g. navigating back)."
+        ),
+    )
+
+
+class WizardStateResponse(BaseModel):
+    """Persisted onboarding-wizard resume state (``GET /v1/onboarding/wizard-state``)."""
+
+    step: str = Field(..., description="Wizard step to reopen on.")
+    org_name: Optional[str] = Field(None, description="Organization display name entered so far, if any.")
+    slug: Optional[str] = Field(None, description="Tenant slug entered so far, if any.")
+    updated_at: Optional[str] = Field(None, description="ISO-8601 time the state was last saved.")
+
+
 class BrowseDirectoryStats(BaseModel):
     """Aggregate counts for published public specs (browse directory home)."""
 
