@@ -36,6 +36,7 @@ auth failure.
 | `account-not-verified` | The resolved account exists but has not completed its own email verification (`users.verified = false`). | Resolution engine, credentials sign-in |
 | `provider-already-linked` | The user already has a different identity linked for this provider (link flow). | `linkExternalAccount` (`lib/db/helper.ts`) |
 | `last-sign-in-method` | Unlink refused: the identity is the user's last remaining sign-in method — no other linked identity and no usable password (`users.password` empty) — so removing it would lock them out (OLO-2.4). | `unlinkExternalAccount` (`lib/db/helper.ts`) |
+| `sign-in-failed` | Generic sign-in failure with no user-actionable detail; the `signIn` callback's defensive fallback when a provider yields no resolvable user. Kept generic so the redirect leaks no account existence signal (OLO-7.3). Renders the generic banner. | NextAuth `signIn` callback (`src/app/api/auth/[...nextauth]/route.ts`) |
 
 ## Pre-contract stable copy keys
 

@@ -22,6 +22,16 @@ import {
 
 const bcrypt = require('bcrypt');
 
+/**
+ * A fixed, valid bcrypt hash (cost 10 — the cost every password write in this codebase uses)
+ * that no real password equals. The credentials path compares against it whenever the email has
+ * no account or no usable password, so a failed sign-in always performs exactly one bcrypt
+ * verification. Without this, the hash only ran when the account existed, and the extra latency
+ * let an attacker enumerate valid emails by response time even within the rate-limit budget
+ * (OLO-7.3 threat-model fix). The plaintext is irrelevant — the value must never match a login.
+ */
+const DECOY_PASSWORD_HASH = '$2b$10$LRiE9uVVzAnnUJNQ5ewIXu11h7QPAED4M3Wo3D6uXa3KnELjifewe';
+
 // Re-exported for existing consumers/tests; the implementation lives with the resolution engine.
 export { resolveOAuthEmailVerified, resolveEntraEmailVerified };
 
@@ -242,21 +252,27 @@ export const credentialsAuthorize = async (
   }
 
   const results = await helper.getUserByEmail(email);
+  const userResult = results.rowCount > 0 ? results.rows[0] : null;
+  const storedHash =
+    userResult && typeof userResult.password === 'string' && userResult.password.length > 0
+      ? userResult.password
+      : DECOY_PASSWORD_HASH;
 
-  if (results.rowCount > 0) {
-    const userResult = results.rows[0];
-    const hashPassword = userResult.password;
+  // Always run one bcrypt comparison — against the decoy hash when there is no account or no
+  // usable password — so a miss costs the same as a wrong password and the response time cannot
+  // be used to enumerate valid emails (OLO-7.3). The decoy hash never matches, so a missing
+  // account still falls through to the failure path below.
+  const passwordMatches = bcrypt.compareSync(password, storedHash);
 
-    if (userResult.password && bcrypt.compareSync(password, hashPassword)) {
-      delete userResult.password;
-      if (rateLimitKey) {
-        recordLoginSuccess(rateLimitKey);
-      }
-      if (ipKey) {
-        recordLoginSuccess(ipKey);
-      }
-      return userResult;
+  if (userResult && userResult.password && passwordMatches) {
+    delete userResult.password;
+    if (rateLimitKey) {
+      recordLoginSuccess(rateLimitKey);
     }
+    if (ipKey) {
+      recordLoginSuccess(ipKey);
+    }
+    return userResult;
   }
 
   // No user, no stored password, or a bad password — all count as a failed attempt

@@ -23,6 +23,7 @@ import {
   pickActiveTenantId,
   resolveActiveTenantForLogin,
   resolvePostLoginRouteForUser,
+  validateTenantSwitch,
 } from '@lib/auth/post-login-routing';
 
 const tenantRows = (...tenants: Array<{ id: string; name: string; status?: string }>) =>
@@ -175,6 +176,35 @@ describe('resolveActiveTenantForLogin', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
     await expect(resolveActiveTenantForLogin('user-1', 't9')).resolves.toBe('t9');
+    consoleError.mockRestore();
+  });
+});
+
+// OLO-7.3 — the tenant switcher's update({ current_tenant_id }) is client-controlled, so
+// validateTenantSwitch must confirm membership before the value enters the signed token, and it
+// must fail *closed* (unlike login's fail-open) — a switch failure just keeps the current tenant.
+describe('validateTenantSwitch', () => {
+  it('accepts a requested tenant the user is a live member of', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(
+      tenantRows({ id: 't1', name: 'Acme' }, { id: 't2', name: 'Beta' })
+    );
+    await expect(validateTenantSwitch('user-1', 't2')).resolves.toBe('t2');
+  });
+
+  it('rejects a tenant the user does not belong to (IDOR / tenant-confusion guard)', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+    await expect(validateTenantSwitch('user-1', 'victim-tenant')).resolves.toBeNull();
+  });
+
+  it('rejects any tenant for a user with no memberships', async () => {
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows());
+    await expect(validateTenantSwitch('user-1', 'anything')).resolves.toBeNull();
+  });
+
+  it('fails closed (returns null) when the membership lookup throws', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
+    await expect(validateTenantSwitch('user-1', 't1')).resolves.toBeNull();
     consoleError.mockRestore();
   });
 });

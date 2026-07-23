@@ -131,6 +131,7 @@ describe('retry affordance (OLO-3.2)', () => {
         AUTH_ERROR_CODES.ACCOUNT_NOT_VERIFIED,
         AUTH_ERROR_CODES.EMAIL_REQUIRED,
         AUTH_ERROR_CODES.PROFILE_INCOMPLETE,
+        AUTH_ERROR_CODES.SIGN_IN_FAILED,
         'SignupSessionExpired',
       ].sort()
     );

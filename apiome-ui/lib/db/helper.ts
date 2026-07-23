@@ -2793,8 +2793,41 @@ export async function createSignupRequest(name: string, email: string, password:
 
 // External Authentication Provider Functions
 
+/**
+ * Bind a linked-account server action to its authenticated caller (OLO-7.3 threat-model fix).
+ *
+ * `helper.ts` is a `'use server'` module, so every exported async function is a callable server
+ * action whose arguments are fully client-controlled. The linked-account / personal-access-token
+ * actions historically took `userId` as a plain argument and used it directly in their SQL
+ * `WHERE ... user_id = $userId` clauses — which only ever compared the target against the value the
+ * *caller* supplied, providing no authorization. That let any authenticated user pass a victim's id
+ * to read the victim's linked providers / PAT suffixes or unlink / overwrite / wipe their tokens
+ * (a cross-user IDOR).
+ *
+ * This helper re-derives the acting user from the server-side session and only proceeds when the
+ * requested `userId` matches it, so the incoming argument can never widen access beyond the caller.
+ *
+ * @param userId The user id the caller is asking to act on (from the client bundle — untrusted).
+ * @returns The authenticated session user id when it equals `userId`; otherwise `null`
+ *   (unauthenticated, or an attempt to act on another user). Callers must treat `null` as "refuse",
+ *   returning their own not-found/empty shape so the response does not distinguish the two cases.
+ */
+async function resolveOwnLinkedAccountUserId(userId: string): Promise<string | null> {
+  const session = await getAuthSession();
+  const sessionUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
+  if (typeof sessionUserId !== 'string' || sessionUserId.trim() === '') {
+    return null;
+  }
+  return sessionUserId === userId ? sessionUserId : null;
+}
+
 export async function getLinkedAccountsForUser(userId: string) {
   try {
+    const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+    if (!authedUserId) {
+      // Not signed in, or asking for another user's identities — disclose nothing.
+      return JSON.stringify([]);
+    }
     const result = await connectionPool.query(
       `SELECT id, provider, provider_user_id, provider_email, email_verified, provider_username,
               (CASE WHEN access_token IS NOT NULL THEN RIGHT(access_token, 6) ELSE NULL END) AS access_token_suffix,
@@ -2802,7 +2835,7 @@ export async function getLinkedAccountsForUser(userId: string) {
        FROM apiome.external_auth_providers
        WHERE user_id = $1
        ORDER BY created_at DESC`,
-      [userId]
+      [authedUserId]
     );
 
     return JSON.stringify(result.rows);
@@ -2918,9 +2951,15 @@ export async function linkExternalAccount(
  */
 export async function getUserHasPassword(userId: string) {
   try {
+    const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+    if (!authedUserId) {
+      // Fail-safe: an unauthenticated / cross-user caller learns nothing and the
+      // last-unlink guard treats the account as password-less.
+      return JSON.stringify({ hasPassword: false });
+    }
     const result = await connectionPool.query(
       "SELECT (password IS NOT NULL AND password <> '') AS has_password FROM apiome.users WHERE id = $1",
-      [userId]
+      [authedUserId]
     );
     if (result.rowCount === 0) {
       return JSON.stringify({ hasPassword: false });
@@ -2952,6 +2991,16 @@ export async function getUserHasPassword(userId: string) {
  *   failures — not found / not owned — carry only `error`).
  */
 export async function unlinkExternalAccount(userId: string, linkedAccountId: string) {
+  const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+  if (!authedUserId) {
+    // Same wording as the not-owned case below so the response never reveals whether
+    // the target account exists for another user.
+    return JSON.stringify({
+      success: false,
+      error: 'Linked account not found or does not belong to you'
+    });
+  }
+  userId = authedUserId;
   const client = await connectionPool.connect();
   try {
     await client.query('BEGIN');
@@ -3131,6 +3180,14 @@ export async function addPersonalAccessToken(
   accessToken: string
 ) {
   try {
+    const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+    if (!authedUserId) {
+      return JSON.stringify({
+        success: false,
+        error: 'Account not found or does not belong to you'
+      });
+    }
+    userId = authedUserId;
     // Update the existing OAuth account with PAT
     // This adds the PAT to an already-linked account
     const result = await connectionPool.query(
@@ -3164,6 +3221,14 @@ export async function updatePersonalAccessToken(
   accessToken: string
 ) {
   try {
+    const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+    if (!authedUserId) {
+      return JSON.stringify({
+        success: false,
+        error: 'Account not found or does not belong to you'
+      });
+    }
+    userId = authedUserId;
     // Verify the account belongs to this user and update the token
     const result = await connectionPool.query(
       `UPDATE apiome.external_auth_providers 
@@ -3195,6 +3260,14 @@ export async function removePersonalAccessToken(
   accountId: string
 ) {
   try {
+    const authedUserId = await resolveOwnLinkedAccountUserId(userId);
+    if (!authedUserId) {
+      return JSON.stringify({
+        success: false,
+        error: 'Account not found or does not belong to you'
+      });
+    }
+    userId = authedUserId;
     // Verify the account belongs to this user and remove the PAT by setting it to null
     const result = await connectionPool.query(
       `UPDATE apiome.external_auth_providers 
