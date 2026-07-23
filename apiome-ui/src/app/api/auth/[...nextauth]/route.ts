@@ -1,6 +1,8 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { NextAuthOptions } from 'next-auth';
+import type { Provider } from 'next-auth/providers/index';
+import type { NextRequest } from 'next/server';
 import {
   credentialsAuthorize,
   signInForProvider,
@@ -12,7 +14,10 @@ import {
   isAllowedCallbackUrl,
   isSafeRelativeCallbackPath,
 } from '../../../../../lib/auth/cookie-options';
-import { configuredOAuthProviders } from '../../../../../lib/auth/nextauth-oauth-providers';
+import {
+  configuredOAuthProviders,
+  resolveOAuthProviders,
+} from '../../../../../lib/auth/nextauth-oauth-providers';
 import { AUTH_ERROR_CODES, loginErrorRedirect } from '../../../../../lib/auth/account-resolution';
 import {
   resolveActiveTenantForLogin,
@@ -22,7 +27,19 @@ import { resolveClientIp } from '../../../../../lib/auth/client-ip';
 import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
 import { readLastActiveTenantId } from '../../../../../lib/auth/last-active-tenant';
 
-export const authOptions: NextAuthOptions = {
+/**
+ * Assemble the NextAuth options from a resolved OAuth provider list.
+ *
+ * Everything except the OAuth providers (secret, cookie scoping, the credentials provider, pages, and
+ * all session/jwt callbacks) is identical for every caller; only the OAuth provider set varies between
+ * the static env build ({@link authOptions}) and the per-request DB-over-env build
+ * ({@link buildRequestAuthOptions}). Keeping one factory guarantees the two never drift (OLO-8.6).
+ *
+ * @param oauthProviders OAuth provider configs to register ahead of the credentials provider.
+ * @returns The complete `NextAuthOptions` for this deployment.
+ */
+function makeAuthOptions(oauthProviders: Provider[]): NextAuthOptions {
+  return {
   secret: process.env.NEXTAUTH_SECRET,
   // Scope session cookies to NEXTAUTH_COOKIE_DOMAIN so subdomain apps
   // (e.g. the studio) can share the login session.
@@ -31,8 +48,9 @@ export const authOptions: NextAuthOptions = {
     // Every OAuth provider comes from the provider registry (OLO-2.3): a provider is
     // registered only when its env vars are configured, so disabling one via env removes
     // its sign-in route along with its login/link buttons. Email trust is decided by the
-    // resolution engine inside signInForProvider (OLO-1.3/1.4), not here.
-    ...configuredOAuthProviders(),
+    // resolution engine inside signInForProvider (OLO-1.3/1.4), not here. The list is resolved
+    // per request (OLO-8.6) so a DB config change lands on the next sign-in without a redeploy.
+    ...oauthProviders,
     CredentialsProvider({
       credentials: {},
       async authorize(credentials: any, req) {
@@ -178,8 +196,43 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   }
-};
+  };
+}
 
-const handler = NextAuth(authOptions);
+/**
+ * Static, env-derived auth options for server-side session reads.
+ *
+ * Imported across the app for `getServerSession(authOptions)`. Validating an existing session only
+ * consults the secret, cookies, and jwt/session callbacks — never the OAuth providers list — so an
+ * env build is correct here; the DB-over-env provider resolution (OLO-8.6) matters only when *starting*
+ * a sign-in, which goes through the per-request handler below.
+ */
+export const authOptions: NextAuthOptions = makeAuthOptions(configuredOAuthProviders());
+
+/** Route context NextAuth's App Router handler receives as its second argument. */
+interface RouteHandlerContext {
+  params: { nextauth: string[] } | Promise<{ nextauth: string[] }>;
+}
+
+/**
+ * Build the auth options for a single sign-in request, resolving the OAuth providers from the
+ * DB-over-env merged config (OLO-8.6). The 8.5 TTL cache keeps this off the per-login hot path, and a
+ * DB outage degrades to env config rather than breaking sign-in.
+ *
+ * @returns The per-request `NextAuthOptions`.
+ */
+async function buildRequestAuthOptions(): Promise<NextAuthOptions> {
+  return makeAuthOptions(await resolveOAuthProviders());
+}
+
+/**
+ * NextAuth App Router handler as a function of the request (OLO-8.6): NextAuth v4 accepts
+ * `NextAuth(req, ctx, options)`, so the options — and thus the enabled provider set — are rebuilt on
+ * every request instead of frozen at module load. Toggling a provider's DB config therefore takes
+ * effect on the next request (within the resolver's cache TTL) with no redeploy.
+ */
+async function handler(req: NextRequest, ctx: RouteHandlerContext) {
+  return NextAuth(req, ctx, await buildRequestAuthOptions());
+}
 
 export { handler as GET, handler as POST };
