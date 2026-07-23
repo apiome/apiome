@@ -43,6 +43,9 @@ from pydantic import BaseModel, Field
 
 from .admin_session import verify_admin_session_token
 from .auth_provider_registry import (
+    FIELD_KIND_CLIENT_ID,
+    FIELD_KIND_CLIENT_SECRET,
+    FIELD_KIND_CONFIG,
     PROVIDER_REGISTRY,
     STATUS_AVAILABLE,
     ProviderDescriptor,
@@ -211,6 +214,70 @@ class ProviderConfigUpdateRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Required-field completeness
+# ---------------------------------------------------------------------------
+
+
+def _config_value_present(config: Any, key: str) -> bool:
+    """Whether ``config[key]`` is a stored, non-blank string.
+
+    A ``config``-kind required field (e.g. an OIDC ``issuer``, OLO-9.1) is satisfied only by a
+    non-blank JSONB value — a blank string is treated as absent, matching the UI's "blank ⇒
+    fallback, not set" rule (OLO-8.5).
+
+    Args:
+        config: The stored ``config`` JSONB (any value; only a dict can carry the key).
+        key: The env-var-named key to read (e.g. ``OKTA_ISSUER``).
+
+    Returns:
+        True when a non-blank string is stored under ``key``.
+    """
+    if not isinstance(config, dict):
+        return False
+    value = config.get(key)
+    return isinstance(value, str) and value.strip() != ""
+
+
+def _missing_required_fields(
+    descriptor: ProviderDescriptor,
+    *,
+    client_id: Any,
+    secret_set: bool,
+    config: Any,
+) -> List[str]:
+    """Semantic names of the required fields not satisfied by an effective config state.
+
+    Generalizes completeness beyond ``client_id`` / ``client_secret`` (OLO-9.1): each required
+    field is checked at the DB location its ``kind`` names — the ``client_id`` column, the sealed
+    secret, or a key in the ``config`` JSONB — so an issuer-based provider names its missing issuer
+    just as a classic provider names a missing client id/secret. ``coming-soon`` providers have no
+    required fields and so yield an empty list.
+
+    Args:
+        descriptor: The provider's registry entry.
+        client_id: The effective client id (column value), or a falsy value when absent.
+        secret_set: Whether a client secret is effectively stored.
+        config: The effective ``config`` JSONB.
+
+    Returns:
+        The missing fields' semantic names, in the descriptor's field order.
+    """
+    missing: List[str] = []
+    for req in descriptor.required_fields:
+        if req.kind == FIELD_KIND_CLIENT_ID:
+            present = bool(client_id)
+        elif req.kind == FIELD_KIND_CLIENT_SECRET:
+            present = bool(secret_set)
+        elif req.kind == FIELD_KIND_CONFIG:
+            present = _config_value_present(config, req.env_key)
+        else:  # Unknown kind — treat as unsatisfiable so a registry typo fails closed.
+            present = False
+        if not present:
+            missing.append(req.field)
+    return missing
+
+
+# ---------------------------------------------------------------------------
 # View construction
 # ---------------------------------------------------------------------------
 
@@ -240,12 +307,13 @@ def _provider_view(
 
     # Which required fields are NOT yet satisfied by the DB row (only meaningful for available
     # providers; coming-soon providers have no required fields and can never be enabled).
-    missing: List[str] = []
-    if descriptor.status == STATUS_AVAILABLE:
-        if "client_id" in descriptor.required_fields and not client_id:
-            missing.append("client_id")
-        if "client_secret" in descriptor.required_fields and not secret_set:
-            missing.append("client_secret")
+    missing: List[str] = (
+        _missing_required_fields(
+            descriptor, client_id=client_id, secret_set=secret_set, config=config
+        )
+        if descriptor.status == STATUS_AVAILABLE
+        else []
+    )
 
     return ProviderConfigView(
         provider_id=descriptor.id,
@@ -258,7 +326,7 @@ def _provider_view(
         secret_set=secret_set,
         secret_source=SOURCE_DB if secret_set else SOURCE_ENV_FALLBACK,
         config=config,
-        required_fields=list(descriptor.required_fields),
+        required_fields=descriptor.required_field_names(),
         missing_for_enable=missing,
         can_enable=descriptor.status == STATUS_AVAILABLE and not missing,
         updated_at=row.get("updated_at"),
@@ -415,8 +483,9 @@ def _guard_enable_completeness(
 
     Computes what each relevant field will be after ``updates`` are applied over ``existing``, and
     — only when the result has the provider ``enabled`` — verifies the provider is ``available`` and
-    every required field (``client_id``, ``client_secret``) is present. A failure raises a
-    structured ``422`` and no write occurs.
+    every required field is present at the DB location its kind names (the ``client_id`` column, the
+    sealed secret, or a ``config`` JSONB key such as an OIDC ``issuer`` — OLO-9.1). A failure raises
+    a structured ``422`` and no write occurs.
 
     Args:
         descriptor: The provider's registry entry.
@@ -453,12 +522,18 @@ def _guard_enable_completeness(
         effective_secret_set = updates["client_secret_encrypted"] is not None
     else:
         effective_secret_set = existing.get("enc_key_id") is not None
+    # config-kind required fields (e.g. an OIDC issuer, OLO-9.1) are checked against the effective
+    # JSONB: the update's config when it sets one, else the stored config.
+    effective_config = (
+        updates["config"] if "config" in updates else existing.get("config")
+    ) or {}
 
-    missing: List[str] = []
-    if "client_id" in descriptor.required_fields and not effective_client_id:
-        missing.append("client_id")
-    if "client_secret" in descriptor.required_fields and not effective_secret_set:
-        missing.append("client_secret")
+    missing = _missing_required_fields(
+        descriptor,
+        client_id=effective_client_id,
+        secret_set=effective_secret_set,
+        config=effective_config,
+    )
 
     if missing:
         raise HTTPException(

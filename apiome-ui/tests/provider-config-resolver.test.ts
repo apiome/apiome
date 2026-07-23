@@ -232,4 +232,25 @@ describe('applyResolvedOverlay (pure)', () => {
     const base = { GITHUB_ID: 'env' };
     expect(applyResolvedOverlay(base, null)).toEqual(base);
   });
+
+  it('overlays a config-kind required field (an OIDC issuer) onto its env key (OLO-9.1)', () => {
+    // An issuer-based provider stores its issuer in the env-var-keyed config JSONB; the overlay
+    // lands it on the env var the auth stack reads — DB winning over env, a blank value falling
+    // back to env. (Provider-specific client-id/secret env mapping is added per provider in
+    // OLO-9.3+; the config overlay here is generic over any env-var-keyed extra.)
+    const base = { OKTA_ISSUER: 'https://env.okta.com' };
+    const out = applyResolvedOverlay(base, {
+      providers: {
+        okta: {
+          enabled: true,
+          client_id: 'db-id',
+          client_secret: 'db-secret',
+          config: { OKTA_ISSUER: 'https://db.okta.com', OKTA_BLANK: '   ' },
+        },
+      },
+    });
+    expect(out.OKTA_ISSUER).toBe('https://db.okta.com'); // DB config wins over env
+    expect(out.OKTA_BLANK).toBeUndefined(); // blank ⇒ fallback, not stored
+    expect(base.OKTA_ISSUER).toBe('https://env.okta.com'); // base untouched
+  });
 });

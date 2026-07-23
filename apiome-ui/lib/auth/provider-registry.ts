@@ -32,7 +32,47 @@
  */
 export type ProviderStatus = 'available' | 'coming-soon';
 
-/** A sign-in provider this codebase knows about (enabled or not). */
+/**
+ * Where a required field's value lives in the stored provider config (OLO-9.1) — the fact the
+ * REST completeness check (OLO-8.4) needs to know which DB location proves a field present:
+ *   - `client_id`: the `auth_provider_config.client_id` column;
+ *   - `client_secret`: the sealed secret (the `enc_key_id`/ciphertext pair);
+ *   - `config`: a key inside the `config` JSONB extras (e.g. an Okta/Auth0 `issuer` URL). The
+ *     merge resolver (OLO-8.5) overlays such a key onto its env var of the same name.
+ */
+export type RequiredFieldKind = 'client_id' | 'client_secret' | 'config';
+
+/**
+ * One field a provider requires to be enabled (OLO-9.1). Historically every provider required
+ * exactly `client_id` + `client_secret`; issuer-based providers (Okta, Cognito, Keycloak, Auth0,
+ * generic OIDC — OLO-9.3–9.7) additionally require an `issuer`/`domain` URL, expressed here as a
+ * `config`-kind field. Each field maps to an env var (boot validation + the OLO-8.5 overlay) and,
+ * for `config`-kind fields, to the same-named key inside the `config` JSONB.
+ */
+export interface RequiredField {
+  /**
+   * Semantic field name — `client_id`, `client_secret`, `issuer`, … . Surfaced (for `config`
+   * fields) in the admin completeness list, so it stays human-meaningful rather than an env-var.
+   */
+  field: string;
+  /** Which stored location proves the field present — see {@link RequiredFieldKind}. */
+  kind: RequiredFieldKind;
+  /**
+   * The env var this field maps to: read at boot ({@link providerEnvIssues}) and overlaid by the
+   * OLO-8.5 merge resolver. For a `config`-kind field this is *also* its key inside the `config`
+   * JSONB (extras are env-var-keyed), so `OKTA_ISSUER` set in env or stored under
+   * `config.OKTA_ISSUER` both satisfy it.
+   */
+  envKey: string;
+}
+
+/**
+ * A sign-in provider this codebase knows about (enabled or not).
+ *
+ * `requiredFields` is the single source of truth; `requiredEnvKeys` is derived from it at registry
+ * construction (see {@link buildRegistry}) so the boot-validation/enablement consumers that read a
+ * flat env-var list keep working unchanged while the richer per-field mapping stays available.
+ */
 export interface ProviderDescriptor {
   /**
    * The provider slug — NextAuth provider id AND the value stored in
@@ -45,10 +85,46 @@ export interface ProviderDescriptor {
   /** Implementation status — see {@link ProviderStatus}. */
   status: ProviderStatus;
   /**
-   * Env vars that must all be set and non-blank for the provider to be enabled.
-   * Empty for `coming-soon` entries (nothing can enable them).
+   * Every field that must be present for the provider to be enabled, in display order.
+   * Empty for `coming-soon` entries (nothing can enable them). See {@link RequiredField}.
+   */
+  requiredFields: readonly RequiredField[];
+  /**
+   * Env vars that must all be set and non-blank for the provider to be enabled — the env-var of
+   * each {@link requiredFields} entry, in order. Derived; do not set directly (see
+   * {@link buildRegistry}).
    */
   requiredEnvKeys: readonly string[];
+}
+
+/**
+ * The client id + client secret every OAuth provider requires, as the standard pair of required
+ * fields. Providers add issuer/domain fields on top of this (OLO-9.1); `coming-soon` entries pass
+ * `[]` instead (nothing can enable them).
+ *
+ * @param clientIdEnvKey Env var holding the OAuth client id (e.g. `GITHUB_ID`).
+ * @param clientSecretEnvKey Env var holding the OAuth client secret (e.g. `GITHUB_SECRET`).
+ * @returns The two-field `[client_id, client_secret]` requirement list.
+ */
+export function clientCredentialFields(
+  clientIdEnvKey: string,
+  clientSecretEnvKey: string
+): RequiredField[] {
+  return [
+    { field: 'client_id', kind: 'client_id', envKey: clientIdEnvKey },
+    { field: 'client_secret', kind: 'client_secret', envKey: clientSecretEnvKey },
+  ];
+}
+
+/**
+ * Finish a registry entry by deriving its `requiredEnvKeys` from `requiredFields`, keeping the two
+ * from ever drifting within an entry.
+ *
+ * @param entry The descriptor minus its derived `requiredEnvKeys`.
+ * @returns The full {@link ProviderDescriptor}.
+ */
+function buildDescriptor(entry: Omit<ProviderDescriptor, 'requiredEnvKeys'>): ProviderDescriptor {
+  return { ...entry, requiredEnvKeys: entry.requiredFields.map((f) => f.envKey) };
 }
 
 /**
@@ -70,38 +146,41 @@ export interface ProviderSummary {
  * `azure` is Microsoft Entra ID (OLO-2.1) — its env contract is shared with
  * `entra-provider.ts`, which delegates its config check here so the two can never drift.
  */
-export const PROVIDER_REGISTRY: readonly ProviderDescriptor[] = [
+const PROVIDER_REGISTRY_ENTRIES: readonly Omit<ProviderDescriptor, 'requiredEnvKeys'>[] = [
   {
     id: 'github',
     label: 'GitHub',
     status: 'available',
-    requiredEnvKeys: ['GITHUB_ID', 'GITHUB_SECRET'],
+    requiredFields: clientCredentialFields('GITHUB_ID', 'GITHUB_SECRET'),
   },
   {
     id: 'gitlab',
     label: 'GitLab',
     status: 'available',
-    requiredEnvKeys: ['GITLAB_CLIENT_ID', 'GITLAB_CLIENT_SECRET'],
+    requiredFields: clientCredentialFields('GITLAB_CLIENT_ID', 'GITLAB_CLIENT_SECRET'),
   },
   {
     id: 'azure',
     label: 'Microsoft',
     status: 'available',
-    requiredEnvKeys: ['AZURE_AD_CLIENT_ID', 'AZURE_AD_CLIENT_SECRET'],
+    requiredFields: clientCredentialFields('AZURE_AD_CLIENT_ID', 'AZURE_AD_CLIENT_SECRET'),
   },
   {
     id: 'google',
     label: 'Google / GCP',
     status: 'coming-soon',
-    requiredEnvKeys: [],
+    requiredFields: [],
   },
   {
     id: 'aws',
     label: 'AWS',
     status: 'coming-soon',
-    requiredEnvKeys: [],
+    requiredFields: [],
   },
 ];
+
+export const PROVIDER_REGISTRY: readonly ProviderDescriptor[] =
+  PROVIDER_REGISTRY_ENTRIES.map(buildDescriptor);
 
 /**
  * Read a trimmed env string, or null when unset/blank.
@@ -232,14 +311,21 @@ export interface ProviderEnvIssue {
  * both are valid deployments. Some-but-not-all is always operator error (a typo'd var name,
  * a secret that never landed), so each such provider yields one issue.
  *
+ * A required field that lives in the `config` JSONB (e.g. an OIDC `issuer`) is validated at boot
+ * through its env var exactly like a client id/secret: with the trio `id + secret + issuer`, a
+ * deployment that sets the id and secret but leaves the issuer env var unset is partial config and
+ * the missing issuer var is named (OLO-9.1 acceptance).
+ *
  * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @param registry Registry to validate (injectable for tests; defaults to {@link PROVIDER_REGISTRY}).
  * @returns One issue per partially-configured provider, in registry display order.
  */
 export function providerEnvIssues(
-  env: Record<string, string | undefined> = process.env
+  env: Record<string, string | undefined> = process.env,
+  registry: readonly ProviderDescriptor[] = PROVIDER_REGISTRY
 ): ProviderEnvIssue[] {
   const issues: ProviderEnvIssue[] = [];
-  for (const { id, label, status, requiredEnvKeys } of PROVIDER_REGISTRY) {
+  for (const { id, label, status, requiredEnvKeys } of registry) {
     if (status !== 'available' || requiredEnvKeys.length === 0) continue;
     const presentKeys = requiredEnvKeys.filter((key) => readEnvString(env, key) !== null);
     const missingKeys = requiredEnvKeys.filter((key) => readEnvString(env, key) === null);
@@ -292,15 +378,17 @@ export function providerValidationMode(
  * offending providers stay cleanly disabled.
  *
  * @param env Environment to read (injectable for tests; defaults to `process.env`).
+ * @param registry Registry to validate (injectable for tests; defaults to {@link PROVIDER_REGISTRY}).
  * @returns The issues found (empty when the deployment's provider env is coherent).
  * @throws Error in `strict` mode when any provider is partially configured, or for an
  *   invalid `AUTH_PROVIDER_VALIDATION` value in any mode.
  */
 export function validateProviderEnv(
-  env: Record<string, string | undefined> = process.env
+  env: Record<string, string | undefined> = process.env,
+  registry: readonly ProviderDescriptor[] = PROVIDER_REGISTRY
 ): ProviderEnvIssue[] {
   const mode = providerValidationMode(env);
-  const issues = providerEnvIssues(env);
+  const issues = providerEnvIssues(env, registry);
   if (issues.length === 0) return issues;
   if (mode === 'strict') {
     throw new Error(

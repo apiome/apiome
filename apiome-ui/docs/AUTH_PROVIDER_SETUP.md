@@ -34,6 +34,18 @@ Rules that apply to every provider:
 - **Some-but-not-all set** → misconfiguration; see
   [Boot-time validation](#boot-time-validation) below.
 
+### Required fields beyond client id/secret (OLO-9.1)
+
+A registry entry declares its required fields structurally (`requiredFields`), each mapped to
+an env var. Today every provider requires exactly a **client id** and a **client secret**, but
+the model also supports fields that live in a provider's `config` extras — notably an OIDC
+**issuer**/**domain** URL that issuer-based providers (Okta, Cognito, Keycloak, Auth0, generic
+OIDC) need before their sign-in factory can be built. When such an entry ships, its issuer env
+var joins the trio: setting the id and secret but leaving the issuer unset is *partial config*
+and boot-time validation names the missing issuer var, exactly as it does for a missing secret.
+In the admin settings screen the same field is required before the provider can be enabled from
+the database (the issuer is stored in the `config` JSONB and overlaid onto its env var).
+
 ## Boot-time validation
 
 At server startup ([`src/instrumentation.ts`](../src/instrumentation.ts) →
