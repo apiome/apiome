@@ -38,9 +38,22 @@ jest.mock('@lib/auth/tenant-slug-availability', () => ({
   checkTenantSlugAvailability: (slug: string) => mockCheckSlugAvailability(slug),
 }));
 
+// Resumability + funnel telemetry (OLO-4.5, #4209): the wizard hydrates its
+// step from `loadOnboardingWizardState` on mount and persists each step change
+// via `saveOnboardingWizardStep` / `completeOnboardingWizard`.
+const mockLoadState = jest.fn<Promise<unknown>, []>();
+const mockSaveStep = jest.fn<Promise<void>, unknown[]>();
+const mockCompleteWizard = jest.fn<Promise<void>, []>();
+jest.mock('@lib/auth/onboarding-wizard-state-actions', () => ({
+  loadOnboardingWizardState: () => mockLoadState(),
+  saveOnboardingWizardStep: (...args: unknown[]) => mockSaveStep(...args),
+  completeOnboardingWizard: () => mockCompleteWizard(),
+}));
+
 import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
 import { FREE_LICENSE_SUMMARY } from '@lib/auth/free-license';
 import {
+  isFirstTenantWizardStep,
   nextWizardStep,
   previousWizardStep,
 } from '@/app/components/auth/onboarding/wizard-steps';
@@ -52,6 +65,9 @@ beforeEach(() => {
     tenant: { id: 't-1', name: 'Acme Corp', slug: 'acme-corp' },
   });
   mockCheckSlugAvailability.mockResolvedValue({ status: 'available' });
+  mockLoadState.mockResolvedValue(null);
+  mockSaveStep.mockResolvedValue(undefined);
+  mockCompleteWizard.mockResolvedValue(undefined);
 });
 
 /**
@@ -79,6 +95,14 @@ describe('wizard step order helpers', () => {
     expect(previousWizardStep('summary')).toBe('organization');
     expect(previousWizardStep('organization')).toBe('welcome');
     expect(previousWizardStep('welcome')).toBe('welcome');
+  });
+
+  it('recognizes valid wizard steps and rejects anything else', () => {
+    expect(isFirstTenantWizardStep('welcome')).toBe(true);
+    expect(isFirstTenantWizardStep('done')).toBe(true);
+    expect(isFirstTenantWizardStep('nope')).toBe(false);
+    expect(isFirstTenantWizardStep(undefined)).toBe(false);
+    expect(isFirstTenantWizardStep(3)).toBe(false);
   });
 });
 
@@ -252,6 +276,90 @@ describe('FirstTenantOnboardingWizard: completion', () => {
     fireEvent.click(await screen.findByRole('button', { name: /go to your dashboard/i }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/ade'));
+    consoleError.mockRestore();
+  });
+});
+
+describe('FirstTenantOnboardingWizard: resumability + funnel telemetry (OLO-4.5)', () => {
+  it('reopens on the saved step with entered values pre-filled', async () => {
+    mockLoadState.mockResolvedValue({ step: 'summary', orgName: 'Acme Corp', slug: 'acme-corp' });
+    render(<FirstTenantOnboardingWizard />);
+
+    // Hydration jumps straight to the review step the user abandoned on.
+    expect(await screen.findByTestId('onboarding-step-summary')).toBeInTheDocument();
+    expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+    expect(screen.getByText('acme-corp')).toBeInTheDocument();
+  });
+
+  it('never resumes onto the terminal done step (no provisioned tenant in memory)', async () => {
+    mockLoadState.mockResolvedValue({ step: 'done', orgName: 'Acme Corp', slug: 'acme-corp' });
+    render(<FirstTenantOnboardingWizard />);
+
+    // `done` needs the just-provisioned tenant, so resume caps at the welcome
+    // start rather than rendering an empty done step.
+    await waitFor(() => expect(mockLoadState).toHaveBeenCalled());
+    expect(screen.getByTestId('onboarding-step-welcome')).toBeInTheDocument();
+  });
+
+  it('seeds the funnel and resume row with a welcome-reached event on a fresh start', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    await waitFor(() =>
+      expect(mockSaveStep).toHaveBeenCalledWith('welcome', '', '', 'reached')
+    );
+  });
+
+  it('records a reached event when advancing forward through the wizard', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    // welcome → organization records the organization-reached event...
+    fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
+    await waitFor(() =>
+      expect(mockSaveStep).toHaveBeenCalledWith('organization', '', '', 'reached')
+    );
+
+    // ...and organization → summary records summary-reached with entered values.
+    fireEvent.change(screen.getByPlaceholderText('Acme, Inc.'), {
+      target: { value: 'Acme Corp' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('acme-inc'), { target: { value: 'acme-corp' } });
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+
+    await screen.findByTestId('onboarding-step-summary');
+    expect(mockSaveStep).toHaveBeenCalledWith('summary', 'Acme Corp', 'acme-corp', 'reached');
+  });
+
+  it('persists backward navigation without recording a funnel event', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    await screen.findByTestId('onboarding-step-summary');
+    mockSaveStep.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // summary → organization
+
+    await waitFor(() =>
+      expect(mockSaveStep).toHaveBeenCalledWith('organization', 'Acme Corp', 'acme-corp', undefined)
+    );
+  });
+
+  it('records completion and clears state after provisioning succeeds', async () => {
+    render(<FirstTenantOnboardingWizard />);
+
+    fillOrganizationStep('Acme Corp', 'acme-corp');
+    fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
+
+    expect(await screen.findByTestId('onboarding-step-done')).toBeInTheDocument();
+    await waitFor(() => expect(mockCompleteWizard).toHaveBeenCalledTimes(1));
+  });
+
+  it('still navigates when persisting the wizard step rejects', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockSaveStep.mockRejectedValue(new Error('persist down'));
+    render(<FirstTenantOnboardingWizard />);
+
+    fireEvent.click(screen.getByRole('button', { name: /set up your organization/i }));
+
+    expect(await screen.findByTestId('onboarding-step-organization')).toBeInTheDocument();
     consoleError.mockRestore();
   });
 });

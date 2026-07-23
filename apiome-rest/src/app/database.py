@@ -209,6 +209,12 @@ DEFAULT_FREE_MAX_TENANTS = 1
 # the V183 auto-issue trigger + backfill, so this is a defensive default).
 DEFAULT_FREE_MAX_USERS_PER_TENANT = 5
 
+# Lifetime of an ``onboarding_wizard_state`` row (OLO-4.5, #4209). A wizard the
+# user never finishes is pruned this long after its last save, matching the
+# short-lived staging pattern of ``oauth_signup_pending`` (V071). A day is long
+# enough to span a "come back tomorrow and finish setup" gap.
+ONBOARDING_WIZARD_STATE_TTL_HOURS = 24
+
 
 class Database:
     """Database connection and query manager."""
@@ -1275,6 +1281,184 @@ class Database:
         if rows and rows[0].get("project_id"):
             return str(rows[0]["project_id"])
         return None
+
+    # ---- Onboarding wizard resume state + funnel telemetry (OLO-4.5) --------
+
+    def upsert_onboarding_wizard_state(
+        self,
+        user_id: str,
+        step: str,
+        org_name: Optional[str],
+        slug: Optional[str],
+    ) -> None:
+        """Persist the caller's onboarding-wizard resume position (OLO-4.5, #4209).
+
+        One row per user (``ON CONFLICT (user_id)``); each save moves the
+        ``expires_at`` sweep window forward so an actively-used wizard is never
+        pruned mid-session. Mirrors the ``oauth_signup_pending`` (V071) staging
+        pattern. The wizard reloads this row on the next login to reopen on
+        ``step`` with ``org_name``/``slug`` pre-filled.
+
+        Args:
+            user_id: Canonical UUID string of the authenticated caller.
+            step: Wizard step to resume on.
+            org_name: Organization name entered so far, or None.
+            slug: Tenant slug entered so far, or None.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.onboarding_wizard_state
+                        (user_id, step, org_name, slug, expires_at)
+                    VALUES (
+                        %s::uuid, %s, %s, %s,
+                        CURRENT_TIMESTAMP + make_interval(hours => %s)
+                    )
+                    ON CONFLICT (user_id) DO UPDATE SET
+                        step = EXCLUDED.step,
+                        org_name = EXCLUDED.org_name,
+                        slug = EXCLUDED.slug,
+                        updated_at = CURRENT_TIMESTAMP,
+                        expires_at = EXCLUDED.expires_at
+                    """,
+                    (user_id, step, org_name, slug, ONBOARDING_WIZARD_STATE_TTL_HOURS),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def get_onboarding_wizard_state(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Return the caller's saved wizard state, or None when absent/expired.
+
+        Expired rows (past ``expires_at``) are treated as absent so an abandoned
+        wizard never resurrects a stale step; the tail is swept separately by
+        :meth:`prune_onboarding_wizard_state`.
+
+        Args:
+            user_id: Canonical UUID string of the authenticated caller.
+
+        Returns:
+            A dict with ``step``, ``org_name``, ``slug``, ``updated_at`` (ISO
+            string), or None.
+        """
+        rows = self.execute_query(
+            """
+            SELECT step, org_name, slug, updated_at
+            FROM apiome.onboarding_wizard_state
+            WHERE user_id = %s::uuid AND expires_at > CURRENT_TIMESTAMP
+            """,
+            (user_id,),
+        )
+        if not rows:
+            return None
+        row = dict(rows[0])
+        updated_at = row.get("updated_at")
+        return {
+            "step": row.get("step"),
+            "org_name": row.get("org_name"),
+            "slug": row.get("slug"),
+            "updated_at": updated_at.isoformat() if updated_at is not None else None,
+        }
+
+    def delete_onboarding_wizard_state(self, user_id: str) -> int:
+        """Clear the caller's saved wizard state; return rows removed.
+
+        Called when the wizard completes (a provisioned tenant means the wizard
+        no longer shows) so no stale resume row lingers until it expires.
+
+        Args:
+            user_id: Canonical UUID string of the authenticated caller.
+
+        Returns:
+            The number of rows deleted (0 or 1).
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM apiome.onboarding_wizard_state WHERE user_id = %s::uuid",
+                    (user_id,),
+                )
+                deleted = cursor.rowcount
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            raise
+
+    def record_onboarding_funnel_event(
+        self,
+        user_id: Optional[str],
+        step: str,
+        event: str,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append an onboarding funnel event (best-effort; never raises).
+
+        Feeds the append-only ``onboarding_funnel_events`` ledger used for
+        step-drop-off metrics. Telemetry must never fail the wizard action it
+        records, so any error is swallowed and logged (mirrors the best-effort
+        ``auth_events`` writes, V193).
+
+        Args:
+            user_id: Caller's UUID string, or None if unknown.
+            step: Wizard step the event is about.
+            event: One of ``reached``, ``completed``, ``abandoned``.
+            detail: Optional structured context serialized to JSONB.
+        """
+        try:
+            conn = self.connect()
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.onboarding_funnel_events
+                        (user_id, step, event, detail)
+                    VALUES (%s::uuid, %s, %s, %s::jsonb)
+                    """,
+                    (
+                        user_id,
+                        step,
+                        event,
+                        json.dumps(detail) if detail is not None else None,
+                    ),
+                )
+            conn.commit()
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            _logger.warning("record_onboarding_funnel_event failed: %s", e)
+
+    def prune_onboarding_wizard_state(self) -> int:
+        """Delete abandoned wizard rows past their ``expires_at``; return rows removed.
+
+        The "abandon cleanup" sweep (OLO-4.5, #4209): a user who walks away
+        mid-wizard leaves a row that no completion clears, so it is pruned once
+        its TTL lapses. Best-effort — a failed sweep is logged, never raised.
+
+        Returns:
+            The number of expired rows deleted.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.onboarding_wizard_state
+                    WHERE expires_at <= CURRENT_TIMESTAMP
+                    """
+                )
+                deleted = cursor.rowcount
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("prune_onboarding_wizard_state failed: %s", e)
+            return 0
 
     def get_tag_by_id(self, tag_id: str) -> Optional[Dict[str, Any]]:
         """Get a single project tag by ID."""

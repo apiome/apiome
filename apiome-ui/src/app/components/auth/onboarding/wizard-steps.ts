@@ -28,6 +28,23 @@ export const FIRST_TENANT_WIZARD_PROGRESS: ReadonlyArray<{
 ];
 
 /**
+ * Type guard for a persisted/untrusted step string (OLO-4.5, #4209).
+ *
+ * Used when hydrating resume state from the server so an unrecognized step
+ * (e.g. from an older build) is ignored and the wizard starts fresh instead of
+ * landing on an invalid step.
+ *
+ * @param value An arbitrary value that may be a wizard step.
+ * @returns True when `value` is one of the known wizard steps.
+ */
+export function isFirstTenantWizardStep(value: unknown): value is FirstTenantWizardStep {
+  return (
+    typeof value === 'string' &&
+    (FIRST_TENANT_WIZARD_STEPS as readonly string[]).includes(value)
+  );
+}
+
+/**
  * The step after `step`, or `step` itself when already at the end.
  *
  * @param step The current wizard step.
