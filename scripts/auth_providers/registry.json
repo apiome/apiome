@@ -30,9 +30,12 @@
     },
     {
       "id": "google",
-      "label": "Google / GCP",
-      "status": "coming-soon",
-      "required_fields": []
+      "label": "Google",
+      "status": "available",
+      "required_fields": [
+        { "field": "client_id", "kind": "client_id", "env_key": "GOOGLE_CLIENT_ID" },
+        { "field": "client_secret", "kind": "client_secret", "env_key": "GOOGLE_CLIENT_SECRET" }
+      ]
     },
     {
       "id": "aws",

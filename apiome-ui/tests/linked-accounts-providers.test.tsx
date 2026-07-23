@@ -34,12 +34,12 @@ jest.mock('../lib/db/helper', () => ({
 import LinkedAccountsClient from '../src/app/ade/dashboard/linked-accounts/LinkedAccountsClient';
 import type { ProviderSummary } from '../lib/auth/provider-registry';
 
-/** Summaries mirroring a deployment with GitHub + GitLab enabled and azure env-disabled. */
+/** Summaries mirroring a deployment with GitHub + GitLab enabled; azure + google env-disabled. */
 const GITHUB_GITLAB_ENABLED: ProviderSummary[] = [
   { id: 'github', label: 'GitHub', status: 'available', enabled: true },
   { id: 'gitlab', label: 'GitLab', status: 'available', enabled: true },
   { id: 'azure', label: 'Microsoft', status: 'available', enabled: false },
-  { id: 'google', label: 'Google / GCP', status: 'coming-soon', enabled: false },
+  { id: 'google', label: 'Google', status: 'available', enabled: false },
   { id: 'aws', label: 'AWS', status: 'coming-soon', enabled: false },
 ];
 
@@ -73,11 +73,12 @@ describe('LinkedAccountsClient — provider cards from the registry (OLO-2.3)', 
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
     expect(screen.getByText('GitLab')).toBeInTheDocument();
-    expect(screen.getByText('Google / GCP')).toBeInTheDocument();
     expect(screen.getByText('AWS')).toBeInTheDocument();
-    // azure is available-but-disabled in this deployment: no card at all.
+    // azure and google are available-but-disabled in this deployment: no card at all.
     expect(screen.queryByText('Microsoft')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Coming soon')).toHaveLength(2);
+    expect(screen.queryByText('Google')).not.toBeInTheDocument();
+    // aws is the only remaining coming-soon teaser.
+    expect(screen.getAllByText('Coming soon')).toHaveLength(1);
   });
 
   it('renders the Microsoft card once azure is env-enabled', async () => {
@@ -88,10 +89,10 @@ describe('LinkedAccountsClient — provider cards from the registry (OLO-2.3)', 
     await waitFor(() => expect(mockGetLinkedAccounts).toHaveBeenCalled());
 
     expect(screen.getByText('Microsoft')).toBeInTheDocument();
-    // Three linkable providers → three enabled Link buttons; teasers stay disabled.
+    // Three linkable providers → three enabled Link buttons; the aws teaser stays disabled.
     const linkButtons = screen.getAllByRole('button', { name: /Link$/ });
     expect(linkButtons.filter((button) => !button.hasAttribute('disabled'))).toHaveLength(3);
-    expect(linkButtons.filter((button) => button.hasAttribute('disabled'))).toHaveLength(2);
+    expect(linkButtons.filter((button) => button.hasAttribute('disabled'))).toHaveLength(1);
   });
 
   it('still labels linked-account rows whose provider was since disabled', async () => {

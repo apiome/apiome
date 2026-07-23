@@ -32,12 +32,12 @@ def test_registry_ids_and_order_match_ui_and_v196():
 
 
 def test_available_vs_coming_soon_status():
-    """github/gitlab/azure are available; google/aws are coming-soon."""
+    """github/gitlab/azure/google are available (google: OLO-9.2); aws is coming-soon."""
     status = {p.id: p.status for p in PROVIDER_REGISTRY}
     assert status["github"] == STATUS_AVAILABLE
     assert status["gitlab"] == STATUS_AVAILABLE
     assert status["azure"] == STATUS_AVAILABLE
-    assert status["google"] == STATUS_COMING_SOON
+    assert status["google"] == STATUS_AVAILABLE
     assert status["aws"] == STATUS_COMING_SOON
 
 

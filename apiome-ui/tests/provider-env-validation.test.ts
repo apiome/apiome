@@ -37,6 +37,8 @@ const ALL_ENABLED_ENV = {
   GITLAB_CLIENT_SECRET: 'gl-secret',
   AZURE_AD_CLIENT_ID: 'az-id',
   AZURE_AD_CLIENT_SECRET: 'az-secret',
+  GOOGLE_CLIENT_ID: 'gg-id',
+  GOOGLE_CLIENT_SECRET: 'gg-secret',
 };
 
 describe('providerEnvIssues', () => {
@@ -75,7 +77,13 @@ describe('providerEnvIssues', () => {
   });
 
   it('ignores extra unrelated env and coming-soon providers', () => {
-    const issues = providerEnvIssues({ ...ALL_ENABLED_ENV, GOOGLE_CLIENT_ID: 'g-id' });
+    // aws is coming-soon (no env contract) and AWS_ACCESS_KEY_ID / an unrelated var map to no
+    // required field, so neither can produce a partial-config issue.
+    const issues = providerEnvIssues({
+      ...ALL_ENABLED_ENV,
+      AWS_ACCESS_KEY_ID: 'aws-key',
+      SOME_UNRELATED_VAR: 'x',
+    });
 
     expect(issues).toEqual([]);
   });
