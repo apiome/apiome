@@ -143,6 +143,26 @@ AZURE_AD_CLIENT_SECRET=<client secret Value>
 - Docker deployments: see [`.env.docker`](../.env.docker) and
   [`DOCKER_README.md`](./DOCKER_README.md) for where these variables are injected.
 
+## Database provider config store (OLO-8.2, env-fallback)
+
+Env vars are the baseline. A deployment can additionally override provider config from the
+admin UI (OLO-8.4) without editing env and restarting: the server-global table
+`apiome.auth_provider_config` (migration **V196**, `apiome-db`) holds one row per provider
+with an explicit `enabled` toggle, `client_id`, an envelope-encrypted `client_secret`
+(ciphertext only — the DB never holds plaintext — with an `enc_key_id` for rotation,
+OLO-8.3), and a `config` JSONB for provider extras (Azure tenant/authority, GitLab/GitHub
+base URLs).
+
+The store is layered **over** env, field by field:
+
+- **No row** for a provider → it is governed entirely by env (the matrix above), unchanged.
+- **A row with a `NULL` field** → that field falls back to env (e.g. `enabled = NULL` uses
+  the env-derived enablement; `client_id = NULL` uses the env client id).
+- **A row with a non-`NULL` field** → the stored value wins over env for that field.
+
+The table is created empty and rows are written lazily on first save, so a fresh deployment
+behaves exactly as if the store did not exist.
+
 ## Test-only endpoint overrides (OLO-7.4)
 
 The end-to-end journey suite (`e2e/journey/`, #4226) points every provider at a local
