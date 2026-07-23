@@ -13,7 +13,9 @@ section numbers here rather than re-deciding.
 
 ## How to use this document
 
-- **§1** decides the session strategy. Implemented by **10.3 (#4998)**; consumed suite-side by
+- **§1** decides the session strategy. **✅ Implemented by 10.3 (#4998)** in
+  `apiome-ui/lib/auth/better-auth-session.ts` (TTL/refresh/cookie-cache + cross-subdomain cookie &
+  trusted-origin parity + secret resolution) and wired into `lib/auth/auth.ts`; consumed suite-side by
   **BAA-1.2–1.5**.
 - **§2** is the field-by-field schema map. Implemented by **10.4 (#4999)**, **10.5 (#5000)**,
   **10.10 (#5005)**.
@@ -88,20 +90,35 @@ through the existing shared cookie. The one thing stateless JWT gave us — a si
 services can verify offline — is re-created deliberately and narrowly with the JWT plugin rather than
 adopted as the primary session model.
 
-### Concrete session parameters (implement in 10.3 #4998)
+### Concrete session parameters (✅ implemented in 10.3 #4998)
 
-- **`session.expiresAt`** TTL = **30 days**, **`updateAge`/refresh = 24 h** — match NextAuth v4
-  defaults so no user is logged out early at cutover.
-- **Secret:** reuse `NEXTAUTH_SECRET` as the Better Auth secret initially so existing tooling and the
-  suite's shared-secret assumption hold; document a rotation path (10.3 acceptance criterion).
-- **Cookie:** keep the shared-domain behavior of `buildAuthCookieOverrides()`
-  (`cookie-options.ts:100-140`) — `sameSite=lax`, `secure`, `httpOnly`, `domain=<NEXTAUTH_COOKIE_DOMAIN>`
-  in prod, host-only in dev. Better Auth's cookie name differs (`better-auth.session_token` /
+Realised in `apiome-ui/lib/auth/better-auth-session.ts` (pure env-driven builders) and applied in
+`lib/auth/auth.ts` on the `session` / `advanced` / `trustedOrigins` / `secret` options:
+
+- **`session.expiresIn`** = **30 days** (`SESSION_EXPIRES_IN_SECONDS`), **`updateAge`/refresh = 24 h**
+  (`SESSION_UPDATE_AGE_SECONDS`) — match NextAuth v4 defaults so no user is logged out early at
+  cutover.
+- **Secret:** `resolveBetterAuthSecret()` reuses `NEXTAUTH_SECRET` by default so existing tooling and
+  the suite's shared-secret assumption hold; `BETTER_AUTH_SECRET` overrides it to migrate onto a
+  dedicated secret, and Better Auth's native versioned `BETTER_AUTH_SECRETS` (`2:new,1:old`) is the
+  **non-destructive rotation path** — because sessions are DB rows, rotating only invalidates the
+  signed cookie cache (one extra DB read, ≤ 60 s window) and logs nobody out.
+- **Cookie:** `buildBetterAuthAdvancedOptions()` sets `crossSubDomainCookies` scoped to the same
+  shared parent domain the legacy engine uses (`getSharedCookieDomain()` → `NEXTAUTH_COOKIE_DOMAIN`
+  in prod, inferred otherwise; host-only in dev). Every other attribute (`sameSite=lax`, `secure`,
+  `httpOnly`, `__Secure-`/`__Host-` prefixes) is already Better Auth's default and matches
+  `buildAuthCookieOverrides()`. Better Auth's cookie name differs (`better-auth.session_token` /
   `__Secure-…`); the studio's mirror (`private-suite/.../designer/lib/auth/cookie-options.ts`) must be
   updated in lockstep (BAA-1.3 #2541) or a studio login stops being an app login.
-- **Cookie cache** ON with a short TTL (e.g. 30–60 s) to preserve today's near-zero session-read cost.
-- **Enable the JWT/bearer plugin** so `designer` can keep minting a `spire`-facing token from the
-  session (BAA-1.4/1.5).
+- **Trusted origins:** `buildBetterAuthTrustedOrigins()` trusts the configured app/studio origins plus
+  a `https://*<cookie-domain>` wildcard so a login can still return to a sibling subdomain covered by
+  the shared cookie — the Better Auth equivalent of `isAllowedCallbackUrl`'s cookie-domain rule.
+- **Cookie cache** ON with a short 60 s TTL (`SESSION_COOKIE_CACHE_MAX_AGE_SECONDS`) to preserve
+  today's near-zero session-read cost.
+- **JWT/bearer plugin — deferred, not part of 10.3.** Registering the plugin so `designer` can mint a
+  `spire`-facing token from the session is the suite-side **BAA-1.4/1.5** work; the existing
+  hand-minted `sub=user_id` bearer keeps working unchanged meanwhile, so it is intentionally out of
+  this ticket's scope (which is session persistence, TTL, cookies and the secret path).
 
 ---
 

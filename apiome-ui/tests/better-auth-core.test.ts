@@ -28,6 +28,8 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
   const originalSecret = process.env.NEXTAUTH_SECRET;
   const originalBetterAuthUrl = process.env.BETTER_AUTH_URL;
   const originalNextAuthUrl = process.env.NEXTAUTH_URL;
+  const originalNodeEnv = process.env.NODE_ENV;
+  const originalCookieDomain = process.env.NEXTAUTH_COOKIE_DOMAIN;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -38,6 +40,8 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     restoreEnv('NEXTAUTH_SECRET', originalSecret);
     restoreEnv('BETTER_AUTH_URL', originalBetterAuthUrl);
     restoreEnv('NEXTAUTH_URL', originalNextAuthUrl);
+    restoreEnv('NODE_ENV', originalNodeEnv);
+    restoreEnv('NEXTAUTH_COOKIE_DOMAIN', originalCookieDomain);
   });
 
   function restoreEnv(key: string, value: string | undefined): void {
@@ -65,6 +69,28 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
     expect(config.plugins).toHaveLength(1);
     expect(auth).toBeDefined();
+  });
+
+  it('passes the OLO-10.3 session strategy, cookie parity and trusted origins', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+    process.env.NODE_ENV = 'production';
+    process.env.NEXTAUTH_URL = 'https://main.apiome.dev';
+    process.env.NEXTAUTH_COOKIE_DOMAIN = '.apiome.dev';
+
+    await import('@lib/auth/auth');
+
+    const config = mockBetterAuth.mock.calls[0][0];
+    // 30-day DB session with 24h refresh + a short signed cookie cache (design §1).
+    expect(config.session).toEqual({
+      expiresIn: 60 * 60 * 24 * 30,
+      updateAge: 60 * 60 * 24,
+      cookieCache: { enabled: true, maxAge: 60 },
+    });
+    // Cross-subdomain cookie scoping on the shared parent domain, matching the legacy engine.
+    expect(config.advanced).toEqual({
+      crossSubDomainCookies: { enabled: true, domain: '.apiome.dev' },
+    });
+    expect(config.trustedOrigins).toContain('https://*.apiome.dev');
   });
 
   it('falls back to NEXTAUTH_URL for the base URL when BETTER_AUTH_URL is unset', async () => {
