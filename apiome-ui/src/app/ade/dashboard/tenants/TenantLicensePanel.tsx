@@ -48,6 +48,11 @@ import {
   type TenantLicenseResponse,
 } from './licenseApi';
 import { describeLicenseError, LICENSE_SEATS_EXHAUSTED_CODE } from './licenseErrors';
+import { seatMeterAppearance, seatsExhausted } from './licenseSeats';
+
+// Re-exported for existing consumers/tests that import the seat-meter helper
+// from this component; the logic now lives in the shared ./licenseSeats module.
+export { seatMeterAppearance } from './licenseSeats';
 
 export interface TenantLicensePanelProps {
   /** True when this row is the session's current tenant (loads live data). */
@@ -55,9 +60,6 @@ export interface TenantLicensePanelProps {
   /** Tenant display name for the non-current-tenant helper. */
   tenantName?: string;
 }
-
-/** Seat-usage fraction (0–100) at which the meter switches to the warning tint. */
-const SEAT_WARNING_PERCENT = 80;
 
 /** Copy shown under the upgrade CTA stub (no billing in this pack). */
 const UPGRADE_STUB_COPY =
@@ -76,39 +78,6 @@ const PLAN_TYPE_BADGE_CLASSES: Record<string, string> = {
   sponsor:
     'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-700',
 };
-
-/**
- * Meter fill + label classes by seat usage.
- *
- * @param used Seats occupied.
- * @param max Seat limit (0 or negative renders as full).
- * @returns Percentage (0–100) plus Tailwind classes for the bar and count.
- */
-export function seatMeterAppearance(
-  used: number,
-  max: number,
-): { percent: number; barClass: string; countClass: string } {
-  const percent = max > 0 ? Math.min(100, Math.round((used / max) * 100)) : 100;
-  if (percent >= 100) {
-    return {
-      percent,
-      barClass: 'bg-red-500',
-      countClass: 'text-red-600 dark:text-red-400',
-    };
-  }
-  if (percent >= SEAT_WARNING_PERCENT) {
-    return {
-      percent,
-      barClass: 'bg-amber-500',
-      countClass: 'text-amber-600 dark:text-amber-400',
-    };
-  }
-  return {
-    percent,
-    barClass: 'bg-emerald-500',
-    countClass: 'text-gray-700 dark:text-gray-300',
-  };
-}
 
 /**
  * Render a stored plan quota limit for display (#64).
@@ -258,7 +227,7 @@ export default function TenantLicensePanel({
 
   const seats = license?.seats;
   const meter = seats ? seatMeterAppearance(seats.used, seats.max) : null;
-  const seatsExhausted = Boolean(seats && seats.used >= seats.max);
+  const seatsAtCapacity = Boolean(seats && seatsExhausted(seats));
 
   return (
     <div>
@@ -368,7 +337,7 @@ export default function TenantLicensePanel({
                         />
                       </div>
                     )}
-                    {seatsExhausted && (
+                    {seatsAtCapacity && (
                       <div className="mt-3">
                         <Alert variant="warning">
                           {describeLicenseError({ code: LICENSE_SEATS_EXHAUSTED_CODE })}

@@ -13,6 +13,15 @@ import {
   KeySquare,
   KeyRound,
 } from 'lucide-react';
+import { Alert } from '@/app/components/ui/Alert';
+import { fetchTenantLicense, type TenantLicenseSeats } from '../tenants/licenseApi';
+import { describeLicenseError, LICENSE_SEATS_EXHAUSTED_CODE } from '../tenants/licenseErrors';
+import {
+  formatSeatUsage,
+  seatMeterAppearance,
+  seatsExhausted,
+  seatsUnlimited,
+} from '../tenants/licenseSeats';
 
 interface Member {
   user_id: string;
@@ -42,7 +51,15 @@ async function accessApi<T>(path: string, init?: RequestInit): Promise<T | null>
   const res = await fetch(`/api/access/${path}`, init);
   if (res.status === 204) return null;
   const json = await res.json();
-  if (!json.success) throw new Error(json.error || 'Request failed');
+  if (!json.success) {
+    const message = json.error || 'Request failed';
+    // The access proxy surfaces a stable machine code (e.g. the OLO-5.3
+    // `license-seats-exhausted` 403) as a top-level `code`. Keep it in the
+    // thrown message — mirroring licenseApi.readProxyJson — so callers can run
+    // the error through `describeLicenseError` for friendly upgrade guidance.
+    const code = typeof json.code === 'string' ? json.code : undefined;
+    throw new Error(code ? `${message} [${code}]` : message);
+  }
   return json.data as T;
 }
 
@@ -56,6 +73,7 @@ export default function MembersClient() {
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [perms, setPerms] = useState<MyPermissions | null>(null);
+  const [seats, setSeats] = useState<TenantLicenseSeats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -68,19 +86,27 @@ export default function MembersClient() {
   const canDelete = !!perms && (perms.is_admin || perms.permissions.includes('members:delete'));
 
   const pendingCount = useMemo(() => members.filter((m) => m.status === 'pending').length, [members]);
+  // At-capacity is surfaced proactively so the OLO-5.3 invite 403 never comes as
+  // a surprise; unlimited (Sponsor) plans are never at capacity.
+  const atCapacity = !!seats && seatsExhausted(seats);
+  const seatMeter = seats ? seatMeterAppearance(seats.used, seats.max) : null;
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [membersData, rolesData, permsData] = await Promise.all([
+      const [membersData, rolesData, permsData, licenseData] = await Promise.all([
         accessApi<Member[]>('members'),
         accessApi<Role[]>('roles'),
         accessApi<MyPermissions>('permissions/me'),
+        // Seat usage is best-effort context for the invite control: a license
+        // read failure must not blank the member roster, so swallow it to null.
+        fetchTenantLicense().catch(() => null),
       ]);
       setMembers(membersData || []);
       setRoles(rolesData || []);
       setPerms(permsData);
+      setSeats(licenseData?.seats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load members');
     } finally {
@@ -111,7 +137,10 @@ export default function MembersClient() {
       setInviteRoleId('');
       await loadData();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to invite member');
+      // Render the OLO-5.3 seats-exhausted 403 as friendly upgrade guidance
+      // rather than the raw API error; fall back to the message otherwise.
+      const friendly = describeLicenseError(e);
+      setError(friendly ?? (e instanceof Error ? e.message : 'Failed to invite member'));
     } finally {
       setBusy(false);
     }
@@ -198,6 +227,54 @@ export default function MembersClient() {
             </div>
           )}
 
+          {/* Seat usage — surfaced proactively (OLO-6.3) so the OLO-5.3 invite
+              403 is anticipated, not a surprise. Best-effort: hidden when the
+              license read failed. */}
+          {seats && (
+            <div
+              data-testid="member-seat-usage"
+              className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  Member seats
+                </p>
+                <p className={`text-sm font-semibold ${seatMeter?.countClass ?? ''}`}>
+                  {formatSeatUsage(seats)}
+                </p>
+              </div>
+              {seatsUnlimited(seats) ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  This plan includes unlimited member seats.
+                </p>
+              ) : (
+                seatMeter && (
+                  <div
+                    role="meter"
+                    aria-label="Member seats used"
+                    aria-valuemin={0}
+                    aria-valuemax={seats.max}
+                    aria-valuenow={seats.used}
+                    className="h-2.5 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"
+                  >
+                    <div
+                      className={`h-full rounded-full transition-all ${seatMeter.barClass}`}
+                      style={{ width: `${seatMeter.percent}%` }}
+                    />
+                  </div>
+                )
+              )}
+              {atCapacity && (
+                <div className="mt-3">
+                  <Alert variant="warning">
+                    {describeLicenseError({ code: LICENSE_SEATS_EXHAUSTED_CODE })}
+                  </Alert>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Invite control */}
           {canInvite && (
             <form
@@ -215,8 +292,8 @@ export default function MembersClient() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="person@example.com"
-                  disabled={busy}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={busy || atCapacity}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                 />
               </div>
               <div className="sm:w-56">
@@ -227,8 +304,8 @@ export default function MembersClient() {
                   id="inviteRole"
                   value={inviteRoleId}
                   onChange={(e) => setInviteRoleId(e.target.value)}
-                  disabled={busy}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={busy || atCapacity}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
                   <option value="">Default role</option>
                   {roles.map((role) => (
@@ -240,8 +317,10 @@ export default function MembersClient() {
               </div>
               <button
                 type="submit"
-                disabled={busy}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                disabled={busy || atCapacity}
+                aria-disabled={busy || atCapacity}
+                title={atCapacity ? 'All member seats are in use — upgrade the plan to add more.' : undefined}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <UserPlus className="w-4 h-4" />
                 Invite member
