@@ -270,6 +270,23 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Internal service-to-service token gating the resolved auth-provider read path (OLO-8.5,
+    # #4971). The DB-over-env merge resolver in apiome-ui reads decrypted provider config from
+    # ``GET /v1/internal/auth-providers/resolved`` while building NextAuth providers *during a
+    # login request* — a context with no user or admin session. So that endpoint is gated not by a
+    # user identity but by a shared secret both services hold: the caller must present it in
+    # ``X-Internal-Service-Token`` and REST compares it in constant time. Unset ⇒ the endpoint
+    # fails closed (503): decrypted secrets are never served without a configured token. Must match
+    # the ``INTERNAL_SERVICE_TOKEN`` given to apiome-ui.
+    internal_service_token: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_INTERNAL_SERVICE_TOKEN",
+            "INTERNAL_SERVICE_TOKEN",
+            "internal_service_token",
+        ),
+    )
+
     # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
     # in apiome.tenant_repositories.refresh_interval_seconds; these set the default
     # applied when a repo has no explicit value and the global minimum floor that

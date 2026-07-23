@@ -2674,6 +2674,29 @@ class Database:
         """
         return self.execute_query(query)
 
+    def list_auth_provider_config_with_secret(self) -> List[Dict[str, Any]]:
+        """List stored provider rows INCLUDING the encrypted secret (OLO-8.5, #4971).
+
+        The counterpart to :meth:`list_auth_provider_config` for the server-to-server resolved read
+        path only: it additionally selects ``client_secret_encrypted`` so the caller can decrypt it
+        in-process (:func:`app.auth_provider_secret_crypto.unseal_provider_secret`) and hand the
+        plaintext to the login-time provider resolver. This must NEVER back a client-facing response
+        — the ciphertext is returned here solely so the internal endpoint can unseal it and drop it.
+
+        Returns:
+            One dict per stored provider row, each with ``client_secret_encrypted`` (bytes/None) and
+            ``enc_key_id`` alongside the read columns, ordered by ``provider_id``.
+        """
+        select_cols = ", ".join(
+            (*self.AUTH_PROVIDER_CONFIG_READ_COLUMNS, "client_secret_encrypted")
+        )
+        query = f"""
+            SELECT {select_cols}
+            FROM apiome.auth_provider_config
+            ORDER BY provider_id
+        """
+        return self.execute_query(query)
+
     def get_auth_provider_config(self, provider_id: str) -> Optional[Dict[str, Any]]:
         """Read one stored provider-config row (OLO-8.2/8.4, #4970).
 
