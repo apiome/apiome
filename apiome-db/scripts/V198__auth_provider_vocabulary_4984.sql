@@ -19,6 +19,8 @@
 -- Idempotent: each constraint is dropped (if present) and re-added with the widened list, so the
 -- migration is a no-op on a database already carrying the target vocabulary.
 
+SET search_path TO apiome, public;
+
 -- external_auth_providers.provider (OLO-2.2 identity vocabulary): existing slugs
 -- (github/gitlab/azure/aws/gcp/bitbucket/google, V181) plus the OLO-9.3–9.7 issuer-based providers.
 ALTER TABLE external_auth_providers
