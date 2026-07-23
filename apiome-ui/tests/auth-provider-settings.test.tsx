@@ -3,10 +3,12 @@
  *
  * Integration tests (RTL) for `AuthProviderSettingsClient` against a mocked
  * `/api/admin/auth-providers` proxy, covering the issue's acceptance criteria:
- * one card per registry provider (coming-soon as disabled placeholders), write-only
- * secret handling ("set / not set", never a value), per-field ".env fallback"
- * indicators, dirty-only partial saves, blocked-enable 422 guidance, the Validate
- * affordance, and the enablement override semantics (true / false / null).
+ * only configured providers are listed (the rest are reachable via the header's
+ * "+ Add Provider" menu, coming-soon entries disabled there), an empty-state card
+ * when nothing is configured, write-only secret handling ("set / not set", never a
+ * value), per-field ".env fallback" indicators, dirty-only partial saves,
+ * blocked-enable 422 guidance, the Validate affordance, and the enablement
+ * override semantics (true / false / null).
  */
 import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
@@ -111,25 +113,101 @@ async function card(label: string) {
   return within(region);
 }
 
+/**
+ * Add an unconfigured provider's card to the list via the header's "+ Add Provider" menu.
+ * Waits for the initial load first (the trigger is disabled until then).
+ */
+async function addProvider(label: string) {
+  const trigger = await screen.findByRole('button', { name: 'Add Provider' });
+  await waitFor(() => expect(trigger).toBeEnabled());
+  fireEvent.click(trigger);
+  fireEvent.click(await screen.findByRole('menuitem', { name: new RegExp(label) }));
+}
+
 afterEach(() => {
   jest.restoreAllMocks();
 });
 
 describe('AuthProviderSettingsClient — rendering', () => {
-  it('renders one card per registry provider, coming-soon ones as disabled placeholders', async () => {
+  it('lists only configured providers; the rest stay out of the way', async () => {
     mockFetch();
     render(<AuthProviderSettingsClient />);
 
-    for (const label of ['GitHub', 'GitLab', 'Microsoft', 'Google / GCP', 'AWS']) {
+    // GitLab is the only provider with DB-stored config in the fixture.
+    expect(
+      await screen.findByRole('region', { name: 'GitLab provider configuration' })
+    ).toBeInTheDocument();
+    for (const label of ['GitHub', 'Microsoft', 'Google / GCP', 'AWS']) {
       expect(
-        await screen.findByRole('region', { name: `${label} provider configuration` })
-      ).toBeInTheDocument();
+        screen.queryByRole('region', { name: `${label} provider configuration` })
+      ).not.toBeInTheDocument();
     }
+  });
 
-    const google = await card('Google / GCP');
-    expect(google.getByText('Coming soon')).toBeInTheDocument();
-    expect(google.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(google.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  it('shows an empty-state card when no providers are configured', async () => {
+    mockFetch(undefined, [{ providers: [GITHUB, AZURE, GOOGLE, AWS] }]);
+    render(<AuthProviderSettingsClient />);
+
+    expect(await screen.findByText('No providers configured.')).toBeInTheDocument();
+    expect(screen.getByText('Click Add to add a new provider.')).toBeInTheDocument();
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  });
+
+  it('offers unconfigured providers in the Add menu, coming-soon ones disabled', async () => {
+    mockFetch();
+    render(<AuthProviderSettingsClient />);
+
+    const trigger = await screen.findByRole('button', { name: 'Add Provider' });
+    await waitFor(() => expect(trigger).toBeEnabled());
+    fireEvent.click(trigger);
+
+    const menu = within(screen.getByRole('menu'));
+    // GitLab is configured, so it is not offered again.
+    expect(menu.queryByRole('menuitem', { name: /GitLab/ })).not.toBeInTheDocument();
+    expect(menu.getByRole('menuitem', { name: /GitHub/ })).toBeEnabled();
+    expect(menu.getByRole('menuitem', { name: /Microsoft/ })).toBeEnabled();
+    expect(menu.getByRole('menuitem', { name: /Google \/ GCP/ })).toBeDisabled();
+    expect(menu.getByRole('menuitem', { name: /AWS/ })).toBeDisabled();
+  });
+
+  it('dismisses an added-but-unsaved card via Cancel, returning it to the Add menu', async () => {
+    mockFetch();
+    render(<AuthProviderSettingsClient />);
+
+    await addProvider('GitHub');
+    const github = await card('GitHub');
+    fireEvent.click(github.getByRole('button', { name: 'Cancel' }));
+
+    expect(
+      screen.queryByRole('region', { name: 'GitHub provider configuration' })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Provider' }));
+    expect(
+      within(screen.getByRole('menu')).getByRole('menuitem', { name: /GitHub/ })
+    ).toBeEnabled();
+  });
+
+  it('offers no Cancel on a persisted provider card', async () => {
+    mockFetch();
+    render(<AuthProviderSettingsClient />);
+
+    const gitlab = await card('GitLab');
+    expect(gitlab.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+  });
+
+  it('adds a provider card from the menu and stops offering it there', async () => {
+    mockFetch();
+    render(<AuthProviderSettingsClient />);
+
+    await addProvider('GitHub');
+    expect(
+      await screen.findByRole('region', { name: 'GitHub provider configuration' })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Provider' }));
+    const menu = within(screen.getByRole('menu'));
+    expect(menu.queryByRole('menuitem', { name: /GitHub/ })).not.toBeInTheDocument();
+    expect(menu.getByRole('menuitem', { name: /Microsoft/ })).toBeEnabled();
   });
 
   it('shows per-field "using .env fallback" indicators exactly where no DB value is set', async () => {
@@ -137,6 +215,7 @@ describe('AuthProviderSettingsClient — rendering', () => {
     render(<AuthProviderSettingsClient />);
 
     // GitHub stores nothing: enablement, client id, secret, and both extras fall back.
+    await addProvider('GitHub');
     const github = await card('GitHub');
     expect(github.getAllByText('using .env fallback').length).toBe(5);
 
@@ -156,6 +235,7 @@ describe('AuthProviderSettingsClient — rendering', () => {
     expect(secretInput.value).toBe('');
     expect(secretInput.placeholder).toMatch(/Secret is set/);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     expect(github.getByText('Secret: not set')).toBeInTheDocument();
   });
@@ -174,6 +254,7 @@ describe('AuthProviderSettingsClient — rendering', () => {
     );
     expect(gitlab.getByText(/Last changed/)).toBeInTheDocument();
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     expect(github.getByText('Env-derived')).toBeInTheDocument();
   });
@@ -199,6 +280,7 @@ describe('AuthProviderSettingsClient — saving', () => {
     });
     render(<AuthProviderSettingsClient />);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     expect(github.getByRole('button', { name: 'Save' })).toBeDisabled();
 
@@ -225,6 +307,7 @@ describe('AuthProviderSettingsClient — saving', () => {
     });
     render(<AuthProviderSettingsClient />);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     fireEvent.change(github.getByLabelText('Client secret'), {
       target: { value: 'super-secret-value' },
@@ -294,6 +377,7 @@ describe('AuthProviderSettingsClient — saving', () => {
     }));
     render(<AuthProviderSettingsClient />);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     fireEvent.click(github.getByRole('radio', { name: 'Enabled' }));
     fireEvent.click(github.getByRole('button', { name: 'Save' }));
@@ -309,6 +393,7 @@ describe('AuthProviderSettingsClient — saving', () => {
     mockFetch(() => ({ status: 401, body: { error: 'unauthorized' } }));
     render(<AuthProviderSettingsClient />);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     fireEvent.change(github.getByLabelText('Client ID'), { target: { value: 'x' } });
     fireEvent.click(github.getByRole('button', { name: 'Save' }));
@@ -323,6 +408,7 @@ describe('AuthProviderSettingsClient — validate affordance', () => {
     mockFetch(undefined, [DEFAULT_LIST, DEFAULT_LIST]);
     render(<AuthProviderSettingsClient />);
 
+    await addProvider('GitHub');
     const github = await card('GitHub');
     fireEvent.click(github.getByRole('button', { name: /Validate/ }));
 

@@ -3,7 +3,13 @@
 /**
  * Sign-in provider configuration screen (OLO-8.7, #4973).
  *
- * Renders one card per registry provider (coming-soon entries as disabled placeholders) with:
+ * The list shows only providers that are already configured (any field stored in the DB, or an
+ * existing DB row). New providers are added via the header's "+ Add Provider" menu, which lists
+ * the remaining registry providers (coming-soon entries as disabled items) — so the page stays
+ * uncluttered no matter how many providers the registry grows. An added-but-unsaved provider
+ * stays visible locally until its first save persists it.
+ *
+ * Each card renders:
  *   - a three-way enablement control (Enabled / Disabled / Use .env) matching the V196
  *     `enabled` column's `true` / `false` / `null` semantics (OLO-8.2/8.5);
  *   - the OAuth client id;
@@ -20,11 +26,12 @@
  * update). A blocked enable (incomplete or coming-soon provider) surfaces the structured 422
  * guidance from OLO-8.4 inline on the card.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
   Loader2,
+  Plus,
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
@@ -137,6 +144,118 @@ function EnablementOption({
   );
 }
 
+/**
+ * Whether a provider counts as "configured" and therefore appears in the list.
+ *
+ * True when any of its fields is stored in the database (rather than falling back to `.env`),
+ * when non-secret extras are stored, or when a DB row exists at all (`updated_at` set) — a row
+ * whose fields were all cleared back to fallback still shows, since an admin deliberately
+ * touched it. Purely env-fallback providers stay hidden until added via the header menu.
+ */
+function isConfigured(view: AdminProviderConfigView): boolean {
+  return (
+    view.enabled_source === 'db' ||
+    view.client_id_source === 'db' ||
+    view.secret_source === 'db' ||
+    Object.keys(view.config ?? {}).length > 0 ||
+    view.updated_at !== null
+  );
+}
+
+/**
+ * The header's "+ Add Provider" affordance: a button opening a menu of every registry provider
+ * not currently shown in the list. Available providers are selectable (adding their card to the
+ * page); coming-soon providers appear as disabled entries so the roadmap stays discoverable.
+ *
+ * @param candidates Providers not currently visible, in registry order.
+ * @param disabled Disables the trigger (while the list is loading or failed to load).
+ * @param onAdd Called with the chosen provider id.
+ */
+function AddProviderMenu({
+  candidates,
+  disabled,
+  onAdd,
+}: {
+  candidates: AdminProviderConfigView[];
+  disabled: boolean;
+  onAdd: (providerId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click / Escape, only while open.
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Plus className="h-4 w-4" /> Add Provider
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          aria-label="Add a sign-in provider"
+          className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+        >
+          {candidates.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+              All providers are already configured.
+            </p>
+          ) : (
+            candidates.map((candidate) => {
+              const brand = getProviderBrand(candidate.provider_id);
+              const comingSoon = candidate.status !== 'available';
+              return (
+                <button
+                  key={candidate.provider_id}
+                  type="button"
+                  role="menuitem"
+                  disabled={comingSoon}
+                  onClick={() => {
+                    onAdd(candidate.provider_id);
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <brand.Icon size={16} className={brand.iconClassName} />
+                  <span className="min-w-0 flex-1 truncate">{candidate.label}</span>
+                  {comingSoon && (
+                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400">
+                      Coming soon
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Result of the Validate affordance: the server-computed completeness for one provider. */
 interface ValidationResult {
   canEnable: boolean;
@@ -148,13 +267,18 @@ interface ValidationResult {
  *
  * @param view The provider's server-confirmed masked view.
  * @param onViewChange Callback replacing the view after a save or validate refresh.
+ * @param onDismiss When set, renders a Cancel button (bottom right) that dismisses the card.
+ *   Passed only for cards added this session but not yet saved — a persisted provider would
+ *   just reappear on the next load, so dismissing it would mislead.
  */
 function ProviderCard({
   view,
   onViewChange,
+  onDismiss,
 }: {
   view: AdminProviderConfigView;
   onViewChange: (view: AdminProviderConfigView) => void;
+  onDismiss?: () => void;
 }) {
   const brand = getProviderBrand(view.provider_id);
   const extraFields = PROVIDER_EXTRA_FIELDS[view.provider_id] ?? [];
@@ -570,6 +694,16 @@ function ProviderCard({
                 {view.updated_by ? ` by ${view.updated_by}` : ''}
               </span>
             )}
+            {onDismiss && (
+              <button
+                type="button"
+                onClick={onDismiss}
+                disabled={saving}
+                className={`${SECONDARY_BUTTON_CLASSES} ml-auto`}
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -577,11 +711,14 @@ function ProviderCard({
   );
 }
 
-/** The System Configuration screen: header plus one card per registry provider. */
+/** The System Configuration screen: header plus one card per configured (or just-added) provider. */
 export default function AuthProviderSettingsClient() {
   const [providers, setProviders] = useState<AdminProviderConfigView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Providers added from the header menu this session; kept visible even before their first
+  // save persists them (after which isConfigured() takes over).
+  const [addedIds, setAddedIds] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -624,16 +761,36 @@ export default function AuthProviderSettingsClient() {
     );
   };
 
+  // The list shows only configured providers plus any added (but not yet saved) this session;
+  // everything else is reachable through the header's Add menu.
+  const visibleProviders = (providers ?? []).filter(
+    (view) => isConfigured(view) || addedIds.includes(view.provider_id)
+  );
+  const addCandidates = (providers ?? []).filter(
+    (view) => !isConfigured(view) && !addedIds.includes(view.provider_id)
+  );
+
   return (
     <>
       <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="px-6 py-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            System Configuration
-          </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Sign-in providers — database values override .env; blank fields fall back to .env.
-          </p>
+        <div className="flex items-start justify-between gap-4 px-6 py-4">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              System Configuration
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Sign-in providers — database values override .env; blank fields fall back to .env.
+            </p>
+          </div>
+          <AddProviderMenu
+            candidates={addCandidates}
+            disabled={loading || providers === null}
+            onAdd={(providerId) =>
+              setAddedIds((current) =>
+                current.includes(providerId) ? current : [...current, providerId]
+              )
+            }
+          />
         </div>
       </header>
 
@@ -664,10 +821,33 @@ export default function AuthProviderSettingsClient() {
             </div>
           )}
 
+          {!loading && !loadError && visibleProviders.length === 0 && (
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                No providers configured.
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Click Add to add a new provider.
+              </p>
+            </div>
+          )}
+
           {!loading &&
             !loadError &&
-            providers?.map((view) => (
-              <ProviderCard key={view.provider_id} view={view} onViewChange={replaceView} />
+            visibleProviders.map((view) => (
+              <ProviderCard
+                key={view.provider_id}
+                view={view}
+                onViewChange={replaceView}
+                onDismiss={
+                  isConfigured(view)
+                    ? undefined
+                    : () =>
+                        setAddedIds((current) =>
+                          current.filter((id) => id !== view.provider_id)
+                        )
+                }
+              />
             ))}
         </div>
       </main>
