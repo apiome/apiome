@@ -1,34 +1,25 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { verifyAdminSessionToken } from '@lib/auth/admin-session';
 
+/**
+ * Whether the current request carries a valid super-admin session.
+ *
+ * The `admin_session` cookie is an HMAC-signed token (see
+ * lib/auth/admin-session.ts). A cookie that was not minted by this server, or
+ * one whose expiry has passed, fails verification — a hand-forged value is
+ * rejected here.
+ *
+ * @returns `true` only when a present cookie verifies by signature and expiry.
+ */
 export async function isAdminAuthenticated(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
     const adminSession = cookieStore.get('admin_session');
 
-    if (!adminSession) {
-      return false;
-    }
-
-    // In a production environment, you'd want to verify the token more thoroughly
-    // For now, just check if it exists and looks valid
-    try {
-      const decoded = Buffer.from(adminSession.value, 'base64').toString();
-      if (decoded.startsWith('admin:')) {
-        const timestamp = parseInt(decoded.split(':')[1]);
-        const eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
-
-        // Check if token is still valid (within 8 hours)
-        return timestamp > eightHoursAgo;
-      }
-    } catch {
-      return false;
-    }
-
-    return false;
+    return verifyAdminSessionToken(adminSession?.value);
   } catch {
     return false;
   }
 }
-

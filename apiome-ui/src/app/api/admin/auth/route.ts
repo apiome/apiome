@@ -6,6 +6,10 @@ import {
   recordLoginSuccess,
 } from '@lib/auth/login-rate-limit';
 import { resolveClientIp } from '@lib/auth/client-ip';
+import {
+  createAdminSessionToken,
+  ADMIN_SESSION_MAX_AGE_MS,
+} from '@lib/auth/admin-session';
 
 /** Resolve a best-effort client IP for rate-limiting the super-admin password form. */
 function clientRateLimitKey(request: NextRequest): string {
@@ -42,14 +46,15 @@ export async function POST(request: NextRequest) {
       // Create a cookie to store admin authentication
       const cookieStore = await cookies();
 
-      // Create a simple token (in production, use JWT or more secure method)
-      const token = Buffer.from(`admin:${Date.now()}`).toString('base64');
+      // Signed, expiring session token (HMAC-SHA256); a forged cookie is rejected
+      // by isAdminAuthenticated(). See lib/auth/admin-session.ts.
+      const token = createAdminSessionToken();
 
       cookieStore.set('admin_session', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 60 * 60 * 8, // 8 hours
+        maxAge: Math.floor(ADMIN_SESSION_MAX_AGE_MS / 1000), // 8 hours
         path: '/',
       });
 
