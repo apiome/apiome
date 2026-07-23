@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { signOutEverywhere } from '@lib/auth/sign-out-client';
 import { Check } from 'lucide-react';
 import { DEFAULT_LOGIN_LANDING } from '@lib/auth/cookie-options';
 import { provisionFirstTenant } from '@lib/auth/first-tenant-actions';
@@ -197,7 +198,7 @@ export function FirstTenantOnboardingWizard() {
           <WelcomeStep
             onGetStarted={() => advanceTo('organization')}
             onCheckAgain={() => router.refresh()}
-            onSignOut={() => signOut({ callbackUrl: '/login' })}
+            onSignOut={() => signOutEverywhere('/login')}
           />
         )}
         {step === 'organization' && (

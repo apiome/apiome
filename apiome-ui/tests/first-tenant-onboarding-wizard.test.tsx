@@ -12,6 +12,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockSignOut = jest.fn();
+const mockSignOutEverywhere = jest.fn();
 const mockUpdate = jest.fn<Promise<unknown>, [unknown]>(async () => null);
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
@@ -20,6 +21,10 @@ const mockProvisionFirstTenant = jest.fn<Promise<unknown>, [string, string]>();
 jest.mock('next-auth/react', () => ({
   signOut: (...args: unknown[]) => mockSignOut(...args),
   useSession: () => ({ data: null, status: 'authenticated', update: mockUpdate }),
+}));
+
+jest.mock('@lib/auth/sign-out-client', () => ({
+  signOutEverywhere: (...args: unknown[]) => mockSignOutEverywhere(...args),
 }));
 
 jest.mock('next/navigation', () => ({
@@ -139,7 +144,9 @@ describe('FirstTenantOnboardingWizard: welcome step', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
 
-    expect(mockSignOut).toHaveBeenCalledWith({ callbackUrl: '/login' });
+    // Logout goes through signOutEverywhere, which clears the session +
+    // last-active-tenant cookies server-side before NextAuth's client signOut.
+    expect(mockSignOutEverywhere).toHaveBeenCalledWith('/login');
   });
 });
 

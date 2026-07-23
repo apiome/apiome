@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { signOutEverywhere } from '../../../../lib/auth/sign-out-client';
 import { useState } from 'react';
 import {
   ArrowRight,
@@ -386,7 +387,7 @@ export default function AdeHome({
             </div>
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => signOutEverywhere('/login')}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200/80 bg-white/80 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
               aria-label="Sign out"
             >
