@@ -20,7 +20,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
-from app.database import DEFAULT_FREE_MAX_USERS_PER_TENANT
+from app.database import (
+    DEFAULT_FREE_MAX_AI_REQUESTS,
+    DEFAULT_FREE_MAX_PROJECTS,
+    DEFAULT_FREE_MAX_USERS_PER_TENANT,
+    DEFAULT_FREE_MAX_VERSIONS,
+)
 from app.database import db as real_db
 from app.license_routes import (
     FEATURE_SOURCE_LICENSE,
@@ -43,7 +48,13 @@ _AUTH = {
 _LICENSE_INFO = {
     "name": "Paid",
     "license_type": "paid",
-    "seats": {"max_tenants": 5, "max_users_per_tenant": 25},
+    "seats": {
+        "max_tenants": 5,
+        "max_users_per_tenant": 25,
+        "max_projects": 10,
+        "max_versions": 50,
+        "max_ai_requests": 1000,
+    },
     "issued_at": "2026-07-01T00:00:00+00:00",
 }
 
@@ -199,6 +210,12 @@ def test_license_surface_returns_plan_seats_and_features():
     body = r.json()
     assert body["plan"] == {"name": "Paid", "type": "paid"}
     assert body["seats"] == {"used": 3, "max": 25}
+    # Quotas reflect the stored seats keys (#64), not the Free defaults.
+    assert body["quotas"] == {
+        "max_projects": 10,
+        "max_versions": 50,
+        "max_ai_requests": 1000,
+    }
     assert [(f["name"], f["enabled"], f["source"]) for f in body["features"]] == [
         ("designer", True, FEATURE_SOURCE_LICENSE),
         ("paths", False, FEATURE_SOURCE_TENANT_OVERRIDE),
@@ -228,6 +245,51 @@ def test_seat_max_matches_enforcement_helper_not_raw_json():
         r = _get_license(rdb, ldb, info=info)
     assert r.status_code == 200
     assert r.json()["seats"]["max"] == DEFAULT_FREE_MAX_USERS_PER_TENANT
+
+
+# ===========================================================================
+# Route — plan quotas (#64): projects / versions / AI limits
+# ===========================================================================
+
+
+def test_unlicensed_tenant_reports_free_default_quotas():
+    # No license row: quotas fall back to the Free defaults, mirroring the
+    # apiome-ui enforcement defaults (1 project / 3 versions / 0 AI).
+    with patch("app.license_routes.db") as rdb, patch("app.license_capacity.db") as ldb:
+        r = _get_license(rdb, ldb, info=None, used=0, features=[])
+    assert r.status_code == 200
+    assert r.json()["quotas"] == {
+        "max_projects": DEFAULT_FREE_MAX_PROJECTS,
+        "max_versions": DEFAULT_FREE_MAX_VERSIONS,
+        "max_ai_requests": DEFAULT_FREE_MAX_AI_REQUESTS,
+    }
+
+
+def test_negative_quota_is_reported_as_unlimited():
+    # Sponsor tier stores -1 for unlimited; the surface passes it through as -1
+    # (never the Free default), matching the apiome-ui unlimited convention.
+    info = {
+        **_LICENSE_INFO,
+        "seats": {"max_users_per_tenant": 100, "max_projects": -1, "max_versions": -1, "max_ai_requests": -1},
+    }
+    with patch("app.license_routes.db") as rdb, patch("app.license_capacity.db") as ldb:
+        r = _get_license(rdb, ldb, info=info)
+    assert r.status_code == 200
+    assert r.json()["quotas"] == {"max_projects": -1, "max_versions": -1, "max_ai_requests": -1}
+
+
+def test_partial_seats_fills_only_missing_quota_keys_with_defaults():
+    # A license that sets max_projects but omits versions/AI reports the stored
+    # value for the present key and Free defaults for the absent ones.
+    info = {**_LICENSE_INFO, "seats": {"max_users_per_tenant": 25, "max_projects": 7}}
+    with patch("app.license_routes.db") as rdb, patch("app.license_capacity.db") as ldb:
+        r = _get_license(rdb, ldb, info=info)
+    assert r.status_code == 200
+    assert r.json()["quotas"] == {
+        "max_projects": 7,
+        "max_versions": DEFAULT_FREE_MAX_VERSIONS,
+        "max_ai_requests": DEFAULT_FREE_MAX_AI_REQUESTS,
+    }
 
 
 # ===========================================================================

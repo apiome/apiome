@@ -113,6 +113,7 @@ const SEAT_LIMIT_PRESETS: { key: string; description: string }[] = [
   { key: 'max_users_per_tenant', description: 'Maximum users allowed per tenant' },
   { key: 'max_projects', description: 'Maximum catalog projects' },
   { key: 'max_versions', description: 'Maximum versions per project' },
+  { key: 'max_ai_requests', description: 'Maximum AI assistant requests (0 = none, -1 = unlimited)' },
 ];
 
 type SeatEntryRow = { id: string; key: string; value: number; keySource: 'preset' | 'custom' };

@@ -30,8 +30,12 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
+  FolderKanban,
+  GaugeCircle,
+  GitBranch,
   Loader2,
   Lock,
+  Sparkles,
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,6 +44,7 @@ import { Button } from '@/app/components/ui/Button';
 import {
   fetchTenantLicense,
   type TenantLicenseFeature,
+  type TenantLicenseQuotas,
   type TenantLicenseResponse,
 } from './licenseApi';
 import { describeLicenseError, LICENSE_SEATS_EXHAUSTED_CODE } from './licenseErrors';
@@ -103,6 +108,76 @@ export function seatMeterAppearance(
     barClass: 'bg-emerald-500',
     countClass: 'text-gray-700 dark:text-gray-300',
   };
+}
+
+/**
+ * Render a stored plan quota limit for display (#64).
+ *
+ * @param value The limit from the license (`-1` = unlimited).
+ * @param zeroLabel Copy shown when the limit is exactly `0` (e.g. "Not included"
+ *   for an AI cap the plan does not grant). Defaults to `'0'`.
+ * @returns Human copy: "Unlimited" for a negative value, `zeroLabel` for `0`,
+ *   otherwise the number as a string.
+ */
+export function formatQuotaLimit(value: number, zeroLabel = '0'): string {
+  if (value < 0) return 'Unlimited';
+  if (value === 0) return zeroLabel;
+  return String(value);
+}
+
+/** One row in the plan-limits card. */
+function QuotaRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <li className="flex items-center justify-between gap-4 px-4 py-3">
+      <span className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        {icon}
+        {label}
+      </span>
+      <span className="text-sm font-semibold text-gray-900 dark:text-white">{value}</span>
+    </li>
+  );
+}
+
+/** Stored plan quota limits card: projects / versions / AI (#64). */
+function PlanLimits({ quotas }: { quotas: TenantLicenseQuotas }) {
+  return (
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <GaugeCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          Plan limits
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          What your plan allows. Unlimited plans show no cap.
+        </p>
+      </div>
+      <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+        <QuotaRow
+          icon={<FolderKanban className="h-4 w-4 text-gray-400 dark:text-gray-500" />}
+          label="Projects"
+          value={formatQuotaLimit(quotas.max_projects)}
+        />
+        <QuotaRow
+          icon={<GitBranch className="h-4 w-4 text-gray-400 dark:text-gray-500" />}
+          label="Published versions per project"
+          value={formatQuotaLimit(quotas.max_versions)}
+        />
+        <QuotaRow
+          icon={<Sparkles className="h-4 w-4 text-gray-400 dark:text-gray-500" />}
+          label="AI assistant requests"
+          value={formatQuotaLimit(quotas.max_ai_requests, 'Not included')}
+        />
+      </ul>
+    </div>
+  );
 }
 
 /** One row in the effective feature list. */
@@ -301,6 +376,9 @@ export default function TenantLicensePanel({
                       </div>
                     )}
                   </div>
+
+                  {/* Stored plan quota limits (#64) */}
+                  {license.quotas && <PlanLimits quotas={license.quotas} />}
 
                   {/* Effective feature list */}
                   <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">

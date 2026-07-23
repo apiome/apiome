@@ -12,6 +12,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import TenantLicensePanel, {
+  formatQuotaLimit,
   seatMeterAppearance,
 } from '../src/app/ade/dashboard/tenants/TenantLicensePanel';
 import type { TenantLicenseResponse } from '../src/app/ade/dashboard/tenants/licenseApi';
@@ -29,6 +30,7 @@ jest.mock('sonner', () => ({
 const LICENSE: TenantLicenseResponse = {
   plan: { name: 'Team', type: 'paid' },
   seats: { used: 3, max: 10 },
+  quotas: { max_projects: 10, max_versions: 50, max_ai_requests: 1000 },
   features: [
     {
       name: 'designer',
@@ -142,6 +144,32 @@ describe('TenantLicensePanel', () => {
     expect(screen.getByText(/All member seats included in this tenant's license/i)).toBeInTheDocument();
   });
 
+  it('renders the stored plan quota limits (#64)', async () => {
+    mockFetchSuccess(LICENSE);
+    renderExpanded();
+
+    expect(await screen.findByText('Plan limits')).toBeInTheDocument();
+    expect(screen.getByText('Projects')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.getByText('Published versions per project')).toBeInTheDocument();
+    expect(screen.getByText('50')).toBeInTheDocument();
+    expect(screen.getByText('AI assistant requests')).toBeInTheDocument();
+    expect(screen.getByText('1000')).toBeInTheDocument();
+  });
+
+  it('shows Unlimited for negative quotas and "Not included" for a zero AI cap', async () => {
+    mockFetchSuccess({
+      ...LICENSE,
+      quotas: { max_projects: -1, max_versions: -1, max_ai_requests: 0 },
+    });
+    renderExpanded();
+
+    await screen.findByText('Plan limits');
+    // Both unlimited quotas render the same copy.
+    expect(screen.getAllByText('Unlimited')).toHaveLength(2);
+    expect(screen.getByText('Not included')).toBeInTheDocument();
+  });
+
   it('renders an empty-features note instead of an empty list', async () => {
     mockFetchSuccess({ ...LICENSE, features: [] });
     renderExpanded();
@@ -186,5 +214,21 @@ describe('seatMeterAppearance', () => {
     expect(seatMeterAppearance(0, 0)).toEqual(
       expect.objectContaining({ percent: 100, barClass: 'bg-red-500' }),
     );
+  });
+});
+
+describe('formatQuotaLimit', () => {
+  it('renders a positive limit as its number', () => {
+    expect(formatQuotaLimit(10)).toBe('10');
+  });
+
+  it('renders any negative value as Unlimited', () => {
+    expect(formatQuotaLimit(-1)).toBe('Unlimited');
+    expect(formatQuotaLimit(-42)).toBe('Unlimited');
+  });
+
+  it('renders zero with the default label, or a custom zero label', () => {
+    expect(formatQuotaLimit(0)).toBe('0');
+    expect(formatQuotaLimit(0, 'Not included')).toBe('Not included');
   });
 });

@@ -209,6 +209,14 @@ DEFAULT_FREE_MAX_TENANTS = 1
 # the V183 auto-issue trigger + backfill, so this is a defensive default).
 DEFAULT_FREE_MAX_USERS_PER_TENANT = 5
 
+# Fallbacks for the license quota keys (#64) when the tenant's license ``seats``
+# JSON omits the key or stores a non-numeric value. They mirror the Free tier
+# seeded by V195 and the apiome-ui enforcement defaults
+# (``entitlement-limits-from-license-seats.ts``): 1 project, 3 versions, no AI.
+DEFAULT_FREE_MAX_PROJECTS = 1
+DEFAULT_FREE_MAX_VERSIONS = 3
+DEFAULT_FREE_MAX_AI_REQUESTS = 0
+
 # Lifetime of an ``onboarding_wizard_state`` row (OLO-4.5, #4209). A wizard the
 # user never finishes is pruned this long after its last save, matching the
 # short-lived staging pattern of ``oauth_signup_pending`` (V071). A day is long
