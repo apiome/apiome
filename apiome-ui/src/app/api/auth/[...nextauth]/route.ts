@@ -26,6 +26,7 @@ import {
 import { resolveClientIp } from '../../../../../lib/auth/client-ip';
 import { activatePendingMembershipForLogin } from '../../../../../lib/auth/membership-activation';
 import { readLastActiveTenantId } from '../../../../../lib/auth/last-active-tenant';
+import { isBetterAuthEngine } from '../../../../../lib/auth/auth-engine';
 
 /**
  * Assemble the NextAuth options from a resolved OAuth provider list.
@@ -232,6 +233,18 @@ async function buildRequestAuthOptions(): Promise<NextAuthOptions> {
  * effect on the next request (within the resolver's cache TTL) with no redeploy.
  */
 async function handler(req: NextRequest, ctx: RouteHandlerContext) {
+  // Better Auth parallel-run dispatch (OLO-10.2, migration design §4). This one `/api/auth/*`
+  // catch-all serves whichever engine the AUTH_ENGINE flag selects. A second sibling catch-all
+  // (`[...all]`) cannot coexist here — Next.js normalizes it to the same route structure as
+  // `[...nextauth]` and the build fails with an "ambiguous route" error — and renaming this folder
+  // would break ~110 importers of `authOptions`. So the flag-selected cutover is realized by
+  // delegating here. With the default `next-auth` engine this route is byte-for-byte NextAuth; the
+  // Better Auth instance and its (ESM, Node-only) dependencies are imported lazily only when the
+  // flag is on, so the legacy path never loads them.
+  if (isBetterAuthEngine()) {
+    const { betterAuthHandler } = await import('../../../../../lib/auth/auth');
+    return betterAuthHandler(req);
+  }
   return NextAuth(req, ctx, await buildRequestAuthOptions());
 }
 
