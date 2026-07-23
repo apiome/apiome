@@ -24,8 +24,11 @@ Internal administration portal for Apiome.
 
 - Password stored in environment variables only
 - HTTP-only secure cookies
+- **HMAC-SHA256-signed session token** (`admin_session`) — a forged cookie is
+  rejected; signature verified with a constant-time comparison. Signed with
+  `ADMIN_SESSION_SECRET` (recommended) or a key derived from `ADMIN_PASSWORD`.
 - Server-side authentication validation
-- Automatic session expiration
+- Automatic session expiration (8-hour `exp` enforced on every read)
 - Protected API routes with 401 responses
 
 ## Documentation
