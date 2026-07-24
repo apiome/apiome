@@ -222,15 +222,29 @@ plugin and any future email-verification/OTP flow have their store:
 |---|---|---|
 | `id` | string PK | |
 | `userId` | string FK → `users.id` | |
-| `secret` | string | encrypted TOTP secret — reuse the OLO-8.3 envelope scheme (§3.5) or the plugin's own encryption; decide in 10.10 |
-| `backupCodes` | string | single-use recovery codes; regenerated as a set |
-| `verified` | boolean | secret verified during enrollment |
-| `failedVerificationCount` | number | drives lockout |
+| `secret` | string | encrypted TOTP secret — the plugin's own symmetric encryption (**R11 resolved**, see below) |
+| `backupCodes` | string | single-use recovery codes; regenerated as a set (encrypted at rest by the plugin) |
+| `verified` | boolean | secret verified during enrollment (plugin default `true`) |
+| `failedVerificationCount` | number | drives lockout (default `0`) |
 | `lockedUntil` | datetime (nullable) | lockout expiry; null = not locked |
 
 Plus `user.twoFactorEnabled boolean` (§2.1). Registered via `twoFactor()` on the server instance
 (`appName`/`issuer` = the app name) and `twoFactorClient()` on the client. **No enrollment/login UX
 here** — that is OLO-9.13 (#5014) / OLO-9.14 (#5006).
+
+> **✅ 2FA foundation implemented (10.10 #5005).** `V201__better_auth_two_factor_5005.sql` creates
+> `apiome.two_factor` (the plugin's native quoted camelCase columns; `"userId"` a UUID FK →
+> `users(id)` `ON DELETE CASCADE`; indexes on `"userId"`/`"secret"`) and adds `users."twoFactorEnabled"`
+> (default `false`). The table is snake_case per apiome convention while the columns stay Better Auth's
+> native names — bridged by `twoFactor({ twoFactorTable: 'two_factor' })` (the model→table `modelName`
+> override; field names are unmapped). The plugin is registered on the server instance
+> (`apiome-ui/lib/auth/auth.ts`, `issuer` = `appName`) and `twoFactorClient()` on the browser client
+> (`apiome-ui/lib/auth/auth-client.ts`). Migration is additive/idempotent/reversible (rollback =
+> `DROP TABLE apiome.two_factor; ALTER TABLE apiome.users DROP COLUMN "twoFactorEnabled";`).
+> **R11 resolved:** the TOTP `secret` and `backupCodes` are encrypted at rest by the plugin's own
+> symmetric encryption, keyed on the Better Auth secret (`NEXTAUTH_SECRET`) — chosen over a bespoke
+> OLO-8.3 `AUTH_CONFIG_ENC_KEY` envelope so the one auth key already protecting sessions/cookies covers
+> 2FA too, adding no new key-management surface.
 
 ### 2.6 Tables that stay as-is
 
@@ -415,7 +429,7 @@ ticket is assigned).
 | **R8** | **Provider-config resolver credential drift** — `PROVIDER_CRED_ENV_KEYS` (`provider-config-resolver.ts:52-59`) covers only github/gitlab/azure; **google/aws are missing**, so a DB-stored Google client id/secret is not overlaid onto env (Google `config` extras still overlay) | Med × Med | Fix the gap while re-pointing the resolver (10.8); add a resolver test asserting every `available` registry provider has cred-env keys | 10.8 (#5003) |
 | **R9** | **Session-read hot-path cost** — DB sessions add a per-request lookup vs today's stateless read | Low × Med | Enable Better Auth cookie cache (short TTL) to match today's zero-DB reads for most requests (§1) | 10.3 (#4998) |
 | **R10** | **Registry mirror drift** — TS/Python registries + `registry.json` fall out of sync while providers are re-expressed | Low × Med | Keep the mirror tests (`provider-registry-mirror.test.ts`, `test_auth_provider_registry.py`) as a CI gate through 10.7/10.9 | 10.7 (#5002) |
-| **R11** | **TOTP secret encryption choice** — the plugin's `two_factor.secret` needs at-rest encryption; using the plugin default vs the OLO-8.3 envelope scheme is undecided | Low × Med | Decide in 10.10 (#5005); prefer reusing the OLO-8.3 `AUTH_CONFIG_ENC_KEY` envelope for one key-management story | 10.10 (#5005) |
+| **R11** | ✅ **Resolved (10.10 #5005).** **TOTP secret encryption choice** — the plugin's `two_factor.secret` needs at-rest encryption | Low × Med | **Resolved:** use the twoFactor plugin's built-in symmetric encryption (keyed on the Better Auth secret `NEXTAUTH_SECRET`) for both `secret` and `backupCodes` — no bespoke OLO-8.3 envelope, so no new key-management surface (§2.5) | 10.10 (#5005) ✅ |
 
 ---
 

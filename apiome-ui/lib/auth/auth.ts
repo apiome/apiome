@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { genericOAuth } from 'better-auth/plugins/generic-oauth';
+import { twoFactor } from 'better-auth/plugins/two-factor';
 import {
   buildBetterAuthAdvancedOptions,
   buildBetterAuthSessionOptions,
@@ -30,6 +31,24 @@ import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 // pulled in with `require`; an ESM default import fails typecheck ("not a module") for this file.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const connectionPool = require('../db/db');
+
+/**
+ * The application name Better Auth advertises. Used both as `appName` and as the 2FA `issuer` (the
+ * label an authenticator app shows for the account, OLO-10.10 §2.5) — shared here so the two can
+ * never drift.
+ */
+const APP_NAME = 'apiome';
+
+/**
+ * Table backing the Better Auth `twoFactor` model (OLO-10.10 #5005).
+ *
+ * apiome's schema is snake_case, so the plugin's `twoFactor` model is mapped onto `two_factor`
+ * (design §2.5). Passed to `twoFactor({ twoFactorTable })`, which sets the model's `modelName`; the
+ * plugin's field names stay Better Auth's native quoted camelCase (no field mapping), exactly as the
+ * V199 core tables do. MUST match the table created by
+ * `apiome-db/scripts/V201__better_auth_two_factor_5005.sql`.
+ */
+const TWO_FACTOR_TABLE = 'two_factor';
 
 /**
  * Assemble the Better Auth configuration (OLO-10.2, extended through 10.7/10.8) for a given
@@ -62,7 +81,7 @@ const connectionPool = require('../db/db');
  */
 function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   return {
-  appName: 'apiome',
+  appName: APP_NAME,
   database: connectionPool,
   secret: resolveBetterAuthSecret(),
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXTAUTH_URL,
@@ -109,7 +128,25 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // see `better-auth-oauth-providers.ts`. `genericOAuth` mounts the `/oauth2/callback/:id` route the
   // 10.6 resolution adapter already recognises; it must come before `nextCookies()` (which stays
   // last so Better Auth can set cookies from Next.js server actions).
-  plugins: [genericOAuth({ config: oauthConfigs }), nextCookies()],
+  //
+  // 2FA foundation (OLO-10.10 #5005): register the `twoFactor` plugin so the TOTP / backup-code /
+  // trusted-device endpoints exist on the migrated stack for OLO-9.13/9.14 to build on — this ticket
+  // stands the plugin up only; no enrollment/login UX is added here.
+  //   - `issuer: appName` — the label shown in the user's authenticator app (design §2.5).
+  //   - `twoFactorTable: TWO_FACTOR_TABLE` — map the plugin's `twoFactor` model onto apiome's
+  //     snake_case `two_factor` table (V201). The plugin's own field names stay Better Auth's native
+  //     quoted camelCase (`"userId"`/`"secret"`/… — no field mapping, matching the V199 core tables),
+  //     so the migration's columns are read out of the box.
+  //   - Secret & backup codes are encrypted at rest by the plugin itself, keyed on the Better Auth
+  //     secret (`resolveBetterAuthSecret()` above). This is the OLO-10.10 resolution of design R11:
+  //     use the plugin's built-in symmetric encryption rather than a bespoke OLO-8.3 envelope, so no
+  //     new key-management surface is introduced (docs/BETTER_AUTH_MIGRATION.md §2.5 / R11).
+  // Placed before `nextCookies()`, which must stay last (see above).
+  plugins: [
+    genericOAuth({ config: oauthConfigs }),
+    twoFactor({ issuer: APP_NAME, twoFactorTable: TWO_FACTOR_TABLE }),
+    nextCookies(),
+  ],
   // Credential brute-force limiting (OLO-10.5): the `before` handler refuses a locked
   // `/sign-in/email` attempt before any password work; the `after` handler records the outcome. Both
   // are path-gated and no-op for requests they do not own.
