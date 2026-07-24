@@ -40,11 +40,14 @@
  *
  * Scope note (OLO-10.7): this module wires the providers, the normalization, the `hd` gate, and the
  * resolution invocation, proven by `tests/better-auth-oauth-providers.test.ts`. Per-request
- * DB-over-env provider resolution (OLO-8.6 → 10.8), account/identity-table parity (10.9), and the
- * live mock-provider e2e journey (10.13) are sequenced after this ticket.
+ * DB-over-env provider resolution is now implemented (OLO-10.8): `auth.ts` feeds the resolver's merged
+ * env into {@link buildGenericOAuthConfigs} and rebuilds the instance when {@link providerConfigSignature}
+ * changes. Account/identity-table parity (10.9) and the live mock-provider e2e journey (10.13) are
+ * sequenced after this ticket.
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { createHash } from 'node:crypto';
 
 import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 import type { OAuth2Tokens, OAuth2UserInfo } from 'better-auth/oauth2';
@@ -609,4 +612,39 @@ export function buildGenericOAuthConfigs(
     configs.push(config);
   }
   return configs;
+}
+
+/**
+ * A stable fingerprint of a generic-OAuth config list, used to decide whether a per-request Better
+ * Auth instance can be reused or must be rebuilt (OLO-10.8). Two config lists that would drive the
+ * OAuth handshake identically produce the same signature; any change an admin makes from the settings
+ * screen — enabling/disabling a provider, or changing a client id, secret, endpoint, or scope —
+ * produces a different one, so the next sign-in rebuilds against the new config.
+ *
+ * The digest covers every field Better Auth's `genericOAuth` uses for the authorize/token/user-info
+ * exchange but deliberately excludes the `getUserInfo` closure (a function, not serializable, and
+ * identical in behaviour across builds). The client secret is folded in via a SHA-256 digest so a
+ * rotated secret still forces a rebuild without the plaintext ever living in the cache key.
+ *
+ * @param configs The generic-OAuth config list from {@link buildGenericOAuthConfigs}.
+ * @returns A hex digest that is equal iff the two config lists are handshake-equivalent.
+ */
+export function providerConfigSignature(configs: GenericOAuthConfig[]): string {
+  const material = configs.map((config) => ({
+    providerId: config.providerId,
+    clientId: config.clientId,
+    // Never place the plaintext secret in the signature; a per-secret digest is enough to detect a
+    // rotation. An unset secret hashes to a fixed marker so "no secret" differs from any real one.
+    clientSecretDigest:
+      typeof config.clientSecret === 'string' && config.clientSecret.length > 0
+        ? createHash('sha256').update(config.clientSecret).digest('hex')
+        : null,
+    authorizationUrl: config.authorizationUrl ?? null,
+    tokenUrl: config.tokenUrl ?? null,
+    userInfoUrl: config.userInfoUrl ?? null,
+    discoveryUrl: config.discoveryUrl ?? null,
+    scopes: config.scopes ?? null,
+    pkce: config.pkce ?? null,
+  }));
+  return createHash('sha256').update(JSON.stringify(material)).digest('hex');
 }
