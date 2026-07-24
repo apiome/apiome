@@ -1,12 +1,14 @@
 name: OLO Journey (MVP gate)
 
-# End-to-end journey test for the OAuth Login & Onboarding MVP (OLO-7.4, #4226) —
-# the acceptance gate for roadmap #4184. Brings up the spine (postgres -> migrate
-# -> rest) via the root docker-compose, then runs:
-#   1. the Playwright journey (apiome-ui/e2e/journey) — real UI + REST + Postgres
-#      with all three OAuth providers mocked: per-provider login, account-resolution
-#      invariants (auto-link / no-duplicate / unverified rejected), zero-tenant
-#      onboarding wizard, Free-license issue + seat limit, tenant switcher;
+# End-to-end journey test for the OAuth Login & Onboarding MVP (OLO-7.4 #4226, rebuilt
+# on Better Auth in OLO-10.13 #5008) — the acceptance gate for roadmap #4184. Brings up
+# the spine (postgres -> migrate -> rest) via the root docker-compose, then runs:
+#   1. the Playwright journey (apiome-ui/e2e/journey) — real UI (on the Better Auth
+#      engine, AUTH_ENGINE=better-auth via support/env.ts) + REST + Postgres with all
+#      four OAuth providers mocked: per-provider login, account-resolution invariants
+#      (auto-link / no-duplicate / unverified rejected), zero-tenant onboarding wizard,
+#      Free-license issue + seat limit, tenant switcher, credentials sign-in, and 2FA
+#      (TOTP enroll + login + backup code);
 #   2. the REST-side journey pytest twin (apiome-rest/tests/test_journey_olo.py).
 # Intended to be a REQUIRED status check on `main`: red means the MVP journey regressed.
 

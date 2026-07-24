@@ -95,6 +95,12 @@ export function journeyServerEnv(): Record<string, string> {
     ...dotEnvValues(),
     ...fromProcess,
     APIOME_LOAD_DOTENV: '0',
+    // OLO-10.13: the journey is the Better Auth acceptance gate, so it runs on the migrated engine.
+    // `AUTH_ENGINE=better-auth` selects Better Auth server-side and (via next.config.ts) propagates to
+    // the build-time-inlined `NEXT_PUBLIC_AUTH_ENGINE` the browser session compat layer reads. The
+    // secret/baseURL fall back to the NEXTAUTH_* values set below (see better-auth-session.ts), so no
+    // extra Better-Auth-specific env is required for the mocked stack.
+    AUTH_ENGINE: 'better-auth',
     NEXTAUTH_URL: BASE_URL,
     NEXTAUTH_SECRET:
       process.env.NEXTAUTH_SECRET || dotEnvValues().NEXTAUTH_SECRET || 'olo-journey-secret',
@@ -115,5 +121,11 @@ export function journeyServerEnv(): Record<string, string> {
     AZURE_AD_CLIENT_SECRET: 'mock-azure-secret',
     AZURE_AD_TENANT: 'mock-tenant',
     AZURE_AD_AUTHORITY_BASE_URL: `${MOCK_OAUTH_URL}/azure`,
+    // Google (4th provider, OLO-10.13): enabled by client id/secret; `GOOGLE_ISSUER` points OIDC
+    // discovery at the mock (`${MOCK}/google/.well-known/openid-configuration`). No workspace-domain
+    // (`hd`) gate is set, so any mocked Google account is accepted.
+    GOOGLE_CLIENT_ID: 'mock-google-client',
+    GOOGLE_CLIENT_SECRET: 'mock-google-secret',
+    GOOGLE_ISSUER: `${MOCK_OAUTH_URL}/google`,
   };
 }
