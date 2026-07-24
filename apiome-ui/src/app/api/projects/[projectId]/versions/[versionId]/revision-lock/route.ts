@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { resolveTenantAdminForSession, setVersionRevisionLock } from '@lib/db/helper';
 
 /**
@@ -12,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string; versionId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }

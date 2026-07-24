@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PanelsTopLeft } from 'lucide-react';
@@ -21,7 +21,7 @@ import { parseExportStudioOptions } from '../../../../components/ade/dashboard/e
  * shows how to open the Studio from a version or catalog item instead.
  */
 function ExportStudioRouteContent() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuthSession();
   const searchParams = useSearchParams();
 
   const artifact = searchParams.get('artifact');

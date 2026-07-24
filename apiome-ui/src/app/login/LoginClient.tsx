@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Lock, User, Info, ShieldCheck, Zap, CreditCard, ArrowRight, RotateCcw } from 'lucide-react';
-import { signIn } from "next-auth/react";
+import { signIn } from '@lib/auth/session-client';
 import { createSignupRequest } from '../../../lib/db/helper';
 import { useDarkMode } from '../hooks/useDarkMode';
 import type { ProviderSummary } from '../../../lib/auth/provider-registry';

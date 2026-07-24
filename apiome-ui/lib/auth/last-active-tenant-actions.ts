@@ -20,6 +20,7 @@ import {
   LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
   isWellFormedTenantId,
 } from './last-active-tenant';
+import { validateTenantSwitch } from './post-login-routing';
 
 /**
  * Persist the tenant the user just activated.
@@ -36,6 +37,11 @@ export async function persistLastActiveTenant(tenantId: string): Promise<void> {
   if (!userId) {
     return;
   }
+  await writeLastActiveTenantCookie(tenantId);
+}
+
+/** Write the durable last-active-tenant cookie for an already-validated tenant id. */
+async function writeLastActiveTenantCookie(tenantId: string): Promise<void> {
   const store = await cookies();
   store.set(LAST_ACTIVE_TENANT_COOKIE, tenantId, {
     httpOnly: true,
@@ -44,4 +50,38 @@ export async function persistLastActiveTenant(tenantId: string): Promise<void> {
     path: '/',
     maxAge: LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
   });
+}
+
+/**
+ * Switch the active tenant (OLO-10.12, #5007) — the engine-agnostic replacement for the NextAuth
+ * `useSession().update({ current_tenant_id })` persistence.
+ *
+ * Under Better Auth a session carries no tenant claim: the active tenant is **derived** at read time
+ * from the durable last-active-tenant cookie, re-validated against live memberships
+ * (`better-auth-session-shape.ts`). So writing that cookie *is* the switch. This action re-validates
+ * the requested tenant against the caller's live memberships (`validateTenantSwitch`, the OLO-7.3
+ * threat-model gate) **before** writing, so a tampered request can never point tenant-scoped queries at
+ * a tenant the user does not belong to — the same guarantee the NextAuth `jwt` callback enforced.
+ *
+ * Fails closed: an unauthenticated caller, a malformed id, or a non-member request writes nothing and
+ * returns `null`.
+ *
+ * @param tenantId The tenant the user asked to activate.
+ * @returns The validated tenant id that was persisted, or `null` when the switch was refused.
+ */
+export async function setActiveTenant(tenantId: string): Promise<string | null> {
+  if (!isWellFormedTenantId(tenantId)) {
+    return null;
+  }
+  const session = await getAuthSession();
+  const userId = (session?.user as { user_id?: string } | undefined)?.user_id;
+  if (!userId) {
+    return null;
+  }
+  const validated = await validateTenantSwitch(userId, tenantId);
+  if (!validated) {
+    return null;
+  }
+  await writeLastActiveTenantCookie(validated);
+  return validated;
 }

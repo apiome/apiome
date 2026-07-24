@@ -3,9 +3,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useAuthSession } from '@lib/auth/session-client';
 import { signOutEverywhere } from '../../../../lib/auth/sign-out-client';
-import type { Session } from "next-auth";
+import type { AppSession } from '@lib/auth/better-auth-session-shape';
 import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, Check, Plus, Shield } from 'lucide-react';
 import WhatsNewDialog from './WhatsNewDialog';
@@ -67,8 +67,8 @@ export type SerializableTopHeaderTenantContext = {
 };
 
 export type TopHeaderSessionBridge = {
-  session: Session | null;
-  update: ReturnType<typeof useSession>['update'];
+  session: AppSession | null;
+  update: ReturnType<typeof useAuthSession>['update'];
 };
 
 export type TopHeaderProps = {
@@ -682,7 +682,7 @@ function TenantLicenseChip({
 }
 
 function TopHeaderWithSession(props: TopHeaderProps) {
-  const { data: session, update } = useSession();
+  const { data: session, update } = useAuthSession();
   return <TopHeaderView {...props} session={session ?? null} update={update} />;
 }
 

@@ -6,9 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '../../../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 import { applyUiMockBaseUrl } from '@lib/mock/mockUrl';
 
@@ -85,7 +84,7 @@ export async function PUT(
 ) {
   try {
     const { versionId } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json(

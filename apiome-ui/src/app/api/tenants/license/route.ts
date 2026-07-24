@@ -13,15 +13,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const user = session?.user as
     | { user_id?: string; email?: string | null; name?: string | null; current_tenant_id?: string }
     | undefined;

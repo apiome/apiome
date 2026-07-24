@@ -2,8 +2,7 @@
  * Shared helpers for /api/primitives/* and /api/types/* proxy routes.
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
@@ -18,7 +17,7 @@ export async function getAuthenticatedTenantContext(): Promise<
   | { ok: true; user: SessionUser; tenantSlug: string }
   | { ok: false; status: number; error: string }
 > {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const user = session?.user as SessionUser | undefined;
 
   if (!user?.user_id) {

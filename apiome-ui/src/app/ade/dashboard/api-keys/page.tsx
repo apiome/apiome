@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { getApiKeysForTenant, createApiKey, deleteApiKey, toggleApiKeyStatus } from '../../../../../lib/db/helper';
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Key, Copy, Check, AlertCircle } from 'lucide-react';
@@ -77,7 +77,7 @@ const SCOPE_PRESET_OPTIONS: { value: ApiKeyScopePreset; label: string; hint: str
 ];
 
 const ApiKeys = () => {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm: confirmDialog } = useDialog();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);

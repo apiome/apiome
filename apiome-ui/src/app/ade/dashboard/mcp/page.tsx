@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, RefreshCw, Server } from "lucide-react";
 import ImportDialog from "@/app/components/ade/dashboard/ImportDialog";
@@ -45,7 +45,7 @@ import { ShadowedNamesPanel } from "@/app/components/ui/mcp/ShadowedNamesPanel";
 import { mcpVisibleEndpointIds } from "@/app/components/ade/dashboard/mcp/mcpCollectionUi";
 
 export default function McpBrowsePage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const sessionUser = session?.user as
     | { user_id?: string; current_tenant_id?: string }
     | undefined;

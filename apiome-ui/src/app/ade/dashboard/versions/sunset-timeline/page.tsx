@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Sun, Download, Lock, Package, ArrowLeft } from 'lucide-react';
@@ -67,7 +67,7 @@ function lifecycleLabel(phase: string): string {
 }
 
 export default function SunsetTimelinePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
 
   const [projects, setProjects] = useState<Project[]>([]);

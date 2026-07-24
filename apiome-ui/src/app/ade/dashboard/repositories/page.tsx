@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useAuthSession } from '@lib/auth/session-client';
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -55,7 +55,7 @@ import { RepositoryRowMenu } from "@/app/components/ade/dashboard/repositories/R
 const VIEW_STORAGE = "apiome-dashboard-repositories-view";
 
 export default function RepositoriesPage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string })
     ?.current_tenant_id;
 

@@ -6,9 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
@@ -90,7 +89,7 @@ async function handleRestResponse(response: Response, defaultError: string): Pro
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json(
@@ -173,7 +172,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json(

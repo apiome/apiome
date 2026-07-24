@@ -18,9 +18,13 @@ const mockPush = jest.fn();
 const mockRefresh = jest.fn();
 const mockProvisionFirstTenant = jest.fn<Promise<unknown>, [string, string]>();
 
-jest.mock('next-auth/react', () => ({
+// The wizard reads the session through the OLO-10.12 engine-aware compat hook; mock it so the test
+// controls `update` without pulling the Better Auth browser client.
+jest.mock('@lib/auth/session-client', () => ({
+  useAuthSession: () => ({ data: null, status: 'authenticated', update: mockUpdate }),
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signIn: (...args: unknown[]) => mockSignOut(...args),
   signOut: (...args: unknown[]) => mockSignOut(...args),
-  useSession: () => ({ data: null, status: 'authenticated', update: mockUpdate }),
 }));
 
 jest.mock('@lib/auth/sign-out-client', () => ({

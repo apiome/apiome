@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import {
   AUTH_ERROR_CODES,
   LINKABLE_PROVIDERS,
@@ -62,7 +61,7 @@ export async function GET(
     return rateLimitedResponse(ipBudget.retryAfterMs);
   }
 
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
 
   if (!session || !(session.user as any)?.user_id) {
     return NextResponse.json(

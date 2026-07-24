@@ -12,9 +12,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '../../../../auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
@@ -124,7 +123,7 @@ export async function GET(
 ) {
   try {
     const { versionId, pathId, slug } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -155,7 +154,7 @@ export async function POST(
 ) {
   try {
     const { versionId, pathId, slug } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -193,7 +192,7 @@ export async function PUT(
 ) {
   try {
     const { versionId, pathId, slug } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -225,7 +224,7 @@ export async function DELETE(
 ) {
   try {
     const { versionId, pathId, slug } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });

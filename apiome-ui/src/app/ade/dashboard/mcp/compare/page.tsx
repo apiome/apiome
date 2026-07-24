@@ -13,7 +13,7 @@
  * presentation logic. Scope is the session's current tenant (enforced server-side by the proxy).
  */
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GitCompareArrows, RefreshCw } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
@@ -96,7 +96,7 @@ async function loadCompareServer(endpoint: McpBrowseEndpoint): Promise<McpCompar
 }
 
 export default function McpServerComparePage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const sessionUser = session?.user as { current_tenant_id?: string } | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
 

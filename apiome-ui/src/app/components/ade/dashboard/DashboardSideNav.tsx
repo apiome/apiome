@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import {
   User,
   Building2,
@@ -43,7 +43,7 @@ interface NavSection {
 
 const DashboardSideNav: React.FC = () => {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const isDark = useDarkMode();
 
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;

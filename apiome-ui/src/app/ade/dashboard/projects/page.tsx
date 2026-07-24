@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useRouter } from 'next/navigation';
 import {
   useEffect,
@@ -339,7 +339,7 @@ function ProjectDashboardActions({
 
 const Projects = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const [projects, setProjects] = useState<Project[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);

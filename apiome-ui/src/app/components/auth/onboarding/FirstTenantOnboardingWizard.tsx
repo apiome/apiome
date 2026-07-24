@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { signOutEverywhere } from '@lib/auth/sign-out-client';
 import { Check } from 'lucide-react';
 import { DEFAULT_LOGIN_LANDING } from '@lib/auth/cookie-options';
@@ -38,7 +38,7 @@ import { DoneStep } from './DoneStep';
  *
  * On confirm the tenant is provisioned by the `provisionFirstTenant` server
  * action; completion activates the new tenant in the session (the same
- * `useSession().update({ current_tenant_id })` contract the tenant switcher
+ * `useAuthSession().update({ current_tenant_id })` contract the tenant switcher
  * uses) and lands the user in the new tenant's dashboard.
  *
  * Resumability + telemetry (OLO-4.5, #4209): the current step and any entered
@@ -50,7 +50,7 @@ import { DoneStep } from './DoneStep';
  */
 export function FirstTenantOnboardingWizard() {
   const router = useRouter();
-  const { update } = useSession();
+  const { update } = useAuthSession();
 
   const [step, setStep] = useState<FirstTenantWizardStep>('welcome');
   const [orgName, setOrgName] = useState('');

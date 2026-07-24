@@ -10,7 +10,7 @@
  * (its NextAuth route is not registered, so linking it could only dead-end). Rows for
  * already-linked accounts always render, even if their provider was since disabled.
  */
-import { useSession, signIn } from 'next-auth/react';
+import { useAuthSession, signIn } from '@lib/auth/session-client';
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Link as LinkIcon, Key } from 'lucide-react';
 import {
@@ -67,7 +67,7 @@ interface LinkedAccountsClientProps {
 }
 
 const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm: confirmDialog } = useDialog();
   const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
   /** Whether the user has a usable password sign-in method (OLO-2.4 last-method guard). */

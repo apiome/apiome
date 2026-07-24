@@ -29,12 +29,12 @@ describe('link route (GET /api/auth/link/[provider])', () => {
 
   it('enforces a per-IP request budget before the session lookup', () => {
     expect(src).toMatch(/checkRequestBudget\(`link:ip:\$\{resolveClientIp\(request\.headers\)\}`\)/);
-    expect(src.indexOf('link:ip:')).toBeLessThan(src.indexOf('getServerSession(authOptions)'));
+    expect(src.indexOf('link:ip:')).toBeLessThan(src.indexOf('getAuthSession()'));
   });
 
   it('enforces a per-account request budget once the caller is known', () => {
     expect(src).toMatch(/checkRequestBudget\(`link:acct:\$\{userId\}`\)/);
-    expect(src.indexOf('getServerSession(authOptions)')).toBeLessThan(src.indexOf('link:acct:'));
+    expect(src.indexOf('getAuthSession()')).toBeLessThan(src.indexOf('link:acct:'));
   });
 
   it('answers over-budget calls with a structured 429 and Retry-After', () => {

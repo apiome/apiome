@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import Link from 'next/link';
 import { User, Mail, Hash, Clock, Building2, Edit2, Key, Shield, LogIn, Copy, Check, Link as LinkIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -28,7 +28,7 @@ import {
 import { cn } from '../../../../../lib/utils';
 
 const Profile = () => {
-  const { data: session, update } = useSession();
+  const { data: session, update } = useAuthSession();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [isLoading, setIsLoading] = useState(false);

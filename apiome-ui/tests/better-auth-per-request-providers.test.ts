@@ -41,6 +41,10 @@ jest.mock('better-auth/plugins/generic-oauth', () => ({ genericOAuth: mockGeneri
 // The OLO-10.10 twoFactor plugin is registered on the instance auth.ts builds; stub it (better-auth
 // is ESM-only) so the per-request rebuild loads under ts-jest.
 jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: jest.fn(() => ({ id: 'two-factor' })) }));
+// OLO-10.12: auth.ts registers customSession; stub it and the session-shape module so importing the
+// instance does not pull the tenant-derivation deps (next/headers, membership store).
+jest.mock('better-auth/plugins', () => ({ customSession: jest.fn((fn: unknown) => ({ id: 'custom-session', fn })) }));
+jest.mock('@lib/auth/better-auth-session-shape', () => ({ augmentBetterAuthUser: jest.fn() }));
 jest.mock('better-auth/api', () => ({
   createAuthMiddleware: (handler: unknown) => handler,
   APIError: class APIError extends Error {},

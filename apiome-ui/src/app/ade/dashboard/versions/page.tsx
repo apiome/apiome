@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useEffect, useState, useRef, useMemo, useCallback, type ReactNode } from 'react';
 import {
   Edit2,
@@ -414,7 +414,7 @@ function VersionsSortTh({
 const Versions = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { conflict, setPushConflictFrom409, clearPushConflict } = usePushConflictBanner();
   const [versionsPullBannerLoading, setVersionsPullBannerLoading] = useState(false);
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();

@@ -265,6 +265,31 @@ token and is unrelated to 2FA.
   `auth.api.getSession`. Middleware stays non-gating (it already is — `src/middleware.ts` only clears
   stale cookies and 404s git-like paths); per-route/per-page guards remain the pattern.
 
+#### ✅ Implemented in 10.12 (#5007) — engine-aware compat layer
+
+The swap is realized **without breaking the default `next-auth` engine** (the parallel-run invariant),
+so no component imports `next-auth/react` yet both engines still serve the browser:
+
+- **Session contract.** Every surface consumes `{ user: { user_id, email, name, image?,
+  current_tenant_id? }, expires }` on either engine. `user_id` = Better Auth `user.id`;
+  `current_tenant_id` is **derived at read time** from the durable last-active-tenant cookie,
+  re-validated against live memberships (`lib/auth/better-auth-session-shape.ts`) — the exact logic the
+  NextAuth `jwt` callback ran at login, moved to read time (no schema change), fail-safe.
+- **Server.** A Better Auth `customSession` plugin (`auth.ts`) injects the contract fields so both
+  `auth.api.getSession()` and the browser `/get-session` return one shape. `getAuthSession()`
+  (`server-session.ts`) dispatches by engine; all ~106 route handlers + page guards read through it.
+- **Client.** `lib/auth/session-client.tsx` exposes the legacy `{ data, status, update }` API +
+  `signIn`/`signOut`, dispatching to `authClient.*` (`better-auth-client-compat.ts`) or to NextAuth's
+  own HTTP endpoints via plain fetch (`next-auth-client-compat.ts`) — the latter so the default engine
+  keeps working with **zero** `next-auth/react` imports. The engine is read in the browser from
+  `NEXT_PUBLIC_AUTH_ENGINE`, which `next.config.ts` derives from `AUTH_ENGINE` (operators set only
+  `AUTH_ENGINE`).
+- **Tenant switch.** `update({ current_tenant_id })` → validated `setActiveTenant` server action writes
+  the cookie (both engines) + refreshes the NextAuth JWT (next-auth only).
+- **Known gap (→ 10.13).** One-time-code credential sign-in (OAuth-signup completion) has no Better
+  Auth endpoint; under Better Auth the OAuth callback establishes the session directly, so the compat
+  `signIn` treats it as a NextAuth-only bridge and warns on the Better Auth engine.
+
 ---
 
 ## 3. Security-invariant preservation plan (c)

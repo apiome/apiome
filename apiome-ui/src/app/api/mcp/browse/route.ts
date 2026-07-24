@@ -7,8 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
@@ -24,7 +23,7 @@ interface SessionUser {
 const EMPTY_BROWSE = { success: true, host_count: 0, endpoint_count: 0, groups: [] };
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const user = session?.user as SessionUser | undefined;
   if (!user?.user_id) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { usePathname, useRouter } from 'next/navigation';
 import { buildLoginRedirect } from '@lib/auth/login-return-to';
 
@@ -25,7 +25,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   children,
   redirectTo
 }) => {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
 

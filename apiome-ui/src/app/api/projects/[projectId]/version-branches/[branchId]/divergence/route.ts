@@ -3,9 +3,8 @@
  * Proxies to REST GET …/version-branches/{branchId}/divergence (#2721, #2723).
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
@@ -46,7 +45,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; branchId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }

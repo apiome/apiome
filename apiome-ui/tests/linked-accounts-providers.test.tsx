@@ -14,8 +14,10 @@ const mockUseSession = jest.fn();
 const mockGetLinkedAccounts = jest.fn();
 const mockGetHasPassword = jest.fn();
 
-jest.mock('next-auth/react', () => ({
-  useSession: () => mockUseSession(),
+jest.mock('@lib/auth/session-client', () => ({
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signOut: jest.fn(),
+  useAuthSession: () => mockUseSession(),
   signIn: jest.fn(),
 }));
 

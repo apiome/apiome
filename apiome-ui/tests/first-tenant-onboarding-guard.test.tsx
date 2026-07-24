@@ -18,9 +18,13 @@ jest.mock('../lib/db/helper', () => ({
   getTenantMembershipsForUser: (userId: string) => mockGetTenantMembershipsForUser(userId),
 }));
 
-jest.mock('next-auth/react', () => ({
+// The guard's client wizard subtree reads the session via the OLO-10.12 engine-aware compat hook;
+// mock it so the jsdom test doesn't pull the Better Auth browser client.
+jest.mock('@lib/auth/session-client', () => ({
+  useAuthSession: () => ({ data: null, status: 'authenticated', update: jest.fn() }),
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signIn: jest.fn(),
   signOut: jest.fn(),
-  useSession: () => ({ data: null, status: 'authenticated', update: jest.fn() }),
 }));
 
 jest.mock('next/navigation', () => ({

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { Check } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import { useMigration } from '../MigrationContext';
@@ -26,7 +26,7 @@ interface Version {
 }
 
 export default function MigrationHeader() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
   const {
     selectedProjectId,

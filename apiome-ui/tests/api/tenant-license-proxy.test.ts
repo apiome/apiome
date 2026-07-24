@@ -33,7 +33,7 @@ describe('tenant license proxy (GET /api/tenants/license)', () => {
   });
 
   it('authenticates the session and resolves the current tenant slug', () => {
-    expect(route).toContain('getServerSession');
+    expect(route).toContain('getAuthSession');
     expect(route).toContain('current_tenant_id');
     expect(route).toContain('getTenantById');
     // Unauthenticated and tenant-less sessions are rejected before proxying.
