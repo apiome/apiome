@@ -38,6 +38,9 @@ const mockGenericOAuth = jest.fn((opts: { config: unknown }) => ({
 jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/plugins/generic-oauth', () => ({ genericOAuth: mockGenericOAuth }));
+// The OLO-10.10 twoFactor plugin is registered on the instance auth.ts builds; stub it (better-auth
+// is ESM-only) so the per-request rebuild loads under ts-jest.
+jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: jest.fn(() => ({ id: 'two-factor' })) }));
 jest.mock('better-auth/api', () => ({
   createAuthMiddleware: (handler: unknown) => handler,
   APIError: class APIError extends Error {},

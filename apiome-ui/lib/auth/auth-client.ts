@@ -1,7 +1,8 @@
 import { createAuthClient } from 'better-auth/react';
+import { twoFactorClient } from 'better-auth/client/plugins';
 
 /**
- * Better Auth browser client (OLO-10.2).
+ * Better Auth browser client (OLO-10.2, extended for 2FA in OLO-10.10).
  *
  * The React client the UI will call as `authClient.signIn` / `authClient.signOut` /
  * `authClient.useSession` once the `signIn`/`signOut`/`useSession` swap lands (10.12 #5007). This
@@ -9,7 +10,14 @@ import { createAuthClient } from 'better-auth/react';
  *
  * `basePath` stays at the default `/api/auth`, which the app already serves same-origin, so the
  * client needs no explicit `baseURL` in the browser — it resolves against the current origin.
+ *
+ * `twoFactorClient()` is the browser counterpart of the server `twoFactor` plugin (OLO-10.10 #5005):
+ * it exposes `authClient.twoFactor.*` (enable / disable / verifyTotp / …) and the second-factor
+ * redirect hook the login step will use. Registered here as foundation only — the enrollment and
+ * login-step UX are OLO-9.13 (#5014) / OLO-9.14 (#5006). The client plugin must be present so the
+ * client's type inference and the `two-factor` path routing match the server instance.
  */
 export const authClient = createAuthClient({
   basePath: '/api/auth',
+  plugins: [twoFactorClient()],
 });

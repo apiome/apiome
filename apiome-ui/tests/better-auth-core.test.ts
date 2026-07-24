@@ -12,6 +12,10 @@ const mockHandler = jest.fn();
 const mockBetterAuth = jest.fn(() => ({ handler: mockHandler }));
 const mockNextCookies = jest.fn(() => ({ id: 'next-cookies' }));
 const mockGenericOAuth = jest.fn(() => ({ id: 'generic-oauth' }));
+// The OLO-10.10 twoFactor plugin factory — stubbed so the instance loads under ts-jest (better-auth
+// is ESM-only). The stub echoes the options back so the test can assert issuer + table mapping.
+const mockTwoFactor = jest.fn((options: unknown) => ({ id: 'two-factor', options }));
+const mockTwoFactorClient = jest.fn(() => ({ id: 'two-factor-client' }));
 const mockCreateAuthClient = jest.fn(() => ({
   signIn: jest.fn(),
   signOut: jest.fn(),
@@ -22,6 +26,8 @@ const mockCreateAuthClient = jest.fn(() => ({
 jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/react', () => ({ createAuthClient: mockCreateAuthClient }));
+jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: mockTwoFactor }));
+jest.mock('better-auth/client/plugins', () => ({ twoFactorClient: mockTwoFactorClient }));
 // `better-auth/plugins/generic-oauth` is ESM-only and is registered by auth.ts for the OLO-10.7 OAuth
 // providers; stub the plugin factory so the instance loads (the provider construction itself is
 // covered by `better-auth-oauth-providers.test.ts`).
@@ -85,11 +91,13 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(config.baseURL).toBe('https://app.example.test');
     expect(config.basePath).toBe('/api/auth');
     expect(config.database).toBeDefined();
-    // Two plugins: the OLO-10.7 genericOAuth (the four OAuth providers) then nextCookies — which must
-    // stay LAST so Better Auth can set cookies from Next.js server actions.
+    // Three plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
+    // plugin, then nextCookies — which must stay LAST so Better Auth can set cookies from Next.js
+    // server actions.
     expect(mockGenericOAuth).toHaveBeenCalledTimes(1);
+    expect(mockTwoFactor).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(2);
+    expect(config.plugins).toHaveLength(3);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
@@ -166,6 +174,28 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(typeof config.hooks.after).toBe('function');
   });
 
+  it('registers the twoFactor plugin with the app name as issuer and the two_factor table (OLO-10.10)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    // Issuer = the app name (the label an authenticator app shows), table mapped to snake_case
+    // `two_factor` (the plugin keeps its native camelCase field names — design §2.5).
+    expect(mockTwoFactor).toHaveBeenCalledTimes(1);
+    expect(mockTwoFactor).toHaveBeenCalledWith({ issuer: 'apiome', twoFactorTable: 'two_factor' });
+
+    // The twoFactor plugin sits AFTER genericOAuth and BEFORE nextCookies (which must stay last).
+    const config = mockBetterAuth.mock.calls[0][0];
+    const twoFactorIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'two-factor',
+    );
+    const nextCookiesIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'next-cookies',
+    );
+    expect(twoFactorIndex).toBeGreaterThanOrEqual(0);
+    expect(twoFactorIndex).toBeLessThan(nextCookiesIndex);
+  });
+
   it('falls back to NEXTAUTH_URL for the base URL when BETTER_AUTH_URL is unset', async () => {
     process.env.NEXTAUTH_SECRET = 'test-secret';
     delete process.env.BETTER_AUTH_URL;
@@ -194,10 +224,16 @@ describe('lib/auth/auth-client.ts (Better Auth browser client)', () => {
     jest.resetModules();
   });
 
-  it('creates the client on the /api/auth base path', async () => {
+  it('creates the client on the /api/auth base path with the twoFactor client plugin', async () => {
     const { authClient } = await import('@lib/auth/auth-client');
 
-    expect(mockCreateAuthClient).toHaveBeenCalledWith({ basePath: '/api/auth' });
+    // Base path unchanged; the OLO-10.10 twoFactorClient() plugin is registered so the client mirrors
+    // the server twoFactor plugin (exposes authClient.twoFactor.* and the second-factor redirect hook).
+    expect(mockCreateAuthClient).toHaveBeenCalledWith({
+      basePath: '/api/auth',
+      plugins: [{ id: 'two-factor-client' }],
+    });
+    expect(mockTwoFactorClient).toHaveBeenCalledTimes(1);
     expect(authClient).toBeDefined();
     expect(authClient.signIn).toBeDefined();
   });
