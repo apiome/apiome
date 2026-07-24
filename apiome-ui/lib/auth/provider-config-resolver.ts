@@ -56,6 +56,9 @@ export const PROVIDER_CRED_ENV_KEYS: Record<
   github: { clientId: 'GITHUB_ID', clientSecret: 'GITHUB_SECRET' },
   gitlab: { clientId: 'GITLAB_CLIENT_ID', clientSecret: 'GITLAB_CLIENT_SECRET' },
   azure: { clientId: 'AZURE_AD_CLIENT_ID', clientSecret: 'AZURE_AD_CLIENT_SECRET' },
+  // Google became a live provider after OLO-8.5 (OLO-9.2, #4985) and is in the store vocabulary
+  // (V198) + the server registry, so its DB-configured credentials must overlay env like the others.
+  google: { clientId: 'GOOGLE_CLIENT_ID', clientSecret: 'GOOGLE_CLIENT_SECRET' },
 };
 
 /** Default TTL (ms) for the in-process cache; bounded so a DB change lands within ~a cache window. */

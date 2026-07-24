@@ -17,9 +17,12 @@ import { oauthResolutionHandler } from './better-auth-account-resolution';
 import {
   applyOauthRedirectOverride,
   buildGenericOAuthConfigs,
+  providerConfigSignature,
   runWithOauthRedirectOverride,
 } from './better-auth-oauth-providers';
 import { LINKABLE_PROVIDERS } from './account-resolution';
+import { resolveProviderEnv, type EnvMap } from './provider-config-resolver';
+import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
 // migrated session/account read hits the same database as the REST API. `lib/db/db` is a CommonJS
@@ -29,16 +32,15 @@ import { LINKABLE_PROVIDERS } from './account-resolution';
 const connectionPool = require('../db/db');
 
 /**
- * Better Auth server instance — the core install for the migration (OLO-10.2).
+ * Assemble the Better Auth configuration (OLO-10.2, extended through 10.7/10.8) for a given
+ * generic-OAuth provider list.
  *
- * This is the baseline the rest of Epic 10 builds on: it boots the Better Auth core (its four
- * models — `user`/`session`/`account`/`verification`) against the shared Postgres pool and nothing
- * more. There are deliberately **no social providers and no 2FA yet** — those arrive in later
- * tickets (providers in 10.7 #5002, 2FA in 10.10 #5005), as do the session/cookie parameters and the
- * `designer→spire` JWT plugin (10.3 #4998). See `docs/BETTER_AUTH_MIGRATION.md`.
- *
- * The instance is only exercised when `AUTH_ENGINE=better-auth`; with the default `next-auth` flag it
- * is never constructed (the catch-all route imports this module lazily — see the route handler).
+ * Everything except the OAuth provider set — the shared Postgres pool, secret, base path, session /
+ * cookie parity, the user-model mapping, credential sign-in, account linking, and the resolution /
+ * rate-limit hooks — is identical for every caller; only the `genericOAuth` config varies between the
+ * static env build ({@link auth}) and the per-request DB-over-env build ({@link resolveRequestAuthInstance}).
+ * Keeping one factory guarantees the two never drift — the Better Auth analogue of the NextAuth
+ * `makeAuthOptions` split (OLO-8.6 → 10.8).
  *
  * Config notes:
  * - `secret` reuses `NEXTAUTH_SECRET` so existing tooling and the suite's shared-secret assumption
@@ -54,8 +56,12 @@ const connectionPool = require('../db/db');
  *   (`better-auth-session.ts`, `docs/BETTER_AUTH_MIGRATION.md` §1).
  * - `nextCookies()` must be the last plugin — it lets Better Auth set cookies from Next.js server
  *   actions (its standard App Router integration).
+ *
+ * @param oauthConfigs The generic-OAuth provider configs to register (from {@link buildGenericOAuthConfigs}).
+ * @returns The complete Better Auth options object for this deployment.
  */
-export const auth = betterAuth({
+function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
+  return {
   appName: 'apiome',
   database: connectionPool,
   secret: resolveBetterAuthSecret(),
@@ -103,7 +109,7 @@ export const auth = betterAuth({
   // see `better-auth-oauth-providers.ts`. `genericOAuth` mounts the `/oauth2/callback/:id` route the
   // 10.6 resolution adapter already recognises; it must come before `nextCookies()` (which stays
   // last so Better Auth can set cookies from Next.js server actions).
-  plugins: [genericOAuth({ config: buildGenericOAuthConfigs() }), nextCookies()],
+  plugins: [genericOAuth({ config: oauthConfigs }), nextCookies()],
   // Credential brute-force limiting (OLO-10.5): the `before` handler refuses a locked
   // `/sign-in/email` attempt before any password work; the `after` handler records the outcome. Both
   // are path-gated and no-op for requests they do not own.
@@ -124,12 +130,99 @@ export const auth = betterAuth({
       await credentialRateLimitAfterHandler(ctx);
     }),
   },
-});
+  };
+}
+
+/**
+ * Build a Better Auth instance whose OAuth providers come from the given environment.
+ *
+ * @param providerEnv The env-shaped map to read provider config from (DB-over-env merged env for a
+ *   per-request build; `process.env` for the static instance). Defaults to `process.env`.
+ * @returns A Better Auth server instance configured for `providerEnv`'s enabled provider set.
+ */
+export function buildBetterAuthInstance(providerEnv: EnvMap = process.env) {
+  return betterAuth(buildBetterAuthConfig(buildGenericOAuthConfigs(providerEnv)));
+}
+
+/** A Better Auth server instance, as returned by {@link buildBetterAuthInstance}. */
+export type BetterAuthInstance = ReturnType<typeof buildBetterAuthInstance>;
+
+/**
+ * Better Auth server instance — the static, env-derived instance (OLO-10.2, extended through 10.7).
+ *
+ * Imported by server code that only needs to *read* an existing session (which consults the secret,
+ * cookies, and DB session/account tables — never the OAuth provider list), so the env build is correct
+ * here. Starting a sign-in goes through {@link betterAuthHandler}, which resolves the DB-over-env
+ * provider set per request (OLO-10.8). See `docs/BETTER_AUTH_MIGRATION.md`.
+ *
+ * The instance is only exercised when `AUTH_ENGINE=better-auth`; with the default `next-auth` flag it
+ * is never constructed (the catch-all route imports this module lazily — see the route handler).
+ */
+export const auth = buildBetterAuthInstance(process.env);
+
+/**
+ * Per-request Better Auth instance cache (OLO-10.8).
+ *
+ * Better Auth freezes the `genericOAuth` config when `betterAuth({...})` is evaluated, so — unlike
+ * NextAuth v4, which accepts options per call — a DB provider change only lands if the *instance* is
+ * rebuilt. Rebuilding on every `/api/auth/*` request (including the frequent get-session) would add
+ * plugin-init latency to each call, so instances are cached by a fingerprint of their provider config
+ * ({@link providerConfigSignature}): the resolver's DB read is TTL-cached (OLO-8.5) and the config
+ * rarely changes, so the fingerprint is stable and the cached instance is reused; an admin edit shifts
+ * the fingerprint and the very next sign-in rebuilds against the new config. Seeded with the static
+ * env instance so a deployment with no DB overrides reuses {@link auth} and never rebuilds.
+ */
+let instanceCache: { signature: string; instance: BetterAuthInstance } = {
+  signature: providerConfigSignature(buildGenericOAuthConfigs(process.env)),
+  instance: auth,
+};
+
+/**
+ * Resolve the Better Auth instance for a single request from the DB-over-env merged provider config
+ * (OLO-10.8, the Better Auth counterpart of the NextAuth per-request rebuild OLO-8.6).
+ *
+ * Resolves the merged env (OLO-8.5, TTL-cached, never throws), builds the provider config from it, and
+ * returns a cached instance when the config is unchanged or a freshly built one when an admin edit
+ * shifted it. Degrade-to-env, never a login outage: if resolution or construction fails for any reason,
+ * the static env-built {@link auth} instance is returned so sign-in keeps working on `.env` config.
+ *
+ * @param baseEnv Base environment; defaults to `process.env` (injectable for tests).
+ * @param now Current epoch ms; defaults to `Date.now()` (injectable for tests).
+ * @returns The Better Auth instance whose provider set reflects the current DB-over-env config.
+ */
+export async function resolveRequestAuthInstance(
+  baseEnv: EnvMap = process.env,
+  now: number = Date.now()
+): Promise<BetterAuthInstance> {
+  try {
+    const mergedEnv = await resolveProviderEnv(baseEnv, now);
+    const oauthConfigs = buildGenericOAuthConfigs(mergedEnv);
+    const signature = providerConfigSignature(oauthConfigs);
+    // The check-build-assign-return below is a single synchronous block (no `await`), so concurrent
+    // requests cannot interleave within it: each resolves its own instance and updates the shared
+    // cache last-writer-wins, which is safe because every built instance is valid for its own config.
+    if (signature === instanceCache.signature) {
+      return instanceCache.instance;
+    }
+    const instance = betterAuth(buildBetterAuthConfig(oauthConfigs));
+    instanceCache = { signature, instance };
+    return instance;
+  } catch (error) {
+    // Never let provider resolution break sign-in: fall back to the static env instance.
+    console.error(
+      '[betterAuth] per-request provider resolution failed; using static env instance',
+      error instanceof Error ? error.name : 'unknown'
+    );
+    return auth;
+  }
+}
 
 /**
  * Better Auth request handler for the `/api/auth/[...all]` catch-all.
  *
- * `auth.handler` dispatches on the request method and path internally, so a single function serves
+ * The instance is resolved per request from the DB-over-env merged config (OLO-10.8), so toggling a
+ * provider from the admin settings screen takes effect on the next sign-in without a redeploy.
+ * `instance.handler` dispatches on the request method and path internally, so a single function serves
  * every Better Auth endpoint (GET and POST alike). The parallel-run route delegates to this when the
  * `AUTH_ENGINE` flag selects Better Auth.
  *
@@ -145,7 +238,8 @@ export const auth = betterAuth({
  */
 export function betterAuthHandler(request: Request): Promise<Response> {
   return runWithOauthRedirectOverride(async () => {
-    const response = await auth.handler(request);
+    const instance = await resolveRequestAuthInstance();
+    const response = await instance.handler(request);
     return applyOauthRedirectOverride(response);
   });
 }
