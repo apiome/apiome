@@ -3,6 +3,8 @@ import { createAuthMiddleware } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { genericOAuth } from 'better-auth/plugins/generic-oauth';
 import { twoFactor } from 'better-auth/plugins/two-factor';
+import { customSession } from 'better-auth/plugins';
+import { augmentBetterAuthUser } from './better-auth-session-shape';
 import {
   buildBetterAuthAdvancedOptions,
   buildBetterAuthSessionOptions,
@@ -142,9 +144,22 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   //     use the plugin's built-in symmetric encryption rather than a bespoke OLO-8.3 envelope, so no
   //     new key-management surface is introduced (docs/BETTER_AUTH_MIGRATION.md §2.5 / R11).
   // Placed before `nextCookies()`, which must stay last (see above).
+  // `customSession` (OLO-10.12 #5007) shapes every session read into the app contract the UI and the
+  // ~106 API routes consume — `session.user.user_id` (= Better Auth's `user.id`) plus the validated
+  // active `current_tenant_id` derived at read time from the durable last-active cookie
+  // (`better-auth-session-shape.ts`). Because it transforms the `/get-session` response, both the
+  // server reader (`auth.api.getSession()`) and the browser client (`authClient.useSession()`) get
+  // the identical shape from this one place, matching what the NextAuth `session`/`jwt` callbacks
+  // produced. The callback is fail-safe (tenant derivation swallows its own errors), so it can never
+  // break a session read. It runs after `twoFactor` and before `nextCookies()` (which must stay last
+  // so Better Auth can set cookies from Next.js server actions).
   plugins: [
     genericOAuth({ config: oauthConfigs }),
     twoFactor({ issuer: APP_NAME, twoFactorTable: TWO_FACTOR_TABLE }),
+    customSession(async ({ user, session }) => ({
+      session,
+      user: await augmentBetterAuthUser(user),
+    })),
     nextCookies(),
   ],
   // Credential brute-force limiting (OLO-10.5): the `before` handler refuses a locked

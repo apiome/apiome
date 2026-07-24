@@ -15,8 +15,10 @@ const mockUseSession = jest.fn();
 const mockPush = jest.fn();
 let mockPathname = '/ade/dashboard/projects';
 
-jest.mock('next-auth/react', () => ({
-  useSession: () => mockUseSession(),
+jest.mock('@lib/auth/session-client', () => ({
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signOut: jest.fn(),
+  useAuthSession: () => mockUseSession(),
 }));
 
 jest.mock('next/navigation', () => ({

@@ -3,8 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import {
   listTenantRepositoryImports,
   tenantRepositoryBelongsToTenant,
@@ -25,7 +24,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const user = session?.user as SessionUser | undefined;
   if (!user?.user_id) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });

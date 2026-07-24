@@ -6,9 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '../auth/[...nextauth]/route';
 import { getTenantById, listVersionBranches } from '@lib/db/helper';
 import { applyUiMockBaseUrls } from '@lib/mock/mockUrl';
 import {
@@ -136,7 +135,7 @@ function nextJsonFromVersionCreateError(
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json(
@@ -275,7 +274,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
 
     if (!session?.user) {
       return NextResponse.json(

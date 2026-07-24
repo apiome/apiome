@@ -8,8 +8,7 @@
  * { success, ... } envelope.
  */
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL, SessionUserForRest } from '@lib/rest-auth';
 
@@ -23,7 +22,7 @@ export interface WorkspaceProxyAuth {
 export async function requireSessionUser(): Promise<
   WorkspaceProxyAuth | { error: NextResponse }
 > {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   if (!session?.user) {
     return { error: NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 }) };
   }

@@ -43,3 +43,17 @@ export function getAuthEngine(): AuthEngine {
 export function isBetterAuthEngine(): boolean {
   return getAuthEngine() === AUTH_ENGINE_BETTER_AUTH;
 }
+
+/**
+ * Client-safe engine check for the browser session compat layer (OLO-10.12).
+ *
+ * `AUTH_ENGINE` is server-only; `next.config.ts` mirrors it into the build-time-inlined
+ * `NEXT_PUBLIC_AUTH_ENGINE` so the browser can read it. Same fail-safe rule: only the literal
+ * `better-auth` selects Better Auth. Usable from both client and server (on the server the public var
+ * is present too), so the compat layer can call it without a `'use client'`/server split.
+ *
+ * @returns `true` when the app is running on the Better Auth engine, otherwise `false`.
+ */
+export function isBetterAuthEngineClient(): boolean {
+  return process.env.NEXT_PUBLIC_AUTH_ENGINE?.trim() === AUTH_ENGINE_BETTER_AUTH;
+}

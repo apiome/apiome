@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -59,7 +59,7 @@ function formatGroupAndRepoName(fullName: string | undefined): string {
 
 export default function AddRepositoryPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
   const userId = (session?.user as { user_id?: string })?.user_id;
 

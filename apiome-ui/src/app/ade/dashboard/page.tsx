@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import {
   Folder,
   GitBranch,
@@ -48,7 +48,7 @@ interface RecentActivity {
 }
 
 const Dashboard = () => {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const [stats, setStats] = useState<DashboardStats>({
     total_tenants: 0,
     admin_tenants: 0,

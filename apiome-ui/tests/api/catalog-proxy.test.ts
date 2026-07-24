@@ -46,7 +46,7 @@ describe('catalog list proxy (GET /api/catalog)', () => {
   });
 
   it('requires a session and a selected tenant', () => {
-    expect(src).toContain('getServerSession');
+    expect(src).toContain('getAuthSession');
     expect(src).toMatch(/Unauthorized/);
     expect(src).toMatch(/No tenant selected/);
   });
@@ -74,7 +74,7 @@ describe('catalog detail proxy (GET /api/catalog/[itemId])', () => {
   });
 
   it('requires a session and a selected tenant', () => {
-    expect(src).toContain('getServerSession');
+    expect(src).toContain('getAuthSession');
     expect(src).toMatch(/Unauthorized/);
     expect(src).toMatch(/No tenant selected/);
   });
@@ -97,7 +97,7 @@ describe('catalog source proxy (GET /api/catalog/[itemId]/source)', () => {
   });
 
   it('requires a session and a selected tenant', () => {
-    expect(src).toContain('getServerSession');
+    expect(src).toContain('getAuthSession');
     expect(src).toMatch(/Unauthorized/);
     expect(src).toMatch(/No tenant selected/);
   });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { getTenantsForUser, getTenantsAdministratedByUser, getTenantUsers, addTenantAdministrator, addTenantUser, removeTenantAdministrator, removeTenantUser, updateTenant } from '../../../../../lib/db/helper';
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Trash2, Users, Shield, ChevronDown, ChevronUp, X, Building2, Edit2, AlertTriangle, MoreVertical, UserCheck } from 'lucide-react';
@@ -65,7 +65,7 @@ interface TenantUser {
 }
 
 const Tenants = () => {
-  const { data: session, status, update } = useSession();
+  const { data: session, status, update } = useAuthSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [adminTenants, setAdminTenants] = useState<AdminUser[]>([]);

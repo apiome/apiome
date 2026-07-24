@@ -11,7 +11,7 @@
  * URL (shareable); tenant scope comes from the session, project scope from ?projectId=.
  */
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
@@ -54,7 +54,7 @@ import {
 const PAGE_SIZE = 50;
 
 function LintWorkspacePageInner() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

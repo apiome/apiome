@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import {
   Database,
   Plus,
@@ -76,7 +76,7 @@ interface Primitive {
 
 export default function PrimitivesManagementClient() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm } = useDialog();
 
   const [primitives, setPrimitives] = useState<Primitive[]>([]);

@@ -16,7 +16,7 @@
  * (MFI-23.6) are separate tickets; this screen ships a self-contained inline card so both views work.
  */
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -492,7 +492,7 @@ const Catalog = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const identityGroupFilter = searchParams.get('identityGroupId');
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
 
   const [items, setItems] = useState<CatalogItem[]>([]);

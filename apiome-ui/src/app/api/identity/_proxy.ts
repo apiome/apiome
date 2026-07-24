@@ -1,9 +1,8 @@
 /**
  * Shared auth helpers for identity API proxies (MFI-6.4, #4410).
  */
-import { getServerSession } from 'next-auth';
+import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getTenantById } from '@lib/db/helper';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
@@ -19,7 +18,7 @@ export async function resolveIdentityProxyContext(): Promise<
   | { error: string; status: number }
   | { tenantSlug: string; headers: Record<string, string> }
 > {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   if (!session?.user) {
     return { error: 'Unauthorized', status: 401 };
   }

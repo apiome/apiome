@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import { Eye, Lock, Globe, Copy, ExternalLink, Search, FileText, MoreVertical, ChevronLeft } from 'lucide-react';
 import { getPublishedVersionsForTenant, updateVersionVisibility, getApiKeysForTenant } from '../../../../../lib/db/helper';
@@ -79,7 +79,7 @@ const PublishedVersions = ({
   /** Public base URL of the hosted mock runtime (#4443, SIM-2.2), e.g. https://mock.example.com */
   mockApiBaseUrl: string;
 }) => {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const { confirm: confirmDialog, alert: alertDialog } = useDialog();
   const [versions, setVersions] = useState<PublishedVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);

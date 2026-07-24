@@ -13,7 +13,9 @@ import '@testing-library/jest-dom';
 
 const mockSignIn = jest.fn();
 
-jest.mock('next-auth/react', () => ({
+jest.mock('@lib/auth/session-client', () => ({
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signOut: jest.fn(),
   signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 

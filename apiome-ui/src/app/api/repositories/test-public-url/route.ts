@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { parseGitHubRepoUrl } from '@/app/utils/git-repo-url';
 
 const UA = 'Apiome-RepositoryUrlTest/1.0';
@@ -69,7 +68,7 @@ async function tryHeadOrGet(url: string): Promise<{ ok: boolean; message: string
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const userId = (session?.user as { user_id?: string } | undefined)?.user_id;
   if (!userId) {
     return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 });

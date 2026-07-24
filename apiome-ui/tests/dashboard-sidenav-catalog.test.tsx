@@ -17,8 +17,10 @@ jest.mock('next/navigation', () => ({
   usePathname: () => mockUsePathname(),
 }));
 
-jest.mock('next-auth/react', () => ({
-  useSession: () => mockUseSession(),
+jest.mock('@lib/auth/session-client', () => ({
+  AuthSessionProvider: ({ children }: { children: unknown }) => children,
+  signOut: jest.fn(),
+  useAuthSession: () => mockUseSession(),
 }));
 
 jest.mock('@/app/hooks/useDarkMode', () => ({

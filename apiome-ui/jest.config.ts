@@ -36,6 +36,11 @@ const config: Config = {
     '^remark-gfm$': '<rootDir>/tests/__mocks__/remark-gfm.ts',
     '^rehype-raw$': '<rootDir>/tests/__mocks__/rehype-raw.ts',
     '^.*auth/server-session$': '<rootDir>/tests/__mocks__/server-session.ts',
+    // `better-auth` is ESM-only (ts-jest cannot require it). Component tests now transitively import
+    // the Better Auth browser client via the OLO-10.12 session compat layer, so stub the two client
+    // entrypoints. Server-side better-auth tests still `jest.mock` these, which takes precedence.
+    '^better-auth/react$': '<rootDir>/tests/__mocks__/better-auth-react.ts',
+    '^better-auth/client/plugins$': '<rootDir>/tests/__mocks__/better-auth-client-plugins.ts',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-markdown|remark-gfm|unified|bail|is-plain-obj|trough|vfile|unist-.*|unified|remark-.*|mdast-.*|micromark.*|decode-named-character-reference|character-entities|property-information|hast-util-whitespace|space-separated-tokens|comma-separated-tokens|pretty-bytes|@seriousme/openapi-schema-validator|uuid)/)',

@@ -9,7 +9,7 @@ import {
   GitPullRequestArrow,
   Loader2,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { createProject } from '@lib/db/helper';
@@ -209,7 +209,7 @@ export function RepositoryFileImportMapping({
   /** Fired when the user has mapped this file to a project (or cleared mapping), while import has not started. */
   onStagedImportTargetChange?: (target: RepositoryFileStagedImportTarget | null) => void;
 }) {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string } | undefined)?.current_tenant_id;
   const currentUserId = (session?.user as { user_id?: string } | undefined)?.user_id;
 

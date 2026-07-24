@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from '@lib/auth/session-client';
 import { User, Building2, Link2 } from "lucide-react";
 import { completeOAuthSignup } from "../../../../lib/auth/oauth-signup-actions";
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -201,7 +201,7 @@ export function RepositoryDetailClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = typeof params?.id === 'string' ? params.id : '';
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const currentTenantId = (session?.user as { current_tenant_id?: string })?.current_tenant_id;
 
   const [repo, setRepo] = useState<DashboardRepository | null>(null);

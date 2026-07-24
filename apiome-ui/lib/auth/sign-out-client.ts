@@ -4,14 +4,14 @@
  * Single logout entry point for every "Sign out" control.
  *
  * Runs the deterministic server-side cookie clear (serverLogout) *before*
- * handing off to NextAuth's client `signOut`, so the session cookie is gone
- * regardless of NextAuth's own cookie handling, and the durable
- * last-active-tenant cookie is cleared too. `signOut` still runs to reset the
- * client SessionProvider state, broadcast the sign-out to other tabs, and
- * perform the redirect.
+ * handing off to the engine-aware client `signOut`, so the session cookie is
+ * gone regardless of the active engine's own cookie handling, and the durable
+ * last-active-tenant cookie is cleared too. The engine `signOut`
+ * (`session-client.tsx`, OLO-10.12) then clears the Better Auth / NextAuth
+ * session and performs the redirect.
  */
 
-import { signOut } from 'next-auth/react';
+import { signOut } from './session-client';
 import { serverLogout } from './logout-actions';
 
 /**
@@ -28,5 +28,5 @@ export async function signOutEverywhere(callbackUrl: string): Promise<void> {
   } catch (error) {
     console.error('[auth] server-side logout cookie clear failed:', error);
   }
-  await signOut({ callbackUrl });
+  await signOut(callbackUrl);
 }

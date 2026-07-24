@@ -8,8 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 import {
@@ -30,7 +29,7 @@ interface SessionUser {
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ endpointId: string }> }) {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   const user = session?.user as SessionUser | undefined;
   if (!user?.user_id) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });

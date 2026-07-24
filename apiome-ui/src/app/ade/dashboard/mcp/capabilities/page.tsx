@@ -8,7 +8,7 @@
  */
 
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Layers, RefreshCw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
@@ -93,7 +93,7 @@ function CapabilitySortHeader({
 }
 
 export default function McpCapabilityDirectoryPage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const sessionUser = session?.user as { current_tenant_id?: string } | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
 

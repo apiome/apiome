@@ -16,6 +16,13 @@ const mockGenericOAuth = jest.fn(() => ({ id: 'generic-oauth' }));
 // is ESM-only). The stub echoes the options back so the test can assert issuer + table mapping.
 const mockTwoFactor = jest.fn((options: unknown) => ({ id: 'two-factor', options }));
 const mockTwoFactorClient = jest.fn(() => ({ id: 'two-factor-client' }));
+// The OLO-10.12 customSession plugin factory — echoes the transform fn back so the test can assert it
+// is registered with a function. The `augmentBetterAuthUser` transform itself (and its tenant
+// derivation) is covered by `better-auth-session-shape.test.ts`, mocked here so importing auth.ts does
+// not pull the tenant-derivation deps (next/headers, membership store).
+const mockCustomSession = jest.fn((fn: unknown) => ({ id: 'custom-session', fn }));
+const mockCustomSessionClient = jest.fn(() => ({ id: 'custom-session-client' }));
+const mockGenericOAuthClient = jest.fn(() => ({ id: 'generic-oauth-client' }));
 const mockCreateAuthClient = jest.fn(() => ({
   signIn: jest.fn(),
   signOut: jest.fn(),
@@ -27,7 +34,13 @@ jest.mock('better-auth', () => ({ betterAuth: mockBetterAuth }));
 jest.mock('better-auth/next-js', () => ({ nextCookies: mockNextCookies }));
 jest.mock('better-auth/react', () => ({ createAuthClient: mockCreateAuthClient }));
 jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: mockTwoFactor }));
-jest.mock('better-auth/client/plugins', () => ({ twoFactorClient: mockTwoFactorClient }));
+jest.mock('better-auth/plugins', () => ({ customSession: mockCustomSession }));
+jest.mock('@lib/auth/better-auth-session-shape', () => ({ augmentBetterAuthUser: jest.fn() }));
+jest.mock('better-auth/client/plugins', () => ({
+  twoFactorClient: mockTwoFactorClient,
+  customSessionClient: mockCustomSessionClient,
+  genericOAuthClient: mockGenericOAuthClient,
+}));
 // `better-auth/plugins/generic-oauth` is ESM-only and is registered by auth.ts for the OLO-10.7 OAuth
 // providers; stub the plugin factory so the instance loads (the provider construction itself is
 // covered by `better-auth-oauth-providers.test.ts`).
@@ -91,13 +104,14 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(config.baseURL).toBe('https://app.example.test');
     expect(config.basePath).toBe('/api/auth');
     expect(config.database).toBeDefined();
-    // Three plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
-    // plugin, then nextCookies — which must stay LAST so Better Auth can set cookies from Next.js
-    // server actions.
+    // Four plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
+    // plugin, the OLO-10.12 customSession (session shaping), then nextCookies — which must stay LAST so
+    // Better Auth can set cookies from Next.js server actions.
     expect(mockGenericOAuth).toHaveBeenCalledTimes(1);
     expect(mockTwoFactor).toHaveBeenCalledTimes(1);
+    expect(mockCustomSession).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(3);
+    expect(config.plugins).toHaveLength(4);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
@@ -196,6 +210,28 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(twoFactorIndex).toBeLessThan(nextCookiesIndex);
   });
 
+  it('registers the customSession plugin with a transform function, before nextCookies (OLO-10.12)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    // customSession shapes every session read into the app contract (user_id + current_tenant_id).
+    expect(mockCustomSession).toHaveBeenCalledTimes(1);
+    expect(typeof mockCustomSession.mock.calls[0][0]).toBe('function');
+
+    // It sits AFTER twoFactor and BEFORE nextCookies (which must stay last).
+    const config = mockBetterAuth.mock.calls[0][0];
+    const customSessionIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'custom-session',
+    );
+    const twoFactorIndex = config.plugins.findIndex((p: { id?: string }) => p?.id === 'two-factor');
+    const nextCookiesIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'next-cookies',
+    );
+    expect(customSessionIndex).toBeGreaterThan(twoFactorIndex);
+    expect(customSessionIndex).toBeLessThan(nextCookiesIndex);
+  });
+
   it('falls back to NEXTAUTH_URL for the base URL when BETTER_AUTH_URL is unset', async () => {
     process.env.NEXTAUTH_SECRET = 'test-secret';
     delete process.env.BETTER_AUTH_URL;
@@ -224,16 +260,23 @@ describe('lib/auth/auth-client.ts (Better Auth browser client)', () => {
     jest.resetModules();
   });
 
-  it('creates the client on the /api/auth base path with the twoFactor client plugin', async () => {
+  it('creates the client on the /api/auth base path with the twoFactor, customSession & genericOAuth client plugins', async () => {
     const { authClient } = await import('@lib/auth/auth-client');
 
-    // Base path unchanged; the OLO-10.10 twoFactorClient() plugin is registered so the client mirrors
-    // the server twoFactor plugin (exposes authClient.twoFactor.* and the second-factor redirect hook).
+    // Base path unchanged; the client mirrors the server plugins: twoFactorClient (OLO-10.10),
+    // customSessionClient (OLO-10.12, so useSession() typing carries user_id/current_tenant_id), and
+    // genericOAuthClient (OLO-10.12, exposes authClient.signIn.oauth2 for the OAuth sign-in swap).
     expect(mockCreateAuthClient).toHaveBeenCalledWith({
       basePath: '/api/auth',
-      plugins: [{ id: 'two-factor-client' }],
+      plugins: [
+        { id: 'two-factor-client' },
+        { id: 'custom-session-client' },
+        { id: 'generic-oauth-client' },
+      ],
     });
     expect(mockTwoFactorClient).toHaveBeenCalledTimes(1);
+    expect(mockCustomSessionClient).toHaveBeenCalledTimes(1);
+    expect(mockGenericOAuthClient).toHaveBeenCalledTimes(1);
     expect(authClient).toBeDefined();
     expect(authClient.signIn).toBeDefined();
   });

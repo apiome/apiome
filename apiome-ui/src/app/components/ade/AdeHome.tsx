@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { signOutEverywhere } from '../../../../lib/auth/sign-out-client';
 import { useState } from 'react';
 import {
@@ -289,7 +289,7 @@ export default function AdeHome({
   entitledFeatureFlags: _entitledFeatureFlags = [],
 }: AdeHomeProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
 

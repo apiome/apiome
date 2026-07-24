@@ -10,7 +10,7 @@
  * so this only ever reflects the caller's own catalog.
  */
 
-import { useSession } from 'next-auth/react';
+import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useState } from 'react';
 import { BarChart3, RefreshCw } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
@@ -26,7 +26,7 @@ import {
 } from '@/app/components/ade/dashboard/mcp/mcpCatalogInsightUi';
 
 export default function McpCatalogAnalyticsPage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuthSession();
   const sessionUser = session?.user as { current_tenant_id?: string } | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
 

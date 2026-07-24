@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '@lib/rest-auth';
 
@@ -8,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session?.user) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
