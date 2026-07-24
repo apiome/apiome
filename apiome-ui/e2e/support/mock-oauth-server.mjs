@@ -1,7 +1,7 @@
 /**
  * Mock OAuth/OIDC provider for the OLO-7.4 end-to-end journey suite (#4226).
  *
- * One dependency-free Node HTTP server that impersonates all three MVP sign-in providers,
+ * One dependency-free Node HTTP server that impersonates all four MVP sign-in providers,
  * path-prefixed so a single port serves them all:
  *
  *   - GitHub  — OAuth2 web flow + REST profile/emails API
@@ -19,6 +19,12 @@
  *       token:      POST /azure/<tenant>/v2.0/token
  *       jwks:       GET  /azure/jwks
  *     (point AZURE_AD_AUTHORITY_BASE_URL at /azure; any AZURE_AD_TENANT works)
+ *   - Google — OIDC authorization-code flow with PKCE + signed RS256 id_token (OLO-10.13)
+ *       discovery:  GET  /google/.well-known/openid-configuration
+ *       authorize:  GET  /google/o/oauth2/v2/auth
+ *       token:      POST /google/token
+ *       jwks:       GET  /azure/jwks   (shared keypair)
+ *     (point GOOGLE_ISSUER at /google)
  *
  * Control API (used by the Playwright journey to drive who "logs in" next):
  *   POST /__mock__/persona   body: {"email","name","login","providerUserId","verified":bool}
@@ -33,6 +39,7 @@
  *   - github: `/user/emails` entry `verified` flag
  *   - gitlab: `confirmed_at` present on `/api/v4/user`
  *   - azure:  explicit `email_verified: true` claim in the id_token (omitted when unverified)
+ *   - google: explicit `email_verified: true` claim in the id_token (omitted when unverified)
  *
  * Test-only: this server performs no real authentication and must never be deployed.
  * Run with:  node e2e/support/mock-oauth-server.mjs   (MOCK_OAUTH_PORT, default 8091)
@@ -274,6 +281,31 @@ function azureDiscovery(origin, tenant) {
   };
 }
 
+/**
+ * OIDC discovery document for the mock Google provider (OLO-10.13).
+ *
+ * The app points Google at this mock via `GOOGLE_ISSUER` (`google-workspace-domain.ts`), which drives
+ * the discovery URL both on the NextAuth path and the Better Auth generic-OAuth path. The `issuer`
+ * here and the id_token `iss` (set in `exchangeCode`) must equal `${origin}/google`. Endpoints and the
+ * signing machinery are reused from the shared authorize/token/jwks helpers — Google uses the same
+ * code + PKCE(S256) flow the Azure provider already exercises.
+ */
+function googleDiscovery(origin) {
+  const issuer = `${origin}/google`;
+  return {
+    issuer,
+    authorization_endpoint: `${issuer}/o/oauth2/v2/auth`,
+    token_endpoint: `${issuer}/token`,
+    jwks_uri: `${origin}/azure/jwks`,
+    response_types_supported: ['code'],
+    subject_types_supported: ['public'],
+    id_token_signing_alg_values_supported: ['RS256'],
+    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
+    scopes_supported: ['openid', 'profile', 'email'],
+    code_challenge_methods_supported: ['S256'],
+  };
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const path = url.pathname;
@@ -367,6 +399,33 @@ const server = createServer(async (req, res) => {
         sendJson(res, 200, tokens);
         return;
       }
+    }
+
+    // ── Google (OIDC) ──────────────────────────────────────────────────────────────
+    // Reuses the shared authorize/token/jwks helpers (Google uses the same authorization-code + PKCE
+    // S256 flow). The id_token carries `sub`/`email`/`email_verified`, which Google's normalizer reads
+    // (`better-auth-oauth-providers.ts` normalizeGoogle / `google-provider.ts`).
+    if (path === '/google/.well-known/openid-configuration') {
+      sendJson(res, 200, googleDiscovery(origin));
+      return;
+    }
+    if (path === '/google/o/oauth2/v2/auth') {
+      handleAuthorize(url, res);
+      return;
+    }
+    if (path === '/google/token' && req.method === 'POST') {
+      const body = await readBody(req);
+      // client_secret_basic carries the client id in the Authorization header; fall back to the form
+      // body (client_secret_post) — identical to the Azure token handler.
+      const basic = (req.headers.authorization || '').replace(/^basic\s+/i, '');
+      const basicId = basic
+        ? decodeURIComponent(Buffer.from(basic, 'base64').toString('utf8').split(':')[0] ?? '')
+        : '';
+      const clientId = basicId || body.client_id || '';
+      const tokens = exchangeCode(body, `${origin}/google`, clientId);
+      if (!tokens) return sendJson(res, 400, { error: 'invalid_grant' });
+      sendJson(res, 200, tokens);
+      return;
     }
 
     sendJson(res, 404, { error: 'not_found', path });

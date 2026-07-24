@@ -23,6 +23,10 @@ const mockTwoFactorClient = jest.fn(() => ({ id: 'two-factor-client' }));
 const mockCustomSession = jest.fn((fn: unknown) => ({ id: 'custom-session', fn }));
 const mockCustomSessionClient = jest.fn(() => ({ id: 'custom-session-client' }));
 const mockGenericOAuthClient = jest.fn(() => ({ id: 'generic-oauth-client' }));
+// The OLO-10.13 one-time-code sign-in plugin — stubbed so importing auth.ts does not pull the endpoint
+// deps (better-auth/api, better-auth/cookies, the DB module). Its behaviour is covered by
+// `better-auth-one-time-code-actions.test.ts`.
+const mockOneTimeCodePlugin = jest.fn(() => ({ id: 'one-time-code' }));
 const mockCreateAuthClient = jest.fn(() => ({
   signIn: jest.fn(),
   signOut: jest.fn(),
@@ -45,6 +49,10 @@ jest.mock('better-auth/client/plugins', () => ({
 // providers; stub the plugin factory so the instance loads (the provider construction itself is
 // covered by `better-auth-oauth-providers.test.ts`).
 jest.mock('better-auth/plugins/generic-oauth', () => ({ genericOAuth: mockGenericOAuth }));
+jest.mock('@lib/auth/better-auth-one-time-code', () => ({
+  oneTimeCodePlugin: mockOneTimeCodePlugin,
+  ONE_TIME_CODE_VERIFY_PATH: '/one-time-code/verify',
+}));
 // `better-auth/api` is ESM-only (ts-jest's CommonJS transform cannot require it). The credential
 // wiring (`better-auth-credentials.ts`, transitively imported by auth.ts) calls createAuthMiddleware
 // at module load, so stub it to return the handler unchanged and provide a minimal APIError.
@@ -104,14 +112,15 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(config.baseURL).toBe('https://app.example.test');
     expect(config.basePath).toBe('/api/auth');
     expect(config.database).toBeDefined();
-    // Four plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
-    // plugin, the OLO-10.12 customSession (session shaping), then nextCookies — which must stay LAST so
-    // Better Auth can set cookies from Next.js server actions.
+    // Five plugins: the OLO-10.7 genericOAuth (the four OAuth providers), the OLO-10.10 twoFactor
+    // plugin, the OLO-10.13 one-time-code sign-in plugin, the OLO-10.12 customSession (session shaping),
+    // then nextCookies — which must stay LAST so Better Auth can set cookies from Next.js server actions.
     expect(mockGenericOAuth).toHaveBeenCalledTimes(1);
     expect(mockTwoFactor).toHaveBeenCalledTimes(1);
+    expect(mockOneTimeCodePlugin).toHaveBeenCalledTimes(1);
     expect(mockCustomSession).toHaveBeenCalledTimes(1);
     expect(mockNextCookies).toHaveBeenCalledTimes(1);
-    expect(config.plugins).toHaveLength(4);
+    expect(config.plugins).toHaveLength(5);
     expect(config.plugins[config.plugins.length - 1]).toEqual({ id: 'next-cookies' });
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
@@ -208,6 +217,25 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     );
     expect(twoFactorIndex).toBeGreaterThanOrEqual(0);
     expect(twoFactorIndex).toBeLessThan(nextCookiesIndex);
+  });
+
+  it('registers the one-time-code sign-in plugin before nextCookies (OLO-10.13)', async () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+
+    // The plugin's session-establishing endpoint must run before nextCookies so the session cookie it
+    // sets is forwarded from the Next.js server action that redeems the one-time code.
+    expect(mockOneTimeCodePlugin).toHaveBeenCalledTimes(1);
+    const config = mockBetterAuth.mock.calls[0][0];
+    const oneTimeCodeIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'one-time-code',
+    );
+    const nextCookiesIndex = config.plugins.findIndex(
+      (p: { id?: string }) => p?.id === 'next-cookies',
+    );
+    expect(oneTimeCodeIndex).toBeGreaterThanOrEqual(0);
+    expect(oneTimeCodeIndex).toBeLessThan(nextCookiesIndex);
   });
 
   it('registers the customSession plugin with a transform function, before nextCookies (OLO-10.12)', async () => {

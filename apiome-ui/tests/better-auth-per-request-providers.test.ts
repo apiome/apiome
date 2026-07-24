@@ -44,6 +44,12 @@ jest.mock('better-auth/plugins/two-factor', () => ({ twoFactor: jest.fn(() => ({
 // OLO-10.12: auth.ts registers customSession; stub it and the session-shape module so importing the
 // instance does not pull the tenant-derivation deps (next/headers, membership store).
 jest.mock('better-auth/plugins', () => ({ customSession: jest.fn((fn: unknown) => ({ id: 'custom-session', fn })) }));
+// OLO-10.13: auth.ts registers the one-time-code sign-in plugin; stub it so importing the instance does
+// not pull its ESM endpoint deps (better-auth/api, better-auth/cookies) or the DB module.
+jest.mock('@lib/auth/better-auth-one-time-code', () => ({
+  oneTimeCodePlugin: jest.fn(() => ({ id: 'one-time-code' })),
+  ONE_TIME_CODE_VERIFY_PATH: '/one-time-code/verify',
+}));
 jest.mock('@lib/auth/better-auth-session-shape', () => ({ augmentBetterAuthUser: jest.fn() }));
 jest.mock('better-auth/api', () => ({
   createAuthMiddleware: (handler: unknown) => handler,

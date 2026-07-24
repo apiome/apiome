@@ -63,9 +63,10 @@ export function mapBetterAuthSession(data: BetterAuthSessionData | null | undefi
  * - OAuth provider → `authClient.signIn.oauth2` (generic-OAuth plugin) initiates the redirect flow.
  * - credentials with a password → `authClient.signIn.email`; navigate to `callbackUrl` on success or
  *   `/login?error=CredentialsSignin` on failure (preserving the login page's error contract).
- * - credentials with only a `oneTimeCode` → **unsupported on Better Auth** (no one-time-code sign-in
- *   endpoint; the OAuth callback establishes the session directly). Logs a clear warning; full parity
- *   is OLO-10.13. See the ticket notes.
+ * - credentials with only a `oneTimeCode` → redeemed through the `completeOneTimeCodeSignIn` server
+ *   action (OLO-10.13), which drives the Better Auth `/one-time-code/verify` endpoint to establish the
+ *   session and seed the active tenant. On success navigate to `callbackUrl`; on failure land on the
+ *   login error contract, matching the password path.
  *
  * @param provider `'credentials'` or an OAuth provider id.
  * @param options `callbackUrl` and, for credentials, the `payload` JSON blob.
@@ -92,12 +93,21 @@ export async function signInBetterAuth(
   };
 
   if (!parsed.password) {
-    // One-time-code sign-in (OAuth-signup completion / invite) has no Better Auth endpoint; under
-    // Better Auth the OAuth callback already establishes the session, so this bridge is a no-op.
-    console.warn(
-      '[auth] one-time-code credential sign-in is not supported on the Better Auth engine; ' +
-        'the OAuth callback establishes the session directly (OLO-10.12 / parity in OLO-10.13).'
-    );
+    // One-time-code sign-in (OAuth-signup completion / invite): redeem the single-use code through the
+    // server action, which drives the Better Auth `/one-time-code/verify` endpoint (OLO-10.13). A
+    // missing/invalid code lands on the same login error contract as a bad password.
+    const oneTimeCode = parsed.oneTimeCode?.trim();
+    if (!oneTimeCode) {
+      window.location.href = `/login?error=CredentialsSignin&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      return;
+    }
+    const { completeOneTimeCodeSignIn } = await import('./better-auth-one-time-code-actions');
+    const result = await completeOneTimeCodeSignIn(oneTimeCode);
+    if (!result.ok) {
+      window.location.href = `/login?error=CredentialsSignin&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      return;
+    }
+    window.location.href = callbackUrl;
     return;
   }
 

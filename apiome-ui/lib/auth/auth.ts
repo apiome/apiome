@@ -17,6 +17,7 @@ import {
   credentialRateLimitBeforeHandler,
 } from './better-auth-credentials';
 import { oauthResolutionHandler } from './better-auth-account-resolution';
+import { oneTimeCodePlugin } from './better-auth-one-time-code';
 import {
   applyOauthRedirectOverride,
   buildGenericOAuthConfigs,
@@ -153,9 +154,17 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // produced. The callback is fail-safe (tenant derivation swallows its own errors), so it can never
   // break a session read. It runs after `twoFactor` and before `nextCookies()` (which must stay last
   // so Better Auth can set cookies from Next.js server actions).
+  //
+  // One-time-code sign-in (OLO-10.13 #5008): the OAuth-signup completion signs the new user in with a
+  // single-use credential code (`auth_one_time_codes`), which Better Auth has no native endpoint for.
+  // `oneTimeCodePlugin()` adds `POST /one-time-code/verify` that consumes the code (the bearer proof)
+  // and establishes the session via the internal adapter — closing the parity gap #5007 deferred here.
+  // Placed before `nextCookies()` (which must stay last) so the session cookie it sets is forwarded
+  // from the Next.js server action that calls it (`better-auth-one-time-code-actions.ts`).
   plugins: [
     genericOAuth({ config: oauthConfigs }),
     twoFactor({ issuer: APP_NAME, twoFactorTable: TWO_FACTOR_TABLE }),
+    oneTimeCodePlugin(),
     customSession(async ({ user, session }) => ({
       session,
       user: await augmentBetterAuthUser(user),
