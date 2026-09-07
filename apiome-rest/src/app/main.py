@@ -77,6 +77,7 @@ from .primitives_routes import router as primitives_router
 from .project_tags_routes import router as project_tags_router
 from .projects_routes import router as projects_router
 from .properties_routes import router as properties_router
+from .provider_verification_routes import router as provider_verification_router
 from .public_types_routes import router as public_types_router
 from .push_webhook_crypto import validate_webhook_signing_key
 from .push_webhook_delivery import process_due_push_webhook_deliveries
@@ -133,7 +134,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.174.0",
+    version="1.175.0",
 )
 
 
@@ -284,6 +285,7 @@ app.include_router(identity_router)
 app.include_router(compatibility_router)
 app.include_router(contract_suite_router)
 app.include_router(contract_runner_router)
+app.include_router(provider_verification_router)
 app.include_router(verification_target_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)

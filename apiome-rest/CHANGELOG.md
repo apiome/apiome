@@ -5,6 +5,48 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.310.0] - 2026-09-07
+
+### Added
+- **Provider verification against a live deployment (#4489, CTG-4.3)** — a published specification
+  can be perfectly versioned and still lie. `POST /v1/tenants/{tenant}/contracts/{version_ref}/
+  verify-provider` executes the version's compiled contract suite against a registered deployment
+  and returns a **conformance report**: per-operation verdicts, every schema violation located by
+  its JSON Pointer into the response body, and coverage measured against every operation the
+  specification declares.
+
+  Nothing here re-implements execution. ECA-1.1 compiles the requests, ECA-1.2 holds the target and
+  its credential *reference*, ECA-2.1 sends them and validates responses, ECA-1.3 stores the run.
+  What was missing was the judgment: coverage had no denominator (a run recorded the cases it
+  executed, never the operations it did not reach), drift had no location (the validator's JSON
+  Pointers were computed and then discarded), mutation was an all-or-nothing target flag, and there
+  was no report object a deploy gate could fetch.
+
+  **Safe by default.** Only `GET`/`HEAD`/`OPTIONS` are sent. A mutating case runs only when the
+  target policy permits mutation, *and* the run opts in, *and* a tenant-supplied fixture names the
+  operation — because "you may write" and "here is the row you may write to" are different
+  permissions. A run can narrow what the registry permits and never widen it; a fixture supplies the
+  request but never the expectation, so it cannot make a failing case pass; a fixture carrying a
+  credential header is refused; and a fixture never overwrites a negative case's body or restores
+  the parameter that case exists to omit. A fixture that matches nothing is reported, not dropped.
+
+  **Coverage is honest.** The denominator counts operations the suite compiler could not compile,
+  so a coverage number cannot be inflated by a document half of which was skipped, and every
+  operation the report does not vouch for is named with its reason.
+
+  Reports are persisted write-once beside their evidence (apiome-db **V252**,
+  `provider_verification_report`) with the coverage numbers and verdict as indexed columns, so
+  CTG-4.4 (scheduled verification) and CTG-4.5 (deploy gating) can ask "is the newest report for
+  this version passing?" without parsing a report body. No new RBAC resource: a conformance report
+  *is* verification evidence. See `docs/provider_verification.md`.
+
+### Changed
+- `app/contract_runner.py` (ECA-2.1) now records **one assertion per located schema violation**
+  alongside the existing headline verdict, with the instance JSON Pointer as the assertion subject,
+  and accepts an optional per-case `decisions` map so a caller can hold a case back or substitute a
+  request without reimplementing the runner. Both are additive: omitting `decisions` is exactly the
+  previous behaviour, and the headline assertion's shape is unchanged.
+
 ## [1.308.0] - 2026-08-31
 
 ### Changed

@@ -13,10 +13,19 @@ Guarantees
 * **Secret-free evidence.** Auth material is applied to the request and never written into
   failure messages beyond what :mod:`app.verification_evidence` already redacts.
 * **Read-only by default.** Mutating methods are skipped unless the target policy allows them.
+* **Every schema violation is located.** A failed response-schema check records one assertion per
+  :class:`~app.schema_instance_validation.InstanceFinding`, carrying the JSON Pointer into the
+  response body, so a drift report can say *where* the deployment disagreed with the contract
+  rather than only that it did (CTG-4.3, #4489).
 
 This module is pure relative to the platform store: it takes a manifest, a resolved target, an
 httpx client (or builds one), and optional auth headers. Compiling, resolving, and recording
 live in :mod:`app.contract_runner_service`.
+
+A caller that needs finer control than "run every case" passes ``decisions`` to :func:`run_suite`
+— a per-case :class:`CaseDecision` that can skip a case with its own reason code or substitute a
+different request for it. Omitting the argument is exactly the ECA-2.1 behaviour; the provider
+verification layer (CTG-4.3) uses it to hold mutating cases back until a tenant supplies a fixture.
 """
 
 from __future__ import annotations
@@ -26,6 +35,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urljoin
@@ -73,12 +83,17 @@ __all__ = [
     "FAILURE_STATUS_MISMATCH",
     "FAILURE_TIMEOUT",
     "FAILURE_TRANSPORT_ERROR",
+    "MUTATING_METHODS",
     "RUNNER_NAME",
     "RUNNER_VERSION",
+    "SAFE_METHODS",
+    "SCHEMA_FINDING_LIMIT",
     "AuthResolutionError",
+    "CaseDecision",
     "SuiteRunResult",
     "materialize_auth_headers",
     "run_suite",
+    "skipped_operation",
     "status_code_matches",
 ]
 
@@ -92,7 +107,43 @@ FAILURE_TIMEOUT = "timeout"
 FAILURE_AUTH_UNAVAILABLE = "auth-unavailable"
 FAILURE_MUTATING_METHOD_BLOCKED = "mutating-method-blocked"
 
-_MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+#: Methods that a contract run may exercise against a live deployment without changing it. A
+#: verification that only sends these is safe to point at production.
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+#: Methods that can change the target's state. Never executed unless something explicitly says so
+#: — the ECA-1.2 target policy, and (CTG-4.3) a per-run opt-in carrying a fixture.
+MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+#: Cap on the per-violation assertions a single failed response-schema check records. A response
+#: that disagrees with its schema in a hundred places is one drift, not a hundred reports, and
+#: evidence rows are storage.
+SCHEMA_FINDING_LIMIT = 20
+
+#: Bounds matching :mod:`app.verification_evidence`'s own field limits. The evidence models apply
+#: their length *constraints* before their redacting validators run, so an over-long value would be
+#: refused outright rather than trimmed. A schema violation deep in a large response body can
+#: produce exactly that — a 50-level JSON Pointer, or a rendered value the size of the payload — so
+#: everything written into an assertion is bounded here first. A drift report that crashed on the
+#: pathological response would be worse than one that trims it and says so.
+_SUBJECT_LIMIT = 500
+_FIELD_LIMIT = 1000
+_MESSAGE_LIMIT = 2000
+
+
+def _bounded(text: Optional[str], limit: int) -> Optional[str]:
+    """Trim ``text`` to ``limit`` characters, marking it when anything was cut.
+
+    Args:
+        text: The value to bound; ``None`` passes through.
+        limit: Maximum length of the result, inclusive of the ellipsis.
+
+    Returns:
+        The text, trimmed and suffixed with ``…`` when it did not fit.
+    """
+    if text is None or len(text) <= limit:
+        return text
+    return text[: limit - 1] + "\u2026"
 
 
 class AuthResolutionError(RuntimeError):
@@ -101,6 +152,69 @@ class AuthResolutionError(RuntimeError):
     Raised before any case runs when ``auth.kind`` is ``env`` or ``stored`` and the secret is
     missing or unusable. The message is secret-free.
     """
+
+
+@dataclass(frozen=True)
+class CaseDecision:
+    """What a caller wants done with one compiled case, ahead of execution.
+
+    :func:`run_suite` executes every case by default. A caller that must narrow or reshape the
+    run supplies one of these per case id instead of reimplementing the runner: the provider
+    verification layer (CTG-4.3) uses it to hold a mutating case back until a tenant supplies a
+    fixture, and to substitute that fixture's request for the compiled one.
+
+    A decision can only make a run **narrower or more specific**, never wider: it cannot lift the
+    target policy's own mutating-method gate, which is re-checked for every case that runs.
+
+    Attributes:
+        run: Whether to execute the case at all. ``False`` records it as ``skipped``.
+        skip_code: Stable failure code for a skipped case. Required when ``run`` is ``False`` —
+            evidence refuses a non-passing case that does not say why.
+        skip_message: Human explanation for the skip.
+        case: A replacement case to execute instead of the compiled one. ``None`` executes the
+            case as compiled. The replacement keeps the compiled case's identity (its ``case_id``
+            and ``operation_key``), so evidence still traces back to the suite.
+    """
+
+    run: bool = True
+    skip_code: Optional[str] = None
+    skip_message: Optional[str] = None
+    case: Optional[ContractCase] = None
+
+
+def skipped_operation(
+    case: ContractCase, *, code: str, message: str, started_at: Optional[datetime] = None
+) -> OperationResultInput:
+    """Build the evidence record for a case that was deliberately not executed.
+
+    Args:
+        case: The compiled case that was held back.
+        code: Stable failure code saying why (``mutating-method-blocked``, …).
+        message: Human explanation.
+        started_at: When the decision was taken; defaults to now.
+
+    Returns:
+        A ``skipped`` :class:`OperationResultInput` with no assertions — nothing was observed, so
+        nothing is asserted.
+    """
+    moment = started_at or datetime.now(timezone.utc)
+    return OperationResultInput(
+        case_id=case.case_id,
+        operation_key=case.operation_key,
+        operation_name=case.operation_name,
+        case_source=case.source,
+        http_method=case.request.method.upper(),
+        http_path=case.request.path,
+        outcome=OPERATION_OUTCOME_SKIPPED,
+        failure_code=code,
+        failure_message=message,
+        expected_status=_expected_status_label(case.expect.status_codes),
+        started_at=moment,
+        finished_at=moment,
+        duration_ms=0,
+        attempts=1,
+        assertions=[],
+    )
 
 
 class SuiteRunResult:
@@ -294,45 +408,115 @@ def _assert_status(case: ContractCase, actual: int) -> AssertionInput:
     )
 
 
-def _assert_response_schema(
+def _render(value: Any) -> Optional[str]:
+    """Render a finding's ``expected``/``actual`` for an evidence text column.
+
+    Args:
+        value: Whatever the validator reported — a scalar, a list, or a mapping.
+
+    Returns:
+        A compact string, or ``None`` when the validator reported nothing.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value
+    try:
+        return json.dumps(value, separators=(",", ":"), sort_keys=True, default=str)
+    except (TypeError, ValueError):  # pragma: no cover - defensive
+        return str(value)
+
+
+def _violation_assertions(findings: Sequence[Any]) -> List[AssertionInput]:
+    """Turn located schema violations into one assertion each.
+
+    This is what makes drift *addressable*: ``subject`` carries the RFC 6901 JSON Pointer into
+    the response body, so a report can say "``/items/0/price`` should be a number and was a
+    string" instead of only "the body does not satisfy the schema".
+
+    Args:
+        findings: :class:`~app.schema_instance_validation.InstanceFinding` values, already
+            ordered by the validator.
+
+    Returns:
+        At most :data:`SCHEMA_FINDING_LIMIT` assertions, in finding order.
+    """
+    assertions: List[AssertionInput] = []
+    for finding in list(findings)[:SCHEMA_FINDING_LIMIT]:
+        pointer = finding.pointer or "/"
+        assertions.append(
+            AssertionInput(
+                kind=ASSERTION_KIND_RESPONSE_SCHEMA,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject=_bounded(pointer, _SUBJECT_LIMIT),
+                expected=_bounded(_render(finding.expected), _FIELD_LIMIT),
+                actual=_bounded(_render(finding.actual), _FIELD_LIMIT),
+                code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
+                message=_bounded(f"{finding.keyword}: {finding.message}", _MESSAGE_LIMIT),
+            )
+        )
+    return assertions
+
+
+def _response_schema_assertions(
     case: ContractCase,
     *,
     schemas: Mapping[str, Dict[str, Any]],
     body: Any,
-) -> Optional[AssertionInput]:
-    """Validate the response body against the case's response schema, when declared."""
+) -> List[AssertionInput]:
+    """Validate the response body against the case's response schema, when declared.
+
+    The first assertion is always the headline verdict on the schema as a whole (its ``subject``
+    is the schema id). When the body fails, it is followed by one assertion per located
+    violation, whose ``subject`` is the JSON Pointer into the body — that is what CTG-4.3's
+    drift report reads.
+
+    Args:
+        case: The case whose response is being judged.
+        schemas: The manifest's schema map.
+        body: The parsed response body.
+
+    Returns:
+        The assertions to record, in order. Empty when the contract declares no response schema.
+    """
     schema_id = case.expect.response_schema_id
     if not schema_id:
-        return None
+        return []
     # Negative cases expect a client error; schema of a success response does not apply.
     if case.expect.outcome == OUTCOME_CLIENT_ERROR:
-        return AssertionInput(
-            kind=ASSERTION_KIND_RESPONSE_SCHEMA,
-            outcome=ASSERTION_OUTCOME_SKIPPED,
-            subject=schema_id,
-            expected="success response schema",
-            actual="skipped for client_error expectation",
-        )
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_RESPONSE_SCHEMA,
+                outcome=ASSERTION_OUTCOME_SKIPPED,
+                subject=schema_id,
+                expected="success response schema",
+                actual="skipped for client_error expectation",
+            )
+        ]
     schema = schemas.get(schema_id)
     if schema is None:
-        return AssertionInput(
-            kind=ASSERTION_KIND_RESPONSE_SCHEMA,
-            outcome=ASSERTION_OUTCOME_FAILED,
-            subject=schema_id,
-            expected=schema_id,
-            actual="schema missing from suite",
-            code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
-            message=f"suite has no schema for id {schema_id!r}",
-        )
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_RESPONSE_SCHEMA,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject=schema_id,
+                expected=schema_id,
+                actual="schema missing from suite",
+                code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
+                message=f"suite has no schema for id {schema_id!r}",
+            )
+        ]
     result = validate_json_instance(schema, body)
     if result.valid is True:
-        return AssertionInput(
-            kind=ASSERTION_KIND_RESPONSE_SCHEMA,
-            outcome=ASSERTION_OUTCOME_PASSED,
-            subject=schema_id,
-            expected=schema_id,
-            actual="conforming",
-        )
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_RESPONSE_SCHEMA,
+                outcome=ASSERTION_OUTCOME_PASSED,
+                subject=schema_id,
+                expected=schema_id,
+                actual="conforming",
+            )
+        ]
     finding = next(iter(result.findings), None)
     if finding is not None:
         detail = finding.message
@@ -340,15 +524,16 @@ def _assert_response_schema(
         detail = result.diagnostics[0].message
     else:
         detail = "response body does not satisfy schema"
-    return AssertionInput(
+    headline = AssertionInput(
         kind=ASSERTION_KIND_RESPONSE_SCHEMA,
         outcome=ASSERTION_OUTCOME_FAILED,
-        subject=schema_id,
-        expected=schema_id,
-        actual=detail[:1000],
+        subject=_bounded(schema_id, _SUBJECT_LIMIT),
+        expected=_bounded(schema_id, _FIELD_LIMIT),
+        actual=_bounded(detail, _FIELD_LIMIT),
         code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
-        message=detail,
+        message=_bounded(detail, _MESSAGE_LIMIT),
     )
+    return [headline, *_violation_assertions(result.findings)]
 
 
 def _parse_json_body(response: httpx.Response) -> Any:
@@ -389,27 +574,15 @@ def _execute_case(
     started = datetime.now(timezone.utc)
     t0 = time.perf_counter()
 
-    if method in _MUTATING_METHODS and not target.policy.allow_mutating_methods:
-        finished = datetime.now(timezone.utc)
-        return OperationResultInput(
-            case_id=case.case_id,
-            operation_key=case.operation_key,
-            operation_name=case.operation_name,
-            case_source=case.source,
-            http_method=method,
-            http_path=case.request.path,
-            outcome=OPERATION_OUTCOME_SKIPPED,
-            failure_code=FAILURE_MUTATING_METHOD_BLOCKED,
-            failure_message=(
+    if method in MUTATING_METHODS and not target.policy.allow_mutating_methods:
+        return skipped_operation(
+            case,
+            code=FAILURE_MUTATING_METHOD_BLOCKED,
+            message=(
                 f"{method} is a mutating method and the target policy has "
                 "allow_mutating_methods=false"
             ),
-            expected_status=_expected_status_label(case.expect.status_codes),
             started_at=started,
-            finished_at=finished,
-            duration_ms=int((time.perf_counter() - t0) * 1000),
-            attempts=1,
-            assertions=[],
         )
 
     policy: VerificationPolicy = target.policy
@@ -480,10 +653,11 @@ def _execute_case(
         )
 
     body = _parse_json_body(response)
-    schema_assertion = _assert_response_schema(case, schemas=schemas, body=body)
-    if schema_assertion is not None:
-        assertions.append(schema_assertion)
-        if schema_assertion.outcome == ASSERTION_OUTCOME_FAILED:
+    schema_assertions = _response_schema_assertions(case, schemas=schemas, body=body)
+    if schema_assertions:
+        assertions.extend(schema_assertions)
+        headline = schema_assertions[0]
+        if headline.outcome == ASSERTION_OUTCOME_FAILED:
             finished = datetime.now(timezone.utc)
             return OperationResultInput(
                 case_id=case.case_id,
@@ -494,7 +668,7 @@ def _execute_case(
                 http_path=case.request.path,
                 outcome=OPERATION_OUTCOME_FAILED,
                 failure_code=FAILURE_RESPONSE_SCHEMA_MISMATCH,
-                failure_message=schema_assertion.message,
+                failure_message=headline.message,
                 expected_status=_expected_status_label(case.expect.status_codes),
                 actual_status=response.status_code,
                 started_at=started,
@@ -552,6 +726,7 @@ def run_suite(
     *,
     auth_headers: Optional[Mapping[str, str]] = None,
     client: Optional[httpx.Client] = None,
+    decisions: Optional[Mapping[str, CaseDecision]] = None,
 ) -> SuiteRunResult:
     """Execute every case in ``manifest`` against ``target``.
 
@@ -561,6 +736,11 @@ def run_suite(
         auth_headers: Headers from :func:`materialize_auth_headers` (or empty).
         client: Optional shared httpx client. When omitted, a guarded client is created that
             honours the target's TLS / redirect / private-network policy.
+        decisions: Optional per-case-id :class:`CaseDecision`. A case with no entry runs as
+            compiled, so omitting this argument is exactly the ECA-2.1 behaviour. A decision can
+            skip a case with its own reason code, or substitute a different request for it — but
+            never lifts the target policy's mutating-method gate, which every executed case is
+            still checked against.
 
     Returns:
         Timing plus one :class:`OperationResultInput` per case, in suite order.
@@ -585,9 +765,18 @@ def run_suite(
             finished_at = datetime.now(timezone.utc)
             return SuiteRunResult(started_at=started_at, finished_at=finished_at, operations=[])
 
+        plan = dict(decisions or {})
+
         def _run_one(index: int, case: ContractCase) -> Tuple[int, OperationResultInput]:
+            decision = plan.get(case.case_id)
+            if decision is not None and not decision.run:
+                return index, skipped_operation(
+                    case,
+                    code=decision.skip_code or FAILURE_MUTATING_METHOD_BLOCKED,
+                    message=decision.skip_message or "the caller held this case back",
+                )
             return index, _execute_case(
-                case,
+                case if decision is None or decision.case is None else decision.case,
                 target=target,
                 auth_headers=headers,
                 client=client,

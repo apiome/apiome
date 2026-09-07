@@ -114,6 +114,7 @@ __all__ = [
     "CONTRACT_SUITE_SCHEMA_VERSION",
     "FINDING_LEVELS",
     "MAX_OPERATIONS_CEILING",
+    "NEGATIVE_CASE_SOURCES",
     "OUTCOME_CLIENT_ERROR",
     "OUTCOME_SUCCESS",
     "SUITE_DIGEST_ALGORITHM",
@@ -178,8 +179,10 @@ CASE_SOURCES: Tuple[str, ...] = (
     CASE_SOURCE_NEGATIVE_BODY_MUTATION,
 )
 
-#: The sources whose cases are expected to be rejected by a conforming implementation.
-_NEGATIVE_SOURCES = frozenset(
+#: The sources whose cases are expected to be rejected by a conforming implementation. Public
+#: because a caller that reshapes a case (CTG-4.3 fixtures) must not overwrite the very thing a
+#: negative case exists to send.
+NEGATIVE_CASE_SOURCES = frozenset(
     {
         CASE_SOURCE_NEGATIVE_BODY_MUTATION,
         CASE_SOURCE_NEGATIVE_MISSING_BODY,
@@ -2224,7 +2227,7 @@ def _counts(compilation: _Compilation, *, skipped: int) -> Dict[str, int]:
         counts[case.source] = counts.get(case.source, 0) + 1
     counts["cases"] = len(compilation.cases)
     counts["negative_cases"] = sum(
-        count for source, count in counts.items() if source in _NEGATIVE_SOURCES
+        count for source, count in counts.items() if source in NEGATIVE_CASE_SOURCES
     )
     counts["operations_compiled"] = len(compilation.operations)
     counts["operations_skipped"] = skipped + len(set(compilation.skipped))

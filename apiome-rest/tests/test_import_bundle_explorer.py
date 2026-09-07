@@ -683,13 +683,18 @@ def test_a_malformed_cursor_is_a_client_error():
 
 
 def test_a_repeat_request_is_served_from_the_inventory_cache():
+    # One payload, sent twice. Rebuilding it would not be a *repeat* request: ``zipfile`` stamps a
+    # DOS timestamp with two-second resolution, so two builds either side of an even second differ
+    # in bytes, and the content hash the cache keys on differs with them.
+    payload = _graphql_zip_payload()
+
     assert bundle_inventory_cache_size() == 0
 
-    first = _post(_graphql_zip_payload())
+    first = _post(payload)
     assert first.status_code == 200
     assert bundle_inventory_cache_size() == 1
 
-    second = _post(_graphql_zip_payload())
+    second = _post(payload)
     assert second.json()["inventory"] == first.json()["inventory"]
     assert bundle_inventory_cache_size() == 1
 
