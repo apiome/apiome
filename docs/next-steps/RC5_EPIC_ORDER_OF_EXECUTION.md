@@ -76,7 +76,7 @@ No demo script. This is board hygiene plus one test ticket, and it takes an afte
 | Move 3 v2 epics **out** of RC5 | [AGX-EPIC-4 #4507](https://github.com/apiome/apiome/issues/4507), [COL-EPIC-4 #4512](https://github.com/apiome/apiome/issues/4512), [OLO-EPIC-9 #4983](https://github.com/apiome/apiome/issues/4983) — all children are v2; they block their umbrellas from ever closing. |
 | Move 5 CTG tickets **into** RC5 | [#4479](https://github.com/apiome/apiome/issues/4479), [#4480](https://github.com/apiome/apiome/issues/4480), [#4489](https://github.com/apiome/apiome/issues/4489), [#4501](https://github.com/apiome/apiome/issues/4501), [#4502](https://github.com/apiome/apiome/issues/4502) — Wave 1's actual content, still sitting in `Future`. |
 | Milestone HIVE-EPIC-10 | [#5273](https://github.com/apiome/apiome/issues/5273) into RC5 — see ‡ above. |
-| Ship [OLO-8.9 #4975](https://github.com/apiome/apiome/issues/4975) | The last open leaf in the OLO tree. Closes [OLO-EPIC-8 #4966](https://github.com/apiome/apiome/issues/4966), then the [OLO umbrella #4184](https://github.com/apiome/apiome/issues/4184). |
+| ~~Ship [OLO-8.9 #4975](https://github.com/apiome/apiome/issues/4975)~~ ✅ | Done. The last open leaf in the OLO tree — closes [OLO-EPIC-8 #4966](https://github.com/apiome/apiome/issues/4966), then the [OLO umbrella #4184](https://github.com/apiome/apiome/issues/4184) once OLO-EPIC-9 is re-milestoned. |
 
 ---
 
@@ -88,7 +88,7 @@ Each block is the order to pick tickets up. `∥` means "can run in parallel wit
 
 | # | Ticket | Depends on |
 |---|---|---|
-| 1 | [OLO-8.9 · Provider-config e2e + parity tests #4975](https://github.com/apiome/apiome/issues/4975) | 8.6/8.7 ✅, [8.8 #4974](https://github.com/apiome/apiome/issues/4974) ✅ |
+| 1 | [OLO-8.9 · Provider-config e2e + parity tests #4975](https://github.com/apiome/apiome/issues/4975) ✅ | 8.6/8.7 ✅, [8.8 #4974](https://github.com/apiome/apiome/issues/4974) ✅ |
 
 **Closes:** OLO-EPIC-8, then the [OLO umbrella #4184](https://github.com/apiome/apiome/issues/4184)
 once [OLO-EPIC-9 #4983](https://github.com/apiome/apiome/issues/4983) is re-milestoned.

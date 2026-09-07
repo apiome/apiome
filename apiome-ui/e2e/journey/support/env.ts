@@ -124,5 +124,36 @@ export function journeyServerEnv(): Record<string, string> {
     GOOGLE_CLIENT_ID: 'mock-google-client',
     GOOGLE_CLIENT_SECRET: 'mock-google-secret',
     GOOGLE_ISSUER: `${MOCK_OAUTH_URL}/google`,
+    // OLO-8.9 (#4975): switch the *database* config source on for the provider-config spec.
+    //
+    // `INTERNAL_SERVICE_TOKEN` is what gates it — without it `resolveProviderEnv` short-circuits to
+    // `env-only` and never asks REST for stored config, so the DB-over-env precedence this suite
+    // proves would be untestable. It is passed through rather than defaulted because REST must hold
+    // the *same* value (see the journey README); a default here would only produce a mismatch that
+    // fails as an opaque 403.
+    //
+    // `ADMIN_PASSWORD` / `ADMIN_SESSION_SECRET` let the spec sign in to the `/admin` portal and have
+    // REST accept the forwarded session (both sides resolve the signing key the same way).
+    ...passThrough(['INTERNAL_SERVICE_TOKEN', 'ADMIN_PASSWORD', 'ADMIN_SESSION_SECRET']),
+    // Pin the provider-config cache to the resolver's clamped floor (5s) instead of its 30s default,
+    // so an admin edit lands within a bounded wait rather than stalling the spec for half a minute.
+    AUTH_PROVIDER_CONFIG_CACHE_TTL_MS: '5000',
   };
+}
+
+/**
+ * Pick the named variables from the caller's environment or `apiome-ui/.env`, omitting any that are
+ * unset so they never reach the server as an empty string (which several consumers treat as
+ * "configured, but blank" rather than "absent").
+ *
+ * @param keys Variable names to forward.
+ * @returns A map of just the keys that had a non-empty value.
+ */
+function passThrough(keys: readonly string[]): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const key of keys) {
+    const value = process.env[key] ?? dotEnvValues()[key];
+    if (value) values[key] = value;
+  }
+  return values;
 }

@@ -191,3 +191,69 @@ export async function listLinkedProviders(email: string): Promise<string[]> {
   );
   return result.rows.map((row: { provider: string }) => row.provider);
 }
+
+/**
+ * One row of `apiome.auth_provider_config` (V196), as the provider-config journey reads it.
+ *
+ * The secret is deliberately surfaced as raw bytes rather than a string: the leg that proves
+ * envelope encryption asserts the stored blob is ciphertext and does **not** contain the
+ * plaintext the admin typed.
+ */
+export interface ProviderConfigRow {
+  /** Provider slug — the table's primary key (`github`, `gitlab`, …). */
+  providerId: string;
+  /** Explicit enablement; `null` means enablement is derived from `.env`. */
+  enabled: boolean | null;
+  /** Stored OAuth client id, or `null` when the provider falls back to `.env`. */
+  clientId: string | null;
+  /** Sealed client secret (AES-256-GCM envelope), or `null` when none is stored. */
+  clientSecretEncrypted: Buffer | null;
+  /** Id of the KEK generation that sealed {@link clientSecretEncrypted}. */
+  encKeyId: string | null;
+  /** Non-secret provider extras, keyed by env var name (e.g. `GITHUB_OAUTH_BASE_URL`). */
+  config: Record<string, unknown>;
+}
+
+/**
+ * Read one provider's stored configuration row.
+ *
+ * @param providerId Provider slug, e.g. `github`.
+ * @returns The row, or `null` when the provider has nothing stored (the `.env`-only state).
+ */
+export async function readProviderConfigRow(
+  providerId: string
+): Promise<ProviderConfigRow | null> {
+  const result = await getPool().query(
+    `SELECT provider_id, enabled, client_id, client_secret_encrypted, enc_key_id, config
+       FROM apiome.auth_provider_config
+      WHERE provider_id = $1`,
+    [providerId]
+  );
+  if (result.rowCount === 0) {
+    return null;
+  }
+  const row = result.rows[0];
+  return {
+    providerId: row.provider_id as string,
+    enabled: row.enabled === null ? null : (row.enabled as boolean),
+    clientId: (row.client_id as string | null) ?? null,
+    clientSecretEncrypted: (row.client_secret_encrypted as Buffer | null) ?? null,
+    encKeyId: (row.enc_key_id as string | null) ?? null,
+    config: (row.config as Record<string, unknown>) ?? {},
+  };
+}
+
+/**
+ * Delete one provider's stored configuration row, returning the provider to `.env`-only config.
+ *
+ * `auth_provider_config` is a **global** table — a row left behind would change which credentials
+ * every other journey spec signs in with — so the provider-config spec calls this both before and
+ * after its run rather than relying on ordering.
+ *
+ * @param providerId Provider slug, e.g. `github`.
+ */
+export async function deleteProviderConfigRow(providerId: string): Promise<void> {
+  await getPool().query('DELETE FROM apiome.auth_provider_config WHERE provider_id = $1', [
+    providerId,
+  ]);
+}
