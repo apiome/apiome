@@ -130,6 +130,16 @@ export function projectVersionsHref(project: Project): string {
   return `/ade/dashboard/versions?projectId=${encodeURIComponent(project.id)}`;
 }
 
+/**
+ * Where a project's consumer contract registry lives (CTG-4.1, #4479).
+ *
+ * @param project The row.
+ * @returns The consumers route for it.
+ */
+export function projectConsumersHref(project: Project): string {
+  return `/ade/dashboard/projects/${encodeURIComponent(project.id)}/consumers`;
+}
+
 // ---------------------------------------------------------------------------------------
 // Facets
 // ---------------------------------------------------------------------------------------

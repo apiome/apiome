@@ -59,6 +59,7 @@ export const RESOURCES: readonly PermissionResource[] = [
   { key: 'lint_findings', label: 'Lint findings' },
   { key: 'verification_targets', label: 'Verification targets' },
   { key: 'verification_evidence', label: 'Verification evidence' },
+  { key: 'consumer_contracts', label: 'Consumer contracts' },
 ];
 
 /** The five actions, in the order the guard and the mockup both read them. */
@@ -70,7 +71,7 @@ export const ACTIONS: readonly PermissionAction[] = [
   { key: 'publish', label: 'Publish' },
 ];
 
-/** How many cells a complete matrix has — 13 resources × 5 actions. */
+/** How many cells a complete matrix has — 14 resources × 5 actions. */
 export const TOTAL_CELLS = RESOURCES.length * ACTIONS.length;
 
 /**

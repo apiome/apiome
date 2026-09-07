@@ -42,6 +42,7 @@ class Resource:
     LINT_FINDINGS = "lint_findings"
     VERIFICATION_TARGETS = "verification_targets"
     VERIFICATION_EVIDENCE = "verification_evidence"
+    CONSUMER_CONTRACTS = "consumer_contracts"
 
 
 class Action:
@@ -70,6 +71,7 @@ RESOURCES = frozenset(
         Resource.LINT_FINDINGS,
         Resource.VERIFICATION_TARGETS,
         Resource.VERIFICATION_EVIDENCE,
+        Resource.CONSUMER_CONTRACTS,
     }
 )
 

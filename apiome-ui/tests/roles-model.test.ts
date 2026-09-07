@@ -6,7 +6,7 @@
  * fixture happens to have. The four that matter most are the ones the ticket's acceptance
  * criteria turn on:
  *
- *   1. **The permission vocabulary is the guard's.** 13 resources × 5 actions = 65 cells,
+ *   1. **The permission vocabulary is the guard's.** 14 resources × 5 actions = 70 cells,
  *      spelled `resource:action` exactly as `apiome-rest/src/app/permissions.py` checks them.
  *   2. **Built-in roles cannot be renamed or deleted, and the reason is stated** — and the
  *      lock is exactly the server's, so an administrator can still tune a built-in *grid*.
@@ -101,7 +101,7 @@ const VIEWER = { is_admin: false, permissions: ['members:view'] };
 // ---------------------------------------------------------------------------------------
 
 describe('the permission vocabulary', () => {
-  it('is the thirteen resources and five actions the REST guard checks', () => {
+  it('is the fourteen resources and five actions the REST guard checks', () => {
     expect(RESOURCES.map((resource) => resource.key)).toEqual([
       'projects',
       'versions',
@@ -116,6 +116,7 @@ describe('the permission vocabulary', () => {
       'lint_findings',
       'verification_targets',
       'verification_evidence',
+      'consumer_contracts',
     ]);
     expect(ACTIONS.map((action) => action.key)).toEqual([
       'view',
@@ -124,7 +125,7 @@ describe('the permission vocabulary', () => {
       'delete',
       'publish',
     ]);
-    expect(TOTAL_CELLS).toBe(65);
+    expect(TOTAL_CELLS).toBe(70);
   });
 
   it('spells a cell the way the guard does', () => {
@@ -220,7 +221,7 @@ describe('what makes a draft dirty', () => {
   });
 
   it('counts the cells that are on against the whole matrix', () => {
-    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 65 cells on');
+    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 70 cells on');
   });
 });
 
