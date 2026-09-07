@@ -37,7 +37,8 @@ wrote the document — not on what the consumer uses. A contract that recorded o
 would miss half the changes that break it.
 
 `V251.surface_pointers` is the flattened, GIN-indexed set of both, which is what makes the CTG-4.2
-lookup an array operation:
+lookup an array operation (the analysis built on it is
+[`consumer_impact.md`](consumer_impact.md)):
 
 ```python
 from app.consumer_contract_store import contracts_affected_by

@@ -1,4 +1,8 @@
-"""Helpers for ``apiome diff`` CI gate formatting and threshold logic (CTG-2.1)."""
+"""Helpers for ``apiome diff`` CI gate formatting and threshold logic (CTG-2.1).
+
+Also renders the CTG-4.2 per-consumer verdicts (#4480) the server attaches when
+``apiome diff --consumers`` is used, so a CI log says *whose* build this breaks.
+"""
 
 from __future__ import annotations
 
@@ -100,7 +104,12 @@ def format_diff_text(payload: dict[str, Any]) -> str:
         rule = change.get("ruleId") or change.get("rule_id") or "?"
         sev = change.get("severity") or ""
         pointer = change.get("pointer") or ""
-        lines.append(f"  [{sev}] {rule} {pointer}")
+        consumers = change.get("consumers")
+        touches = f" — breaks {', '.join(consumers)}" if consumers else ""
+        lines.append(f"  [{sev}] {rule} {pointer}{touches}")
+    impact = payload.get("consumers")
+    if isinstance(impact, dict):
+        lines.extend(format_consumer_impact_text(impact))
     return "\n".join(lines)
 
 
@@ -114,3 +123,67 @@ def format_diff_json(payload: dict[str, Any]) -> str:
         Pretty-printed JSON string.
     """
     return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _impact_target(impact: dict[str, Any]) -> str:
+    """Human phrase for what one attributed change touches.
+
+    Args:
+        impact: One entry from a verdict's ``impacts`` list.
+
+    Returns:
+        ``document-wide``, ``GET /pets``, or ``GET /pets — 200 response `name```.
+    """
+    if impact.get("match") == "document":
+        return "document-wide"
+    method = str(impact.get("method") or "").upper()
+    operation = f"{method} {impact.get('path') or ''}".strip()
+    field_path = impact.get("fieldPath")
+    if impact.get("match") != "field" or not field_path:
+        return operation
+    where = str(impact.get("fieldLocation") or "field")
+    status = impact.get("fieldStatus")
+    if status:
+        where = f"{status} {where}"
+    return f"{operation} — {where} `{field_path}`"
+
+
+def format_consumer_impact_text(impact: dict[str, Any]) -> list[str]:
+    """Render the consumer-impact block of the text report.
+
+    A breaking verdict is spelled ``breaks <handle>`` so the line a CI log is grepped for says
+    who to talk to, not only that something is wrong.
+
+    Args:
+        impact: The ``consumers`` block of a ClassifiedDiffResponse.
+
+    Returns:
+        Lines to append to the text report (empty when there is nothing to say).
+    """
+    if not isinstance(impact, dict):
+        return []
+    lines = ["", f"Consumer impact: {impact.get('summary') or 'not analysed'}"]
+    for verdict in impact.get("consumers") or []:
+        if not isinstance(verdict, dict):
+            continue
+        slug = verdict.get("consumerSlug") or "?"
+        outcome = verdict.get("verdict") or "?"
+        if outcome == "breaking":
+            lines.append(f"  breaks {slug}")
+        elif outcome == "undeclared":
+            lines.append(f"  {slug}: no declared surface")
+        else:
+            lines.append(f"  {slug}: {outcome}")
+        for row in verdict.get("impacts") or []:
+            if not isinstance(row, dict):
+                continue
+            lines.append(
+                f"    [{row.get('severity') or ''}] {_impact_target(row)} "
+                f"({row.get('ruleId') or '?'})"
+            )
+        if verdict.get("truncated"):
+            lines.append("    …list truncated.")
+    unattributed = (impact.get("counts") or {}).get("changes_unattributed", 0)
+    if unattributed:
+        lines.append(f"  {unattributed} change(s) affect no registered consumer")
+    return lines

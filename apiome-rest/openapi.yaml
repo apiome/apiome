@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.175.0
+  version: 1.176.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -7583,7 +7583,21 @@ paths:
 
         includes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown
 
-        changelog for the same classification (used by ``apiome diff --format md``).'
+        changelog for the same classification (used by ``apiome diff --format md``).
+
+
+        With ``consumers: true`` the response also carries the CTG-4.2 per-consumer
+        analysis —
+
+        ``consumers`` on the body, and the touched handles on each change — and the
+        markdown gains a
+
+        "Consumer impact" section. Consumers are those registered against the **base**
+        project, since
+
+        that is the published contract they declared against; the flag needs
+
+        ``consumer_contracts:view``.'
       operationId: post_classified_diff_v1_diff__tenant_slug__classified_post
       parameters:
       - name: tenant_slug
@@ -59784,6 +59798,59 @@ components:
       - known
       title: CertificateBody
       description: The certificate the live host was last observed serving.
+    ChangeAttribution:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: Rule ID.
+          example: documentation.schema-missing-description
+        severity:
+          type: string
+          title: Severity
+          description: Severity.
+          example: warning
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer.
+          example: example
+        changeKind:
+          type: string
+          title: Changekind
+          default: ''
+          description: Change Kind.
+          example: example
+        unclassified:
+          type: boolean
+          title: Unclassified
+          default: false
+          description: Unclassified.
+          example: false
+        consumers:
+          items:
+            type: string
+          type: array
+          title: Consumers
+          description: Consumers.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - ruleId
+      - severity
+      - pointer
+      title: ChangeAttribution
+      description: "One classified change and the consumers it touches — every change,\
+        \ in diff order.\n\nAn **empty** ``consumers`` list is the \"no registered\
+        \ consumer affected\" flag: the change is\nstill classified globally, it simply\
+        \ meets nobody's declared surface. That is the difference\nbetween \"safe\"\
+        \ and \"nobody has told us they use this\", and it is exact — unlike a consumer's\n\
+        ``impacts`` list, this is never truncated.\n\nAttributes:\n    rule_id: The\
+        \ rule that fired.\n    severity: Its global severity.\n    pointer: The change's\
+        \ JSON Pointer.\n    change_kind: Raw enumerator kind.\n    unclassified:\
+        \ True when the classifier fell back to breaking.\n    consumers: Handles\
+        \ of the consumers whose declared surface this change touches."
     ChangeReportModel:
       properties:
         schemaVersion:
@@ -60347,6 +60414,18 @@ components:
           default: ''
           description: Change Kind.
           example: example
+        consumers:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Response payload for classified diff change.
+          - type: 'null'
+            description: Response payload for classified diff change.
+          title: Consumers
+          description: Handles of the registered consumers this change touches. ``null``
+            when the consumer analysis was not requested; ``[]`` means no registered
+            consumer is affected.
       additionalProperties: false
       type: object
       required:
@@ -60428,6 +60507,13 @@ components:
           title: Head
           description: 'Head side: either another stored ``{project, version}`` or
             ``{inline}`` candidate document text.'
+        consumers:
+          type: boolean
+          title: Consumers
+          description: Include the CTG-4.2 per-consumer analysis for the base project's
+            registered consumers. Requires ``consumer_contracts:view``.
+          default: false
+          example: false
       additionalProperties: false
       type: object
       required:
@@ -60496,6 +60582,13 @@ components:
         head:
           $ref: '#/components/schemas/ClassifiedDiffHeadMeta'
           description: Head.
+        consumers:
+          anyOf:
+          - $ref: '#/components/schemas/ConsumerImpactReport'
+          - type: 'null'
+            description: Response payload for classified diff.
+          description: 'CTG-4.2 per-consumer verdicts, present only when ``consumers:
+            true`` was sent.'
       additionalProperties: false
       type: object
       required:
@@ -60904,13 +60997,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -61565,6 +61658,116 @@ components:
       - connections
       title: ConnectionListResponse
       description: ConnectionListResponse schema.
+    ConsumerChangeImpact:
+      properties:
+        ruleId:
+          type: string
+          title: Ruleid
+          description: Rule ID.
+          example: documentation.schema-missing-description
+        severity:
+          type: string
+          title: Severity
+          description: Severity.
+          example: warning
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer.
+          example: example
+        changeKind:
+          type: string
+          title: Changekind
+          default: ''
+          description: Change Kind.
+          example: example
+        unclassified:
+          type: boolean
+          title: Unclassified
+          default: false
+          description: Unclassified.
+          example: false
+        match:
+          type: string
+          title: Match
+          description: field | operation | document.
+          example: example
+        declaredPointer:
+          type: string
+          title: Declaredpointer
+          default: ''
+          description: Declared Pointer.
+          example: example
+        method:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Method
+          description: Method.
+        path:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Path
+          description: Path.
+        operationId:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Operationid
+          description: Operation ID.
+        fieldPath:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Fieldpath
+          description: Field Path.
+        fieldLocation:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Fieldlocation
+          description: Field Location.
+        fieldStatus:
+          anyOf:
+          - type: string
+            description: Consumer Change Impact schema.
+          - type: 'null'
+            description: Consumer Change Impact schema.
+          title: Fieldstatus
+          description: Field Status.
+      additionalProperties: false
+      type: object
+      required:
+      - ruleId
+      - severity
+      - pointer
+      - match
+      title: ConsumerChangeImpact
+      description: "One classified change, as it lands on one consumer's declared\
+        \ surface.\n\nAttributes:\n    rule_id: The CTG-1.1 rule that fired.\n   \
+        \ severity: ``breaking`` / ``non-breaking`` / ``docs-only``.\n    pointer:\
+        \ The change's own JSON Pointer.\n    change_kind: Raw enumerator kind behind\
+        \ the rule.\n    unclassified: True when the classifier fell back to breaking.\n\
+        \    match: ``field``, ``operation``, or ``document`` — how specific the attribution\
+        \ is.\n    declared_pointer: The declared pointer the change met, empty for\
+        \ a document-wide match.\n    method: Declared operation's method, for an\
+        \ operation or field match.\n    path: Declared operation's path template,\
+        \ for an operation or field match.\n    operation_id: The declared ``operationId``,\
+        \ when the specification has one.\n    field_path: Dotted data path or parameter\
+        \ name, for a field match.\n    field_location: ``response`` / ``request``\
+        \ / ``parameter``, for a field match.\n    field_status: Response status the\
+        \ field was declared at, for a response field."
     ConsumerContractField:
       properties:
         pointer:
@@ -61855,6 +62058,70 @@ components:
       - consumer
       title: ConsumerDetailResponse
       description: One consumer with its current contract, when it has declared one.
+    ConsumerImpactReport:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: ctg.consumer-impact.v1
+          description: Schema Version.
+          example: 1.0.0
+        summary:
+          type: string
+          title: Summary
+          default: ''
+          description: Short summary suitable for navigation and reference docs.
+          example: List pets
+        maxSeverity:
+          anyOf:
+          - type: string
+            description: Consumer Impact Report schema.
+          - type: 'null'
+            description: Consumer Impact Report schema.
+          title: Maxseverity
+          description: Max Severity.
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: Counts.
+        consumers:
+          items:
+            $ref: '#/components/schemas/ConsumerVerdict'
+          type: array
+          title: Consumers
+          description: Consumers.
+          maxItems: 1000
+        breakingConsumers:
+          items:
+            type: string
+          type: array
+          title: Breakingconsumers
+          description: Breaking Consumers.
+          maxItems: 1000
+        attribution:
+          items:
+            $ref: '#/components/schemas/ChangeAttribution'
+          type: array
+          title: Attribution
+          description: Attribution.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: ConsumerImpactReport
+      description: "Per-consumer verdicts for one classified diff, plus the headline\
+        \ summary.\n\nAttributes:\n    schema_version: :data:`CONSUMER_IMPACT_SCHEMA_VERSION`.\n\
+        \    summary: One line, e.g. ``breaks 2 of 7 consumers: billing-service, mobile-app``.\n\
+        \    max_severity: Worst severity across every *attributed* change; ``None``\
+        \ when none.\n    counts: Consumer and change tallies (see :func:`analyze_consumer_impact`).\
+        \ Its keys are\n        ``snake_case`` and are part of the published schema\
+        \ — they name tallies, not model\n        fields, exactly as :attr:`~app.change_taxonomy.ClassifiedDiff.counts`\
+        \ does.\n    consumers: Every live consumer, worst verdict first then by handle.\n\
+        \    breaking_consumers: Handles of the consumers this change set breaks,\
+        \ in order.\n    attribution: Every classified change with the consumers it\
+        \ touches, in diff order. An\n        empty ``consumers`` list flags a change\
+        \ no registered consumer is affected by."
     ConsumerInput:
       properties:
         slug:
@@ -62109,6 +62376,146 @@ components:
       description: "A consumer plus its current contract — the project page's row.\n\
         \nAttributes:\n    consumer: The consumer.\n    contract: Its current contract\
         \ revision, or ``None`` when it has declared nothing yet."
+    ConsumerVerdict:
+      properties:
+        consumerId:
+          type: string
+          title: Consumerid
+          description: Consumer ID.
+          example: example
+        consumerSlug:
+          type: string
+          title: Consumerslug
+          description: Consumer Slug.
+          example: example-resource
+        consumerName:
+          type: string
+          title: Consumername
+          description: Consumer Name.
+          example: Example
+        owner:
+          anyOf:
+          - type: string
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Owner
+          description: Owner.
+        contact:
+          anyOf:
+          - type: string
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Contact
+          description: Contact.
+        declared:
+          type: boolean
+          title: Declared
+          default: true
+          description: Declared.
+          example: false
+        verdict:
+          type: string
+          title: Verdict
+          description: Verdict.
+          example: example
+        contractId:
+          anyOf:
+          - type: string
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Contractid
+          description: Contract ID.
+        contractRevision:
+          anyOf:
+          - type: integer
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Contractrevision
+          description: Contract Revision.
+        contractVersionLabel:
+          anyOf:
+          - type: string
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Contractversionlabel
+          description: Contract Version Label.
+        contractMatchesBase:
+          anyOf:
+          - type: boolean
+            description: Consumer Verdict schema.
+          - type: 'null'
+            description: Consumer Verdict schema.
+          title: Contractmatchesbase
+          description: Contract Matches Base.
+        operationsDeclared:
+          type: integer
+          title: Operationsdeclared
+          default: 0
+          description: Operations Declared.
+          example: 1
+        fieldsDeclared:
+          type: integer
+          title: Fieldsdeclared
+          default: 0
+          description: Fields Declared.
+          example: 1
+        operationsAffected:
+          type: integer
+          title: Operationsaffected
+          default: 0
+          description: Operations Affected.
+          example: 1
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: Counts.
+        impacts:
+          items:
+            $ref: '#/components/schemas/ConsumerChangeImpact'
+          type: array
+          title: Impacts
+          description: Impacts.
+          maxItems: 1000
+        truncated:
+          type: boolean
+          title: Truncated
+          default: false
+          description: Truncated.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - consumerId
+      - consumerSlug
+      - consumerName
+      - verdict
+      title: ConsumerVerdict
+      description: "What a single change set does to a single registered consumer.\n\
+        \nAttributes:\n    consumer_id: Registry id.\n    consumer_slug: The stable\
+        \ handle CI jobs and Pact files use.\n    consumer_name: Display name.\n \
+        \   owner: Accountable team or person, so a breaking verdict names someone\
+        \ to tell.\n    contact: Where to reach them.\n    declared: Whether the consumer\
+        \ has a current contract at all.\n    verdict: ``breaking`` / ``non-breaking``\
+        \ / ``docs-only`` / ``unaffected`` / ``undeclared``.\n    contract_id: The\
+        \ contract revision the verdict was computed against.\n    contract_revision:\
+        \ Its per-consumer revision number.\n    contract_version_label: The specification\
+        \ version its pointers were resolved against.\n    contract_matches_base:\
+        \ Whether that is the same revision as the diff's base. When false\n     \
+        \   the surface was resolved against a different document and a pointer may\
+        \ have moved;\n        the verdict is still the best available answer, but\
+        \ it is not silently equated.\n    operations_declared: How many operations\
+        \ the contract declares.\n    fields_declared: How many fields it declares.\n\
+        \    operations_affected: How many declared operations the change set touches.\n\
+        \    counts: Distinct changes per severity, plus ``unclassified`` and ``total``.\n\
+        \    impacts: The attributed changes, most severe first (bounded, see ``truncated``).\n\
+        \    truncated: True when ``impacts`` was cut at :data:`MAX_IMPACTS_PER_CONSUMER`."
     ConsumptionEdgeOut:
       properties:
         path_id:
@@ -62133,7 +62540,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 2d4f5485-ef28-4a99-867e-00dd36f60ee2
+          example: 9714b3cd-19e4-4bf4-bdcf-4d12dda3d696
         method:
           type: string
           title: Method
@@ -64276,7 +64683,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
         envelope:
           additionalProperties: true
           type: object
@@ -94827,7 +95234,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
       additionalProperties: false
       type: object
       required:
@@ -106816,13 +107223,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-07T21:33:23Z'
+          example: '2026-09-07T23:21:30Z'
         outcome:
           anyOf:
           - type: string

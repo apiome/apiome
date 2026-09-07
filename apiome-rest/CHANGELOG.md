@@ -5,6 +5,53 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.311.0] - 2026-09-07
+
+### Added
+- **Consumer-aware breaking analysis (#4480, CTG-4.2)** — "breaking" is a claim about somebody.
+  A whole-spec verdict ("47 breaking changes") forces a provider to treat every change as an
+  incident and tells a consumer nothing. `POST /v1/diff/{tenant}/classified` with
+  `consumers: true` now intersects the CTG-1.1 classified changes with what each registered
+  consumer declared it uses (CTG-4.1) and answers the question that actually gates a release:
+
+  ```
+  breaks 2 of 7 consumers: billing-service, mobile-app
+  ```
+
+  Nothing was added to the database. A verdict is derived from a stored contract and a diff, and
+  both already existed; what was missing was the join. `app.consumer_impact` is pure (pointer
+  algebra, attribution rules, markdown), `app.consumer_impact_service` is the one place the
+  registry is read for an analysis, and CTG-4.5's deploy gate calls the same seam.
+
+  **The exclusion is the point.** A change inside a body schema, on an operation whose consumer
+  declared which fields it reads, attributes only when one of those fields is met — removing a
+  field nobody reads breaks nobody. Two exceptions keep that from under-reporting: an operation
+  declared with no fields is operation-wide throughout (nothing finer was declared, so nothing
+  finer is claimed), and a `/parameters/…` change is always operation-wide, because a newly
+  required query parameter breaks every caller whether or not they declared it. Root `security`,
+  `servers` and `securitySchemes` changes reach every declared consumer.
+
+  Pointer overlap is **segment-aware**, unlike the `starts_with` narrowing query behind
+  `db.find_consumer_contracts_by_pointers`: `/components/schemas/Pet` no longer "touches"
+  `/components/schemas/PetFood`. The SQL only narrows the candidate set; this renders the verdict.
+
+  **The denominator is honest.** A consumer registered without a current contract cannot be
+  counted as safe, so it is reported beside the fraction (`2 registered consumers have declared
+  no surface`) with verdict `undeclared`, never inside it. Each verdict also carries
+  `contractMatchesBase`, so a surface resolved against a different revision is flagged rather
+  than silently equated.
+
+  Changes touching nobody stay globally classified and are flagged: each change gains a
+  `consumers` array (`[]` = no registered consumer affected, `null` = not analysed), and the
+  report's `attribution` list is exact even when a consumer's `impacts` enumeration is capped.
+
+  Markdown responses gain a **Consumer impact** section, and `apiome diff --consumers` prints
+  `breaks billing-service` lines in text, JSON and markdown. The CI **exit code is unchanged** —
+  `--fail-on` still grades the whole specification, so a build never passes merely because nobody
+  has registered as a consumer yet.
+
+  See `apiome-rest/docs/consumer_impact.md`.
+
 ## [1.310.0] - 2026-09-07
 
 ### Added
