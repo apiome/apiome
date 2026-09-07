@@ -28740,6 +28740,561 @@ class Database:
         )
         return [dict(r) for r in rows]
 
+    # ------------------------------------------------------------------
+    # Consumer contract registry (CTG-4.1, #4479)
+    # ------------------------------------------------------------------
+
+    #: Columns every consumer read returns, so a row adapts cleanly into
+    #: :func:`app.consumer_contract.consumer_record_from_row`.
+    _CONSUMER_COLUMNS = """
+        id::text AS id, tenant_id::text AS tenant_id, project_id::text AS project_id,
+        slug, name, description, owner, contact, metadata,
+        created_by::text AS created_by, updated_by::text AS updated_by,
+        created_at, updated_at, deleted_at
+    """
+
+    #: Columns every contract read returns, for
+    #: :func:`app.consumer_contract.contract_record_from_row`.
+    _CONSUMER_CONTRACT_COLUMNS = """
+        id::text AS id, tenant_id::text AS tenant_id, project_id::text AS project_id,
+        consumer_id::text AS consumer_id, revision, is_current, source,
+        version_id::text AS version_id, version_label,
+        surface, operation_count, field_count, surface_pointers,
+        unresolved, unresolved_count, source_metadata, source_digest, note,
+        created_by::text AS created_by, actor_label, created_at
+    """
+
+    #: The same columns qualified with the ``cc`` alias, for the two reads that join
+    #: ``consumer`` (which carries identically named columns and would otherwise be ambiguous).
+    _CONSUMER_CONTRACT_COLUMNS_CC = """
+        cc.id::text AS id, cc.tenant_id::text AS tenant_id, cc.project_id::text AS project_id,
+        cc.consumer_id::text AS consumer_id, cc.revision, cc.is_current, cc.source,
+        cc.version_id::text AS version_id, cc.version_label,
+        cc.surface, cc.operation_count, cc.field_count, cc.surface_pointers,
+        cc.unresolved, cc.unresolved_count, cc.source_metadata, cc.source_digest, cc.note,
+        cc.created_by::text AS created_by, cc.actor_label, cc.created_at
+    """
+
+    def list_consumers(
+        self, project_id: str, tenant_id: str, *, include_deleted: bool = False
+    ) -> List[Dict[str, Any]]:
+        """A project's consumers, newest first (CTG-4.1, #4479).
+
+        Args:
+            project_id: Project whose registry to read.
+            tenant_id: Tenant the caller is acting in; a project in another tenant reads as empty.
+            include_deleted: Include retired consumers.
+
+        Returns:
+            The consumer rows; empty when nothing is registered or either id is not a UUID.
+        """
+        if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return []
+        clause = "" if include_deleted else " AND deleted_at IS NULL"
+        return self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_COLUMNS}
+            FROM apiome.consumer
+            WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause}
+            ORDER BY created_at DESC, slug
+            """,
+            (project_id, tenant_id),
+        )
+
+    def get_consumer_by_slug(
+        self, project_id: str, tenant_id: str, slug: str
+    ) -> Optional[Dict[str, Any]]:
+        """One live consumer by its handle (CTG-4.1, #4479).
+
+        Args:
+            project_id: Owning project.
+            tenant_id: Tenant the caller is acting in.
+            slug: The consumer's stable handle.
+
+        Returns:
+            The row, or ``None`` when no live consumer in this project carries that slug.
+        """
+        if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        if not slug:
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_COLUMNS}
+            FROM apiome.consumer
+            WHERE project_id = %s::uuid AND tenant_id = %s::uuid
+              AND slug = %s AND deleted_at IS NULL
+            """,
+            (project_id, tenant_id, slug),
+        )
+        return rows[0] if rows else None
+
+    def get_consumer_by_id(
+        self, consumer_id: str, tenant_id: str, *, include_deleted: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """One consumer by id, scoped to a tenant (CTG-4.1, #4479).
+
+        Args:
+            consumer_id: The consumer row id.
+            tenant_id: Tenant the caller is acting in; another tenant's consumer reads as absent.
+            include_deleted: Include retired consumers, so a stored contract stays explicable.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        clause = "" if include_deleted else " AND deleted_at IS NULL"
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_COLUMNS}
+            FROM apiome.consumer
+            WHERE id = %s::uuid AND tenant_id = %s::uuid{clause}
+            """,
+            (consumer_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def insert_consumer(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        slug: str,
+        name: str,
+        description: Optional[str] = None,
+        owner: Optional[str] = None,
+        contact: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        created_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Register a new consumer (CTG-4.1, #4479).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: Project this consumer consumes.
+            slug: Stable handle, unique among the project's live consumers.
+            name: Display name.
+            description: What this consumer is.
+            owner: Accountable team or person.
+            contact: Email or URL to notify when its contract would break.
+            metadata: Non-secret free-form context.
+            created_by: The acting user.
+
+        Returns:
+            The stored row, or ``None`` when either scope id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")) or not is_uuid_string(str(project_id or "")):
+            return None
+        query = f"""
+            INSERT INTO apiome.consumer (
+                tenant_id, project_id, slug, name, description, owner, contact,
+                metadata, created_by, updated_by
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s::jsonb, %s::uuid, %s::uuid
+            )
+            RETURNING {self._CONSUMER_COLUMNS}
+        """
+        params = (
+            tenant_id,
+            project_id,
+            slug,
+            name,
+            description,
+            owner,
+            contact,
+            json.dumps(metadata or {}, sort_keys=True),
+            created_by if created_by and is_uuid_string(str(created_by)) else None,
+            created_by if created_by and is_uuid_string(str(created_by)) else None,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception:
+            conn.rollback()
+            raise
+
+    #: Columns :meth:`update_consumer` will write. A field outside this set is ignored rather
+    #: than interpolated, so an update can never be steered into an unintended column — and
+    #: ``slug`` is deliberately absent, because renaming a handle orphans every reference to it.
+    _CONSUMER_UPDATABLE = {
+        "name": "%s",
+        "description": "%s",
+        "owner": "%s",
+        "contact": "%s",
+        "metadata": "%s::jsonb",
+    }
+
+    def update_consumer(
+        self,
+        consumer_id: str,
+        tenant_id: str,
+        fields: Dict[str, Any],
+        *,
+        updated_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Apply a partial update to a consumer (CTG-4.1, #4479).
+
+        Args:
+            consumer_id: The consumer to update.
+            tenant_id: Tenant the caller is acting in.
+            fields: Column → value map; keys outside :attr:`_CONSUMER_UPDATABLE` are ignored.
+            updated_by: The acting user.
+
+        Returns:
+            The updated row, or ``None`` when nothing matched or no writable field was given.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        assignments: List[str] = []
+        params: List[Any] = []
+        for column, placeholder in self._CONSUMER_UPDATABLE.items():
+            if column not in fields:
+                continue
+            value = fields[column]
+            assignments.append(f"{column} = {placeholder}")
+            params.append(
+                json.dumps(value or {}, sort_keys=True) if column == "metadata" else value
+            )
+        if not assignments:
+            return None
+        assignments.append("updated_at = CURRENT_TIMESTAMP")
+        assignments.append("updated_by = %s::uuid")
+        params.append(updated_by if updated_by and is_uuid_string(str(updated_by)) else None)
+        params.extend([consumer_id, tenant_id])
+
+        query = f"""
+            UPDATE apiome.consumer
+            SET {', '.join(assignments)}
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING {self._CONSUMER_COLUMNS}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, tuple(params))
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception:
+            conn.rollback()
+            raise
+
+    def soft_delete_consumer(
+        self, consumer_id: str, tenant_id: str, *, deleted_by: Optional[str] = None
+    ) -> bool:
+        """Retire a consumer, keeping its contracts readable (CTG-4.1, #4479).
+
+        A hard delete would take the contract revisions with it, and a published version's
+        per-consumer verdict has to stay explicable after the consumer is decommissioned.
+
+        Args:
+            consumer_id: The consumer to retire.
+            tenant_id: Tenant the caller is acting in.
+            deleted_by: The acting user, recorded as the last editor.
+
+        Returns:
+            True when a live consumer was retired.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return False
+        affected = self._execute_write(
+            """
+            UPDATE apiome.consumer
+            SET deleted_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by = %s::uuid
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            """,
+            (
+                deleted_by if deleted_by and is_uuid_string(str(deleted_by)) else None,
+                consumer_id,
+                tenant_id,
+            ),
+        )
+        return affected > 0
+
+    def insert_consumer_contract(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        consumer_id: str,
+        surface: Dict[str, Any],
+        surface_pointers: List[str],
+        operation_count: int,
+        field_count: int,
+        source: str = "manual",
+        version_id: Optional[str] = None,
+        version_label: Optional[str] = None,
+        unresolved: Optional[List[Dict[str, Any]]] = None,
+        source_metadata: Optional[Dict[str, Any]] = None,
+        source_digest: Optional[str] = None,
+        note: Optional[str] = None,
+        created_by: Optional[str] = None,
+        actor_label: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Write the consumer's next contract revision (CTG-4.1, #4479).
+
+        The demotion of the previous revision and the insert of the new one happen in **one**
+        transaction: V251's partial unique index allows exactly one current revision per
+        consumer, so a demote that committed without its insert would leave a consumer with a
+        history and no current contract.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: Project the consumer belongs to.
+            consumer_id: The consumer declaring the surface.
+            surface: The ``apiome.consumer.contract/v1`` document.
+            surface_pointers: Every pointer the surface touches, for the CTG-4.2 intersection.
+            operation_count: How many operations the surface declares.
+            field_count: How many fields it declares.
+            source: ``pact`` or ``manual``.
+            version_id: Specification revision the pointers were resolved against.
+            version_label: That revision's label, snapshotted.
+            unresolved: Interactions that could not be placed.
+            source_metadata: Pact provenance; empty for a manual declaration.
+            source_digest: ``sha256:<hex>`` of the uploaded Pact document.
+            note: Free text explaining the revision.
+            created_by: The acting user.
+            actor_label: Their email or name at the time.
+
+        Returns:
+            The stored row, or ``None`` when a scope id is not a UUID.
+        """
+        for scope in (tenant_id, project_id, consumer_id):
+            if not is_uuid_string(str(scope or "")):
+                return None
+        unresolved_rows = unresolved or []
+        actor = created_by if created_by and is_uuid_string(str(created_by)) else None
+        version = version_id if version_id and is_uuid_string(str(version_id)) else None
+
+        query = f"""
+            INSERT INTO apiome.consumer_contract (
+                tenant_id, project_id, consumer_id, revision, is_current, source,
+                version_id, version_label, surface, operation_count, field_count,
+                surface_pointers, unresolved, unresolved_count,
+                source_metadata, source_digest, note, created_by, actor_label
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s::uuid,
+                (SELECT COALESCE(MAX(revision), 0) + 1
+                   FROM apiome.consumer_contract WHERE consumer_id = %s::uuid),
+                TRUE, %s,
+                %s::uuid, %s, %s::jsonb, %s, %s,
+                %s::text[], %s::jsonb, %s,
+                %s::jsonb, %s, %s, %s::uuid, %s
+            )
+            RETURNING {self._CONSUMER_CONTRACT_COLUMNS}
+        """
+        params = (
+            tenant_id,
+            project_id,
+            consumer_id,
+            consumer_id,
+            source,
+            version,
+            version_label,
+            json.dumps(surface, sort_keys=True),
+            int(operation_count),
+            int(field_count),
+            list(surface_pointers),
+            json.dumps(unresolved_rows, sort_keys=True),
+            len(unresolved_rows),
+            json.dumps(source_metadata or {}, sort_keys=True),
+            source_digest,
+            note,
+            actor,
+            actor_label,
+        )
+
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.consumer_contract
+                    SET is_current = FALSE
+                    WHERE consumer_id = %s::uuid AND is_current
+                    """,
+                    (consumer_id,),
+                )
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def get_current_consumer_contract(
+        self, consumer_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """A consumer's current contract revision (CTG-4.1, #4479).
+
+        Args:
+            consumer_id: The consumer.
+            tenant_id: Tenant the caller is acting in.
+
+        Returns:
+            The row, or ``None`` when the consumer has declared nothing yet.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_CONTRACT_COLUMNS}
+            FROM apiome.consumer_contract
+            WHERE consumer_id = %s::uuid AND tenant_id = %s::uuid AND is_current
+            """,
+            (consumer_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_consumer_contract_revision(
+        self, consumer_id: str, tenant_id: str, revision: int
+    ) -> Optional[Dict[str, Any]]:
+        """One stored contract revision by number (CTG-4.1, #4479).
+
+        Args:
+            consumer_id: The consumer.
+            tenant_id: Tenant the caller is acting in.
+            revision: The revision number, from 1.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        try:
+            wanted = int(revision)
+        except (TypeError, ValueError):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_CONTRACT_COLUMNS}
+            FROM apiome.consumer_contract
+            WHERE consumer_id = %s::uuid AND tenant_id = %s::uuid AND revision = %s
+            """,
+            (consumer_id, tenant_id, wanted),
+        )
+        return rows[0] if rows else None
+
+    def list_consumer_contracts(
+        self, consumer_id: str, tenant_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """A consumer's contract revisions, newest first (CTG-4.1, #4479).
+
+        Args:
+            consumer_id: The consumer.
+            tenant_id: Tenant the caller is acting in.
+            limit: Maximum rows (clamped to 1..200).
+
+        Returns:
+            The revision rows.
+        """
+        if not is_uuid_string(str(consumer_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return []
+        return self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_CONTRACT_COLUMNS}
+            FROM apiome.consumer_contract
+            WHERE consumer_id = %s::uuid AND tenant_id = %s::uuid
+            ORDER BY revision DESC
+            LIMIT %s
+            """,
+            (consumer_id, tenant_id, max(1, min(int(limit), 200))),
+        )
+
+    def list_current_consumer_contracts(
+        self, project_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every live consumer's current contract in a project (CTG-4.1, #4479).
+
+        One read for the project page's list, and the candidate set the CTG-4.2 intersection
+        narrows before it walks pointers.
+
+        Args:
+            project_id: The project.
+            tenant_id: Tenant the caller is acting in.
+
+        Returns:
+            The current contract rows for live consumers.
+        """
+        if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return []
+        return self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_CONTRACT_COLUMNS_CC}
+            FROM apiome.consumer_contract cc
+            JOIN apiome.consumer c ON c.id = cc.consumer_id
+            WHERE cc.project_id = %s::uuid AND cc.tenant_id = %s::uuid
+              AND cc.is_current AND c.deleted_at IS NULL
+            ORDER BY c.slug
+            """,
+            (project_id, tenant_id),
+        )
+
+    def find_consumer_contracts_by_pointers(
+        self, project_id: str, tenant_id: str, pointers: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Current contracts whose declared surface meets any of ``pointers`` (CTG-4.1, #4479).
+
+        This is the query CTG-4.2 is built on, and the reason V251 stores ``surface_pointers``
+        as an indexed array rather than leaving the pointers inside the surface document.
+
+        The overlap is tested **both ways**, because a classified change and a declared field
+        are not always at the same depth: a change reported at ``/components/schemas/Pet``
+        (the whole schema) touches a contract field at ``…/Pet/properties/name``, and a change
+        reported at ``…/properties/name/type`` touches a contract field at
+        ``…/properties/name``. Matching only one direction would miss half the breakages.
+
+        Args:
+            project_id: The project whose consumers to consider.
+            tenant_id: Tenant the caller is acting in.
+            pointers: The changed JSON Pointers.
+
+        Returns:
+            The matching current contract rows, one per affected consumer.
+        """
+        if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return []
+        wanted = [str(pointer) for pointer in (pointers or []) if str(pointer)]
+        if not wanted:
+            return []
+        return self.execute_query(
+            f"""
+            SELECT {self._CONSUMER_CONTRACT_COLUMNS_CC}
+            FROM apiome.consumer_contract cc
+            JOIN apiome.consumer c ON c.id = cc.consumer_id
+            WHERE cc.project_id = %s::uuid AND cc.tenant_id = %s::uuid
+              AND cc.is_current AND c.deleted_at IS NULL
+              AND EXISTS (
+                  SELECT 1
+                  FROM unnest(cc.surface_pointers) AS declared
+                  CROSS JOIN unnest(%s::text[]) AS changed
+                  WHERE starts_with(changed, declared) OR starts_with(declared, changed)
+              )
+            ORDER BY c.slug
+            """,
+            (project_id, tenant_id, wanted),
+        )
+
+
 
 # Global database instance
 db = Database()

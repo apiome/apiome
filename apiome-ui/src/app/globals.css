@@ -31018,3 +31018,500 @@ tr:focus-within .pub-url__glyph {
   max-block-size: min(30vh, 18rem);
   overflow-y: auto;
 }
+
+/* ==========================================================================
+   CONSUMER CONTRACT REGISTRY  (CTG-4.1, #4479)
+   --------------------------------------------------------------------------
+   `/ade/dashboard/projects/{id}/consumers` — the list of a project's
+   consumers, the surface picker, the Pact-import dialog, and the drawer that
+   shows one consumer's declared surface in full.
+
+   Everything is token-only: no hex, no px, no bare colour. The two families
+   are `.cns-*` (this screen) and the primitives it borrows rather than
+   restates — `.mono` (HIVE-1.4) for every pointer, path and handle, `.tnt-menu`
+   (HIVE-5.1) for the row's overflow menu, and `DataTable`'s own chrome for the
+   list itself.
+
+   One deliberate colour decision: a declared operation is drawn as inked code
+   on `--bg-inset`, never as an accent chip. A row can carry six of them, and
+   six accent chips in one cell reads as six alerts. The *status* badge is the
+   only tinted thing in the row, which is what makes it findable.
+   ========================================================================== */
+
+/* ---- The list's cells --------------------------------------------------- */
+
+.cns-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.cns-identity__name {
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.cns-identity__slug {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+.cns-owner {
+  color: var(--fg);
+}
+
+/* An unassigned owner is a gap in the registry, not an error — muted, not
+   tinted. The consumer whose team nobody recorded is still a real consumer. */
+.cns-owner--none {
+  color: var(--fg-subtle);
+  font-style: italic;
+}
+
+.cns-surface {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.cns-surface__line {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.cns-surface__ops {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* One declared operation. Inked code on the inset ground: this is evidence,
+   not a state, so it takes `--fg` rather than a tone. */
+.cns-op {
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  font-size: var(--fs-2xs);
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.cns-surface__more {
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+}
+
+.cns-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.cns-status__meta {
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+}
+
+/* The row menu's destructive verb. `.tnt-menu__item` carries the chrome; this
+   only re-inks it, and only on hover — a red row in a resting menu reads as an
+   error the reader has already caused. */
+.cns-menu__item--danger {
+  color: var(--danger-fg);
+}
+
+.cns-menu__item--danger[data-highlighted],
+.cns-menu__item--danger:hover {
+  background: var(--danger-soft);
+}
+
+.cns-menu__item--danger[data-highlighted] > svg,
+.cns-menu__item--danger:hover > svg {
+  color: var(--danger-fg);
+}
+
+/* ---- The dialogs' shared form ------------------------------------------- */
+
+.cns-dialog {
+  max-inline-size: min(34rem, calc(100vw - var(--space-6)));
+}
+
+.cns-dialog--wide {
+  max-inline-size: min(52rem, calc(100vw - var(--space-6)));
+}
+
+.cns-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.cns-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.cns-form__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cns-form__hint {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+/* The file input is driven by its own button, so it is removed from the layout
+   rather than hidden: `display: none` would take it out of the accessibility
+   tree too, and the button's `click()` needs it to still be there. */
+.cns-file {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cns-pact {
+  font-size: var(--fs-2xs);
+  line-height: 1.5;
+}
+
+/* ---- The Pact import's outcome report ----------------------------------- */
+
+.cns-outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cns-outcome__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cns-outcome__heading,
+.cns-drawer__grouphead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.cns-outcome__count,
+.cns-drawer__count {
+  padding: 0 0.375rem;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--fg-muted);
+}
+
+.cns-outcome__list,
+.cns-drawer__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cns-outcome__item,
+.cns-drawer__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  font-size: var(--fs-2xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.cns-outcome__where {
+  color: var(--fg-muted);
+}
+
+.cns-outcome__item--more {
+  background: transparent;
+  color: var(--fg-subtle);
+}
+
+/* ---- The surface picker -------------------------------------------------- */
+
+.cns-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.cns-picker__state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.cns-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-block-size: min(50vh, 26rem);
+  overflow-y: auto;
+}
+
+.cns-picker__totals {
+  margin-inline-end: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cns-pick {
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+/* A picked operation is tinted, not outlined: the list scrolls, and an outline
+   at this density reads as a table rule rather than as a selection. */
+.cns-pick.is-picked {
+  background: var(--accent-soft);
+}
+
+.cns-pick__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  min-inline-size: 0;
+}
+
+.cns-pick__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-inline-size: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: start;
+  cursor: pointer;
+  color: inherit;
+}
+
+.cns-pick__toggle:disabled {
+  cursor: default;
+}
+
+.cns-pick__chevron {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-subtle);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.cns-pick__toggle[aria-expanded='true'] .cns-pick__chevron {
+  transform: rotate(90deg);
+}
+
+.cns-pick__op {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.cns-pick__summary {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cns-pick__count {
+  flex-shrink: 0;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cns-pick__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-2) var(--space-2) var(--space-6);
+}
+
+.cns-pick__truncated {
+  font-size: var(--fs-2xs);
+  color: var(--warn-fg);
+}
+
+.cns-pick__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cns-pick__grouphead {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.cns-pick__fieldlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.125rem var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cns-pick__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.125rem 0;
+  min-inline-size: 0;
+  cursor: pointer;
+}
+
+.cns-pick__path {
+  font-size: var(--fs-2xs);
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cns-pick__type,
+.cns-pick__status {
+  flex-shrink: 0;
+  font-size: var(--fs-2xs);
+  color: var(--fg-subtle);
+}
+
+.cns-pick__required {
+  flex-shrink: 0;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+/* ---- The declared-surface drawer ---------------------------------------- */
+
+.cns-drawer__summary {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.cns-drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-5);
+}
+
+.cns-drawer__heading {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cns-drawer__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cns-drawer__empty {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.cns-drawer__ops {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cns-drawer__op {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+.cns-drawer__opline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
+.cns-drawer__opsummary {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+.cns-drawer__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.125rem var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cns-drawer__field {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--fs-2xs);
+  color: var(--fg);
+  min-inline-size: 0;
+}
+
+.cns-drawer__where {
+  color: var(--fg-subtle);
+  white-space: nowrap;
+}

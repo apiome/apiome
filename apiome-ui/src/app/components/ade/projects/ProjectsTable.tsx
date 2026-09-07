@@ -32,7 +32,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Ellipsis, Pencil, Trash2, TrendingUp, Undo2 } from 'lucide-react';
+import { Ellipsis, Pencil, Trash2, TrendingUp, Undo2, Users } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Avatar } from '@/app/components/ui/Avatar';
@@ -57,6 +57,7 @@ import {
   projectLifecycle,
   projectScores,
   projectsFootLabel,
+  projectConsumersHref,
   projectVersionsHref,
   type Project,
   type ProjectQualityHistoryMap,
@@ -333,6 +334,12 @@ export default function ProjectsTable({
                         >
                           <TrendingUp aria-hidden />
                           Open versions
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item className={MENU_ITEM_CLASS} asChild>
+                          <Link href={projectConsumersHref(project)}>
+                            <Users aria-hidden />
+                            Consumers
+                          </Link>
                         </DropdownMenu.Item>
                         <DropdownMenu.Item
                           className={MENU_ITEM_CLASS}

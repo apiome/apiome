@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.173.0
+  version: 1.174.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -7380,6 +7380,875 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for post classified diffresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers:
+    get:
+      tags:
+      - consumer-contracts
+      summary: List a project's consumers
+      description: 'Every live consumer of the project, newest first, each with its
+        **current** contract revision — the operations and fields it declares it uses,
+        plus how many interactions could not be resolved.
+
+
+        A consumer that has never declared a contract is still listed, with `contract:
+        null`. That is the state a newly registered consumer is in, and hiding it
+        would make the registration look like it failed.
+
+
+        Requires `consumer_contracts:view`.'
+      operationId: list_project_consumers_v1_tenants__tenant_slug__projects__project_ref__consumers_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectsconsumersauthorization schema.
+          - type: 'null'
+            description: Listaprojectsconsumersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectsconsumers Xapikey schema.
+          - type: 'null'
+            description: Listaprojectsconsumers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a project's consumers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerListResponse'
+                description: Response payload for listaprojectsconsumersresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaprojectsconsumersresponse422.
+    post:
+      tags:
+      - consumer-contracts
+      summary: Register a consumer
+      description: 'Register a named client of this project. The handle (`slug`) is
+        what CI and Pact files name; it is derived from `name` when omitted, and is
+        **not** editable afterwards — renaming it would orphan every reference to
+        it.
+
+
+        Registering a consumer declares nothing on its own. The surface it uses arrives
+        separately, either by importing a Pact file or by declaring a picked selection.
+
+
+        Requires `consumer_contracts:create`.'
+      operationId: register_consumer_v1_tenants__tenant_slug__projects__project_ref__consumers_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeraconsumerauthorization schema.
+          - type: 'null'
+            description: Registeraconsumerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeraconsumer Xapikey schema.
+          - type: 'null'
+            description: Registeraconsumer Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerInput'
+              description: Request body for registeraconsumerrequest.
+        description: Request body for register a consumer.
+      responses:
+        '201':
+          description: Successful response for register a consumer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerRecord'
+                description: Response payload for registeraconsumerresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for registeraconsumerresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}:
+    get:
+      tags:
+      - consumer-contracts
+      summary: Read one consumer and its current contract
+      description: 'Read a consumer by its handle or its id, together with the full
+        surface of its current contract revision.
+
+
+        Requires `consumer_contracts:view`.'
+      operationId: read_consumer_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readoneconsumeranditscurrentcontractauthorization schema.
+          - type: 'null'
+            description: Readoneconsumeranditscurrentcontractauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readoneconsumeranditscurrentcontract Xapikey schema.
+          - type: 'null'
+            description: Readoneconsumeranditscurrentcontract Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one consumer and its current contract.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerDetailResponse'
+                description: Response payload for readoneconsumeranditscurrentcontractresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readoneconsumeranditscurrentcontractresponse422.
+    patch:
+      tags:
+      - consumer-contracts
+      summary: Update a consumer
+      description: 'Apply a partial update to a consumer''s identity — its name, description,
+        owner, contact, or metadata. Omitted fields are left alone.
+
+
+        The handle is not updatable. It is the name CI and Pact files use, and changing
+        it would silently orphan every reference to it; retire the consumer and register
+        a new one instead.
+
+
+        Requires `consumer_contracts:edit`.'
+      operationId: patch_consumer_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateaconsumerauthorization schema.
+          - type: 'null'
+            description: Updateaconsumerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateaconsumer Xapikey schema.
+          - type: 'null'
+            description: Updateaconsumer Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerPatch'
+              description: Request body for updateaconsumerrequest.
+        description: Request body for update a consumer.
+      responses:
+        '200':
+          description: Successful response for update a consumer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerRecord'
+                description: Response payload for updateaconsumerresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for updateaconsumerresponse422.
+    delete:
+      tags:
+      - consumer-contracts
+      summary: Retire a consumer
+      description: 'Retire a consumer. Its contract revisions are **kept**: a published
+        version''s per-consumer verdict has to stay explicable after the consumer
+        is decommissioned, and the handle becomes available again for a new registration.
+
+
+        Requires `consumer_contracts:delete`, which the built-in grids give Owner
+        and Admin only — removing a consumer removes a signal that guards other people''s
+        changes.'
+      operationId: delete_consumer_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Retireaconsumerauthorization schema.
+          - type: 'null'
+            description: Retireaconsumerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Retireaconsumer Xapikey schema.
+          - type: 'null'
+            description: Retireaconsumer Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for retire a consumer.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for retireaconsumerresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/contract:
+    put:
+      tags:
+      - consumer-contracts
+      summary: Declare a consumer's contract from a picked surface
+      description: 'Declare which operations — and, optionally, which fields on them
+        — this consumer uses, without a Pact file. This is what the UI picker submits.
+
+
+        The selection names operations and fields **the way a person picks them**
+        (method, path template, dotted data path); the server resolves each against
+        the stored specification and stores the resulting JSON Pointers. A client
+        cannot supply its own pointers, so a stored surface always describes something
+        the specification actually contains.
+
+
+        Anything that does not resolve is **reported, not dropped**: an operation
+        that no longer exists, or a field that has been removed, comes back in `unresolved`
+        with a stable reason code and is stored on the revision.
+
+
+        Every call writes a **new revision**; nothing is overwritten.
+
+
+        Requires `consumer_contracts:edit`.'
+      operationId: declare_contract_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__contract_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Declareaconsumerscontractfromapickedsurfversion schema.
+          - type: 'null'
+            description: Declareaconsumerscontractfromapickedsurfversion schema.
+          description: Version label, revision id, or `latest` to resolve the selection
+            against. Defaults to the project's latest revision.
+          title: Version
+        description: Version label, revision id, or `latest` to resolve the selection
+          against. Defaults to the project's latest revision.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Declareaconsumerscontractfromapickedsurfauthorization schema.
+          - type: 'null'
+            description: Declareaconsumerscontractfromapickedsurfauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Declareaconsumerscontractfromapickedsurf Xapikey schema.
+          - type: 'null'
+            description: Declareaconsumerscontractfromapickedsurf Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurfaceSelection'
+              description: Request body for declareaconsumerscontractfromapickedsurfrequest.
+        description: Request body for declare a consumer's contract from a picked
+          surface.
+      responses:
+        '201':
+          description: Successful response for declare a consumer's contract from
+            a picked surface.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractResponse'
+                description: Response payload for declareaconsumerscontractfromapickedsurfresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for declareaconsumerscontractfromapickedsurfresponse422.
+    get:
+      tags:
+      - consumer-contracts
+      summary: Read a consumer's contract
+      description: 'The consumer''s current contract revision, or a specific one with
+        `?revision=`.
+
+
+        Requires `consumer_contracts:view`.'
+      operationId: read_contract_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__contract_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: revision
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+            description: Readaconsumerscontractrevision schema.
+          - type: 'null'
+            description: Readaconsumerscontractrevision schema.
+          description: A specific revision number; defaults to the current one.
+          title: Revision
+        description: A specific revision number; defaults to the current one.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaconsumerscontractauthorization schema.
+          - type: 'null'
+            description: Readaconsumerscontractauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaconsumerscontract Xapikey schema.
+          - type: 'null'
+            description: Readaconsumerscontract Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a consumer's contract.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerContractRecord'
+                description: Response payload for readaconsumerscontractresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readaconsumerscontractresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/contract-revisions:
+    get:
+      tags:
+      - consumer-contracts
+      summary: List a consumer's contract history
+      description: 'Every stored revision of this consumer''s contract, newest first.
+        Revisions are never overwritten, so this is the record of what the consumer
+        claimed it used over time.
+
+
+        Requires `consumer_contracts:view`.'
+      operationId: list_contract_revisions_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__contract_revisions_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Maximum revisions to return.
+          default: 50
+          title: Limit
+        description: Maximum revisions to return.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaconsumerscontracthistoryauthorization schema.
+          - type: 'null'
+            description: Listaconsumerscontracthistoryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaconsumerscontracthistory Xapikey schema.
+          - type: 'null'
+            description: Listaconsumerscontracthistory Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a consumer's contract history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractRevisionsResponse'
+                description: Response payload for listaconsumerscontracthistoryresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaconsumerscontracthistoryresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-surface:
+    get:
+      tags:
+      - consumer-contracts
+      summary: List the operations and fields a consumer could declare
+      description: 'Every operation of a stored version, with the request, response,
+        and parameter fields a consumer can declare against it. This is the catalogue
+        the UI picker draws.
+
+
+        Field enumeration is bounded — recursive schemas terminate and very wide operations
+        are cut short — and an operation whose list was cut says so with `truncated:
+        true`. A field the catalogue omitted can still be declared by naming it explicitly.
+
+
+        Requires `consumer_contracts:view`.'
+      operationId: read_available_surface_v1_tenants__tenant_slug__projects__project_ref__consumer_surface_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheoperationsandfieldsaconsumercouldversion schema.
+          - type: 'null'
+            description: Listtheoperationsandfieldsaconsumercouldversion schema.
+          description: Version label, revision id, or `latest`. Defaults to the latest
+            revision.
+          title: Version
+        description: Version label, revision id, or `latest`. Defaults to the latest
+          revision.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheoperationsandfieldsaconsumercouldauthorization schema.
+          - type: 'null'
+            description: Listtheoperationsandfieldsaconsumercouldauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheoperationsandfieldsaconsumercould Xapikey schema.
+          - type: 'null'
+            description: Listtheoperationsandfieldsaconsumercould Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the operations and fields a consumer
+            could declare.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableSurfaceResponse'
+                description: Response payload for listtheoperationsandfieldsaconsumercouldresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheoperationsandfieldsaconsumercouldresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports:
+    post:
+      tags:
+      - consumer-contracts
+      summary: Import a Pact file into a consumer contract
+      description: 'Import a Pact document (specification 1.x-4.x). Each interaction''s
+        method and path is resolved onto the project''s path **template** — `/pets/42`
+        becomes `/pets/{petId}` — and the keys of its example request and response
+        bodies become the fields the consumer declares, resolved against that operation''s
+        schemas at the interaction''s own status code. Query parameters are declared
+        as parameter usage.
+
+
+        **Nothing is dropped.** An interaction naming a retired endpoint, a status
+        the specification does not declare, or a field that has been removed comes
+        back in `unresolved` with a stable reason code and is stored on the revision.
+        An import whose interactions all fail to resolve stores a visibly empty surface
+        rather than succeeding quietly.
+
+
+        `matchingRules`, `providerStates`, and generators are deliberately not read:
+        they say how a value is compared, not which fields are used.
+
+
+        The consumer is **registered if it does not exist**, under the handle in `consumer_slug`
+        or one derived from the document''s own `consumer.name` — so a CI job uploading
+        a pact for a new service succeeds on its first run.
+
+
+        Requires `consumer_contracts:create`.'
+      operationId: import_pact_contract_v1_tenants__tenant_slug__projects__project_ref__consumer_pact_imports_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Importa Pactfileintoaconsumercontractauthorization schema.
+          - type: 'null'
+            description: Importa Pactfileintoaconsumercontractauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Importa Pactfileintoaconsumercontract Xapikey schema.
+          - type: 'null'
+            description: Importa Pactfileintoaconsumercontract Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactImportRequest'
+              description: Request body for importa pactfileintoaconsumercontractrequest.
+        description: Request body for import a pact file into a consumer contract.
+      responses:
+        '201':
+          description: Successful response for import a pact file into a consumer
+            contract.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractResponse'
+                description: Response payload for importa pactfileintoaconsumercontractresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for importa pactfileintoaconsumercontractresponse422.
   /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint:
     get:
       tags:
@@ -54499,6 +55368,169 @@ components:
       - reason
       title: AuthorizeResponse
       description: The edge's on-demand TLS answer for one hostname.
+    AvailableFieldOut:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer.
+          example: example
+        schema_pointer:
+          type: string
+          title: Schema Pointer
+          description: Schema Pointer.
+          example: example
+        location:
+          type: string
+          title: Location
+          description: Location.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Path.
+          example: /resources/{id}
+        status:
+          anyOf:
+          - type: string
+            description: Response payload for available field.
+          - type: 'null'
+            description: Response payload for available field.
+          title: Status
+          description: Status.
+        media_type:
+          anyOf:
+          - type: string
+            description: Response payload for available field.
+          - type: 'null'
+            description: Response payload for available field.
+          title: Media Type
+          description: Media Type.
+        type_name:
+          anyOf:
+          - type: string
+            description: Response payload for available field.
+          - type: 'null'
+            description: Response payload for available field.
+          title: Type Name
+          description: Type Name.
+        required:
+          type: boolean
+          title: Required
+          default: false
+          description: Required.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - pointer
+      - schema_pointer
+      - location
+      - path
+      title: AvailableFieldOut
+      description: One field the picker may offer.
+    AvailableOperationOut:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: Method.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Path.
+          example: /resources/{id}
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer.
+          example: example
+        operation_id:
+          anyOf:
+          - type: string
+            description: Response payload for available operation.
+          - type: 'null'
+            description: Response payload for available operation.
+          title: Operation Id
+          description: OpenAPI ``operationId`` value when set.
+        summary:
+          anyOf:
+          - type: string
+            description: Response payload for available operation.
+          - type: 'null'
+            description: Response payload for available operation.
+          title: Summary
+          description: Short summary suitable for navigation and reference docs.
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+          description: Associated tag labels.
+          maxItems: 1000
+        fields:
+          items:
+            $ref: '#/components/schemas/AvailableFieldOut'
+          type: array
+          title: Fields
+          description: Fields.
+          maxItems: 1000
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when this operation has more fields than are listed.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      - pointer
+      title: AvailableOperationOut
+      description: One operation the picker may offer, with its addressable fields.
+    AvailableSurfaceResponse:
+      properties:
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The revision the catalogue was built from.
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for available surface.
+          - type: 'null'
+            description: Response payload for available surface.
+          title: Version Label
+          description: That revision's label.
+        operations:
+          items:
+            $ref: '#/components/schemas/AvailableOperationOut'
+          type: array
+          title: Operations
+          description: Operations.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many operations the specification declares.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when any operation's field list was cut short by the walk
+            limits.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - version_record_id
+      - count
+      title: AvailableSurfaceResponse
+      description: The picker's catalogue for one stored version.
     BotPresetBody:
       properties:
         key:
@@ -59637,6 +60669,550 @@ components:
       - connections
       title: ConnectionListResponse
       description: ConnectionListResponse schema.
+    ConsumerContractField:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: Operation-anchored JSON Pointer to the field.
+          example: example
+        schema_pointer:
+          type: string
+          title: Schema Pointer
+          description: Where the node actually lives (a $ref target, or the same pointer).
+          example: example
+        location:
+          type: string
+          enum:
+          - response
+          - request
+          - parameter
+          title: Location
+          description: response | request | parameter.
+          example: response
+        status:
+          anyOf:
+          - type: string
+            description: Consumer Contract Field schema.
+          - type: 'null'
+            description: Consumer Contract Field schema.
+          title: Status
+          description: Response status code, if a response.
+        media_type:
+          anyOf:
+          - type: string
+            description: Consumer Contract Field schema.
+          - type: 'null'
+            description: Consumer Contract Field schema.
+          title: Media Type
+          description: Media type, for a body field.
+        path:
+          type: string
+          title: Path
+          description: Dotted data path, or the parameter name.
+          default: ''
+          example: /resources/{id}
+      additionalProperties: false
+      type: object
+      required:
+      - pointer
+      - schema_pointer
+      - location
+      title: ConsumerContractField
+      description: "One field a consumer reads or sends, resolved against a stored\
+        \ specification.\n\nAttributes:\n    pointer: JSON Pointer anchored on the\
+        \ operation — where the field hangs off\n        ``/paths/<path>/<method>``.\
+        \ This is the field's identity within the contract.\n    schema_pointer: JSON\
+        \ Pointer to where the node actually lives in the document. Equal to\n   \
+        \     ``pointer`` for an inline schema; a ``/components/schemas/...`` pointer\
+        \ when the\n        field was reached through a ``$ref``. Both are stored\
+        \ because the CTG-1.1 classifier\n        reports operation changes and component-schema\
+        \ changes at different pointers.\n    location: ``response``, ``request``,\
+        \ or ``parameter``.\n    status: Response status code, for a ``response``\
+        \ field.\n    media_type: Media type the body was declared under, for a body\
+        \ field.\n    path: Dotted data path relative to the body root (``items.id``),\
+        \ or the parameter name.\n        Array levels are not spelled in the path\
+        \ — ``items.id`` names ``id`` inside every\n        element of ``items`` —\
+        \ because that is how a consumer talks about it."
+    ConsumerContractOperation:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: Lowercase HTTP method.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Specification path template.
+          example: /resources/{id}
+        pointer:
+          type: string
+          title: Pointer
+          description: /paths/<escaped path>/<method>.
+          example: example
+        operation_id:
+          anyOf:
+          - type: string
+            description: Consumer Contract Operation schema.
+          - type: 'null'
+            description: Consumer Contract Operation schema.
+          title: Operation Id
+          description: Declared operationId.
+        summary:
+          anyOf:
+          - type: string
+            description: Consumer Contract Operation schema.
+          - type: 'null'
+            description: Consumer Contract Operation schema.
+          title: Summary
+          description: Operation summary.
+        fields:
+          items:
+            $ref: '#/components/schemas/ConsumerContractField'
+          type: array
+          title: Fields
+          description: Fields used on this operation.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      - pointer
+      title: ConsumerContractOperation
+      description: "One operation a consumer calls, with the fields it uses on that\
+        \ operation.\n\nAttributes:\n    method: Lowercase HTTP method, as the path\
+        \ item spells it.\n    path: The specification's path template (``/pets/{petId}``),\
+        \ not the concrete URL a\n        Pact interaction happened to exercise.\n\
+        \    pointer: ``/paths/<escaped path>/<method>`` — the classifier's own operation\
+        \ pointer.\n    operation_id: The declared ``operationId``, when the specification\
+        \ has one.\n    summary: The operation's summary, carried so a list read needs\
+        \ no second fetch.\n    fields: Every field this consumer declared on this\
+        \ operation."
+    ConsumerContractRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        consumer_id:
+          type: string
+          title: Consumer Id
+          description: Consumer ID.
+          example: consumer_01h2xcejqtf3fz5y5j0v8k9m2p
+        revision:
+          type: integer
+          title: Revision
+          description: Revision.
+          example: 1
+        is_current:
+          type: boolean
+          title: Is Current
+          default: true
+          description: Whether current.
+          example: true
+        source:
+          type: string
+          title: Source
+          default: manual
+          description: Provenance source for the record (for example human or imported).
+          example: human
+        version_id:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Version Id
+          description: Project version identifier or semantic version label, depending
+            on context.
+        version_label:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Version Label
+          description: Version Label.
+        surface:
+          $ref: '#/components/schemas/ConsumerContractSurface'
+          description: Surface.
+        operation_count:
+          type: integer
+          title: Operation Count
+          default: 0
+          description: Number of operation.
+          example: 1
+        field_count:
+          type: integer
+          title: Field Count
+          default: 0
+          description: Number of field.
+          example: 1
+        unresolved:
+          items:
+            $ref: '#/components/schemas/UnresolvedInteraction'
+          type: array
+          title: Unresolved
+          description: Unresolved.
+          maxItems: 1000
+        unresolved_count:
+          type: integer
+          title: Unresolved Count
+          default: 0
+          description: Number of unresolved.
+          example: 1
+        source_metadata:
+          additionalProperties: true
+          type: object
+          title: Source Metadata
+          description: Source Metadata.
+        source_digest:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Source Digest
+          description: Source Digest.
+        note:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Note
+          description: Note.
+        actor_label:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Actor Label
+          description: Actor Label.
+        created_at:
+          anyOf:
+          - type: string
+            description: Consumer Contract schema.
+          - type: 'null'
+            description: Consumer Contract schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - consumer_id
+      - revision
+      title: ConsumerContractRecord
+      description: "One stored contract revision.\n\nAttributes:\n    id: Row id.\n\
+        \    consumer_id: The consumer this revision belongs to.\n    revision: Per-consumer\
+        \ counter, from 1.\n    is_current: Whether this is the consumer's current\
+        \ revision.\n    source: ``pact`` or ``manual``.\n    version_id: The specification\
+        \ revision the pointers were resolved against.\n    version_label: That revision's\
+        \ version label, snapshotted.\n    surface: The declared surface.\n    operation_count:\
+        \ How many operations it declares.\n    field_count: How many fields it declares.\n\
+        \    unresolved: Interactions that could not be placed.\n    unresolved_count:\
+        \ How many of those there are.\n    source_metadata: Pact provenance; empty\
+        \ for a manual declaration.\n    source_digest: ``sha256:<hex>`` of the uploaded\
+        \ Pact document, when there was one.\n    note: Free text explaining the revision.\n\
+        \    actor_label: Who declared it, at the time.\n    created_at: When it was\
+        \ declared (ISO-8601)."
+    ConsumerContractSurface:
+      properties:
+        schema_version:
+          type: string
+          title: Schema Version
+          description: Stored envelope version.
+          default: apiome.consumer.contract/v1
+          example: 1.0.0
+        operations:
+          items:
+            $ref: '#/components/schemas/ConsumerContractOperation'
+          type: array
+          title: Operations
+          description: Declared operations, ordered by path then method.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: ConsumerContractSurface
+      description: "Everything a consumer declared it uses.\n\nAttributes:\n    schema_version:\
+        \ The stored envelope version (:data:`CONTRACT_SCHEMA_VERSION`).\n    operations:\
+        \ The operations, in stable order (path, then method)."
+    ConsumerDetailResponse:
+      properties:
+        consumer:
+          $ref: '#/components/schemas/ConsumerRecord'
+          description: Consumer.
+        contract:
+          anyOf:
+          - $ref: '#/components/schemas/ConsumerContractRecord'
+          - type: 'null'
+            description: Response payload for consumer detail.
+          description: The current contract revision, or null when none is declared.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      title: ConsumerDetailResponse
+      description: One consumer with its current contract, when it has declared one.
+    ConsumerInput:
+      properties:
+        slug:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Consumer Input schema.
+          - type: 'null'
+            description: Consumer Input schema.
+          title: Slug
+          description: URL-safe identifier.
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: Consumer Input schema.
+          - type: 'null'
+            description: Consumer Input schema.
+          title: Description
+          description: Free-text description.
+        owner:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Consumer Input schema.
+          - type: 'null'
+            description: Consumer Input schema.
+          title: Owner
+          description: Owner.
+        contact:
+          anyOf:
+          - type: string
+            maxLength: 320
+            description: Consumer Input schema.
+          - type: 'null'
+            description: Consumer Input schema.
+          title: Contact
+          description: Contact.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Additional JSON metadata bag.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: ConsumerInput
+      description: "A new consumer, as a caller defines one.\n\nAttributes:\n    slug:\
+        \ Stable handle. Derived from ``name`` when omitted.\n    name: Display name.\n\
+        \    description: What this consumer is.\n    owner: Free text — the team,\
+        \ squad, channel, or person accountable.\n    contact: Email or URL to notify\
+        \ when this consumer's contract would break.\n    metadata: Non-secret free-form\
+        \ context (repository, environment, CI job)."
+    ConsumerListResponse:
+      properties:
+        consumers:
+          items:
+            $ref: '#/components/schemas/ConsumerSummary'
+          type: array
+          title: Consumers
+          description: The project's consumers, newest first.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many consumers were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: ConsumerListResponse
+      description: Every live consumer of a project with its current contract.
+    ConsumerPatch:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            description: Consumer Patch schema.
+          - type: 'null'
+            description: Consumer Patch schema.
+          title: Name
+          description: Human-readable name.
+        description:
+          anyOf:
+          - type: string
+            maxLength: 4000
+            description: Consumer Patch schema.
+          - type: 'null'
+            description: Consumer Patch schema.
+          title: Description
+          description: Free-text description.
+        owner:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Consumer Patch schema.
+          - type: 'null'
+            description: Consumer Patch schema.
+          title: Owner
+          description: Owner.
+        contact:
+          anyOf:
+          - type: string
+            maxLength: 320
+            description: Consumer Patch schema.
+          - type: 'null'
+            description: Consumer Patch schema.
+          title: Contact
+          description: Contact.
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Consumer Patch schema.
+          - type: 'null'
+            description: Consumer Patch schema.
+          title: Metadata
+          description: Additional JSON metadata bag.
+      additionalProperties: false
+      type: object
+      title: ConsumerPatch
+      description: 'A partial update. Omitted fields are left alone.
+
+
+        ``slug`` is deliberately absent: it is the handle CI and Pact files name,
+        and renaming it
+
+        would silently orphan every reference to it.'
+    ConsumerRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns the resource.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Description
+          description: Free-text description.
+        owner:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Owner
+          description: Owner.
+        contact:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Contact
+          description: Contact.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Additional JSON metadata bag.
+        created_at:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        deleted_at:
+          anyOf:
+          - type: string
+            description: Consumer schema.
+          - type: 'null'
+            description: Consumer schema.
+          title: Deleted At
+          description: Deleted At timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - tenant_id
+      - project_id
+      - slug
+      - name
+      title: ConsumerRecord
+      description: "A stored consumer.\n\nAttributes:\n    id: Row id.\n    tenant_id:\
+        \ Owning tenant.\n    project_id: Project this consumer consumes.\n    slug:\
+        \ Stable handle.\n    name: Display name.\n    description: What this consumer\
+        \ is.\n    owner: Accountable team or person.\n    contact: Where to reach\
+        \ them.\n    metadata: Free-form non-secret context.\n    created_at: When\
+        \ it was registered.\n    updated_at: When it was last changed.\n    deleted_at:\
+        \ Retirement stamp, when retired."
+    ConsumerSummary:
+      properties:
+        consumer:
+          $ref: '#/components/schemas/ConsumerRecord'
+          description: Consumer.
+        contract:
+          anyOf:
+          - $ref: '#/components/schemas/ConsumerContractRecord'
+          - type: 'null'
+            description: Consumer schema.
+          description: Contract.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      title: ConsumerSummary
+      description: "A consumer plus its current contract — the project page's row.\n\
+        \nAttributes:\n    consumer: The consumer.\n    contract: Its current contract\
+        \ revision, or ``None`` when it has declared nothing yet."
     ConsumptionEdgeOut:
       properties:
         path_id:
@@ -59661,7 +61237,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 94ab9e30-d052-4f2f-bd68-391a19da5b61
+          example: 25a2d15c-ab68-464d-a523-da97069db7cc
         method:
           type: string
           title: Method
@@ -60188,6 +61764,50 @@ components:
       - origin
       title: ContractRequestParameter
       description: One parameter value a case sends, with the evidence behind it.
+    ContractResponse:
+      properties:
+        consumer:
+          $ref: '#/components/schemas/ConsumerRecord'
+          description: Consumer.
+        contract:
+          $ref: '#/components/schemas/ConsumerContractRecord'
+          description: Contract.
+        unresolved:
+          items:
+            $ref: '#/components/schemas/UnresolvedInteraction'
+          type: array
+          title: Unresolved
+          description: Interactions or fields that could not be resolved against the
+            specification. Repeated from the stored contract so an importing client
+            sees them without a second read; they are never silently dropped.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - contract
+      title: ContractResponse
+      description: A stored contract revision plus the consumer it belongs to.
+    ContractRevisionsResponse:
+      properties:
+        revisions:
+          items:
+            $ref: '#/components/schemas/ConsumerContractRecord'
+          type: array
+          title: Revisions
+          description: Revisions, newest first.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many revisions were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: ContractRevisionsResponse
+      description: A consumer's contract history.
     ContractRunRequest:
       properties:
         target_ref:
@@ -61653,7 +63273,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-08-31T17:50:37Z'
+          example: '2026-09-07T20:27:56Z'
         envelope:
           additionalProperties: true
           type: object
@@ -84261,6 +85881,62 @@ components:
       type: object
       title: OperationUpdateRequest
       description: Partial update payload for an operation.
+    PactImportRequest:
+      properties:
+        pact:
+          type: string
+          title: Pact
+          description: The Pact document as raw JSON text.
+          example: example
+        consumer_slug:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Request body for pact import.
+          - type: 'null'
+            description: Request body for pact import.
+          title: Consumer Slug
+          description: Consumer Slug.
+        consumer_name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Request body for pact import.
+          - type: 'null'
+            description: Request body for pact import.
+          title: Consumer Name
+          description: Consumer Name.
+        version:
+          anyOf:
+          - type: string
+            maxLength: 128
+            description: Request body for pact import.
+          - type: 'null'
+            description: Request body for pact import.
+          title: Version
+          description: Version.
+        note:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Request body for pact import.
+          - type: 'null'
+            description: Request body for pact import.
+          title: Note
+          description: Note.
+      additionalProperties: false
+      type: object
+      required:
+      - pact
+      title: PactImportRequest
+      description: "A Pact document to import.\n\nAttributes:\n    pact: The Pact\
+        \ document as raw JSON text.\n    consumer_slug: The handle to store it under.\
+        \ Derived from the document's own\n        ``consumer.name`` when omitted,\
+        \ which is what lets a CI job upload a pact for a\n        service that has\
+        \ never been registered.\n    consumer_name: Display name for a consumer this\
+        \ import registers.\n    version: Version label, revision id, or ``latest``\
+        \ to resolve the interactions against.\n    note: Free text explaining the\
+        \ revision."
     PathCreateRequest:
       properties:
         pathname:
@@ -91707,7 +93383,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-08-31T17:50:37Z'
+          example: '2026-09-07T20:27:56Z'
       additionalProperties: false
       type: object
       required:
@@ -93815,6 +95491,84 @@ components:
       - message
       title: SecurityWarningBody
       description: A concern that does not block the write.
+    SelectedField:
+      properties:
+        location:
+          type: string
+          enum:
+          - response
+          - request
+          - parameter
+          title: Location
+          default: response
+          description: Location.
+          example: response
+        path:
+          type: string
+          title: Path
+          description: Dotted data path, or the parameter name.
+          default: ''
+          example: /resources/{id}
+        status:
+          anyOf:
+          - type: string
+            description: Selected Field schema.
+          - type: 'null'
+            description: Selected Field schema.
+          title: Status
+          description: Response status code.
+        media_type:
+          anyOf:
+          - type: string
+            description: Selected Field schema.
+          - type: 'null'
+            description: Selected Field schema.
+          title: Media Type
+          description: Media type for a body field.
+      additionalProperties: false
+      type: object
+      title: SelectedField
+      description: "One field picked in the UI, named the way a person picks it.\n\
+        \nThe picker sends *what it means* — \"the ``id`` field of the 200 response\
+        \ of ``GET /pets``\" —\nand the server resolves that against the specification.\
+        \ It deliberately does not send\npointers: a client that computed its own\
+        \ pointers could store a surface the specification\ndoes not contain, and\
+        \ the whole point of the registry is that it does.\n\nAttributes:\n    location:\
+        \ ``response``, ``request``, or ``parameter``.\n    path: Dotted data path,\
+        \ or the parameter name.\n    status: Response status code, for a ``response``\
+        \ field. Defaults to the operation's\n        first declared 2xx.\n    media_type:\
+        \ Media type, for a body field. Defaults to the first declared JSON media\
+        \ type."
+    SelectedOperation:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: HTTP method.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Specification path template.
+          example: /resources/{id}
+        fields:
+          items:
+            $ref: '#/components/schemas/SelectedField'
+          type: array
+          title: Fields
+          description: Fields picked on this operation; empty declares the operation
+            only.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      title: SelectedOperation
+      description: "One operation picked in the UI, with the fields picked under it.\n\
+        \nAttributes:\n    method: HTTP method (any case; normalized server-side).\n\
+        \    path: The specification's path template.\n    fields: Fields picked on\
+        \ this operation; empty means \"the whole operation\"."
     SemanticFingerprint:
       properties:
         fingerprint:
@@ -98982,6 +100736,31 @@ components:
       title: SunsetTimelineResponse
       description: Aggregated sunset / deprecation timeline for accessible projects
         (#508).
+    SurfaceSelection:
+      properties:
+        operations:
+          items:
+            $ref: '#/components/schemas/SelectedOperation'
+          type: array
+          title: Operations
+          description: Operations.
+          maxItems: 1000
+        note:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Surface Selection schema.
+          - type: 'null'
+            description: Surface Selection schema.
+          title: Note
+          description: Note.
+      additionalProperties: false
+      type: object
+      title: SurfaceSelection
+      description: "A whole picked surface, as the UI picker submits it.\n\nAttributes:\n\
+        \    operations: The picked operations. Refused when empty — an empty contract\
+        \ declares\n        nothing and would silently exempt the consumer from every\
+        \ future analysis.\n    note: Optional free text explaining the revision."
     SynthesizedInstance:
       properties:
         id:
@@ -102114,6 +103893,73 @@ components:
       - relatedProjectId
       title: UnlinkArtifactsRequest
       description: Remove one project from a shared identity group (pairwise unlink).
+    UnresolvedInteraction:
+      properties:
+        reason:
+          type: string
+          title: Reason
+          description: 'One of: operation-not-found, method-not-declared, status-not-declared,
+            media-type-not-declared, field-not-found, parameter-not-declared, interaction-not-http,
+            interaction-malformed.'
+          example: example
+        message:
+          type: string
+          title: Message
+          description: What could not be resolved.
+          example: Example validation message.
+        description:
+          anyOf:
+          - type: string
+            description: Unresolved Interaction schema.
+          - type: 'null'
+            description: Unresolved Interaction schema.
+          title: Description
+          description: Interaction description.
+        method:
+          anyOf:
+          - type: string
+            description: Unresolved Interaction schema.
+          - type: 'null'
+            description: Unresolved Interaction schema.
+          title: Method
+          description: Method as named by the source.
+        path:
+          anyOf:
+          - type: string
+            description: Unresolved Interaction schema.
+          - type: 'null'
+            description: Unresolved Interaction schema.
+          title: Path
+          description: Path as named by the source.
+        status:
+          anyOf:
+          - type: string
+            description: Unresolved Interaction schema.
+          - type: 'null'
+            description: Unresolved Interaction schema.
+          title: Status
+          description: Response status, when relevant.
+        field_path:
+          anyOf:
+          - type: string
+            description: Unresolved Interaction schema.
+          - type: 'null'
+            description: Unresolved Interaction schema.
+          title: Field Path
+          description: Data path that did not resolve, for a field failure.
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      - message
+      title: UnresolvedInteraction
+      description: "Something the importer could not place, kept rather than dropped.\n\
+        \nAttributes:\n    reason: One of :data:`UNRESOLVED_REASONS`.\n    message:\
+        \ What specifically could not be resolved.\n    description: The interaction's\
+        \ own description, when it had one.\n    method: The method as the source\
+        \ named it.\n    path: The path as the source named it (concrete, not templated).\n\
+        \    status: The response status the source named, when relevant.\n    field_path:\
+        \ The data path that could not be resolved, for a field-level failure."
     UnresolvedRefPrimitive:
       properties:
         id:
@@ -103454,13 +105300,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-08-31T17:50:37Z'
+          example: '2026-09-07T20:27:56Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-08-31T17:50:37Z'
+          example: '2026-09-07T20:27:56Z'
         outcome:
           anyOf:
           - type: string
