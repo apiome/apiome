@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.174.0",
+    "version": "1.175.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -8412,6 +8412,379 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for executeacontractsuiteagainstaverificatioresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/contracts/{version_ref}/verify-provider": {
+      "post": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Verify a live deployment against a published contract",
+        "description": "Compile the version's deterministic contract suite (ECA-1.1), resolve the named verification target (ECA-1.2), execute the cases this run is allowed to send, validate every response against the contract's own schema, and return a **conformance report**: per-operation verdicts, each schema violation located by its JSON Pointer into the response body, and coverage measured against every operation in the specification.\n\n**Safe by default.** Only `GET`/`HEAD`/`OPTIONS` are executed unless the request both sets `verification.allow_mutating` **and** supplies a fixture naming the operation \u2014 opting in is a permission, not a payload. Neither can widen the verification target's own `allow_mutating_methods` policy, and a fixture may not carry credentials.\n\n**Coverage is honest.** The denominator is every operation the specification declares, including those the suite compiler could not compile; what was not exercised is named with its reason rather than left out.\n\nThe run is always recorded as immutable ECA-1.3 evidence and the report is persisted beside it. A version that cannot yield executable cases answers **200** with `ok: false` and a stable taxonomy `error`. Addressing faults are HTTP errors (400/404/422); target resolution faults are 400/404; evidence faults are 400.",
+        "operationId": "verify_provider_for_version_v1_tenants__tenant_slug__contracts__version_ref__verify_provider_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Verifyalivedeploymentagainstapublishedcoauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Verifyalivedeploymentagainstapublishedcoauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Verifyalivedeploymentagainstapublishedco Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Verifyalivedeploymentagainstapublishedco Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderVerificationRequest",
+                "description": "Request body for verifyalivedeploymentagainstapublishedcorequest."
+              }
+            }
+          },
+          "description": "Request body for verify a live deployment against a published contract."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for verify a live deployment against a published contract.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderVerificationResponse",
+                  "description": "Response payload for verifyalivedeploymentagainstapublishedcoresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for verifyalivedeploymentagainstapublishedcoresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/provider-verifications": {
+      "get": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "List provider verification reports",
+        "description": "A tenant's conformance reports, newest first, without their per-operation detail. Every field is a stored column, so a deploy gate can ask *did the newest report for this version pass, and how much did it cover?* without opening a report body.\n\nFilter by `version_ref` for one version's history, `target_id` for one deployment, or `outcome` for what is currently drifting.",
+        "operationId": "list_provider_verifications_v1_tenants__tenant_slug__provider_verifications_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "version_ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listproviderverificationreportsversionref schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listproviderverificationreportsversionref schema."
+                }
+              ],
+              "description": "Restrict to one version reference.",
+              "title": "Version Ref"
+            },
+            "description": "Restrict to one version reference."
+          },
+          {
+            "name": "target_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listproviderverificationreportstargetid schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listproviderverificationreportstargetid schema."
+                }
+              ],
+              "description": "Restrict to one verification target.",
+              "title": "Target Id"
+            },
+            "description": "Restrict to one verification target."
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listproviderverificationreportsoutcome schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listproviderverificationreportsoutcome schema."
+                }
+              ],
+              "description": "Restrict to one verdict: `passed`, `failed`, or `errored`.",
+              "title": "Outcome"
+            },
+            "description": "Restrict to one verdict: `passed`, `failed`, or `errored`."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Maximum reports to return.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum reports to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listproviderverificationreportsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listproviderverificationreportsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listproviderverificationreports Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listproviderverificationreports Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list provider verification reports.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConformanceReportSummary"
+                  },
+                  "title": "Response List Provider Verifications V1 Tenants  Tenant Slug  Provider Verifications Get",
+                  "description": "Response List Provider Verifications V1 Tenants  Tenant Slug  Provider Verifications Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listproviderverificationreportsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/provider-verifications/{report_id}": {
+      "get": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Read one provider verification report",
+        "description": "The full conformance report: per-operation verdicts, every drift located by its JSON Pointer into the response body, the operations the run does not vouch for and why, and the id of the immutable evidence run the report was read from.",
+        "operationId": "read_provider_verification_v1_tenants__tenant_slug__provider_verifications__report_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id",
+              "description": "Report Id schema."
+            },
+            "description": "Path parameter identifying the report id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readoneproviderverificationreportauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readoneproviderverificationreportauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readoneproviderverificationreport Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readoneproviderverificationreport Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one provider verification report.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConformanceReportRecord",
+                  "description": "Response payload for readoneproviderverificationreportresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readoneproviderverificationreportresponse422."
                 }
               }
             }
@@ -81727,6 +82100,808 @@
         "title": "ConformanceFailure",
         "description": "One instance check that failed against one emitted target schema.\n\n``kind`` separates the two failure channels the acceptance criteria demand be kept\napart: a ``conformance`` row means the target's validator ran and rejected the\ninstance; a ``transcode`` row means the instance never reached the validator because\nit has no representation on the target's wire format."
       },
+      "ConformanceReport": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version",
+            "description": "Report envelope version.",
+            "default": 1,
+            "example": 1
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`passed`, `failed`, or `errored`, derived from the case records exactly the way ECA-1.3 derives a run verdict \u2014 never declared.",
+            "example": "example"
+          },
+          "suite_digest": {
+            "type": "string",
+            "title": "Suite Digest",
+            "description": "Digest of the executed ECA-1.1 suite.",
+            "example": "example"
+          },
+          "api_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Api Title",
+            "description": "API title, when declared."
+          },
+          "api_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Api Version",
+            "description": "Source-declared API version."
+          },
+          "api_format": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Api Format",
+            "description": "Source format key."
+          },
+          "target": {
+            "$ref": "#/components/schemas/TargetIdentity",
+            "description": "The deployment that was checked."
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "When the run began.",
+            "example": "2026-09-07T21:33:23Z"
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Finished At",
+            "description": "When the run ended.",
+            "example": "2026-09-07T21:33:23Z"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Duration Ms",
+            "description": "Wall-clock duration in milliseconds.",
+            "example": 1
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/CoverageSummary",
+            "description": "What fraction of the contract was exercised."
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/OperationConformance"
+            },
+            "type": "array",
+            "title": "Operations",
+            "description": "Per-operation verdicts, sorted by operation key.",
+            "maxItems": 1000
+          },
+          "uncovered": {
+            "items": {
+              "$ref": "#/components/schemas/UncoveredOperation"
+            },
+            "type": "array",
+            "title": "Uncovered",
+            "description": "Operations this report does not vouch for, sorted by key.",
+            "maxItems": 1000
+          },
+          "drift": {
+            "items": {
+              "$ref": "#/components/schemas/DriftFinding"
+            },
+            "type": "array",
+            "title": "Drift",
+            "description": "Every disagreement, flattened, in operation then case order.",
+            "maxItems": 1000
+          },
+          "mutating_allowed": {
+            "type": "boolean",
+            "title": "Mutating Allowed",
+            "description": "Whether the run opted in to mutating methods at all.",
+            "example": false
+          },
+          "mutating_operations_exercised": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mutating Operations Exercised",
+            "description": "Mutating operations a fixture unlocked. Empty on a read-only run.",
+            "maxItems": 1000
+          },
+          "fixtures_supplied": {
+            "type": "integer",
+            "title": "Fixtures Supplied",
+            "description": "Fixtures the caller submitted.",
+            "default": 0,
+            "example": 1
+          },
+          "fixtures_applied": {
+            "type": "integer",
+            "title": "Fixtures Applied",
+            "description": "Cases a fixture was substituted into.",
+            "default": 0,
+            "example": 1
+          },
+          "fixture_findings": {
+            "items": {
+              "$ref": "#/components/schemas/FixtureFinding"
+            },
+            "type": "array",
+            "title": "Fixture Findings",
+            "description": "Fixtures that could not be used.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "outcome",
+          "suite_digest",
+          "target",
+          "started_at",
+          "finished_at",
+          "duration_ms",
+          "coverage",
+          "mutating_allowed"
+        ],
+        "title": "ConformanceReport",
+        "description": "The drift picture of one deployment, at one moment, against one published contract."
+      },
+      "ConformanceReportRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Report id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns it.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "The ECA-1.3 evidence run this report summarises.",
+            "example": "run_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_ref": {
+            "type": "string",
+            "title": "Version Ref",
+            "description": "Version reference that was verified.",
+            "example": "1.0.0"
+          },
+          "artifact_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Kind",
+            "description": "`project` or `catalog`."
+          },
+          "artifact_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Id",
+            "description": "Artifact id."
+          },
+          "artifact_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Slug",
+            "description": "Artifact slug."
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Resolved version label."
+          },
+          "suite_digest": {
+            "type": "string",
+            "title": "Suite Digest",
+            "description": "Digest of the executed suite.",
+            "example": "example"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Target Id",
+            "description": "Target, when it still exists."
+          },
+          "target_slug": {
+            "type": "string",
+            "title": "Target Slug",
+            "description": "Target handle at run time.",
+            "example": "example-resource"
+          },
+          "target_environment": {
+            "type": "string",
+            "title": "Target Environment",
+            "description": "Environment class at run time.",
+            "example": "example"
+          },
+          "target_network_class": {
+            "type": "string",
+            "title": "Target Network Class",
+            "description": "`public` or `private`.",
+            "default": "public",
+            "example": "example"
+          },
+          "target_base_url": {
+            "type": "string",
+            "title": "Target Base Url",
+            "description": "Base URL at run time.",
+            "example": "https://example.com/resource"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`passed`, `failed`, or `errored`.",
+            "example": "example"
+          },
+          "operations_total": {
+            "type": "integer",
+            "title": "Operations Total",
+            "description": "Operations in the specification, compiled or not.",
+            "example": 1
+          },
+          "operations_exercised": {
+            "type": "integer",
+            "title": "Operations Exercised",
+            "description": "Operations that received a request.",
+            "example": 1
+          },
+          "operations_passed": {
+            "type": "integer",
+            "title": "Operations Passed",
+            "description": "Exercised operations with no drift.",
+            "example": 1
+          },
+          "operations_failed": {
+            "type": "integer",
+            "title": "Operations Failed",
+            "description": "Exercised operations that drifted.",
+            "example": 1
+          },
+          "operations_errored": {
+            "type": "integer",
+            "title": "Operations Errored",
+            "description": "Exercised operations that never answered.",
+            "example": 1
+          },
+          "operations_skipped": {
+            "type": "integer",
+            "title": "Operations Skipped",
+            "description": "Compiled operations nothing was sent for.",
+            "example": 1
+          },
+          "operations_uncompiled": {
+            "type": "integer",
+            "title": "Operations Uncompiled",
+            "description": "Operations the compiler could not compile.",
+            "example": 1
+          },
+          "coverage_percent": {
+            "type": "number",
+            "title": "Coverage Percent",
+            "description": "Exercised over total, as a percentage.",
+            "example": 100.0
+          },
+          "cases_total": {
+            "type": "integer",
+            "title": "Cases Total",
+            "description": "Cases accounted for.",
+            "example": 1
+          },
+          "cases_passed": {
+            "type": "integer",
+            "title": "Cases Passed",
+            "description": "Cases that passed.",
+            "example": 1
+          },
+          "cases_failed": {
+            "type": "integer",
+            "title": "Cases Failed",
+            "description": "Cases that drifted.",
+            "example": 1
+          },
+          "cases_errored": {
+            "type": "integer",
+            "title": "Cases Errored",
+            "description": "Cases that never answered.",
+            "example": 1
+          },
+          "cases_skipped": {
+            "type": "integer",
+            "title": "Cases Skipped",
+            "description": "Cases deliberately not sent.",
+            "example": 1
+          },
+          "drift_count": {
+            "type": "integer",
+            "title": "Drift Count",
+            "description": "Disagreements observed.",
+            "example": 1
+          },
+          "mutating_allowed": {
+            "type": "boolean",
+            "title": "Mutating Allowed",
+            "description": "Whether the run opted in to mutating methods.",
+            "example": false
+          },
+          "fixture_count": {
+            "type": "integer",
+            "title": "Fixture Count",
+            "description": "Fixtures the caller supplied.",
+            "example": 1
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "When it was written."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "User who ran it."
+          },
+          "actor_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Actor Label",
+            "description": "Actor label at the time."
+          },
+          "actor_kind": {
+            "type": "string",
+            "title": "Actor Kind",
+            "description": "`user`, `api_key`, or `system`.",
+            "default": "user",
+            "example": "example"
+          },
+          "report": {
+            "$ref": "#/components/schemas/ConformanceReport",
+            "description": "The stored conformance report."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "run_id",
+          "version_ref",
+          "suite_digest",
+          "target_slug",
+          "target_environment",
+          "target_base_url",
+          "outcome",
+          "operations_total",
+          "operations_exercised",
+          "operations_passed",
+          "operations_failed",
+          "operations_errored",
+          "operations_skipped",
+          "operations_uncompiled",
+          "coverage_percent",
+          "cases_total",
+          "cases_passed",
+          "cases_failed",
+          "cases_errored",
+          "cases_skipped",
+          "drift_count",
+          "mutating_allowed",
+          "fixture_count",
+          "report"
+        ],
+        "title": "ConformanceReportRecord",
+        "description": "A report with its detail \u2014 per-operation verdicts, drift, and uncovered operations."
+      },
+      "ConformanceReportSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Report id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns it.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "The ECA-1.3 evidence run this report summarises.",
+            "example": "run_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_ref": {
+            "type": "string",
+            "title": "Version Ref",
+            "description": "Version reference that was verified.",
+            "example": "1.0.0"
+          },
+          "artifact_kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Kind",
+            "description": "`project` or `catalog`."
+          },
+          "artifact_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Id",
+            "description": "Artifact id."
+          },
+          "artifact_slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Artifact Slug",
+            "description": "Artifact slug."
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Resolved version label."
+          },
+          "suite_digest": {
+            "type": "string",
+            "title": "Suite Digest",
+            "description": "Digest of the executed suite.",
+            "example": "example"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Target Id",
+            "description": "Target, when it still exists."
+          },
+          "target_slug": {
+            "type": "string",
+            "title": "Target Slug",
+            "description": "Target handle at run time.",
+            "example": "example-resource"
+          },
+          "target_environment": {
+            "type": "string",
+            "title": "Target Environment",
+            "description": "Environment class at run time.",
+            "example": "example"
+          },
+          "target_network_class": {
+            "type": "string",
+            "title": "Target Network Class",
+            "description": "`public` or `private`.",
+            "default": "public",
+            "example": "example"
+          },
+          "target_base_url": {
+            "type": "string",
+            "title": "Target Base Url",
+            "description": "Base URL at run time.",
+            "example": "https://example.com/resource"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`passed`, `failed`, or `errored`.",
+            "example": "example"
+          },
+          "operations_total": {
+            "type": "integer",
+            "title": "Operations Total",
+            "description": "Operations in the specification, compiled or not.",
+            "example": 1
+          },
+          "operations_exercised": {
+            "type": "integer",
+            "title": "Operations Exercised",
+            "description": "Operations that received a request.",
+            "example": 1
+          },
+          "operations_passed": {
+            "type": "integer",
+            "title": "Operations Passed",
+            "description": "Exercised operations with no drift.",
+            "example": 1
+          },
+          "operations_failed": {
+            "type": "integer",
+            "title": "Operations Failed",
+            "description": "Exercised operations that drifted.",
+            "example": 1
+          },
+          "operations_errored": {
+            "type": "integer",
+            "title": "Operations Errored",
+            "description": "Exercised operations that never answered.",
+            "example": 1
+          },
+          "operations_skipped": {
+            "type": "integer",
+            "title": "Operations Skipped",
+            "description": "Compiled operations nothing was sent for.",
+            "example": 1
+          },
+          "operations_uncompiled": {
+            "type": "integer",
+            "title": "Operations Uncompiled",
+            "description": "Operations the compiler could not compile.",
+            "example": 1
+          },
+          "coverage_percent": {
+            "type": "number",
+            "title": "Coverage Percent",
+            "description": "Exercised over total, as a percentage.",
+            "example": 100.0
+          },
+          "cases_total": {
+            "type": "integer",
+            "title": "Cases Total",
+            "description": "Cases accounted for.",
+            "example": 1
+          },
+          "cases_passed": {
+            "type": "integer",
+            "title": "Cases Passed",
+            "description": "Cases that passed.",
+            "example": 1
+          },
+          "cases_failed": {
+            "type": "integer",
+            "title": "Cases Failed",
+            "description": "Cases that drifted.",
+            "example": 1
+          },
+          "cases_errored": {
+            "type": "integer",
+            "title": "Cases Errored",
+            "description": "Cases that never answered.",
+            "example": 1
+          },
+          "cases_skipped": {
+            "type": "integer",
+            "title": "Cases Skipped",
+            "description": "Cases deliberately not sent.",
+            "example": 1
+          },
+          "drift_count": {
+            "type": "integer",
+            "title": "Drift Count",
+            "description": "Disagreements observed.",
+            "example": 1
+          },
+          "mutating_allowed": {
+            "type": "boolean",
+            "title": "Mutating Allowed",
+            "description": "Whether the run opted in to mutating methods.",
+            "example": false
+          },
+          "fixture_count": {
+            "type": "integer",
+            "title": "Fixture Count",
+            "description": "Fixtures the caller supplied.",
+            "example": 1
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "When it was written."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "User who ran it."
+          },
+          "actor_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Conformance Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Conformance Report schema."
+              }
+            ],
+            "title": "Actor Label",
+            "description": "Actor label at the time."
+          },
+          "actor_kind": {
+            "type": "string",
+            "title": "Actor Kind",
+            "description": "`user`, `api_key`, or `system`.",
+            "default": "user",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "run_id",
+          "version_ref",
+          "suite_digest",
+          "target_slug",
+          "target_environment",
+          "target_base_url",
+          "outcome",
+          "operations_total",
+          "operations_exercised",
+          "operations_passed",
+          "operations_failed",
+          "operations_errored",
+          "operations_skipped",
+          "operations_uncompiled",
+          "coverage_percent",
+          "cases_total",
+          "cases_passed",
+          "cases_failed",
+          "cases_errored",
+          "cases_skipped",
+          "drift_count",
+          "mutating_allowed",
+          "fixture_count"
+        ],
+        "title": "ConformanceReportSummary",
+        "description": "A report without its detail \u2014 what a list read returns.\n\nEvery field here is a stored column rather than a JSON lookup, which is what lets CTG-4.4 and\nCTG-4.5 ask \"did the newest report for this version pass, and how much did it cover?\" without\nopening a single report body."
+      },
       "ConnectionBody": {
         "properties": {
           "id": {
@@ -82601,7 +83776,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "25a2d15c-ab68-464d-a523-da97069db7cc"
+            "example": "2d4f5485-ef28-4a99-867e-00dd36f60ee2"
           },
           "method": {
             "type": "string",
@@ -84376,6 +85551,114 @@
         "title": "CoverageEntry",
         "description": "One row of the coverage ledger (IXH-3.1).\n\nClassifies one source construct. Entity-scoped rows reference their canonical\nentity by key; document-scoped rows (root-level constructs) have no entity. A\ndeclared parser limit is marked ``document_scoped = false`` \u2014 it states an adapter\nfact, not a verified fact about this document."
       },
+      "CoverageSummary": {
+        "properties": {
+          "operations_total": {
+            "type": "integer",
+            "title": "Operations Total",
+            "description": "Operations in the specification, compiled or not.",
+            "example": 1
+          },
+          "operations_exercised": {
+            "type": "integer",
+            "title": "Operations Exercised",
+            "description": "Operations that received at least one request.",
+            "example": 1
+          },
+          "operations_passed": {
+            "type": "integer",
+            "title": "Operations Passed",
+            "description": "Exercised operations with no drift.",
+            "example": 1
+          },
+          "operations_failed": {
+            "type": "integer",
+            "title": "Operations Failed",
+            "description": "Exercised operations that drifted.",
+            "example": 1
+          },
+          "operations_errored": {
+            "type": "integer",
+            "title": "Operations Errored",
+            "description": "Exercised operations that never answered.",
+            "example": 1
+          },
+          "operations_skipped": {
+            "type": "integer",
+            "title": "Operations Skipped",
+            "description": "Compiled operations whose every case was held back.",
+            "example": 1
+          },
+          "operations_uncompiled": {
+            "type": "integer",
+            "title": "Operations Uncompiled",
+            "description": "Operations the suite compiler could not turn into cases at all. Reported separately from `operations_skipped`: one was not sendable, the other was not sent.",
+            "example": 1
+          },
+          "uncovered_named": {
+            "type": "integer",
+            "title": "Uncovered Named",
+            "description": "How many uncovered operations the report could name. Lower than `operations_total - operations_exercised` when the compiler could not attribute a skip to a specific operation \u2014 stated rather than hidden. It can also exceed `len(uncovered)`, because the *list* is capped for readability while the count is not.",
+            "example": 1
+          },
+          "coverage_percent": {
+            "type": "number",
+            "title": "Coverage Percent",
+            "description": "`operations_exercised / operations_total`, as a percentage to one decimal.",
+            "example": 100.0
+          },
+          "cases_total": {
+            "type": "integer",
+            "title": "Cases Total",
+            "description": "Cases the run accounted for.",
+            "example": 1
+          },
+          "cases_passed": {
+            "type": "integer",
+            "title": "Cases Passed",
+            "description": "Cases that passed.",
+            "example": 1
+          },
+          "cases_failed": {
+            "type": "integer",
+            "title": "Cases Failed",
+            "description": "Cases that drifted.",
+            "example": 1
+          },
+          "cases_errored": {
+            "type": "integer",
+            "title": "Cases Errored",
+            "description": "Cases that never answered.",
+            "example": 1
+          },
+          "cases_skipped": {
+            "type": "integer",
+            "title": "Cases Skipped",
+            "description": "Cases deliberately not sent.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operations_total",
+          "operations_exercised",
+          "operations_passed",
+          "operations_failed",
+          "operations_errored",
+          "operations_skipped",
+          "operations_uncompiled",
+          "uncovered_named",
+          "coverage_percent",
+          "cases_total",
+          "cases_passed",
+          "cases_failed",
+          "cases_errored",
+          "cases_skipped"
+        ],
+        "title": "CoverageSummary",
+        "description": "How much of the specification this run actually exercised.\n\nThe denominator is **every operation in the model**, not every operation the suite compiler\ncould compile. A coverage number that quietly excluded what could not be compiled would read\nas reassurance about operations nobody checked."
+      },
       "CreateConnectionRequest": {
         "properties": {
           "siteId": {
@@ -85020,7 +86303,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-07T20:27:56Z"
+            "example": "2026-09-07T21:33:23Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -86278,6 +87561,107 @@
         "type": "object",
         "title": "DomainUpdateRequest",
         "description": "Request model for renaming or reordering a domain.\n\nEvery field is optional and only the supplied ones are written; renaming a domain never moves\nit in the tree unless ``sort_order`` is given too."
+      },
+      "DriftFinding": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "Canonical operation key that drifted.",
+            "example": "GET"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id",
+            "description": "The compiled case that observed it.",
+            "example": "case_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "http_method": {
+            "type": "string",
+            "title": "Http Method",
+            "description": "HTTP verb executed.",
+            "example": "example"
+          },
+          "http_path": {
+            "type": "string",
+            "title": "Http Path",
+            "description": "Request path executed.",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`status`, `response_schema`, or `transport`.",
+            "example": "example"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable failure code from the runner.",
+            "example": "example"
+          },
+          "pointer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Drift Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Drift Finding schema."
+              }
+            ],
+            "title": "Pointer",
+            "description": "RFC 6901 JSON Pointer to the offending value **in the response body** \u2014 the answer to *where*. Null for a status or transport drift, which has no body location."
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Drift Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Drift Finding schema."
+              }
+            ],
+            "title": "Expected",
+            "description": "What the contract required."
+          },
+          "actual": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Drift Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Drift Finding schema."
+              }
+            ],
+            "title": "Actual",
+            "description": "What the deployment returned."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human explanation, redacted by the evidence layer.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key",
+          "case_id",
+          "http_method",
+          "http_path",
+          "kind",
+          "code",
+          "message"
+        ],
+        "title": "DriftFinding",
+        "description": "One way the deployment disagreed with its contract, located as precisely as possible."
       },
       "DroppedPointBody": {
         "properties": {
@@ -90702,6 +92086,51 @@
         ],
         "title": "FirstTenantProvisionResponse",
         "description": "Result of ``POST /v1/onboarding/first-tenant``."
+      },
+      "FixtureFinding": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable code: `fixture-unmatched`, `fixture-not-mutating`, \u2026",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "What was wrong with the fixture.",
+            "example": "Example validation message."
+          },
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "The operation key the fixture named.",
+            "example": "GET"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Fixture Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Fixture Finding schema."
+              }
+            ],
+            "title": "Case Id",
+            "description": "The case id it named, when it did."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "operation_key"
+        ],
+        "title": "FixtureFinding",
+        "description": "A fixture the planner could not use, and why.\n\nNothing a tenant supplies is silently dropped: a fixture that matched nothing is a fixture\nsomebody believes is protecting an operation that was never verified."
       },
       "FormatAvailability": {
         "type": "string",
@@ -112495,6 +113924,121 @@
         "title": "MockUsageResponse",
         "description": "Mock usage counters for a tenant (#4420, SIM-1.5)."
       },
+      "MutatingFixture": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Operation Key",
+            "description": "Canonical operation key the fixture authorizes (`POST /pets`).",
+            "example": "GET"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "description": "Mutating Fixture schema."
+              },
+              {
+                "type": "null",
+                "description": "Mutating Fixture schema."
+              }
+            ],
+            "title": "Case Id",
+            "description": "Narrow the fixture to one compiled case. Omit to authorize every case of the operation; a case-scoped fixture wins over an operation-scoped one."
+          },
+          "path_parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Path Parameters",
+            "description": "Path parameter values, substituted into the operation's route template. This is how a fixture points a `DELETE /pets/{petId}` at a disposable record."
+          },
+          "query_parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Query Parameters",
+            "description": "Query parameter values to send."
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers",
+            "description": "Extra request headers. Credential headers are refused \u2014 authentication comes from the verification target's secret-free reference, never from a stored fixture."
+          },
+          "body": {
+            "anyOf": [
+              {
+                "description": "Mutating Fixture schema."
+              },
+              {
+                "type": "null",
+                "description": "Mutating Fixture schema."
+              }
+            ],
+            "title": "Body",
+            "description": "Request body to send instead of the compiled one. Applied to positive cases only: a negative case's body *is* the case, so it is never overwritten."
+          },
+          "has_body": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Mutating Fixture schema."
+              },
+              {
+                "type": "null",
+                "description": "Mutating Fixture schema."
+              }
+            ],
+            "title": "Has Body",
+            "description": "Whether the fixture sends a body at all. `null` infers it from `body`, which is the usual case; `false` sends no body even when the compiled case had one; `true` with a null `body` sends a literal JSON `null`."
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Mutating Fixture schema."
+              },
+              {
+                "type": "null",
+                "description": "Mutating Fixture schema."
+              }
+            ],
+            "title": "Media Type",
+            "description": "Media type for the fixture body. Defaults to the compiled case's."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Mutating Fixture schema."
+              },
+              {
+                "type": "null",
+                "description": "Mutating Fixture schema."
+              }
+            ],
+            "title": "Note",
+            "description": "Why exercising this operation is safe \u2014 the sentence a reviewer wants when a verification run turns out to have written to something."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key"
+        ],
+        "title": "MutatingFixture",
+        "description": "A tenant's explicit permission \u2014 and payload \u2014 for exercising one mutating operation.\n\nA fixture answers the question a safe-by-default verifier cannot answer for itself: *which*\nresource may this run create, replace, or delete, and with what. It supplies the request only.\nThe expectation stays whatever the contract declared, so a fixture can never make a case pass \u2014\nit can only get the case sent."
+      },
       "MutationDetail": {
         "properties": {
           "kind": {
@@ -112792,6 +114336,123 @@
         ],
         "title": "OpenTailResponse",
         "description": "The outcome of opening a live tail session."
+      },
+      "OperationConformance": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "Canonical operation key.",
+            "example": "GET"
+          },
+          "operation_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Operation Conformance schema."
+              },
+              {
+                "type": "null",
+                "description": "Operation Conformance schema."
+              }
+            ],
+            "title": "Operation Name",
+            "description": "Source operation name."
+          },
+          "http_method": {
+            "type": "string",
+            "title": "Http Method",
+            "description": "HTTP verb.",
+            "example": "example"
+          },
+          "http_path": {
+            "type": "string",
+            "title": "Http Path",
+            "description": "Route template or executed path.",
+            "example": "example"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "description": "`passed`, `failed`, `errored`, or `skipped`. `skipped` means every case for this operation was held back \u2014 the operation was *not* verified.",
+            "example": "example"
+          },
+          "exercised": {
+            "type": "boolean",
+            "title": "Exercised",
+            "description": "Whether at least one request was actually sent for this operation.",
+            "example": false
+          },
+          "cases_total": {
+            "type": "integer",
+            "title": "Cases Total",
+            "description": "Cases compiled for this operation and planned.",
+            "example": 1
+          },
+          "cases_passed": {
+            "type": "integer",
+            "title": "Cases Passed",
+            "description": "Cases that passed.",
+            "example": 1
+          },
+          "cases_failed": {
+            "type": "integer",
+            "title": "Cases Failed",
+            "description": "Cases whose response contradicted the contract.",
+            "example": 1
+          },
+          "cases_errored": {
+            "type": "integer",
+            "title": "Cases Errored",
+            "description": "Cases that never got an answer to judge.",
+            "example": 1
+          },
+          "cases_skipped": {
+            "type": "integer",
+            "title": "Cases Skipped",
+            "description": "Cases deliberately not sent.",
+            "example": 1
+          },
+          "skip_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Operation Conformance schema."
+              },
+              {
+                "type": "null",
+                "description": "Operation Conformance schema."
+              }
+            ],
+            "title": "Skip Reason",
+            "description": "Why the operation was not exercised, when it was not."
+          },
+          "drift": {
+            "items": {
+              "$ref": "#/components/schemas/DriftFinding"
+            },
+            "type": "array",
+            "title": "Drift",
+            "description": "Every disagreement observed for this operation.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key",
+          "http_method",
+          "http_path",
+          "outcome",
+          "exercised",
+          "cases_total",
+          "cases_passed",
+          "cases_failed",
+          "cases_errored",
+          "cases_skipped"
+        ],
+        "title": "OperationConformance",
+        "description": "One operation's verdict, rolled up from every case that exercised it."
       },
       "OperationCreateRequest": {
         "properties": {
@@ -117149,6 +118810,187 @@
         ],
         "title": "ProviderConfigView",
         "description": "One provider's masked configuration \u2014 the shape both GET and PUT return.\n\nNever carries a secret value: ``secret_set`` reports only whether a secret is stored."
+      },
+      "ProviderVerificationOptions": {
+        "properties": {
+          "allow_mutating": {
+            "type": "boolean",
+            "title": "Allow Mutating",
+            "description": "Opt in to exercising mutating methods. Off by default. Even when on, a mutating case runs only if a fixture names its operation \u2014 and never if the verification target's own policy forbids mutating methods.",
+            "default": false,
+            "example": false
+          },
+          "fixtures": {
+            "items": {
+              "$ref": "#/components/schemas/MutatingFixture"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Fixtures",
+            "description": "Per-operation permission and payload for mutating operations."
+          },
+          "max_drift_findings_per_case": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Max Drift Findings Per Case",
+            "description": "Cap on located schema violations carried into the report for one case. A response that disagrees with its schema everywhere is one drift, not a hundred.",
+            "default": 20,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProviderVerificationOptions",
+        "description": "How much of the deployment this run is allowed to touch."
+      },
+      "ProviderVerificationRequest": {
+        "properties": {
+          "target_ref": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Target Ref",
+            "description": "Verification target slug or id (ECA-1.2) naming the deployment to check.",
+            "example": "example"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ContractSuiteOptions",
+            "description": "Suite compiler options; hashed into the suite digest the report and the evidence both record, so two reports with the same digest checked the same requests."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/ProviderVerificationOptions",
+            "description": "What this run may send. Safe methods only by default; mutating operations require both `allow_mutating` and a fixture naming the operation."
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Request body for provider verification."
+              },
+              {
+                "type": "null",
+                "description": "Request body for provider verification."
+              }
+            ],
+            "title": "Idempotency Key",
+            "description": "Evidence retry key; forwarded to the verification-runs store."
+          },
+          "context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context",
+            "description": "Non-secret CI context (commit, branch, workflow URL). Never credentials."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target_ref"
+        ],
+        "title": "ProviderVerificationRequest",
+        "description": "What to verify, against which deployment, and how much of it may be touched."
+      },
+      "ProviderVerificationResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "description": "Whether the suite executed and a report was produced.",
+            "example": false
+          },
+          "version_ref": {
+            "type": "string",
+            "title": "Version Ref",
+            "description": "The version reference exactly as requested.",
+            "example": "1.0.0"
+          },
+          "suite_digest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for provider verification."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "title": "Suite Digest",
+            "description": "Digest of the suite that was executed, when compiled."
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConformanceReport"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "description": "The conformance report when `ok` is true."
+          },
+          "stored": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConformanceReportRecord"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "description": "The persisted report, when it was written. Null \u2014 with `report` still populated \u2014 when persistence was not possible, so a caller is never handed a report id that does not exist."
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationRunRecord"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "description": "The immutable ECA-1.3 evidence behind the report."
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Response payload for provider verification."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "title": "Created",
+            "description": "True when evidence was newly written; False on idempotent replay."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpecImportJobError"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for provider verification."
+              }
+            ],
+            "description": "Populated when `ok` is false: stable taxonomy code plus remediation."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ok",
+          "version_ref"
+        ],
+        "title": "ProviderVerificationResponse",
+        "description": "The outcome of one provider verification attempt."
       },
       "PublicExportDocumentRequest": {
         "properties": {
@@ -123036,7 +124878,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-07T20:27:56Z"
+            "example": "2026-09-07T21:33:23Z"
           }
         },
         "additionalProperties": false,
@@ -133543,6 +135385,58 @@
         "title": "TargetFidelity",
         "description": "The cheap per-target fidelity summary for one (source, target) pairing (MFX-2.5).\n\nThe lightweight half of the surface: a :attr:`tier` badge and a :attr:`preserved_percent`\nestimate plus the per-kind counts, all derived from the prediction report with no emit.\nThe export dialog renders one of these per target card (MFX-6.1) and the version view\naggregates them into its pre-summary (MFX-6.5); the full per-construct detail is fetched\non demand via ``POST /export/preview`` (:class:`ExportFidelity`)."
       },
+      "TargetIdentity": {
+        "properties": {
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Target Identity schema."
+              },
+              {
+                "type": "null",
+                "description": "Target Identity schema."
+              }
+            ],
+            "title": "Target Id",
+            "description": "Target id, when it still exists."
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "Target handle at run time.",
+            "example": "pet-store"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "Environment class (`mock`, `staging`, `production`).",
+            "example": "example"
+          },
+          "network_class": {
+            "type": "string",
+            "title": "Network Class",
+            "description": "`public` or `private`.",
+            "default": "public",
+            "example": "example"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url",
+            "description": "Base URL the requests were sent to.",
+            "example": "https://example.com/resource"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "environment",
+          "base_url"
+        ],
+        "title": "TargetIdentity",
+        "description": "The deployment a report is about, snapshotted at run time.\n\nA report names the target as it *was*, so a later rename, re-pointing, or retirement cannot\nrewrite what a past verification claimed to have checked."
+      },
       "TargetLocation": {
         "properties": {
           "json_pointer": {
@@ -136503,6 +138397,37 @@
         "title": "TypeRegistrySettingsUpdateRequest",
         "description": "Request model for saving a tenant's type-registry settings (#3472).\n\nEvery field is optional so the UI may send a partial update; omitted fields keep their\ncurrent persisted value (or the default when no row exists yet). Enum and range checks\nhere mirror the ``apiome.type_registry_settings`` CHECK constraints so an invalid value is\nrejected with a clean 422 before it ever reaches the database."
       },
+      "UncoveredOperation": {
+        "properties": {
+          "operation_key": {
+            "type": "string",
+            "title": "Operation Key",
+            "description": "Canonical operation key.",
+            "example": "GET"
+          },
+          "reason_code": {
+            "type": "string",
+            "title": "Reason Code",
+            "description": "Why it was not exercised: a compiler finding code (`UNSUPPORTED_STREAMING`, `NO_CASES_COMPILED`, \u2026) or a planner skip code (`mutating-fixture-missing`, \u2026).",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "What stopped it being verified.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_key",
+          "reason_code",
+          "message"
+        ],
+        "title": "UncoveredOperation",
+        "description": "An operation the report does not vouch for, and why."
+      },
       "UnlinkArtifactsRequest": {
         "properties": {
           "projectId": {
@@ -138304,14 +140229,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-07T20:27:56Z"
+            "example": "2026-09-07T21:33:23Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-07T20:27:56Z"
+            "example": "2026-09-07T21:33:23Z"
           },
           "outcome": {
             "anyOf": [

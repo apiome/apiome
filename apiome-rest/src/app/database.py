@@ -29295,6 +29295,242 @@ class Database:
         )
 
 
+    # =========================================================================================
+    # Provider verification reports (CTG-4.3, #4489)
+    # =========================================================================================
+
+    #: Every column a reader of a conformance report needs, with the UUIDs rendered as text so a
+    #: caller never has to know psycopg2 returns UUID objects. Kept as one constant because the
+    #: read, the list, and the insert's ``RETURNING`` clause must not drift apart.
+    _PROVIDER_VERIFICATION_REPORT_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        run_id::text AS run_id,
+        version_ref,
+        artifact_kind,
+        artifact_id::text AS artifact_id,
+        artifact_slug,
+        version_label,
+        suite_digest,
+        target_id::text AS target_id,
+        target_slug,
+        target_environment,
+        target_network_class,
+        target_base_url,
+        outcome,
+        operations_total,
+        operations_exercised,
+        operations_passed,
+        operations_failed,
+        operations_errored,
+        operations_skipped,
+        operations_uncompiled,
+        coverage_percent,
+        cases_total,
+        cases_passed,
+        cases_failed,
+        cases_errored,
+        cases_skipped,
+        drift_count,
+        mutating_allowed,
+        fixture_count,
+        report,
+        created_at,
+        created_by::text AS created_by,
+        actor_label,
+        actor_kind
+    """
+
+    def insert_provider_verification_report(
+        self, *, report: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Write one conformance report beside the evidence run it summarises.
+
+        The row is write-once (V252's BEFORE UPDATE trigger), so it is written whole in a single
+        statement — there is no open/append/close path a half-written report could survive in.
+
+        Args:
+            report: The column map, including ``tenant_id``, ``run_id``, and the coverage counts.
+
+        Returns:
+            The stored row, or ``None`` when a required id is not a UUID (which keeps a test
+            tenant like ``"t1"`` from reaching the database at all).
+        """
+        tenant_id = str(report.get("tenant_id") or "")
+        run_id = str(report.get("run_id") or "")
+        if not is_uuid_string(tenant_id) or not is_uuid_string(run_id):
+            return None
+
+        def _uuid_or_none(value: Any) -> Optional[str]:
+            """Pass a UUID through, and anything else as NULL."""
+            text = str(value or "")
+            return text if text and is_uuid_string(text) else None
+
+        params = (
+            tenant_id,
+            run_id,
+            report.get("version_ref"),
+            report.get("artifact_kind"),
+            _uuid_or_none(report.get("artifact_id")),
+            report.get("artifact_slug"),
+            report.get("version_label"),
+            report.get("suite_digest"),
+            _uuid_or_none(report.get("target_id")),
+            report.get("target_slug"),
+            report.get("target_environment"),
+            report.get("target_network_class") or "public",
+            report.get("target_base_url"),
+            report.get("outcome"),
+            int(report.get("operations_total") or 0),
+            int(report.get("operations_exercised") or 0),
+            int(report.get("operations_passed") or 0),
+            int(report.get("operations_failed") or 0),
+            int(report.get("operations_errored") or 0),
+            int(report.get("operations_skipped") or 0),
+            int(report.get("operations_uncompiled") or 0),
+            float(report.get("coverage_percent") or 0.0),
+            int(report.get("cases_total") or 0),
+            int(report.get("cases_passed") or 0),
+            int(report.get("cases_failed") or 0),
+            int(report.get("cases_errored") or 0),
+            int(report.get("cases_skipped") or 0),
+            int(report.get("drift_count") or 0),
+            bool(report.get("mutating_allowed")),
+            int(report.get("fixture_count") or 0),
+            json.dumps(report.get("report") or {}, sort_keys=True, default=str),
+            _uuid_or_none(report.get("created_by")),
+            report.get("actor_label"),
+            report.get("actor_kind") or "user",
+        )
+        query = f"""
+            INSERT INTO apiome.provider_verification_report (
+                tenant_id, run_id, version_ref, artifact_kind, artifact_id, artifact_slug,
+                version_label, suite_digest, target_id, target_slug, target_environment,
+                target_network_class, target_base_url, outcome,
+                operations_total, operations_exercised, operations_passed, operations_failed,
+                operations_errored, operations_skipped, operations_uncompiled, coverage_percent,
+                cases_total, cases_passed, cases_failed, cases_errored, cases_skipped,
+                drift_count, mutating_allowed, fixture_count, report,
+                created_by, actor_label, actor_kind
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s, %s, %s::uuid, %s, %s, %s, %s::uuid, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s::jsonb,
+                %s::uuid, %s, %s
+            )
+            RETURNING {self._PROVIDER_VERIFICATION_REPORT_COLUMNS}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def get_provider_verification_report(
+        self, report_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one conformance report inside a tenant.
+
+        Args:
+            report_id: The report id.
+            tenant_id: The caller's tenant — part of the WHERE clause, never an afterthought.
+
+        Returns:
+            The row, or ``None`` when nothing matches in this tenant.
+        """
+        if not is_uuid_string(str(report_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._PROVIDER_VERIFICATION_REPORT_COLUMNS}
+            FROM apiome.provider_verification_report
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (report_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_provider_verification_report_by_run(
+        self, run_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read the conformance report written for one evidence run.
+
+        Args:
+            run_id: The ECA-1.3 verification run id.
+            tenant_id: The caller's tenant.
+
+        Returns:
+            The row, or ``None`` when that run has no report.
+        """
+        if not is_uuid_string(str(run_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._PROVIDER_VERIFICATION_REPORT_COLUMNS}
+            FROM apiome.provider_verification_report
+            WHERE run_id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (run_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def list_provider_verification_reports(
+        self,
+        tenant_id: str,
+        *,
+        version_ref: Optional[str] = None,
+        target_id: Optional[str] = None,
+        outcome: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """A tenant's conformance reports, newest first.
+
+        The filters are the questions a gate asks: "the newest report for *this* version"
+        (CTG-4.5), "everything that ran against *this* deployment", "what is drifting".
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_ref: Restrict to one version reference.
+            target_id: Restrict to one verification target.
+            outcome: Restrict to one verdict.
+            limit: Maximum rows.
+
+        Returns:
+            The rows; empty when nothing matches or the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        clauses = ["tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        if version_ref:
+            clauses.append("version_ref = %s")
+            params.append(version_ref)
+        if target_id and is_uuid_string(str(target_id)):
+            clauses.append("target_id = %s::uuid")
+            params.append(target_id)
+        if outcome:
+            clauses.append("outcome = %s")
+            params.append(outcome)
+        params.append(max(1, int(limit)))
+        return self.execute_query(
+            f"""
+            SELECT {self._PROVIDER_VERIFICATION_REPORT_COLUMNS}
+            FROM apiome.provider_verification_report
+            WHERE {" AND ".join(clauses)}
+            ORDER BY created_at DESC, id
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
+
 
 # Global database instance
 db = Database()
