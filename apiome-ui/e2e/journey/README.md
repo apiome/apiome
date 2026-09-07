@@ -46,12 +46,40 @@ itself. Database connectivity comes from `DATABASE_URL` (env or `apiome-ui/.env`
 Runs are re-entrant: every email, slug, and provider-side id carries a per-run suffix,
 so repeated runs against the same database never collide.
 
+## Provider-config legs (OLO-8.9, #4975)
+
+`provider-config-precedence.spec.ts` drives the OLO-EPIC-8 story end to end: an admin configures
+GitHub credentials in `/admin/dashboard/settings`, the next sign-in uses them instead of `.env`,
+removing the row falls back to `.env`, and the fallback still signs in. It asserts the `client_id`
+on the outgoing authorization request — the only place the *effective* credentials are observable —
+and asserts at the storage layer that the secret is stored as ciphertext, never plaintext.
+
+It needs three variables that the rest of the suite does not, because they gate the **database**
+config source. All three default to empty in `docker-compose.yml`, so the spec probes first and
+**skips with the variable to set** rather than silently passing on `.env`:
+
+| Variable | Where it must be set | Why |
+| --- | --- | --- |
+| `INTERNAL_SERVICE_TOKEN` | `apiome-ui/.env` **and** `apiome-rest/.env`, identical | Gates `GET /v1/internal/auth-providers/resolved`. Unset ⇒ `resolveProviderEnv` degrades to `env-only` and never reads the DB. |
+| `ADMIN_SESSION_SECRET` | `apiome-ui/.env` **and** `apiome-rest/.env`, identical | REST re-verifies the signed `admin_session` the UI forwards; a mismatch 403s every admin save. `ADMIN_PASSWORD` is the fallback derivation on both sides. |
+| `AUTH_CONFIG_ENC_KEY` | `apiome-rest/.env` (base64, 32 bytes) | The KEK that seals stored client secrets. Absent ⇒ writing a secret returns `encryption_not_configured`. |
+
+`ADMIN_PASSWORD` (in `apiome-ui/.env`) is what the spec signs in to the portal with.
+
+The spec also pins `AUTH_PROVIDER_CONFIG_CACHE_TTL_MS=5000` — the resolver's clamped floor — so an
+admin edit reaches the login path within a bounded wait instead of the 30s default. It runs last
+(alphabetically) and clears its `auth_provider_config` row before *and* after: that table is
+**global**, so a leaked row would change which credentials every other spec signs in with.
+
 ## Suite layout
 
 - `oauth-onboarding-journey.spec.ts` — the eleven-step journey (serial): four OAuth providers,
   invariants, onboarding, license, switcher, credentials sign-in, and the 2FA legs.
+- `provider-config-precedence.spec.ts` — the OLO-8.9 DB-over-`.env` provider-config story (above).
 - `support/env.ts` — ports, URLs, and the app-under-test environment (the four provider mock
-  overrides).
+  overrides, plus the OLO-8.9 database-config-source variables).
+- `support/provider-config.ts` — the OLO-8.9 readiness probe, the resolved-endpoint poller, and the
+  authorization-request `client_id` capture.
 - `support/mock-oauth.ts` — persona control client for the mock provider.
 - `support/db.ts` — seeding (zero-tenant user, credential user, invite targets) and storage-layer
   invariant checks (no-duplicate-account, linked identities, 2FA state).

@@ -30,6 +30,18 @@ jobs:
       # with local dev, so the compose defaults (5432/8000) are often taken.
       BETTER_AUTH_SECRET: olo-journey-ci-secret
       NEXT_TELEMETRY_DISABLED: "1"
+      # OLO-8.9 (#4975): the database provider-config source. compose passes all three into REST
+      # (docker-compose.yml) and support/env.ts forwards the first two into the app under test, so
+      # both sides agree. Without them `provider-config-precedence.spec.ts` skips (it says which one
+      # is missing) — the rest of the journey is unaffected.
+      #
+      # Throwaway values for an ephemeral CI stack, deliberately inline and obviously non-secret,
+      # matching BETTER_AUTH_SECRET above. Never reuse these anywhere real.
+      INTERNAL_SERVICE_TOKEN: olo-journey-ci-internal-service-token
+      ADMIN_PASSWORD: olo-journey-ci-admin-password
+      ADMIN_SESSION_SECRET: olo-journey-ci-admin-session-secret
+      # AES-256 KEK sealing stored client secrets: base64 of exactly 32 bytes.
+      AUTH_CONFIG_ENC_KEY: b2xvLWpvdXJuZXktY2ktcHJvdmlkZXItY2ZnLWtleSE=
 
     steps:
       - name: Checkout code
