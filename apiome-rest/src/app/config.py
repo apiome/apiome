@@ -1547,6 +1547,44 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Scheduled provider verification & drift alerts (CTG-4.4, #4501). A background async loop
+    # (app.verification_schedule_sweep) executes each due tenant schedule's CTG-4.3 provider
+    # verification against a registered deployment, records the tick, and — on new drift — fans an
+    # alert out over the tenant's push-webhook subscriptions. The feature is opt-in per schedule
+    # (a tenant with no schedules costs one empty query per tick); these settings govern the loop.
+    #
+    # verification_schedule_enabled     Global kill switch. When False the sweep halts entirely for
+    #                                   a tick (no selection, no run, no alert), for incident
+    #                                   response — independent of per-schedule enablement.
+    # verification_schedule_interval_seconds  The sweep's tick floor: how often the loop wakes to
+    #                                   look for due schedules. Cheap; each schedule's own cadence
+    #                                   (minimum 5 minutes) gates actual runs.
+    # verification_schedule_batch_size  Max schedules executed per tick. Unlike the other sweeps
+    #                                   this one sends real HTTP requests to live deployments, so
+    #                                   the batch is bounded rather than "everything that is due";
+    #                                   the remainder stays due and is picked up next tick.
+    verification_schedule_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_VERIFICATION_SCHEDULE_ENABLED",
+            "verification_schedule_enabled",
+        ),
+    )
+    verification_schedule_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_VERIFICATION_SCHEDULE_INTERVAL",
+            "verification_schedule_interval_seconds",
+        ),
+    )
+    verification_schedule_batch_size: int = Field(
+        default=5,
+        validation_alias=AliasChoices(
+            "APIOME_VERIFICATION_SCHEDULE_BATCH_SIZE",
+            "verification_schedule_batch_size",
+        ),
+    )
+
     # Dependency-vulnerability lookup for the MCP supply-chain scan (CLX-3.2, #4856). OFF by default:
     # the trust-posture scan is fully offline unless an operator turns this on, which is what the
     # roadmap asks for ("start with local/offline tools; third-party scanning APIs are optional

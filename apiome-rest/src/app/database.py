@@ -29530,6 +29530,617 @@ class Database:
             tuple(params),
         )
 
+    # =========================================================================================
+    # Scheduled verification & drift alerts (CTG-4.4, #4501)
+    # =========================================================================================
+
+    #: Every column a reader of a schedule needs, with the UUIDs rendered as text so a caller never
+    #: has to know psycopg2 returns UUID objects. One constant because the read, the list, the
+    #: due-selection, and both writes' ``RETURNING`` clauses must not drift apart.
+    _VERIFICATION_SCHEDULE_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        slug,
+        name,
+        description,
+        version_ref,
+        target_id::text AS target_id,
+        target_slug,
+        cadence_seconds,
+        enabled,
+        alert_on_recovery,
+        verification,
+        suite_options,
+        last_run_at,
+        last_status,
+        last_success_at,
+        last_report_id::text AS last_report_id,
+        consecutive_failures,
+        run_count,
+        alert_state,
+        alert_fingerprint,
+        last_alert_at,
+        created_at,
+        updated_at,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by
+    """
+
+    #: Every column of one recorded tick.
+    _VERIFICATION_SCHEDULE_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        schedule_id::text AS schedule_id,
+        report_id::text AS report_id,
+        run_id::text AS run_id,
+        status,
+        error_code,
+        error_message,
+        operations_total,
+        operations_exercised,
+        operations_failed,
+        coverage_percent,
+        drift_count,
+        drift_fingerprint,
+        alerted,
+        alert_reason,
+        alert_deliveries,
+        started_at,
+        finished_at,
+        duration_ms,
+        created_at
+    """
+
+    #: The columns an update may set. A whitelist rather than the caller's keys, so a dynamic SET
+    #: clause can never be steered into a column the API does not expose.
+    _VERIFICATION_SCHEDULE_UPDATABLE = (
+        "name",
+        "description",
+        "cadence_seconds",
+        "enabled",
+        "alert_on_recovery",
+        "verification",
+        "suite_options",
+    )
+
+    def insert_verification_schedule(
+        self, *, schedule: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Define one verification schedule.
+
+        Args:
+            schedule: The column map, including ``tenant_id``, ``target_id``, and ``slug``.
+
+        Returns:
+            The stored row, or ``None`` when the tenant or target id is not a UUID (which keeps a
+            test tenant like ``"t1"`` from reaching the database at all).
+        """
+        tenant_id = str(schedule.get("tenant_id") or "")
+        target_id = str(schedule.get("target_id") or "")
+        if not is_uuid_string(tenant_id) or not is_uuid_string(target_id):
+            return None
+        created_by = str(schedule.get("created_by") or "")
+        params = (
+            tenant_id,
+            schedule.get("slug"),
+            schedule.get("name"),
+            schedule.get("description"),
+            schedule.get("version_ref"),
+            target_id,
+            schedule.get("target_slug"),
+            int(schedule.get("cadence_seconds") or 0),
+            bool(schedule.get("enabled", True)),
+            bool(schedule.get("alert_on_recovery", True)),
+            json.dumps(schedule.get("verification") or {}, sort_keys=True, default=str),
+            json.dumps(schedule.get("suite_options") or {}, sort_keys=True, default=str),
+            created_by if is_uuid_string(created_by) else None,
+        )
+        query = f"""
+            INSERT INTO apiome.verification_schedule (
+                tenant_id, slug, name, description, version_ref, target_id, target_slug,
+                cadence_seconds, enabled, alert_on_recovery, verification, suite_options,
+                created_by, updated_by
+            )
+            VALUES (
+                %s::uuid, %s, %s, %s, %s, %s::uuid, %s,
+                %s, %s, %s, %s::jsonb, %s::jsonb,
+                %s::uuid, NULL
+            )
+            RETURNING {self._VERIFICATION_SCHEDULE_COLUMNS}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def get_verification_schedule_by_id(
+        self, schedule_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one live schedule by id inside a tenant.
+
+        Args:
+            schedule_id: The schedule id.
+            tenant_id: The caller's tenant — part of the WHERE clause, never an afterthought.
+
+        Returns:
+            The row, or ``None`` when nothing live matches in this tenant.
+        """
+        if not is_uuid_string(str(schedule_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_COLUMNS}
+            FROM apiome.verification_schedule
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            """,
+            (schedule_id, tenant_id),
+        )
+        return rows[0] if rows else None
+
+    def get_verification_schedule_by_slug(
+        self, tenant_id: str, slug: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one live schedule by handle inside a tenant.
+
+        Args:
+            tenant_id: The caller's tenant.
+            slug: The handle, matched case-insensitively (as the unique index is built).
+
+        Returns:
+            The row, or ``None`` when nothing live matches.
+        """
+        if not is_uuid_string(str(tenant_id or "")) or not str(slug or "").strip():
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_COLUMNS}
+            FROM apiome.verification_schedule
+            WHERE tenant_id = %s::uuid AND lower(slug) = lower(%s) AND deleted_at IS NULL
+            """,
+            (tenant_id, str(slug).strip()),
+        )
+        return rows[0] if rows else None
+
+    def find_verification_schedule_for_pair(
+        self, tenant_id: str, version_ref: str, target_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read the live schedule already watching one (version, deployment) pair.
+
+        Used to refuse a duplicate before the unique index does, so the caller gets a stable code
+        instead of a driver error.
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_ref: The version reference.
+            target_id: The verification target id.
+
+        Returns:
+            The row, or ``None`` when the pair is unwatched.
+        """
+        if not is_uuid_string(str(tenant_id or "")) or not is_uuid_string(str(target_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_COLUMNS}
+            FROM apiome.verification_schedule
+            WHERE tenant_id = %s::uuid AND version_ref = %s AND target_id = %s::uuid
+              AND deleted_at IS NULL
+            """,
+            (tenant_id, version_ref, target_id),
+        )
+        return rows[0] if rows else None
+
+    def list_verification_schedules(
+        self,
+        tenant_id: str,
+        *,
+        version_ref: Optional[str] = None,
+        target_id: Optional[str] = None,
+        enabled: Optional[bool] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """A tenant's live schedules, newest first.
+
+        The filters are the questions a gate asks: "is *this* version being watched, and how fresh
+        is it?" (CTG-4.5), "what runs against *this* deployment", "what is currently paused".
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_ref: Restrict to one version reference.
+            target_id: Restrict to one verification target.
+            enabled: Restrict to enabled or paused schedules.
+            limit: Maximum rows.
+
+        Returns:
+            The rows; empty when nothing matches or the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        clauses = ["tenant_id = %s::uuid", "deleted_at IS NULL"]
+        params: List[Any] = [tenant_id]
+        if version_ref:
+            clauses.append("version_ref = %s")
+            params.append(version_ref)
+        if target_id and is_uuid_string(str(target_id)):
+            clauses.append("target_id = %s::uuid")
+            params.append(target_id)
+        if enabled is not None:
+            clauses.append("enabled = %s")
+            params.append(bool(enabled))
+        params.append(max(1, int(limit)))
+        return self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_COLUMNS}
+            FROM apiome.verification_schedule
+            WHERE {" AND ".join(clauses)}
+            ORDER BY created_at DESC, id
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
+    def update_verification_schedule(
+        self,
+        schedule_id: str,
+        tenant_id: str,
+        *,
+        fields: Dict[str, Any],
+        updated_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Apply a partial update to one live schedule.
+
+        Only :data:`_VERIFICATION_SCHEDULE_UPDATABLE` columns are settable — the scheduling and
+        alerting state belong to the sweep (:meth:`mark_verification_schedule_ran`), not to a PATCH,
+        so no request can clear an outstanding alert or fake a fresh verification.
+
+        Args:
+            schedule_id: The schedule id.
+            tenant_id: The caller's tenant.
+            fields: Column values to set.
+            updated_by: The acting user id, when there is one.
+
+        Returns:
+            The updated row, or ``None`` when nothing live matched or nothing was settable.
+        """
+        if not is_uuid_string(str(schedule_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        assignments: List[str] = []
+        params: List[Any] = []
+        for column in self._VERIFICATION_SCHEDULE_UPDATABLE:
+            if column not in fields:
+                continue
+            value = fields[column]
+            if column in ("verification", "suite_options"):
+                assignments.append(f"{column} = %s::jsonb")
+                params.append(json.dumps(value or {}, sort_keys=True, default=str))
+            else:
+                assignments.append(f"{column} = %s")
+                params.append(value)
+        if not assignments:
+            return None
+        assignments.append("updated_at = CURRENT_TIMESTAMP")
+        actor = str(updated_by or "")
+        assignments.append("updated_by = %s::uuid")
+        params.append(actor if is_uuid_string(actor) else None)
+        params.extend([schedule_id, tenant_id])
+        query = f"""
+            UPDATE apiome.verification_schedule
+            SET {", ".join(assignments)}
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING {self._VERIFICATION_SCHEDULE_COLUMNS}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, tuple(params))
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def soft_delete_verification_schedule(
+        self, schedule_id: str, tenant_id: str, *, updated_by: Optional[str] = None
+    ) -> bool:
+        """Retire one schedule, keeping its run history.
+
+        A soft delete because the freshness question ("when did this version last verify clean?")
+        outlives the instruction that answered it, and V253's run rows cascade from the schedule.
+
+        Args:
+            schedule_id: The schedule id.
+            tenant_id: The caller's tenant.
+            updated_by: The acting user id, when there is one.
+
+        Returns:
+            ``True`` when a live schedule was retired.
+        """
+        if not is_uuid_string(str(schedule_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return False
+        actor = str(updated_by or "")
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.verification_schedule
+                    SET deleted_at = CURRENT_TIMESTAMP,
+                        enabled = FALSE,
+                        updated_at = CURRENT_TIMESTAMP,
+                        updated_by = %s::uuid
+                    WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+                    RETURNING id
+                    """,
+                    (actor if is_uuid_string(actor) else None, schedule_id, tenant_id),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+            return bool(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_due_verification_schedules(self, *, limit: int = 25) -> List[Dict[str, Any]]:
+        """Return the schedules whose cadence has elapsed, oldest anchor first (CTG-4.4).
+
+        A schedule is *due* when it is live, enabled, its tenant is live, and it has either never
+        run or its own ``cadence_seconds`` has elapsed since ``last_run_at``. The comparison is
+        evaluated in the database against a single ``now()``, so due-ness is free of application
+        clock skew and identical for every replica sweeping at the same moment.
+
+        Never-run schedules sort first, then the oldest anchor, so a backlog drains fairly rather
+        than starving whichever schedule happens to sort last by id.
+
+        Args:
+            limit: Maximum schedules returned per tick. Each one executes real HTTP requests
+                against a live deployment, so the batch is bounded by the caller rather than by
+                how many happen to be due.
+
+        Returns:
+            The due schedule rows. A live tenant is required (``EXISTS`` rather than a join, so
+            the column list stays unambiguous).
+        """
+        return self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_COLUMNS}
+            FROM apiome.verification_schedule
+            WHERE deleted_at IS NULL
+              AND enabled
+              AND (
+                last_run_at IS NULL
+                OR last_run_at <= now() - make_interval(secs => cadence_seconds)
+              )
+              AND EXISTS (
+                SELECT 1 FROM apiome.tenants t
+                WHERE t.id = verification_schedule.tenant_id AND t.deleted_at IS NULL
+              )
+            ORDER BY last_run_at ASC NULLS FIRST, created_at ASC
+            LIMIT %s
+            """,
+            (max(1, int(limit)),),
+        )
+
+    def try_acquire_verification_schedule_lock(self, schedule_id: str) -> bool:
+        """Try to take the per-schedule advisory lock (CTG-4.4).
+
+        Per-schedule single-flight, mirroring :meth:`try_acquire_mcp_catalog_digest_lock`: a
+        Postgres **session** advisory lock keyed on the schedule id ensures two workers or two
+        overlapping ticks never run the same schedule at once, which would double the traffic at
+        the deployment and could double an alert. Non-blocking — returns ``False`` at once when
+        another session holds it. Acquire and release must run on the same connection (the sweep
+        uses one ``Database`` per tick).
+
+        Args:
+            schedule_id: The schedule to serialize.
+
+        Returns:
+            ``True`` when the lock was acquired.
+        """
+        rows = self.execute_query(
+            "SELECT pg_try_advisory_lock(hashtext(%s)) AS locked",
+            (f"verification-schedule:{schedule_id}",),
+        )
+        return bool(rows and rows[0].get("locked"))
+
+    def release_verification_schedule_lock(self, schedule_id: str) -> None:
+        """Release the per-schedule advisory lock (CTG-4.4).
+
+        Counterpart to :meth:`try_acquire_verification_schedule_lock`; must run on the same
+        connection that acquired it. Safe to call even if the lock was not held.
+
+        Args:
+            schedule_id: The schedule whose lock to release.
+        """
+        self.execute_query(
+            "SELECT pg_advisory_unlock(hashtext(%s)) AS unlocked",
+            (f"verification-schedule:{schedule_id}",),
+        )
+
+    def insert_verification_schedule_run(self, *, run: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Record one tick in the write-once history.
+
+        Args:
+            run: The column map, including ``tenant_id``, ``schedule_id``, and ``status``.
+
+        Returns:
+            The stored row, or ``None`` when a required id is not a UUID.
+        """
+        tenant_id = str(run.get("tenant_id") or "")
+        schedule_id = str(run.get("schedule_id") or "")
+        if not is_uuid_string(tenant_id) or not is_uuid_string(schedule_id):
+            return None
+
+        def _uuid_or_none(value: Any) -> Optional[str]:
+            """Pass a UUID through, and anything else as NULL."""
+            text = str(value or "")
+            return text if text and is_uuid_string(text) else None
+
+        params = (
+            tenant_id,
+            schedule_id,
+            _uuid_or_none(run.get("report_id")),
+            _uuid_or_none(run.get("run_id")),
+            run.get("status"),
+            run.get("error_code"),
+            run.get("error_message"),
+            int(run.get("operations_total") or 0),
+            int(run.get("operations_exercised") or 0),
+            int(run.get("operations_failed") or 0),
+            float(run.get("coverage_percent") or 0.0),
+            int(run.get("drift_count") or 0),
+            run.get("drift_fingerprint"),
+            bool(run.get("alerted")),
+            run.get("alert_reason"),
+            int(run.get("alert_deliveries") or 0),
+            run.get("started_at"),
+            run.get("finished_at"),
+            int(run.get("duration_ms") or 0),
+        )
+        query = f"""
+            INSERT INTO apiome.verification_schedule_run (
+                tenant_id, schedule_id, report_id, run_id, status, error_code, error_message,
+                operations_total, operations_exercised, operations_failed, coverage_percent,
+                drift_count, drift_fingerprint, alerted, alert_reason, alert_deliveries,
+                started_at, finished_at, duration_ms
+            )
+            VALUES (
+                %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s
+            )
+            RETURNING {self._VERIFICATION_SCHEDULE_RUN_COLUMNS}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_verification_schedule_runs(
+        self,
+        schedule_id: str,
+        tenant_id: str,
+        *,
+        status: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """One schedule's recorded ticks, newest first — the trend and freshness read.
+
+        Args:
+            schedule_id: The schedule.
+            tenant_id: The caller's tenant.
+            status: Restrict to one verdict.
+            limit: Maximum rows.
+
+        Returns:
+            The rows; empty when nothing matches or an id is not a UUID.
+        """
+        if not is_uuid_string(str(schedule_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return []
+        clauses = ["schedule_id = %s::uuid", "tenant_id = %s::uuid"]
+        params: List[Any] = [schedule_id, tenant_id]
+        if status:
+            clauses.append("status = %s")
+            params.append(status)
+        params.append(max(1, int(limit)))
+        return self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_SCHEDULE_RUN_COLUMNS}
+            FROM apiome.verification_schedule_run
+            WHERE {" AND ".join(clauses)}
+            ORDER BY created_at DESC, id
+            LIMIT %s
+            """,
+            tuple(params),
+        )
+
+    def mark_verification_schedule_ran(
+        self,
+        schedule_id: str,
+        tenant_id: str,
+        *,
+        status: str,
+        report_id: Optional[str] = None,
+        alert_state: str = "ok",
+        alert_fingerprint: Optional[str] = None,
+        alerted: bool = False,
+        succeeded: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Advance a schedule's cadence anchor and alert state after one tick (CTG-4.4).
+
+        Called once per processed schedule — success, drift, or a run that could not happen — so a
+        schedule whose version stopped compiling cannot stay perpetually due and hammer the sweep.
+        The counters move in the database (``consecutive_failures``, ``run_count``) rather than
+        being computed and written back, so two replicas cannot lose one another's increments.
+
+        ``last_report_id`` is only overwritten when this tick produced a report: a tick that could
+        not run must not erase the pointer to the last one that could.
+
+        Args:
+            schedule_id: The schedule that ticked.
+            tenant_id: Its tenant.
+            status: ``passed``, ``failed``, or ``errored``.
+            report_id: The conformance report this tick stored, when it stored one.
+            alert_state: The alert state the decision produced.
+            alert_fingerprint: The violation-set digest to carry forward.
+            alerted: Whether this tick notified (stamps ``last_alert_at``).
+            succeeded: Whether this tick verified clean (advances ``last_success_at``).
+
+        Returns:
+            The updated row, or ``None`` when nothing live matched.
+        """
+        if not is_uuid_string(str(schedule_id or "")) or not is_uuid_string(str(tenant_id or "")):
+            return None
+        report = str(report_id or "")
+        query = f"""
+            UPDATE apiome.verification_schedule
+            SET last_run_at = now(),
+                last_status = %s,
+                last_success_at = CASE WHEN %s THEN now() ELSE last_success_at END,
+                last_report_id = COALESCE(%s::uuid, last_report_id),
+                consecutive_failures = CASE WHEN %s THEN 0 ELSE consecutive_failures + 1 END,
+                run_count = run_count + 1,
+                alert_state = %s,
+                alert_fingerprint = %s,
+                last_alert_at = CASE WHEN %s THEN now() ELSE last_alert_at END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING {self._VERIFICATION_SCHEDULE_COLUMNS}
+        """
+        params = (
+            status,
+            bool(succeeded),
+            report if is_uuid_string(report) else None,
+            bool(succeeded),
+            alert_state,
+            alert_fingerprint,
+            bool(alerted),
+            schedule_id,
+            tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return row
+        except Exception as e:
+            conn.rollback()
+            raise e
 
 
 # Global database instance

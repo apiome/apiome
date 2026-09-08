@@ -119,6 +119,7 @@ from .version_changelog_routes import router as version_changelog_router
 from .version_merge_routes import router as version_merge_router
 from .version_tags_routes import router as version_tags_router
 from .verification_evidence_routes import router as verification_evidence_router
+from .verification_schedule_routes import router as verification_schedule_router
 from .verification_target_routes import router as verification_target_router
 from .versions_routes import router as versions_router
 from .workflow_audit_routes import router as workflow_audit_router
@@ -134,7 +135,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.176.0",
+    version="1.177.0",
 )
 
 
@@ -287,6 +288,7 @@ app.include_router(contract_suite_router)
 app.include_router(contract_runner_router)
 app.include_router(provider_verification_router)
 app.include_router(verification_target_router)
+app.include_router(verification_schedule_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
@@ -433,6 +435,7 @@ _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
+_verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
 _repository_webhook_secret_task: asyncio.Task | None = None
 _repository_webhook_ip_range_task: asyncio.Task | None = None
@@ -690,6 +693,43 @@ async def startup_event():
             except Exception:
                 log.exception("lint waiver expiry sweep")
 
+    async def _verification_schedule_sweep() -> None:
+        """Periodically verify deployments against their contracts and alert on drift (CTG-4.4).
+
+        Ticks on ``APIOME_VERIFICATION_SCHEDULE_INTERVAL`` (default 60s) and lets the per-schedule
+        cadence + due-selection in ``list_due_verification_schedules`` decide which schedules
+        actually run, so the cheap floor cadence here never runs a schedule more often than its own
+        cadence (minimum 5 minutes) allows. At most
+        ``APIOME_VERIFICATION_SCHEDULE_BATCH_SIZE`` schedules execute per tick — unlike the other
+        sweeps this one sends real requests to live deployments — and the remainder stays due for
+        the next tick. Runs on a dedicated DB connection like the other sweeps, because the
+        per-schedule advisory locks that give single-flight are session-scoped.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.verification_schedule_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+
+                def _run_schedules() -> int:
+                    thread_db = Database()
+                    try:
+                        from .verification_schedule_sweep import (
+                            process_verification_schedule_sweep,
+                        )
+
+                        return process_verification_schedule_sweep(thread_db)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_schedules)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("verification schedule sweep")
+
     async def _async_job_retention_sweep() -> None:
         """Periodically reap expired async jobs and export artifacts (IXH-6.3, #5122).
 
@@ -804,6 +844,8 @@ async def startup_event():
     _mcp_catalog_digest_task = asyncio.create_task(_mcp_catalog_digest_sweep())
     global _lint_waiver_expiry_task
     _lint_waiver_expiry_task = asyncio.create_task(_lint_waiver_expiry_sweep())
+    global _verification_schedule_task
+    _verification_schedule_task = asyncio.create_task(_verification_schedule_sweep())
     global _async_job_retention_task
     _async_job_retention_task = asyncio.create_task(_async_job_retention_sweep())
     global _repository_webhook_secret_task
@@ -875,6 +917,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _lint_waiver_expiry_task = None
+    global _verification_schedule_task
+    if _verification_schedule_task is not None:
+        _verification_schedule_task.cancel()
+        try:
+            await _verification_schedule_task
+        except asyncio.CancelledError:
+            pass
+        _verification_schedule_task = None
     global _async_job_retention_task
     if _async_job_retention_task is not None:
         _async_job_retention_task.cancel()
