@@ -192,7 +192,7 @@ Deliberate drift: point the same version at a stub that drops a required field �
 
 ## Out of scope
 
-* Scheduled runs and drift alerts — CTG-4.4 (#4501)
+* Scheduled runs and drift alerts — CTG-4.4 (#4501), delivered: see `verification_schedules.md`
 * The aggregate deploy-gate verdict — CTG-4.5 (#4502)
 * Consumer-aware breaking analysis — CTG-4.2 (#4480)
 * A dashboard surface — not in this ticket's affected modules

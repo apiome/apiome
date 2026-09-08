@@ -93,12 +93,25 @@ def test_migration_adds_no_rbac_resource(repo_root: Path) -> None:
     assert not present, f"Migration unexpectedly touches: {present}"
 
 
-def test_migration_is_the_next_free_version(repo_root: Path) -> None:
-    """A duplicate version number is refused by the migrator, but only at deploy time."""
+def test_migration_version_numbers_are_unique(repo_root: Path) -> None:
+    """A duplicate version number is refused by the migrator, but only at deploy time.
+
+    Checked across the whole directory rather than by pinning V252 as the newest: the rule that
+    matters is that two migrations never claim one number, and a rule phrased as "nothing newer
+    exists" has to be edited by every ticket that adds a migration, which is how it stops being
+    checked at all.
+    """
     scripts = repo_root / "apiome-db" / "scripts"
-    versions = [path.name for path in scripts.glob("V252__*.sql")]
-    assert versions == [Path(_MIGRATION).name]
-    assert not list(scripts.glob("V253__*.sql")), "V252 is no longer the newest migration"
+    assert [path.name for path in scripts.glob("V252__*.sql")] == [Path(_MIGRATION).name]
+
+    seen: dict[str, str] = {}
+    duplicates: list[tuple[str, str]] = []
+    for path in sorted(scripts.glob("V*__*.sql")):
+        version = path.name.split("__", 1)[0]
+        if version in seen:
+            duplicates.append((seen[version], path.name))
+        seen[version] = path.name
+    assert not duplicates, f"duplicate migration versions: {duplicates}"
 
 
 def test_the_report_layer_reuses_the_existing_evidence_resource() -> None:
