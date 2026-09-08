@@ -99,12 +99,24 @@ def diff(
         "--format",
         help="Output format: text (default), json, or md (CTG-1.3 markdown changelog).",
     ),
+    consumers: bool = typer.Option(
+        False,
+        "--consumers",
+        help=(
+            "Add the CTG-4.2 per-consumer analysis: which registered consumers of the baseline "
+            "project this change breaks. Needs consumer_contracts:view."
+        ),
+    ),
 ) -> None:
     """Diff a local OpenAPI file against a published project version (CI gate).
 
     Uploads ``file`` as an inline candidate and classifies against a stored version
     via ``POST /v1/diff/{tenant}/classified``. Exit codes: ``0`` = gate passed,
     ``1`` = threshold met, ``2`` = operational error.
+
+    With ``--consumers`` the report also names *whose* build each change breaks
+    ("breaks billing-service") in all three formats. The threshold is unchanged: it still
+    grades the whole specification, so a passing gate never depends on who has registered.
     """
     fmt = (output_format or "text").strip().lower()
     if json_mode_from_context(ctx):
@@ -131,10 +143,12 @@ def diff(
         client, tenant_slug = tenant_scoped_client(ctx)
         inline = _read_inline_spec(file)
         post_path = api_paths.classified_diff(tenant_slug)
-        body = {
+        body: dict[str, Any] = {
             "base": {"project": project, "version": version_ref},
             "head": {"inline": inline},
         }
+        if consumers:
+            body["consumers"] = True
 
         json_response = _post_classified(
             client,

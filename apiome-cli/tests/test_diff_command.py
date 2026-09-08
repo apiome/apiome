@@ -297,3 +297,266 @@ def test_diff_safe_exits_zero(httpx_mock: object) -> None:
         ["diff", str(_SPEC_FILE), "--against", "payments@latest"],
     )
     assert result.exit_code == EXIT_SUCCESS, result.output
+
+
+# ---------------------------------------------------------------------------------------------
+# CTG-4.2 per-consumer verdicts (#4480)
+# ---------------------------------------------------------------------------------------------
+
+_CONSUMER_IMPACT = {
+    "schemaVersion": "ctg.consumer-impact.v1",
+    "summary": (
+        "breaks 1 of 2 consumers: billing-service "
+        "(1 registered consumer has declared no surface)"
+    ),
+    "maxSeverity": "breaking",
+    "counts": {
+        "consumers_total": 3,
+        "consumers_declared": 2,
+        "consumers_undeclared": 1,
+        "consumers_affected": 1,
+        "consumers_breaking": 1,
+        "changes_total": 1,
+        "changes_attributed": 1,
+        "changes_unattributed": 0,
+    },
+    "consumers": [
+        {
+            "consumerId": "c-1",
+            "consumerSlug": "billing-service",
+            "consumerName": "Billing Service",
+            "owner": "Payments",
+            "contact": None,
+            "declared": True,
+            "verdict": "breaking",
+            "contractId": "k-1",
+            "contractRevision": 2,
+            "contractVersionLabel": "1.0.0",
+            "contractMatchesBase": True,
+            "operationsDeclared": 1,
+            "fieldsDeclared": 1,
+            "operationsAffected": 1,
+            "counts": {
+                "breaking": 1,
+                "non-breaking": 0,
+                "docs-only": 0,
+                "unclassified": 0,
+                "total": 1,
+            },
+            "impacts": [
+                {
+                    "ruleId": "ctg.property_removed",
+                    "severity": "breaking",
+                    "pointer": "/components/schemas/Pet/properties/name",
+                    "changeKind": "property_removed",
+                    "unclassified": False,
+                    "match": "field",
+                    "declaredPointer": "/components/schemas/Pet/properties/name",
+                    "method": "get",
+                    "path": "/pets",
+                    "operationId": None,
+                    "fieldPath": "name",
+                    "fieldLocation": "response",
+                    "fieldStatus": "200",
+                }
+            ],
+            "truncated": False,
+        },
+        {
+            "consumerId": "c-2",
+            "consumerSlug": "mobile-app",
+            "consumerName": "Mobile App",
+            "owner": None,
+            "contact": None,
+            "declared": True,
+            "verdict": "unaffected",
+            "contractId": "k-2",
+            "contractRevision": 1,
+            "contractVersionLabel": "1.0.0",
+            "contractMatchesBase": True,
+            "operationsDeclared": 1,
+            "fieldsDeclared": 1,
+            "operationsAffected": 0,
+            "counts": {
+                "breaking": 0,
+                "non-breaking": 0,
+                "docs-only": 0,
+                "unclassified": 0,
+                "total": 0,
+            },
+            "impacts": [],
+            "truncated": False,
+        },
+        {
+            "consumerId": "c-3",
+            "consumerSlug": "ghost",
+            "consumerName": "Ghost",
+            "owner": None,
+            "contact": None,
+            "declared": False,
+            "verdict": "undeclared",
+            "contractId": None,
+            "contractRevision": None,
+            "contractVersionLabel": None,
+            "contractMatchesBase": None,
+            "operationsDeclared": 0,
+            "fieldsDeclared": 0,
+            "operationsAffected": 0,
+            "counts": {
+                "breaking": 0,
+                "non-breaking": 0,
+                "docs-only": 0,
+                "unclassified": 0,
+                "total": 0,
+            },
+            "impacts": [],
+            "truncated": False,
+        },
+    ],
+    "breakingConsumers": ["billing-service"],
+    "attribution": [
+        {
+            "ruleId": "ctg.property_removed",
+            "severity": "breaking",
+            "pointer": "/components/schemas/Pet/properties/name",
+            "changeKind": "property_removed",
+            "unclassified": False,
+            "consumers": ["billing-service"],
+        }
+    ],
+}
+
+_CONSUMERS_PAYLOAD = {
+    **_BREAKING_PAYLOAD,
+    "changes": [
+        {**_BREAKING_PAYLOAD["changes"][0], "consumers": ["billing-service"]},
+    ],
+    "consumers": _CONSUMER_IMPACT,
+}
+
+
+def _last_request_body(httpx_mock: object) -> dict:
+    request = httpx_mock.get_requests()[-1]
+    return json.loads(request.content.decode("utf-8"))
+
+
+def test_diff_consumers_flag_is_opt_in(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_BREAKING_PAYLOAD)
+    runner.invoke(app, ["diff", str(_SPEC_FILE), "--against", "payments@latest"])
+    assert "consumers" not in _last_request_body(httpx_mock)
+
+
+def test_diff_consumers_flag_requests_and_prints_per_consumer_verdicts(
+    httpx_mock: object,
+) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_CONSUMERS_PAYLOAD)
+    result = runner.invoke(
+        app,
+        ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--consumers"],
+    )
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert _last_request_body(httpx_mock)["consumers"] is True
+    assert "breaks 1 of 2 consumers: billing-service" in result.stdout
+    assert "  breaks billing-service" in result.stdout
+    assert "mobile-app: unaffected" in result.stdout
+    assert "ghost: no declared surface" in result.stdout
+    assert "GET /pets — 200 response `name`" in result.stdout
+    # The change line itself names who it breaks, so grepping one line is enough.
+    assert "ctg.property_removed /components/schemas/Pet/properties/name — breaks billing-service" in (
+        result.stdout
+    )
+
+
+def test_diff_consumers_json_stays_schema_stable(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_CONSUMERS_PAYLOAD)
+    result = runner.invoke(
+        app,
+        [
+            "diff",
+            str(_SPEC_FILE),
+            "--against",
+            "payments@latest",
+            "--consumers",
+            "--format",
+            "json",
+        ],
+    )
+    assert result.exit_code == EXIT_ERROR, result.output
+    payload = json.loads(result.stdout)
+    jsonschema.validate(
+        instance=payload, schema=json.loads(_SCHEMA_FILE.read_text(encoding="utf-8"))
+    )
+    assert payload["consumers"]["breakingConsumers"] == ["billing-service"]
+    assert payload["changes"][0]["consumers"] == ["billing-service"]
+
+
+def test_diff_consumers_does_not_change_the_gate_threshold(httpx_mock: object) -> None:
+    """A consumer verdict reports; the exit code still grades the whole specification."""
+    safe_with_consumers = {
+        **_SAFE_PAYLOAD,
+        "consumers": {
+            **_CONSUMER_IMPACT,
+            "summary": "breaks 0 of 2 consumers",
+            "breakingConsumers": [],
+            "maxSeverity": None,
+            "attribution": [],
+        },
+    }
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=safe_with_consumers)
+    result = runner.invoke(
+        app,
+        ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--consumers"],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert "breaks 0 of 2 consumers" in result.stdout
+
+
+def test_diff_consumers_reports_changes_nobody_is_affected_by(httpx_mock: object) -> None:
+    payload = {
+        **_BREAKING_PAYLOAD,
+        "changes": [{**_BREAKING_PAYLOAD["changes"][0], "consumers": []}],
+        "consumers": {
+            **_CONSUMER_IMPACT,
+            "summary": "breaks 0 of 2 consumers",
+            "breakingConsumers": [],
+            "counts": {**_CONSUMER_IMPACT["counts"], "changes_unattributed": 1},
+            "consumers": [_CONSUMER_IMPACT["consumers"][1]],
+            "attribution": [
+                {**_CONSUMER_IMPACT["attribution"][0], "consumers": []},
+            ],
+        },
+    }
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=payload)
+    result = runner.invoke(
+        app,
+        ["diff", str(_SPEC_FILE), "--against", "payments@latest", "--consumers"],
+    )
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert "1 change(s) affect no registered consumer" in result.stdout
+    assert "breaks billing-service" not in result.stdout
+
+
+def test_diff_consumers_markdown_asks_the_server_for_the_section(httpx_mock: object) -> None:
+    httpx_mock.add_response(url=_DIFF_URL, method="POST", json=_CONSUMERS_PAYLOAD)
+    httpx_mock.add_response(
+        url=_DIFF_URL,
+        method="POST",
+        text="# Changelog\n\n## Consumer impact\n\n_breaks 1 of 2 consumers: billing-service._\n",
+        headers={"content-type": "text/markdown; charset=utf-8"},
+    )
+    result = runner.invoke(
+        app,
+        [
+            "diff",
+            str(_SPEC_FILE),
+            "--against",
+            "payments@latest",
+            "--consumers",
+            "--format",
+            "md",
+        ],
+    )
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert "## Consumer impact" in result.stdout
+    for request in httpx_mock.get_requests():
+        assert json.loads(request.content.decode("utf-8"))["consumers"] is True

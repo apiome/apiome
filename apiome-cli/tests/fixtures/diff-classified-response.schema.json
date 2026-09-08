@@ -4,57 +4,401 @@
   "title": "ClassifiedDiffResponse",
   "type": "object",
   "additionalProperties": false,
-  "required": ["changes", "counts", "base", "head"],
+  "required": [
+    "changes",
+    "counts",
+    "base",
+    "head"
+  ],
   "properties": {
     "changes": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["ruleId", "severity", "pointer"],
+        "required": [
+          "ruleId",
+          "severity",
+          "pointer"
+        ],
         "properties": {
-          "ruleId": { "type": "string", "minLength": 1 },
+          "ruleId": {
+            "type": "string",
+            "minLength": 1
+          },
           "severity": {
             "type": "string",
-            "enum": ["breaking", "non-breaking", "docs-only"]
+            "enum": [
+              "breaking",
+              "non-breaking",
+              "docs-only"
+            ]
           },
-          "pointer": { "type": "string" },
+          "pointer": {
+            "type": "string"
+          },
           "before": {},
           "after": {},
-          "unclassified": { "type": "boolean" },
-          "changeKind": { "type": "string" }
+          "unclassified": {
+            "type": "boolean"
+          },
+          "changeKind": {
+            "type": "string"
+          },
+          "consumers": {
+            "description": "Handles this change touches; null when not analysed, [] when nobody is.",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
     "counts": {
       "type": "object",
-      "additionalProperties": { "type": "integer" }
+      "additionalProperties": {
+        "type": "integer"
+      }
     },
     "maxSeverity": {
-      "type": ["string", "null"],
-      "enum": ["breaking", "non-breaking", "docs-only", null]
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "breaking",
+        "non-breaking",
+        "docs-only",
+        null
+      ]
     },
     "base": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["projectId", "projectSlug", "versionRecordId", "versionLabel"],
+      "required": [
+        "projectId",
+        "projectSlug",
+        "versionRecordId",
+        "versionLabel"
+      ],
       "properties": {
-        "projectId": { "type": "string" },
-        "projectSlug": { "type": "string" },
-        "versionRecordId": { "type": "string" },
-        "versionLabel": { "type": "string" }
+        "projectId": {
+          "type": "string"
+        },
+        "projectSlug": {
+          "type": "string"
+        },
+        "versionRecordId": {
+          "type": "string"
+        },
+        "versionLabel": {
+          "type": "string"
+        }
       }
     },
     "head": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source"],
+      "required": [
+        "source"
+      ],
       "properties": {
-        "source": { "type": "string", "enum": ["stored", "inline"] },
-        "projectId": { "type": ["string", "null"] },
-        "projectSlug": { "type": ["string", "null"] },
-        "versionRecordId": { "type": ["string", "null"] },
-        "versionLabel": { "type": ["string", "null"] }
+        "source": {
+          "type": "string",
+          "enum": [
+            "stored",
+            "inline"
+          ]
+        },
+        "projectId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "projectSlug": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "versionRecordId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "versionLabel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "consumers": {
+      "description": "CTG-4.2 per-consumer analysis; absent or null unless --consumers was used.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "summary",
+        "counts",
+        "consumers"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ctg.consumer-impact.v1"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "maxSeverity": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "breaking",
+            "non-breaking",
+            "docs-only",
+            null
+          ]
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "consumerId",
+              "consumerSlug",
+              "consumerName",
+              "verdict"
+            ],
+            "properties": {
+              "consumerId": {
+                "type": "string"
+              },
+              "consumerSlug": {
+                "type": "string"
+              },
+              "consumerName": {
+                "type": "string"
+              },
+              "owner": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "contact": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "declared": {
+                "type": "boolean"
+              },
+              "verdict": {
+                "type": "string",
+                "enum": [
+                  "breaking",
+                  "non-breaking",
+                  "docs-only",
+                  "unaffected",
+                  "undeclared"
+                ]
+              },
+              "contractId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "contractRevision": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "contractVersionLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "contractMatchesBase": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "operationsDeclared": {
+                "type": "integer"
+              },
+              "fieldsDeclared": {
+                "type": "integer"
+              },
+              "operationsAffected": {
+                "type": "integer"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "impacts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "ruleId",
+                    "severity",
+                    "pointer",
+                    "match"
+                  ],
+                  "properties": {
+                    "ruleId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "breaking",
+                        "non-breaking",
+                        "docs-only"
+                      ]
+                    },
+                    "pointer": {
+                      "type": "string"
+                    },
+                    "changeKind": {
+                      "type": "string"
+                    },
+                    "unclassified": {
+                      "type": "boolean"
+                    },
+                    "match": {
+                      "type": "string",
+                      "enum": [
+                        "field",
+                        "operation",
+                        "document"
+                      ]
+                    },
+                    "declaredPointer": {
+                      "type": "string"
+                    },
+                    "method": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "path": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "operationId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fieldPath": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fieldLocation": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fieldStatus": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              },
+              "truncated": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "breakingConsumers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attribution": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ruleId",
+              "severity",
+              "pointer",
+              "consumers"
+            ],
+            "properties": {
+              "ruleId": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "breaking",
+                  "non-breaking",
+                  "docs-only"
+                ]
+              },
+              "pointer": {
+                "type": "string"
+              },
+              "changeKind": {
+                "type": "string"
+              },
+              "unclassified": {
+                "type": "boolean"
+              },
+              "consumers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

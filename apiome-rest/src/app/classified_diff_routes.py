@@ -6,6 +6,11 @@ returns the CTG-1.1 classified change list with summary counts and max severity.
 
 When ``Accept`` requests ``text/markdown`` (or ``text/md``), the response is the
 CTG-1.3 markdown changelog instead of JSON (CTG-2.1 / #4471).
+
+Sending ``consumers: true`` adds the CTG-4.2 per-consumer analysis (#4480): the same changes,
+intersected with what each registered consumer of the **base** project declared it uses, plus the
+"breaks 2 of 7 consumers" summary. It is opt-in because it needs ``consumer_contracts:view`` and
+costs a registry read the default gate does not.
 """
 
 from __future__ import annotations
@@ -19,6 +24,8 @@ from .auth import validate_authentication
 from .change_taxonomy import ClassifiedDiff, classify_openapi_changes
 from .changelog_generator import build_changelog, render_changelog_markdown
 from .compatibility_engine import openapi_for_revision
+from .consumer_impact import ConsumerImpactReport, render_consumer_impact_markdown
+from .consumer_impact_service import consumer_impact_for_diff
 from .database import db
 from .import_ingestion import IngestionError, parse_document
 from .permissions import Action, Resource, enforce_permission
@@ -77,6 +84,13 @@ class ClassifiedDiffRequest(BaseModel):
         description=(
             "Head side: either another stored ``{project, version}`` or "
             "``{inline}`` candidate document text."
+        ),
+    )
+    consumers: bool = Field(
+        default=False,
+        description=(
+            "Include the CTG-4.2 per-consumer analysis for the base project's registered "
+            "consumers. Requires ``consumer_contracts:view``."
         ),
     )
 
@@ -143,6 +157,14 @@ class ClassifiedDiffChangeOut(BaseModel):
     after: Any = None
     unclassified: bool = False
     change_kind: str = Field(default="", serialization_alias="changeKind")
+    consumers: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Handles of the registered consumers this change touches. ``null`` when the "
+            "consumer analysis was not requested; ``[]`` means no registered consumer is "
+            "affected."
+        ),
+    )
 
 
 class ClassifiedDiffResponse(BaseModel):
@@ -155,6 +177,12 @@ class ClassifiedDiffResponse(BaseModel):
     max_severity: Optional[str] = Field(default=None, serialization_alias="maxSeverity")
     base: ClassifiedDiffResolvedStored
     head: ClassifiedDiffHeadMeta
+    consumers: Optional[ConsumerImpactReport] = Field(
+        default=None,
+        description=(
+            "CTG-4.2 per-consumer verdicts, present only when ``consumers: true`` was sent."
+        ),
+    )
 
 
 def _resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
@@ -289,8 +317,27 @@ def _response_from_classified(
     *,
     base_meta: ClassifiedDiffResolvedStored,
     head_meta: ClassifiedDiffHeadMeta,
+    impact: Optional[ConsumerImpactReport] = None,
 ) -> ClassifiedDiffResponse:
-    """Map a pure ClassifiedDiff onto the REST response model."""
+    """Map a pure ClassifiedDiff onto the REST response model.
+
+    Args:
+        result: The CTG-1.1 classification.
+        base_meta: Resolved base coordinates.
+        head_meta: Resolved head coordinates.
+        impact: CTG-4.2 per-consumer analysis, when it was requested. Each change then also
+            carries the handles it touches, so a caller never has to re-join the two lists.
+
+    Returns:
+        The response model.
+    """
+    slugs_by_change: Dict[tuple[str, str, str], list[str]] = {}
+    if impact is not None:
+        for entry in impact.attribution:
+            slugs_by_change[(entry.pointer, entry.rule_id, entry.change_kind)] = list(
+                entry.consumers
+            )
+
     return ClassifiedDiffResponse(
         changes=[
             ClassifiedDiffChangeOut(
@@ -301,6 +348,11 @@ def _response_from_classified(
                 after=c.after,
                 unclassified=c.unclassified,
                 change_kind=c.change_kind,
+                consumers=(
+                    None
+                    if impact is None
+                    else slugs_by_change.get((c.pointer, c.rule_id, c.change_kind), [])
+                ),
             )
             for c in result.changes
         ],
@@ -308,6 +360,7 @@ def _response_from_classified(
         max_severity=result.max_severity,
         base=base_meta,
         head=head_meta,
+        consumers=impact,
     )
 
 
@@ -343,11 +396,21 @@ async def post_classified_diff(
     Default response is JSON (:class:`ClassifiedDiffResponse`). When ``Accept``
     includes ``text/markdown`` or ``text/md``, returns the CTG-1.3 markdown
     changelog for the same classification (used by ``apiome diff --format md``).
+
+    With ``consumers: true`` the response also carries the CTG-4.2 per-consumer analysis —
+    ``consumers`` on the body, and the touched handles on each change — and the markdown gains a
+    "Consumer impact" section. Consumers are those registered against the **base** project, since
+    that is the published contract they declared against; the flag needs
+    ``consumer_contracts:view``.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    if body.consumers:
+        enforce_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW)
     tenant_id = str(auth_data["tenant_id"])
 
-    base_doc, base_meta, _ = _resolve_stored_side(tenant_id, tenant_slug, body.base)
+    base_doc, base_meta, base_version = _resolve_stored_side(
+        tenant_id, tenant_slug, body.base
+    )
 
     if isinstance(body.head, ClassifiedDiffInlineHead):
         head_doc = _parse_inline(body.head.inline)
@@ -366,6 +429,15 @@ async def post_classified_diff(
 
     result = classify_openapi_changes(base_doc, head_doc)
 
+    impact: Optional[ConsumerImpactReport] = None
+    if body.consumers:
+        impact = consumer_impact_for_diff(
+            tenant_id,
+            base_meta.project_id,
+            result,
+            base_version_id=str(base_version.get("id") or "") or None,
+        )
+
     if _wants_markdown(accept):
         to_version = head_meta.version_label or "inline"
         changelog = build_changelog(
@@ -374,6 +446,10 @@ async def post_classified_diff(
             to_version=to_version,
         )
         md = render_changelog_markdown(changelog)
+        if impact is not None:
+            md = md.rstrip("\n") + "\n\n" + render_consumer_impact_markdown(impact)
         return Response(content=md, media_type="text/markdown; charset=utf-8")
 
-    return _response_from_classified(result, base_meta=base_meta, head_meta=head_meta)
+    return _response_from_classified(
+        result, base_meta=base_meta, head_meta=head_meta, impact=impact
+    )

@@ -301,3 +301,203 @@ def test_classified_diff_accept_markdown_changelog(mock_auth):
     body = r.text
     assert body.startswith("# Changelog")
     assert "ctg.property_removed" in body
+
+
+# ---------------------------------------------------------------------------------------------
+# CTG-4.2 consumer-aware breaking analysis (#4480)
+# ---------------------------------------------------------------------------------------------
+
+_PETS_BY_ID_GET = "/paths/~1pets~1{id}/get"
+_PETS_GET = "/paths/~1pets/get"
+
+
+def _consumer_summary(slug: str, operation_pointer: str | None):
+    """Build a ConsumerSummary the way the registry would return one."""
+    from app.consumer_contract import (
+        ConsumerContractOperation,
+        ConsumerContractRecord,
+        ConsumerContractSurface,
+        ConsumerRecord,
+        ConsumerSummary,
+    )
+
+    consumer = ConsumerRecord(
+        id=f"consumer-{slug}",
+        tenant_id="tenant-1",
+        project_id="proj-1",
+        slug=slug,
+        name=slug,
+    )
+    if operation_pointer is None:
+        return ConsumerSummary(consumer=consumer, contract=None)
+    method = operation_pointer.rsplit("/", 1)[1]
+    surface = ConsumerContractSurface(
+        operations=[
+            ConsumerContractOperation(
+                method=method,
+                path="/pets" if operation_pointer == _PETS_GET else "/pets/{id}",
+                pointer=operation_pointer,
+                fields=[],
+            )
+        ]
+    )
+    return ConsumerSummary(
+        consumer=consumer,
+        contract=ConsumerContractRecord(
+            id=f"contract-{slug}",
+            consumer_id=consumer.id,
+            revision=1,
+            source="manual",
+            version_id="base-rev",
+            version_label="1.0.0",
+            surface=surface,
+            operation_count=1,
+        ),
+    )
+
+
+def _stored_vs_stored_body(*, consumers: bool):
+    body = {
+        "base": {"project": "pets", "version": "1.0.0"},
+        "head": {"project": "pets", "version": "1.1.0"},
+    }
+    if consumers:
+        body["consumers"] = True
+    return body
+
+
+def _classified_call(mock_db, summaries, *, body, accept="application/json"):
+    """Run the endpoint with a mocked registry read and the real impact engine."""
+    with (
+        patch(
+            "app.classified_diff_routes.openapi_for_revision",
+            side_effect=[_BASE_SPEC, _HEAD_REMOVED_PATH],
+        ),
+        patch(
+            "app.consumer_impact_service.list_consumer_summaries",
+            return_value=summaries,
+        ) as mock_list,
+    ):
+        mock_db.get_project_by_slug.return_value = _FAKE_PROJECT
+        mock_db.get_version_by_version_id.side_effect = lambda pid, ver, tid: (
+            _FAKE_BASE_VER if ver == "1.0.0" else _FAKE_HEAD_VER if ver == "1.1.0" else None
+        )
+        response = client.post(
+            "/v1/diff/acme/classified",
+            json=body,
+            headers={"Authorization": "Bearer x", "Accept": accept},
+        )
+    return response, mock_list
+
+
+def test_classified_diff_consumers_flag_returns_per_consumer_verdicts(mock_auth):
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.return_value = True
+        r, mock_list = _classified_call(
+            mock_db,
+            [
+                _consumer_summary("billing-service", _PETS_BY_ID_GET),
+                _consumer_summary("mobile-app", _PETS_GET),
+                _consumer_summary("ghost", None),
+            ],
+            body=_stored_vs_stored_body(consumers=True),
+        )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    impact = data["consumers"]
+    assert impact["schemaVersion"] == "ctg.consumer-impact.v1"
+    assert impact["breakingConsumers"] == ["billing-service"]
+    assert impact["summary"] == (
+        "breaks 1 of 2 consumers: billing-service "
+        "(1 registered consumer has declared no surface)"
+    )
+    assert impact["counts"]["consumers_total"] == 3
+    verdicts = {v["consumerSlug"]: v["verdict"] for v in impact["consumers"]}
+    assert verdicts == {
+        "billing-service": "breaking",
+        "mobile-app": "unaffected",
+        "ghost": "undeclared",
+    }
+    # The registry is read for the base project, which is what consumers registered against.
+    assert mock_list.call_args.args == ("tenant-1", "proj-1")
+
+    removed = next(c for c in data["changes"] if c["ruleId"] == "ctg.path_removed")
+    assert removed["consumers"] == ["billing-service"]
+
+
+def test_classified_diff_flags_changes_no_consumer_is_affected_by(mock_auth):
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.return_value = True
+        r, _ = _classified_call(
+            mock_db,
+            [_consumer_summary("mobile-app", _PETS_GET)],
+            body=_stored_vs_stored_body(consumers=True),
+        )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["consumers"]["counts"]["changes_unattributed"] >= 1
+    # Globally classified as before; the empty list is the "affects nobody" flag.
+    removed = next(c for c in data["changes"] if c["ruleId"] == "ctg.path_removed")
+    assert removed["severity"] == "breaking"
+    assert removed["consumers"] == []
+    assert data["maxSeverity"] == "breaking"
+
+
+def test_classified_diff_without_the_flag_never_reads_the_registry(mock_auth):
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.return_value = True
+        r, mock_list = _classified_call(
+            mock_db,
+            [_consumer_summary("billing-service", _PETS_BY_ID_GET)],
+            body=_stored_vs_stored_body(consumers=False),
+        )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["consumers"] is None
+    assert data["changes"][0]["consumers"] is None
+    mock_list.assert_not_called()
+
+
+def test_classified_diff_consumers_flag_requires_consumer_contracts_view(mock_auth):
+    def _permission(tenant_id, user_id, resource, action):
+        return resource != "consumer_contracts"
+
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.side_effect = _permission
+        r, mock_list = _classified_call(
+            mock_db,
+            [_consumer_summary("billing-service", _PETS_BY_ID_GET)],
+            body=_stored_vs_stored_body(consumers=True),
+        )
+    assert r.status_code == 403
+    mock_list.assert_not_called()
+
+
+def test_classified_diff_markdown_gains_a_consumer_impact_section(mock_auth):
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.return_value = True
+        r, _ = _classified_call(
+            mock_db,
+            [_consumer_summary("billing-service", _PETS_BY_ID_GET)],
+            body=_stored_vs_stored_body(consumers=True),
+            accept="text/markdown",
+        )
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("text/markdown")
+    assert "# Changelog" in r.text
+    assert "## Consumer impact" in r.text
+    assert "breaks 1 of 1 consumer: billing-service" in r.text
+    assert "### `billing-service` — breaking" in r.text
+
+
+def test_classified_diff_markdown_without_the_flag_is_unchanged(mock_auth):
+    with patch("app.classified_diff_routes.db") as mock_db:
+        mock_db.user_has_permission.return_value = True
+        r, _ = _classified_call(
+            mock_db,
+            [],
+            body=_stored_vs_stored_body(consumers=False),
+            accept="text/markdown",
+        )
+    assert r.status_code == 200, r.text
+    assert "Consumer impact" not in r.text

@@ -512,6 +512,7 @@ apiome --json verify contract --project payments-api --version 1.0.0 --target mo
 apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking
 apiome diff ./openapi.yaml --against payments-api@1.0.0 --fail-on warn --format json
 apiome diff ./openapi.yaml --against payments-api@latest --format md
+apiome diff ./openapi.yaml --against payments-api@latest --consumers
 
 # Arazzo workflows (after arazzo import)
 apiome workflows list --project checkout-flow --version 1.0.0
@@ -549,12 +550,41 @@ apiome diff ./openapi.yaml --against payments-api@latest
 apiome diff ./openapi.yaml --against payments-api@1.0.0 --fail-on warn
 apiome diff ./openapi.yaml --against payments-api@latest --format json
 apiome diff ./openapi.yaml --against payments-api@latest --format md
+apiome diff ./openapi.yaml --against payments-api@latest --consumers
 ```
 
 | Flag | Default | Meaning |
 |------|---------|---------|
 | `--fail-on` | `breaking` | Exit `1` when `maxSeverity` is at least this level. `warn` also fails on `non-breaking`. `docs-only` alone never fails. |
 | `--format` | `text` | `text` human summary, `json` ClassifiedDiffResponse, `md` CTG-1.3 markdown changelog (`Accept: text/markdown`). |
+| `--consumers` | off | Add the CTG-4.2 per-consumer analysis. Needs `consumer_contracts:view`. |
+
+#### Who does this break? (`--consumers`)
+
+A whole-spec verdict says *something* broke; `--consumers` says *whose build*. Every change is
+intersected with what each registered consumer of the baseline project declared it uses
+(CTG-4.1), so the report names handles:
+
+```
+Classified diff maxSeverity: breaking
+Counts — breaking: 1, non-breaking: 0, docs-only: 0, unclassified: 0, total: 1
+  [breaking] ctg.property_removed /components/schemas/Pet/properties/name — breaks billing-service
+
+Consumer impact: breaks 1 of 2 consumers: billing-service
+  breaks billing-service
+    [breaking] GET /pets — 200 response `name` (ctg.property_removed)
+  mobile-app: unaffected
+```
+
+Removing a field nobody declared reads breaks nobody, and is reported as
+`N change(s) affect no registered consumer` rather than as silence. Consumers registered without
+a declared surface are listed as `no declared surface` and kept **out** of the "N of M"
+denominator, so the fraction never reads as reassurance about a service nobody has heard from.
+
+`--format json` carries the same thing under `consumers` (plus the touched handles on each
+change), and `--format md` gains a "Consumer impact" section. **The exit code is unchanged** — the
+gate still grades the whole specification, so a build never passes merely because no one has
+registered yet.
 
 **Exit codes (this command only):** `0` = gate passed, `1` = threshold met (breaking/warn findings), `2` = auth/network/parse/oversize. Requires API key + tenant scope. Read-only CI tokens with `diff:read` (CTG-2.3) are supported.
 
