@@ -4,6 +4,11 @@ Authentication module for JWT and API Key validation.
 Supports both JWT tokens (from NextAuth) and API keys for authentication.
 API keys may carry machine scopes (CTG-2.3 / #4473): ``*`` (full access),
 ``diff:read``, and ``lint:read``. Restricted keys are allowlisted by method+path.
+
+A route may appear in the allowlist more than once, each entry naming a different acceptable
+scope: the deploy gate (CTG-4.5 / #4502) is a read over lint grades *and* breaking classification,
+so a CI key holding either read scope may call it rather than needing a third scope minted and
+carried through the key-management surfaces of three packages.
 """
 
 import logging
@@ -34,7 +39,8 @@ API_KEY_SCOPE_FULL = "*"
 API_KEY_SCOPE_DIFF_READ = "diff:read"
 API_KEY_SCOPE_LINT_READ = "lint:read"
 
-#: (HTTP method, path regex) → required scope for restricted machine keys.
+#: (HTTP method, path regex) → an acceptable scope for restricted machine keys. A route may have
+#: several entries; holding **any** of the matched scopes admits the call.
 _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     (
         "POST",
@@ -65,6 +71,31 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         ),
         API_KEY_SCOPE_LINT_READ,
     ),
+    # CTG-4.5 (#4502): the deploy gate and the policy it was judged under. Deliberately readable
+    # with *either* CI read scope — the aggregate is composed of a lint grade and a breaking
+    # classification, so a key trusted with either input is trusted with the summary. Both scopes
+    # are listed rather than a new `gate:read` because a third scope would have to be minted,
+    # picked in the Control Panel, and carried through apiome-db's key CLI for no extra safety.
+    (
+        "GET",
+        re.compile(r"^/v1/projects/[^/]+/[^/]+/gate/?$"),
+        API_KEY_SCOPE_DIFF_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/projects/[^/]+/[^/]+/gate/?$"),
+        API_KEY_SCOPE_LINT_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/projects/[^/]+/[^/]+/gate/policy/?$"),
+        API_KEY_SCOPE_DIFF_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/projects/[^/]+/[^/]+/gate/policy/?$"),
+        API_KEY_SCOPE_LINT_READ,
+    ),
 )
 
 
@@ -92,20 +123,33 @@ def is_full_access_key(scopes: Sequence[str]) -> bool:
     return API_KEY_SCOPE_FULL in scopes
 
 
-def required_scope_for_request(method: str, path: str) -> Optional[str]:
+def acceptable_scopes_for_request(method: str, path: str) -> List[str]:
     """
-    Return the CI scope required for ``method`` + ``path``, or None if not allowlisted.
+    Return every CI scope that admits ``method`` + ``path``, in allowlist order.
 
-    Restricted keys (no ``*``) may only call allowlisted routes whose required scope
-    is present on the key.
+    A route with more than one entry (the CTG-4.5 deploy gate) is callable by a key holding any
+    one of them; an empty list means the route is not allowlisted at all and only a full-access
+    key may call it.
     """
     method_u = (method or "").upper()
     # Strip query string if a caller passed a full URL path.
     path_only = (path or "").split("?", 1)[0]
+    scopes: List[str] = []
     for allow_method, pattern, scope in _API_KEY_SCOPE_ALLOWLIST:
-        if allow_method == method_u and pattern.match(path_only):
-            return scope
-    return None
+        if allow_method == method_u and pattern.match(path_only) and scope not in scopes:
+            scopes.append(scope)
+    return scopes
+
+
+def required_scope_for_request(method: str, path: str) -> Optional[str]:
+    """
+    Return the first CI scope that admits ``method`` + ``path``, or None if not allowlisted.
+
+    Kept for callers that want a single scope to name in a message; enforcement uses
+    :func:`acceptable_scopes_for_request`, because a route may accept more than one.
+    """
+    scopes = acceptable_scopes_for_request(method, path)
+    return scopes[0] if scopes else None
 
 
 def enforce_api_key_scopes(auth_data: Dict[str, Any], request: Request) -> None:
@@ -120,15 +164,15 @@ def enforce_api_key_scopes(auth_data: Dict[str, Any], request: Request) -> None:
     scopes = normalize_api_key_scopes(auth_data.get("scopes"))
     if is_full_access_key(scopes):
         return
-    required = required_scope_for_request(request.method, request.url.path)
-    if required and required in scopes:
+    acceptable = acceptable_scopes_for_request(request.method, request.url.path)
+    if any(scope in scopes for scope in acceptable):
         return
     raise HTTPException(
         status_code=403,
         detail=(
             "API key scope does not allow this operation. "
             f"Key scopes={list(scopes)}; "
-            f"required={required or 'full access (*)'}"
+            f"required={' or '.join(acceptable) if acceptable else 'full access (*)'}"
         ),
     )
 

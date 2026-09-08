@@ -32,6 +32,8 @@ from .contract_suite_routes import router as contract_suite_router
 from .contract_runner_routes import router as contract_runner_router
 from .data_routes import router as data_router
 from .database import Database, db
+from .deploy_gate_routes import router as deploy_gate_router
+from .deploy_gate_routes import tenant_router as deploy_gate_tenant_router
 from .domains_routes import router as domains_router
 from .draft_lock_routes import router as draft_lock_router
 from .export_job_routes import router as export_job_router
@@ -135,7 +137,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.177.0",
+    version="1.178.0",
 )
 
 
@@ -281,6 +283,10 @@ app.include_router(primitives_router)
 app.include_router(type_namespaces_router)
 app.include_router(classes_router)
 app.include_router(projects_router)
+# deploy_gate_router shares the `/v1/projects` prefix and is registered *after* it, so
+# `/{tenant}/by-slug/{project_slug}` still wins for a project whose slug is literally `gate`
+# (CTG-4.5, #4502). Nothing else in projects_routes matches three segments ending in a literal.
+app.include_router(deploy_gate_router)
 app.include_router(catalog_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
@@ -289,6 +295,7 @@ app.include_router(contract_runner_router)
 app.include_router(provider_verification_router)
 app.include_router(verification_target_router)
 app.include_router(verification_schedule_router)
+app.include_router(deploy_gate_tenant_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)

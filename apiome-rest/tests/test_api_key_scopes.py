@@ -11,6 +11,7 @@ from app.auth import (
     API_KEY_SCOPE_DIFF_READ,
     API_KEY_SCOPE_FULL,
     API_KEY_SCOPE_LINT_READ,
+    acceptable_scopes_for_request,
     enforce_api_key_scopes,
     is_full_access_key,
     normalize_api_key_scopes,
@@ -81,6 +82,46 @@ def test_required_scope_for_request_allowlist():
     assert required_scope_for_request(
         "POST", "/v1/mcp/acme/endpoints/ep/versions/ver/lint"
     ) is None
+
+
+def test_the_deploy_gate_accepts_either_ci_read_scope():
+    """CTG-4.5 (#4502): the gate aggregates a lint grade and a breaking classification, so a key
+    trusted with either input is trusted with the summary. Both are listed rather than minting a
+    third scope that would have to be carried through three packages' key-management surfaces."""
+    gate = "/v1/projects/acme/petstore/gate"
+    assert acceptable_scopes_for_request("GET", gate) == [
+        API_KEY_SCOPE_DIFF_READ,
+        API_KEY_SCOPE_LINT_READ,
+    ]
+    assert acceptable_scopes_for_request("GET", f"{gate}/policy") == [
+        API_KEY_SCOPE_DIFF_READ,
+        API_KEY_SCOPE_LINT_READ,
+    ]
+    # Moving the bar is never a CI-key operation, whatever scope it holds.
+    assert acceptable_scopes_for_request("PUT", f"{gate}/policy") == []
+    assert acceptable_scopes_for_request("DELETE", f"{gate}/policy") == []
+
+
+@pytest.mark.parametrize("key", [_KEY_DIFF, _KEY_LINT, _KEY_BOTH])
+def test_enforce_api_key_scopes_admits_every_ci_key_to_the_gate(key):
+    """A restricted key holding either read scope may call the gate."""
+    req = MagicMock()
+    req.method = "GET"
+    req.url.path = "/v1/projects/acme/petstore/gate"
+    enforce_api_key_scopes({"auth_method": "api_key", **key}, req)
+
+
+def test_enforce_api_key_scopes_still_refuses_an_unrelated_scope_on_the_gate():
+    """The allowlist widened for two known scopes, not for restricted keys in general."""
+    req = MagicMock()
+    req.method = "GET"
+    req.url.path = "/v1/projects/acme/petstore/gate"
+    with pytest.raises(HTTPException) as excinfo:
+        enforce_api_key_scopes(
+            {"auth_method": "api_key", **{**_KEY_FULL, "scopes": ["mock:read"]}}, req
+        )
+    assert excinfo.value.status_code == 403
+    assert "diff:read or lint:read" in str(excinfo.value.detail)
 
 
 def test_enforce_api_key_scopes_jwt_passthrough():
