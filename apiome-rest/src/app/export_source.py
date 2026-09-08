@@ -64,6 +64,15 @@ class ExportSource(BaseModel):
     version_label: Optional[str] = Field(
         default=None, description="The revision's source-declared version label (e.g. ``1.0.0``)."
     )
+    tenant_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "The owning tenant id. Only the public (slug-addressed) loader fills this in — the "
+            "authenticated loader's caller already holds it. It exists so an anonymous surface "
+            "can read tenant-scoped settings for a revision it resolved from slugs alone "
+            "(SDK-3.4, #4494); it is never echoed to an anonymous caller."
+        ),
+    )
 
 
 def _resolve_revision_id(
@@ -230,4 +239,5 @@ def load_public_export_source(
         artifact_id=str(projection["id"]),
         version_record_id=revision_id,
         version_label=projection.get("version_label"),
+        tenant_id=str(projection["tenant_id"]) if projection.get("tenant_id") else None,
     )

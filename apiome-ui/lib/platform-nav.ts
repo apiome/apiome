@@ -327,6 +327,16 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         icon: 'package-open',
         requiresTenant: true,
       },
+      {
+        // Beside Export studio rather than under Govern: both decide the shape of what leaves
+        // the platform, and SDK branding is read on the way out, not enforced on the way in
+        // (SDK-3.4, #4494).
+        id: 'sdk-settings',
+        label: 'SDK settings',
+        href: `${DASHBOARD_HREF}/sdk-settings`,
+        icon: 'package',
+        requiresTenant: true,
+      },
     ],
   },
   {

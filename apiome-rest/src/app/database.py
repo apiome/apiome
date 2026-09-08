@@ -7659,12 +7659,15 @@ class Database:
         Returns:
             A row shaped like :meth:`get_version_source_projection`'s (``id`` is the owning
             project id, plus ``project_slug``, ``version_label``, ``source_format``,
-            ``protocol``, ``format_metadata``, ``tool_versions``, project ``metadata``) with an
-            extra ``version_record_id`` (the resolved ``versions.id``), or ``None`` when no
-            published public revision matches the slugs.
+            ``protocol``, ``format_metadata``, ``tool_versions``, project ``metadata``) with two
+            extras: ``version_record_id`` (the resolved ``versions.id``) and ``tenant_id`` (the
+            owning tenant, which the slug-addressed caller does not otherwise learn — SDK-3.4
+            needs it to read that tenant's branding). ``None`` when no published public revision
+            matches the slugs.
         """
         query = """
             SELECT p.id AS id, p.slug AS project_slug,
+                   t.id AS tenant_id,
                    v.id AS version_record_id,
                    v.version_id AS version_label,
                    v.source_format, v.protocol, v.format_metadata,
@@ -30326,6 +30329,177 @@ class Database:
         return self._execute_write(
             """
             DELETE FROM apiome.deploy_gate_policy
+            WHERE tenant_id = %s::uuid AND project_id IS NULL
+            """,
+            (tenant_id,),
+        )
+
+
+    # =========================================================================================
+    # SDK generation settings & branding (SDK-3.4, #4494)
+    # =========================================================================================
+
+    #: Every column a reader of a settings row needs, UUIDs rendered as text so a caller never has
+    #: to know psycopg2 returns UUID objects. One constant because the read and both writes'
+    #: ``RETURNING`` clauses must not drift apart.
+    _SDK_GENERATION_SETTINGS_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        settings,
+        content_fingerprint,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by,
+        created_at,
+        updated_at
+    """
+
+    def get_sdk_generation_settings_rows(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return the settings rows that contribute to a scope, least specific first (SDK-3.4).
+
+        Unlike :meth:`get_deploy_gate_policy`, this returns *both* rows rather than the winner:
+        SDK-3.4 merges tenant and project settings key by key, so a project that overrides only its
+        user-agent still inherits its tenant's package pattern. Both rows in one query keeps that a
+        single round trip.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project to resolve for; ``None`` reads only the tenant-wide row.
+
+        Returns:
+            ``[tenant_row?, project_row?]`` ordered tenant-first, so a caller can merge by folding
+            left. Empty when neither scope has saved settings — or when the tenant id is not a
+            UUID, so a unit-test tenant handle never reaches the database.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        if project_id is not None and is_uuid_string(str(project_id)):
+            query = f"""
+                SELECT {self._SDK_GENERATION_SETTINGS_COLUMNS}
+                FROM apiome.sdk_generation_settings
+                WHERE tenant_id = %s::uuid
+                  AND (project_id = %s::uuid OR project_id IS NULL)
+                ORDER BY project_id NULLS FIRST
+            """
+            rows = self.execute_query(query, (tenant_id, project_id))
+        else:
+            query = f"""
+                SELECT {self._SDK_GENERATION_SETTINGS_COLUMNS}
+                FROM apiome.sdk_generation_settings
+                WHERE tenant_id = %s::uuid AND project_id IS NULL
+            """
+            rows = self.execute_query(query, (tenant_id,))
+        return [dict(row) for row in rows or []]
+
+    def upsert_sdk_generation_settings(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str],
+        settings: Dict[str, Any],
+        content_fingerprint: str,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Save the generation settings for one scope, replacing whatever it held (SDK-3.4).
+
+        The row is mutable by design: these settings produce no stored verdict, so there is no past
+        judgment for a version history to explain, and attribution of the change lives in
+        ``access_audit`` (the same argument CTG-4.5 made for its policy row).
+
+        The two scopes need two statements because their uniqueness is enforced by two *partial*
+        indexes (``project_id IS NULL`` and ``project_id IS NOT NULL``), and ``ON CONFLICT`` names
+        one index at a time.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project these settings govern, or ``None`` for the tenant-wide row.
+            settings: The ``sdk.generation-settings.v1`` body.
+            content_fingerprint: Digest of that body.
+            actor_id: The user making the change.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        scoped = project_id is not None and is_uuid_string(str(project_id))
+        payload = Json(settings or {})
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        if scoped:
+            query = f"""
+                INSERT INTO apiome.sdk_generation_settings (
+                    tenant_id, project_id, settings, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, project_id) WHERE project_id IS NOT NULL DO UPDATE SET
+                    settings = EXCLUDED.settings,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._SDK_GENERATION_SETTINGS_COLUMNS}
+            """
+            params: tuple = (
+                tenant_id,
+                project_id,
+                payload,
+                content_fingerprint,
+                actor,
+                actor,
+            )
+        else:
+            query = f"""
+                INSERT INTO apiome.sdk_generation_settings (
+                    tenant_id, project_id, settings, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, NULL, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id) WHERE project_id IS NULL DO UPDATE SET
+                    settings = EXCLUDED.settings,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._SDK_GENERATION_SETTINGS_COLUMNS}
+            """
+            params = (tenant_id, payload, content_fingerprint, actor, actor)
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_sdk_generation_settings(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> int:
+        """Remove the settings saved for one scope, falling back to the next one up (SDK-3.4).
+
+        Nothing cascades: clearing a tenant's settings leaves its projects' overrides in place,
+        because those were configured deliberately.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project override to drop, or ``None`` for the tenant-wide row.
+
+        Returns:
+            Rows removed: ``1`` when settings were saved for that exact scope, ``0`` otherwise.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return 0
+        if project_id is not None and is_uuid_string(str(project_id)):
+            return self._execute_write(
+                """
+                DELETE FROM apiome.sdk_generation_settings
+                WHERE tenant_id = %s::uuid AND project_id = %s::uuid
+                """,
+                (tenant_id, project_id),
+            )
+        return self._execute_write(
+            """
+            DELETE FROM apiome.sdk_generation_settings
             WHERE tenant_id = %s::uuid AND project_id IS NULL
             """,
             (tenant_id,),

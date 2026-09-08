@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.178.0",
+    "version": "1.179.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6679,6 +6679,312 @@
         }
       }
     },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-settings": {
+      "get": {
+        "tags": [
+          "sdk-generation",
+          "sdk-generation"
+        ],
+        "summary": "Get the generation settings in force for a project",
+        "description": "The package naming, licence header and user-agent this project's generated artifacts carry, and where they came from: `project` (an override saved here), `tenant` (the workspace default), `merged` (both), or `default` (nothing saved anywhere).\n\n`resolved` carries the same settings with their tokens substituted for this project \u2014 the package names a publisher would actually use.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\nRequires `projects:view`.",
+        "operationId": "get_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthegenerationsettingsinforceforaprojeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthegenerationsettingsinforceforaprojeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthegenerationsettingsinforceforaproje Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthegenerationsettingsinforceforaproje Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get the generation settings in force for a project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for getthegenerationsettingsinforceforaprojeresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for getthegenerationsettingsinforceforaprojeresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "sdk-generation",
+          "sdk-generation"
+        ],
+        "summary": "Set this project's generation settings",
+        "description": "Save an override for one project, replacing whatever it held. The workspace defaults still supply every key this body does not name.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
+        "operationId": "put_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthisprojectsgenerationsettingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthisprojectsgenerationsettingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthisprojectsgenerationsettings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthisprojectsgenerationsettings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SdkGenerationSettingsPutRequest",
+                "description": "Request body for setthisprojectsgenerationsettingsrequest."
+              }
+            }
+          },
+          "description": "Request body for set this project's generation settings."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for set this project's generation settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for setthisprojectsgenerationsettingsresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "The settings body is not valid."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sdk-generation",
+          "sdk-generation"
+        ],
+        "summary": "Drop this project's override",
+        "description": "Remove the project's settings, so it inherits the workspace defaults again. Returns the settings **now** in force, not a bare `204`, so a caller can see what it fell back to.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.clear`.",
+        "operationId": "delete_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Dropthisprojectsoverrideauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Dropthisprojectsoverrideauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Dropthisprojectsoverride Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Dropthisprojectsoverride Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for drop this project's override.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for dropthisprojectsoverrideresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for dropthisprojectsoverrideresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/catalog/{tenant_slug}": {
       "get": {
         "tags": [
@@ -10901,6 +11207,270 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for removethetenantsdeploygatepolicyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/governance/sdk-generation-settings": {
+      "get": {
+        "tags": [
+          "governance",
+          "governance"
+        ],
+        "summary": "Get the workspace generation defaults",
+        "description": "The package naming, licence header and user-agent every project in the workspace inherits unless it overrides them.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\nRequires `projects:view`.",
+        "operationId": "get_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Gettheworkspacegenerationdefaultsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Gettheworkspacegenerationdefaultsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Gettheworkspacegenerationdefaults Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Gettheworkspacegenerationdefaults Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get the workspace generation defaults.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for gettheworkspacegenerationdefaultsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for gettheworkspacegenerationdefaultsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "governance",
+          "governance"
+        ],
+        "summary": "Set the workspace generation defaults",
+        "description": "Save the workspace-wide defaults, replacing whatever they held. Projects that have saved their own override keep it for the keys it names.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
+        "operationId": "put_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settheworkspacegenerationdefaultsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settheworkspacegenerationdefaultsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settheworkspacegenerationdefaults Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settheworkspacegenerationdefaults Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SdkGenerationSettingsPutRequest",
+                "description": "Request body for settheworkspacegenerationdefaultsrequest."
+              }
+            }
+          },
+          "description": "Request body for set the workspace generation defaults."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for set the workspace generation defaults.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for settheworkspacegenerationdefaultsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The settings body is not valid."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "governance",
+          "governance"
+        ],
+        "summary": "Clear the workspace generation defaults",
+        "description": "Remove the workspace defaults. Project overrides are **not** cascaded away \u2014 they were configured deliberately. Returns the settings now in force at workspace scope.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.clear`.",
+        "operationId": "delete_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Cleartheworkspacegenerationdefaultsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Cleartheworkspacegenerationdefaultsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Cleartheworkspacegenerationdefaults Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Cleartheworkspacegenerationdefaults Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for clear the workspace generation defaults.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGenerationSettingsOut",
+                  "description": "Response payload for cleartheworkspacegenerationdefaultsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for cleartheworkspacegenerationdefaultsresponse422."
                 }
               }
             }
@@ -20892,7 +21462,7 @@
           "snippets"
         ],
         "summary": "Render a usage snippet for one operation of a published revision",
-        "description": "Return the install + call snippet for one operation of a published revision.\n\nResolves the project and version within the caller's tenant, requires the revision to\nbe published, loads its canonical content, addresses the operation by operationId /\nname / URL-encoded canonical key, and renders the requested language deterministically\nwith a content-addressed ``ETag``. A matching ``If-None-Match`` short-circuits to 304.\n\nArgs:\n    tenant_slug: Decorative; the token's tenant scopes every read.\n    project_id: The project UUID within the tenant.\n    version_record_id: The revision UUID (``versions.id``).\n    operation_id: operationId, canonical name, or URL-encoded canonical key.\n    lang: ``ts`` / ``python`` / ``curl`` (aliases ``fetch`` / ``httpx``).\n    if_none_match: Standard conditional-request header.\n    auth_data: The authenticated tenant context (JWT or API key).\n\nReturns:\n    The :class:`SnippetResponse` JSON, or an empty 304.",
+        "description": "Return the install + call snippet for one operation of a published revision.\n\nResolves the project and version within the caller's tenant, requires the revision to\nbe published, loads its canonical content, addresses the operation by operationId /\nname / URL-encoded canonical key, and renders the requested language deterministically\nwith a content-addressed ``ETag``. A matching ``If-None-Match`` short-circuits to 304.\n\nArgs:\n    tenant_slug: The tenant's slug. The token's tenant still scopes every read; the slug is\n        used only to resolve ``{tenant}`` in the tenant's branding patterns.\n    project_id: The project UUID within the tenant.\n    version_record_id: The revision UUID (``versions.id``).\n    operation_id: operationId, canonical name, or URL-encoded canonical key.\n    lang: ``ts`` / ``python`` / ``curl`` (aliases ``fetch`` / ``httpx``).\n    if_none_match: Standard conditional-request header.\n    auth_data: The authenticated tenant context (JWT or API key).\n\nReturns:\n    The :class:`SnippetResponse` JSON, or an empty 304.",
         "operationId": "get_version_operation_snippet_v1_versions__tenant_slug___project_id___version_record_id__snippets__operation_id__get",
         "parameters": [
           {
@@ -83686,14 +84256,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -85718,7 +86288,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "91501999-e16f-472d-b6a8-8b7c6f04f76a"
+            "example": "b91b9f4f-ff63-454c-b932-6aad01de8d16"
           },
           "method": {
             "type": "string",
@@ -88245,7 +88815,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -126903,6 +127473,50 @@
         "title": "ResolveTargetRequest",
         "description": "What a runner says when it selects a target."
       },
+      "ResolvedBrandingOut": {
+        "properties": {
+          "packageNames": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Packagenames",
+            "description": "Package Names."
+          },
+          "licenseHeader": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for resolved branding."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for resolved branding."
+              }
+            ],
+            "title": "Licenseheader",
+            "description": "License Header."
+          },
+          "userAgent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for resolved branding."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for resolved branding."
+              }
+            ],
+            "title": "Useragent",
+            "description": "User Agent."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ResolvedBrandingOut",
+        "description": "Token-substituted settings, ready for a generator or a snippet to apply.\n\nAttributes:\n    package_names: Resolved package name per ecosystem. An ecosystem whose pattern resolved to\n        an illegal name for that registry is omitted rather than emitted broken.\n    license_header: The resolved licence text (still uncommented \u2014 the consumer knows its own\n        comment syntax).\n    user_agent: The resolved user-agent string."
+      },
       "ResolvedPrimitiveRefs": {
         "properties": {
           "id": {
@@ -127192,7 +127806,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           }
         },
         "additionalProperties": false,
@@ -128882,6 +129496,190 @@
         ],
         "title": "ScopedCatalogPage",
         "description": "One bounded slice of a version's catalog (DUW-1.2).\n\nShared by the scoped class and path reads, because a client pages both the same way and a\nsecond identically-shaped model would only invite the two to drift apart. ``items`` stays\nloosely typed for the same reason the legacy full-version read does: a class carries JSONB\n``schema``/``canvas_metadata`` and nested property rows, a path carries JSONB ``metadata`` and\noperations, and pinning either here would make an additive column a breaking change.\n\n``total`` is the size of the *whole* selection, not of this page \u2014 the folder's membership for\na domain listing \u2014 so the workspace can compare it against its node budget before hydrating\nanything further."
+      },
+      "SdkGenerationSettings": {
+        "properties": {
+          "packageNamePatterns": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Packagenamepatterns",
+            "description": "Package name pattern per ecosystem (`npm`, `pypi`), e.g. `{\"npm\": \"@acme/{project}-sdk\"}`."
+          },
+          "licenseHeader": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Generation Settings schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Generation Settings schema."
+              }
+            ],
+            "title": "Licenseheader",
+            "description": "Text prepended as a comment to generated source (may span lines)."
+          },
+          "userAgent": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Generation Settings schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Generation Settings schema."
+              }
+            ],
+            "title": "Useragent",
+            "description": "User-agent generated clients send, for API-side traffic attribution."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SdkGenerationSettings",
+        "description": "The complete ``sdk.generation-settings.v1`` body, after merging.\n\nEvery field is optional and defaults to ``None`` \u2014 \"nothing configured\" is the documented\ndefault at every scope, because there is no sensible platform-wide package scope or licence to\ninvent on a tenant's behalf.\n\nAttributes:\n    package_name_patterns: Package name pattern per ecosystem (see :data:`ECOSYSTEMS`), e.g.\n        ``{\"npm\": \"@acme/{project}-sdk\"}``. Ecosystems are merged individually.\n    license_header: Text prepended, as a comment, to generated source. May span lines.\n    user_agent: User-agent string generated clients send, for API-side traffic attribution."
+      },
+      "SdkGenerationSettingsOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "description": "The settings body shape.",
+            "default": "sdk.generation-settings.v1",
+            "example": "1.0.0"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "default | tenant | project | merged.",
+            "example": "human"
+          },
+          "contentFingerprint": {
+            "type": "string",
+            "title": "Contentfingerprint",
+            "description": "sha256 digest of the merged settings body.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/SdkGenerationSettings",
+            "description": "Settings."
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedBrandingOut",
+            "description": "The settings with tokens substituted for this scope."
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "The scope this request addressed: tenant | project.",
+            "default": "tenant",
+            "example": "example"
+          },
+          "scopeBody": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Response payload for sdk generation settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sdk generation settings."
+              }
+            ],
+            "title": "Scopebody",
+            "description": "The body saved at exactly this scope, verbatim, or null when nothing is saved here. Only this distinguishes an absent key (inherit) from an explicit null (deliberately none)."
+          },
+          "tenantSettingsId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sdk generation settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sdk generation settings."
+              }
+            ],
+            "title": "Tenantsettingsid",
+            "description": "Tenant Settings ID."
+          },
+          "projectSettingsId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sdk generation settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sdk generation settings."
+              }
+            ],
+            "title": "Projectsettingsid",
+            "description": "Project Settings ID."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for sdk generation settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sdk generation settings."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for sdk generation settings."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for sdk generation settings."
+              }
+            ],
+            "title": "Updatedby",
+            "description": "Updated By."
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded",
+            "description": "True when a stored row could not be read and was skipped.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "contentFingerprint",
+          "resolved"
+        ],
+        "title": "SdkGenerationSettingsOut",
+        "description": "The settings in force for a scope, and where each part of them came from.\n\nAttributes:\n    schema_version: The body shape these settings were read as.\n    source: ``default`` (nothing saved anywhere), ``tenant``, ``project``, or ``merged`` when\n        both scopes contributed.\n    content_fingerprint: ``sha256:`` digest of the merged body \u2014 identical settings produce\n        identical artifacts, and this is the value that proves it.\n    settings: The merged settings themselves.\n    resolved: The settings with their tokens substituted for this scope, ready to apply.\n    scope: The scope this request addressed (``tenant`` or ``project``).\n    scope_body: The body saved at *exactly* that scope, verbatim, or ``None`` when nothing is\n        saved there. An editor needs this and not just ``settings``: only the raw body says\n        whether a key is absent (inherit) or present as ``null`` (deliberately none), and the\n        merged view cannot tell those apart.\n    tenant_settings_id: The contributing tenant-scope row, when there is one.\n    project_settings_id: The contributing project-scope row, when there is one.\n    updated_at: When the most specific contributing row was last written.\n    updated_by: Who wrote it.\n    degraded: True when a stored row could not be read and was skipped."
+      },
+      "SdkGenerationSettingsPutRequest": {
+        "properties": {
+          "settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Settings",
+            "description": "The settings to save. Only the keys named here are stored, so a body naming one setting configures exactly that one and leaves the rest inheriting."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SdkGenerationSettingsPutRequest",
+        "description": "Body for saving SDK generation settings.\n\nAttributes:\n    settings: The ``sdk.generation-settings.v1`` body. Only the keys it names are stored."
       },
       "SecretRefBody": {
         "properties": {
@@ -142543,14 +143341,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-08T01:52:24Z"
+            "example": "2026-09-08T03:24:42Z"
           },
           "outcome": {
             "anyOf": [

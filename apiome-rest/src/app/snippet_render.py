@@ -23,6 +23,15 @@ Known limitation: the canonical model does not record security schemes, so auth 
 snippets comes only from *name-based* inference over declared header/query parameters (the
 same rule set the browse Try It panel applies). Operations whose auth is declared solely via
 OpenAPI ``security`` render without auth headers.
+
+Branding (SDK-3.4, #4494): :func:`render_snippet` takes an optional ``user_agent`` and
+``license_header``, resolved from a tenant's stored generation settings by
+:func:`app.sdk_generation_settings_store.load_branding`. Both default to ``None`` and change
+nothing when absent — which is what keeps the bulk request-file emitter
+(:class:`app.http_file_emitter.HttpFileEmitter`), which shares :func:`synthesize_request` and
+:func:`render_curl`, byte-identical. The branding is deliberately *not* mirrored into the
+client-side twin: the browse Try It panel sends the request it renders, and stamping a tenant's
+attribution user-agent onto a reader's live traffic would misattribute it.
 """
 
 from __future__ import annotations
@@ -323,7 +332,7 @@ def _synthesize_body(api: CanonicalApi, message: Message) -> Optional[Any]:
 
 
 def synthesize_request(
-    api: CanonicalApi, op: Operation
+    api: CanonicalApi, op: Operation, user_agent: Optional[str] = None
 ) -> Tuple[SnippetRequest, List[SnippetPlaceholder]]:
     """Compose the deterministic example request one operation's snippets render.
 
@@ -335,6 +344,11 @@ def synthesize_request(
     Args:
         api: The canonical model the operation belongs to.
         op: The operation to synthesize a request for.
+        user_agent: A tenant's attribution user-agent (SDK-3.4), added as a ``User-Agent``
+            header. ``None`` — the default, and what every caller but the snippet routes
+            passes — adds nothing, which is what keeps the bulk request-file emitter's output
+            unchanged. An operation that declares its own ``User-Agent`` parameter keeps it:
+            the spec is more authoritative than a tenant default.
 
     Returns:
         The composed :class:`SnippetRequest` and its placeholder inventory.
@@ -401,6 +415,9 @@ def synthesize_request(
                     SnippetPlaceholder(token=value, kind="header", name=param.name)
                 )
             headers[param.name] = value
+
+    if user_agent and not any(name.lower() == "user-agent" for name in headers):
+        headers["User-Agent"] = user_agent
 
     body: Optional[str] = None
     body_json: Optional[Any] = None
@@ -493,6 +510,33 @@ def format_python_literal(value: Any, indent_level: int) -> str:
 # Per-language renderers (parity with snippet.ts)
 # ===========================================================================
 
+#: Line-comment prefix per language, used to render a tenant's licence header above the call.
+#:
+#: Line comments, never a block comment: a licence containing ``*/`` would terminate a block
+#: comment from the inside and turn the rest of the header into code. This module owns the table
+#: because commenting text for a language is a rendering concern, not a settings one.
+_LICENSE_COMMENT_PREFIXES: Dict[str, str] = {"ts": "//", "python": "#", "curl": "#"}
+
+
+def license_comment_block(text: Optional[str], lang: str) -> Optional[str]:
+    """Render licence text as a line-comment block for one snippet language.
+
+    Args:
+        text: The resolved licence text, or ``None``.
+        lang: A canonical language key from :data:`SUPPORTED_LANGS`.
+
+    Returns:
+        The commented block without a trailing newline, or ``None`` when there is nothing to
+        render or the language has no known comment syntax.
+    """
+    if not text or not text.strip():
+        return None
+    prefix = _LICENSE_COMMENT_PREFIXES.get(lang)
+    if prefix is None:
+        return None
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    return "\n".join(f"{prefix} {line}".rstrip() for line in lines)
+
 
 def render_curl(request: SnippetRequest) -> str:
     """Render one synthesized request as a single-line ``curl`` command.
@@ -563,13 +607,24 @@ def _render_httpx(request: SnippetRequest) -> str:
 _RENDERERS = {"curl": render_curl, "ts": _render_fetch, "python": _render_httpx}
 
 
-def render_snippet(api: CanonicalApi, op: Operation, lang: str) -> SnippetRender:
+def render_snippet(
+    api: CanonicalApi,
+    op: Operation,
+    lang: str,
+    *,
+    user_agent: Optional[str] = None,
+    license_header: Optional[str] = None,
+) -> SnippetRender:
     """Render the install + call snippet for one operation in one canonical language.
 
     Args:
         api: The canonical model the operation belongs to.
         op: The operation to render (must have an HTTP binding).
         lang: A canonical language key from :data:`SUPPORTED_LANGS`.
+        user_agent: A tenant's attribution user-agent (SDK-3.4), added to the request headers.
+        license_header: A tenant's licence text (SDK-3.4), prepended to the code as a line-comment
+            block. Both default to ``None`` and then change nothing, so an unbranded render stays
+            byte-identical to what this function produced before SDK-3.4.
 
     Returns:
         The :class:`SnippetRender` with code, install line, request, and placeholders.
@@ -579,11 +634,15 @@ def render_snippet(api: CanonicalApi, op: Operation, lang: str) -> SnippetRender
         KeyError: When ``lang`` is not a canonical key (routes validate via
             :func:`resolve_lang` first).
     """
-    request, placeholders = synthesize_request(api, op)
+    request, placeholders = synthesize_request(api, op, user_agent)
+    code = _RENDERERS[lang](request)
+    prologue = license_comment_block(license_header, lang)
+    if prologue:
+        code = f"{prologue}\n{code}"
     return SnippetRender(
         lang=lang,
         install=INSTALL_LINES[lang],
-        code=_RENDERERS[lang](request),
+        code=code,
         request=request,
         placeholders=placeholders,
     )

@@ -31515,3 +31515,226 @@ tr:focus-within .pub-url__glyph {
   color: var(--fg-subtle);
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   SDK GENERATION SETTINGS  (SDK-3.4, #4494)
+   --------------------------------------------------------------------------
+   The Ship → SDK settings screen: a scope picker, one form of four fields, and
+   a read-only "in force" panel showing what the merged settings resolve to.
+
+   Three things this block is careful about.
+
+   1. **It borrows rather than restates.** The card chrome, the icon tile
+      (`.tnt-icon-tile`) and the native-control skin (`.hive-control`) already
+      exist; only what is specific to this form is declared here.
+
+   2. **The form is one column, deliberately.** A licence header is a paragraph
+      and a package pattern is a line of code; side by side they would each get
+      half a screen and neither would fit. The preview panel below is a two-
+      column definition list because its terms are short labels.
+
+   3. **Every metric is a token.** The mockups froze the field gap at 16px and
+      the preview's term column at 160px; both are spent as `--space-*` and a
+      `rem` minimum instead, so the density and font-scale preferences reach
+      this screen like every other.
+   ========================================================================== */
+
+.sdks-notice {
+  margin-block-end: var(--space-4);
+}
+
+.sdks-problems {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+/* --- Scope picker ------------------------------------------------------- */
+
+.sdks-scope {
+  display: grid;
+  gap: var(--space-1);
+  margin-block-end: var(--space-4);
+  max-inline-size: 32rem;
+}
+
+.sdks-scope__label {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.sdks-scope__select {
+  inline-size: 100%;
+}
+
+.sdks-scope__hint {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+/* --- Cards -------------------------------------------------------------- */
+
+.sdks-card {
+  margin-block-end: var(--space-4);
+}
+
+.sdks-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.sdks-card__text {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.sdks-card__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0;
+}
+
+.sdks-card__desc {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.sdks-fingerprint {
+  margin-inline-start: auto;
+  align-self: center;
+}
+
+/* --- The form ----------------------------------------------------------- */
+
+.sdks-body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sdks-field {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.sdks-field__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.sdks-field__label {
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
+.sdks-field__inherit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.sdks-field__box {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.sdks-field__control {
+  inline-size: 100%;
+}
+
+.sdks-field__hint {
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+/* --- Footer ------------------------------------------------------------- */
+
+.sdks-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.sdks-footer__state {
+  margin-inline-end: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.sdks-footer__spinner {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+}
+
+/* --- "In force" preview -------------------------------------------------- */
+
+.sdks-preview {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sdks-preview__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.sdks-preview__row {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+.sdks-preview__term {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  min-inline-size: 0;
+}
+
+.sdks-preview__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+}
+
+.sdks-preview__value {
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  margin: 0;
+  min-inline-size: 0;
+  overflow-x: auto;
+}
+
+.sdks-preview__value--block {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-inline-size: 40rem) {
+  .sdks-preview__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

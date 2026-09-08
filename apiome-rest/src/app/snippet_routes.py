@@ -20,6 +20,16 @@ Both take ``?lang=`` (``ts`` / ``python`` / ``curl``, with browse aliases ``fetc
 canonical key itself (``operation_id`` is a ``:path`` parameter, so URL-encoded keys like
 ``GET%20/pets/%7Bid%7D`` resolve for paradigms without operationIds), and serve
 deterministic, content-addressed responses with ``ETag`` / ``If-None-Match`` 304 support.
+
+**Branding (SDK-3.4, #4494).** Both routes apply the tenant's stored generation settings — its
+attribution user-agent as a request header, its licence header as a comment above the code — and
+report which settings were applied in ``branding``. Two consequences worth knowing:
+
+* The ``ETag`` is a digest of the whole response, so changing a tenant's settings changes it
+  automatically; no cache-key work is needed. The public route's ``Cache-Control: public`` stays
+  correct because the tenant is already part of its URL.
+* Branding is resolved per *project*, so ``{project}`` and ``{tenant}`` substitute; ``{version}``
+  resolves from the revision being rendered.
 """
 
 from __future__ import annotations
@@ -38,6 +48,8 @@ from .database import db
 from .export_source import ExportSourceError, load_public_export_source
 from .public_export_guards import enforce_public_export_rate_limit
 from .revision_deprecation import is_uuid_string
+from .sdk_generation_settings import PatternContext, ResolvedBranding
+from .sdk_generation_settings_store import load_branding
 from .snippet_render import (
     SUPPORTED_LANGS,
     SnippetRenderError,
@@ -113,6 +125,28 @@ class SnippetRequestModel(BaseModel):
     )
 
 
+class SnippetBrandingModel(BaseModel):
+    """The tenant branding applied to this snippet (SDK-3.4).
+
+    Reported rather than left implicit so a reader can tell a tenant's user-agent from one the
+    spec itself declares, and so a "Get SDK" surface can show the package name the same settings
+    would produce without a second call.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_agent: Optional[str] = Field(
+        default=None, description="Attribution user-agent added to the request headers, if any."
+    )
+    license_header: Optional[str] = Field(
+        default=None, description="Licence text prepended to the code as a comment, if any."
+    )
+    package_names: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved package name per ecosystem for this project (npm, pypi).",
+    )
+
+
 class SnippetResponse(BaseModel):
     """One rendered install + call snippet for one operation and language."""
 
@@ -126,6 +160,10 @@ class SnippetResponse(BaseModel):
     operation: SnippetOperationRef
     request: SnippetRequestModel
     placeholders: List[SnippetPlaceholderModel] = Field(default_factory=list)
+    branding: SnippetBrandingModel = Field(
+        default_factory=SnippetBrandingModel,
+        description="The tenant generation settings applied to this snippet (SDK-3.4).",
+    )
 
 
 class PublicSnippetResponse(SnippetResponse):
@@ -170,13 +208,43 @@ def _find_operation_or_404(api: CanonicalApi, operation_id: str) -> Operation:
     return op
 
 
-def _render_or_422(api: CanonicalApi, op: Operation, lang: str) -> SnippetResponse:
-    """Render one snippet, mapping non-HTTP operations to 422."""
+def _render_or_422(
+    api: CanonicalApi,
+    op: Operation,
+    lang: str,
+    branding: Optional[ResolvedBranding] = None,
+) -> SnippetResponse:
+    """Render one snippet, applying tenant branding, and map non-HTTP operations to 422.
+
+    Args:
+        api: The canonical model the operation belongs to.
+        op: The resolved operation.
+        lang: The canonical language key.
+        branding: The tenant's resolved generation settings, or ``None`` for an unbranded render.
+
+    Returns:
+        The response payload.
+
+    Raises:
+        HTTPException: 422 when the operation has no HTTP binding.
+    """
+    brand = branding or ResolvedBranding(package_names={})
     try:
-        render = render_snippet(api, op, lang)
+        render = render_snippet(
+            api,
+            op,
+            lang,
+            user_agent=brand.user_agent,
+            license_header=brand.license_header,
+        )
     except SnippetRenderError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return SnippetResponse(
+        branding=SnippetBrandingModel(
+            user_agent=brand.user_agent,
+            license_header=brand.license_header,
+            package_names=dict(brand.package_names),
+        ),
         lang=render.lang,
         install=render.install,
         code=render.code,
@@ -275,7 +343,8 @@ async def get_version_operation_snippet(
     with a content-addressed ``ETag``. A matching ``If-None-Match`` short-circuits to 304.
 
     Args:
-        tenant_slug: Decorative; the token's tenant scopes every read.
+        tenant_slug: The tenant's slug. The token's tenant still scopes every read; the slug is
+            used only to resolve ``{tenant}`` in the tenant's branding patterns.
         project_id: The project UUID within the tenant.
         version_record_id: The revision UUID (``versions.id``).
         operation_id: operationId, canonical name, or URL-encoded canonical key.
@@ -286,7 +355,6 @@ async def get_version_operation_snippet(
     Returns:
         The :class:`SnippetResponse` JSON, or an empty 304.
     """
-    _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
 
     resolved_lang = _resolve_lang_or_400(lang)
@@ -317,7 +385,16 @@ async def get_version_operation_snippet(
         raise HTTPException(status_code=404, detail=f"Operation not found: {operation_id}")
 
     op = _find_operation_or_404(canonical, operation_id)
-    payload = _render_or_422(canonical, op, resolved_lang)
+    branding = load_branding(
+        tenant_id,
+        str(project["id"]),
+        PatternContext(
+            tenant=str(tenant_slug or ""),
+            project=str(project.get("slug") or ""),
+            version=str(version.get("version_id") or ""),
+        ),
+    )
+    payload = _render_or_422(canonical, op, resolved_lang, branding)
     return _cached_json_response(payload, if_none_match, cache_scope="private")
 
 
@@ -374,7 +451,18 @@ async def get_public_operation_snippet(
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
     op = _find_operation_or_404(source.api, operation_id)
-    base = _render_or_422(source.api, op, resolved_lang)
+    # The anonymous caller supplied slugs, not a tenant id; the loader resolved one, which is what
+    # lets a public snippet carry the same branding the authenticated one does.
+    branding = load_branding(
+        source.tenant_id,
+        source.artifact_id,
+        PatternContext(
+            tenant=tenant_slug,
+            project=project_slug,
+            version=str(source.version_label or version_slug),
+        ),
+    )
+    base = _render_or_422(source.api, op, resolved_lang, branding)
     payload = PublicSnippetResponse(
         **base.model_dump(),
         tenant_slug=tenant_slug,

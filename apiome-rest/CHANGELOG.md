@@ -5,6 +5,49 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.314.0] - 2026-09-07
+
+### Added
+- **SDK generation settings & branding (#4494, SDK-3.4)** — an organisation wants the code Apiome
+  hands its consumers to carry the organisation's identity: packages under its own npm scope /
+  PyPI naming pattern, its licence header on the source, its own user-agent on the traffic those
+  clients generate. None of that is a property of any version, project row or generated file, so
+  it now has one durable home and one set of rules.
+
+  ```bash
+  curl -sX PUT -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
+    "$APIOME/v1/tenants/$TENANT/governance/sdk-generation-settings" \
+    -d '{"settings":{"packageNamePatterns":{"npm":"@acme/{project}-sdk"},
+         "userAgent":"acme-sdk/{version}"}}' | jq -r .resolved.packageNames
+  ```
+
+  - Six endpoints, three per scope:
+    `GET|PUT|DELETE /v1/tenants/{t}/governance/sdk-generation-settings` and
+    `GET|PUT|DELETE /v1/projects/{t}/{project}/sdk-settings`. A `GET` never materialises a row —
+    a scope with nothing saved answers `source: "default"` — and a `DELETE` returns the settings
+    **now** in force rather than a bare `204`.
+  - **The merge is per key, not per row.** A project that overrides only its user-agent still
+    inherits its tenant's package pattern, and `packageNamePatterns` merges one ecosystem at a
+    time. This is the one place SDK-3.4 departs from CTG-4.5's whole-body override, and the reason
+    a stored body carries only the keys its author named: an **absent** key inherits the next scope
+    up, an explicit **`null`** is deliberately none and blocks that inheritance.
+  - **A pattern is validated by being resolved.** `@acme/{project}-sdk` is not itself a legal npm
+    name, so patterns are checked by substituting probe values and validating the result. At read
+    time a package pattern whose tokens the scope cannot fill is *omitted* rather than resolved
+    approximately — a package name is an exact identifier, and a nearly-right one is worse than
+    none. Tokens: `{tenant}`, `{project}`, `{version}`, `{year}`.
+  - **The snippet service applies them.** SDK-2.3's authenticated and anonymous surfaces now stamp
+    the tenant's user-agent onto the example request and its licence header above the code (as
+    line comments — a block comment could be terminated from inside by a licence containing `*/`),
+    and report both back in a new `branding` field alongside the resolved package names.
+    Rendering with no branding is byte-identical to before, which is what keeps FMT-2.4's bulk
+    request-file emitter — which shares `synthesize_request` and `render_curl` — unchanged.
+  - `projects:view` to read, `projects:edit` to change: no new RBAC resource and no new API-key
+    scope. Both writes are audited as `governance.sdk_generation_settings.update` / `.clear`,
+    with the licence header recorded by length rather than verbatim.
+  - Schema: apiome-db **V255** (`sdk_generation_settings`, two partial unique indexes, one JSONB
+    body). Docs: `apiome-rest/docs/sdk_generation_settings.md`.
+
 ## [1.313.0] - 2026-09-07
 
 ### Added

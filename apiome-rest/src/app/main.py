@@ -103,6 +103,10 @@ from .slate_git_preview_routes import router as slate_git_preview_router
 from .slate_insights_routes import router as slate_insights_router
 from .slate_routes import router as slate_router
 from .slate_security_routes import router as slate_security_router
+from .sdk_generation_settings_routes import router as sdk_generation_settings_router
+from .sdk_generation_settings_routes import (
+    tenant_router as sdk_generation_settings_tenant_router,
+)
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
@@ -137,7 +141,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.178.0",
+    version="1.179.0",
 )
 
 
@@ -287,6 +291,10 @@ app.include_router(projects_router)
 # `/{tenant}/by-slug/{project_slug}` still wins for a project whose slug is literally `gate`
 # (CTG-4.5, #4502). Nothing else in projects_routes matches three segments ending in a literal.
 app.include_router(deploy_gate_router)
+# sdk_generation_settings_router shares the `/v1/projects` prefix for the same reason and is
+# registered after it too, so `/{tenant}/by-slug/{project_slug}` still wins for a project
+# slugged `sdk-settings` (SDK-3.4, #4494).
+app.include_router(sdk_generation_settings_router)
 app.include_router(catalog_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
@@ -296,6 +304,7 @@ app.include_router(provider_verification_router)
 app.include_router(verification_target_router)
 app.include_router(verification_schedule_router)
 app.include_router(deploy_gate_tenant_router)
+app.include_router(sdk_generation_settings_tenant_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
