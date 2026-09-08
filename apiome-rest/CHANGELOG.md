@@ -5,6 +5,76 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.313.0] - 2026-09-07
+
+### Added
+- **Deploy-gating status API (#4502, CTG-4.5)** — a CD pipeline asks one question, *can I promote
+  this API version?*, and the answer lived in five places: the GOV lint grade on the revision,
+  CTG-3.1's breaking classification, CTG-4.2's per-consumer verdicts, CTG-4.3's conformance report
+  and CTG-4.4's freshness. Every team that wanted a gate scripted its own multi-call version, and
+  every one of them decided the combination rules differently.
+
+  ```bash
+  curl -sH "X-API-Key: $KEY" "$APIOME/v1/projects/$TENANT/$PROJECT/gate" | jq -r .status
+  ```
+
+  `GET /v1/projects/{tenant_slug}/{project_ref}/gate` returns `pass` / `warn` / `fail` plus a
+  per-signal breakdown, each signal carrying a stable reason code, a human sentence, a link to its
+  evidence, and the facts the judgment was made from. **No analysis was added**: every signal is a
+  read of something an earlier ticket already stored — the gate never re-lints (#5259's stored
+  reports) and never re-diffs (the stored `ctg.changelog.v1` payload is rehydrated into the
+  classified diff CTG-4.2's `consumer_impact_for_diff` already takes, because a changelog entry and
+  a classified change carry the same fields).
+
+  **Partial inputs are the normal case, so there are five per-signal statuses rather than three.**
+  A signal with nothing behind it reports `not_configured`; one that exists but could not be read
+  reports `unknown`. Both are excluded from the verdict — the endpoint has to ship before all four
+  sources exist everywhere — and both are counted apart, because "nobody has registered a consumer",
+  "I could not read the registry" and "no consumer is broken" are three different facts.
+  `evaluatedSignals` is how a strict pipeline tells an empty gate from a real pass.
+
+  **The status is always 200.** A `409` on a failing build would make a network fault and a breaking
+  change look identical to a pipeline's error handling; the verdict is in the body and the caller
+  owns the exit code, exactly as the CLX-4.2 lint gate does.
+
+  **Thresholds are two-rung and tenant- or project-scoped.** Each signal carries a warn threshold
+  and a fail threshold, either of which may be `null` to disable that rung, which is what lets one
+  vocabulary come out of four very different measurements without a per-signal "action" dial:
+  *warn below B, fail below D* says the whole lint policy in five words. A rung that could never
+  fire is refused with a `422` listing every problem at once.
+  `GET|PUT|DELETE /v1/tenants/{tenant}/governance/deploy-gate-policy` and the per-project
+  `…/gate/policy` configure it, resolving project → tenant → documented default, with `policy.source`
+  on every response saying which one applied. Unlike the other policy surfaces these rows are
+  mutable rather than append-only — the gate stores no verdict, so there is no past judgment for a
+  version history to explain; attribution lives in `access_audit`.
+
+  Unlike every other policy default in the platform, **this one has teeth**: it fails on a breaking
+  change and on a broken consumer, and warns on a lint grade below B or a verification older than a
+  day. The advisory defaults elsewhere exist because those gates hang off flows that already existed
+  and a blocking default would break people who never asked for one; nothing hangs off this one.
+
+  **Every signal fails soft, on its own.** A store that is unreachable or a payload this release
+  cannot parse costs that signal — `unknown`, reason `signal-unavailable` — and nothing else. A gate
+  that returned `500` because one of four inputs was briefly unavailable would stop every pipeline in
+  the tenant. The policy read degrades the same way, flagging `policy.degraded` so "nothing is
+  configured" stays distinguishable from "I could not read what is".
+
+  A schedule is matched to the gated revision however its reference was spelled (`…/1.2.0`,
+  `…/<uuid>`, `…/latest`); across several, freshness is the most recent clean run and the status is
+  the worst, so a failing staging check is never averaged away by a passing production one. When
+  nothing schedules the version, the signal falls back to a manual CTG-4.3 report, read by resolved
+  artifact coordinates — and a failing report never becomes the freshness anchor.
+
+  **No new RBAC resource and no new API-key scope.** Reading a gate is `versions:view` (what a CI
+  runner resolves to); moving the bar is `verification_targets:edit`, the same class of decision
+  V211 already keeps out of an Editor's hands. The consumer signal is gated inside the response on
+  `consumer_contracts:view`, reported `unknown` rather than leaked or silently passed. The gate is
+  allowlisted for *either* CTG-2.3 CI read scope (`diff:read` or `lint:read`), since it aggregates
+  inputs both of those already grant.
+
+  apiome-db **V254** adds `deploy_gate_policy` (one row per scope, two partial unique indexes) plus
+  the artifact index the report fallback reads. See `docs/deploy_gate.md`.
+
 ## [1.311.0] - 2026-09-07
 
 ### Added

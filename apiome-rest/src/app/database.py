@@ -29488,6 +29488,9 @@ class Database:
         version_ref: Optional[str] = None,
         target_id: Optional[str] = None,
         outcome: Optional[str] = None,
+        artifact_kind: Optional[str] = None,
+        artifact_id: Optional[str] = None,
+        version_label: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """A tenant's conformance reports, newest first.
@@ -29495,11 +29498,20 @@ class Database:
         The filters are the questions a gate asks: "the newest report for *this* version"
         (CTG-4.5), "everything that ran against *this* deployment", "what is drifting".
 
+        ``version_ref`` and ``artifact_id`` ask that first question two different ways. A report is
+        addressed by the reference string it was *requested* with, which may spell the project as a
+        slug or an id and the version as a label, a revision id, or ``latest``; the deploy gate is
+        anchored on a project id and must find the evidence however it was spelled, so it filters
+        on the resolved coordinates V252 stores instead (V254 indexes them).
+
         Args:
             tenant_id: The caller's tenant.
-            version_ref: Restrict to one version reference.
+            version_ref: Restrict to one version reference, exactly as it was requested.
             target_id: Restrict to one verification target.
             outcome: Restrict to one verdict.
+            artifact_kind: Restrict to ``project`` or ``catalog`` (resolved at run time).
+            artifact_id: Restrict to one artifact id (resolved at run time).
+            version_label: Restrict to one resolved version label.
             limit: Maximum rows.
 
         Returns:
@@ -29518,6 +29530,15 @@ class Database:
         if outcome:
             clauses.append("outcome = %s")
             params.append(outcome)
+        if artifact_kind:
+            clauses.append("artifact_kind = %s")
+            params.append(artifact_kind)
+        if artifact_id and is_uuid_string(str(artifact_id)):
+            clauses.append("artifact_id = %s::uuid")
+            params.append(artifact_id)
+        if version_label:
+            clauses.append("version_label = %s")
+            params.append(version_label)
         params.append(max(1, int(limit)))
         return self.execute_query(
             f"""
@@ -30141,6 +30162,174 @@ class Database:
         except Exception as e:
             conn.rollback()
             raise e
+
+    # =========================================================================================
+    # Deploy-gating status API (CTG-4.5, #4502)
+    # =========================================================================================
+
+    #: Every column a reader of a gate policy needs, UUIDs rendered as text so a caller never has
+    #: to know psycopg2 returns UUID objects. One constant because the read and both writes'
+    #: ``RETURNING`` clauses must not drift apart.
+    _DEPLOY_GATE_POLICY_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        thresholds,
+        content_fingerprint,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by,
+        created_at,
+        updated_at
+    """
+
+    def get_deploy_gate_policy(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Return the deploy-gate policy in force for a scope (CTG-4.5).
+
+        Resolution is a single query, not two round trips: a project override and the tenant-wide
+        policy are both selected and the override sorts first, so "the policy in force" costs one
+        index lookup on the gate's hot path.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project to resolve for; ``None`` reads only the tenant-wide row.
+
+        Returns:
+            The winning row, or ``None`` when neither scope has a saved policy (the caller then
+            uses the documented default). ``None`` too when the tenant id is not a UUID, so a
+            unit-test tenant handle never reaches the database.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        scoped = project_id is not None and is_uuid_string(str(project_id))
+        if scoped:
+            query = f"""
+                SELECT {self._DEPLOY_GATE_POLICY_COLUMNS}
+                FROM apiome.deploy_gate_policy
+                WHERE tenant_id = %s::uuid
+                  AND (project_id = %s::uuid OR project_id IS NULL)
+                ORDER BY project_id NULLS LAST
+                LIMIT 1
+            """
+            rows = self.execute_query(query, (tenant_id, project_id))
+        else:
+            query = f"""
+                SELECT {self._DEPLOY_GATE_POLICY_COLUMNS}
+                FROM apiome.deploy_gate_policy
+                WHERE tenant_id = %s::uuid AND project_id IS NULL
+                LIMIT 1
+            """
+            rows = self.execute_query(query, (tenant_id,))
+        return dict(rows[0]) if rows else None
+
+    def upsert_deploy_gate_policy(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str],
+        thresholds: Dict[str, Any],
+        content_fingerprint: str,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Save the deploy-gate policy for one scope, replacing whatever it held (CTG-4.5).
+
+        The row is mutable by design: the gate stores no verdict, so there is no past judgment for
+        a version history to explain, and attribution of the change lives in ``access_audit``.
+
+        The two scopes need two statements because their uniqueness is enforced by two *partial*
+        indexes (``project_id IS NULL`` and ``project_id IS NOT NULL``), and ``ON CONFLICT`` names
+        one index at a time.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project this policy governs, or ``None`` for the tenant-wide policy.
+            thresholds: The ``ctg.gate-policy.v1`` body.
+            content_fingerprint: Digest of that body.
+            actor_id: The user making the change.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        scoped = project_id is not None and is_uuid_string(str(project_id))
+        payload = Json(thresholds or {})
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        if scoped:
+            query = f"""
+                INSERT INTO apiome.deploy_gate_policy (
+                    tenant_id, project_id, thresholds, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, project_id) WHERE project_id IS NOT NULL DO UPDATE SET
+                    thresholds = EXCLUDED.thresholds,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._DEPLOY_GATE_POLICY_COLUMNS}
+            """
+            params: tuple = (
+                tenant_id,
+                project_id,
+                payload,
+                content_fingerprint,
+                actor,
+                actor,
+            )
+        else:
+            query = f"""
+                INSERT INTO apiome.deploy_gate_policy (
+                    tenant_id, project_id, thresholds, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, NULL, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id) WHERE project_id IS NULL DO UPDATE SET
+                    thresholds = EXCLUDED.thresholds,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._DEPLOY_GATE_POLICY_COLUMNS}
+            """
+            params = (tenant_id, payload, content_fingerprint, actor, actor)
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_deploy_gate_policy(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> int:
+        """Remove the saved policy for one scope, falling back to the next one up (CTG-4.5).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project override to drop, or ``None`` for the tenant-wide policy.
+
+        Returns:
+            Rows removed: ``1`` when a policy was saved for that exact scope, ``0`` otherwise.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return 0
+        if project_id is not None and is_uuid_string(str(project_id)):
+            return self._execute_write(
+                """
+                DELETE FROM apiome.deploy_gate_policy
+                WHERE tenant_id = %s::uuid AND project_id = %s::uuid
+                """,
+                (tenant_id, project_id),
+            )
+        return self._execute_write(
+            """
+            DELETE FROM apiome.deploy_gate_policy
+            WHERE tenant_id = %s::uuid AND project_id IS NULL
+            """,
+            (tenant_id,),
+        )
 
 
 # Global database instance

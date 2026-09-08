@@ -41,6 +41,7 @@ __all__ = [
     "get_report",
     "get_report_for_run",
     "latest_report",
+    "latest_report_for_project",
     "list_reports",
     "record_from_row",
     "save_report",
@@ -344,15 +345,21 @@ def list_reports(
     version_ref: Optional[str] = None,
     target_id: Optional[str] = None,
     outcome: Optional[str] = None,
+    artifact_kind: Optional[str] = None,
+    artifact_id: Optional[str] = None,
+    version_label: Optional[str] = None,
     limit: int = 50,
 ) -> List[ConformanceReportSummary]:
     """A tenant's conformance reports, newest first, without their detail.
 
     Args:
         tenant_id: The caller's tenant.
-        version_ref: Restrict to one version reference.
+        version_ref: Restrict to one version reference, exactly as it was requested.
         target_id: Restrict to one verification target.
         outcome: Restrict to one verdict.
+        artifact_kind: Restrict to ``project`` or ``catalog``, as resolved at run time.
+        artifact_id: Restrict to one artifact id, as resolved at run time.
+        version_label: Restrict to one resolved version label.
         limit: Maximum reports (clamped to 1..200).
 
     Returns:
@@ -363,6 +370,9 @@ def list_reports(
         version_ref=version_ref,
         target_id=target_id,
         outcome=outcome,
+        artifact_kind=artifact_kind,
+        artifact_id=artifact_id,
+        version_label=version_label,
         limit=max(1, min(int(limit), MAX_LIST_LIMIT)),
     )
     return [summary_from_row(row) for row in rows]
@@ -387,5 +397,41 @@ def latest_report(
     """
     reports = list_reports(
         tenant_id, version_ref=version_ref, target_id=target_id, limit=1
+    )
+    return reports[0] if reports else None
+
+
+def latest_report_for_project(
+    tenant_id: str,
+    project_id: str,
+    *,
+    version_label: Optional[str] = None,
+    target_id: Optional[str] = None,
+) -> Optional[ConformanceReportSummary]:
+    """The newest conformance report for a project, however its version reference was spelled.
+
+    :func:`latest_report` matches the reference string a run was *requested* with, which is exact
+    but brittle for a caller that starts from a project id: the same deployment may have been
+    verified as ``project/petstore/1.0.0`` on Monday and ``project/petstore/latest`` on Tuesday.
+    The deploy gate (CTG-4.5) asks the question the other way round — "has anything verified *this
+    project* recently?" — so it reads the coordinates CTG-4.3 resolved at run time, which V254
+    indexes.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: The project whose evidence to look for.
+        version_label: Narrow to one published version label, when the gate names one.
+        target_id: Restrict to one deployment.
+
+    Returns:
+        The newest matching summary, or ``None`` when this project has never been verified.
+    """
+    reports = list_reports(
+        tenant_id,
+        artifact_kind="project",
+        artifact_id=project_id,
+        version_label=version_label,
+        target_id=target_id,
+        limit=1,
     )
     return reports[0] if reports else None

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.176.0",
+    "version": "1.178.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6245,6 +6245,440 @@
         }
       }
     },
+    "/v1/projects/{tenant_slug}/{project_ref}/gate": {
+      "get": {
+        "tags": [
+          "deploy-gate",
+          "deploy-gate"
+        ],
+        "summary": "Can I promote this API version?",
+        "description": "One aggregate verdict for a CD pipeline, composed of the four signals that already exist elsewhere in the platform:\n\n* **lint** \u2014 the GOV grade stored on the revision (never recomputed here);\n* **breaking** \u2014 the CTG-3.1 classification of the publish against its predecessor;\n* **consumers** \u2014 the CTG-4.2 per-consumer verdicts (\"breaks 2 of 7\");\n* **verification** \u2014 CTG-4.4 freshness, falling back to a manual CTG-4.3 report.\n\n**Partial inputs are the normal case.** A signal with nothing behind it reports `not_configured` and is excluded from the verdict rather than failing it; a signal that exists but could not be read reports `unknown` and is also excluded, counted apart. `evaluatedSignals` says how many actually took part \u2014 branch on that, not on `status`, if a project with nothing configured must not read as a green light.\n\n**The status is always 200.** The verdict lives in `status` (`pass` / `warn` / `fail`); the pipeline owns the exit code.\n\nBy default the gate judges the project's newest **published** revision. Pass `revisionId` to judge a specific one.\n\nRequires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`; without it that one signal reports `unknown`.",
+        "operationId": "get_project_deploy_gate_v1_projects__tenant_slug___project_ref__gate_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "revisionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ipromotethis Apiversionrevision ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ipromotethis Apiversionrevision ID schema."
+                }
+              ],
+              "description": "Judge this published revision instead of the newest one.",
+              "title": "Revisionid"
+            },
+            "description": "Judge this published revision instead of the newest one."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ipromotethis Apiversionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ipromotethis Apiversionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ipromotethis Apiversion Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ipromotethis Apiversion Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for can i promote this api version?.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGateReport",
+                  "description": "Response payload for can ipromotethis apiversionresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or revision not found in this tenant."
+          },
+          "400": {
+            "description": "The named revision is not published."
+          },
+          "409": {
+            "description": "The project has no published revision to gate."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for can ipromotethis apiversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/gate/policy": {
+      "get": {
+        "tags": [
+          "deploy-gate",
+          "deploy-gate"
+        ],
+        "summary": "Get the deploy-gate policy in force for a project",
+        "description": "The thresholds this project's gate is judged under, and where they came from: `project` (an override saved here), `tenant` (the tenant-wide policy), or `default` (nothing saved anywhere).\n\nThresholds are **two-rung**: each signal carries a warn threshold and a fail threshold, either of which may be `null` to disable that rung. Absent keys take their documented defaults, so a body naming one threshold configures exactly that one.\n\nThe default policy fails on a breaking change and on a broken consumer, and warns on a lint grade below B or a verification older than a day.\n\nReadable by anyone who can read the gate \u2014 a verdict nobody can explain is not a gate. Requires `versions:view`.",
+        "operationId": "get_project_gate_policy_v1_projects__tenant_slug___project_ref__gate_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthedeploygatepolicyinforceforaprojectauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthedeploygatepolicyinforceforaprojectauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthedeploygatepolicyinforceforaproject Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthedeploygatepolicyinforceforaproject Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get the deploy-gate policy in force for a project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for getthedeploygatepolicyinforceforaprojectresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for getthedeploygatepolicyinforceforaprojectresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "deploy-gate",
+          "deploy-gate"
+        ],
+        "summary": "Set this project's deploy-gate thresholds",
+        "description": "Save an override for one project, replacing whatever it held. The tenant-wide policy still governs every project without one.\n\nThresholds are **two-rung**: each signal carries a warn threshold and a fail threshold, either of which may be `null` to disable that rung. Absent keys take their documented defaults, so a body naming one threshold configures exactly that one.\n\nThe default policy fails on a breaking change and on a broken consumer, and warns on a lint grade below B or a verification older than a day.\n\nRequires `verification_targets:edit`: moving the bar is the same class of decision as deciding where verification points. Audited as `governance.deploy_gate_policy.update`.",
+        "operationId": "put_project_gate_policy_v1_projects__tenant_slug___project_ref__gate_policy_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthisprojectsdeploygatethresholdsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthisprojectsdeploygatethresholdsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthisprojectsdeploygatethresholds Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthisprojectsdeploygatethresholds Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeployGatePolicyPutRequest",
+                "description": "Request body for setthisprojectsdeploygatethresholdsrequest."
+              }
+            }
+          },
+          "description": "Request body for set this project's deploy-gate thresholds."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for set this project's deploy-gate thresholds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for setthisprojectsdeploygatethresholdsresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "The threshold body is not valid."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "deploy-gate",
+          "deploy-gate"
+        ],
+        "summary": "Remove this project's deploy-gate override",
+        "description": "Drop the project override so the tenant-wide policy (or the documented default) governs again. Returns the policy that is now in force, so a caller sees what it fell back to rather than having to ask again.\n\nRequires `verification_targets:delete`. Audited as `governance.deploy_gate_policy.clear`.",
+        "operationId": "delete_project_gate_policy_v1_projects__tenant_slug___project_ref__gate_policy_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removethisprojectsdeploygateoverrideauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removethisprojectsdeploygateoverrideauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removethisprojectsdeploygateoverride Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removethisprojectsdeploygateoverride Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for remove this project's deploy-gate override.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for removethisprojectsdeploygateoverrideresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for removethisprojectsdeploygateoverrideresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/catalog/{tenant_slug}": {
       "get": {
         "tags": [
@@ -9514,6 +9948,959 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for readtheverificationtargetauditledgerresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/verification-schedules": {
+      "get": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "List scheduled verifications",
+        "description": "Every live verification schedule in the tenant, newest first, each carrying its **freshness**: `last_success_at` and `freshness_seconds` \u2014 the seconds since this deployment last verified clean.\n\n`freshness_seconds` is `null` when the schedule has never verified clean. A gate must read that as *unknown*, never as *fresh*.\n\nFilter by `version_ref` to ask \"is this version's deployment being watched, and how recently?\", by `target_id` for one deployment, or by `enabled` to find what is paused.\n\nRequires `verification_targets:view`.",
+        "operationId": "list_verification_schedules_v1_tenants__tenant_slug__verification_schedules_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "version_ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listscheduledverificationsversionref schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listscheduledverificationsversionref schema."
+                }
+              ],
+              "description": "Restrict to one version reference.",
+              "title": "Version Ref"
+            },
+            "description": "Restrict to one version reference."
+          },
+          {
+            "name": "target_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listscheduledverificationstargetid schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listscheduledverificationstargetid schema."
+                }
+              ],
+              "description": "Restrict to one verification target.",
+              "title": "Target Id"
+            },
+            "description": "Restrict to one verification target."
+          },
+          {
+            "name": "enabled",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean",
+                  "description": "Listscheduledverificationsenabled schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listscheduledverificationsenabled schema."
+                }
+              ],
+              "description": "Restrict to enabled (`true`) or paused (`false`) schedules.",
+              "title": "Enabled"
+            },
+            "description": "Restrict to enabled (`true`) or paused (`false`) schedules."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Maximum schedules to return.",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Maximum schedules to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listscheduledverificationsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listscheduledverificationsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listscheduledverifications Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listscheduledverifications Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list scheduled verifications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VerificationScheduleRecord"
+                  },
+                  "title": "Response List Verification Schedules V1 Tenants  Tenant Slug  Verification Schedules Get",
+                  "description": "Response List Verification Schedules V1 Tenants  Tenant Slug  Verification Schedules Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listscheduledverificationsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Schedule recurring verification of a deployment",
+        "description": "Define a standing instruction: verify one published version against one registered deployment on a cadence, and notify when it drifts.\n\n**Each tick is a CTG-4.3 run, unchanged.** The same suite is compiled, the same requests are sent, the same mutation rules apply (safe methods only unless the target policy, the schedule's `verification.allow_mutating`, *and* a fixture naming the operation all agree), and the same immutable evidence and conformance report are written. A scheduled check that behaved differently from a manual one would be worthless as a gate input.\n\n**Cadence** is a number of seconds or one of `5m`, `15m`, `30m`, `hourly`, `6h`, `12h`, `daily`, `weekly`. The floor is five minutes: anything shorter against a live deployment is load, not monitoring.\n\n**Alerting is quiet by design.** A pass\u2192fail transition notifies exactly once; a repeat of the same failure is silent; a failure whose set of violations *changed* notifies again, because new drift hiding behind old drift is how a second regression is missed. Recovery notifies unless `alert_on_recovery` is false.\n\nOne live schedule per handle, and one per (version, deployment) pair \u2014 a second schedule for the same pair would double the traffic and double every alert.\n\nRequires `verification_targets:create`.",
+        "operationId": "create_verification_schedule_v1_tenants__tenant_slug__verification_schedules_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Schedulerecurringverificationofadeploymeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Schedulerecurringverificationofadeploymeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Schedulerecurringverificationofadeployme Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Schedulerecurringverificationofadeployme Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationScheduleInput",
+                "description": "Request body for schedulerecurringverificationofadeploymerequest."
+              }
+            }
+          },
+          "description": "Request body for schedule recurring verification of a deployment."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for schedule recurring verification of a deployment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationScheduleRecord",
+                  "description": "Response payload for schedulerecurringverificationofadeploymeresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for schedulerecurringverificationofadeploymeresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/verification-schedules/{schedule_ref}": {
+      "get": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Read one scheduled verification",
+        "description": "Read a schedule by its handle or its id, with its current freshness and alert state.\n\n`alert_state` is `alerting` while drift is outstanding \u2014 that is the state which makes a repeated failure quiet, and it clears when the deployment verifies clean again.\n\nRequires `verification_targets:view`.",
+        "operationId": "read_verification_schedule_v1_tenants__tenant_slug__verification_schedules__schedule_ref__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schedule_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Ref",
+              "description": "Schedule Ref schema."
+            },
+            "description": "Path parameter identifying the schedule ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonescheduledverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonescheduledverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonescheduledverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonescheduledverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one scheduled verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationScheduleRecord",
+                  "description": "Response payload for readonescheduledverificationresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonescheduledverificationresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Retune or pause a scheduled verification",
+        "description": "Change the cadence, the name, the run options, or whether the schedule ticks. A paused schedule (`enabled: false`) keeps its history and its freshness anchor.\n\n**The scheduling state is not settable here.** `last_success_at`, `alert_state`, and the failure counters are the sweep's record of what actually happened; a monitor whose freshness could be edited would not be a monitor.\n\n**Cadence** accepts seconds or one of `5m`, `15m`, `30m`, `hourly`, `6h`, `12h`, `daily`, `weekly`.\n\nRequires `verification_targets:edit`.",
+        "operationId": "update_verification_schedule_v1_tenants__tenant_slug__verification_schedules__schedule_ref__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schedule_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Ref",
+              "description": "Schedule Ref schema."
+            },
+            "description": "Path parameter identifying the schedule ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retuneorpauseascheduledverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retuneorpauseascheduledverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retuneorpauseascheduledverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retuneorpauseascheduledverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationSchedulePatch",
+                "description": "Request body for retuneorpauseascheduledverificationrequest."
+              }
+            }
+          },
+          "description": "Request body for retune or pause a scheduled verification."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for retune or pause a scheduled verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationScheduleRecord",
+                  "description": "Response payload for retuneorpauseascheduledverificationresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for retuneorpauseascheduledverificationresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Retire a scheduled verification",
+        "description": "Stop the schedule ticking. The retirement is a **soft delete**: the run history stays, because \"when did this version last verify clean?\" outlives the instruction that answered it.\n\nTo stop checks temporarily, PATCH `enabled: false` instead \u2014 a paused schedule can be resumed, a retired one cannot.\n\nRequires `verification_targets:delete`.",
+        "operationId": "remove_verification_schedule_v1_tenants__tenant_slug__verification_schedules__schedule_ref__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schedule_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Ref",
+              "description": "Schedule Ref schema."
+            },
+            "description": "Path parameter identifying the schedule ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retireascheduledverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retireascheduledverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Retireascheduledverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Retireascheduledverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for retire a scheduled verification."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for retireascheduledverificationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/verification-schedules/{schedule_ref}/runs": {
+      "get": {
+        "tags": [
+          "contract-assurance"
+        ],
+        "summary": "Read a schedule's verification history",
+        "description": "The write-once history of what each tick found, newest first: the verdict, the coverage it measured, how much drift it saw, and \u2014 for every tick, not only the noisy ones \u2014 whether it notified and why. \"Why was I not paged?\" is answerable from the history rather than from a worker's log.\n\n`status` is `passed`, `failed` (the deployment contradicted the contract), or `errored` (no verdict to trust \u2014 the deployment never answered, or the run could not be executed at all; the latter carries an `error_code`).\n\n`drift_fingerprint` is the digest of the violation set: two failing ticks with the same fingerprint found the same thing, which is exactly when the second one stays silent.\n\nRequires `verification_evidence:view` \u2014 a verification history is evidence.",
+        "operationId": "list_verification_schedule_runs_v1_tenants__tenant_slug__verification_schedules__schedule_ref__runs_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "schedule_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Schedule Ref",
+              "description": "Schedule Ref schema."
+            },
+            "description": "Path parameter identifying the schedule ref segment."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaschedulesverificationhistorystatus schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaschedulesverificationhistorystatus schema."
+                }
+              ],
+              "description": "Restrict to `passed`, `failed`, or `errored`.",
+              "title": "Status"
+            },
+            "description": "Restrict to `passed`, `failed`, or `errored`."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Maximum ticks to return.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum ticks to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaschedulesverificationhistoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaschedulesverificationhistoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaschedulesverificationhistory Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaschedulesverificationhistory Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a schedule's verification history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VerificationScheduleRunRecord"
+                  },
+                  "title": "Response List Verification Schedule Runs V1 Tenants  Tenant Slug  Verification Schedules  Schedule Ref  Runs Get",
+                  "description": "Response List Verification Schedule Runs V1 Tenants  Tenant Slug  Verification Schedules  Schedule Ref  Runs Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaschedulesverificationhistoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/governance/deploy-gate-policy": {
+      "get": {
+        "tags": [
+          "governance"
+        ],
+        "summary": "Get the tenant's deploy-gate policy",
+        "description": "The thresholds every project in this tenant is judged under unless it saves its own override. A tenant that has never saved one gets the documented default with `source: \"default\"`.\n\nThresholds are **two-rung**: each signal carries a warn threshold and a fail threshold, either of which may be `null` to disable that rung. Absent keys take their documented defaults, so a body naming one threshold configures exactly that one.\n\nThe default policy fails on a breaking change and on a broken consumer, and warns on a lint grade below B or a verification older than a day.\n\nRequires `versions:view`.",
+        "operationId": "get_tenant_gate_policy_v1_tenants__tenant_slug__governance_deploy_gate_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthetenantsdeploygatepolicyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthetenantsdeploygatepolicyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Getthetenantsdeploygatepolicy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Getthetenantsdeploygatepolicy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get the tenant's deploy-gate policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for getthetenantsdeploygatepolicyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for getthetenantsdeploygatepolicyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "governance"
+        ],
+        "summary": "Set the tenant's deploy-gate thresholds",
+        "description": "Save the tenant-wide policy, replacing whatever it held. Project overrides are left alone: they were configured deliberately, and a tenant-wide edit that silently reset them would move bars nobody asked to move.\n\nThresholds are **two-rung**: each signal carries a warn threshold and a fail threshold, either of which may be `null` to disable that rung. Absent keys take their documented defaults, so a body naming one threshold configures exactly that one.\n\nThe default policy fails on a breaking change and on a broken consumer, and warns on a lint grade below B or a verification older than a day.\n\nRequires `verification_targets:edit`. Audited as `governance.deploy_gate_policy.update`.",
+        "operationId": "put_tenant_gate_policy_v1_tenants__tenant_slug__governance_deploy_gate_policy_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthetenantsdeploygatethresholdsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthetenantsdeploygatethresholdsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setthetenantsdeploygatethresholds Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setthetenantsdeploygatethresholds Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeployGatePolicyPutRequest",
+                "description": "Request body for setthetenantsdeploygatethresholdsrequest."
+              }
+            }
+          },
+          "description": "Request body for set the tenant's deploy-gate thresholds."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for set the tenant's deploy-gate thresholds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for setthetenantsdeploygatethresholdsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The threshold body is not valid."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "governance"
+        ],
+        "summary": "Remove the tenant's deploy-gate policy",
+        "description": "Drop the tenant-wide policy so the documented default governs again. Project overrides are not cascaded away.\n\nRequires `verification_targets:delete`. Audited as `governance.deploy_gate_policy.clear`.",
+        "operationId": "delete_tenant_gate_policy_v1_tenants__tenant_slug__governance_deploy_gate_policy_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removethetenantsdeploygatepolicyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removethetenantsdeploygatepolicyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removethetenantsdeploygatepolicy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removethetenantsdeploygatepolicy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for remove the tenant's deploy-gate policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeployGatePolicyOut",
+                  "description": "Response payload for removethetenantsdeploygatepolicyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for removethetenantsdeploygatepolicyresponse422."
                 }
               }
             }
@@ -76044,6 +77431,43 @@
         "title": "BreakingPublishGuardrailOut",
         "description": "Breaking-publish guardrail assessment for a candidate publish (CTG-3.4, #4478).\n\nShared verbatim by the preflight endpoint, the blocked-publish 422 body, and the audit\ntrail, so the dialog, the API error, and the audit row can never disagree."
       },
+      "BreakingThresholds": {
+        "properties": {
+          "warnAtSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Breaking Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Breaking Thresholds schema."
+              }
+            ],
+            "title": "Warnatseverity",
+            "description": "Warn when the worst classified change is at least this severe (`docs-only` | `non-breaking` | `breaking`; `null` disables the rung)."
+          },
+          "failAtSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Breaking Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Breaking Thresholds schema."
+              }
+            ],
+            "title": "Failatseverity",
+            "description": "Fail when the worst classified change is at least this severe (`null` disables the rung \u2014 useful when the consumer signal is the gate instead).",
+            "default": "breaking"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "BreakingThresholds",
+        "description": "Where the bar sits for the CTG-3.1 breaking classification of the publish.\n\nAttributes:\n    warn_at_severity: Warn when the worst change is at least this severe; ``None`` disables it.\n    fail_at_severity: Fail when the worst change is at least this severe; ``None`` disables it."
+      },
       "BrowseDirectoryStats": {
         "properties": {
           "tenant_count": {
@@ -82262,14 +83686,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -84048,6 +85472,46 @@
         "title": "ConsumerSummary",
         "description": "A consumer plus its current contract \u2014 the project page's row.\n\nAttributes:\n    consumer: The consumer.\n    contract: Its current contract revision, or ``None`` when it has declared nothing yet."
       },
+      "ConsumerThresholds": {
+        "properties": {
+          "warnAboveAffected": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Consumer Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Consumer Thresholds schema."
+              }
+            ],
+            "title": "Warnaboveaffected",
+            "description": "Warn when more consumers than this are affected (`null` disables the rung).",
+            "default": 0
+          },
+          "failAboveBreaking": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Consumer Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Consumer Thresholds schema."
+              }
+            ],
+            "title": "Failabovebreaking",
+            "description": "Fail when more consumers than this are broken (`null` disables the rung).",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ConsumerThresholds",
+        "description": "Where the bar sits for the CTG-4.2 per-consumer verdicts.\n\nBoth are *tolerances*: the count may be this high without tripping the rung.\n\nAttributes:\n    warn_above_affected: Warn when more than this many consumers are touched at all.\n    fail_above_breaking: Fail when more than this many consumers are broken."
+      },
       "ConsumerVerdict": {
         "properties": {
           "consumerId": {
@@ -84254,7 +85718,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "9714b3cd-19e4-4bf4-bdcf-4d12dda3d696"
+            "example": "91501999-e16f-472d-b6a8-8b7c6f04f76a"
           },
           "method": {
             "type": "string",
@@ -86781,7 +88245,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -87148,6 +88612,268 @@
         ],
         "title": "DeliverySeverity",
         "description": "How much a reason weighs on the decision."
+      },
+      "DeployGatePolicyOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "ctg.gate-policy.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "`default` | `tenant` | `project`.",
+            "example": "human"
+          },
+          "policyId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for deploy gate policy."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for deploy gate policy."
+              }
+            ],
+            "title": "Policyid",
+            "description": "Policy ID."
+          },
+          "contentFingerprint": {
+            "type": "string",
+            "title": "Contentfingerprint",
+            "default": "",
+            "description": "Content Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/DeployGateThresholds",
+            "description": "Thresholds."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for deploy gate policy."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for deploy gate policy."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for deploy gate policy."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for deploy gate policy."
+              }
+            ],
+            "title": "Updatedby",
+            "description": "Updated By."
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded",
+            "description": "True when a saved policy could not be read and the default stood in.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "DeployGatePolicyOut",
+        "description": "The threshold policy a gate response was judged under.\n\nAttributes:\n    source: ``default`` (nothing saved), ``tenant``, or ``project``.\n    policy_id: Stored row id; ``None`` for the documented default.\n    content_fingerprint: Digest of the threshold body.\n    thresholds: The thresholds themselves.\n    updated_at: When the stored policy last changed.\n    updated_by: Who changed it.\n    degraded: True when a saved policy could not be read and the default stood in. A gate has\n        to answer, so an unreadable policy row falls back rather than failing \u2014 but a caller\n        must be able to tell \"nothing is configured\" from \"I could not read what is\"."
+      },
+      "DeployGatePolicyPutRequest": {
+        "properties": {
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds",
+            "description": "Per-signal warn/fail thresholds. Absent groups and absent keys take their documented defaults."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DeployGatePolicyPutRequest",
+        "description": "Body for saving a deploy-gate policy.\n\nAttributes:\n    thresholds: The ``ctg.gate-policy.v1`` threshold body."
+      },
+      "DeployGateReport": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "ctg.gate.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`pass` | `warn` | `fail`.",
+            "example": "active"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "One line for a pipeline log.",
+            "example": "List pets"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectSlug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deploy Gate Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Deploy Gate Report schema."
+              }
+            ],
+            "title": "Projectslug",
+            "description": "Project Slug."
+          },
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deploy Gate Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Deploy Gate Report schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "versionRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deploy Gate Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Deploy Gate Report schema."
+              }
+            ],
+            "title": "Versionref",
+            "description": "`project/{slug}/{version}` \u2014 the reference the other CTG APIs address."
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Deploy Gate Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Deploy Gate Report schema."
+              }
+            ],
+            "title": "Publishedat",
+            "description": "Published At."
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Evaluatedat",
+            "description": "Evaluated At.",
+            "example": "example"
+          },
+          "evaluatedSignals": {
+            "type": "integer",
+            "title": "Evaluatedsignals",
+            "description": "How many signals took part in the verdict.",
+            "example": 1
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/GateSignal"
+            },
+            "type": "array",
+            "title": "Signals",
+            "description": "Signals.",
+            "maxItems": 1000
+          },
+          "policy": {
+            "$ref": "#/components/schemas/DeployGatePolicyOut",
+            "description": "Policy."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "summary",
+          "projectId",
+          "revisionId",
+          "evaluatedAt",
+          "evaluatedSignals",
+          "policy"
+        ],
+        "title": "DeployGateReport",
+        "description": "The single aggregate verdict a CD pipeline reads.\n\nAttributes:\n    schema_version: :data:`DEPLOY_GATE_SCHEMA_VERSION`.\n    status: ``pass`` / ``warn`` / ``fail`` \u2014 the worst *evaluated* signal.\n    summary: One line a pipeline can print.\n    project_id / project_slug: The gated project.\n    revision_id / version_label / version_ref / published_at: The gated published revision.\n    evaluated_at: When the verdict was computed.\n    evaluated_signals: How many of the four took part. ``0`` means nothing could be judged and\n        ``status`` is ``pass`` by the partial-inputs rule \u2014 branch on this, not on the status,\n        if an unconfigured project must not read as a green light.\n    counts: Signals per status.\n    signals: The four, always all of them, in :data:`GATE_SIGNALS` order.\n    policy: The thresholds this verdict was judged under."
+      },
+      "DeployGateThresholds": {
+        "properties": {
+          "lint": {
+            "$ref": "#/components/schemas/LintThresholds",
+            "description": "Lint."
+          },
+          "breaking": {
+            "$ref": "#/components/schemas/BreakingThresholds",
+            "description": "Breaking."
+          },
+          "consumers": {
+            "$ref": "#/components/schemas/ConsumerThresholds",
+            "description": "Consumers."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/VerificationThresholds",
+            "description": "Verification."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DeployGateThresholds",
+        "description": "The complete ``ctg.gate-policy.v1`` body: one threshold group per signal."
       },
       "DestinationAvailability": {
         "type": "string",
@@ -94180,6 +95906,78 @@
         "title": "FunctionWarningBody",
         "description": "A concern that does not block the write."
       },
+      "GateSignal": {
+        "properties": {
+          "signal": {
+            "type": "string",
+            "title": "Signal",
+            "description": "`lint` | `breaking` | `consumers` | `verification`.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`pass` | `warn` | `fail` | `not_configured` | `unknown`.",
+            "example": "active"
+          },
+          "satisfied": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Gate Signal schema."
+              },
+              {
+                "type": "null",
+                "description": "Gate Signal schema."
+              }
+            ],
+            "title": "Satisfied",
+            "description": "Whether thresholds were met; null when not judged."
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Stable reason code.",
+            "example": "example"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "One human sentence.",
+            "example": "example"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Gate Signal schema."
+              },
+              {
+                "type": "null",
+                "description": "Gate Signal schema."
+              }
+            ],
+            "title": "Link",
+            "description": "Where to read the evidence."
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data",
+            "description": "The facts behind the judgment."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signal",
+          "status",
+          "reason",
+          "detail"
+        ],
+        "title": "GateSignal",
+        "description": "One of the four inputs, judged.\n\nAttributes:\n    signal: One of :data:`GATE_SIGNALS`.\n    status: One of :data:`GATE_STATUSES`.\n    satisfied: Whether the signal met its thresholds; ``None`` when it was not judged at all.\n    reason: Stable machine-readable code \u2014 branch on this, not on ``detail``.\n    detail: One human sentence saying what was observed and what the policy makes of it.\n    link: API path a reader follows for the underlying evidence.\n    data: The facts the judgment was made from, so the verdict is checkable without a\n        second request."
+      },
       "GitFilesetRequest": {
         "properties": {
           "repo_url": {
@@ -99395,6 +101193,44 @@
         ],
         "title": "LintRuleOut",
         "description": "One registered built-in lint rule from the rule-catalog registry (GOV-1.2, #4428).\n\n``rule_id`` is the stable identifier findings carry in their ``rule`` field, so every\nviolation is attributable to a registered rule. ``default_severity`` is the severity the\nrule applies when no style guide overrides it. Blocking (error) rules include CLX-4.3\ntransparency fields (reference, remediation, fixture, false-positive guidance)."
+      },
+      "LintThresholds": {
+        "properties": {
+          "warnBelowGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Lint Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Lint Thresholds schema."
+              }
+            ],
+            "title": "Warnbelowgrade",
+            "description": "Warn below this letter grade (`null` disables the rung).",
+            "default": "B"
+          },
+          "failBelowGrade": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Lint Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Lint Thresholds schema."
+              }
+            ],
+            "title": "Failbelowgrade",
+            "description": "Fail below this letter grade (`null` disables the rung).",
+            "default": "D"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "LintThresholds",
+        "description": "Where the bar sits for the GOV lint grade stored on the revision.\n\nAttributes:\n    warn_below_grade: Warn when the grade is worse than this letter; ``None`` disables the rung.\n    fail_below_grade: Fail when the grade is worse than this letter; ``None`` disables the rung."
       },
       "LintWorkspaceAxisSummaryOut": {
         "properties": {
@@ -125356,7 +127192,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           }
         },
         "additionalProperties": false,
@@ -140707,14 +142543,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-07T23:21:30Z"
+            "example": "2026-09-08T01:52:24Z"
           },
           "outcome": {
             "anyOf": [
@@ -141384,6 +143220,701 @@
         "title": "VerificationRunSummary",
         "description": "A run without its per-case detail \u2014 what a list read returns."
       },
+      "VerificationScheduleInput": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Slug",
+            "description": "Stable handle CI and the UI address the schedule by.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Human-readable display name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Verification Schedule Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Input schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Operator note: what this schedule is watching, and why."
+          },
+          "version_ref": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Version Ref",
+            "description": "`project/{slug}/{version}` or `catalog/{item}/{version}` to verify.",
+            "example": "1.0.0"
+          },
+          "target_ref": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Target Ref",
+            "description": "Verification target slug or id (ECA-1.2) naming the deployment to check.",
+            "example": "example"
+          },
+          "cadence": {
+            "title": "Cadence",
+            "description": "How often to run: a number of seconds, or one of `5m`, `15m`, `30m`, `hourly`, `6h`, `12h`, `daily`, `weekly`.",
+            "default": "daily"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the schedule ticks. A paused schedule keeps its history.",
+            "default": true,
+            "example": true
+          },
+          "alert_on_recovery": {
+            "type": "boolean",
+            "title": "Alert On Recovery",
+            "description": "Notify when a drifting deployment verifies clean again.",
+            "default": true,
+            "example": false
+          },
+          "options": {
+            "$ref": "#/components/schemas/ContractSuiteOptions",
+            "description": "ECA-1.1 compiler options, hashed into the suite digest each run records."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/ProviderVerificationOptions",
+            "description": "What each run may send. Safe methods only by default; mutating operations require both `allow_mutating` and a fixture naming the operation, and a fixture carrying a credential header is refused before it is stored."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "version_ref",
+          "target_ref"
+        ],
+        "title": "VerificationScheduleInput",
+        "description": "A complete schedule definition, as a caller supplies it on create."
+      },
+      "VerificationSchedulePatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "description": "Verification Schedule Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Verification Schedule Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "cadence": {
+            "anyOf": [
+              {
+                "description": "Verification Schedule Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "title": "Cadence",
+            "description": "New cadence (seconds or preset)."
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Verification Schedule Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "title": "Enabled",
+            "description": "Pause or resume the schedule."
+          },
+          "alert_on_recovery": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Verification Schedule Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "title": "Alert On Recovery",
+            "description": "Alert On Recovery."
+          },
+          "options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractSuiteOptions"
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "description": "Options."
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProviderVerificationOptions"
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Patch schema."
+              }
+            ],
+            "description": "Verification."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VerificationSchedulePatch",
+        "description": "A partial update. Every field is optional; only what is set is changed."
+      },
+      "VerificationScheduleRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Schedule id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns it.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "Stable handle.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Operator note."
+          },
+          "version_ref": {
+            "type": "string",
+            "title": "Version Ref",
+            "description": "Version reference verified on each tick.",
+            "example": "1.0.0"
+          },
+          "target_id": {
+            "type": "string",
+            "title": "Target Id",
+            "description": "The verification target's id.",
+            "example": "target_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "target_slug": {
+            "type": "string",
+            "title": "Target Slug",
+            "description": "The target's handle at definition time.",
+            "example": "example-resource"
+          },
+          "cadence_seconds": {
+            "type": "integer",
+            "title": "Cadence Seconds",
+            "description": "Interval between ticks, in seconds.",
+            "example": 1
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the schedule ticks.",
+            "example": true
+          },
+          "alert_on_recovery": {
+            "type": "boolean",
+            "title": "Alert On Recovery",
+            "description": "Whether recovery notifies.",
+            "example": false
+          },
+          "options": {
+            "$ref": "#/components/schemas/ContractSuiteOptions",
+            "description": "Compiler options each run uses."
+          },
+          "verification": {
+            "$ref": "#/components/schemas/ProviderVerificationOptions",
+            "description": "Run options each tick uses."
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Last Run At",
+            "description": "When the schedule last ticked, whatever the outcome."
+          },
+          "last_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Last Status",
+            "description": "`passed`, `failed`, or `errored`; null before the first tick."
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Last Success At",
+            "description": "When it last verified clean \u2014 the freshness anchor."
+          },
+          "last_report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Last Report Id",
+            "description": "The newest conformance report this schedule produced."
+          },
+          "consecutive_failures": {
+            "type": "integer",
+            "title": "Consecutive Failures",
+            "description": "Unhealthy ticks since the last clean one.",
+            "default": 0,
+            "example": 1
+          },
+          "run_count": {
+            "type": "integer",
+            "title": "Run Count",
+            "description": "Ticks recorded for this schedule.",
+            "default": 0,
+            "example": 1
+          },
+          "alert_state": {
+            "type": "string",
+            "title": "Alert State",
+            "description": "`ok`, or `alerting` while drift is outstanding.",
+            "default": "ok",
+            "example": "example"
+          },
+          "alert_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Alert Fingerprint",
+            "description": "Digest of the violation set last alerted on."
+          },
+          "last_alert_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Last Alert At",
+            "description": "When an alert was last sent."
+          },
+          "freshness_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Freshness Seconds",
+            "description": "Seconds since the last clean verification, computed at read time. Null when this schedule has never verified clean \u2014 which a gate must read as 'unknown', never as 'fresh'."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "When it was defined."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "When it last changed."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "User who defined it."
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule schema."
+              }
+            ],
+            "title": "Updated By",
+            "description": "User who last changed it."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "slug",
+          "name",
+          "version_ref",
+          "target_id",
+          "target_slug",
+          "cadence_seconds",
+          "enabled",
+          "alert_on_recovery"
+        ],
+        "title": "VerificationScheduleRecord",
+        "description": "A stored schedule, as every reader sees it.\n\nThere is no redacted variant: a schedule holds a *reference* to a target, and the target holds\na *reference* to a credential, so nothing here can be a secret."
+      },
+      "VerificationScheduleRunRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Run-history row id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns it.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "schedule_id": {
+            "type": "string",
+            "title": "Schedule Id",
+            "description": "The schedule that ticked.",
+            "example": "schedule_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Report Id",
+            "description": "The conformance report, when one was produced and stored."
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Run Id",
+            "description": "The ECA-1.3 evidence run behind the report."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`passed`, `failed`, or `errored`.",
+            "example": "active"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Error Code",
+            "description": "Set only when the run could not be executed at all (the version stopped compiling, the target was withdrawn). A deployment that answered wrongly is `failed` with no error code; one that never answered is `errored` with none either."
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Error Message",
+            "description": "Remediation text, when refused."
+          },
+          "operations_total": {
+            "type": "integer",
+            "title": "Operations Total",
+            "description": "Operations the specification declares.",
+            "default": 0,
+            "example": 1
+          },
+          "operations_exercised": {
+            "type": "integer",
+            "title": "Operations Exercised",
+            "description": "Operations that received a request.",
+            "default": 0,
+            "example": 1
+          },
+          "operations_failed": {
+            "type": "integer",
+            "title": "Operations Failed",
+            "description": "Exercised operations that drifted.",
+            "default": 0,
+            "example": 1
+          },
+          "coverage_percent": {
+            "type": "number",
+            "title": "Coverage Percent",
+            "description": "Exercised over total, as a percent.",
+            "default": 0.0,
+            "example": 100.0
+          },
+          "drift_count": {
+            "type": "integer",
+            "title": "Drift Count",
+            "description": "Located disagreements observed.",
+            "default": 0,
+            "example": 1
+          },
+          "drift_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Drift Fingerprint",
+            "description": "Digest of the violation set; null for a clean tick."
+          },
+          "alerted": {
+            "type": "boolean",
+            "title": "Alerted",
+            "description": "Whether this tick notified.",
+            "default": false,
+            "example": false
+          },
+          "alert_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Alert Reason",
+            "description": "`transition`, `new-violations`, or `recovered`."
+          },
+          "alert_deliveries": {
+            "type": "integer",
+            "title": "Alert Deliveries",
+            "description": "Webhook deliveries enqueued for this tick's alert.",
+            "default": 0,
+            "example": 1
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Started At",
+            "description": "When the tick began."
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Finished At",
+            "description": "When it ended."
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms",
+            "description": "Wall-clock duration in milliseconds.",
+            "default": 0,
+            "example": 1
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Verification Schedule Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Schedule Run schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "When it was recorded."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "schedule_id",
+          "status"
+        ],
+        "title": "VerificationScheduleRunRecord",
+        "description": "One recorded tick \u2014 the write-once history row, as a reader sees it."
+      },
       "VerificationTargetInput": {
         "properties": {
           "slug": {
@@ -141842,6 +144373,53 @@
         ],
         "title": "VerificationTargetRecord",
         "description": "A stored target, as every reader sees it.\n\nThere is no redacted variant of this model because there is nothing to redact: the schema\ncannot hold credential material, so the full record is always safe to return."
+      },
+      "VerificationThresholds": {
+        "properties": {
+          "warnAfterSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Verification Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Thresholds schema."
+              }
+            ],
+            "title": "Warnafterseconds",
+            "description": "Warn when the last clean verification is older than this many seconds.",
+            "default": 86400
+          },
+          "failAfterSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Verification Thresholds schema."
+              },
+              {
+                "type": "null",
+                "description": "Verification Thresholds schema."
+              }
+            ],
+            "title": "Failafterseconds",
+            "description": "Fail when the last clean verification is older than this many seconds.",
+            "default": 604800
+          },
+          "failOnUnhealthyRun": {
+            "type": "boolean",
+            "title": "Failonunhealthyrun",
+            "description": "Fail when the most recent verification failed or errored, whatever its age.",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VerificationThresholds",
+        "description": "Where the bar sits for CTG-4.4 verification freshness.\n\nAttributes:\n    warn_after_seconds: Warn once the last clean verification is older than this.\n    fail_after_seconds: Fail once the last clean verification is older than this.\n    fail_on_unhealthy_run: Fail when the most recent run failed or could not run, whatever its\n        age. A recent *failure* is worse news than an old success, so it is judged first."
       },
       "VerifyResponse": {
         "properties": {
