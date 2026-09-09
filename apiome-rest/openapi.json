@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.180.0",
+    "version": "1.181.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -6857,7 +6857,7 @@
           "sdk-generation"
         ],
         "summary": "Get the generation settings in force for a project",
-        "description": "The package naming, licence header and user-agent this project's generated artifacts carry, and where they came from: `project` (an override saved here), `tenant` (the workspace default), `merged` (both), or `default` (nothing saved anywhere).\n\n`resolved` carries the same settings with their tokens substituted for this project \u2014 the package names a publisher would actually use.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:view`.",
+        "description": "The package naming, licence header and user-agent this project's generated artifacts carry, and where they came from: `project` (an override saved here), `tenant` (the workspace default), `merged` (both), or `default` (nothing saved anywhere).\n\n`resolved` carries the same settings with their tokens substituted for this project \u2014 the package names a publisher would actually use.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`, `gomod`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:view`.",
         "operationId": "get_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_get",
         "parameters": [
           {
@@ -6957,7 +6957,7 @@
           "sdk-generation"
         ],
         "summary": "Set this project's generation settings",
-        "description": "Save an override for one project, replacing whatever it held. The workspace defaults still supply every key this body does not name.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
+        "description": "Save an override for one project, replacing whatever it held. The workspace defaults still supply every key this body does not name.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`, `gomod`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
         "operationId": "put_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_put",
         "parameters": [
           {
@@ -11392,7 +11392,7 @@
           "governance"
         ],
         "summary": "Get the workspace generation defaults",
-        "description": "The package naming, licence header and user-agent every project in the workspace inherits unless it overrides them.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:view`.",
+        "description": "The package naming, licence header and user-agent every project in the workspace inherits unless it overrides them.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`, `gomod`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:view`.",
         "operationId": "get_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_get",
         "parameters": [
           {
@@ -11478,7 +11478,7 @@
           "governance"
         ],
         "summary": "Set the workspace generation defaults",
-        "description": "Save the workspace-wide defaults, replacing whatever they held. Projects that have saved their own override keep it for the keys it names.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
+        "description": "Save the workspace-wide defaults, replacing whatever they held. Projects that have saved their own override keep it for the keys it names.\n\nSettings are merged **key by key**, tenant first: a project that overrides only its user-agent still inherits its tenant's package patterns. `packageNamePatterns` merges one ecosystem at a time.\n\nA key **absent** from a body inherits the next scope up; a key present as **`null`** is deliberately none, and blocks that inheritance.\n\nPatterns may contain the tokens `{tenant}`, `{project}`, `{version}`, `{year}`, substituted from the scope being resolved. A package pattern is validated by resolving it against probe values and checking the result against its registry's naming rules, so `@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\nEcosystems: `npm`, `pypi`, `gomod`. `licenseHeader` is capped at 4,000 characters; `userAgent` at 200 and to characters legal in an HTTP header.\n\n`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets for the project. It is the one setting that is an access control rather than branding, so an unset value means *not allowed* \u2014 a workspace or project owner must opt in.\n\nRequires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.",
         "operationId": "put_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_put",
         "parameters": [
           {
@@ -84427,14 +84427,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -86459,7 +86459,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "cb9b8c25-bcbe-4b4f-84e8-0d0c4cdb38bd"
+            "example": "a5951b30-fbd7-4c5e-afbb-02e390fbfa1e"
           },
           "method": {
             "type": "string",
@@ -88986,7 +88986,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -122337,6 +122337,10 @@
             "title": "Settings Fingerprint",
             "description": "Fingerprint of the merged SDK settings the kit was branded with (SDK-3.4)."
           },
+          "go_client": {
+            "$ref": "#/components/schemas/SdkGoClientModel",
+            "description": "The generated Go client the download carries (SDK-2.4)."
+          },
           "download": {
             "$ref": "#/components/schemas/SdkDownloadModel",
             "description": "Download."
@@ -122352,6 +122356,7 @@
           "operation_count",
           "total_operation_count",
           "truncated",
+          "go_client",
           "download"
         ],
         "title": "PublicSdkInfoResponse",
@@ -128115,7 +128120,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           }
         },
         "additionalProperties": false,
@@ -129845,7 +129850,7 @@
             },
             "type": "object",
             "title": "Packagenamepatterns",
-            "description": "Package name pattern per ecosystem (`npm`, `pypi`), e.g. `{\"npm\": \"@acme/{project}-sdk\"}`."
+            "description": "Package name pattern per ecosystem (`npm`, `pypi`, `gomod`), e.g. `{\"npm\": \"@acme/{project}-sdk\"}`. `gomod` is the generated Go client's `go.mod` module path."
           },
           "licenseHeader": {
             "anyOf": [
@@ -130027,6 +130032,65 @@
         "type": "object",
         "title": "SdkGenerationSettingsPutRequest",
         "description": "Body for saving SDK generation settings.\n\nAttributes:\n    settings: The ``sdk.generation-settings.v1`` body. Only the keys it names are stored."
+      },
+      "SdkGoClientModel": {
+        "properties": {
+          "directory": {
+            "type": "string",
+            "title": "Directory",
+            "description": "The directory the module sits in inside the archive.",
+            "example": "example"
+          },
+          "module_path": {
+            "type": "string",
+            "title": "Module Path",
+            "description": "The `go.mod` module path the generated client declares.",
+            "example": "example"
+          },
+          "package_name": {
+            "type": "string",
+            "title": "Package Name",
+            "description": "The Go package name its files declare.",
+            "example": "Example"
+          },
+          "go_version": {
+            "type": "string",
+            "title": "Go Version",
+            "description": "The `go` directive the module declares.",
+            "example": "1.0.0"
+          },
+          "install": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Go Client Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Go Client Model schema."
+              }
+            ],
+            "title": "Install",
+            "description": "The `go get` command, once the module is published at that path."
+          },
+          "method_count": {
+            "type": "integer",
+            "title": "Method Count",
+            "description": "Client methods the module carries \u2014 the kit's renderable operations.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "directory",
+          "module_path",
+          "package_name",
+          "go_version",
+          "method_count"
+        ],
+        "title": "SdkGoClientModel",
+        "description": "The generated Go client the download carries \u2014 SDK-2.4 (#4488).\n\nReported separately from ``languages`` because it is not a snippet: it is a compilable module\ninside the archive, with a module path a consumer imports rather than a tab they copy from."
       },
       "SdkLanguageModel": {
         "properties": {
@@ -143771,14 +143835,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-09T01:22:41Z"
+            "example": "2026-09-09T03:06:15Z"
           },
           "outcome": {
             "anyOf": [

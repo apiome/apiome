@@ -75,6 +75,8 @@ from .canonical_model import (
     ParameterLocation,
     Type,
 )
+from .canonical_security import AUTH_SCHEME_HEADERS as _AUTH_SCHEME_HEADERS
+from .canonical_security import operation_security_schemes
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -138,16 +140,10 @@ BASE_URL_VARIABLE = "baseUrl"
 #: and re-importing the result recovers the same scheme, which is what keeps a request file
 #: round-tripping through the ``http-file`` adapter. A scheme absent from this table has no
 #: header representation and is reported as a loss instead of being approximated.
-AUTH_SCHEME_HEADERS: Dict[str, Tuple[str, str]] = {
-    "authorization": ("Authorization", "$AUTHORIZATION"),
-    "bearer": ("Authorization", "Bearer $ACCESS_TOKEN"),
-    "basic": ("Authorization", "Basic $CREDENTIALS"),
-    "digest": ("Authorization", "Digest $CREDENTIALS"),
-    "oauth2": ("Authorization", "Bearer $ACCESS_TOKEN"),
-    "openIdConnect": ("Authorization", "Bearer $ACCESS_TOKEN"),
-    "apiKey": ("X-API-Key", "$API_KEY"),
-    "cookie": ("Cookie", "$SECRET"),
-}
+#: Re-exported from :mod:`app.canonical_security`, which owns it now that three emitters read a
+#: model's auth (SDK-2.4, #4488). Kept as a module attribute because it is part of this emitter's
+#: documented surface and importers name it here.
+AUTH_SCHEME_HEADERS = _AUTH_SCHEME_HEADERS
 
 #: Operation kinds that describe an event flow rather than a request/response call.
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
@@ -666,45 +662,20 @@ def collapse_headers(headers: Dict[str, str]) -> List[Tuple[str, str]]:
 def _security_schemes(api: CanonicalApi, operation: Operation) -> Tuple[List[str], str]:
     """Return the canonical security schemes that apply to ``operation``, and their scope.
 
-    Reads the two shapes a canonical model records auth in, and keeps them apart because
-    they are different statements:
-
-    * ``operation.extras["security"]`` (what a gateway import writes) is a *per-operation*
-      requirement — this call needs this credential — so the emitter may add the header.
-    * ``api.extras["inferred_auth_schemes"]`` (what an inferred import writes) says only
-      that the API was *observed* using a scheme somewhere. Adding its header to every
-      operation would assert a requirement no source stated, and would make a re-import
-      report auth on calls that never carried it; so a model-scoped scheme may only refine
-      a header the operation already declares.
+    A thin alias for :func:`app.canonical_security.operation_security_schemes`, which owns the
+    rule that an operation-scoped requirement may add a header while a model-scoped observation
+    may only refine one the operation already declares. This emitter, the LLM tool-array emitter
+    and the Go client generator all read the same two ``extras`` shapes, so the reading lives in
+    one module.
 
     Args:
         api: The canonical model.
         operation: The operation whose auth is wanted.
 
     Returns:
-        ``(schemes, scope)`` — scheme identifiers in declaration order, deduplicated, and
-        ``"operation"`` or ``"api"`` for where they were declared. An empty list has scope
-        ``"api"`` and no effect.
+        ``(schemes, scope)`` — see :func:`app.canonical_security.operation_security_schemes`.
     """
-
-    def _collect(entries: object) -> List[str]:
-        schemes: List[str] = []
-        if not isinstance(entries, (list, tuple)):
-            return schemes
-        for entry in entries:
-            scheme: Optional[str] = None
-            if isinstance(entry, str):
-                scheme = entry
-            elif isinstance(entry, dict) and isinstance(entry.get("scheme"), str):
-                scheme = entry["scheme"]
-            if scheme and scheme not in schemes:
-                schemes.append(scheme)
-        return schemes
-
-    declared = _collect(operation.extras.get("security"))
-    if declared:
-        return declared, "operation"
-    return _collect(api.extras.get("inferred_auth_schemes")), "api"
+    return operation_security_schemes(api, operation)
 
 
 # ===========================================================================

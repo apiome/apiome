@@ -3,8 +3,10 @@
 Two anonymous, slug-addressed routes behind the browse portal's Get SDK panel:
 
 * **``GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk``** — what the panel needs to draw
-  itself: the resolved package names (SDK-3.4), the install line per language, how many operations
-  the kit covers, and the download's filename.
+  itself: the resolved package names (SDK-3.4), the install line per language, the generated Go
+  client's module path (SDK-2.4), how many operations the kit covers, and the download's filename.
+  The Go client is *named* here, never generated: its module path and package name are pure
+  functions of the coordinates and the branding.
 * **``GET …/sdk/download``** — the kit itself (:mod:`app.sdk_kit`) as ``application/zip``.
 
 **One gate, one answer.** Both routes resolve the revision through
@@ -32,6 +34,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .export_artifact_store import content_sha256_hex, content_sha256_hex_only, digest_header_value
 from .export_source import ExportSource, ExportSourceError, load_public_export_source
+from .go_client_generator import DEFAULT_GO_VERSION, GO_ECOSYSTEM
 from .public_export_guards import (
     enforce_public_export_rate_limit,
     public_export_document_max_bytes,
@@ -39,6 +42,7 @@ from .public_export_guards import (
 from .sdk_generation_settings import PatternContext, ResolvedBranding
 from .sdk_generation_settings_store import load_settings, public_sdk_enabled_from
 from .sdk_kit import (
+    GO_CLIENT_DIRECTORY,
     KIT_MEDIA_TYPE,
     KIT_SCHEMA_VERSION,
     LANGUAGE_FILE_EXTENSIONS,
@@ -46,6 +50,7 @@ from .sdk_kit import (
     ClientKit,
     KitCoordinates,
     build_client_kit,
+    go_client_coordinates,
     kit_filename,
     package_install_command,
     summarize_kit,
@@ -101,6 +106,28 @@ class SdkPackageModel(BaseModel):
     )
 
 
+class SdkGoClientModel(BaseModel):
+    """The generated Go client the download carries — SDK-2.4 (#4488).
+
+    Reported separately from ``languages`` because it is not a snippet: it is a compilable module
+    inside the archive, with a module path a consumer imports rather than a tab they copy from.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    directory: str = Field(description="The directory the module sits in inside the archive.")
+    module_path: str = Field(description="The `go.mod` module path the generated client declares.")
+    package_name: str = Field(description="The Go package name its files declare.")
+    go_version: str = Field(description="The `go` directive the module declares.")
+    install: Optional[str] = Field(
+        default=None,
+        description="The `go get` command, once the module is published at that path.",
+    )
+    method_count: int = Field(
+        description="Client methods the module carries — the kit's renderable operations."
+    )
+
+
 class SdkDownloadModel(BaseModel):
     """What the download will be, so a client can label its button before fetching."""
 
@@ -144,6 +171,9 @@ class PublicSdkInfoResponse(BaseModel):
     settings_fingerprint: Optional[str] = Field(
         default=None,
         description="Fingerprint of the merged SDK settings the kit was branded with (SDK-3.4).",
+    )
+    go_client: SdkGoClientModel = Field(
+        description="The generated Go client the download carries (SDK-2.4)."
     )
     download: SdkDownloadModel
 
@@ -325,6 +355,9 @@ async def get_public_sdk_info(
     # Counted, not built: rendering every snippet in three languages to report three numbers
     # would do the download's whole job for a call that throws the archive away.
     summary = summarize_kit(source.api)
+    # Named, not generated: the module path and package name are pure functions of the coordinates
+    # and the branding, so the panel can label the Go client without paying to emit it.
+    go_module, go_package = go_client_coordinates(source.api, gated.coordinates, branding)
 
     return PublicSdkInfoResponse(
         tenant_slug=tenant_slug,
@@ -355,6 +388,14 @@ async def get_public_sdk_info(
         truncated=summary.truncated,
         license_header=branding.license_header,
         settings_fingerprint=gated.settings_fingerprint,
+        go_client=SdkGoClientModel(
+            directory=GO_CLIENT_DIRECTORY,
+            module_path=go_module,
+            package_name=go_package,
+            go_version=DEFAULT_GO_VERSION,
+            install=package_install_command(GO_ECOSYSTEM, go_module),
+            method_count=summary.operation_count,
+        ),
         download=SdkDownloadModel(
             filename=kit_filename(gated.coordinates),
             media_type=KIT_MEDIA_TYPE,

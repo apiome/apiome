@@ -26,13 +26,19 @@
  * beside the text fields rather than among them.
  */
 
-/** Package ecosystems the API accepts a name pattern for. Mirrors REST's `ECOSYSTEMS`. */
-export const SDK_ECOSYSTEMS = ['npm', 'pypi'] as const;
+/**
+ * Package ecosystems the API accepts a name pattern for. Mirrors REST's `ECOSYSTEMS`.
+ *
+ * `gomod` arrived with the SDK-2.4 Go client generator (#4488): it is the generated module's
+ * `go.mod` path rather than a registry name, but it is configured, merged and validated exactly
+ * like the other two, so it lives in the same list.
+ */
+export const SDK_ECOSYSTEMS = ['npm', 'pypi', 'gomod'] as const;
 
 export type SdkEcosystem = (typeof SDK_ECOSYSTEMS)[number];
 
 /** Every editable field, in the order the form lays them out. */
-export const SDK_FIELD_KEYS = ['npm', 'pypi', 'licenseHeader', 'userAgent'] as const;
+export const SDK_FIELD_KEYS = ['npm', 'pypi', 'gomod', 'licenseHeader', 'userAgent'] as const;
 
 export type SdkFieldKey = (typeof SDK_FIELD_KEYS)[number];
 
@@ -122,6 +128,7 @@ export function emptyDraft(scope: SdkSettingsScope): SdkSettingsDraft {
   return {
     npm: { ...field },
     pypi: { ...field },
+    gomod: { ...field },
     licenseHeader: { ...field },
     userAgent: { ...field },
     // Off, matching the API's default: public SDK access is a permission, and "not configured"
@@ -174,6 +181,7 @@ export function draftFromBody(
   return {
     npm: fieldFrom(patternPresent('npm'), patternValue('npm'), scope),
     pypi: fieldFrom(patternPresent('pypi'), patternValue('pypi'), scope),
+    gomod: fieldFrom(patternPresent('gomod'), patternValue('gomod'), scope),
     licenseHeader: fieldFrom('licenseHeader' in body, body.licenseHeader, scope),
     userAgent: fieldFrom('userAgent' in body, body.userAgent, scope),
     publicSdkEnabled: toggleFrom('publicSdkEnabled' in body, body.publicSdkEnabled, scope),

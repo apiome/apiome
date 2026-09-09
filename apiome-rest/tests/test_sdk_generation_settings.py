@@ -134,6 +134,38 @@ def test_an_illegal_pypi_pattern_is_refused() -> None:
     assert "PyPI" in excinfo.value.errors[0]
 
 
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "github.com/{tenant}/{project}-go",
+        "example.com/acme/pets-go",
+        "internal.corp/team/sdk/v2",
+        "acme",
+    ],
+)
+def test_a_legal_go_module_pattern_is_accepted(pattern: str) -> None:
+    """SDK-2.4 (#4488): the generated Go client's `go.mod` path is configured like a package name."""
+    body = parse_settings_body({"packageNamePatterns": {"gomod": pattern}})
+    assert body["packageNamePatterns"]["gomod"] == pattern
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    ["github.com//acme", "github.com/acme/", "github.com/ acme", "github.com/acme/.."],
+)
+def test_an_illegal_go_module_pattern_is_refused(pattern: str) -> None:
+    """An empty or traversal element is a path, not a module name."""
+    with pytest.raises(SdkSettingsError) as excinfo:
+        parse_settings_body({"packageNamePatterns": {"gomod": pattern}})
+    assert "Go module path" in excinfo.value.errors[0]
+
+
+def test_a_go_module_pattern_resolves_like_any_other_ecosystem() -> None:
+    settings = settings_from_body({"packageNamePatterns": {"gomod": "github.com/{tenant}/{project}-go"}})
+    resolved = resolve_package_names(settings, PatternContext(tenant="acme", project="petstore"))
+    assert resolved == {"gomod": "github.com/acme/petstore-go"}
+
+
 def test_a_user_agent_with_a_newline_is_refused() -> None:
     """Header injection: a user-agent is written into a request header."""
     with pytest.raises(SdkSettingsError) as excinfo:

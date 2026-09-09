@@ -5,6 +5,62 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.316.0] - 2026-09-08
+
+### Added
+- **Go client generator (#4488, SDK-2.4)** — Go was the most-requested third language for infra
+  buyers, and the client kit now carries one: a complete, **dependency-free** Go module generated
+  from the published contract, sitting in the kit's `go/` directory beside the snippets.
+
+  ```bash
+  curl -sO -J "$APIOME/v1/browse/tenants/$TENANT/projects/$PROJECT/versions/1.0.0/sdk/download"
+  unzip -q petstore-1.0.0-sdk.zip && cd go && go build ./... && go vet ./...
+  ```
+
+  - **What it generates.** `go.mod` (standard library only — a generated SDK that pulls in a
+    dependency tree is a liability), a `net/http` transport behind an injectable `Doer` with
+    `WithHTTPClient` / `WithBaseURL` / `WithUserAgent` / `WithHeader` / `WithRequestEditor`,
+    exported types for every schema the contract declares, one `context.Context`-first method per
+    HTTP operation, auth options derived from the model's security schemes, a typed error per
+    declared error response, a `README.md`, and a runnable `examples/<group>/main.go` per operation
+    group. The tenant's SDK-3.4 licence header is commented onto every `.go` file and its
+    user-agent is baked in as `DefaultUserAgent`.
+  - **Why it generates from the canonical model.** SDK-2.4's stated dependencies — the generator
+    SPI (#4482) and the codegen preprocessing pass (#4483) — were both closed **not-planned**, as
+    were the artifact store (#4481), the two MVP language generators (#4485/#4486) and the
+    dashboard/CLI surfaces (#4491/#4492). Following the precedent SDK-2.3/3.3/3.4 set,
+    `app.go_client_generator` is a pure function of the persisted canonical model and its output
+    rides the existing client kit rather than an artifact store — so the download stays
+    byte-deterministic and keeps its content-addressed `ETag`.
+  - **`gomod`, a third SDK-3.4 package ecosystem.** A tenant configures the `go.mod` module path
+    their consumers `go get`, with the same tenant → project merge and `{tenant}`/`{project}`
+    tokens as the npm and PyPI patterns. Unconfigured, it falls back to
+    `example.com/<tenant>/<project>-go` — `example.com` is IANA-reserved, so a default module path
+    can never point at somebody's real repository.
+  - **It never takes a download down.** An operation with no HTTP binding gets no method and is
+    recorded with a reason, exactly as the snippets record theirs; a generator failure degrades the
+    kit to its snippets and says so in the README and the manifest.
+  - **The manifest gained a `go_client` block** (module path, package name, Go version, method and
+    type counts, auth options, example groups, per-method coordinates and skips), and the public
+    SDK info route gained a `go_client` object so the browse panel can name the module without
+    paying to generate it.
+  - **The compile gate is real.** `tests/test_go_client_generator.py` runs `go build ./...`,
+    `go vet ./...`, `gofmt -l` and a `go test` that drives the generated client against a live
+    `httptest` server — path, query, cookie, auth header, user-agent, JSON decoding and the typed
+    404 over an actual HTTP round trip — whenever a Go toolchain is on `PATH`, and skips otherwise.
+
+### Changed
+- **Reading a model's auth moved to `app.canonical_security` (#4488).** The canonical model has no
+  first-class security field, so importers record auth in two `extras` shapes that mean different
+  things: `operation.extras["security"]` is a per-operation *requirement*, while
+  `api.extras["inferred_auth_schemes"]` is only an *observation* that the API was seen using a
+  scheme. Three emitters now need that distinction, so `AUTH_SCHEME_HEADERS` and both readers live
+  in one module; `app.http_file_emitter` and `app.llm_tools_emitter` delegate to it. Behaviour is
+  unchanged.
+- **Three `app.snippet_render` helpers became public** — `upper_snake_token`, `request_message` and
+  `pick_content_type` — so the Go generator asks the same questions the snippets do rather than
+  keeping a second copy of the answers. `license_comment_block` learned the `go` comment prefix.
+
 ## [1.315.0] - 2026-09-08
 
 ### Added

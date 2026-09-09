@@ -69,6 +69,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 from pydantic import Field, field_validator
 
 from .canonical_model import ApiParadigm, CanonicalApi, Channel, Operation, Type
+from .canonical_security import declared_security_schemes
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -630,11 +631,11 @@ class LlmToolsEmitter(Emitter, register=True):
 def _declared_security_schemes(api: CanonicalApi) -> List[str]:
     """Return the security-scheme names the model declares, from wherever they live.
 
-    The canonical model has no first-class security field: an import records schemes on
-    ``api.extras['inferred_auth_schemes']`` (an inferred surface) or per operation on
-    ``extras['security']`` (a gateway or OpenAPI import). Both are read here so the loss
-    report names what a tool array is dropping rather than merely that it drops
-    something.
+    A thin alias for :func:`app.canonical_security.declared_security_schemes`, which owns the
+    reading now that three emitters need it — the canonical model has no first-class security
+    field, so an import records schemes on ``api.extras['inferred_auth_schemes']`` or per
+    operation on ``extras['security']``, and both are read so the loss report names what a tool
+    array is dropping rather than merely that it drops something.
 
     Args:
         api: The model being emitted.
@@ -642,20 +643,7 @@ def _declared_security_schemes(api: CanonicalApi) -> List[str]:
     Returns:
         The distinct scheme names, sorted for determinism.
     """
-    names: set = set()
-    inferred = (api.extras or {}).get("inferred_auth_schemes")
-    if isinstance(inferred, list):
-        names.update(str(item) for item in inferred if item)
-    elif isinstance(inferred, dict):
-        names.update(str(key) for key in inferred)
-    for service in api.services:
-        for operation in service.operations:
-            declared = (operation.extras or {}).get("security")
-            if isinstance(declared, list):
-                names.update(str(item) for item in declared if isinstance(item, str))
-            elif isinstance(declared, str):
-                names.add(declared)
-    return sorted(names)
+    return declared_security_schemes(api)
 
 
 def _coerce_options(

@@ -100,6 +100,21 @@ describe('reading a stored body at project scope', () => {
   it('starts blank when the scope has saved nothing', () => {
     expect(draftFromBody(null, 'project')).toEqual(emptyDraft('project'));
   });
+
+  it('carries the Go module path like any other ecosystem (SDK-2.4)', () => {
+    // `gomod` is a module path rather than a registry name, but it is configured, merged and
+    // written back through exactly the same three states as npm and PyPI.
+    expect(SDK_ECOSYSTEMS).toContain('gomod');
+    const draft = draftFromBody(
+      { packageNamePatterns: { gomod: 'github.com/acme/{project}-go' } },
+      'project',
+    );
+    expect(draft.gomod).toEqual({ inherit: false, value: 'github.com/acme/{project}-go' });
+    expect(draft.npm).toEqual({ inherit: true, value: '' });
+    expect(bodyFromDraft(draft, 'project')).toEqual({
+      packageNamePatterns: { gomod: 'github.com/acme/{project}-go' },
+    });
+  });
 });
 
 describe('reading a stored body at workspace scope', () => {

@@ -1,17 +1,23 @@
-"""The public client kit — SDK-3.3 (#4493).
+"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488).
 
 A consumer who lands on a published spec in the browse portal wants one thing: something they
 can unzip and run. This module builds it — a deterministic ``sdk.client-kit.v1`` archive holding
-the contract, a README, and one runnable snippet per operation per language.
+the contract, a README, one runnable snippet per operation per language, and a complete Go client
+module under ``go/``.
 
-**Why a kit and not a generated library.** The original SDK-3.3 scope served "the latest
+**Why the kit is built rather than stored.** The original SDK-3.3 scope served "the latest
 generated artifact" from the SDK-1.1 artifact store. That ticket, the generator SPI (SDK-1.2),
-both language generators (SDK-2.1/2.2) and the dashboard/CLI surfaces (SDK-3.1/3.2) were all
-closed **not-planned**, so there is no artifact to serve and no generator to make one. What did
-ship is the SDK-2.3 snippet service, which renders runnable per-operation code straight from the
-persisted canonical model. This module packages that output: the kit is what SDK-3.3 can honestly
-deliver today, and it is built at request time rather than stored, so there is no artifact
-lifecycle to retain, expire or invalidate.
+both MVP language generators (SDK-2.1/2.2) and the dashboard/CLI surfaces (SDK-3.1/3.2) were all
+closed **not-planned**, so there is no artifact store and nothing to retain, expire or invalidate.
+What did ship reads the persisted canonical model directly — the SDK-2.3 snippet service, which
+renders runnable per-operation code, and the SDK-2.4 Go client generator
+(:mod:`app.go_client_generator`), which emits a compilable, dependency-free Go module. This module
+packages both, at request time, from one revision.
+
+**The Go client is planned separately** (:func:`plan_go_client`) for two reasons: a route can
+report what a consumer would get — the module path they will ``go get`` — without paying to
+generate it, and a generator failure degrades the kit to its snippets rather than taking the
+download down.
 
 Three properties are load-bearing.
 
@@ -42,6 +48,14 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from .canonical_model import CanonicalApi, Operation
+from .go_client_generator import (
+    GO_CLIENT_SCHEMA_VERSION,
+    GO_ECOSYSTEM,
+    GoClientPackage,
+    generate_go_client,
+    go_module_path,
+    go_package_name,
+)
 from .sdk_generation_settings import ResolvedBranding
 from .snippet_render import (
     INSTALL_LINES,
@@ -53,6 +67,7 @@ from .snippet_render import (
 from .zip_bundle import write_zip_entry
 
 __all__ = [
+    "GO_CLIENT_DIRECTORY",
     "KIT_MEDIA_TYPE",
     "KIT_SCHEMA_VERSION",
     "LANGUAGE_FILE_EXTENSIONS",
@@ -60,9 +75,12 @@ __all__ = [
     "MAX_KIT_OPERATIONS",
     "PACKAGE_INSTALL_COMMANDS",
     "ClientKit",
+    "GoClientPlan",
     "KitCoordinates",
     "KitSummary",
     "build_client_kit",
+    "go_client_coordinates",
+    "plan_go_client",
     "summarize_kit",
     "kit_filename",
     "package_install_command",
@@ -96,10 +114,16 @@ LANGUAGE_FILE_EXTENSIONS: Dict[str, str] = {"ts": "ts", "python": "py", "curl": 
 #: Fenced-block language tag per canonical language, for the README.
 _MARKDOWN_FENCE: Dict[str, str] = {"ts": "ts", "python": "python", "curl": "bash"}
 
+#: The archive directory the generated Go module lives in. It is a directory rather than the
+#: archive root because the kit also carries the contract, the README and the snippets — a
+#: consumer unzips it and runs ``go build ./go/...`` or copies that one directory out.
+GO_CLIENT_DIRECTORY = "go"
+
 #: How a resolved package name is installed, per ecosystem (SDK-3.4 reports the names).
 PACKAGE_INSTALL_COMMANDS: Dict[str, str] = {
     "npm": "npm install {name}",
     "pypi": "pip install {name}",
+    "gomod": "go get {name}",
 }
 
 #: Source formats whose captured document is neither JSON nor YAML, mapped to their conventional
@@ -242,6 +266,97 @@ class _RenderedOperation:
     #: The substitutable tokens the snippets carry. Synthesis is language-independent, so one
     #: language's list describes them all.
     placeholders: List[SnippetPlaceholder] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class GoClientPlan:
+    """The generated Go client a kit carries, or the reason it carries none.
+
+    The Go client (SDK-2.4, #4488) is the one part of a kit that is a *library* rather than a
+    snippet, so it is planned separately: a route can report what a consumer would get — the
+    module path they will ``go get``, the package they will import — without paying to generate it,
+    and a generator failure degrades the kit to its snippets rather than taking the download down.
+
+    Attributes:
+        module_path: The ``go.mod`` module path the generated client declares.
+        package_name: The Go package name its files declare.
+        package: The generated module, or ``None`` when generation was skipped or failed.
+        error: Why there is no package, when there is none.
+    """
+
+    module_path: str
+    package_name: str
+    package: Optional[GoClientPackage] = None
+    error: Optional[str] = None
+
+
+def go_client_coordinates(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> Tuple[str, str]:
+    """Return the ``(module path, package name)`` a kit's Go client would use.
+
+    A tenant that configured a ``gomod`` package name (SDK-3.4) gets exactly that path — it is the
+    identifier their consumers type into ``go get``, and second-guessing it would break them.
+    Everything else falls back to the revision's own coordinates under the reserved
+    ``example.com`` host, which cannot collide with a real repository.
+
+    Args:
+        api: The revision's canonical model, for the package-name fallbacks.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding.
+
+    Returns:
+        ``(module path, package name)``.
+    """
+    module_path = go_module_path(
+        branding.package_names.get(GO_ECOSYSTEM),
+        coordinates.tenant_slug,
+        f"{coordinates.project_slug}-go",
+    )
+    package_name = go_package_name(
+        coordinates.project_slug,
+        api.identity.name if api.identity else None,
+        api.title,
+    )
+    return module_path, package_name
+
+
+def plan_go_client(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> GoClientPlan:
+    """Generate the kit's Go client, degrading to a reason rather than failing the kit.
+
+    Args:
+        api: The revision's canonical model.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding — its module path, licence header and
+            user-agent all reach the generated package.
+
+    Returns:
+        The :class:`GoClientPlan`. Its ``package`` is ``None`` and its ``error`` set when the
+        generator raised: one unrenderable model must not cost the consumer the whole download.
+    """
+    module_path, package_name = go_client_coordinates(api, coordinates, branding)
+    try:
+        package = generate_go_client(
+            api,
+            module_path=module_path,
+            package_name=package_name,
+            license_header=branding.license_header,
+            user_agent=branding.user_agent,
+            max_operations=MAX_KIT_OPERATIONS,
+        )
+    except Exception as exc:  # noqa: BLE001 - a kit ships its snippets even when codegen cannot.
+        return GoClientPlan(
+            module_path=module_path,
+            package_name=package_name,
+            error=f"{type(exc).__name__}: {exc}",
+        )
+    return GoClientPlan(
+        module_path=package.module_path,
+        package_name=package.package_name,
+        package=package,
+    )
 
 
 def package_install_command(ecosystem: str, name: str) -> Optional[str]:
@@ -454,6 +569,7 @@ def _build_readme(
     skipped: List[Dict[str, str]],
     spec_name: str,
     summary: KitSummary,
+    go_client: GoClientPlan,
 ) -> str:
     """Compose the kit's ``README.md``.
 
@@ -465,6 +581,7 @@ def _build_readme(
         skipped: Operations left out, with reasons.
         spec_name: The in-archive filename of the captured contract.
         summary: The kit's operation counts, for the truncation note.
+        go_client: The generated Go client (SDK-2.4), or the reason there is none.
 
     Returns:
         The README's Markdown text.
@@ -516,7 +633,59 @@ def _build_readme(
         f"- `{spec_name}` — the published contract, exactly as its author wrote it.",
         "- `manifest.json` — what this kit contains and which revision it came from.",
         "- `snippets/<language>/<operation>.<ext>` — one runnable example per operation.",
-        "",
+    ]
+    if go_client.package is not None:
+        lines.append(
+            f"- `{GO_CLIENT_DIRECTORY}/` — a complete, dependency-free Go client module "
+            f"(`{go_client.module_path}`), with its own README.",
+        )
+    lines.append("")
+
+    if go_client.package is not None:
+        package = go_client.package
+        install = package_install_command(GO_ECOSYSTEM, go_client.module_path)
+        lines += [
+            "## Go client",
+            "",
+            f"`{GO_CLIENT_DIRECTORY}/` is a generated Go client for this revision — "
+            f"{len(package.methods)} "
+            + ("method" if len(package.methods) == 1 else "methods")
+            + " over the standard library, no dependencies. Every method takes a "
+            "`context.Context` first and sends through an injectable `Doer`.",
+            "",
+            "```bash",
+            f"cd {GO_CLIENT_DIRECTORY} && go build ./...",
+            "```",
+            "",
+        ]
+        if install:
+            lines += [
+                "Once you have published the module at that path, consumers install it with:",
+                "",
+                "```bash",
+                install,
+                "```",
+                "",
+            ]
+        if package.example_groups:
+            lines += [
+                "Runnable examples live in `"
+                + GO_CLIENT_DIRECTORY
+                + "/examples/`: "
+                + ", ".join(f"`{directory}`" for directory in package.example_groups)
+                + ".",
+                "",
+            ]
+    elif go_client.error:
+        lines += [
+            "## Go client",
+            "",
+            "No Go client is included for this revision: "
+            f"{go_client.error}. The snippets below are unaffected.",
+            "",
+        ]
+
+    lines += [
         "## Operations",
         "",
     ]
@@ -563,6 +732,56 @@ def _build_readme(
     return "\n".join(lines)
 
 
+def _go_client_manifest(plan: GoClientPlan) -> Dict[str, Any]:
+    """Describe the kit's Go client for ``manifest.json``.
+
+    The block is always present, so a consumer never has to tell "this kit predates the Go client"
+    apart from "this revision could not produce one" — ``included`` says which.
+
+    Args:
+        plan: The planned client.
+
+    Returns:
+        The manifest block.
+    """
+    block: Dict[str, Any] = {
+        "schema_version": GO_CLIENT_SCHEMA_VERSION,
+        "directory": GO_CLIENT_DIRECTORY,
+        "module_path": plan.module_path,
+        "package_name": plan.package_name,
+        "included": plan.package is not None,
+    }
+    if plan.package is None:
+        block["error"] = plan.error
+        return block
+    package = plan.package
+    block.update(
+        {
+            "go_version": package.go_version,
+            "method_count": len(package.methods),
+            "type_count": len(package.types),
+            "auth_options": list(package.auth_options),
+            "example_groups": list(package.example_groups),
+            "methods": [
+                {
+                    "name": method.name,
+                    "operation_id": method.operation_id,
+                    "key": method.key,
+                    "http_method": method.method,
+                    "path": method.path,
+                    "group": method.group,
+                }
+                for method in package.methods
+            ],
+            "skipped": [
+                {"operation_id": item.operation_id, "key": item.key, "reason": item.reason}
+                for item in package.skipped
+            ],
+        }
+    )
+    return block
+
+
 def build_client_kit(
     api: CanonicalApi,
     *,
@@ -591,8 +810,18 @@ def build_client_kit(
     """
     rendered, skipped, summary = _render_operations(api, branding)
     spec_name = spec_filename(source_format, source_text)
+    go_client = plan_go_client(api, coordinates, branding)
 
     entries: List[_Entry] = []
+    if go_client.package is not None:
+        for go_file in go_client.package.files:
+            entries.append(
+                _Entry(
+                    path=f"{GO_CLIENT_DIRECTORY}/{go_file.path}",
+                    text=go_file.text,
+                    subject="go-client",
+                )
+            )
     for entry in rendered:
         for lang, (_install, code) in sorted(entry.snippets.items()):
             extension = LANGUAGE_FILE_EXTENSIONS.get(lang, "txt")
@@ -616,6 +845,7 @@ def build_client_kit(
         skipped,
         spec_name,
         summary,
+        go_client,
     )
     entries.append(_Entry(path="README.md", text=readme, subject="readme"))
     entries.sort(key=lambda item: item.path)
@@ -647,11 +877,13 @@ def build_client_kit(
             for entry in rendered
         ],
         "skipped": skipped,
+        "go_client": _go_client_manifest(go_client),
         "provenance": {
             "version_record_id": coordinates.version_record_id,
             "version_label": coordinates.version_label,
             "source_format": source_format,
             "renderer": f"app.snippet_render/{KIT_SCHEMA_VERSION}",
+            "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
             "apiome_version": apiome_version,
             "settings_fingerprint": settings_fingerprint,
         },

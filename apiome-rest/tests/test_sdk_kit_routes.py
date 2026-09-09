@@ -28,6 +28,7 @@ from app.canonical_model import (
 )
 from app.config import settings
 from app.export_source import ExportSource, ExportSourceError
+from app.go_client_generator import DEFAULT_GO_VERSION
 from app.main import app
 from app.sdk_generation_settings import ResolvedBranding, SdkGenerationSettingsOut
 from app.sdk_kit import KIT_SCHEMA_VERSION
@@ -249,6 +250,41 @@ def test_info_reports_the_resolved_package_names_and_their_install_commands() ->
         {"ecosystem": "pypi", "name": "acme-widgets", "install": "pip install acme-widgets"},
     ]
     assert body["license_header"] == "Copyright (c) 2026 Acme, Inc."
+
+
+def test_info_names_the_go_client_the_download_carries() -> None:
+    """SDK-2.4 (#4488): the Go client is a module inside the archive, not a snippet tab."""
+    with patch(_LOADER, return_value=_source()):
+        body = client.get(_BASE).json()
+
+    assert body["go_client"] == {
+        "directory": "go",
+        "module_path": "example.com/acme/widgets-go",
+        "package_name": "widgets",
+        "go_version": DEFAULT_GO_VERSION,
+        "install": "go get example.com/acme/widgets-go",
+        # The Go client covers exactly the operations the kit can render.
+        "method_count": 1,
+    }
+
+
+def test_info_prefers_a_configured_go_module_path() -> None:
+    """A module path is what a consumer types into `go get`; a configured one is used verbatim."""
+    branding = ResolvedBranding(package_names={"gomod": "github.com/acme/widgets-go"})
+    with patch(_LOADER, return_value=_source()), patch(
+        _SETTINGS, return_value=_settings_out(branding=branding)
+    ):
+        body = client.get(_BASE).json()
+
+    assert body["go_client"]["module_path"] == "github.com/acme/widgets-go"
+    assert body["go_client"]["install"] == "go get github.com/acme/widgets-go"
+    assert body["packages"] == [
+        {
+            "ecosystem": "gomod",
+            "name": "github.com/acme/widgets-go",
+            "install": "go get github.com/acme/widgets-go",
+        }
+    ]
 
 
 def test_info_reports_the_settings_fingerprint_as_provenance() -> None:

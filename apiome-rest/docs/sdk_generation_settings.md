@@ -1,10 +1,10 @@
 # SDK generation settings & branding — SDK-3.4 (#4494)
 
 An organisation wants the code Apiome hands its consumers to carry the organisation's identity:
-packages named under its own npm scope / PyPI naming pattern, its licence header on the source, and
-its own user-agent on the traffic those clients generate. None of that is a property of any single
-version, project row or generated file — it is tenant policy — so it gets one durable home and one
-set of rules.
+packages named under its own npm scope / PyPI / Go module naming pattern, its licence header on the
+source, and its own user-agent on the traffic those clients generate. None of that is a property of
+any single version, project row or generated file — it is tenant policy — so it gets one durable
+home and one set of rules.
 
 ## Where the pieces live
 
@@ -23,7 +23,11 @@ Addressed as `sdk.generation-settings.v1`:
 
 ```json
 {
-  "packageNamePatterns": { "npm": "@acme/{project}-sdk", "pypi": "acme-{project}" },
+  "packageNamePatterns": {
+    "npm": "@acme/{project}-sdk",
+    "pypi": "acme-{project}",
+    "gomod": "github.com/acme/{project}-go"
+  },
   "licenseHeader": "Copyright (c) {year} Acme, Inc.\nSPDX-License-Identifier: Apache-2.0",
   "userAgent": "acme-sdk/{version}",
   "publicSdkEnabled": true
@@ -33,9 +37,18 @@ Addressed as `sdk.generation-settings.v1`:
 Patterns may contain `{tenant}`, `{project}`, `{version}` and `{year}`, substituted from the scope
 being resolved. An unknown token is refused at save time rather than left as a literal brace.
 
-Ecosystems are `npm` and `pypi` — deliberately only the two the platform can name today. Adding a
-third is one entry in `ECOSYSTEMS` plus one branch in `_package_name_problem`; an unknown ecosystem
-is refused with the accepted list rather than stored and silently ignored.
+Ecosystems are `npm`, `pypi` and `gomod` — only what the platform can actually name. `npm` and
+`pypi` are reported by the SDK-2.3 snippet service; **`gomod` (SDK-2.4, #4488) is the `go.mod`
+module path the generated Go client declares** and the identifier its consumers type into `go get`,
+so a configured one is used verbatim. An unconfigured `gomod` falls back to
+`example.com/<tenant>/<project>-go` — `example.com` is IANA-reserved, so a default module path can
+never point at somebody's real repository. Adding a fourth ecosystem is one entry in `ECOSYSTEMS`
+plus one branch in `_package_name_problem`; an unknown ecosystem is refused with the accepted list
+rather than stored and silently ignored.
+
+A Go module path is validated as slash-separated elements of letters, digits and `. - _ ~`, none
+empty and none `.`/`..` — a dot in the first element is *not* required, because a tenant serving
+from an internal proxy has a legitimate bare path.
 
 `publicSdkEnabled` (boolean, added by SDK-3.3, #4493) is the odd one out: an **access control**
 rather than branding. It opens the public browse portal's "Get SDK" client-kit download and its
