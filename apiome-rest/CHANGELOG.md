@@ -5,6 +5,70 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.315.0] - 2026-09-08
+
+### Added
+- **Public "Get SDK" surface (#4493, SDK-3.3)** — the browse portal is where API *consumers*
+  land, and until now a published spec page offered them no path to a working client. It now
+  offers two, both behind one per-project switch that is **off by default**.
+
+  ```bash
+  # Opt a project in, then take the kit.
+  curl -sX PUT -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
+    "$APIOME/v1/projects/$TENANT/$PROJECT/sdk-settings" \
+    -d '{"settings":{"publicSdkEnabled":true}}' > /dev/null
+  curl -sO -J "$APIOME/v1/browse/tenants/$TENANT/projects/$PROJECT/versions/1.0.0/sdk/download"
+  ```
+
+  - Two anonymous routes:
+    `GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk` describes what is on offer (the
+    resolved package names and their install commands, the languages, the operation counts, the
+    settings fingerprint), and `…/sdk/download` serves the archive itself as `application/zip`.
+    Both share the MFX-7.3 public-export rate limit; the download reuses its size cap.
+  - **What the download is.** The original scope served a generated client library from the
+    SDK-1.1 artifact store. SDK-1.1 (#4481), the generator SPI (#4482), both language generators
+    (#4485/#4486) and the dashboard/CLI surfaces (#4491/#4492) were closed **not-planned**, so
+    there is no artifact to serve and no generator to make one. The download is instead an
+    `sdk.client-kit.v1` archive built from what *did* ship — the SDK-2.3 renderer — carrying a
+    README, the published contract verbatim, and one runnable snippet per operation in
+    ts/python/curl. It is built **per request**, so there is no artifact lifecycle to retain or
+    expire.
+  - **`publicSdkEnabled`, a new key on the SDK-3.4 `sdk.generation-settings.v1` body.** It merges
+    tenant → project key by key like every other setting, so a workspace can open every project at
+    once and one project can override either way. It is the only setting that is an access control
+    rather than branding, so it defaults to `false` rather than `null` — for a permission, "not
+    configured" and "not allowed" are the same answer — and an unreadable settings row also reads
+    as `false`: **the gate fails closed**. Only a real boolean is accepted; `1` is refused.
+  - **A project that has not opted in gets a 404**, identical to the one an unpublished, private or
+    unknown version gets. A `403` would confirm that the project exists and merely declined.
+  - **Provenance and determinism.** The archive's `manifest.json` records the version record id,
+    version label, source format, renderer, API version and merged settings fingerprint, and
+    digests every entry. Building twice from the same inputs yields byte-identical archives, which
+    is what lets an unstored download carry a strong content-addressed `ETag` (with `If-None-Match`
+    → 304) and a `Digest` over its exact bytes.
+  - Operations with no HTTP binding (gRPC, GraphQL, events) are recorded in the manifest's
+    `skipped` list rather than failing the kit, and the work is capped at 250 renderable operations
+    with `truncated` reported.
+
+### Changed
+- **The anonymous snippet route is now gated (#4493).**
+  `GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/snippets/{operation_id}` is part of the
+  same consumer-facing SDK surface as the Get SDK download, so it now answers **404** for a project
+  whose `publicSdkEnabled` is not set. Since the setting defaults to off, **public snippet URLs
+  that worked in 1.314.0 return 404 until a workspace or project owner opts in.** The
+  **authenticated** snippet route is unchanged — it is tenant-scoped, not public exposure.
+- **Every settings fingerprint changed value.** The canonical settings body carries every key,
+  including unset ones, so that a fingerprint keeps meaning the same thing across releases; adding
+  `publicSdkEnabled` therefore changes the digest the same settings produce. Stored row
+  fingerprints are untouched until their row is next saved; the ones responses report changed
+  immediately.
+- `ExportSource` now carries the revision's captured `source_text` and `source_format`, so a bundle
+  can ship the contract alongside what was derived from it. Additive; existing callers are
+  unaffected.
+- The deterministic zip-entry writer moved from `app.export_job_engine` to a shared
+  `app.zip_bundle`, so the export bundle and the client kit cannot drift apart on the pinned
+  timestamp their reproducibility depends on.
+
 ## [1.314.0] - 2026-09-07
 
 ### Added

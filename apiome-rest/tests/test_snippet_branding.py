@@ -277,6 +277,11 @@ def test_the_public_route_brands_from_the_tenant_the_loader_resolved() -> None:
     )
     with patch(
         "app.snippet_routes.load_public_export_source", return_value=source
+    ), patch(
+        # SDK-3.3 (#4493) gates the public route on the project's publicSdkEnabled setting; this
+        # test is about branding, so the gate is opened.
+        "app.snippet_routes.load_public_sdk_enabled",
+        return_value=True,
     ), patch("app.snippet_routes.load_branding", return_value=_BRANDING) as branding:
         resp = client.get(
             "/v1/browse/tenants/acme/projects/petstore/versions/1.0.0/snippets/listPets?lang=ts"

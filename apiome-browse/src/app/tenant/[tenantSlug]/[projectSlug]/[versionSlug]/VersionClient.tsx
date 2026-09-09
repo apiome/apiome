@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
@@ -8,6 +8,11 @@ import { EntityHeader } from '../../../../components/EntityHeader';
 import { SpecSidebar } from '../../../../components/SpecSidebar';
 import { SpecViewer, type SpecFormat } from '../../../../components/SpecViewer';
 import { PublicExportDialog } from '../../../../components/export/PublicExportDialog';
+import { GetSdkPanel } from '../../../../components/sdk/GetSdkPanel';
+import {
+  publicSdkInfoUrl,
+  type PublicSdkInfoResponse,
+} from '../../../../../../lib/sdk/publicSdk';
 import { mockCurlCommand, sampleMockPath } from '../../../../../../lib/mock/mockUrl';
 import type {
   PublicVersionChangelogRow,
@@ -68,6 +73,34 @@ export function VersionClient({
   const [activeAnchor, setActiveAnchor] = useState<string | undefined>(undefined);
   const [showExport, setShowExport] = useState(false);
   const [activeTab, setActiveTab] = useState<VersionTab>('specification');
+  const [sdkInfo, setSdkInfo] = useState<PublicSdkInfoResponse | null>(null);
+
+  const coords = useMemo(
+    () => ({ tenantSlug, projectSlug, versionSlug }),
+    [tenantSlug, projectSlug, versionSlug]
+  );
+
+  // SDK-3.3 (#4493). The publisher opts a project into public SDK access per project, and a
+  // project that has not opted in answers this call with the same 404 an unpublished version
+  // does — so a failure here means "render no SDK affordance at all", not "render a disabled
+  // one". The base URL is documented as browser-reachable, which is why this is a client fetch
+  // rather than an SSR one.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(publicSdkInfoUrl(restApiBaseUrl, coords));
+        if (!response.ok) return;
+        const info: PublicSdkInfoResponse = await response.json();
+        if (!cancelled) setSdkInfo(info);
+      } catch {
+        // Offline, blocked, or no SDK on offer — either way there is nothing to show.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [restApiBaseUrl, coords]);
 
   const onSpecChange = useCallback((next: unknown, nextFormat: SpecFormat) => {
     setSpec(next);
@@ -208,6 +241,14 @@ export function VersionClient({
               </section>
             )}
 
+            {sdkInfo && (
+              <GetSdkPanel
+                info={sdkInfo}
+                coords={coords}
+                restApiBaseUrl={restApiBaseUrl}
+              />
+            )}
+
             <section className="space-y-3">
               <header className="flex items-end justify-between gap-3">
                 <div>
@@ -235,6 +276,7 @@ export function VersionClient({
                 versionSlug={versionSlug}
                 restApiBaseUrl={restApiBaseUrl}
                 mockBaseUrl={mockBaseUrl}
+                sdkEnabled={sdkInfo !== null}
                 onSpecChange={onSpecChange}
               />
             </section>

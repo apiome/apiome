@@ -25,7 +25,8 @@ Addressed as `sdk.generation-settings.v1`:
 {
   "packageNamePatterns": { "npm": "@acme/{project}-sdk", "pypi": "acme-{project}" },
   "licenseHeader": "Copyright (c) {year} Acme, Inc.\nSPDX-License-Identifier: Apache-2.0",
-  "userAgent": "acme-sdk/{version}"
+  "userAgent": "acme-sdk/{version}",
+  "publicSdkEnabled": true
 }
 ```
 
@@ -35,6 +36,14 @@ being resolved. An unknown token is refused at save time rather than left as a l
 Ecosystems are `npm` and `pypi` — deliberately only the two the platform can name today. Adding a
 third is one entry in `ECOSYSTEMS` plus one branch in `_package_name_problem`; an unknown ecosystem
 is refused with the accepted list rather than stored and silently ignored.
+
+`publicSdkEnabled` (boolean, added by SDK-3.3, #4493) is the odd one out: an **access control**
+rather than branding. It opens the public browse portal's "Get SDK" client-kit download and its
+anonymous per-operation snippets for the project — see `public_sdk_kit.md`. Because it gates
+exposure it defaults to **`false`**, not `null`: for a permission, "not configured" and "not
+allowed" are the same answer, and it is the safe one. Only a real boolean is accepted (`1` is
+refused — `isinstance(True, int)` makes that easy to get wrong), and an unreadable settings row
+reads as `false`, so the gate fails closed.
 
 ## The three rules worth knowing
 
@@ -81,6 +90,12 @@ Every response carries three different things on purpose:
 identically, which is the determinism guarantee: same settings in, same branding stamped onto the
 artifact.
 
+The canonical body always carries **every** key, including unset ones, so that a fingerprint keeps
+meaning the same thing across releases. The corollary is that adding a key changes every
+fingerprint's *value*: SDK-3.3's `publicSdkEnabled` did, so a fingerprint recorded before that
+release will not match the one the same settings produce after it. Stored row fingerprints are
+untouched until their row is next saved; the ones responses report changed immediately.
+
 **Permissions.** `projects:view` to read, `projects:edit` to change — no new RBAC resource, and no
 new API-key scope. A full-access key already reaches these routes; the two restricted CI scopes
 (`diff:read`, `lint:read`) have nothing to do with package naming, and minting a third would have
@@ -108,6 +123,13 @@ Two properties hold that surface together:
 
 An operation that declares its own `User-Agent` parameter keeps it: the spec is more authoritative
 about its own API than a workspace default is.
+
+The **SDK-3.3 public client kit** (`app/sdk_kit.py`, `app/sdk_kit_routes.py`) consumes both halves
+of these settings: `publicSdkEnabled` decides whether the browse portal serves anything at all,
+and the branding is stamped onto every snippet in the archive while the resolved package names and
+their install commands go into its README and its info payload. The merged fingerprint travels in
+the archive's `manifest.json`, so a changed kit is attributable to changed branding rather than to
+a changed API. See `public_sdk_kit.md`.
 
 The branding is deliberately **not** mirrored into the client-side snippet twin
 (`apiome-ui/lib/tryit/snippet.ts`), despite the standing parity rule: the browse Try It panel

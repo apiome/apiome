@@ -13,7 +13,10 @@ Two routes share the renderer:
   — anonymous, slug-addressed, for the public browse surface (SDK-3.3 snippet tabs and
   the SIM-3.5 Try It copy-as-code). Resolves through
   :func:`app.export_source.load_public_export_source`, so private / draft / unknown
-  versions are a uniform 404, and shares the MFX-7.3 public-export rate limit.
+  versions are a uniform 404, and shares the MFX-7.3 public-export rate limit. Since
+  SDK-3.3 (#4493) it is additionally gated by the project's ``publicSdkEnabled`` setting —
+  the same switch that opens the "Get SDK" download — and answers the same 404 when a
+  project has not opted in.
 
 Both take ``?lang=`` (``ts`` / ``python`` / ``curl``, with browse aliases ``fetch`` /
 ``httpx``), address the operation by OpenAPI ``operationId``, canonical name, or the
@@ -49,7 +52,7 @@ from .export_source import ExportSourceError, load_public_export_source
 from .public_export_guards import enforce_public_export_rate_limit
 from .revision_deprecation import is_uuid_string
 from .sdk_generation_settings import PatternContext, ResolvedBranding
-from .sdk_generation_settings_store import load_branding
+from .sdk_generation_settings_store import load_branding, load_public_sdk_enabled
 from .snippet_render import (
     SUPPORTED_LANGS,
     SnippetRenderError,
@@ -410,7 +413,8 @@ async def get_version_operation_snippet(
         404: {
             "description": (
                 "No published public version matches the slugs (private, draft, and unknown "
-                "versions are indistinguishable), or the operation is unknown."
+                "versions are indistinguishable), the project has not enabled public SDK "
+                "access (SDK-3.3), or the operation is unknown."
             )
         },
         429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
@@ -449,6 +453,20 @@ async def get_public_operation_snippet(
         source = load_public_export_source(tenant_slug, project_slug, version_slug)
     except ExportSourceError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+    # SDK-3.3 (#4493): public snippets are part of the same consumer-facing SDK surface as the
+    # "Get SDK" download, and are gated by the same per-project setting. A project that has not
+    # opted in is a 404 — the same answer an unpublished or private version gives, so the gate
+    # cannot be used to confirm that a project exists and merely declined. The authenticated
+    # snippet route above is unaffected: it is tenant-scoped, not public exposure.
+    if not load_public_sdk_enabled(source.tenant_id, source.artifact_id):
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No public snippets are available for {tenant_slug!r}/{project_slug!r} "
+                f"version {version_slug!r}."
+            ),
+        )
 
     op = _find_operation_or_404(source.api, operation_id)
     # The anonymous caller supplied slugs, not a tenant id; the loader resolved one, which is what

@@ -110,6 +110,7 @@ from .lossiness import LossinessSeverity
 from .projection_telemetry import projection_telemetry
 from .quality_rank_telemetry import observe_delivery
 from .transcoding_guards import TranscodeGuard, classify_transcode
+from .zip_bundle import ZIP_EPOCH, write_zip_entry
 
 logger = logging.getLogger(__name__)
 
@@ -1004,10 +1005,9 @@ def build_result_manifest(result: EmitResult) -> List[ExportJobFile]:
 # The media type and in-bundle manifest name for a multi-file zip delivery (MFX-4.2).
 BUNDLE_MEDIA_TYPE = "application/zip"
 _BUNDLE_MANIFEST_NAME = "manifest.json"
-# A fixed DOS epoch for every zip entry's timestamp so the same emit result always packages
-# to byte-identical bundle bytes (zip stores an mtime per entry; without pinning it the
-# bundle would differ on every call). 1980-01-01 is the earliest a DOS timestamp can encode.
-_ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+#: The pinned entry timestamp that makes bundle bytes reproducible, shared with the SDK-3.3
+#: client kit via :mod:`app.zip_bundle` so the two bundle builders cannot drift apart.
+_ZIP_EPOCH = ZIP_EPOCH
 
 
 def _bundle_manifest_name(result: EmitResult) -> str:
@@ -1073,11 +1073,7 @@ def build_bundle_manifest(
 
 def _write_zip_entry(archive: zipfile.ZipFile, name: str, text: str) -> None:
     """Write one UTF-8 text entry to ``archive`` with a pinned timestamp (deterministic bytes)."""
-    info = zipfile.ZipInfo(filename=name, date_time=_ZIP_EPOCH)
-    info.compress_type = zipfile.ZIP_DEFLATED
-    # 0o644 (rw-r--r--) in the high 16 bits, the conventional Unix mode for a zip entry.
-    info.external_attr = 0o644 << 16
-    archive.writestr(info, text.encode("utf-8"))
+    write_zip_entry(archive, name, text)
 
 
 def build_export_zip(

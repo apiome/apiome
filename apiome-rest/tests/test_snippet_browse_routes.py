@@ -4,12 +4,17 @@ Exercises ``GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/snippets/{opera
 with the public source loader patched (no live Postgres): anonymous access, the slug
 coordinates echo, uniform-404 passthrough from the loader, lang/operation validation, the
 non-HTTP-operation 422, and ETag / 304 conditional caching.
+
+Since SDK-3.3 (#4493) the route is also gated by the project's ``publicSdkEnabled`` setting. The
+autouse fixture below opens that gate so the SDK-2.3 behaviours above are exercised on their own;
+the gate itself is pinned by ``test_public_snippet_requires_public_sdk_access``.
 """
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.canonical_model import (
@@ -29,6 +34,14 @@ client = TestClient(app)
 _BASE = "/v1/browse/tenants/acme/projects/widgets/versions/1.0.0/snippets"
 
 _LOADER = "app.snippet_routes.load_public_export_source"
+_GATE = "app.snippet_routes.load_public_sdk_enabled"
+
+
+@pytest.fixture(autouse=True)
+def _public_sdk_enabled():
+    """Open the SDK-3.3 public-SDK gate for every test that is not about the gate."""
+    with patch(_GATE, return_value=True):
+        yield
 
 
 def _source() -> ExportSource:
@@ -65,6 +78,7 @@ def _source() -> ExportSource:
         artifact_id="artifact-1",
         version_record_id="rev-uuid-1",
         version_label="1.0.0",
+        tenant_id="tenant-1",
     )
 
 
@@ -136,6 +150,22 @@ def test_public_snippet_non_http_operation_422() -> None:
     with patch(_LOADER, return_value=_source()):
         resp = client.get(f"{_BASE}/widgetsQuery", params={"lang": "curl"})
     assert resp.status_code == 422
+
+
+def test_public_snippet_requires_public_sdk_access() -> None:
+    """A project that has not opted into public SDK access serves no snippets (SDK-3.3).
+
+    The refusal is a 404 rather than a 403: it has to be indistinguishable from the loader's own
+    "no such published public version", or it would confirm that the project exists and merely
+    declined.
+    """
+    with patch(_LOADER, return_value=_source()), patch(_GATE, return_value=False) as gate:
+        resp = client.get(f"{_BASE}/listWidgets", params={"lang": "curl"})
+
+    assert resp.status_code == 404
+    assert "No public snippets are available" in resp.json()["detail"]
+    # Asked about the tenant and project the loader resolved, not about the URL slugs.
+    gate.assert_called_once_with("tenant-1", "artifact-1")
 
 
 def test_public_snippet_etag_304() -> None:

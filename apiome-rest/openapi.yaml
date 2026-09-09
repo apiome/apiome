@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.179.0
+  version: 1.180.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -852,11 +852,147 @@ paths:
           description: Unknown lang value.
         '404':
           description: No published public version matches the slugs (private, draft,
-            and unknown versions are indistinguishable), or the operation is unknown.
+            and unknown versions are indistinguishable), the project has not enabled
+            public SDK access (SDK-3.3), or the operation is unknown.
         '422':
           description: The operation has no HTTP binding (no snippet is defined).
         '429':
           description: Public export rate limit exceeded (MFX-7.3).
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions/{version_slug}/sdk:
+    get:
+      tags:
+      - browse
+      summary: Describe the public SDK available for a published public version (no
+        auth)
+      description: "Return what the browse Get SDK panel needs to render itself.\n\
+        \nA 404 is the panel's instruction to render nothing at all — it is what an\
+        \ unpublished, private\nor non-opted-in project returns, so the caller needs\
+        \ no second question.\n\nArgs:\n    tenant_slug: The owning tenant's slug.\n\
+        \    project_slug: The project (artifact) slug within the tenant.\n    version_slug:\
+        \ The version label (e.g. ``1.0.0``) of the published revision.\n\nReturns:\n\
+        \    The :class:`PublicSdkInfoResponse`."
+      operationId: get_public_sdk_info_v1_browse_tenants__tenant_slug__projects__project_slug__versions__version_slug__sdk_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Slug
+          description: Version Slug schema.
+        description: Semantic version label or version slug (for example ``1.0.0``).
+      responses:
+        '200':
+          description: Successful response for describe the public sdk available for
+            a published public version (no auth).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicSdkInfoResponse'
+                description: Response payload for describethepublic sdkavailableforapublishresponse200.
+        '404':
+          description: No published public version matches the slugs, or the project
+            has not enabled public SDK access. The two are deliberately indistinguishable.
+        '429':
+          description: Public export rate limit exceeded (MFX-7.3).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for describethepublic sdkavailableforapublishresponse422.
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions/{version_slug}/sdk/download:
+    get:
+      tags:
+      - browse
+      summary: Download the client kit for a published public version (no auth)
+      description: "Serve the ``sdk.client-kit.v1`` archive for one published public\
+        \ version.\n\nThe archive is built per request and is byte-deterministic,\
+        \ so its ``ETag`` is a digest of the\nbytes themselves and a repeat request\
+        \ with ``If-None-Match`` short-circuits to 304 without the\nbody being sent.\n\
+        \nArgs:\n    request: The incoming request, for the running API version.\n\
+        \    tenant_slug: The owning tenant's slug.\n    project_slug: The project\
+        \ (artifact) slug within the tenant.\n    version_slug: The version label\
+        \ (e.g. ``1.0.0``) of the published revision.\n    if_none_match: Standard\
+        \ conditional-request header.\n\nReturns:\n    The zip archive, or an empty\
+        \ 304.\n\nRaises:\n    HTTPException: 404 when no public SDK is available;\
+        \ 413 when the kit exceeds the public\n        download cap."
+      operationId: download_public_sdk_v1_browse_tenants__tenant_slug__projects__project_slug__versions__version_slug__sdk_download_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: version_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Slug
+          description: Version Slug schema.
+        description: Semantic version label or version slug (for example ``1.0.0``).
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Downloadtheclientkitforapublishedpublicv If None Match schema.
+          - type: 'null'
+            description: Downloadtheclientkitforapublishedpublicv If None Match schema.
+          title: If-None-Match
+          description: If-None-Match schema.
+        description: ETag from a prior response; returns 304 when unchanged.
+      responses:
+        '200':
+          description: The client kit archive.
+          content:
+            application/zip: {}
+        '404':
+          description: No published public version matches the slugs, or the project
+            has not enabled public SDK access. The two are deliberately indistinguishable.
+        '429':
+          description: Public export rate limit exceeded (MFX-7.3).
+        '304':
+          description: Not modified (ETag matched If-None-Match).
+        '413':
+          description: The kit exceeds the public download limit.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for downloadtheclientkitforapublishedpublicvresponse422.
   /v1/data/{tenant_slug}:
     get:
       tags:
@@ -4972,6 +5108,13 @@ paths:
         `userAgent` at 200 and to characters legal in an HTTP header.
 
 
+        `publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens
+        the public browse portal''s **Get SDK** client-kit download and its anonymous
+        per-operation snippets for the project. It is the one setting that is an access
+        control rather than branding, so an unset value means *not allowed* — a workspace
+        or project owner must opt in.
+
+
         Requires `projects:view`.'
       operationId: get_project_sdk_settings_v1_projects__tenant_slug___project_ref__sdk_settings_get
       parameters:
@@ -5061,6 +5204,13 @@ paths:
 
         Ecosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters;
         `userAgent` at 200 and to characters legal in an HTTP header.
+
+
+        `publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens
+        the public browse portal''s **Get SDK** client-kit download and its anonymous
+        per-operation snippets for the project. It is the one setting that is an access
+        control rather than branding, so an unset value means *not allowed* — a workspace
+        or project owner must opt in.
 
 
         Requires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.'
@@ -8495,6 +8645,13 @@ paths:
         `userAgent` at 200 and to characters legal in an HTTP header.
 
 
+        `publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens
+        the public browse portal''s **Get SDK** client-kit download and its anonymous
+        per-operation snippets for the project. It is the one setting that is an access
+        control rather than branding, so an unset value means *not allowed* — a workspace
+        or project owner must opt in.
+
+
         Requires `projects:view`.'
       operationId: get_tenant_sdk_settings_v1_tenants__tenant_slug__governance_sdk_generation_settings_get
       parameters:
@@ -8573,6 +8730,13 @@ paths:
 
         Ecosystems: `npm`, `pypi`. `licenseHeader` is capped at 4,000 characters;
         `userAgent` at 200 and to characters legal in an HTTP header.
+
+
+        `publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens
+        the public browse portal''s **Get SDK** client-kit download and its anonymous
+        per-operation snippets for the project. It is the one setting that is an access
+        control rather than branding, so an unset value means *not allowed* — a workspace
+        or project owner must opt in.
 
 
         Requires `projects:edit`. Audited as `governance.sdk_generation_settings.update`.'
@@ -62616,13 +62780,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -64191,7 +64355,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: b91b9f4f-ff63-454c-b932-6aad01de8d16
+          example: cb9b8c25-bcbe-4b4f-84e8-0d0c4cdb38bd
         method:
           type: string
           title: Method
@@ -66334,7 +66498,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
         envelope:
           additionalProperties: true
           type: object
@@ -92691,6 +92855,108 @@ components:
       title: PublicExportTargetsResponse
       description: The per-target fidelity list for one published public revision
         (MFX-7.1).
+    PublicSdkInfoResponse:
+      properties:
+        tenant_slug:
+          type: string
+          title: Tenant Slug
+          description: The owning tenant's slug, as requested.
+          example: acme
+        project_slug:
+          type: string
+          title: Project Slug
+          description: The project (artifact) slug, as requested.
+          example: example-resource
+        version_slug:
+          type: string
+          title: Version Slug
+          description: The version label, as requested (e.g. ``1.0.0``).
+          example: example-resource
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The resolved revision (``versions.id``).
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for public sdk info.
+          - type: 'null'
+            description: Response payload for public sdk info.
+          title: Version Label
+          description: The resolved revision's source-declared version label.
+        api_title:
+          anyOf:
+          - type: string
+            description: Response payload for public sdk info.
+          - type: 'null'
+            description: Response payload for public sdk info.
+          title: Api Title
+          description: The API's declared title.
+        languages:
+          items:
+            $ref: '#/components/schemas/SdkLanguageModel'
+          type: array
+          title: Languages
+          description: Languages offered, in documentation order.
+          maxItems: 1000
+        packages:
+          items:
+            $ref: '#/components/schemas/SdkPackageModel'
+          type: array
+          title: Packages
+          description: Resolved package names for this project, empty when none are
+            configured.
+          maxItems: 1000
+        operation_count:
+          type: integer
+          title: Operation Count
+          description: Operations the kit carries a snippet for (non-HTTP ones are
+            excluded).
+          example: 1
+        total_operation_count:
+          type: integer
+          title: Total Operation Count
+          description: Operations the API declares in total.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the API has more operations than one kit carries.
+          example: false
+        license_header:
+          anyOf:
+          - type: string
+            description: Response payload for public sdk info.
+          - type: 'null'
+            description: Response payload for public sdk info.
+          title: License Header
+          description: The licence text stamped on every snippet, when configured.
+        settings_fingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for public sdk info.
+          - type: 'null'
+            description: Response payload for public sdk info.
+          title: Settings Fingerprint
+          description: Fingerprint of the merged SDK settings the kit was branded
+            with (SDK-3.4).
+        download:
+          $ref: '#/components/schemas/SdkDownloadModel'
+          description: Download.
+      additionalProperties: false
+      type: object
+      required:
+      - tenant_slug
+      - project_slug
+      - version_slug
+      - version_record_id
+      - operation_count
+      - total_operation_count
+      - truncated
+      - download
+      title: PublicSdkInfoResponse
+      description: Everything the browse Get SDK panel needs, in one anonymous call.
     PurgeEstimateBody:
       properties:
         scopeKind:
@@ -97216,7 +97482,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
       additionalProperties: false
       type: object
       required:
@@ -98604,6 +98870,32 @@ components:
         before hydrating
 
         anything further.'
+    SdkDownloadModel:
+      properties:
+        filename:
+          type: string
+          title: Filename
+          description: Suggested download filename.
+          example: Example
+        media_type:
+          type: string
+          title: Media Type
+          description: The download's media type (``application/zip``).
+          example: example
+        schema_version:
+          type: string
+          title: Schema Version
+          description: The kit manifest's shape (``sdk.client-kit.v1``).
+          example: 1.0.0
+      additionalProperties: false
+      type: object
+      required:
+      - filename
+      - media_type
+      - schema_version
+      title: SdkDownloadModel
+      description: What the download will be, so a client can label its button before
+        fetching.
     SdkGenerationSettings:
       properties:
         packageNamePatterns:
@@ -98629,6 +98921,14 @@ components:
             description: Sdk Generation Settings schema.
           title: Useragent
           description: User-agent generated clients send, for API-side traffic attribution.
+        publicSdkEnabled:
+          type: boolean
+          title: Publicsdkenabled
+          description: 'Whether anonymous browse visitors may take the SDK for this
+            project: the `Get SDK` client-kit download and the public per-operation
+            snippets (SDK-3.3). Off unless a workspace or project owner opts in.'
+          default: false
+          example: false
       additionalProperties: false
       type: object
       title: SdkGenerationSettings
@@ -98640,7 +98940,13 @@ components:
         \ (see :data:`ECOSYSTEMS`), e.g.\n        ``{\"npm\": \"@acme/{project}-sdk\"\
         }``. Ecosystems are merged individually.\n    license_header: Text prepended,\
         \ as a comment, to generated source. May span lines.\n    user_agent: User-agent\
-        \ string generated clients send, for API-side traffic attribution."
+        \ string generated clients send, for API-side traffic attribution.\n    public_sdk_enabled:\
+        \ Whether the public browse portal may serve this project's SDK — the\n  \
+        \      client-kit download and the anonymous per-operation snippets (SDK-3.3).\
+        \ Unlike the\n        other three this is a *gate*, not branding, so it defaults\
+        \ to ``False`` rather than\n        ``None``: \"not configured\" and \"not\
+        \ allowed\" are the same answer for an access\n        control, and the safe\
+        \ one."
     SdkGenerationSettingsOut:
       properties:
         schemaVersion:
@@ -98760,6 +99066,67 @@ components:
       title: SdkGenerationSettingsPutRequest
       description: "Body for saving SDK generation settings.\n\nAttributes:\n    settings:\
         \ The ``sdk.generation-settings.v1`` body. Only the keys it names are stored."
+    SdkLanguageModel:
+      properties:
+        lang:
+          type: string
+          title: Lang
+          description: The canonical language key (``ts`` / ``python`` / ``curl``).
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Human label for a tab or heading.
+          example: example
+        install:
+          anyOf:
+          - type: string
+            description: Sdk Language Model schema.
+          - type: 'null'
+            description: Sdk Language Model schema.
+          title: Install
+          description: Shell command installing the dependency, or null.
+        file_extension:
+          type: string
+          title: File Extension
+          description: Extension the kit writes this language's files with.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - lang
+      - label
+      - file_extension
+      title: SdkLanguageModel
+      description: One language the kit and the snippet tabs offer.
+    SdkPackageModel:
+      properties:
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: Package ecosystem (``npm``, ``pypi``).
+          example: example
+        name:
+          type: string
+          title: Name
+          description: The resolved package name for this project.
+          example: Pet
+        install:
+          anyOf:
+          - type: string
+            description: Sdk Package Model schema.
+          - type: 'null'
+            description: Sdk Package Model schema.
+          title: Install
+          description: The command that installs it, when the ecosystem has one.
+      additionalProperties: false
+      type: object
+      required:
+      - ecosystem
+      - name
+      title: SdkPackageModel
+      description: One resolved package name, as the tenant's SDK-3.4 patterns produce
+        it.
     SecretRefBody:
       properties:
         id:
@@ -109361,13 +109728,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-08T03:24:42Z'
+          example: '2026-09-09T01:22:41Z'
         outcome:
           anyOf:
           - type: string

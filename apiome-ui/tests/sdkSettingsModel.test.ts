@@ -224,3 +224,77 @@ describe('the source sentence', () => {
     );
   });
 });
+
+describe('the public SDK switch (SDK-3.3)', () => {
+  it('starts off at both scopes, because a gate has no other safe default', () => {
+    expect(emptyDraft('tenant').publicSdkEnabled).toEqual({ inherit: false, value: false });
+    expect(emptyDraft('project').publicSdkEnabled).toEqual({ inherit: true, value: false });
+  });
+
+  it('reads an absent key at project scope as inherited', () => {
+    expect(draftFromBody({ userAgent: 'acme/1.0' }, 'project').publicSdkEnabled).toEqual({
+      inherit: true,
+      value: false,
+    });
+  });
+
+  it('reads an explicit true as an override', () => {
+    expect(draftFromBody({ publicSdkEnabled: true }, 'project').publicSdkEnabled).toEqual({
+      inherit: false,
+      value: true,
+    });
+  });
+
+  it('reads an explicit null as off, not as inherited', () => {
+    // For a gate, "deliberately none" and "closed" are the same answer — but it must still block
+    // inheritance, which is what `inherit: false` records.
+    expect(draftFromBody({ publicSdkEnabled: null }, 'project').publicSdkEnabled).toEqual({
+      inherit: false,
+      value: false,
+    });
+  });
+
+  it('never shows the switch as inherited at workspace scope', () => {
+    expect(draftFromBody({}, 'tenant').publicSdkEnabled.inherit).toBe(false);
+  });
+
+  it('omits its key when inheriting', () => {
+    const draft = emptyDraft('project');
+    expect(bodyFromDraft(draft, 'project')).not.toHaveProperty('publicSdkEnabled');
+  });
+
+  it('writes an explicit false at project scope, to close a workspace that opened it', () => {
+    const draft = emptyDraft('project');
+    draft.publicSdkEnabled = { inherit: false, value: false };
+    expect(bodyFromDraft(draft, 'project').publicSdkEnabled).toBe(false);
+  });
+
+  it('omits an off switch at workspace scope, where absent and false mean the same thing', () => {
+    // Keeps the invariant that a blank workspace form saves an empty body: there is nothing above
+    // a workspace to inherit from, so a stored false adds no information.
+    expect(bodyFromDraft(emptyDraft('tenant'), 'tenant')).toEqual({});
+  });
+
+  it('writes true at either scope', () => {
+    for (const scope of ['tenant', 'project'] as const) {
+      const draft = emptyDraft(scope);
+      draft.publicSdkEnabled = { inherit: false, value: true };
+      expect(bodyFromDraft(draft, scope).publicSdkEnabled).toBe(true);
+    }
+  });
+
+  it('round-trips all three project states', () => {
+    const bodies: SdkSettingsBody[] = [{}, { publicSdkEnabled: true }, { publicSdkEnabled: false }];
+    for (const body of bodies) {
+      const draft = draftFromBody(body, 'project');
+      expect(bodyFromDraft(draft, 'project').publicSdkEnabled).toBe(body.publicSdkEnabled);
+    }
+  });
+
+  it('counts as a change on its own', () => {
+    const baseline = emptyDraft('project');
+    const draft = { ...baseline, publicSdkEnabled: { inherit: false, value: true } };
+    expect(isDraftDirty(draft, baseline)).toBe(true);
+    expect(isDraftDirty(baseline, baseline)).toBe(false);
+  });
+});

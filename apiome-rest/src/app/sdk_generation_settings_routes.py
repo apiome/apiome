@@ -86,7 +86,11 @@ _SETTINGS_DESCRIPTION = (
     "`@acme/{project}-sdk` is accepted and `@ACME/{project}` is not.\n\n"
     f"Ecosystems: {', '.join('`' + e + '`' for e in ECOSYSTEMS)}. `licenseHeader` is capped at "
     f"{LICENSE_HEADER_MAX_CHARS:,} characters; `userAgent` at {USER_AGENT_MAX_CHARS} and to "
-    "characters legal in an HTTP header."
+    "characters legal in an HTTP header.\n\n"
+    "`publicSdkEnabled` (boolean, default `false`) is the SDK-3.3 gate: it opens the public "
+    "browse portal's **Get SDK** client-kit download and its anonymous per-operation snippets "
+    "for the project. It is the one setting that is an access control rather than branding, so "
+    "an unset value means *not allowed* — a workspace or project owner must opt in."
 )
 
 
