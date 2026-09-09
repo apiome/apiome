@@ -104,6 +104,12 @@ const FIELDS: {
     placeholder: 'acme-{project}',
   },
   {
+    key: 'gomod',
+    label: 'Go module path',
+    hint: 'The go.mod path consumers go get. Slash-separated; no empty elements.',
+    placeholder: 'github.com/acme/{project}-go',
+  },
+  {
     key: 'licenseHeader',
     label: 'Licence header',
     hint: 'Prepended to generated source as a comment. May span lines.',

@@ -75,10 +75,12 @@ SDK_GENERATION_SETTINGS_SCHEMA_VERSION = "sdk.generation-settings.v1"
 
 #: Package ecosystems a name pattern can be declared for.
 #:
-#: Deliberately only the two the platform can actually name today (the MVP language targets were
-#: TypeScript and Python). Adding a third is one entry here plus one validator below — an unknown
-#: ecosystem is refused with the accepted list rather than stored and silently ignored.
-ECOSYSTEMS: Tuple[str, ...] = ("npm", "pypi")
+#: Only the ecosystems the platform can actually name: ``npm`` and ``pypi`` for the SDK-2.3 snippet
+#: renderer, and ``gomod`` for the SDK-2.4 Go client generator, whose ``go.mod`` module path is the
+#: identifier a consumer types into ``go get``. Adding a fourth is one entry here plus one branch in
+#: :func:`_package_name_problem` — an unknown ecosystem is refused with the accepted list rather
+#: than stored and silently ignored.
+ECOSYSTEMS: Tuple[str, ...] = ("npm", "pypi", "gomod")
 
 #: Substitution tokens accepted in any pattern (package names, the licence header, the user-agent).
 #:
@@ -120,6 +122,13 @@ _NPM_MAX_CHARS = 214
 #: PyPI distribution name (PEP 508): alphanumeric at both ends, ``.``/``-``/``_`` inside.
 _PYPI_NAME = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$")
 _PYPI_MAX_CHARS = 128
+
+#: Go module path: slash-separated elements of unreserved URI characters. Deliberately *not*
+#: requiring a dot in the first element — ``go.mod`` accepts a bare path, and a tenant publishing
+#: to an internal proxy has a legitimate one — but every element must be non-empty and neither
+#: ``.`` nor ``..``, because those are path traversal rather than a module name.
+_GOMOD_ELEMENT = re.compile(r"^[A-Za-z0-9~_-]+(?:\.[A-Za-z0-9~_-]+)*$")
+_GOMOD_MAX_CHARS = 256
 
 #: Any ``{token}`` occurrence, used both to substitute and to spot unknown tokens.
 _TOKEN_PATTERN = re.compile(r"\{([A-Za-z0-9_]*)\}")
@@ -178,8 +187,9 @@ class SdkGenerationSettings(_CamelModel):
     package_name_patterns: Dict[str, str] = Field(
         default_factory=dict,
         description=(
-            "Package name pattern per ecosystem (`npm`, `pypi`), e.g. "
-            "`{\"npm\": \"@acme/{project}-sdk\"}`."
+            "Package name pattern per ecosystem (`npm`, `pypi`, `gomod`), e.g. "
+            "`{\"npm\": \"@acme/{project}-sdk\"}`. `gomod` is the generated Go client's "
+            "`go.mod` module path."
         ),
     )
     license_header: Optional[str] = Field(
@@ -408,6 +418,16 @@ def _package_name_problem(ecosystem: str, name: str) -> Optional[str]:
             return (
                 f"resolves to {name!r}, which is not a legal PyPI distribution name "
                 "(letters/digits at both ends, `.`/`-`/`_` inside)"
+            )
+        return None
+    if ecosystem == "gomod":
+        if len(name) > _GOMOD_MAX_CHARS:
+            return f"resolves to {len(name)} characters (a module path is capped at {_GOMOD_MAX_CHARS})"
+        elements = name.split("/")
+        if any(not _GOMOD_ELEMENT.match(element) for element in elements):
+            return (
+                f"resolves to {name!r}, which is not a legal Go module path "
+                "(slash-separated elements of letters/digits/`.`/`-`/`_`/`~`, none empty)"
             )
         return None
     # Unreachable while parse_settings_body gates the ecosystem, and deliberately permissive if a

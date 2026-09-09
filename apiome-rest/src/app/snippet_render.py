@@ -5,7 +5,10 @@ into a runnable usage snippet (install line + call code) for ``ts`` (built-in ``
 ``python`` (``httpx``) or ``curl``. This module is the **single source of truth** for
 per-operation snippets: the browse operation pages (SDK-3.3) and the Try It copy-as-code
 feature (SIM-3.5) consume it through :mod:`app.snippet_routes` instead of hand-rolling their
-own generators.
+own generators. The Go client generator (SDK-2.4, :mod:`app.go_client_generator`) is not a
+snippet language, but it reads the same three questions from here — :func:`upper_snake_token`,
+:func:`request_message` and :func:`pick_content_type` — so a generated method and the snippet
+beside it describe the same call.
 
 Output parity: the emitted curl/fetch/httpx shapes, string escaping, and secret-placeholder
 tokens intentionally mirror the client-side generators in
@@ -227,10 +230,20 @@ class SnippetRenderError(Exception):
 # ===========================================================================
 
 
-def _upper_snake(name: str) -> str:
+def upper_snake_token(name: str) -> str:
     """Derive a shouting-snake placeholder token from a parameter/variable name.
 
     ``petId`` → ``PET_ID``; non-alphanumeric runs collapse to a single underscore.
+
+    Public because the Go client generator (SDK-2.4, #4488) spells its example argument
+    values with the same tokens the snippets use, so a reader who moves from a snippet to
+    the generated client substitutes the same names.
+
+    Args:
+        name: The source parameter or variable name.
+
+    Returns:
+        The shouting-snake token, or ``VALUE`` when nothing survives.
     """
     spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name or "")
     token = re.sub(r"[^A-Za-z0-9]+", "_", spaced).strip("_").upper()
@@ -272,7 +285,7 @@ def resolve_server_base(api: CanonicalApi) -> Tuple[str, List[SnippetPlaceholder
         if default is not None and str(default) != "":
             url = url.replace("{" + var_name + "}", str(default))
         else:
-            token = _upper_snake(var_name)
+            token = upper_snake_token(var_name)
             url = url.replace("{" + var_name + "}", token)
             placeholders.append(SnippetPlaceholder(token=token, kind="server", name=var_name))
     return url.rstrip("/"), placeholders
@@ -282,19 +295,41 @@ def _placeholder_value(param: Parameter) -> str:
     """Value for a non-secret parameter: its declared default, else an upper-snake token."""
     if param.default is not None and str(param.default) != "":
         return str(param.default)
-    return _upper_snake(param.name)
+    return upper_snake_token(param.name)
 
 
-def _request_message(op: Operation) -> Optional[Message]:
-    """Return the operation's first request-role message, if any."""
+def request_message(op: Operation) -> Optional[Message]:
+    """Return the operation's first request-role message, if any.
+
+    Public because the Go client generator (SDK-2.4, #4488) decides an operation's request-body
+    argument from the same message this module synthesizes a body from — asking the question in
+    one place is what keeps a generated method's body and its snippet describing the same call.
+
+    Args:
+        op: The operation to inspect.
+
+    Returns:
+        The first :class:`~app.canonical_model.Message` with the request role, or ``None``.
+    """
     for message in op.messages:
         if message.role == MessageRole.REQUEST:
             return message
     return None
 
 
-def _pick_content_type(message: Message) -> str:
-    """Choose the body content type: first JSON-ish declared type, else first, else JSON."""
+def pick_content_type(message: Message) -> str:
+    """Choose the body content type: first JSON-ish declared type, else first, else JSON.
+
+    Public for the same reason as :func:`request_message`: the Go client generator picks a
+    request body's Go type from whether this returns a JSON media type, and a second copy of the
+    rule could disagree with the snippet.
+
+    Args:
+        message: The request message whose encoding is wanted.
+
+    Returns:
+        The chosen media type.
+    """
     for content_type in message.content_types:
         if "json" in content_type.lower():
             return content_type
@@ -421,9 +456,9 @@ def synthesize_request(
 
     body: Optional[str] = None
     body_json: Optional[Any] = None
-    message = _request_message(op)
+    message = request_message(op)
     if message is not None and (message.payload_schema is not None or message.payload is not None):
-        content_type = _pick_content_type(message)
+        content_type = pick_content_type(message)
         if "json" in content_type.lower():
             instance = _synthesize_body(api, message)
             if instance is not None:
@@ -515,7 +550,15 @@ def format_python_literal(value: Any, indent_level: int) -> str:
 #: Line comments, never a block comment: a licence containing ``*/`` would terminate a block
 #: comment from the inside and turn the rest of the header into code. This module owns the table
 #: because commenting text for a language is a rendering concern, not a settings one.
-_LICENSE_COMMENT_PREFIXES: Dict[str, str] = {"ts": "//", "python": "#", "curl": "#"}
+#: ``go`` is present although Go is not a snippet language: the Go client generator (SDK-2.4,
+#: \#4488) renders a tenant's licence header onto every generated ``.go`` file through
+#: :func:`license_comment_block`, and commenting text for a language belongs in one table.
+_LICENSE_COMMENT_PREFIXES: Dict[str, str] = {
+    "ts": "//",
+    "python": "#",
+    "curl": "#",
+    "go": "//",
+}
 
 
 def license_comment_block(text: Optional[str], lang: str) -> Optional[str]:

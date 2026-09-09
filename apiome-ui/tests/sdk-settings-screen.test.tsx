@@ -196,6 +196,23 @@ describe('saving', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
   });
 
+  it('edits the Go module path the SDK-2.4 generator writes into go.mod', async () => {
+    mockFetch();
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-form');
+
+    fireEvent.change(screen.getByLabelText('Go module path'), {
+      target: { value: 'github.com/acme/{project}-go' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(lastBody()).toEqual({
+        settings: { packageNamePatterns: { gomod: 'github.com/acme/{project}-go' } },
+      }),
+    );
+  });
+
   it('lists every problem a refusal reported, not just the first', async () => {
     mockFetch({
       saveError: {

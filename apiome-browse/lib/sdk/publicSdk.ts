@@ -44,6 +44,21 @@ export interface PublicSdkPackage {
   install?: string | null;
 }
 
+/**
+ * The generated Go client the download carries — SDK-2.4 (#4488).
+ *
+ * Not one of `languages`: those are snippet tabs a reader copies from, while this is a compilable
+ * module inside the archive with a path a consumer imports.
+ */
+export interface PublicSdkGoClient {
+  directory: string;
+  module_path: string;
+  package_name: string;
+  go_version: string;
+  install?: string | null;
+  method_count: number;
+}
+
 /** What the download will be, so the button can be labelled before it is fetched. */
 export interface PublicSdkDownload {
   filename: string;
@@ -66,6 +81,8 @@ export interface PublicSdkInfoResponse {
   truncated: boolean;
   license_header?: string | null;
   settings_fingerprint?: string | null;
+  /** Optional so a panel keeps rendering against a REST build older than SDK-2.4. */
+  go_client?: PublicSdkGoClient | null;
   download: PublicSdkDownload;
 }
 
