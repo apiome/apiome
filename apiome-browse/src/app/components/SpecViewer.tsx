@@ -6,6 +6,7 @@ import YAML from 'yaml';
 import { useTheme, specThemes, SpecTheme } from './ThemeProvider';
 import { operationAnchorId, schemaAnchorId } from './SpecSidebar';
 import { TryItPanel } from './tryit/TryItPanel';
+import { OperationSnippetTabs } from './sdk/OperationSnippetTabs';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -42,6 +43,12 @@ interface SpecViewerProps {
    * (SIM-3.1) will consume (SIM-2.3, #4444).
    */
   mockBaseUrl?: string | null;
+  /**
+   * Whether this project has opted into public SDK access (SDK-3.3, #4493). When false the
+   * per-operation snippet tabs are not offered at all — the route that feeds them answers 404
+   * for a project that has not opted in, so an offered tab would only ever show an error.
+   */
+  sdkEnabled?: boolean;
   /** Notify parent (e.g. sidebar) of spec + format changes. */
   onSpecChange?: (spec: unknown, format: SpecFormat) => void;
 }
@@ -71,6 +78,20 @@ const HTTP_METHOD_TONE: Record<string, string> = {
   trace: 'bg-zinc-100 text-zinc-700 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
 };
 
+/**
+ * One operation as the overview projects it out of the OpenAPI document.
+ *
+ * `operationId` is carried for the SDK-3.3 snippet tabs, which address an operation by it when
+ * the spec declares one.
+ */
+interface SpecOperation {
+  method: string;
+  path: string;
+  summary?: string;
+  deprecated?: boolean;
+  operationId?: string;
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -90,6 +111,7 @@ export function SpecViewer({
   versionSlug,
   restApiBaseUrl,
   mockBaseUrl,
+  sdkEnabled = false,
   onSpecChange,
 }: SpecViewerProps) {
   const { specTheme, setSpecTheme, resolvedTheme } = useTheme();
@@ -382,6 +404,8 @@ export function SpecViewer({
           tenantSlug={tenantSlug}
           projectSlug={projectSlug}
           versionSlug={versionSlug}
+          restApiBaseUrl={restApiBaseUrl}
+          sdkEnabled={sdkEnabled}
         />
       )}
 
@@ -454,6 +478,8 @@ function SpecOverview({
   tenantSlug,
   projectSlug,
   versionSlug,
+  restApiBaseUrl,
+  sdkEnabled,
 }: {
   spec: unknown;
   format: SpecFormat;
@@ -461,6 +487,9 @@ function SpecOverview({
   tenantSlug: string;
   projectSlug: string;
   versionSlug: string;
+  restApiBaseUrl: string;
+  /** Whether this project publishes an SDK, gating the per-operation snippet tabs (SDK-3.3). */
+  sdkEnabled: boolean;
 }) {
   if (!isObject(spec)) return null;
 
@@ -479,7 +508,7 @@ function SpecOverview({
     ].sort((a, b) => a.localeCompare(b));
     const schemaCount = schemaNames.length;
     let opCount = 0;
-    const groups = new Map<string, { tag: string; description?: string; ops: { method: string; path: string; summary?: string; deprecated?: boolean }[] }>();
+    const groups = new Map<string, { tag: string; description?: string; ops: SpecOperation[] }>();
     const ensure = (tag: string) => {
       let g = groups.get(tag);
       if (!g) {
@@ -508,6 +537,9 @@ function SpecOverview({
             path: pathKey,
             summary: typeof opRaw.summary === 'string' ? opRaw.summary : undefined,
             deprecated: opRaw.deprecated === true,
+            // SDK-3.3 (#4493): how the snippet route addresses this operation. Absent is fine —
+            // the snippet helpers fall back to the canonical `GET /pets/{id}` key.
+            operationId: typeof opRaw.operationId === 'string' ? opRaw.operationId : undefined,
           });
         }
       }
@@ -632,6 +664,8 @@ function SpecOverview({
                       tenantSlug={tenantSlug}
                       projectSlug={projectSlug}
                       versionSlug={versionSlug}
+                      restApiBaseUrl={restApiBaseUrl}
+                      sdkEnabled={sdkEnabled}
                     />
                   ))}
                 </ul>
@@ -757,10 +791,12 @@ function SpecOverview({
 }
 
 /**
- * One operation row in the overview list, with its inline "Try It" disclosure — SIM-3.1 (#4447).
+ * One operation row in the overview list, with its inline "Try It" disclosure — SIM-3.1 (#4447)
+ * — and, for projects that publish an SDK, its "Code" disclosure — SDK-3.3 (#4493).
  *
- * The panel itself (server picker, parameter form, body editor, send pipeline) lives in
- * `tryit/TryItPanel`; this row only owns the expanded/collapsed state.
+ * Neither panel lives here: Try It is `tryit/TryItPanel` and the snippets are
+ * `sdk/OperationSnippetTabs`. This row owns only which of the two is expanded — at most one, so
+ * a long row never pushes the next operation off the screen twice over.
  */
 function OperationRow({
   op,
@@ -769,17 +805,26 @@ function OperationRow({
   tenantSlug,
   projectSlug,
   versionSlug,
+  restApiBaseUrl,
+  sdkEnabled,
 }: {
-  op: { method: string; path: string; summary?: string; deprecated?: boolean };
+  op: SpecOperation;
   spec: unknown;
   mockBaseUrl?: string | null;
   tenantSlug: string;
   projectSlug: string;
   versionSlug: string;
+  restApiBaseUrl: string;
+  sdkEnabled: boolean;
 }) {
-  const [tryItOpen, setTryItOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<'tryit' | 'code' | null>(null);
   const anchor = operationAnchorId(op.method, op.path);
   const panelId = `${anchor}-tryit`;
+  const codePanelId = `${anchor}-code`;
+  const tryItOpen = openPanel === 'tryit';
+  const codeOpen = openPanel === 'code';
+  const toggle = (panel: 'tryit' | 'code') =>
+    setOpenPanel((current) => (current === panel ? null : panel));
 
   return (
     <li id={anchor} className="scroll-mt-24">
@@ -806,29 +851,34 @@ function OperationRow({
             <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">{op.summary}</p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setTryItOpen((open) => !open)}
-          aria-expanded={tryItOpen}
-          aria-controls={panelId}
-          className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
-            tryItOpen
-              ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-              : 'border border-zinc-200 bg-white text-zinc-700 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
-          }`}
-        >
-          Try It
-          <svg
-            className={`h-3 w-3 transition-transform ${tryItOpen ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {sdkEnabled && (
+            <DisclosureButton
+              label="Code"
+              open={codeOpen}
+              controls={codePanelId}
+              onClick={() => toggle('code')}
+            />
+          )}
+          <DisclosureButton
+            label="Try It"
+            open={tryItOpen}
+            controls={panelId}
+            onClick={() => toggle('tryit')}
+          />
+        </div>
       </div>
+      {codeOpen && (
+        <div id={codePanelId} className="px-4 pb-4">
+          <OperationSnippetTabs
+            coords={{ tenantSlug, projectSlug, versionSlug }}
+            restApiBaseUrl={restApiBaseUrl}
+            method={op.method}
+            path={op.path}
+            operationId={op.operationId}
+          />
+        </div>
+      )}
       {tryItOpen && (
         <div id={panelId} className="px-4 pb-4">
           <TryItPanel
@@ -843,6 +893,45 @@ function OperationRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** The chevron toggle both operation-row disclosures use. */
+function DisclosureButton({
+  label,
+  open,
+  controls,
+  onClick,
+}: {
+  label: string;
+  open: boolean;
+  controls: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      aria-controls={controls}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+        open
+          ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
+          : 'border border-zinc-200 bg-white text-zinc-700 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+      }`}
+    >
+      {label}
+      <svg
+        className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
   );
 }
 

@@ -40,6 +40,14 @@ MFX-7.3 public-export per-IP rate limit (429 when exceeded). The response echoes
 resolved slug coordinates (`tenant_slug`, `project_slug`, `version_slug`,
 `version_record_id`, `version_label`), mirroring the public export responses.
 
+**Gated since SDK-3.3 (#4493).** Public snippets are part of the same consumer-facing SDK
+surface as the "Get SDK" download, so this route is additionally gated by the project's
+`publicSdkEnabled` setting — and answers the **same 404** when a project has not opted in,
+rather than a 403 that would confirm the project exists and merely declined. The setting
+defaults to off, so a project serves public snippets only once a workspace or project owner
+enables it; see `public_sdk_kit.md`. The **authenticated** route above is unaffected — it is
+tenant-scoped, not public exposure.
+
 ## Languages
 
 | `lang` value | Renders | Install line |

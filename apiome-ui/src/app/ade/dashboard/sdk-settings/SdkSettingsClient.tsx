@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Braces, Package, Scale, Tag } from 'lucide-react';
+import { Braces, Globe, Package, Scale, Tag } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -11,6 +11,7 @@ import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Spinner } from '@/app/components/ui/Spinner';
+import { Switch } from '@/app/components/ui/Switch';
 import { Textarea } from '@/app/components/ui/Textarea';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -36,6 +37,7 @@ import {
   isDraftDirty,
   type SdkFieldKey,
   type SdkSettingsDraft,
+  type SdkToggleDraft,
   type SdkSettingsResponse,
   type SdkSettingsScope,
 } from './sdkSettingsModel';
@@ -49,6 +51,12 @@ import {
  * ecosystem, the licence header stamped onto generated source, and the user-agent generated
  * clients send for API-side traffic attribution. It sits in **Ship**, beside Export studio, for
  * the same reason: both decide the shape of what leaves the platform.
+ *
+ * SDK-3.3 (#4493) added one more, and it is a different kind of thing: **Public SDK access**, the
+ * switch that lets anonymous visitors to the public browse portal download this project's client
+ * kit and read its per-operation code examples. The other three fields decide what generated code
+ * *looks* like; this one decides who may have it. It is off unless someone turns it on, so a
+ * project is never published to the world by inaction.
  *
  * ### One form, two scopes
  *
@@ -189,6 +197,13 @@ export default function SdkSettingsClient() {
     },
     [],
   );
+
+  const setPublicSdk = useCallback((patch: Partial<SdkToggleDraft>) => {
+    setDraft((current) => ({
+      ...current,
+      publicSdkEnabled: { ...current.publicSdkEnabled, ...patch },
+    }));
+  }, []);
 
   const save = useCallback(async () => {
     setSaving(true);
@@ -380,6 +395,57 @@ export default function SdkSettingsClient() {
                     </div>
                   );
                 })}
+
+                <div className="sdks-field">
+                  <div className="sdks-field__head">
+                    <Label htmlFor="sdk-settings-publicSdkEnabled" className="sdks-field__label">
+                      Public SDK access
+                    </Label>
+                    {scope === 'project' ? (
+                      <label
+                        className="sdks-field__inherit"
+                        htmlFor="sdk-settings-publicSdkEnabled-inherit"
+                      >
+                        <input
+                          id="sdk-settings-publicSdkEnabled-inherit"
+                          type="checkbox"
+                          className="hive-control sdks-field__box"
+                          checked={draft.publicSdkEnabled.inherit}
+                          disabled={disabled}
+                          onChange={(event) => setPublicSdk({ inherit: event.target.checked })}
+                        />
+                        Inherit from workspace
+                      </label>
+                    ) : null}
+                  </div>
+
+                  <div className="sdks-toggle__row">
+                    <Switch
+                      id="sdk-settings-publicSdkEnabled"
+                      aria-label="Allow anonymous visitors to download this SDK"
+                      checked={draft.publicSdkEnabled.value}
+                      disabled={disabled || draft.publicSdkEnabled.inherit}
+                      onCheckedChange={(checked) => setPublicSdk({ value: checked })}
+                    />
+                    <span className="sdks-toggle__state">
+                      {draft.publicSdkEnabled.inherit
+                        ? 'Inherited'
+                        : draft.publicSdkEnabled.value
+                          ? 'Anyone can download the SDK'
+                          : 'No public SDK'}
+                    </span>
+                  </div>
+
+                  <p className="sdks-field__hint">
+                    {draft.publicSdkEnabled.inherit
+                      ? 'Takes whatever the workspace defaults say.'
+                      : draft.publicSdkEnabled.value
+                        ? 'Anonymous visitors to the published version can download a client kit ' +
+                          'and read per-operation code examples on the public portal.'
+                        : 'The public portal shows no SDK download and no code examples, and ' +
+                          'their URLs return 404.'}
+                  </p>
+                </div>
               </CardContent>
 
               <CardFooter className="sdks-footer">
@@ -451,6 +517,14 @@ export default function SdkSettingsClient() {
                     </dt>
                     <dd className="sdks-preview__value mono sdks-preview__value--block">
                       {settings?.resolved.licenseHeader || '—'}
+                    </dd>
+                  </div>
+                  <div className="sdks-preview__row">
+                    <dt className="sdks-preview__term">
+                      <Globe aria-hidden className="sdks-preview__glyph" /> Public SDK
+                    </dt>
+                    <dd className="sdks-preview__value">
+                      {settings?.settings.publicSdkEnabled ? 'Enabled' : 'Disabled'}
                     </dd>
                   </div>
                 </dl>

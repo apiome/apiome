@@ -19,6 +19,11 @@
  * At workspace scope there is nothing to inherit from, so `inherit` is always false and an empty
  * field simply omits its key — a `PUT` replaces the scope's whole body, so omission is how a
  * workspace default is removed.
+ *
+ * SDK-3.3 (#4493) added one field that is not a text box: `publicSdkEnabled`, the switch that
+ * opens the public browse portal's SDK download and snippets for a project. It keeps the same
+ * three states (inherited / explicitly on / explicitly off) but carries a boolean, so it lives
+ * beside the text fields rather than among them.
  */
 
 /** Package ecosystems the API accepts a name pattern for. Mirrors REST's `ECOSYSTEMS`. */
@@ -42,8 +47,25 @@ export interface SdkFieldDraft {
   value: string;
 }
 
-/** The whole form. */
-export type SdkSettingsDraft = Record<SdkFieldKey, SdkFieldDraft>;
+/**
+ * The public-SDK switch's editable state — SDK-3.3 (#4493).
+ *
+ * The same tri-state rule as a text field, but the "value" is a boolean rather than a string, so
+ * it has its own shape: inherited, explicitly on, or explicitly off. Being a gate rather than
+ * branding, "deliberately none" and "off" are the same answer — an explicit `null` and an
+ * explicit `false` both close it — so the form only ever writes a boolean.
+ */
+export interface SdkToggleDraft {
+  /** True when the project takes the workspace answer. Always false at workspace scope. */
+  inherit: boolean;
+  /** The switch's position when it is not inheriting. */
+  value: boolean;
+}
+
+/** The whole form: the four text fields plus the public-SDK switch. */
+export type SdkSettingsDraft = Record<SdkFieldKey, SdkFieldDraft> & {
+  publicSdkEnabled: SdkToggleDraft;
+};
 
 /** A stored settings body, exactly as the API returns it in `scopeBody`. */
 export interface SdkSettingsBody {
@@ -51,6 +73,7 @@ export interface SdkSettingsBody {
   packageNamePatterns?: Record<string, string | null> | null;
   licenseHeader?: string | null;
   userAgent?: string | null;
+  publicSdkEnabled?: boolean | null;
 }
 
 /** The merged settings the API reports as in force. */
@@ -58,6 +81,8 @@ export interface SdkSettings {
   packageNamePatterns: Record<string, string>;
   licenseHeader: string | null;
   userAgent: string | null;
+  /** Whether the public browse portal may serve this project's SDK (SDK-3.3). */
+  publicSdkEnabled: boolean;
 }
 
 /** The merged settings with their `{tokens}` substituted for the scope. */
@@ -99,6 +124,9 @@ export function emptyDraft(scope: SdkSettingsScope): SdkSettingsDraft {
     pypi: { ...field },
     licenseHeader: { ...field },
     userAgent: { ...field },
+    // Off, matching the API's default: public SDK access is a permission, and "not configured"
+    // has to read as "not allowed".
+    publicSdkEnabled: { inherit: scope === 'project', value: false },
   };
 }
 
@@ -148,7 +176,27 @@ export function draftFromBody(
     pypi: fieldFrom(patternPresent('pypi'), patternValue('pypi'), scope),
     licenseHeader: fieldFrom('licenseHeader' in body, body.licenseHeader, scope),
     userAgent: fieldFrom('userAgent' in body, body.userAgent, scope),
+    publicSdkEnabled: toggleFrom('publicSdkEnabled' in body, body.publicSdkEnabled, scope),
   };
+}
+
+/**
+ * Read the public-SDK switch out of a stored body.
+ *
+ * @param present Whether the body names the key at all.
+ * @param stored The stored value, which may be `null`.
+ * @param scope Which scope the form edits.
+ * @returns The switch's draft state.
+ */
+function toggleFrom(
+  present: boolean,
+  stored: boolean | null | undefined,
+  scope: SdkSettingsScope,
+): SdkToggleDraft {
+  if (scope === 'tenant') return { inherit: false, value: stored === true };
+  if (!present) return { inherit: true, value: false };
+  // An explicit `null` blocks inheritance and means "none", which for a gate is "off".
+  return { inherit: false, value: stored === true };
 }
 
 /**
@@ -201,6 +249,19 @@ export function bodyFromDraft(
   const agent = bodyValue(draft.userAgent, scope);
   if (agent !== undefined) body.userAgent = agent;
 
+  // The switch omits its key when inheriting, and never writes `null`: for a gate, `false` says
+  // the same thing and reads unambiguously.
+  //
+  // At workspace scope an *off* switch omits its key too, exactly as an empty text field does.
+  // There is nothing above a workspace to inherit from, so a stored `false` and an absent key
+  // resolve identically — and omitting keeps the invariant that a blank workspace form saves an
+  // empty body, configuring nothing.
+  if (!draft.publicSdkEnabled.inherit) {
+    if (draft.publicSdkEnabled.value || scope === 'project') {
+      body.publicSdkEnabled = draft.publicSdkEnabled.value;
+    }
+  }
+
   return body;
 }
 
@@ -212,11 +273,15 @@ export function bodyFromDraft(
  * @returns True when there is something to save.
  */
 export function isDraftDirty(draft: SdkSettingsDraft, baseline: SdkSettingsDraft): boolean {
-  return SDK_FIELD_KEYS.some(
+  const textChanged = SDK_FIELD_KEYS.some(
     (key) =>
       draft[key].inherit !== baseline[key].inherit ||
       draft[key].value.trim() !== baseline[key].value.trim(),
   );
+  const toggleChanged =
+    draft.publicSdkEnabled.inherit !== baseline.publicSdkEnabled.inherit ||
+    draft.publicSdkEnabled.value !== baseline.publicSdkEnabled.value;
+  return textChanged || toggleChanged;
 }
 
 /**

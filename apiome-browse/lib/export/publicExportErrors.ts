@@ -2,23 +2,11 @@
  * User-facing error messages for the public export dialog — MFX-7.3 (#3862).
  *
  * Maps the REST guard responses (429 rate limit, 413 size cap, 404 unpublished) to stable
- * copy the dialog can show without parsing raw JSON error envelopes.
+ * copy the dialog can show without parsing raw JSON error envelopes. The envelope parsing
+ * itself lives in `lib/http/problemDetail`, shared with the Get SDK panel (SDK-3.3).
  */
 
-/** Parse a FastAPI-style error body when present. */
-function detailFromBody(body: string): string | null {
-  const trimmed = body.trim();
-  if (!trimmed.startsWith('{')) return null;
-  try {
-    const parsed = JSON.parse(trimmed) as { detail?: unknown };
-    if (typeof parsed.detail === 'string' && parsed.detail.trim()) {
-      return parsed.detail.trim();
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
+import { detailFromBody } from '../http/problemDetail';
 
 /**
  * A stable, user-facing message for a failed public export HTTP response.

@@ -53,7 +53,9 @@ class ExportSource(BaseModel):
 
     The canonical model is what the fidelity engine walks; the ``artifact_id`` /
     ``version_record_id`` / ``version_label`` are echoed back in the REST response so the caller
-    can confirm exactly which revision the fidelity was computed for.
+    can confirm exactly which revision the fidelity was computed for. ``source_text`` /
+    ``source_format`` carry the captured document itself, for bundles that ship the contract
+    alongside what was derived from it.
     """
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
@@ -71,6 +73,23 @@ class ExportSource(BaseModel):
             "authenticated loader's caller already holds it. It exists so an anonymous surface "
             "can read tenant-scoped settings for a revision it resolved from slugs alone "
             "(SDK-3.4, #4494); it is never echoed to an anonymous caller."
+        ),
+    )
+    source_text: Optional[str] = Field(
+        default=None,
+        description=(
+            "The revision's captured source document, verbatim. The canonical model is a "
+            "*projection* of this text, so a consumer that wants the contract as its author "
+            "wrote it needs the text itself — which is what the SDK-3.3 client kit ships beside "
+            "its snippets. ``None`` when the revision carried no reconstructable source."
+        ),
+    )
+    source_format: Optional[str] = Field(
+        default=None,
+        description=(
+            "The captured source's format key (e.g. ``openapi``, ``graphql``), used to name the "
+            "source document sensibly inside a bundle. Falls back to the canonical model's own "
+            "format when the stored row does not declare one."
         ),
     )
 
@@ -178,6 +197,8 @@ def load_export_source(
         artifact_id=str(artifact_id),
         version_record_id=revision_id,
         version_label=projection.get("version_label"),
+        source_text=source.source_text,
+        source_format=source.source_format,
     )
 
 
@@ -240,4 +261,6 @@ def load_public_export_source(
         version_record_id=revision_id,
         version_label=projection.get("version_label"),
         tenant_id=str(projection["tenant_id"]) if projection.get("tenant_id") else None,
+        source_text=source.source_text,
+        source_format=source.source_format,
     )

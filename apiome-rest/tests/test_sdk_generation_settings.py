@@ -341,5 +341,71 @@ def test_the_canonical_body_carries_every_key_even_when_unset() -> None:
         "packageNamePatterns": {},
         "licenseHeader": None,
         "userAgent": None,
+        # SDK-3.3 (#4493). Unlike its three neighbours this one defaults to False rather than
+        # None: it is an access control, and "not configured" must read as "not allowed".
+        "publicSdkEnabled": False,
         "schemaVersion": SDK_GENERATION_SETTINGS_SCHEMA_VERSION,
     }
+
+
+# ===========================================================================
+# The public-SDK gate — SDK-3.3 (#4493)
+# ===========================================================================
+
+
+def test_public_sdk_access_is_off_by_default() -> None:
+    """Nothing configured means not allowed. An access control has no other safe default."""
+    assert SdkGenerationSettings().public_sdk_enabled is False
+    assert settings_from_body({}).public_sdk_enabled is False
+    assert settings_from_body(None).public_sdk_enabled is False
+
+
+def test_public_sdk_access_round_trips_both_booleans() -> None:
+    for value in (True, False):
+        parsed = parse_settings_body({"publicSdkEnabled": value})
+        assert parsed["publicSdkEnabled"] is value
+        assert settings_from_body(parsed).public_sdk_enabled is value
+
+
+def test_a_non_boolean_public_sdk_value_is_refused() -> None:
+    """`1` must not become a permission grant — `isinstance(True, int)` makes that easy to miss."""
+    for value in (1, 0, "true", [], {}):
+        with pytest.raises(SdkSettingsError) as excinfo:
+            parse_settings_body({"publicSdkEnabled": value})
+        assert "publicSdkEnabled" in excinfo.value.errors[0]
+
+
+def test_the_accepted_key_list_names_public_sdk_enabled() -> None:
+    with pytest.raises(SdkSettingsError) as excinfo:
+        parse_settings_body({"nope": True})
+    assert "publicSdkEnabled" in excinfo.value.errors[0]
+
+
+def test_a_project_inherits_its_workspace_public_sdk_answer() -> None:
+    """An absent key inherits: a workspace can open every project at once."""
+    merged = merge_settings_bodies({"publicSdkEnabled": True}, {"userAgent": "acme/1.0"})
+    assert settings_from_body(merged).public_sdk_enabled is True
+
+
+def test_a_project_can_close_a_workspace_that_opened_it() -> None:
+    merged = merge_settings_bodies({"publicSdkEnabled": True}, {"publicSdkEnabled": False})
+    assert settings_from_body(merged).public_sdk_enabled is False
+
+
+def test_an_explicit_null_blocks_inheritance_and_reads_as_off() -> None:
+    """`null` is "deliberately none"; for a gate, none means closed."""
+    merged = merge_settings_bodies({"publicSdkEnabled": True}, {"publicSdkEnabled": None})
+    assert merged["publicSdkEnabled"] is None
+    assert settings_from_body(merged).public_sdk_enabled is False
+
+
+def test_a_project_can_open_a_workspace_that_left_it_closed() -> None:
+    merged = merge_settings_bodies({"userAgent": "acme/1.0"}, {"publicSdkEnabled": True})
+    assert settings_from_body(merged).public_sdk_enabled is True
+
+
+def test_the_fingerprint_distinguishes_the_two_answers() -> None:
+    """Opening a project's SDK is a change a fingerprint must be able to attribute."""
+    closed = settings_content_fingerprint(settings_from_body({"publicSdkEnabled": False}))
+    opened = settings_content_fingerprint(settings_from_body({"publicSdkEnabled": True}))
+    assert closed != opened

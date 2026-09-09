@@ -24,7 +24,9 @@ from app.sdk_generation_settings_store import (
     audit_detail,
     clear_settings,
     load_branding,
+    load_public_sdk_enabled,
     load_settings,
+    public_sdk_enabled_from,
     save_settings,
 )
 
@@ -293,3 +295,77 @@ def test_the_audit_payload_records_the_header_by_length_not_verbatim() -> None:
     assert detail["settings"]["userAgent"] == "acme/1.0"
     assert detail["contentFingerprint"] == out.content_fingerprint
     assert detail["scope"] == "tenant"
+
+
+# ===========================================================================
+# The public-SDK gate — SDK-3.3 (#4493)
+# ===========================================================================
+
+_ROWS = "app.sdk_generation_settings_store.db.get_sdk_generation_settings_rows"
+
+
+def test_public_sdk_access_is_closed_when_nothing_is_stored() -> None:
+    with patch(_ROWS, return_value=[]):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is False
+
+
+def test_public_sdk_access_is_closed_without_a_tenant() -> None:
+    """No tenant, no read — an anonymous surface with no resolved tenant gets no exposure."""
+    with patch(_ROWS) as rows:
+        assert load_public_sdk_enabled(None, _PROJECT) is False
+    rows.assert_not_called()
+
+
+def test_a_workspace_can_open_public_sdk_access_for_a_project() -> None:
+    with patch(_ROWS, return_value=[_row({"publicSdkEnabled": True})]):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is True
+
+
+def test_a_project_override_closes_what_its_workspace_opened() -> None:
+    rows = [
+        _row({"publicSdkEnabled": True}),
+        _row({"publicSdkEnabled": False}, project_id=_PROJECT, row_id="55555555-5555-4555-8555-555555555555"),
+    ]
+    with patch(_ROWS, return_value=rows):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is False
+
+
+def test_a_project_override_opens_what_its_workspace_left_closed() -> None:
+    rows = [
+        _row({"userAgent": "acme-sdk/1.0"}),
+        _row({"publicSdkEnabled": True}, project_id=_PROJECT, row_id="55555555-5555-4555-8555-555555555555"),
+    ]
+    with patch(_ROWS, return_value=rows):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is True
+
+
+def test_an_unreadable_settings_row_fails_closed() -> None:
+    """Branding degrades to "none"; a gate must degrade to "no", not to whatever it last read.
+
+    A store fault that quietly opened a project's SDK to the public would be the worst possible
+    way for this to fail.
+    """
+    with patch(_ROWS, side_effect=RuntimeError("boom")):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is False
+
+
+def test_a_row_with_an_unusable_body_fails_closed() -> None:
+    with patch(_ROWS, return_value=[_row("not-an-object")]):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is False
+
+
+def test_the_gate_rule_can_be_applied_to_settings_already_loaded() -> None:
+    """The SDK-3.3 routes read the settings once for three questions; the rule stays in one place."""
+    with patch(_ROWS, return_value=[_row({"publicSdkEnabled": True})]):
+        out = load_settings(_TENANT, _PROJECT, _CTX)
+    assert public_sdk_enabled_from(out) is True
+    # Same rows, same answer, whichever entry point asked.
+    with patch(_ROWS, return_value=[_row({"publicSdkEnabled": True})]):
+        assert load_public_sdk_enabled(_TENANT, _PROJECT) is True
+
+
+def test_the_gate_rule_refuses_a_degraded_read_it_is_handed() -> None:
+    with patch(_ROWS, side_effect=RuntimeError("boom")):
+        out = load_settings(_TENANT, _PROJECT, _CTX)
+    assert out.degraded is True
+    assert public_sdk_enabled_from(out) is False

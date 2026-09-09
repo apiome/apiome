@@ -12,7 +12,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import SdkSettingsClient from '@/app/ade/dashboard/sdk-settings/SdkSettingsClient';
-import type { SdkSettingsResponse } from '@/app/ade/dashboard/sdk-settings/sdkSettingsModel';
+import {
+  SDK_FIELD_KEYS,
+  type SdkSettingsResponse,
+} from '@/app/ade/dashboard/sdk-settings/sdkSettingsModel';
 
 const PROJECT_ID = 'p-1';
 
@@ -22,7 +25,12 @@ function settings(partial: Partial<SdkSettingsResponse> = {}): SdkSettingsRespon
     schemaVersion: 'sdk.generation-settings.v1',
     source: 'default',
     contentFingerprint: `sha256:${'a'.repeat(64)}`,
-    settings: { packageNamePatterns: {}, licenseHeader: null, userAgent: null },
+    settings: {
+      packageNamePatterns: {},
+      licenseHeader: null,
+      userAgent: null,
+      publicSdkEnabled: false,
+    },
     resolved: { packageNames: {}, licenseHeader: null, userAgent: null },
     scope: 'tenant',
     scopeBody: null,
@@ -152,8 +160,12 @@ describe('the scope picker', () => {
     render(<SdkSettingsClient />);
     await screen.findByTestId('sdk-settings-form');
     fireEvent.change(screen.getByLabelText('Scope'), { target: { value: PROJECT_ID } });
+    // The four text fields plus the SDK-3.3 public-access switch, which is tri-state in exactly
+    // the same way.
     await waitFor(() =>
-      expect(screen.getAllByLabelText('Inherit from workspace')).toHaveLength(4),
+      expect(screen.getAllByLabelText('Inherit from workspace')).toHaveLength(
+        SDK_FIELD_KEYS.length + 1,
+      ),
     );
   });
 });
@@ -263,5 +275,70 @@ describe('a member without projects:edit', () => {
     expect(await screen.findByText(/Read-only for members/)).toBeInTheDocument();
     expect(screen.getByLabelText('User agent')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+});
+
+describe('the public SDK switch (SDK-3.3)', () => {
+  it('starts off, so a project is never published to the world by inaction', async () => {
+    mockFetch();
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-form');
+
+    const toggle = screen.getByLabelText('Allow anonymous visitors to download this SDK');
+    expect(toggle).not.toBeChecked();
+    expect(screen.getByText('No public SDK')).toBeInTheDocument();
+  });
+
+  it('sends the boolean when it is turned on', async () => {
+    mockFetch();
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-form');
+
+    fireEvent.click(screen.getByLabelText('Allow anonymous visitors to download this SDK'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(lastBody()).toEqual({ settings: { publicSdkEnabled: true } }));
+  });
+
+  it('explains what turning it on actually exposes', async () => {
+    mockFetch();
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-form');
+
+    fireEvent.click(screen.getByLabelText('Allow anonymous visitors to download this SDK'));
+    expect(screen.getByText(/Anonymous visitors to the published version/)).toBeInTheDocument();
+  });
+
+  it('sends an explicit false at project scope, to close a workspace that opened it', async () => {
+    mockFetch({ settings: settings({ scope: 'project' }) });
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-form');
+    fireEvent.change(screen.getByLabelText('Scope'), { target: { value: PROJECT_ID } });
+
+    await screen.findByLabelText('Allow anonymous visitors to download this SDK');
+    // Stop inheriting, leaving the switch off: that is a project saying "not here", which only an
+    // explicit false can express.
+    const inherits = screen.getAllByLabelText('Inherit from workspace');
+    fireEvent.click(inherits[inherits.length - 1]);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(lastBody()).toEqual({ settings: { publicSdkEnabled: false } }));
+  });
+
+  it('reports the answer in force in the preview panel', async () => {
+    mockFetch({
+      settings: settings({
+        settings: {
+          packageNamePatterns: {},
+          licenseHeader: null,
+          userAgent: null,
+          publicSdkEnabled: true,
+        },
+      }),
+    });
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-preview');
+
+    expect(screen.getByText('Enabled')).toBeInTheDocument();
   });
 });

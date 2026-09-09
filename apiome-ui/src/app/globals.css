@@ -31663,6 +31663,22 @@ tr:focus-within .pub-url__glyph {
   margin: 0;
 }
 
+/* --- Public SDK switch (SDK-3.3, #4493) ---------------------------------- */
+/* The one field that is a permission rather than a pattern: a switch and the sentence saying
+   what it currently means, in place of the text input the other fields render. */
+
+.sdks-toggle__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--control-h-sm);
+}
+
+.sdks-toggle__state {
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
 /* --- Footer ------------------------------------------------------------- */
 
 .sdks-footer {

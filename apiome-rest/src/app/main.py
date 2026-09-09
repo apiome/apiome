@@ -107,6 +107,7 @@ from .sdk_generation_settings_routes import router as sdk_generation_settings_ro
 from .sdk_generation_settings_routes import (
     tenant_router as sdk_generation_settings_tenant_router,
 )
+from .sdk_kit_routes import router as sdk_kit_router
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
@@ -141,7 +142,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.179.0",
+    version="1.180.0",
 )
 
 
@@ -279,6 +280,7 @@ app.include_router(mcp_badge_router)
 app.include_router(mcp_feed_router)
 app.include_router(browse_export_router)
 app.include_router(snippet_browse_router)
+app.include_router(sdk_kit_router)
 app.include_router(data_router)
 # registry_audit_router before primitives_router so its literal /{tenant_slug}/audit route is
 # matched ahead of the primitives /{tenant_slug}/{primitive_id} catch-all (#3481).

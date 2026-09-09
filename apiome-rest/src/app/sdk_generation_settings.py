@@ -168,6 +168,11 @@ class SdkGenerationSettings(_CamelModel):
             ``{"npm": "@acme/{project}-sdk"}``. Ecosystems are merged individually.
         license_header: Text prepended, as a comment, to generated source. May span lines.
         user_agent: User-agent string generated clients send, for API-side traffic attribution.
+        public_sdk_enabled: Whether the public browse portal may serve this project's SDK — the
+            client-kit download and the anonymous per-operation snippets (SDK-3.3). Unlike the
+            other three this is a *gate*, not branding, so it defaults to ``False`` rather than
+            ``None``: "not configured" and "not allowed" are the same answer for an access
+            control, and the safe one.
     """
 
     package_name_patterns: Dict[str, str] = Field(
@@ -185,9 +190,18 @@ class SdkGenerationSettings(_CamelModel):
         default=None,
         description="User-agent generated clients send, for API-side traffic attribution.",
     )
+    public_sdk_enabled: bool = Field(
+        default=False,
+        description=(
+            "Whether anonymous browse visitors may take the SDK for this project: the "
+            "`Get SDK` client-kit download and the public per-operation snippets "
+            "(SDK-3.3). Off unless a workspace or project owner opts in."
+        ),
+    )
 
 
-#: What a tenant that has configured nothing gets: no patterns, no header, no user-agent.
+#: What a tenant that has configured nothing gets: no patterns, no header, no user-agent, and —
+#: deliberately — no public SDK exposure. Opting a project's consumers in is always an explicit act.
 DEFAULT_SETTINGS = SdkGenerationSettings()
 
 
@@ -576,6 +590,27 @@ def _parse_user_agent(raw: Any, errors: List[str]) -> Optional[str]:
     return agent
 
 
+def _parse_public_sdk_enabled(raw: Any, errors: List[str]) -> Optional[bool]:
+    """Validate the ``publicSdkEnabled`` key, returning the canonical value.
+
+    Args:
+        raw: The submitted value — ``True``/``False``, or ``None`` to say "deliberately not
+            inherited, and off".
+        errors: Collector appended to on each problem.
+
+    Returns:
+        The boolean to store, or ``None`` for an explicit clear.
+    """
+    if raw is None:
+        return None
+    # `isinstance(True, int)` is True in Python, so an int would pass a naive numeric check and a
+    # `1` would silently become a permission grant. Only a real bool is accepted.
+    if not isinstance(raw, bool):
+        errors.append("publicSdkEnabled: expected a boolean or null")
+        return None
+    return raw
+
+
 def parse_settings_body(body: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
     """Validate a submitted settings body into the canonical form that is stored.
 
@@ -601,12 +636,18 @@ def parse_settings_body(body: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
         raise SdkSettingsError(["expected a settings object"])
 
     errors: List[str] = []
-    known = {"packageNamePatterns", "licenseHeader", "userAgent", "schemaVersion"}
+    known = {
+        "packageNamePatterns",
+        "licenseHeader",
+        "userAgent",
+        "publicSdkEnabled",
+        "schemaVersion",
+    }
     unknown = sorted(str(key) for key in body.keys() if str(key) not in known)
     if unknown:
         errors.append(
             f"unknown setting(s) {', '.join(unknown)}; expected any of "
-            "packageNamePatterns, licenseHeader, userAgent"
+            "packageNamePatterns, licenseHeader, userAgent, publicSdkEnabled"
         )
 
     parsed: Dict[str, Any] = {"schemaVersion": SDK_GENERATION_SETTINGS_SCHEMA_VERSION}
@@ -618,6 +659,8 @@ def parse_settings_body(body: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
         parsed["licenseHeader"] = _parse_license_header(body["licenseHeader"], errors)
     if "userAgent" in body:
         parsed["userAgent"] = _parse_user_agent(body["userAgent"], errors)
+    if "publicSdkEnabled" in body:
+        parsed["publicSdkEnabled"] = _parse_public_sdk_enabled(body["publicSdkEnabled"], errors)
 
     if errors:
         raise SdkSettingsError(errors)
@@ -684,10 +727,15 @@ def settings_from_body(body: Optional[Mapping[str, Any]]) -> SdkGenerationSettin
 
     header = body.get("licenseHeader")
     agent = body.get("userAgent")
+    # An explicit `null` (or anything that is not a real bool) collapses to "off" here, the same
+    # way a cleared licence header collapses to None: the merge already used the null to block
+    # inheritance, and past that point "cleared" and "never set" mean the same thing.
+    public_sdk = body.get("publicSdkEnabled")
     return SdkGenerationSettings(
         package_name_patterns=patterns,
         license_header=header.strip() if isinstance(header, str) and header.strip() else None,
         user_agent=agent.strip() if isinstance(agent, str) and agent.strip() else None,
+        public_sdk_enabled=public_sdk if isinstance(public_sdk, bool) else False,
     )
 
 

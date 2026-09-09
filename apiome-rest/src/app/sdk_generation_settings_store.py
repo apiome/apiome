@@ -48,7 +48,9 @@ __all__ = [
     "audit_detail",
     "clear_settings",
     "load_branding",
+    "load_public_sdk_enabled",
     "load_settings",
+    "public_sdk_enabled_from",
     "save_settings",
 ]
 
@@ -260,6 +262,51 @@ def load_branding(
         license_header=out.resolved.license_header,
         user_agent=out.resolved.user_agent,
     )
+
+
+def public_sdk_enabled_from(out: SdkGenerationSettingsOut) -> bool:
+    """Read the public-SDK answer out of settings already loaded.
+
+    The rule, in one place, for the two callers that need it: the sibling
+    :func:`load_public_sdk_enabled` and any surface that has already read the settings for another
+    reason and must not pay for a second query to ask one more question of the same rows.
+
+    Args:
+        out: The settings in force, from :func:`load_settings`.
+
+    Returns:
+        ``True`` only when the merged settings explicitly enable public SDK access. A degraded
+        read is ``False`` — **the gate fails closed**.
+    """
+    if out.degraded:
+        return False
+    return bool(out.settings.public_sdk_enabled)
+
+
+def load_public_sdk_enabled(
+    tenant_id: Optional[str], project_id: Optional[str] = None
+) -> bool:
+    """Return whether the public browse portal may serve this project's SDK (SDK-3.3).
+
+    The access-control counterpart of :func:`load_branding`: the anonymous "Get SDK" and public
+    snippet routes ask this one question and need one answer. It reads the same merged
+    tenant + project body, so a workspace can opt every project in and a single project can still
+    override either way.
+
+    **Fails closed.** No tenant, nothing stored, or a settings row that could not be read all
+    return ``False``. A degraded read must never widen public exposure — the whole point of the
+    flag is that exposure is deliberate.
+
+    Args:
+        tenant_id: The owning tenant, or ``None`` when there is none to read.
+        project_id: The project being asked about; ``None`` asks the tenant default alone.
+
+    Returns:
+        ``True`` only when the merged settings explicitly enable public SDK access.
+    """
+    if not tenant_id:
+        return False
+    return public_sdk_enabled_from(load_settings(tenant_id, project_id))
 
 
 def save_settings(
