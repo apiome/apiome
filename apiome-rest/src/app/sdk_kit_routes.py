@@ -35,6 +35,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .export_artifact_store import content_sha256_hex, content_sha256_hex_only, digest_header_value
 from .export_source import ExportSource, ExportSourceError, load_public_export_source
 from .go_client_generator import DEFAULT_GO_VERSION, GO_ECOSYSTEM
+from .server_stub_generator import EXPRESS_DIRECTORY, FASTAPI_DIRECTORY
 from .public_export_guards import (
     enforce_public_export_rate_limit,
     public_export_document_max_bytes,
@@ -43,6 +44,7 @@ from .sdk_generation_settings import PatternContext, ResolvedBranding
 from .sdk_generation_settings_store import load_settings, public_sdk_enabled_from
 from .sdk_kit import (
     GO_CLIENT_DIRECTORY,
+    SERVER_STUB_DIRECTORY,
     KIT_MEDIA_TYPE,
     KIT_SCHEMA_VERSION,
     LANGUAGE_FILE_EXTENSIONS,
@@ -51,6 +53,7 @@ from .sdk_kit import (
     KitCoordinates,
     build_client_kit,
     go_client_coordinates,
+    server_stub_coordinates,
     kit_filename,
     package_install_command,
     summarize_kit,
@@ -128,6 +131,28 @@ class SdkGoClientModel(BaseModel):
     )
 
 
+class SdkServerStubsModel(BaseModel):
+    """The generated server stubs the download carries — SDK-2.5 (#4490).
+
+    Reported alongside the Go client because it answers the opposite question: the client is what a
+    consumer *calls* this API with, the stubs are what a team *implements* it with. A panel that
+    offered only one of the two would hide half of what the same archive contains.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    directory: str = Field(description="The directory the stub projects sit in inside the archive.")
+    targets: List[str] = Field(
+        default_factory=list,
+        description="The frameworks generated, in documentation order (``fastapi``, ``express``).",
+    )
+    python_package: str = Field(description="The Python package the FastAPI project declares.")
+    npm_package: str = Field(description="The npm package the Express project declares.")
+    route_count: int = Field(
+        description="Routes each project carries — the kit's renderable operations."
+    )
+
+
 class SdkDownloadModel(BaseModel):
     """What the download will be, so a client can label its button before fetching."""
 
@@ -174,6 +199,9 @@ class PublicSdkInfoResponse(BaseModel):
     )
     go_client: SdkGoClientModel = Field(
         description="The generated Go client the download carries (SDK-2.4)."
+    )
+    server_stubs: SdkServerStubsModel = Field(
+        description="The generated server stubs the download carries (SDK-2.5)."
     )
     download: SdkDownloadModel
 
@@ -358,6 +386,10 @@ async def get_public_sdk_info(
     # Named, not generated: the module path and package name are pure functions of the coordinates
     # and the branding, so the panel can label the Go client without paying to emit it.
     go_module, go_package = go_client_coordinates(source.api, gated.coordinates, branding)
+    # Named, not generated, for the same reason: both package names are pure functions of the
+    # coordinates and the branding, so the panel can label the server stubs without emitting two
+    # whole projects for a call that would throw them away.
+    python_package, npm_package = server_stub_coordinates(source.api, gated.coordinates, branding)
 
     return PublicSdkInfoResponse(
         tenant_slug=tenant_slug,
@@ -395,6 +427,13 @@ async def get_public_sdk_info(
             go_version=DEFAULT_GO_VERSION,
             install=package_install_command(GO_ECOSYSTEM, go_module),
             method_count=summary.operation_count,
+        ),
+        server_stubs=SdkServerStubsModel(
+            directory=SERVER_STUB_DIRECTORY,
+            targets=[FASTAPI_DIRECTORY, EXPRESS_DIRECTORY],
+            python_package=python_package,
+            npm_package=npm_package,
+            route_count=summary.operation_count,
         ),
         download=SdkDownloadModel(
             filename=kit_filename(gated.coordinates),

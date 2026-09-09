@@ -59,6 +59,20 @@ export interface PublicSdkGoClient {
   method_count: number;
 }
 
+/**
+ * The generated server stubs the download carries — SDK-2.5.
+ *
+ * The opposite direction from `PublicSdkGoClient`: that is what a consumer calls the API with,
+ * these are what a team implements it with, and the same archive carries both.
+ */
+export interface PublicSdkServerStubs {
+  directory: string;
+  targets: string[];
+  python_package: string;
+  npm_package: string;
+  route_count: number;
+}
+
 /** What the download will be, so the button can be labelled before it is fetched. */
 export interface PublicSdkDownload {
   filename: string;
@@ -83,6 +97,8 @@ export interface PublicSdkInfoResponse {
   settings_fingerprint?: string | null;
   /** Optional so a panel keeps rendering against a REST build older than SDK-2.4. */
   go_client?: PublicSdkGoClient | null;
+  /** Optional so a panel keeps rendering against a REST build older than SDK-2.5. */
+  server_stubs?: PublicSdkServerStubs | null;
   download: PublicSdkDownload;
 }
 

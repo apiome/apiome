@@ -1,9 +1,14 @@
-"""The public client-kit builder — SDK-3.3 (#4493).
+"""The public client-kit builder — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490).
 
 Pure-function tests for :mod:`app.sdk_kit`: what an archive contains, the determinism guarantee
 its ``ETag`` rests on, the provenance its manifest carries, the branding it inherits from SDK-3.4,
 and the two things that must never take a kit down — an operation with no HTTP binding, and an API
 with more operations than one kit carries.
+
+The generated *projects* the kit carries — the Go client and the two server stubs — are tested in
+their own modules. What is checked here is only the wiring: that they are staged under the right
+directories, described in the manifest, pointed at from the README, and that a failure in either
+generator degrades the kit to its snippets rather than taking the download down.
 """
 
 from __future__ import annotations
@@ -27,10 +32,12 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.go_client_generator import GO_CLIENT_SCHEMA_VERSION
+from app.server_stub_generator import SERVER_STUB_SCHEMA_VERSION
 from app.sdk_generation_settings import ResolvedBranding
 from app.sdk_kit import (
     KIT_SCHEMA_VERSION,
     MAX_KIT_OPERATIONS,
+    SERVER_STUB_DIRECTORY,
     KitCoordinates,
     build_client_kit,
     kit_filename,
@@ -159,6 +166,28 @@ def test_the_kit_carries_a_readme_manifest_spec_and_one_snippet_per_language() -
         "go/go.mod",
         "go/widgets.go",
         "manifest.json",
+        # SDK-2.5 (#4490): two runnable server skeletons, under `server/`.
+        "server/express/README.md",
+        "server/express/package.json",
+        "server/express/src/app.ts",
+        "server/express/src/handlers.ts",
+        "server/express/src/models.ts",
+        "server/express/src/routes/widgets.ts",
+        "server/express/src/runtime.ts",
+        "server/express/src/schemas.ts",
+        "server/express/src/server.ts",
+        "server/express/src/validation.ts",
+        "server/express/tsconfig.json",
+        "server/fastapi/README.md",
+        "server/fastapi/pyproject.toml",
+        "server/fastapi/widgets_server/__init__.py",
+        "server/fastapi/widgets_server/app.py",
+        "server/fastapi/widgets_server/errors.py",
+        "server/fastapi/widgets_server/handlers.py",
+        "server/fastapi/widgets_server/main.py",
+        "server/fastapi/widgets_server/models.py",
+        "server/fastapi/widgets_server/routers/__init__.py",
+        "server/fastapi/widgets_server/routers/widgets.py",
         "snippets/curl/getWidget.sh",
         "snippets/python/getWidget.py",
         "snippets/ts/getWidget.ts",
@@ -265,6 +294,7 @@ def test_the_manifest_carries_the_revision_and_settings_provenance() -> None:
         "source_format": "openapi-3.1",
         "renderer": f"app.snippet_render/{KIT_SCHEMA_VERSION}",
         "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
+        "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
         "apiome_version": "1.180.0",
         "settings_fingerprint": "sha256:" + "a" * 64,
     }
@@ -332,6 +362,72 @@ def test_a_go_generator_failure_degrades_the_kit_rather_than_failing_it() -> Non
     # The snippets are untouched.
     assert "snippets/ts/getWidget.ts" in _entries(kit.content)
     assert "No Go client is included" in _read(kit.content, "README.md")
+
+
+# ===========================================================================
+# The server stubs (SDK-2.5)
+# ===========================================================================
+
+
+def test_the_archive_carries_both_server_stub_projects() -> None:
+    entries = _entries(_build().content)
+    assert f"{SERVER_STUB_DIRECTORY}/fastapi/pyproject.toml" in entries
+    assert f"{SERVER_STUB_DIRECTORY}/fastapi/widgets_server/app.py" in entries
+    assert f"{SERVER_STUB_DIRECTORY}/express/package.json" in entries
+    assert f"{SERVER_STUB_DIRECTORY}/express/src/app.ts" in entries
+
+
+def test_the_server_stub_packages_never_reuse_the_tenants_client_package_names() -> None:
+    """Publishing a server skeleton under the client library's name is two packages, one address."""
+    manifest = _manifest(_build(branding=_BRANDED).content)["server_stubs"]
+    assert manifest["npm_package"] == "@acme/widgets-sdk-server"
+    assert manifest["python_package"] == "widgets_server"
+
+
+def test_the_server_stubs_inherit_the_tenants_licence_header() -> None:
+    content = _build(branding=_BRANDED).content
+    assert _read(content, f"{SERVER_STUB_DIRECTORY}/express/src/app.ts").startswith(
+        "// Copyright (c) 2026 Acme, Inc."
+    )
+    assert _read(content, f"{SERVER_STUB_DIRECTORY}/fastapi/widgets_server/app.py").startswith(
+        "# Copyright (c) 2026 Acme, Inc."
+    )
+
+
+def test_the_manifest_describes_both_server_stub_targets() -> None:
+    manifest = _manifest(_build().content)["server_stubs"]
+    assert manifest["included"] is True
+    assert manifest["schema_version"] == SERVER_STUB_SCHEMA_VERSION
+    assert manifest["directory"] == SERVER_STUB_DIRECTORY
+    assert manifest["route_count"] == 1
+    assert [target["target"] for target in manifest["targets"]] == ["fastapi", "express"]
+    assert [target["directory"] for target in manifest["targets"]] == [
+        f"{SERVER_STUB_DIRECTORY}/fastapi",
+        f"{SERVER_STUB_DIRECTORY}/express",
+    ]
+    # The non-HTTP operation is reported there too, for the same reason the snippets report it.
+    assert [item["key"] for item in manifest["skipped"]] == ["Query.widgets"]
+
+
+def test_the_kit_readme_points_at_the_server_stubs() -> None:
+    readme = _read(_build().content, "README.md")
+    assert "## Server stubs" in readme
+    assert f"cd {SERVER_STUB_DIRECTORY}/fastapi" in readme
+    assert f"cd {SERVER_STUB_DIRECTORY}/express" in readme
+
+
+def test_a_server_stub_failure_degrades_the_kit_rather_than_failing_it() -> None:
+    """A kit's snippets are worth shipping even when codegen cannot produce a project."""
+    with patch("app.sdk_kit.generate_server_stubs", side_effect=RuntimeError("boom")):
+        kit = _build()
+    assert not [name for name in _entries(kit.content) if name.startswith(f"{SERVER_STUB_DIRECTORY}/")]
+    block = _manifest(kit.content)["server_stubs"]
+    assert block["included"] is False
+    assert block["error"] == "RuntimeError: boom"
+    # The snippets and the Go client are untouched.
+    assert "snippets/ts/getWidget.ts" in _entries(kit.content)
+    assert "go/client.go" in _entries(kit.content)
+    assert "No server stubs are included" in _read(kit.content, "README.md")
 
 
 def test_the_manifest_digests_every_entry_but_never_itself() -> None:
