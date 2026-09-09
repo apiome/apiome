@@ -268,6 +268,31 @@ def test_info_names_the_go_client_the_download_carries() -> None:
     }
 
 
+def test_info_names_the_server_stubs_the_download_carries() -> None:
+    """SDK-2.5 (#4490): the archive also answers the opposite question — how to *implement* this."""
+    with patch(_LOADER, return_value=_source()):
+        body = client.get(_BASE).json()
+
+    assert body["server_stubs"] == {
+        "directory": "server",
+        "targets": ["fastapi", "express"],
+        "python_package": "widgets_server",
+        "npm_package": "widgets-server",
+        "route_count": 1,
+    }
+
+
+def test_info_never_offers_a_server_stub_under_the_client_packages_name() -> None:
+    """A configured npm name is the *client* library; a server skeleton may not share its address."""
+    branding = ResolvedBranding(package_names={"npm": "@acme/widgets-sdk"})
+    with patch(_LOADER, return_value=_source()), patch(
+        _SETTINGS, return_value=_settings_out(branding=branding)
+    ):
+        body = client.get(_BASE).json()
+
+    assert body["server_stubs"]["npm_package"] == "@acme/widgets-sdk-server"
+
+
 def test_info_prefers_a_configured_go_module_path() -> None:
     """A module path is what a consumer types into `go get`; a configured one is used verbatim."""
     branding = ResolvedBranding(package_names={"gomod": "github.com/acme/widgets-go"})

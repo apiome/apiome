@@ -1,9 +1,9 @@
-"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488).
+"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490).
 
 A consumer who lands on a published spec in the browse portal wants one thing: something they
 can unzip and run. This module builds it — a deterministic ``sdk.client-kit.v1`` archive holding
-the contract, a README, one runnable snippet per operation per language, and a complete Go client
-module under ``go/``.
+the contract, a README, one runnable snippet per operation per language, a complete Go client
+module under ``go/``, and two runnable server skeletons under ``server/``.
 
 **Why the kit is built rather than stored.** The original SDK-3.3 scope served "the latest
 generated artifact" from the SDK-1.1 artifact store. That ticket, the generator SPI (SDK-1.2),
@@ -11,11 +11,14 @@ both MVP language generators (SDK-2.1/2.2) and the dashboard/CLI surfaces (SDK-3
 closed **not-planned**, so there is no artifact store and nothing to retain, expire or invalidate.
 What did ship reads the persisted canonical model directly — the SDK-2.3 snippet service, which
 renders runnable per-operation code, and the SDK-2.4 Go client generator
-(:mod:`app.go_client_generator`), which emits a compilable, dependency-free Go module. This module
-packages both, at request time, from one revision.
+(:mod:`app.go_client_generator`), which emits a compilable, dependency-free Go module, and the
+SDK-2.5 server stub generators (:mod:`app.server_stub_generator`), which emit a FastAPI and an
+Express project from the same contract. This module packages all three, at request time, from one
+revision.
 
-**The Go client is planned separately** (:func:`plan_go_client`) for two reasons: a route can
-report what a consumer would get — the module path they will ``go get`` — without paying to
+**The generated projects are planned separately** (:func:`plan_go_client`,
+:func:`plan_server_stubs`) for two reasons: a route can report what a consumer would get — the
+module path they will ``go get``, the package the server stub declares — without paying to
 generate it, and a generator failure degrades the kit to its snippets rather than taking the
 download down.
 
@@ -57,6 +60,17 @@ from .go_client_generator import (
     go_package_name,
 )
 from .sdk_generation_settings import ResolvedBranding
+from .express_stub_generator import express_package_name
+from .fastapi_stub_generator import fastapi_package_name
+from .server_stub_generator import (
+    EXPRESS_DIRECTORY,
+    EXPRESS_STUB_SCHEMA_VERSION,
+    FASTAPI_DIRECTORY,
+    FASTAPI_STUB_SCHEMA_VERSION,
+    SERVER_STUB_SCHEMA_VERSION,
+    ServerStubBundle,
+    generate_server_stubs,
+)
 from .snippet_render import (
     INSTALL_LINES,
     SUPPORTED_LANGS,
@@ -74,13 +88,17 @@ __all__ = [
     "LANGUAGE_LABELS",
     "MAX_KIT_OPERATIONS",
     "PACKAGE_INSTALL_COMMANDS",
+    "SERVER_STUB_DIRECTORY",
     "ClientKit",
     "GoClientPlan",
     "KitCoordinates",
     "KitSummary",
+    "ServerStubPlanResult",
     "build_client_kit",
     "go_client_coordinates",
     "plan_go_client",
+    "plan_server_stubs",
+    "server_stub_coordinates",
     "summarize_kit",
     "kit_filename",
     "package_install_command",
@@ -118,6 +136,12 @@ _MARKDOWN_FENCE: Dict[str, str] = {"ts": "ts", "python": "python", "curl": "bash
 #: archive root because the kit also carries the contract, the README and the snippets — a
 #: consumer unzips it and runs ``go build ./go/...`` or copies that one directory out.
 GO_CLIENT_DIRECTORY = "go"
+
+#: The archive directory the generated server stubs live in, one project per sub-directory
+#: (``server/fastapi``, ``server/express``). A directory of its own because these are *servers* —
+#: a consumer looking for something to call and a consumer looking for something to implement are
+#: two different readers, and mixing the two under one root would serve neither.
+SERVER_STUB_DIRECTORY = "server"
 
 #: How a resolved package name is installed, per ecosystem (SDK-3.4 reports the names).
 PACKAGE_INSTALL_COMMANDS: Dict[str, str] = {
@@ -359,6 +383,92 @@ def plan_go_client(
     )
 
 
+@dataclass(frozen=True)
+class ServerStubPlanResult:
+    """The generated server stubs a kit carries, or the reason it carries none.
+
+    Planned separately from the snippets for the same two reasons the Go client is: a route can
+    report what a consumer would get — the Python package, the npm package — without paying to
+    generate two whole projects, and a generator failure degrades the kit rather than taking the
+    download down.
+
+    Attributes:
+        python_package: The Python package the FastAPI project declares.
+        npm_package: The npm package the Express project declares.
+        bundle: The generated projects, or ``None`` when generation failed.
+        error: Why there is no bundle, when there is none.
+    """
+
+    python_package: str
+    npm_package: str
+    bundle: Optional[ServerStubBundle] = None
+    error: Optional[str] = None
+
+
+def server_stub_coordinates(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> Tuple[str, str]:
+    """Return the ``(Python package, npm package)`` a kit's server stubs would declare.
+
+    Neither name is taken verbatim from SDK-3.4 branding, and that is the difference from the Go
+    client: the ``gomod`` name a tenant configures *is* the module their consumers ``go get``, but
+    the ``npm`` and ``pypi`` names are their *client* libraries — publishing a server skeleton
+    under one of those would put two different packages at one address. A configured npm scope is
+    honoured (``@acme/widgets`` → ``@acme/widgets-server``); everything else falls back to the
+    revision's own coordinates.
+
+    Args:
+        api: The revision's canonical model, for the name fallbacks.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding.
+
+    Returns:
+        ``(python package, npm package)``.
+    """
+    title = api.title or coordinates.project_slug
+    return (
+        fastapi_package_name(coordinates.project_slug, api.identity.name if api.identity else None, title),
+        express_package_name(branding.package_names.get("npm"), coordinates.project_slug, title),
+    )
+
+
+def plan_server_stubs(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> ServerStubPlanResult:
+    """Generate the kit's server stubs, degrading to a reason rather than failing the kit.
+
+    Args:
+        api: The revision's canonical model.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding — its npm package name and licence
+            header both reach the generated projects.
+
+    Returns:
+        The :class:`ServerStubPlanResult`. Its ``bundle`` is ``None`` and its ``error`` set when a
+        generator raised: one unrenderable model must not cost the consumer the whole download.
+    """
+    python_package, npm_package = server_stub_coordinates(api, coordinates, branding)
+    try:
+        bundle = generate_server_stubs(
+            api,
+            python_package_name=python_package,
+            npm_package_name=npm_package,
+            license_header=branding.license_header,
+            max_operations=MAX_KIT_OPERATIONS,
+        )
+    except Exception as exc:  # noqa: BLE001 - a kit ships its snippets even when codegen cannot.
+        return ServerStubPlanResult(
+            python_package=python_package,
+            npm_package=npm_package,
+            error=f"{type(exc).__name__}: {exc}",
+        )
+    return ServerStubPlanResult(
+        python_package=bundle.fastapi.package_name,
+        npm_package=bundle.express.package_name,
+        bundle=bundle,
+    )
+
+
 def package_install_command(ecosystem: str, name: str) -> Optional[str]:
     """Return the shell command that installs ``name`` from ``ecosystem``.
 
@@ -570,6 +680,7 @@ def _build_readme(
     spec_name: str,
     summary: KitSummary,
     go_client: GoClientPlan,
+    server_stubs: ServerStubPlanResult,
 ) -> str:
     """Compose the kit's ``README.md``.
 
@@ -582,6 +693,7 @@ def _build_readme(
         spec_name: The in-archive filename of the captured contract.
         summary: The kit's operation counts, for the truncation note.
         go_client: The generated Go client (SDK-2.4), or the reason there is none.
+        server_stubs: The generated server stubs (SDK-2.5), or the reason there are none.
 
     Returns:
         The README's Markdown text.
@@ -639,6 +751,11 @@ def _build_readme(
             f"- `{GO_CLIENT_DIRECTORY}/` — a complete, dependency-free Go client module "
             f"(`{go_client.module_path}`), with its own README.",
         )
+    if server_stubs.bundle is not None:
+        lines.append(
+            f"- `{SERVER_STUB_DIRECTORY}/` — two runnable server skeletons for implementing this "
+            "contract: a FastAPI project and an Express/TypeScript one, each with its own README.",
+        )
     lines.append("")
 
     if go_client.package is not None:
@@ -682,6 +799,36 @@ def _build_readme(
             "",
             "No Go client is included for this revision: "
             f"{go_client.error}. The snippets below are unaffected.",
+            "",
+        ]
+
+    if server_stubs.bundle is not None:
+        bundle = server_stubs.bundle
+        lines += [
+            "## Server stubs",
+            "",
+            f"`{SERVER_STUB_DIRECTORY}/` holds two skeletons for *implementing* this contract — the "
+            f"other direction from the client above. Each routes {bundle.route_count} "
+            + ("operation" if bundle.route_count == 1 else "operations")
+            + ", validates every request against the published contract before your code runs, and "
+            "answers `501 Not Implemented` until you implement it.",
+            "",
+            "```bash",
+            f"cd {SERVER_STUB_DIRECTORY}/{FASTAPI_DIRECTORY} && pip install -e . && "
+            f"uvicorn {bundle.fastapi.package_name}.main:app",
+            f"cd {SERVER_STUB_DIRECTORY}/{EXPRESS_DIRECTORY} && npm install && npm run build && npm start",
+            "```",
+            "",
+            "The handler interfaces are typed from the contract, so an implementation whose "
+            "signature does not match it fails `mypy` or `tsc` rather than production.",
+            "",
+        ]
+    elif server_stubs.error:
+        lines += [
+            "## Server stubs",
+            "",
+            f"No server stubs are included for this revision: {server_stubs.error}. The snippets "
+            "below are unaffected.",
             "",
         ]
 
@@ -782,6 +929,71 @@ def _go_client_manifest(plan: GoClientPlan) -> Dict[str, Any]:
     return block
 
 
+def _server_stub_manifest(plan: ServerStubPlanResult) -> Dict[str, Any]:
+    """Describe the kit's server stubs for ``manifest.json``.
+
+    The block is always present, so a consumer never has to tell "this kit predates the server
+    stubs" apart from "this revision could not produce them" — ``included`` says which.
+
+    Args:
+        plan: The planned stubs.
+
+    Returns:
+        The manifest block.
+    """
+    block: Dict[str, Any] = {
+        "schema_version": SERVER_STUB_SCHEMA_VERSION,
+        "directory": SERVER_STUB_DIRECTORY,
+        "python_package": plan.python_package,
+        "npm_package": plan.npm_package,
+        "included": plan.bundle is not None,
+    }
+    if plan.bundle is None:
+        block["error"] = plan.error
+        return block
+    bundle = plan.bundle
+    block.update(
+        {
+            "route_count": bundle.route_count,
+            "targets": [
+                {
+                    "target": "fastapi",
+                    "directory": f"{SERVER_STUB_DIRECTORY}/{FASTAPI_DIRECTORY}",
+                    "schema_version": FASTAPI_STUB_SCHEMA_VERSION,
+                    "package_name": bundle.fastapi.package_name,
+                    "routers": list(bundle.fastapi.routers),
+                    "handler_interfaces": list(bundle.fastapi.handler_classes),
+                    "model_count": len(bundle.fastapi.model_classes),
+                },
+                {
+                    "target": "express",
+                    "directory": f"{SERVER_STUB_DIRECTORY}/{EXPRESS_DIRECTORY}",
+                    "schema_version": EXPRESS_STUB_SCHEMA_VERSION,
+                    "package_name": bundle.express.package_name,
+                    "routers": list(bundle.express.routers),
+                    "handler_interfaces": list(bundle.express.handler_interfaces),
+                    "model_count": len(bundle.express.model_types),
+                },
+            ],
+            "operations": [
+                {
+                    "operation_id": operation.operation_id,
+                    "key": operation.key,
+                    "http_method": operation.http_method,
+                    "path": operation.path_template,
+                    "group": operation.group,
+                }
+                for operation in bundle.plan.operations
+            ],
+            "skipped": [
+                {"operation_id": item.operation_id, "key": item.key, "reason": item.reason}
+                for item in bundle.skipped
+            ],
+        }
+    )
+    return block
+
+
 def build_client_kit(
     api: CanonicalApi,
     *,
@@ -798,7 +1010,8 @@ def build_client_kit(
         api: The revision's canonical model.
         coordinates: The slug/revision coordinates the kit was requested at.
         branding: The tenant's resolved SDK-3.4 settings — its user-agent is stamped on every
-            request, its licence header on every snippet, its package names into the README.
+            request, its licence header on every snippet and every generated source file, its
+            package names into the README and into the generated projects.
         source_text: The captured contract, included verbatim when present.
         source_format: The captured contract's format key, used to name its file.
         settings_fingerprint: The merged settings' fingerprint, recorded as provenance so a
@@ -811,6 +1024,7 @@ def build_client_kit(
     rendered, skipped, summary = _render_operations(api, branding)
     spec_name = spec_filename(source_format, source_text)
     go_client = plan_go_client(api, coordinates, branding)
+    server_stubs = plan_server_stubs(api, coordinates, branding)
 
     entries: List[_Entry] = []
     if go_client.package is not None:
@@ -820,6 +1034,15 @@ def build_client_kit(
                     path=f"{GO_CLIENT_DIRECTORY}/{go_file.path}",
                     text=go_file.text,
                     subject="go-client",
+                )
+            )
+    if server_stubs.bundle is not None:
+        for stub_file in server_stubs.bundle.files:
+            entries.append(
+                _Entry(
+                    path=f"{SERVER_STUB_DIRECTORY}/{stub_file.path}",
+                    text=stub_file.text,
+                    subject="server-stub",
                 )
             )
     for entry in rendered:
@@ -846,6 +1069,7 @@ def build_client_kit(
         spec_name,
         summary,
         go_client,
+        server_stubs,
     )
     entries.append(_Entry(path="README.md", text=readme, subject="readme"))
     entries.sort(key=lambda item: item.path)
@@ -878,12 +1102,14 @@ def build_client_kit(
         ],
         "skipped": skipped,
         "go_client": _go_client_manifest(go_client),
+        "server_stubs": _server_stub_manifest(server_stubs),
         "provenance": {
             "version_record_id": coordinates.version_record_id,
             "version_label": coordinates.version_label,
             "source_format": source_format,
             "renderer": f"app.snippet_render/{KIT_SCHEMA_VERSION}",
             "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
+            "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
             "apiome_version": apiome_version,
             "settings_fingerprint": settings_fingerprint,
         },

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.181.0",
+    "version": "1.182.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -84427,14 +84427,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -86459,7 +86459,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "a5951b30-fbd7-4c5e-afbb-02e390fbfa1e"
+            "example": "7ed9c6dc-7c15-4ddb-af43-921002106718"
           },
           "method": {
             "type": "string",
@@ -88986,7 +88986,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -122341,6 +122341,10 @@
             "$ref": "#/components/schemas/SdkGoClientModel",
             "description": "The generated Go client the download carries (SDK-2.4)."
           },
+          "server_stubs": {
+            "$ref": "#/components/schemas/SdkServerStubsModel",
+            "description": "The generated server stubs the download carries (SDK-2.5)."
+          },
           "download": {
             "$ref": "#/components/schemas/SdkDownloadModel",
             "description": "Download."
@@ -122357,6 +122361,7 @@
           "total_operation_count",
           "truncated",
           "go_client",
+          "server_stubs",
           "download"
         ],
         "title": "PublicSdkInfoResponse",
@@ -128120,7 +128125,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           }
         },
         "additionalProperties": false,
@@ -130174,6 +130179,53 @@
         ],
         "title": "SdkPackageModel",
         "description": "One resolved package name, as the tenant's SDK-3.4 patterns produce it."
+      },
+      "SdkServerStubsModel": {
+        "properties": {
+          "directory": {
+            "type": "string",
+            "title": "Directory",
+            "description": "The directory the stub projects sit in inside the archive.",
+            "example": "example"
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Targets",
+            "description": "The frameworks generated, in documentation order (``fastapi``, ``express``).",
+            "maxItems": 1000
+          },
+          "python_package": {
+            "type": "string",
+            "title": "Python Package",
+            "description": "The Python package the FastAPI project declares.",
+            "example": "example"
+          },
+          "npm_package": {
+            "type": "string",
+            "title": "Npm Package",
+            "description": "The npm package the Express project declares.",
+            "example": "example"
+          },
+          "route_count": {
+            "type": "integer",
+            "title": "Route Count",
+            "description": "Routes each project carries \u2014 the kit's renderable operations.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "directory",
+          "python_package",
+          "npm_package",
+          "route_count"
+        ],
+        "title": "SdkServerStubsModel",
+        "description": "The generated server stubs the download carries \u2014 SDK-2.5 (#4490).\n\nReported alongside the Go client because it answers the opposite question: the client is what a\nconsumer *calls* this API with, the stubs are what a team *implements* it with. A panel that\noffered only one of the two would hide half of what the same archive contains."
       },
       "SecretRefBody": {
         "properties": {
@@ -143835,14 +143887,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-09T03:06:15Z"
+            "example": "2026-09-09T04:47:25Z"
           },
           "outcome": {
             "anyOf": [
