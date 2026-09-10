@@ -30506,5 +30506,549 @@ class Database:
         )
 
 
+    # =========================================================================================
+    # SDK package publishing — SDK-4.1 (#4495)
+    # =========================================================================================
+
+    #: Every column a reader of a credential row needs, UUIDs rendered as text. One constant
+    #: because the read and the write's ``RETURNING`` clause must not drift apart.
+    #: ``encrypted_token`` is included because the resolver has to open it; nothing projects it
+    #: onto a response.
+    _SDK_REGISTRY_CREDENTIAL_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        ecosystem,
+        registry_url,
+        encrypted_token,
+        key_version,
+        token_metadata,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by,
+        created_at,
+        updated_at
+    """
+
+    #: Every column of a publish run.
+    _SDK_PUBLISH_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        version_id::text AS version_id,
+        ecosystem,
+        dry_run,
+        status,
+        version_line,
+        release_series,
+        regen_counter,
+        package_name,
+        package_version,
+        artifact_sha256,
+        artifact_bytes,
+        registry_url,
+        credential_scope,
+        provenance,
+        log,
+        error_code,
+        error_message,
+        started_at,
+        finished_at,
+        created_by::text AS created_by
+    """
+
+    def get_sdk_registry_credentials(
+        self,
+        tenant_id: str,
+        project_id: Optional[str] = None,
+        ecosystem: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return the registry credentials in scope, tenant-wide first (SDK-4.1).
+
+        Both scopes come back in one query. Unlike SDK-3.4's settings they are not merged — a
+        project row *replaces* the tenant row for its ecosystem — so the caller picks the most
+        specific readable one rather than folding them.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: When given, the tenant-wide rows *and* that project's overrides.
+            ecosystem: Narrow to one ecosystem, when the caller only needs that one.
+
+        Returns:
+            The matching rows, tenant-first. Empty when the tenant id is not a UUID, so a unit-test
+            tenant handle never reaches the database.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        clauses = ["tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        if project_id is not None and is_uuid_string(str(project_id)):
+            clauses.append("(project_id = %s::uuid OR project_id IS NULL)")
+            params.append(project_id)
+        else:
+            clauses.append("project_id IS NULL")
+        if ecosystem:
+            clauses.append("ecosystem = %s")
+            params.append(ecosystem)
+        joined = " AND ".join(clauses)
+        query = f"""
+            SELECT {self._SDK_REGISTRY_CREDENTIAL_COLUMNS}
+            FROM apiome.sdk_registry_credentials
+            WHERE {joined}
+            ORDER BY project_id NULLS FIRST, ecosystem
+        """
+        rows = self.execute_query(query, tuple(params))
+        return [dict(row) for row in rows or []]
+
+    def upsert_sdk_registry_credential(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str],
+        ecosystem: str,
+        registry_url: str,
+        encrypted_token: bytes,
+        key_version: int,
+        token_metadata: Dict[str, Any],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store or replace one scope's credential for one ecosystem (SDK-4.1).
+
+        The two scopes need two statements because their uniqueness is enforced by two *partial*
+        indexes, and ``ON CONFLICT`` names one at a time — the same shape V255 uses.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project this credential is for, or ``None`` for the tenant-wide row.
+            ecosystem: ``npm`` or ``pypi``.
+            registry_url: Where it publishes.
+            encrypted_token: The sealed token blob. Never plaintext.
+            key_version: The master-key version that sealed it.
+            token_metadata: Non-secret description of the token.
+            actor_id: The user storing it.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        scoped = project_id is not None and is_uuid_string(str(project_id))
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        blob = psycopg2.Binary(encrypted_token)
+        metadata = Json(token_metadata or {})
+        if scoped:
+            query = f"""
+                INSERT INTO apiome.sdk_registry_credentials (
+                    tenant_id, project_id, ecosystem, registry_url, encrypted_token,
+                    key_version, token_metadata, created_by, updated_by
+                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, project_id, ecosystem) WHERE project_id IS NOT NULL
+                DO UPDATE SET
+                    registry_url = EXCLUDED.registry_url,
+                    encrypted_token = EXCLUDED.encrypted_token,
+                    key_version = EXCLUDED.key_version,
+                    token_metadata = EXCLUDED.token_metadata,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._SDK_REGISTRY_CREDENTIAL_COLUMNS}
+            """
+            params: tuple = (
+                tenant_id,
+                project_id,
+                ecosystem,
+                registry_url,
+                blob,
+                key_version,
+                metadata,
+                actor,
+                actor,
+            )
+        else:
+            query = f"""
+                INSERT INTO apiome.sdk_registry_credentials (
+                    tenant_id, project_id, ecosystem, registry_url, encrypted_token,
+                    key_version, token_metadata, created_by, updated_by
+                ) VALUES (%s::uuid, NULL, %s, %s, %s, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, ecosystem) WHERE project_id IS NULL
+                DO UPDATE SET
+                    registry_url = EXCLUDED.registry_url,
+                    encrypted_token = EXCLUDED.encrypted_token,
+                    key_version = EXCLUDED.key_version,
+                    token_metadata = EXCLUDED.token_metadata,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._SDK_REGISTRY_CREDENTIAL_COLUMNS}
+            """
+            params = (
+                tenant_id,
+                ecosystem,
+                registry_url,
+                blob,
+                key_version,
+                metadata,
+                actor,
+                actor,
+            )
+
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_sdk_registry_credential(
+        self, tenant_id: str, ecosystem: str, project_id: Optional[str] = None
+    ) -> int:
+        """Remove the credential stored at exactly one scope (SDK-4.1).
+
+        Nothing cascades: dropping a project override falls back to the tenant credential, and
+        dropping the tenant credential leaves project overrides in place.
+
+        Args:
+            tenant_id: Owning tenant.
+            ecosystem: ``npm`` or ``pypi``.
+            project_id: The project override to drop, or ``None`` for the tenant-wide row.
+
+        Returns:
+            Rows removed: ``1`` when a credential was stored at that exact scope, ``0`` otherwise.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return 0
+        if project_id is not None and is_uuid_string(str(project_id)):
+            return self._execute_write(
+                """
+                DELETE FROM apiome.sdk_registry_credentials
+                WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND ecosystem = %s
+                """,
+                (tenant_id, project_id, ecosystem),
+            )
+        return self._execute_write(
+            """
+            DELETE FROM apiome.sdk_registry_credentials
+            WHERE tenant_id = %s::uuid AND project_id IS NULL AND ecosystem = %s
+            """,
+            (tenant_id, ecosystem),
+        )
+
+    def next_sdk_publish_counter(
+        self, tenant_id: str, project_id: str, ecosystem: str, release_series: str
+    ) -> int:
+        """Return the regen counter the next release of one series would take (SDK-4.1).
+
+        Derived from the runs that actually claimed a version rather than from a stored counter, so
+        it cannot drift from what was published. ``failed`` and ``dry_run`` rows are excluded — a
+        number nothing was uploaded under is free to reuse.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project being published.
+            ecosystem: ``npm`` or ``pypi``.
+            release_series: The series key (``1.4``, ``1.5-beta``).
+
+        Returns:
+            ``0`` for a series that has never been released — including when the ids are not UUIDs,
+            so a unit-test handle predicts a first release rather than reaching the database.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        rows = self.execute_query(
+            """
+            SELECT COALESCE(MAX(regen_counter) + 1, 0) AS next_counter
+            FROM apiome.sdk_publish_runs
+            WHERE tenant_id = %s::uuid
+              AND project_id = %s::uuid
+              AND ecosystem = %s
+              AND release_series = %s
+              AND status IN ('in_progress', 'published', 'already_published')
+            """,
+            (tenant_id, project_id, ecosystem, release_series),
+        )
+        if not rows:
+            return 0
+        return int(rows[0].get("next_counter") or 0)
+
+    def insert_sdk_publish_run(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        ecosystem: str,
+        status: str,
+        dry_run: bool,
+        version_line: Optional[str],
+        release_series: str,
+        regen_counter: int,
+        package_name: str,
+        package_version: str,
+        artifact_sha256: Optional[str] = None,
+        artifact_bytes: Optional[int] = None,
+        registry_url: Optional[str] = None,
+        credential_scope: Optional[str] = None,
+        provenance: Optional[Dict[str, Any]] = None,
+        log: Optional[List[Dict[str, Any]]] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+        finished: bool = False,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Insert one publish run (SDK-4.1).
+
+        An ``in_progress`` insert is how a version number is *claimed*: the partial unique index
+        means two concurrent publishes cannot both take the same one, and the loser retries with
+        the next counter rather than racing to the registry.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project being published.
+            version_id: The revision it was built from.
+            ecosystem: ``npm`` or ``pypi``.
+            status: The lifecycle status to record.
+            dry_run: Whether this run only validated.
+            version_line: The published version's label.
+            release_series: The series the counter was allocated under.
+            regen_counter: Which release of that series this is.
+            package_name: The resolved package name.
+            package_version: The version being claimed.
+            artifact_sha256: Digest of the built archive.
+            artifact_bytes: Size of the built archive.
+            registry_url: Where it publishes.
+            credential_scope: Which scope supplied the credential.
+            provenance: The provenance embedded in the package metadata.
+            log: The publish event log.
+            error_code: Machine-readable failure code, when it failed.
+            error_message: Redacted failure message, when it failed.
+            finished: Whether to stamp ``finished_at`` now.
+            actor_id: The user who asked for the publish.
+
+        Returns:
+            The stored row, or ``None`` when the ids are not UUIDs.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When this package version is already claimed. The
+                caller retries with the next counter.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+        version = version_id if is_uuid_string(str(version_id or "")) else None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        finished_at = "CURRENT_TIMESTAMP" if finished else "NULL"
+        query = f"""
+            INSERT INTO apiome.sdk_publish_runs (
+                tenant_id, project_id, version_id, ecosystem, dry_run, status,
+                version_line, release_series, regen_counter, package_name, package_version,
+                artifact_sha256, artifact_bytes, registry_url, credential_scope,
+                provenance, log, error_code, error_message, finished_at, created_by
+            ) VALUES (
+                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, {finished_at}, %s::uuid
+            )
+            RETURNING {self._SDK_PUBLISH_RUN_COLUMNS}
+        """
+        params = (
+            tenant_id,
+            project_id,
+            version,
+            ecosystem,
+            dry_run,
+            status,
+            version_line,
+            release_series,
+            regen_counter,
+            package_name,
+            package_version,
+            artifact_sha256,
+            artifact_bytes,
+            registry_url,
+            credential_scope,
+            Json(provenance or {}),
+            Json(log or []),
+            error_code,
+            error_message,
+            actor,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def finish_sdk_publish_run(
+        self,
+        run_id: str,
+        tenant_id: str,
+        *,
+        status: str,
+        log: Optional[List[Dict[str, Any]]] = None,
+        provenance: Optional[Dict[str, Any]] = None,
+        artifact_sha256: Optional[str] = None,
+        artifact_bytes: Optional[int] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Close out an ``in_progress`` run with its outcome (SDK-4.1).
+
+        A ``failed`` status leaves the claim index's predicate, which is what frees the version
+        number for the next attempt; ``published`` and ``already_published`` keep it claimed
+        forever.
+
+        Args:
+            run_id: The run to close.
+            tenant_id: The caller's tenant, which also scopes the update.
+            status: The final status.
+            log: The complete event log to store.
+            provenance: The provenance embedded in the published package's own metadata. Written
+                here rather than at insert time because the archive does not exist until *after*
+                the version number has been claimed.
+            artifact_sha256: Digest of what was uploaded.
+            artifact_bytes: Size of what was uploaded.
+            error_code: Machine-readable failure code.
+            error_message: Redacted failure message.
+
+        Returns:
+            The updated row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        query = f"""
+            UPDATE apiome.sdk_publish_runs
+            SET status = %s,
+                log = COALESCE(%s, log),
+                provenance = COALESCE(%s, provenance),
+                artifact_sha256 = COALESCE(%s, artifact_sha256),
+                artifact_bytes = COALESCE(%s, artifact_bytes),
+                error_code = %s,
+                error_message = %s,
+                finished_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING {self._SDK_PUBLISH_RUN_COLUMNS}
+        """
+        params = (
+            status,
+            Json(log) if log is not None else None,
+            Json(provenance) if provenance is not None else None,
+            artifact_sha256,
+            artifact_bytes,
+            error_code,
+            error_message,
+            run_id,
+            tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_sdk_publish_runs(
+        self,
+        tenant_id: str,
+        project_id: str,
+        *,
+        ecosystem: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List a project's publish history, newest first (SDK-4.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to read.
+            ecosystem: Narrow to one ecosystem.
+            limit: Page size.
+            offset: Rows to skip.
+
+        Returns:
+            The matching rows. Empty when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        clauses = ["tenant_id = %s::uuid", "project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if ecosystem:
+            clauses.append("ecosystem = %s")
+            params.append(ecosystem)
+        params.extend([max(1, int(limit)), max(0, int(offset))])
+        joined = " AND ".join(clauses)
+        query = f"""
+            SELECT {self._SDK_PUBLISH_RUN_COLUMNS}
+            FROM apiome.sdk_publish_runs
+            WHERE {joined}
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s OFFSET %s
+        """
+        rows = self.execute_query(query, tuple(params))
+        return [dict(row) for row in rows or []]
+
+    def count_sdk_publish_runs(
+        self, tenant_id: str, project_id: str, *, ecosystem: Optional[str] = None
+    ) -> int:
+        """Count a project's publish runs, for paging (SDK-4.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to count.
+            ecosystem: Narrow to one ecosystem.
+
+        Returns:
+            The number of rows, or ``0`` when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        clauses = ["tenant_id = %s::uuid", "project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if ecosystem:
+            clauses.append("ecosystem = %s")
+            params.append(ecosystem)
+        joined = " AND ".join(clauses)
+        rows = self.execute_query(
+            f"""
+            SELECT COUNT(*) AS total
+            FROM apiome.sdk_publish_runs
+            WHERE {joined}
+            """,
+            tuple(params),
+        )
+        return int(rows[0].get("total") or 0) if rows else 0
+
+    def get_sdk_publish_run(self, run_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return one publish run within the caller's tenant (SDK-4.1).
+
+        Args:
+            run_id: The run to read.
+            tenant_id: The caller's tenant, which scopes the read.
+
+        Returns:
+            The row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_PUBLISH_RUN_COLUMNS}
+            FROM apiome.sdk_publish_runs
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (run_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+
 # Global database instance
 db = Database()

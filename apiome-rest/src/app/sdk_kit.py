@@ -93,9 +93,12 @@ __all__ = [
     "GoClientPlan",
     "KitCoordinates",
     "KitSummary",
+    "RenderedOperation",
     "ServerStubPlanResult",
     "build_client_kit",
     "go_client_coordinates",
+    "operation_identifier",
+    "render_kit_operations",
     "plan_go_client",
     "plan_server_stubs",
     "server_stub_coordinates",
@@ -276,7 +279,7 @@ class _Entry:
 
 
 @dataclass
-class _RenderedOperation:
+class RenderedOperation:
     """One operation's snippets, staged for both the archive and the README."""
 
     op: Operation
@@ -533,7 +536,7 @@ def _filename_safe(value: str) -> str:
     return _FILENAME_UNSAFE.sub("-", (value or "").strip()).strip("-.")
 
 
-def _operation_identifier(op: Operation) -> str:
+def operation_identifier(op: Operation) -> str:
     """The id a consumer would address this operation by.
 
     Mirrors :func:`app.snippet_render.find_operation`'s precedence, so an id printed in the kit is
@@ -552,7 +555,7 @@ def _operation_slug(op: Operation, taken: Dict[str, int]) -> str:
     Returns:
         The stem, suffixed ``-2``, ``-3``… when an earlier operation already claimed it.
     """
-    base = _slug(_operation_identifier(op))
+    base = _slug(operation_identifier(op))
     if not base:
         base = _slug(f"{op.http_method or 'op'} {op.http_path or op.key}") or "operation"
     # Uniqueness is tracked case-insensitively: `getWidget` and `getwidget` are two names on a
@@ -564,9 +567,9 @@ def _operation_slug(op: Operation, taken: Dict[str, int]) -> str:
     return base if seen == 1 else f"{base}-{seen}"
 
 
-def _render_operations(
+def render_kit_operations(
     api: CanonicalApi, branding: ResolvedBranding
-) -> Tuple[List[_RenderedOperation], List[Dict[str, str]], KitSummary]:
+) -> Tuple[List[RenderedOperation], List[Dict[str, str]], KitSummary]:
     """Render every eligible operation in every language.
 
     The cap counts *renderable* operations only, so a model's non-HTTP operations never consume
@@ -580,7 +583,7 @@ def _render_operations(
         ``(rendered, skipped, summary)`` — the rendered operations in declaration order, one
         record per operation no snippet is defined for, and the counts for the manifest.
     """
-    rendered: List[_RenderedOperation] = []
+    rendered: List[RenderedOperation] = []
     skipped: List[Dict[str, str]] = []
     taken: Dict[str, int] = {}
     total = 0
@@ -591,7 +594,7 @@ def _render_operations(
         if _is_renderable(op) and len(rendered) >= MAX_KIT_OPERATIONS:
             omitted += 1
             continue
-        identifier = _operation_identifier(op)
+        identifier = operation_identifier(op)
         snippets: Dict[str, Tuple[Optional[str], str]] = {}
         placeholders: List[SnippetPlaceholder] = []
         failure: Optional[str] = None
@@ -615,7 +618,7 @@ def _render_operations(
             skipped.append({"operation_id": identifier, "key": op.key, "reason": failure})
             continue
         rendered.append(
-            _RenderedOperation(
+            RenderedOperation(
                 op=op,
                 slug=_operation_slug(op, taken),
                 identifier=identifier,
@@ -645,7 +648,7 @@ def _package_lines(branding: ResolvedBranding) -> List[Tuple[str, str, Optional[
     ]
 
 
-def _placeholder_legend(rendered: List[_RenderedOperation]) -> List[Tuple[str, str]]:
+def _placeholder_legend(rendered: List[RenderedOperation]) -> List[Tuple[str, str]]:
     """Collect the distinct placeholder tokens across the kit, for the README's legend.
 
     Built from the renderer's structured placeholder records rather than by scanning the emitted
@@ -675,7 +678,7 @@ def _build_readme(
     api: CanonicalApi,
     coordinates: KitCoordinates,
     branding: ResolvedBranding,
-    rendered: List[_RenderedOperation],
+    rendered: List[RenderedOperation],
     skipped: List[Dict[str, str]],
     spec_name: str,
     summary: KitSummary,
@@ -1021,7 +1024,7 @@ def build_client_kit(
     Returns:
         The :class:`ClientKit`. Building it twice from the same arguments yields identical bytes.
     """
-    rendered, skipped, summary = _render_operations(api, branding)
+    rendered, skipped, summary = render_kit_operations(api, branding)
     spec_name = spec_filename(source_format, source_text)
     go_client = plan_go_client(api, coordinates, branding)
     server_stubs = plan_server_stubs(api, coordinates, branding)

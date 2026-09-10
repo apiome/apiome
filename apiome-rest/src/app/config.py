@@ -263,6 +263,29 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for tenant package-registry credentials (SDK-4.1, #4495).
+    # The npm / PyPI publish tokens stored in apiome.sdk_registry_credentials (V256). Same shape
+    # and same rotation story as the MCP credential keys above, but a separate key map on purpose:
+    # a publish token and an outbound MCP token are different blast radii, and the SDK vault seals
+    # under its own magic so a blob cannot be moved between the two. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    sdk_registry_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS",
+            "sdk_registry_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new registry credentials are sealed under. Defaults to the highest version
+    # present in sdk_registry_credential_encryption_keys when unset.
+    sdk_registry_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGISTRY_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "sdk_registry_credential_active_key_version",
+        ),
+    )
+
     # Envelope encryption-at-rest for server-global OAuth provider secrets (OLO-8.3, #4969). The
     # key-encryption-key (KEK) that seals the client secret stored in
     # apiome.auth_provider_config.client_secret_encrypted (V196, OLO-8.2). The KEK lives in the

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.182.0
+  version: 1.183.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -5348,6 +5348,579 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for dropthisprojectsoverrideresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-registry-credentials:
+    get:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: List the credentials a project would publish with
+      description: 'Both the workspace credentials and this project''s overrides,
+        workspace first, so a reader can see what is being overridden.
+
+
+        A credential is **write-only**: this API stores the token encrypted at rest
+        and never returns it. What comes back is its public scheme prefix (`npm_`,
+        `pypi-`), its length and a truncated SHA-256 — enough to confirm which token
+        is stored, not enough to use it.
+
+
+        A **project** credential replaces the workspace one for that ecosystem. Unlike
+        SDK-3.4''s generation settings, credentials do not merge field by field: a
+        token is atomic.
+
+
+        Ecosystems: `npm`, `pypi`. `gomod` is absent because a Go module is released
+        by pushing a tag (SDK-4.2), not by uploading to a registry.
+
+
+        `registryUrl` defaults to the ecosystem''s public registry and must be `https://`
+        — a publish token sent over plain HTTP is a token disclosed.
+
+
+        Requires `projects:view`.'
+      operationId: list_project_registry_credentials_v1_projects__tenant_slug___project_ref__sdk_registry_credentials_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthecredentialsaprojectwouldpublishwiauthorization schema.
+          - type: 'null'
+            description: Listthecredentialsaprojectwouldpublishwiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthecredentialsaprojectwouldpublishwi Xapikey schema.
+          - type: 'null'
+            description: Listthecredentialsaprojectwouldpublishwi Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the credentials a project would
+            publish with.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryCredentialListResponse'
+                description: Response payload for listthecredentialsaprojectwouldpublishwiresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthecredentialsaprojectwouldpublishwiresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-registry-credentials/{ecosystem}:
+    put:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: Store this project's credential for one registry
+      description: 'Replaces the workspace credential for this project and ecosystem,
+        whole.
+
+
+        A credential is **write-only**: this API stores the token encrypted at rest
+        and never returns it. What comes back is its public scheme prefix (`npm_`,
+        `pypi-`), its length and a truncated SHA-256 — enough to confirm which token
+        is stored, not enough to use it.
+
+
+        A **project** credential replaces the workspace one for that ecosystem. Unlike
+        SDK-3.4''s generation settings, credentials do not merge field by field: a
+        token is atomic.
+
+
+        Ecosystems: `npm`, `pypi`. `gomod` is absent because a Go module is released
+        by pushing a tag (SDK-4.2), not by uploading to a registry.
+
+
+        `registryUrl` defaults to the ecosystem''s public registry and must be `https://`
+        — a publish token sent over plain HTTP is a token disclosed.
+
+
+        Requires `projects:edit`. Audited as `governance.sdk_registry_credential.update`.'
+      operationId: put_project_registry_credential_v1_projects__tenant_slug___project_ref__sdk_registry_credentials__ecosystem__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storethisprojectscredentialforoneregistrauthorization schema.
+          - type: 'null'
+            description: Storethisprojectscredentialforoneregistrauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storethisprojectscredentialforoneregistr Xapikey schema.
+          - type: 'null'
+            description: Storethisprojectscredentialforoneregistr Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistryCredentialPutRequest'
+              description: Request body for storethisprojectscredentialforoneregistrrequest.
+        description: Request body for store this project's credential for one registry.
+      responses:
+        '200':
+          description: Successful response for store this project's credential for
+            one registry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryCredentialOut'
+                description: Response payload for storethisprojectscredentialforoneregistrresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: The token, registry URL or ecosystem is not acceptable.
+        '503':
+          description: No credential-encryption key is configured on this deployment.
+    delete:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: Remove this project's credential for one registry
+      description: 'The project falls back to the workspace credential, if there is
+        one.
+
+
+        Requires `projects:edit`. Audited as `governance.sdk_registry_credential.clear`.'
+      operationId: delete_project_registry_credential_v1_projects__tenant_slug___project_ref__sdk_registry_credentials__ecosystem__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removethisprojectscredentialforoneregistauthorization schema.
+          - type: 'null'
+            description: Removethisprojectscredentialforoneregistauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removethisprojectscredentialforoneregist Xapikey schema.
+          - type: 'null'
+            description: Removethisprojectscredentialforoneregist Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove this project's credential for
+            one registry.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Project Registry Credential V1 Projects  Tenant
+                  Slug   Project Ref  Sdk Registry Credentials  Ecosystem  Delete
+                description: Response Delete Project Registry Credential V1 Projects  Tenant
+                  Slug   Project Ref  Sdk Registry Credentials  Ecosystem  Delete
+                  schema.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removethisprojectscredentialforoneregistresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-publish:
+    post:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: Publish a version's SDK package to npm or PyPI (dry run by default)
+      description: 'Builds the package a consumer would `npm install` / `pip install`
+        from one **published** revision and, unless `dryRun` is false, uploads it
+        with the tenant''s stored registry credential.
+
+
+        **The version number is derived, not chosen.** It is `major.minor.<regen counter>`,
+        where `major.minor` come from the revision''s version line and the counter
+        is how many releases that line''s release series has already had. Re-publishing
+        the same line bumps the patch; a new line starts a new series. A prerelease
+        line stays a prerelease (`1.5.0-beta.2` on npm, `1.5.0b2` on PyPI). A line
+        with no leading number cannot be mapped and is refused.
+
+
+        **A dry run is the same work minus the upload.** It resolves the credential
+        (proving it is present and still decryptable), computes the version the next
+        real publish would claim, builds the archive and reports its SHA-256 and contents.
+        The build is byte-deterministic, so the digest a dry run reports is the digest
+        a publish uploads.
+
+
+        **Provenance is embedded in the package''s own metadata** — `package.json`''s
+        `apiome` object, PyPI''s `Project-URL` entries — naming the revision id, the
+        version line, the release series and the generator, so an installed package
+        traces back to its spec.
+
+
+        Requires `versions:publish`, for a dry run too. Audited as `sdk.package_publish`.'
+      operationId: publish_project_sdk_v1_projects__tenant_slug___project_ref__sdk_publish_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaversions Sdkpackagetonpmor Py Pidryauthorization
+              schema.
+          - type: 'null'
+            description: Publishaversions Sdkpackagetonpmor Py Pidryauthorization
+              schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaversions Sdkpackagetonpmor Py Pidry Xapikey schema.
+          - type: 'null'
+            description: Publishaversions Sdkpackagetonpmor Py Pidry Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SdkPublishRequest'
+              description: Request body for publishaversions sdkpackagetonpmor py
+                pidryrequest.
+        description: Request body for publish a version's sdk package to npm or pypi
+          (dry run by default).
+      responses:
+        '200':
+          description: Successful response for publish a version's sdk package to
+            npm or pypi (dry run by default).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SdkPublishRunModel'
+                description: Response payload for publishaversions sdkpackagetonpmor
+                  py pidryresponse200.
+        '400':
+          description: Unsupported ecosystem, or the revision is not published.
+        '404':
+          description: Project or version not found in this tenant.
+        '409':
+          description: 'No free version number: another publish of this series is
+            in flight.'
+        '422':
+          description: No package name is configured, the version line cannot be mapped,
+            no usable credential is stored, or there is nothing to package.
+        '503':
+          description: No credential-encryption key is configured on this deployment.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-publish-runs:
+    get:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: List a project's package publish history
+      description: 'Every publish attempt, newest first — dry runs included, because
+        a dry run is the record of what a release *would* have been.
+
+
+        Requires `versions:view`.'
+      operationId: list_project_publish_runs_v1_projects__tenant_slug___project_ref__sdk_publish_runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectspackagepublishhistoryecosystem schema.
+          - type: 'null'
+            description: Listaprojectspackagepublishhistoryecosystem schema.
+          description: Narrow to one ecosystem (`npm` or `pypi`).
+          title: Ecosystem
+        description: Narrow to one ecosystem (`npm` or `pypi`).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+          description: Offset schema.
+        description: Number of rows to skip before returning results.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectspackagepublishhistoryauthorization schema.
+          - type: 'null'
+            description: Listaprojectspackagepublishhistoryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprojectspackagepublishhistory Xapikey schema.
+          - type: 'null'
+            description: Listaprojectspackagepublishhistory Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a project's package publish history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SdkPublishRunListResponse'
+                description: Response payload for listaprojectspackagepublishhistoryresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaprojectspackagepublishhistoryresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-publish-runs/{run_id}:
+    get:
+      tags:
+      - sdk-publishing
+      - sdk-publishing
+      summary: Read one publish run
+      description: 'The run''s outcome, the version it claimed and its event log.
+        The log is stored redacted — a registry error quoting the credential it rejected
+        is replaced before it is written.
+
+
+        Requires `versions:view`.'
+      operationId: get_project_publish_run_v1_projects__tenant_slug___project_ref__sdk_publish_runs__run_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readonepublishrunauthorization schema.
+          - type: 'null'
+            description: Readonepublishrunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readonepublishrun Xapikey schema.
+          - type: 'null'
+            description: Readonepublishrun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one publish run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SdkPublishRunModel'
+                description: Response payload for readonepublishrunresponse200.
+        '404':
+          description: Project or run not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readonepublishrunresponse422.
   /v1/catalog/{tenant_slug}:
     get:
       tags:
@@ -8854,6 +9427,247 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for cleartheworkspacegenerationdefaultsresponse422.
+  /v1/tenants/{tenant_slug}/governance/sdk-registry-credentials:
+    get:
+      tags:
+      - governance
+      - governance
+      summary: List the workspace's package-registry credentials
+      description: 'A credential is **write-only**: this API stores the token encrypted
+        at rest and never returns it. What comes back is its public scheme prefix
+        (`npm_`, `pypi-`), its length and a truncated SHA-256 — enough to confirm
+        which token is stored, not enough to use it.
+
+
+        A **project** credential replaces the workspace one for that ecosystem. Unlike
+        SDK-3.4''s generation settings, credentials do not merge field by field: a
+        token is atomic.
+
+
+        Ecosystems: `npm`, `pypi`. `gomod` is absent because a Go module is released
+        by pushing a tag (SDK-4.2), not by uploading to a registry.
+
+
+        `registryUrl` defaults to the ecosystem''s public registry and must be `https://`
+        — a publish token sent over plain HTTP is a token disclosed.
+
+
+        Requires `projects:view`.'
+      operationId: list_tenant_registry_credentials_v1_tenants__tenant_slug__governance_sdk_registry_credentials_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacespackageregistrycredentiauthorization schema.
+          - type: 'null'
+            description: Listtheworkspacespackageregistrycredentiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacespackageregistrycredenti Xapikey schema.
+          - type: 'null'
+            description: Listtheworkspacespackageregistrycredenti Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the workspace's package-registry
+            credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryCredentialListResponse'
+                description: Response payload for listtheworkspacespackageregistrycredentiresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheworkspacespackageregistrycredentiresponse422.
+  /v1/tenants/{tenant_slug}/governance/sdk-registry-credentials/{ecosystem}:
+    put:
+      tags:
+      - governance
+      - governance
+      summary: Store the workspace's credential for one registry
+      description: 'A credential is **write-only**: this API stores the token encrypted
+        at rest and never returns it. What comes back is its public scheme prefix
+        (`npm_`, `pypi-`), its length and a truncated SHA-256 — enough to confirm
+        which token is stored, not enough to use it.
+
+
+        A **project** credential replaces the workspace one for that ecosystem. Unlike
+        SDK-3.4''s generation settings, credentials do not merge field by field: a
+        token is atomic.
+
+
+        Ecosystems: `npm`, `pypi`. `gomod` is absent because a Go module is released
+        by pushing a tag (SDK-4.2), not by uploading to a registry.
+
+
+        `registryUrl` defaults to the ecosystem''s public registry and must be `https://`
+        — a publish token sent over plain HTTP is a token disclosed.
+
+
+        Requires `projects:edit`. Audited as `governance.sdk_registry_credential.update`
+        — the audit row records the token''s fingerprint, never the token.'
+      operationId: put_tenant_registry_credential_v1_tenants__tenant_slug__governance_sdk_registry_credentials__ecosystem__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storetheworkspacescredentialforoneregistauthorization schema.
+          - type: 'null'
+            description: Storetheworkspacescredentialforoneregistauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storetheworkspacescredentialforoneregist Xapikey schema.
+          - type: 'null'
+            description: Storetheworkspacescredentialforoneregist Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistryCredentialPutRequest'
+              description: Request body for storetheworkspacescredentialforoneregistrequest.
+        description: Request body for store the workspace's credential for one registry.
+      responses:
+        '200':
+          description: Successful response for store the workspace's credential for
+            one registry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryCredentialOut'
+                description: Response payload for storetheworkspacescredentialforoneregistresponse200.
+        '422':
+          description: The token, registry URL or ecosystem is not acceptable.
+        '503':
+          description: No credential-encryption key is configured on this deployment.
+    delete:
+      tags:
+      - governance
+      - governance
+      summary: Remove the workspace's credential for one registry
+      description: 'Nothing cascades: a project that stored its own credential keeps
+        publishing with it.
+
+
+        Requires `projects:edit`. Audited as `governance.sdk_registry_credential.clear`.'
+      operationId: delete_tenant_registry_credential_v1_tenants__tenant_slug__governance_sdk_registry_credentials__ecosystem__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removetheworkspacescredentialforoneregisauthorization schema.
+          - type: 'null'
+            description: Removetheworkspacescredentialforoneregisauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removetheworkspacescredentialforoneregis Xapikey schema.
+          - type: 'null'
+            description: Removetheworkspacescredentialforoneregis Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove the workspace's credential for
+            one registry.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Tenant Registry Credential V1 Tenants  Tenant
+                  Slug  Governance Sdk Registry Credentials  Ecosystem  Delete
+                description: Response Delete Tenant Registry Credential V1 Tenants  Tenant
+                  Slug  Governance Sdk Registry Credentials  Ecosystem  Delete schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removetheworkspacescredentialforoneregisresponse422.
   /v1/tenants/{tenant_slug}/verification-runs:
     post:
       tags:
@@ -62780,13 +63594,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -64355,7 +65169,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 7ed9c6dc-7c15-4ddb-af43-921002106718
+          example: bbe7db20-0ada-4b2a-bb7d-467cbfbb6757
         method:
           type: string
           title: Method
@@ -66498,7 +67312,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
         envelope:
           additionalProperties: true
           type: object
@@ -94943,6 +95757,193 @@ components:
 
         (``is_system = false``). ``unresolved_ref_count`` mirrors ``GET …/unresolved``
         (#3457).'
+    RegistryCredentialListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: sdk.registry-credential.v1
+          description: Schema Version.
+          example: 1.0.0
+        scope:
+          type: string
+          title: Scope
+          description: Scope.
+          example: example
+        encryptionConfigured:
+          type: boolean
+          title: Encryptionconfigured
+          description: Encryption Configured.
+          example: false
+        ecosystems:
+          items:
+            type: string
+          type: array
+          title: Ecosystems
+          description: Ecosystems.
+          maxItems: 1000
+        credentials:
+          items:
+            $ref: '#/components/schemas/RegistryCredentialOut'
+          type: array
+          title: Credentials
+          description: Credentials.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - scope
+      - encryptionConfigured
+      - ecosystems
+      - credentials
+      title: RegistryCredentialListResponse
+      description: "The credentials configured for one scope.\n\nAttributes:\n   \
+        \ schema_version: The projection's shape.\n    scope: The scope that was addressed.\n\
+        \    encryption_configured: Whether this deployment can store credentials\
+        \ at all.\n    ecosystems: Which ecosystems can be published to.\n    credentials:\
+        \ One entry per stored credential, tenant-wide first."
+    RegistryCredentialOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: sdk.registry-credential.v1
+          description: Schema Version.
+          example: 1.0.0
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: '``npm`` or ``pypi``.'
+          example: example
+        scope:
+          type: string
+          title: Scope
+          description: '``tenant`` or ``project``.'
+          example: example
+        projectId:
+          anyOf:
+          - type: string
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Projectid
+          description: Project ID.
+        registryUrl:
+          type: string
+          title: Registryurl
+          description: Registry URL.
+          example: example
+        tokenPrefix:
+          anyOf:
+          - type: string
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Tokenprefix
+          description: Token Prefix.
+        tokenLength:
+          anyOf:
+          - type: integer
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Tokenlength
+          description: Token Length.
+        tokenFingerprint:
+          anyOf:
+          - type: string
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Tokenfingerprint
+          description: Token Fingerprint.
+        keyVersion:
+          anyOf:
+          - type: integer
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Keyversion
+          description: Key Version.
+        readable:
+          type: boolean
+          title: Readable
+          default: true
+          description: Readable.
+          example: false
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Updatedat
+          description: Updated At.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for registry credential.
+          - type: 'null'
+            description: Response payload for registry credential.
+          title: Updatedby
+          description: Updated By.
+      additionalProperties: false
+      type: object
+      required:
+      - ecosystem
+      - scope
+      - registryUrl
+      title: RegistryCredentialOut
+      description: "A stored credential, described without being revealed.\n\nAttributes:\n\
+        \    schema_version: The projection's shape.\n    ecosystem: ``npm`` or ``pypi``.\n\
+        \    scope: ``tenant`` or ``project``.\n    project_id: The project this credential\
+        \ belongs to, when it is a project override.\n    registry_url: Where it publishes.\n\
+        \    token_prefix: The public scheme prefix the token declares, when it declares\
+        \ one.\n    token_length: How many characters the stored token has.\n    token_fingerprint:\
+        \ A truncated SHA-256 of the token, for confirming a rotation.\n    key_version:\
+        \ Which master key sealed it.\n    readable: Whether the stored token can\
+        \ currently be decrypted. ``False`` means the key\n        that sealed it\
+        \ is not configured — the credential is present but unusable, and saying\n\
+        \        so beats a publish failing with a decryption error.\n    created_at:\
+        \ When it was first stored.\n    updated_at: When it was last replaced.\n\
+        \    updated_by: Who last replaced it."
+    RegistryCredentialPutRequest:
+      properties:
+        token:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          title: Token
+          description: The registry token — an npm automation token or a PyPI API
+            token. Stored envelope-encrypted; never returned by any route.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+        registryUrl:
+          anyOf:
+          - type: string
+            description: Request body for registry credential put.
+          - type: 'null'
+            description: Request body for registry credential put.
+          title: Registryurl
+          description: Registry endpoint. Defaults to `npm` → `https://registry.npmjs.org`,
+            `pypi` → `https://upload.pypi.org/legacy/`. Must be `https://`.
+      additionalProperties: false
+      type: object
+      required:
+      - token
+      title: RegistryCredentialPutRequest
+      description: "Body for storing a registry credential.\n\nAttributes:\n    token:\
+        \ The plaintext registry token. Sealed before it is written and never returned.\n\
+        \    registry_url: Where to publish; defaults to the ecosystem's public registry."
     RegistryHealthResponse:
       properties:
         status:
@@ -97490,7 +98491,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
       additionalProperties: false
       type: object
       required:
@@ -99189,6 +100190,252 @@ components:
       title: SdkPackageModel
       description: One resolved package name, as the tenant's SDK-3.4 patterns produce
         it.
+    SdkPublishRequest:
+      properties:
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: '`npm` or `pypi`.'
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Request body for sdk publish.
+          - type: 'null'
+            description: Request body for sdk publish.
+          title: Version
+          description: Revision UUID or version label. Defaults to the latest revision.
+        dryRun:
+          type: boolean
+          title: Dryrun
+          description: 'Validate without publishing. Defaults to **true**: uploading
+            to a public registry is irreversible, so it is always the deliberate choice.'
+          default: true
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - ecosystem
+      title: SdkPublishRequest
+      description: "Body for a publish (or a dry run).\n\nAttributes:\n    ecosystem:\
+        \ ``npm`` or ``pypi``.\n    version: The revision to publish — a revision\
+        \ UUID or a version label. Defaults to the\n        project's latest revision.\n\
+        \    dry_run: When ``true`` (the default), everything is resolved and built\
+        \ and nothing is\n        uploaded."
+    SdkPublishRunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/SdkPublishRunModel'
+          type: array
+          title: Runs
+          description: Runs.
+          maxItems: 1000
+        total:
+          type: integer
+          title: Total
+          description: Total.
+          example: 1
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+      additionalProperties: false
+      type: object
+      required:
+      - runs
+      - total
+      - limit
+      - offset
+      title: SdkPublishRunListResponse
+      description: "A page of publish history.\n\nAttributes:\n    runs: The rows,\
+        \ newest first.\n    total: How many rows match.\n    limit: The page size\
+        \ used.\n    offset: The offset used."
+    SdkPublishRunModel:
+      properties:
+        runId:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Runid
+          description: Run ID.
+        status:
+          type: string
+          title: Status
+          description: Status.
+          example: active
+        dryRun:
+          type: boolean
+          title: Dryrun
+          description: Dry Run.
+          example: false
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: Ecosystem.
+          example: example
+        packageName:
+          type: string
+          title: Packagename
+          description: Package Name.
+          example: Example
+        packageVersion:
+          type: string
+          title: Packageversion
+          description: Package Version.
+          example: 1.0.0
+        releaseSeries:
+          type: string
+          title: Releaseseries
+          description: Release Series.
+          example: example
+        regenCounter:
+          type: integer
+          title: Regencounter
+          description: Regen Counter.
+          example: 1
+        versionLine:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Versionline
+          description: Version Line.
+        registryUrl:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Registryurl
+          description: Registry URL.
+        credentialScope:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Credentialscope
+          description: Credential Scope.
+        artifactFilename:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Artifactfilename
+          description: Artifact Filename.
+        artifactSha256:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Artifactsha256
+          description: Artifact Sha256.
+        artifactBytes:
+          anyOf:
+          - type: integer
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Artifactbytes
+          description: Artifact Bytes.
+        operationCount:
+          type: integer
+          title: Operationcount
+          default: 0
+          description: Number of operation.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          default: false
+          description: Truncated.
+          example: false
+        skipped:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+          title: Skipped
+          description: Skipped.
+          maxItems: 1000
+        files:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Files
+          description: Files.
+          maxItems: 1000
+        provenance:
+          additionalProperties: true
+          type: object
+          title: Provenance
+          description: Provenance.
+        log:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Log
+          description: Log.
+          maxItems: 1000
+        errorCode:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Errorcode
+          description: Error Code.
+        errorMessage:
+          anyOf:
+          - type: string
+            description: Sdk Publish Run Model schema.
+          - type: 'null'
+            description: Sdk Publish Run Model schema.
+          title: Errormessage
+          description: Error Message.
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      - dryRun
+      - ecosystem
+      - packageName
+      - packageVersion
+      - releaseSeries
+      - regenCounter
+      title: SdkPublishRunModel
+      description: "One publish run.\n\nAttributes:\n    run_id: The ledger row.\n\
+        \    status: ``dry_run``, ``in_progress``, ``published``, ``already_published``\
+        \ or ``failed``.\n    dry_run: Whether anything was uploaded.\n    ecosystem:\
+        \ ``npm`` or ``pypi``.\n    package_name: The resolved package name.\n   \
+        \ package_version: The version claimed.\n    release_series: The series the\
+        \ counter was allocated under.\n    regen_counter: Which release of that series\
+        \ this is.\n    version_line: The version label the package version was derived\
+        \ from.\n    registry_url: Where it published (or would have).\n    credential_scope:\
+        \ Which scope supplied the credential.\n    artifact_filename: The archive's\
+        \ filename.\n    artifact_sha256: The archive's digest.\n    artifact_bytes:\
+        \ The archive's size.\n    operation_count: How many operations shipped snippets.\n\
+        \    truncated: Whether the API has more operations than one package carries\
+        \ snippets for.\n    skipped: Operations no snippet is defined for.\n    files:\
+        \ What is inside the archive (a dry run's report; empty for a stored run).\n\
+        \    provenance: The provenance embedded in the package's own metadata.\n\
+        \    log: The publish event log, redacted of secrets.\n    error_code: Set\
+        \ when the run failed.\n    error_message: Set when the run failed."
     SdkServerStubsModel:
       properties:
         directory:
@@ -109838,13 +111085,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-09T04:47:25Z'
+          example: '2026-09-10T02:38:36Z'
         outcome:
           anyOf:
           - type: string

@@ -5,6 +5,75 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.318.0] - 2026-09-09
+
+### Added
+- **Package publishing pipelines (#4495, SDK-4.1)** — downloading a zip is not how SDKs are
+  consumed at scale, so a published version can now be released as a package a consumer installs:
+  `npm install @acme/widgets-sdk`, `pip install acme-widgets`.
+
+  ```bash
+  # Store the workspace's token once (write-only; never returned by any route)
+  curl -sX PUT "$APIOME/v1/tenants/acme/governance/sdk-registry-credentials/npm" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"token": "npm_..."}'
+
+  # Validate a release without publishing anything (the default)
+  curl -sX POST "$APIOME/v1/projects/acme/widgets/sdk-publish" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"ecosystem": "npm", "version": "1.4.2"}'
+  ```
+
+  - **Encrypted tenant registry credentials.** npm / PyPI tokens are stored in apiome-db V256
+    `sdk_registry_credentials` as **ciphertext only**, sealed with AES-256-GCM envelope encryption
+    under `APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS`. The scheme MCAT-6.2 already used was
+    extracted to `app.envelope_crypto` rather than copied, and the SDK vault seals under its own
+    magic so a blob cannot be moved between the two even on a shared key. A credential is
+    **write-only** — every read returns the ecosystem, the registry, the token's *public* scheme
+    prefix, its length and a truncated digest, and no route returns a token. A project credential
+    replaces the workspace one whole (unlike SDK-3.4's settings, a token is atomic), and both
+    scopes are managed at `…/sdk-registry-credentials`.
+  - **Publish with a dry run.** `POST /v1/projects/{t}/{project}/sdk-publish` defaults to
+    `dryRun: true`: it resolves the branding, resolves *and decrypts* the credential, computes the
+    version the next real publish would claim, builds the exact archive that publish would upload
+    and reports its SHA-256 — and uploads nothing. Because the build is byte-deterministic, the
+    digest a dry run reports is the digest a publish uploads. Sending `dryRun: false` is the
+    deliberate act; a default that published would make a mis-typed request a public release.
+  - **Semver from the version line and a regen counter.** The published version is
+    `major.minor.<counter>`, where `major.minor` come from the revision's version line and the
+    counter is how many releases that line's *release series* has already had: `1.4` → `1.4.0`,
+    `1.4.1`, `1.4.2`…; `v3` → `3.0.0`; `2026-01-04` → `2026.1.0`. The counter is allocated per
+    series rather than per line, so `1.4.2` and `1.4.3` cannot both claim `1.4.0`. A prerelease
+    line stays a prerelease (npm `1.5.0-beta.2`, PyPI `1.5.0b2`), and a line with no leading
+    number (`latest`, `draft`) is refused rather than given an invented ordering. The counter is
+    **derived from the run ledger**, never stored on a project row, and a partial unique index
+    makes that safe under concurrency — a run is inserted `in_progress` holding its version before
+    the upload, and a publish that loses the race takes the next number.
+  - **Provenance in the package's own metadata.** `package.json` carries an `apiome` object and
+    PyPI's core metadata carries `Project-URL` entries naming the **revision id** (not merely the
+    label — a label can be re-published, a revision cannot), the version line, the release series,
+    the regen counter, the renderer and the SDK-3.4 settings fingerprint. An installed package
+    therefore traces back to its spec with nothing but the package manager.
+  - **What is in the package.** SDK-4.1's stated dependencies — the two MVP client generators
+    (#4485/#4486), the generator SPI (#4482) and the SDK-1.1 job service and artifact store
+    (#4481) this was to be a step on — were all closed **not-planned**, so, following the
+    SDK-2.3/2.4/2.5/3.3/3.4 precedent, the pipeline publishes what did ship, read straight from
+    the persisted canonical model: the published contract verbatim, a README, one runnable snippet
+    per operation, and an importable module exposing the provenance and the spec. A distribution is
+    assembled from a list of files plus metadata, so a future client generator becomes another
+    contributor to that list rather than a second pipeline. `gomod` is deliberately not
+    publishable — it names a module path, and a Go module is released by pushing a tag (SDK-4.2).
+  - **Secrets never reach a log.** The token is read into memory, handed to the transport and
+    never touched again; every run-log line — including anything the registry said — passes
+    through exact-substring redaction over the token in play, so even a registry that quotes the
+    credential it rejected cannot put one in the ledger. Uploads go through the SSRF-guarded
+    client, so a tenant cannot point a registry URL at an internal address and be handed a token.
+  - **History.** `GET …/sdk-publish-runs[/{run_id}]` lists every attempt, dry runs included, with
+    the version it claimed, the digest it uploaded and its redacted event log.
+  - Credential management is `projects:view` / `projects:edit`; publishing — including a dry run —
+    is `versions:publish`. No new RBAC resource, for the reason CTG-4.4, CTG-4.5 and SDK-3.4 all
+    gave. Documented in `docs/sdk_package_publishing.md`.
+
 ## [1.316.0] - 2026-09-08
 
 ### Added

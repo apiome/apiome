@@ -108,6 +108,9 @@ from .sdk_generation_settings_routes import (
     tenant_router as sdk_generation_settings_tenant_router,
 )
 from .sdk_kit_routes import router as sdk_kit_router
+from .sdk_publish_routes import router as sdk_publish_router
+from .sdk_publish_routes import tenant_router as sdk_publish_tenant_router
+from .sdk_registry_credentials import validate_registry_credential_keys
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
@@ -142,7 +145,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.182.0",
+    version="1.183.0",
 )
 
 
@@ -297,6 +300,10 @@ app.include_router(deploy_gate_router)
 # registered after it too, so `/{tenant}/by-slug/{project_slug}` still wins for a project
 # slugged `sdk-settings` (SDK-3.4, #4494).
 app.include_router(sdk_generation_settings_router)
+# sdk_publish_router shares the `/v1/projects` prefix for the same reason and is registered
+# after it too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged
+# `sdk-publish` or `sdk-registry-credentials` (SDK-4.1, #4495).
+app.include_router(sdk_publish_router)
 app.include_router(catalog_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
@@ -307,6 +314,7 @@ app.include_router(verification_target_router)
 app.include_router(verification_schedule_router)
 app.include_router(deploy_gate_tenant_router)
 app.include_router(sdk_generation_settings_tenant_router)
+app.include_router(sdk_publish_tenant_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
@@ -488,6 +496,7 @@ async def startup_event():
             )
     validate_webhook_signing_key()
     validate_credential_encryption_keys()
+    validate_registry_credential_keys()
     validate_auth_config_encryption_keys()
 
     # Bundled-toolchain self-check (FMT-1.3, #5414). Resolves and actually invokes every
