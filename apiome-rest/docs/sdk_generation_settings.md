@@ -150,7 +150,10 @@ The branding is deliberately **not** mirrored into the client-side snippet twin
 traffic would misattribute it.
 
 `resolved.packageNames` is the seam SDK-3.3 (browse "Get SDK", #4493) and SDK-4.1 (package
-publishing, #4495) are expected to read; neither exists yet, and nothing here assumes them.
+publishing, #4495) read. SDK-4.1 is the strictest consumer: a package name is the exact identifier
+a registry indexes, so a project with **no** `packageNamePatterns` entry for the ecosystem it is
+publishing to is refused rather than published under a guessed name. See
+`sdk_package_publishing.md`.
 
 ## Tests
 

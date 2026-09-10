@@ -6,18 +6,12 @@ as **ciphertext only** (V129); this module is the single place the plaintext is 
 written and unsealed in-memory at connect time. The database never sees, and cannot reconstruct, a
 token.
 
-Scheme — *envelope encryption* with AES-256-GCM (Python ``cryptography``):
-
-* A per-secret random **data-encryption key (DEK)** encrypts the JSON payload (AES-256-GCM, random
-  96-bit nonce). A fresh DEK per secret means two endpoints holding the same token still produce
-  unrelated ciphertext, and a single DEK never protects more than one short message.
-* A long-lived **master key (KEK)**, supplied from the environment, *wraps* (encrypts) that DEK
-  (again AES-256-GCM). Only the wrapped DEK and the payload ciphertext are stored — never the DEK
-  itself, and never the master key.
-* The DB column ``key_version`` records *which* master key sealed a row. Several master keys can be
-  configured at once, so the active key can be rotated while every older row stays decryptable under
-  the version that sealed it. The key-version is also bound into the GCM additional-authenticated-data
-  of both encryptions, so a row cannot be silently re-tagged to a different version.
+**The scheme itself lives in :mod:`app.envelope_crypto`** — AES-256-GCM envelope encryption with a
+per-secret data key wrapped by a versioned master key, the key-version bound into the AAD of both
+encryptions. SDK-4.1 (#4495) needed the identical scheme for npm / PyPI registry tokens, so it was
+extracted rather than copied; this module is that primitive configured for MCP credentials, and
+its stored blob format is unchanged (magic ``OMCV``, format version 1), so rows sealed by earlier
+releases still decrypt.
 
 Key configuration (environment):
 
@@ -46,145 +40,44 @@ Security invariants:
 
 from __future__ import annotations
 
-import base64
-import binascii
-import json
-import logging
-import os
 from typing import Any, Dict, Mapping, Optional, Tuple
 
-from cryptography.exceptions import InvalidTag
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
 from .config import settings
+from .envelope_crypto import EnvelopeCipher, EnvelopeEncryptionError
 
-logger = logging.getLogger(__name__)
+__all__ = [
+    "CredentialEncryptionError",
+    "credential_encryption_configured",
+    "needs_reseal",
+    "reseal_credential_payload",
+    "seal_credential_payload",
+    "unseal_credential_payload",
+    "validate_credential_encryption_keys",
+]
 
-# Sealed-blob framing. The stored ``encrypted_payload`` is a self-describing byte string:
-#
-#   MAGIC(4) | FORMAT(1) | wrap_nonce(12) | wrapped_dek(48) | payload_nonce(12) | ciphertext(>=16)
-#
-# ``wrapped_dek`` is a 32-byte DEK sealed with AES-256-GCM (32 + 16-byte tag = 48). ``ciphertext`` is
-# the payload sealed with the DEK (plaintext + 16-byte tag). The MAGIC/FORMAT header lets the parser
-# reject foreign bytes and lets the format evolve without ambiguity.
-_MAGIC = b"OMCV"  # Apiome MCP Credential Vault
-_FORMAT_VERSION = 1
-_NONCE_LEN = 12  # 96-bit GCM nonce (the recommended size)
-_KEY_LEN = 32  # AES-256
-_GCM_TAG_LEN = 16
-_WRAPPED_DEK_LEN = _KEY_LEN + _GCM_TAG_LEN  # 48
-_HEADER_LEN = len(_MAGIC) + 1  # MAGIC + FORMAT byte
-# Smallest legal blob: header + wrap nonce + wrapped DEK + payload nonce + an empty payload's GCM tag.
-_MIN_BLOB_LEN = _HEADER_LEN + _NONCE_LEN + _WRAPPED_DEK_LEN + _NONCE_LEN + _GCM_TAG_LEN
+#: Raised when a credential cannot be sealed.
+#:
+#: Causes: encryption is not configured (no master key), the key map is malformed, the requested
+#: active key-version has no key, or the payload is not JSON-serialisable. The message never
+#: contains secret material — only the non-secret cause — so it is safe to log and surface. An
+#: alias of the shared :class:`~app.envelope_crypto.EnvelopeEncryptionError` so a caller may catch
+#: either name.
+CredentialEncryptionError = EnvelopeEncryptionError
 
-
-class CredentialEncryptionError(RuntimeError):
-    """Raised when a credential cannot be sealed.
-
-    Causes: encryption is not configured (no master key), the key map is malformed, the requested
-    active key-version has no key, or the payload is not JSON-serialisable. The message never
-    contains secret material — only the non-secret cause — so it is safe to log and surface.
-    """
-
-
-def _decode_master_key(b64: str, version: int) -> bytes:
-    """Decode one base64 master key, requiring exactly 32 bytes (AES-256).
-
-    Accepts both standard and URL-safe base64. The version appears only in the (non-secret) error
-    message; the key bytes themselves are never logged.
-    """
-    candidate = b64.strip()
-    raw: Optional[bytes] = None
-    for decoder in (base64.b64decode, base64.urlsafe_b64decode):
-        try:
-            raw = decoder(candidate)
-            break
-        except (binascii.Error, ValueError):
-            continue
-    if raw is None:
-        raise CredentialEncryptionError(
-            f"master key for version {version} is not valid base64"
-        )
-    if len(raw) != _KEY_LEN:
-        raise CredentialEncryptionError(
-            f"master key for version {version} must decode to {_KEY_LEN} bytes (AES-256), "
-            f"got {len(raw)}"
-        )
-    return raw
-
-
-def _load_key_map() -> Dict[int, bytes]:
-    """Parse the configured key map into ``{version: 32-byte key}`` (empty when unconfigured).
-
-    Raises:
-        CredentialEncryptionError: If the env value is present but malformed (not JSON, not an
-            object, a non-integer version, or a key that is not a 32-byte base64 string).
-    """
-    raw = settings.mcp_credential_encryption_keys
-    if not raw or not raw.strip():
-        return {}
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise CredentialEncryptionError(
-            "APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS is not valid JSON"
-        ) from exc
-    if not isinstance(parsed, dict) or not parsed:
-        raise CredentialEncryptionError(
-            "APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS must be a non-empty JSON object "
-            'mapping version to base64 key, e.g. {"1": "<base64 key>"}'
-        )
-    keys: Dict[int, bytes] = {}
-    for version_str, value in parsed.items():
-        try:
-            version = int(version_str)
-        except (TypeError, ValueError) as exc:
-            raise CredentialEncryptionError(
-                f"key-version {version_str!r} is not an integer"
-            ) from exc
-        if version < 1:
-            raise CredentialEncryptionError(
-                f"key-version {version} is invalid; versions must be >= 1"
-            )
-        if not isinstance(value, str):
-            raise CredentialEncryptionError(
-                f"master key for version {version} must be a base64 string"
-            )
-        keys[version] = _decode_master_key(value, version)
-    return keys
-
-
-def _active_key_version(keys: Mapping[int, bytes]) -> int:
-    """Return the key-version new secrets are sealed under (configured, or the highest present).
-
-    Raises:
-        CredentialEncryptionError: If a version is configured but absent from the key map.
-    """
-    configured = settings.mcp_credential_active_key_version
-    if configured is not None:
-        if configured not in keys:
-            raise CredentialEncryptionError(
-                f"active key-version {configured} has no configured master key"
-            )
-        return configured
-    return max(keys)
-
-
-def _aad(version: int) -> bytes:
-    """Additional authenticated data binding a sealed blob to its key-version.
-
-    Feeding this into both GCM operations means a blob sealed under version *N* will not authenticate
-    if presented as version *M* — a row cannot be silently re-pointed at a different key.
-    """
-    return f"{_MAGIC.decode('ascii')}:v{version}".encode("ascii")
+#: The MCP credential vault. ``OMCV`` = *Apiome MCP Credential Vault* — the magic that has opened
+#: every stored blob since V129, and part of the AAD, so a blob cannot be moved to another vault.
+_CIPHER = EnvelopeCipher(
+    magic=b"OMCV",
+    subject="MCP credential",
+    keys_setting="APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS",
+    read_keys=lambda: settings.mcp_credential_encryption_keys,
+    read_active_version=lambda: settings.mcp_credential_active_key_version,
+)
 
 
 def credential_encryption_configured() -> bool:
     """Return ``True`` when at least one master key is configured and parseable."""
-    try:
-        return bool(_load_key_map())
-    except CredentialEncryptionError:
-        return False
+    return _CIPHER.configured()
 
 
 def validate_credential_encryption_keys() -> None:
@@ -198,10 +91,7 @@ def validate_credential_encryption_keys() -> None:
         CredentialEncryptionError: If the key map is present but malformed, or the active version is
             absent from it.
     """
-    keys = _load_key_map()
-    if not keys:
-        return
-    _active_key_version(keys)
+    _CIPHER.validate()
 
 
 def seal_credential_payload(payload: Mapping[str, Any]) -> Tuple[bytes, int]:
@@ -219,63 +109,7 @@ def seal_credential_payload(payload: Mapping[str, Any]) -> Tuple[bytes, int]:
         CredentialEncryptionError: If encryption is not configured, the key map is malformed, or the
             payload is not JSON-serialisable.
     """
-    keys = _load_key_map()
-    if not keys:
-        raise CredentialEncryptionError(
-            "MCP credential encryption is not configured; set "
-            "APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS before storing a secret"
-        )
-    version = _active_key_version(keys)
-    master = keys[version]
-    aad = _aad(version)
-
-    try:
-        plaintext = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    except (TypeError, ValueError) as exc:
-        raise CredentialEncryptionError("credential payload is not JSON-serialisable") from exc
-
-    dek = AESGCM.generate_key(bit_length=_KEY_LEN * 8)
-    payload_nonce = os.urandom(_NONCE_LEN)
-    ciphertext = AESGCM(dek).encrypt(payload_nonce, plaintext, aad)
-
-    wrap_nonce = os.urandom(_NONCE_LEN)
-    wrapped_dek = AESGCM(master).encrypt(wrap_nonce, dek, aad)
-
-    blob = b"".join(
-        (
-            _MAGIC,
-            bytes((_FORMAT_VERSION,)),
-            wrap_nonce,
-            wrapped_dek,
-            payload_nonce,
-            ciphertext,
-        )
-    )
-    return blob, version
-
-
-def _parse_blob(blob: bytes) -> Tuple[bytes, bytes, bytes, bytes]:
-    """Split a sealed blob into ``(wrap_nonce, wrapped_dek, payload_nonce, ciphertext)``.
-
-    Raises:
-        ValueError: If the blob is too short, lacks the magic header, or carries an unknown format
-            version.
-    """
-    if len(blob) < _MIN_BLOB_LEN:
-        raise ValueError("sealed credential is shorter than the minimum envelope length")
-    if blob[: len(_MAGIC)] != _MAGIC:
-        raise ValueError("sealed credential has an unrecognised header")
-    if blob[len(_MAGIC)] != _FORMAT_VERSION:
-        raise ValueError(f"sealed credential has unsupported format version {blob[len(_MAGIC)]}")
-    offset = _HEADER_LEN
-    wrap_nonce = blob[offset : offset + _NONCE_LEN]
-    offset += _NONCE_LEN
-    wrapped_dek = blob[offset : offset + _WRAPPED_DEK_LEN]
-    offset += _WRAPPED_DEK_LEN
-    payload_nonce = blob[offset : offset + _NONCE_LEN]
-    offset += _NONCE_LEN
-    ciphertext = blob[offset:]
-    return wrap_nonce, wrapped_dek, payload_nonce, ciphertext
+    return _CIPHER.seal(payload)
 
 
 def unseal_credential_payload(
@@ -294,55 +128,7 @@ def unseal_credential_payload(
     Returns:
         The decrypted payload dict, or ``None`` when no plaintext can be produced.
     """
-    if not encrypted_payload or key_version is None:
-        return None
-
-    try:
-        keys = _load_key_map()
-    except CredentialEncryptionError:
-        logger.warning(
-            "MCP credential encryption is misconfigured; cannot decrypt credential "
-            "(key_version=%s)",
-            key_version,
-        )
-        return None
-    if not keys:
-        return None
-
-    try:
-        version = int(key_version)
-    except (TypeError, ValueError):
-        return None
-    master = keys.get(version)
-    if master is None:
-        logger.warning(
-            "no MCP credential master key configured for key_version=%s; cannot decrypt",
-            version,
-        )
-        return None
-
-    blob = bytes(encrypted_payload)
-    aad = _aad(version)
-    try:
-        wrap_nonce, wrapped_dek, payload_nonce, ciphertext = _parse_blob(blob)
-        dek = AESGCM(master).decrypt(wrap_nonce, wrapped_dek, aad)
-        plaintext = AESGCM(dek).decrypt(payload_nonce, ciphertext, aad)
-        decoded = json.loads(plaintext.decode("utf-8"))
-    except (InvalidTag, ValueError, UnicodeDecodeError):
-        # Tampered/foreign/wrong-version blob, or corrupt plaintext. Message stays secret-free.
-        logger.warning(
-            "failed to decrypt MCP credential (key_version=%s); the stored secret may be "
-            "corrupt or sealed under a different key",
-            version,
-        )
-        return None
-    if not isinstance(decoded, dict):
-        logger.warning(
-            "decrypted MCP credential (key_version=%s) is not a JSON object; ignoring",
-            version,
-        )
-        return None
-    return decoded
+    return _CIPHER.unseal(encrypted_payload, key_version)
 
 
 def needs_reseal(key_version: Optional[int]) -> bool:
@@ -352,18 +138,7 @@ def needs_reseal(key_version: Optional[int]) -> bool:
     Returns ``False`` when encryption is unconfigured/misconfigured or the version is unknown (there
     is nothing meaningful to rotate to).
     """
-    if key_version is None:
-        return False
-    try:
-        keys = _load_key_map()
-    except CredentialEncryptionError:
-        return False
-    if not keys:
-        return False
-    try:
-        return int(key_version) != _active_key_version(keys)
-    except (TypeError, ValueError):
-        return False
+    return _CIPHER.needs_reseal(key_version)
 
 
 def reseal_credential_payload(
@@ -386,7 +161,4 @@ def reseal_credential_payload(
         CredentialEncryptionError: If re-sealing fails (e.g. encryption became unconfigured between
             the decrypt and the re-encrypt).
     """
-    payload = unseal_credential_payload(encrypted_payload, key_version)
-    if payload is None:
-        return None
-    return seal_credential_payload(payload)
+    return _CIPHER.reseal(encrypted_payload, key_version)
