@@ -180,7 +180,8 @@ failure: the upload may well have landed.
 ## What SDK-4.2 and SDK-4.3 inherit
 
 * **`Distribution`** is "a list of files plus metadata". SDK-4.2 (git delivery) opens a PR carrying
-  the same file list rather than uploading it; a future client generator contributes to that list.
+  the same file list rather than uploading it — see `sdk_git_delivery.md`; a future client
+  generator contributes to that list.
 * **The version rule** is a pure function (`app.sdk_publish_version`), so a PR branch name or a git
   tag can carry the same number a registry release would.
 * **The run ledger** already has a status vocabulary and an event log; SDK-4.3 (auto-regen on

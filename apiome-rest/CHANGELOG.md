@@ -5,6 +5,60 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.319.0] - 2026-09-10
+
+### Added
+- **Git delivery, PR mode (#4496, SDK-4.2)** — registry publishing serves an SDK's consumers; git
+  delivery serves its owners. A regenerated SDK now arrives as a **pull request** against the
+  tenant's own repository, where their normal review and CI apply.
+
+  ```bash
+  # Point the project's npm SDK at a repository already registered with Apiome
+  curl -sX PUT "$APIOME/v1/projects/acme/widgets/sdk-git-delivery-targets/npm" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"repositoryId": "5f0c…", "baseBranch": "main", "targetPath": "sdks/typescript"}'
+
+  # Deliver version 1.4.2 — opens (or updates) apiome/sdk-regen-1.4.2-widgets-npm
+  curl -sX POST "$APIOME/v1/projects/acme/widgets/sdk-git-delivery" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"ecosystem": "npm", "version": "1.4.2"}'
+  ```
+
+  - **No new credential type.** A delivery target (apiome-db V257 `sdk_git_delivery_targets`: one
+    per project per ecosystem — repository, base branch, target path) names a repository registered
+    through a linked GitHub account, and a delivery pushes with that repository's existing
+    linked-account token. There is no token column in V257. A repository registered from a public
+    URL, or hosted outside GitHub, is refused with the reason.
+  - **The SDK-4.1 package, committed.** The delivery builds the same file list a publish would
+    upload (`app.sdk_publish_pipeline` now exposes `resolve_release_branding`,
+    `resolve_release_series` and `build_release_distribution`), carrying the version the next
+    registry publish of the series would claim, and commits it under the target path through
+    GitHub's Git Database API — no clone, no git binary, no token on disk.
+  - **A pull request with provenance.** Its body carries the spec version and revision id, the
+    generator version, a changed-files overview and the provenance table; the commit carries
+    `Apiome-Revision` / `Apiome-Version-Line` / `Apiome-Package` / `Apiome-Generator` trailers.
+  - **Idempotent per (version, target, options).** The branch is
+    `apiome/sdk-regen-<version>-<project>-<ecosystem>` — the ticket's `apiome/sdk-regen-<version>`
+    plus the project and ecosystem, so several SDKs can share a repository without overwriting each
+    other's pull requests. Every delivery is rebuilt on the latest base branch and force-updates the
+    branch; re-running updates the open pull request (`updated`), writes nothing when it already
+    carries this SDK (`unchanged`) or when the base already contains it (`up_to_date`), and only
+    opens one when none is open (`opened`).
+  - **Only generated files are ever removed.** A `.apiome/sdk-delivery.json` manifest beside the SDK
+    lists what Apiome generated; the next delivery removes files that list named and the new one
+    does not, and never touches anything else under the target path.
+  - **Failures are runs with actionable logs.** Every attempt is a row in
+    `sdk_git_delivery_runs`; a missing or revoked credential, a read-only token, a rejected push, a
+    refused pull request or a package that cannot be built is a `failed` run with a stable
+    `errorCode`, a message naming the fix, and a step log redacted of the repository token.
+    `POST …/sdk-git-delivery` answers `200` with the run either way.
+  - **Shared run log.** SDK-4.1's redacting event log moved to `app.sdk_run_log.RunLog` (with a
+    per-pipeline redaction marker) so both release pipelines redact through one implementation.
+  - Listing targets is `projects:view`; saving one is `projects:edit` **and** `imports:edit` (a
+    target decides what Apiome pushes into a repository with that repository's credential);
+    delivering is `versions:publish`; history is `versions:view`. No new RBAC resource. Documented
+    in `docs/sdk_git_delivery.md`.
+
 ## [1.318.0] - 2026-09-09
 
 ### Added

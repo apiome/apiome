@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.183.0",
+    "version": "1.184.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -7861,6 +7861,709 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for readonepublishrunresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-git-delivery-targets": {
+      "get": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "List where a project's SDKs are delivered",
+        "description": "A **delivery target** says where one project's SDK for one ecosystem is delivered: a repository already registered with Apiome, the branch pull requests target (blank for the repository's default branch), and the directory inside the repository the SDK lives in (blank for the root).\n\n**No new credential.** A delivery pushes with the repository's existing linked-account integration, so the repository must have been registered through a linked GitHub account \u2014 one registered from a public URL holds no credential and is refused.\n\nEcosystems: `npm`, `pypi` \u2014 the SDK-4.1 package layouts. Each delivery uses the branch `apiome/sdk-regen-<version>-<project>-<ecosystem>`.\n\nEach target reports `deliverable` and, when it is false, the `problem` a delivery would hit (the repository was removed, or registered without a linked account).\n\nRequires `projects:view`.",
+        "operationId": "list_git_delivery_targets_v1_projects__tenant_slug___project_ref__sdk_git_delivery_targets_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listwhereaprojects Sdksaredeliveredauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listwhereaprojects Sdksaredeliveredauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listwhereaprojects Sdksaredelivered Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listwhereaprojects Sdksaredelivered Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list where a project's sdks are delivered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitDeliveryTargetListResponse",
+                  "description": "Response payload for listwhereaprojects sdksaredeliveredresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listwhereaprojects sdksaredeliveredresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-git-delivery-targets/{ecosystem}": {
+      "put": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "Configure where a project's SDK for one ecosystem is delivered",
+        "description": "A **delivery target** says where one project's SDK for one ecosystem is delivered: a repository already registered with Apiome, the branch pull requests target (blank for the repository's default branch), and the directory inside the repository the SDK lives in (blank for the root).\n\n**No new credential.** A delivery pushes with the repository's existing linked-account integration, so the repository must have been registered through a linked GitHub account \u2014 one registered from a public URL holds no credential and is refused.\n\nEcosystems: `npm`, `pypi` \u2014 the SDK-4.1 package layouts. Each delivery uses the branch `apiome/sdk-regen-<version>-<project>-<ecosystem>`.\n\nReplaces any existing target for this project and ecosystem.\n\nRequires `projects:edit` **and** `imports:edit` \u2014 a target decides what Apiome pushes into a repository with that repository's credential. Audited as `sdk.git_delivery_target.update`.",
+        "operationId": "put_git_delivery_target_v1_projects__tenant_slug___project_ref__sdk_git_delivery_targets__ecosystem__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "ecosystem",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ecosystem",
+              "description": "Ecosystem schema."
+            },
+            "description": "Path parameter identifying the ecosystem segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Configurewhereaprojects Sdkforoneecosysteauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Configurewhereaprojects Sdkforoneecosysteauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Configurewhereaprojects Sdkforoneecosyste Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Configurewhereaprojects Sdkforoneecosyste Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitDeliveryTargetPutRequest",
+                "description": "Request body for configurewhereaprojects sdkforoneecosysterequest."
+              }
+            }
+          },
+          "description": "Request body for configure where a project's sdk for one ecosystem is delivered."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for configure where a project's sdk for one ecosystem is delivered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitDeliveryTargetOut",
+                  "description": "Response payload for configurewhereaprojects sdkforoneecosysteresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "A field is invalid, or the repository cannot receive a delivery (`sdk-git-delivery-repository-missing`, `\u2026-provider-unsupported`, `\u2026-repository-unlinked`)."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "Stop delivering a project's SDK for one ecosystem",
+        "description": "Removes the target. Past runs are kept, and nothing is changed in the repository \u2014 an open pull request stays open.\n\nRequires `projects:edit`. Audited as `sdk.git_delivery_target.clear`.",
+        "operationId": "delete_git_delivery_target_v1_projects__tenant_slug___project_ref__sdk_git_delivery_targets__ecosystem__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "ecosystem",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ecosystem",
+              "description": "Ecosystem schema."
+            },
+            "description": "Path parameter identifying the ecosystem segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Stopdeliveringaprojects Sdkforoneecosysteauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Stopdeliveringaprojects Sdkforoneecosysteauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Stopdeliveringaprojects Sdkforoneecosyste Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Stopdeliveringaprojects Sdkforoneecosyste Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for stop delivering a project's sdk for one ecosystem.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Git Delivery Target V1 Projects  Tenant Slug   Project Ref  Sdk Git Delivery Targets  Ecosystem  Delete",
+                  "description": "Response Delete Git Delivery Target V1 Projects  Tenant Slug   Project Ref  Sdk Git Delivery Targets  Ecosystem  Delete schema."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "The ecosystem is not one git delivery supports."
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-git-delivery": {
+      "post": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "Deliver a version's SDK to its repository as a pull request",
+        "description": "Regenerates the SDK-4.1 package for one **published** revision and delivers it to the project's configured repository: a commit on `apiome/sdk-regen-<version>-<project>-<ecosystem>`, built on the latest base branch, and a pull request whose description carries the spec version, the generator version, a changed-files overview and the provenance.\n\n**Idempotent.** Re-running for the same version updates the same pull request rather than opening another: `unchanged` when the open pull request already carries exactly this SDK, `updated` when its branch was rebuilt, `up_to_date` when the base branch already contains it (nothing is written), `opened` when a new pull request was needed.\n\n**Failures are runs.** A missing or revoked credential, a token without write access, a rejected push or a refused pull request answers `200` with `status: failed`, a stable `errorCode` and an actionable log.\n\nRequires `versions:publish`. Audited as `sdk.git_delivery`.",
+        "operationId": "deliver_project_sdk_v1_projects__tenant_slug___project_ref__sdk_git_delivery_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveraversions Sdktoitsrepositoryasapulauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveraversions Sdktoitsrepositoryasapulauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveraversions Sdktoitsrepositoryasapul Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveraversions Sdktoitsrepositoryasapul Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SdkGitDeliveryRequest",
+                "description": "Request body for deliveraversions sdktoitsrepositoryasapulrequest."
+              }
+            }
+          },
+          "description": "Request body for deliver a version's sdk to its repository as a pull request."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for deliver a version's sdk to its repository as a pull request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGitDeliveryRunModel",
+                  "description": "Response payload for deliveraversions sdktoitsrepositoryasapulresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported ecosystem, or the revision is not published."
+          },
+          "404": {
+            "description": "Project, version or delivery target not found."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deliveraversions sdktoitsrepositoryasapulresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-git-delivery-runs": {
+      "get": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "List a project's SDK delivery history",
+        "description": "Every delivery attempt, newest first \u2014 failed ones included, because a failed run is the record of why a pull request did not arrive.\n\nRequires `versions:view`.",
+        "operationId": "list_git_delivery_runs_v1_projects__tenant_slug___project_ref__sdk_git_delivery_runs_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "ecosystem",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojects Sdkdeliveryhistoryecosystem schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojects Sdkdeliveryhistoryecosystem schema."
+                }
+              ],
+              "description": "Narrow to one ecosystem (`npm` or `pypi`).",
+              "title": "Ecosystem"
+            },
+            "description": "Narrow to one ecosystem (`npm` or `pypi`)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset",
+              "description": "Offset schema."
+            },
+            "description": "Number of rows to skip before returning results."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojects Sdkdeliveryhistoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojects Sdkdeliveryhistoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojects Sdkdeliveryhistory Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojects Sdkdeliveryhistory Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's sdk delivery history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGitDeliveryRunListResponse",
+                  "description": "Response payload for listaprojects sdkdeliveryhistoryresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojects sdkdeliveryhistoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{tenant_slug}/{project_ref}/sdk-git-delivery-runs/{run_id}": {
+      "get": {
+        "tags": [
+          "sdk-git-delivery",
+          "sdk-git-delivery"
+        ],
+        "summary": "Read one SDK delivery run",
+        "description": "The run's outcome, the branch, commit and pull request it wrote, the changed-files overview and its event log. The log is stored redacted \u2014 a provider error quoting the repository token is replaced before it is written.\n\nRequires `versions:view`.",
+        "operationId": "get_git_delivery_run_v1_projects__tenant_slug___project_ref__sdk_git_delivery_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readone Sdkdeliveryrunauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readone Sdkdeliveryrunauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readone Sdkdeliveryrun Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readone Sdkdeliveryrun Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one sdk delivery run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SdkGitDeliveryRunModel",
+                  "description": "Response payload for readone sdkdeliveryrunresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or run not found in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readone sdkdeliveryrunresponse422."
                 }
               }
             }
@@ -85432,14 +86135,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -87464,7 +88167,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "bbe7db20-0ada-4b2a-bb7d-467cbfbb6757"
+            "example": "dce24fe6-c498-4376-ae4a-26bde6fd3223"
           },
           "method": {
             "type": "string",
@@ -89991,7 +90694,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -97723,6 +98426,240 @@
         ],
         "title": "GateSignal",
         "description": "One of the four inputs, judged.\n\nAttributes:\n    signal: One of :data:`GATE_SIGNALS`.\n    status: One of :data:`GATE_STATUSES`.\n    satisfied: Whether the signal met its thresholds; ``None`` when it was not judged at all.\n    reason: Stable machine-readable code \u2014 branch on this, not on ``detail``.\n    detail: One human sentence saying what was observed and what the policy makes of it.\n    link: API path a reader follows for the underlying evidence.\n    data: The facts the judgment was made from, so the verdict is checkable without a\n        second request."
+      },
+      "GitDeliveryTargetListResponse": {
+        "properties": {
+          "ecosystems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ecosystems",
+            "description": "Ecosystems.",
+            "maxItems": 1000
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/GitDeliveryTargetOut"
+            },
+            "type": "array",
+            "title": "Targets",
+            "description": "Targets.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ecosystems",
+          "targets"
+        ],
+        "title": "GitDeliveryTargetListResponse",
+        "description": "A project's delivery targets.\n\nAttributes:\n    ecosystems: Which ecosystems can be delivered.\n    targets: One entry per configured ecosystem."
+      },
+      "GitDeliveryTargetOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "sdk.git-delivery-target.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem",
+            "description": "Ecosystem.",
+            "example": "example"
+          },
+          "repositoryId": {
+            "type": "string",
+            "title": "Repositoryid",
+            "description": "Repository ID.",
+            "example": "example"
+          },
+          "repositoryFullName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name."
+          },
+          "repositoryProvider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Repositoryprovider",
+            "description": "Repository Provider."
+          },
+          "baseBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Basebranch",
+            "description": "Base Branch."
+          },
+          "targetPath": {
+            "type": "string",
+            "title": "Targetpath",
+            "default": "",
+            "description": "Target Path.",
+            "example": "example"
+          },
+          "branchPattern": {
+            "type": "string",
+            "title": "Branchpattern",
+            "description": "Branch Pattern.",
+            "example": "example"
+          },
+          "deliverable": {
+            "type": "boolean",
+            "title": "Deliverable",
+            "default": true,
+            "description": "Deliverable.",
+            "example": false
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Problem",
+            "description": "Problem."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for git delivery target."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for git delivery target."
+              }
+            ],
+            "title": "Updatedby",
+            "description": "Updated By."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ecosystem",
+          "repositoryId",
+          "branchPattern"
+        ],
+        "title": "GitDeliveryTargetOut",
+        "description": "A configured delivery target, as the API describes it.\n\nAttributes:\n    schema_version: The projection's shape.\n    ecosystem: ``npm`` or ``pypi``.\n    repository_id: The registered repository.\n    repository_full_name: ``owner/repo``, or ``None`` when the repository has been removed.\n    repository_provider: Where the repository is hosted.\n    base_branch: The configured base, or ``None`` for the repository's default branch.\n    target_path: The directory the SDK is committed under (``''`` for the root).\n    branch_pattern: The branch a delivery of this target uses, with ``{version}`` standing in\n        for the version line.\n    deliverable: Whether a delivery could run with this configuration now.\n    problem: Why not, when it could not.\n    created_at: When the target was first configured.\n    updated_at: When it was last changed.\n    updated_by: Who last changed it."
+      },
+      "GitDeliveryTargetPutRequest": {
+        "properties": {
+          "repositoryId": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Repositoryid",
+            "description": "Id of a repository registered through a linked GitHub account.",
+            "example": "example"
+          },
+          "baseBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Request body for git delivery target put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for git delivery target put."
+              }
+            ],
+            "title": "Basebranch",
+            "description": "The pull request's base branch. Omit for the repository's default branch."
+          },
+          "targetPath": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024,
+                "description": "Request body for git delivery target put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for git delivery target put."
+              }
+            ],
+            "title": "Targetpath",
+            "description": "Directory inside the repository, e.g. `sdks/typescript`. Omit for the root."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryId"
+        ],
+        "title": "GitDeliveryTargetPutRequest",
+        "description": "Body for configuring a delivery target.\n\nAttributes:\n    repository_id: The registered repository to deliver into.\n    base_branch: The branch pull requests target; blank for the repository's default branch.\n    target_path: The directory inside the repository; blank for the root."
       },
       "GitFilesetRequest": {
         "properties": {
@@ -129373,7 +130310,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           }
         },
         "additionalProperties": false,
@@ -131285,6 +132222,362 @@
         "type": "object",
         "title": "SdkGenerationSettingsPutRequest",
         "description": "Body for saving SDK generation settings.\n\nAttributes:\n    settings: The ``sdk.generation-settings.v1`` body. Only the keys it names are stored."
+      },
+      "SdkGitDeliveryRequest": {
+        "properties": {
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem",
+            "description": "`npm` or `pypi`.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for sdk git delivery."
+              },
+              {
+                "type": "null",
+                "description": "Request body for sdk git delivery."
+              }
+            ],
+            "title": "Version",
+            "description": "Revision UUID or version label. Defaults to the latest revision."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ecosystem"
+        ],
+        "title": "SdkGitDeliveryRequest",
+        "description": "Body for a delivery.\n\nAttributes:\n    ecosystem: ``npm`` or ``pypi``.\n    version: The revision to deliver \u2014 a revision UUID or a version label. Defaults to the\n        project's latest revision."
+      },
+      "SdkGitDeliveryRunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/SdkGitDeliveryRunModel"
+            },
+            "type": "array",
+            "title": "Runs",
+            "description": "Runs.",
+            "maxItems": 1000
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "Limit.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "Offset.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "runs",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "SdkGitDeliveryRunListResponse",
+        "description": "A page of delivery history.\n\nAttributes:\n    runs: The rows, newest first.\n    total: How many rows match.\n    limit: The page size used.\n    offset: The offset used."
+      },
+      "SdkGitDeliveryRunModel": {
+        "properties": {
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Runid",
+            "description": "Run ID."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "ecosystem": {
+            "type": "string",
+            "title": "Ecosystem",
+            "description": "Ecosystem.",
+            "example": "example"
+          },
+          "versionLine": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Versionline",
+            "description": "Version Line."
+          },
+          "releaseSeries": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Releaseseries",
+            "description": "Release Series."
+          },
+          "regenCounter": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Regencounter",
+            "description": "Regen Counter."
+          },
+          "packageName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Packagename",
+            "description": "Package Name."
+          },
+          "packageVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Packageversion",
+            "description": "Package Version."
+          },
+          "repositoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Repositoryid",
+            "description": "Repository ID."
+          },
+          "repositoryFullName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Repositoryfullname",
+            "description": "Repository Full Name."
+          },
+          "baseBranch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Basebranch",
+            "description": "Base Branch."
+          },
+          "targetPath": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Targetpath",
+            "description": "Target Path."
+          },
+          "branchName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Branchname",
+            "description": "Branch Name."
+          },
+          "baseSha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Basesha",
+            "description": "Base Sha."
+          },
+          "commitSha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Commitsha",
+            "description": "Commit Sha."
+          },
+          "pullRequestNumber": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Pullrequestnumber",
+            "description": "Pull Request Number."
+          },
+          "pullRequestUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Pullrequesturl",
+            "description": "Pull Request URL."
+          },
+          "changes": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Changes",
+            "description": "Changes."
+          },
+          "provenance": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Provenance",
+            "description": "Provenance."
+          },
+          "log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Log",
+            "description": "Log.",
+            "maxItems": 1000
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Errorcode",
+            "description": "Error Code."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sdk Git Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Sdk Git Delivery Run Model schema."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "ecosystem"
+        ],
+        "title": "SdkGitDeliveryRunModel",
+        "description": "One delivery run.\n\nAttributes:\n    run_id: The ledger row.\n    status: ``in_progress``, ``opened``, ``updated``, ``unchanged``, ``up_to_date`` or\n        ``failed``.\n    ecosystem: ``npm`` or ``pypi``.\n    version_line: The API version delivered.\n    release_series: The series the package version was derived under.\n    regen_counter: The counter the package version carries.\n    package_name: The committed package's name.\n    package_version: The committed package's version.\n    repository_id: The registered repository.\n    repository_full_name: ``owner/repo``.\n    base_branch: The base branch used.\n    target_path: The directory the SDK was committed under.\n    branch_name: The delivery branch.\n    base_sha: The base commit.\n    commit_sha: The commit the branch points at.\n    pull_request_number: The pull request opened or updated.\n    pull_request_url: Its web page.\n    changes: The changed-files overview.\n    provenance: The provenance embedded in the committed package.\n    log: The delivery event log, redacted of secrets.\n    error_code: Set when the run failed.\n    error_message: Set when the run failed."
       },
       "SdkGoClientModel": {
         "properties": {
@@ -145451,14 +146744,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-10T02:38:36Z"
+            "example": "2026-09-11T00:28:17Z"
           },
           "outcome": {
             "anyOf": [

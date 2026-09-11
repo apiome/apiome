@@ -31049,6 +31049,512 @@ class Database:
         )
         return dict(rows[0]) if rows else None
 
+    # -------------------------------------------------------------------------------------------
+    # SDK-4.2 (#4496) — git delivery targets and runs
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of a delivery target, joined to the repository it names. The repository
+    #: columns come from a ``LEFT JOIN`` that ignores soft-deleted rows, so a target whose
+    #: repository was removed reads back with ``repository_full_name`` / ``repository_provider``
+    #: NULL rather than disappearing — the listing can say "this target points at nothing".
+    _SDK_GIT_DELIVERY_TARGET_COLUMNS = """
+        t.id::text AS id,
+        t.tenant_id::text AS tenant_id,
+        t.project_id::text AS project_id,
+        t.ecosystem,
+        t.repository_id::text AS repository_id,
+        t.base_branch,
+        t.target_path,
+        t.created_by::text AS created_by,
+        t.updated_by::text AS updated_by,
+        t.created_at,
+        t.updated_at,
+        r.repository_full_name,
+        r.provider AS repository_provider,
+        r.source AS repository_source,
+        r.default_branch AS repository_default_branch,
+        (r.linked_account_id IS NOT NULL) AS repository_has_linked_account
+    """
+
+    #: Every column of a delivery run.
+    _SDK_GIT_DELIVERY_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        version_id::text AS version_id,
+        target_id::text AS target_id,
+        repository_id::text AS repository_id,
+        ecosystem,
+        status,
+        version_line,
+        release_series,
+        regen_counter,
+        package_name,
+        package_version,
+        repository_full_name,
+        base_branch,
+        target_path,
+        branch_name,
+        base_sha,
+        commit_sha,
+        pull_request_number,
+        pull_request_url,
+        changes,
+        provenance,
+        log,
+        error_code,
+        error_message,
+        started_at,
+        finished_at,
+        created_by::text AS created_by
+    """
+
+    def list_sdk_git_delivery_targets(
+        self, tenant_id: str, project_id: str
+    ) -> List[Dict[str, Any]]:
+        """List a project's git delivery targets, one per ecosystem (SDK-4.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose targets to read.
+
+        Returns:
+            The rows ordered by ecosystem, each carrying the repository's full name, provider and
+            source. Empty when the ids are not UUIDs, so a unit-test handle never reaches the
+            database.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_GIT_DELIVERY_TARGET_COLUMNS}
+            FROM apiome.sdk_git_delivery_targets t
+            LEFT JOIN apiome.tenant_repositories r
+              ON r.id = t.repository_id AND r.tenant_id = t.tenant_id AND r.deleted_at IS NULL
+            WHERE t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+            ORDER BY t.ecosystem
+            """,
+            (tenant_id, project_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_sdk_git_delivery_target(
+        self, tenant_id: str, project_id: str, ecosystem: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one project's delivery target for one ecosystem (SDK-4.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+
+        Returns:
+            The row joined to its repository, or ``None`` when none is configured or the ids are
+            not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_GIT_DELIVERY_TARGET_COLUMNS}
+            FROM apiome.sdk_git_delivery_targets t
+            LEFT JOIN apiome.tenant_repositories r
+              ON r.id = t.repository_id AND r.tenant_id = t.tenant_id AND r.deleted_at IS NULL
+            WHERE t.tenant_id = %s::uuid AND t.project_id = %s::uuid AND t.ecosystem = %s
+            LIMIT 1
+            """,
+            (tenant_id, project_id, ecosystem),
+        )
+        return dict(rows[0]) if rows else None
+
+    def upsert_sdk_git_delivery_target(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        ecosystem: str,
+        repository_id: str,
+        base_branch: Optional[str],
+        target_path: str,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store or replace a project's delivery target for one ecosystem (SDK-4.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+            repository_id: The registered repository to deliver into. The caller has already
+                checked it belongs to this tenant and can be pushed to.
+            base_branch: The pull request's base, or ``None`` for the repository's default branch.
+            target_path: The normalised repository-relative directory (``''`` for the root).
+            actor_id: The user configuring it.
+
+        Returns:
+            The stored row joined to its repository, or ``None`` when the ids are not UUIDs.
+        """
+        if not (
+            is_uuid_string(str(tenant_id or ""))
+            and is_uuid_string(str(project_id or ""))
+            and is_uuid_string(str(repository_id or ""))
+        ):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        query = f"""
+            WITH t AS (
+                INSERT INTO apiome.sdk_git_delivery_targets (
+                    tenant_id, project_id, ecosystem, repository_id, base_branch, target_path,
+                    created_by, updated_by
+                ) VALUES (%s::uuid, %s::uuid, %s, %s::uuid, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, project_id, ecosystem)
+                DO UPDATE SET
+                    repository_id = EXCLUDED.repository_id,
+                    base_branch = EXCLUDED.base_branch,
+                    target_path = EXCLUDED.target_path,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING *
+            )
+            SELECT {self._SDK_GIT_DELIVERY_TARGET_COLUMNS}
+            FROM t
+            LEFT JOIN apiome.tenant_repositories r
+              ON r.id = t.repository_id AND r.tenant_id = t.tenant_id AND r.deleted_at IS NULL
+        """
+        params = (
+            tenant_id,
+            project_id,
+            ecosystem,
+            repository_id,
+            base_branch,
+            target_path,
+            actor,
+            actor,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_sdk_git_delivery_target(
+        self, tenant_id: str, project_id: str, ecosystem: str
+    ) -> int:
+        """Remove a project's delivery target for one ecosystem (SDK-4.2).
+
+        Runs are kept: their ``target_id`` is ``ON DELETE SET NULL`` and they carry their own copy
+        of where they delivered to.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+
+        Returns:
+            Rows removed — ``1`` when a target was configured, ``0`` otherwise.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        return self._execute_write(
+            """
+            DELETE FROM apiome.sdk_git_delivery_targets
+            WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND ecosystem = %s
+            """,
+            (tenant_id, project_id, ecosystem),
+        )
+
+    def insert_sdk_git_delivery_run(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        target_id: Optional[str],
+        repository_id: Optional[str],
+        ecosystem: str,
+        status: str,
+        version_line: Optional[str] = None,
+        repository_full_name: Optional[str] = None,
+        base_branch: Optional[str] = None,
+        target_path: Optional[str] = None,
+        log: Optional[List[Dict[str, Any]]] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Open one delivery run (SDK-4.2).
+
+        Inserted ``in_progress`` before anything is written to the provider, so a delivery that
+        fails at any later step — a revoked token, a rejected push — is recorded as a failed run
+        rather than leaving no trace.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project being delivered.
+            version_id: The revision it is built from.
+            target_id: The target configuration in force.
+            repository_id: The repository it delivers into.
+            ecosystem: ``npm`` or ``pypi``.
+            status: The initial status (``in_progress``).
+            version_line: The revision's version label.
+            repository_full_name: ``owner/repo`` as registered.
+            base_branch: The configured base branch, when one is set.
+            target_path: The configured target path.
+            log: The event log so far.
+            actor_id: The user who asked for the delivery.
+
+        Returns:
+            The stored row, or ``None`` when the tenant or project id is not a UUID.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+
+        def _uuid_or_none(value: Optional[str]) -> Optional[str]:
+            return value if is_uuid_string(str(value or "")) else None
+
+        query = f"""
+            INSERT INTO apiome.sdk_git_delivery_runs (
+                tenant_id, project_id, version_id, target_id, repository_id, ecosystem, status,
+                version_line, repository_full_name, base_branch, target_path, log, created_by
+            ) VALUES (
+                %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s,
+                %s, %s, %s, %s, %s, %s::uuid
+            )
+            RETURNING {self._SDK_GIT_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            tenant_id,
+            project_id,
+            _uuid_or_none(version_id),
+            _uuid_or_none(target_id),
+            _uuid_or_none(repository_id),
+            ecosystem,
+            status,
+            version_line,
+            repository_full_name,
+            base_branch,
+            target_path,
+            Json(log or []),
+            _uuid_or_none(actor_id),
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def finish_sdk_git_delivery_run(
+        self,
+        run_id: str,
+        tenant_id: str,
+        *,
+        status: str,
+        log: Optional[List[Dict[str, Any]]] = None,
+        release_series: Optional[str] = None,
+        regen_counter: Optional[int] = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        repository_full_name: Optional[str] = None,
+        base_branch: Optional[str] = None,
+        branch_name: Optional[str] = None,
+        base_sha: Optional[str] = None,
+        commit_sha: Optional[str] = None,
+        pull_request_number: Optional[int] = None,
+        pull_request_url: Optional[str] = None,
+        changes: Optional[Dict[str, Any]] = None,
+        provenance: Optional[Dict[str, Any]] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Close a delivery run with its outcome (SDK-4.2).
+
+        Every coordinate is ``COALESCE``d onto what the insert recorded: a run learns its branch,
+        its base and its pull request as it goes, and a failure part-way through must keep what it
+        had learned rather than blanking it.
+
+        Args:
+            run_id: The run to close.
+            tenant_id: The caller's tenant, which also scopes the update.
+            status: The final status.
+            log: The complete event log.
+            release_series: The series the package version was derived under.
+            regen_counter: The counter the package version carries.
+            package_name: The committed package's name.
+            package_version: The committed package's version.
+            repository_full_name: ``owner/repo`` as GitHub reported it.
+            base_branch: The base branch actually used (the default branch, when none is set).
+            branch_name: The delivery branch.
+            base_sha: The base commit the delivery was built on.
+            commit_sha: The commit that was pushed.
+            pull_request_number: The pull request opened or updated.
+            pull_request_url: Its web URL.
+            changes: The changed-files overview.
+            provenance: The provenance embedded in the committed package.
+            error_code: Machine-readable failure code.
+            error_message: Redacted failure message.
+
+        Returns:
+            The updated row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        query = f"""
+            UPDATE apiome.sdk_git_delivery_runs
+            SET status = %s,
+                log = COALESCE(%s, log),
+                release_series = COALESCE(%s, release_series),
+                regen_counter = COALESCE(%s, regen_counter),
+                package_name = COALESCE(%s, package_name),
+                package_version = COALESCE(%s, package_version),
+                repository_full_name = COALESCE(%s, repository_full_name),
+                base_branch = COALESCE(%s, base_branch),
+                branch_name = COALESCE(%s, branch_name),
+                base_sha = COALESCE(%s, base_sha),
+                commit_sha = COALESCE(%s, commit_sha),
+                pull_request_number = COALESCE(%s, pull_request_number),
+                pull_request_url = COALESCE(%s, pull_request_url),
+                changes = COALESCE(%s, changes),
+                provenance = COALESCE(%s, provenance),
+                error_code = %s,
+                error_message = %s,
+                finished_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING {self._SDK_GIT_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            status,
+            Json(log) if log is not None else None,
+            release_series,
+            regen_counter,
+            package_name,
+            package_version,
+            repository_full_name,
+            base_branch,
+            branch_name,
+            base_sha,
+            commit_sha,
+            pull_request_number,
+            pull_request_url,
+            Json(changes) if changes is not None else None,
+            Json(provenance) if provenance is not None else None,
+            error_code,
+            error_message,
+            run_id,
+            tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_sdk_git_delivery_runs(
+        self,
+        tenant_id: str,
+        project_id: str,
+        *,
+        ecosystem: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List a project's delivery history, newest first (SDK-4.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to read.
+            ecosystem: Narrow to one ecosystem.
+            limit: Page size.
+            offset: Rows to skip.
+
+        Returns:
+            The matching rows. Empty when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        clauses = ["tenant_id = %s::uuid", "project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if ecosystem:
+            clauses.append("ecosystem = %s")
+            params.append(ecosystem)
+        params.extend([max(1, int(limit)), max(0, int(offset))])
+        joined = " AND ".join(clauses)
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_GIT_DELIVERY_RUN_COLUMNS}
+            FROM apiome.sdk_git_delivery_runs
+            WHERE {joined}
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows or []]
+
+    def count_sdk_git_delivery_runs(
+        self, tenant_id: str, project_id: str, *, ecosystem: Optional[str] = None
+    ) -> int:
+        """Count a project's delivery runs, for paging (SDK-4.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to count.
+            ecosystem: Narrow to one ecosystem.
+
+        Returns:
+            The number of rows, or ``0`` when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        clauses = ["tenant_id = %s::uuid", "project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if ecosystem:
+            clauses.append("ecosystem = %s")
+            params.append(ecosystem)
+        joined = " AND ".join(clauses)
+        rows = self.execute_query(
+            f"""
+            SELECT COUNT(*) AS total
+            FROM apiome.sdk_git_delivery_runs
+            WHERE {joined}
+            """,
+            tuple(params),
+        )
+        return int(rows[0].get("total") or 0) if rows else 0
+
+    def get_sdk_git_delivery_run(self, run_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return one delivery run within the caller's tenant (SDK-4.2).
+
+        Args:
+            run_id: The run to read.
+            tenant_id: The caller's tenant, which scopes the read.
+
+        Returns:
+            The row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_GIT_DELIVERY_RUN_COLUMNS}
+            FROM apiome.sdk_git_delivery_runs
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (run_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
 
 # Global database instance
 db = Database()

@@ -44,7 +44,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .envelope_crypto import EnvelopeEncryptionError
-from .export_source import ExportSourceError, load_export_source
+from .export_source import ExportSource, ExportSourceError, load_export_source
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
 from .sdk_publish_pipeline import (
@@ -69,7 +69,14 @@ from .sdk_registry_credentials import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["router", "tenant_router"]
+__all__ = [
+    "load_published_source",
+    "resolve_project",
+    "router",
+    "tenant_id_of",
+    "tenant_router",
+    "write_audit",
+]
 
 #: Project-scoped surface. Shares the ``/v1/projects`` prefix, and ``main`` registers it *after*
 #: ``projects_router`` for the same reason SDK-3.4's settings router is: ``/{tenant}/{project}/…``
@@ -293,11 +300,12 @@ def _run_model(outcome: PublishOutcome) -> SdkPublishRunModel:
 
 
 # ===========================================================================
-# Shared helpers
+# Shared helpers — public because SDK-4.2's git delivery routes (app.sdk_git_delivery_routes)
+# address the same projects and revisions the same way.
 # ===========================================================================
 
 
-def _tenant_id(auth_data: Dict[str, Any]) -> str:
+def tenant_id_of(auth_data: Dict[str, Any]) -> str:
     """Return the authenticated tenant id, or refuse.
 
     Args:
@@ -315,7 +323,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
     return str(tenant_id)
 
 
-def _resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
+def resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     """Resolve a project reference (id or slug) within the tenant, or refuse.
 
     The same id-or-slug dispatch every project-addressed surface does, over the same two accessors.
@@ -347,6 +355,55 @@ def _resolve_project(tenant_id: str, project_ref: str) -> Dict[str, Any]:
     return row
 
 
+def load_published_source(
+    tenant_id: str,
+    project_id: str,
+    version: Optional[str],
+    *,
+    code_prefix: str = "sdk-publish",
+    refusal: str = (
+        "Only a published revision can be released as a package. Publish the version first, then "
+        "publish its SDK."
+    ),
+) -> ExportSource:
+    """Load a revision's canonical model, refusing one that is not published.
+
+    A package is a public artifact, and a delivered SDK is the same package, so both are only ever
+    built from a revision that is itself published within the workspace. Shared by SDK-4.1's publish
+    route and SDK-4.2's git delivery route.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: The resolved project id.
+        version: A revision UUID or version label, or ``None`` for the latest revision.
+        code_prefix: Prefix of the refusal codes (``sdk-publish`` → ``sdk-publish-not-published``).
+        refusal: The message for an unpublished revision.
+
+    Returns:
+        The loaded :class:`~app.export_source.ExportSource`.
+
+    Raises:
+        HTTPException: The source loader's own status (404 unknown version, 422 no captured source)
+            as ``<prefix>-source-unavailable``; 400 ``<prefix>-not-published`` for a revision that is
+            not published.
+    """
+    try:
+        source = load_export_source(tenant_id, project_id, version)
+    except ExportSourceError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"code": f"{code_prefix}-source-unavailable", "message": str(exc)},
+        ) from exc
+
+    revision = db.get_version_by_id(source.version_record_id, tenant_id)
+    if not revision or not revision.get("published"):
+        raise HTTPException(
+            status_code=400,
+            detail={"code": f"{code_prefix}-not-published", "message": refusal},
+        )
+    return source
+
+
 def _credential_error(exc: RegistryCredentialError) -> HTTPException:
     """Map a credential refusal onto ``422`` with every problem listed."""
     return HTTPException(
@@ -373,7 +430,7 @@ def _publish_error(exc: PublishError) -> HTTPException:
     )
 
 
-def _audit(
+def write_audit(
     *,
     tenant_id: str,
     action: str,
@@ -476,7 +533,7 @@ def _store_credential(
             },
         ) from exc
 
-    _audit(
+    write_audit(
         tenant_id=tenant_id,
         action=AUDIT_CREDENTIAL_UPDATE,
         auth_data=auth_data,
@@ -518,7 +575,7 @@ def _clear_credential(
     except RegistryCredentialError as exc:
         raise _credential_error(exc) from exc
     if cleared:
-        _audit(
+        write_audit(
             tenant_id=tenant_id,
             action=AUDIT_CREDENTIAL_CLEAR,
             auth_data=auth_data,
@@ -560,7 +617,7 @@ async def list_tenant_registry_credentials(
         HTTPException: 403 without ``projects:view``.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
-    return _credentials_response(_tenant_id(auth_data), "tenant", None)
+    return _credentials_response(tenant_id_of(auth_data), "tenant", None)
 
 
 @tenant_router.put(
@@ -601,7 +658,7 @@ async def put_tenant_registry_credential(
             is unconfigured.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
-    tenant_id = _tenant_id(auth_data)
+    tenant_id = tenant_id_of(auth_data)
     return _store_credential(
         tenant_id=tenant_id,
         project_id=None,
@@ -640,7 +697,7 @@ async def delete_tenant_registry_credential(
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     return _clear_credential(
-        tenant_id=_tenant_id(auth_data),
+        tenant_id=tenant_id_of(auth_data),
         project_id=None,
         ecosystem=ecosystem,
         auth_data=auth_data,
@@ -683,8 +740,8 @@ async def list_project_registry_credentials(
         HTTPException: 403 without ``projects:view``; 404 when the project is unknown.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
     return _credentials_response(tenant_id, "project", str(project["id"]))
 
 
@@ -729,8 +786,8 @@ async def put_project_registry_credential(
             invalid body; 503 when encryption is unconfigured.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
     return _store_credential(
         tenant_id=tenant_id,
         project_id=str(project["id"]),
@@ -771,8 +828,8 @@ async def delete_project_registry_credential(
         HTTPException: 403 without ``projects:edit``; 404 for an unknown project.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
     return _clear_credential(
         tenant_id=tenant_id,
         project_id=str(project["id"]),
@@ -847,31 +904,9 @@ async def publish_project_sdk(
             400 for an unpublished revision; and whatever status the pipeline chose for a refusal.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
-
-    try:
-        source = load_export_source(tenant_id, str(project["id"]), body.version)
-    except ExportSourceError as exc:
-        raise HTTPException(
-            status_code=exc.status_code,
-            detail={"code": "sdk-publish-source-unavailable", "message": str(exc)},
-        ) from exc
-
-    revision = db.get_version_by_id(source.version_record_id, tenant_id)
-    if not revision or not revision.get("published"):
-        # A package is a public artifact; it is only ever built from a revision that is itself
-        # public within the workspace.
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "sdk-publish-not-published",
-                "message": (
-                    "Only a published revision can be released as a package. Publish the version "
-                    "first, then publish its SDK."
-                ),
-            },
-        )
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
+    source = load_published_source(tenant_id, str(project["id"]), body.version)
 
     context = PublishContext(
         tenant_id=tenant_id,
@@ -896,7 +931,7 @@ async def publish_project_sdk(
     except PublishError as exc:
         raise _publish_error(exc) from exc
 
-    _audit(
+    write_audit(
         tenant_id=tenant_id,
         action=AUDIT_PUBLISH,
         auth_data=auth_data,
@@ -956,8 +991,8 @@ async def list_project_publish_runs(
         HTTPException: 403 without ``versions:view``; 404 when the project is unknown.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     rows = db.list_sdk_publish_runs(
         tenant_id, project_id, ecosystem=ecosystem, limit=limit, offset=offset
@@ -1004,8 +1039,8 @@ async def get_project_publish_run(
             the run belongs to another project.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
-    tenant_id = _tenant_id(auth_data)
-    project = _resolve_project(tenant_id, project_ref)
+    tenant_id = tenant_id_of(auth_data)
+    project = resolve_project(tenant_id, project_ref)
     row = db.get_sdk_publish_run(run_id, tenant_id)
     if not row or str(row.get("project_id")) != str(project["id"]):
         raise HTTPException(
