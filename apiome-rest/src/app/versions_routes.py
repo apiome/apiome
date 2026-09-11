@@ -122,6 +122,7 @@ from .publication_change_report import (
 from .rate_limit import FixedWindowRateLimiter
 from .publication_changelog import generate_version_changelog_on_publish
 from .publish_notifications import notify_version_published_on_publish
+from .sdk_regen_subscriptions import enqueue_regen_on_publish
 from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
 from .revision_deprecation import (
@@ -2180,6 +2181,16 @@ async def publish_version(
         tenant_id=auth_data["tenant_id"],
         project_id=project_id,
         published_revision_id=version_record_id,
+        actor_id=user_id,
+    )
+    # SDK-4.3 (#4497): queue one regen job per active SDK subscription; the worker regenerates and
+    # delivers them. Independent of the tasks above, and never fails the publish.
+    background_tasks.add_task(
+        enqueue_regen_on_publish,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        published_revision_id=version_record_id,
+        version_line=version.get("version_id") or existing.get("version_id"),
         actor_id=user_id,
     )
 

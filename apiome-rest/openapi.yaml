@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.184.0
+  version: 1.185.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -6470,6 +6470,640 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readone sdkdeliveryrunresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-regen-subscriptions:
+    get:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: List which of a project's SDKs regenerate on publish
+      description: 'A **regen subscription** makes one of a project''s SDKs regenerate
+        and ship every time the project publishes a version — no one has to remember
+        to.
+
+
+        `deliveryMode` says how it ships: `registry` publishes the package (SDK-4.1,
+        using the project''s registry credential), `git` opens or updates a pull request
+        (SDK-4.2, using the project''s git delivery target), and `registry_and_git`
+        publishes first and then delivers the version that publish claimed. It has
+        **no default**: publishing to a public registry is irreversible, so it is
+        never done unless named.
+
+
+        `options.dryRun` (registry modes only, default `false`) rehearses every release
+        instead: the package is built and the credential resolved, and nothing is
+        uploaded. Unknown options are refused.
+
+
+        Ecosystems: `npm`, `pypi` — one subscription per project per ecosystem.
+
+
+        Requires `projects:view`.'
+      operationId: list_regen_subscriptions_v1_projects__tenant_slug___project_ref__sdk_regen_subscriptions_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwhichofaprojects Sdksregenerateonpublauthorization schema.
+          - type: 'null'
+            description: Listwhichofaprojects Sdksregenerateonpublauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwhichofaprojects Sdksregenerateonpubl Xapikey schema.
+          - type: 'null'
+            description: Listwhichofaprojects Sdksregenerateonpubl Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list which of a project's sdks regenerate
+            on publish.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenSubscriptionListResponse'
+                description: Response payload for listwhichofaprojects sdksregenerateonpublresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listwhichofaprojects sdksregenerateonpublresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-regen-subscriptions/{ecosystem}:
+    put:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: Subscribe a project's SDK for one ecosystem to its publish events
+      description: 'A **regen subscription** makes one of a project''s SDKs regenerate
+        and ship every time the project publishes a version — no one has to remember
+        to.
+
+
+        `deliveryMode` says how it ships: `registry` publishes the package (SDK-4.1,
+        using the project''s registry credential), `git` opens or updates a pull request
+        (SDK-4.2, using the project''s git delivery target), and `registry_and_git`
+        publishes first and then delivers the version that publish claimed. It has
+        **no default**: publishing to a public registry is irreversible, so it is
+        never done unless named.
+
+
+        `options.dryRun` (registry modes only, default `false`) rehearses every release
+        instead: the package is built and the credential resolved, and nothing is
+        uploaded. Unknown options are refused.
+
+
+        Ecosystems: `npm`, `pypi` — one subscription per project per ecosystem.
+
+
+        Replaces any existing subscription for this project and ecosystem. Jobs already
+        queued run with the subscription as it is when they start.
+
+
+        Requires `projects:edit` **and** `versions:publish` — a subscription publishes
+        and delivers on the tenant''s behalf on every later publish. Audited as `sdk.regen_subscription.update`.'
+      operationId: put_regen_subscription_v1_projects__tenant_slug___project_ref__sdk_regen_subscriptions__ecosystem__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Subscribeaprojects Sdkforoneecosystemtoitauthorization schema.
+          - type: 'null'
+            description: Subscribeaprojects Sdkforoneecosystemtoitauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Subscribeaprojects Sdkforoneecosystemtoit Xapikey schema.
+          - type: 'null'
+            description: Subscribeaprojects Sdkforoneecosystemtoit Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegenSubscriptionPutRequest'
+              description: Request body for subscribeaprojects sdkforoneecosystemtoitrequest.
+        description: Request body for subscribe a project's sdk for one ecosystem
+          to its publish events.
+      responses:
+        '200':
+          description: Successful response for subscribe a project's sdk for one ecosystem
+            to its publish events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenSubscriptionOut'
+                description: Response payload for subscribeaprojects sdkforoneecosystemtoitresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: An invalid ecosystem, delivery mode or option.
+    patch:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: Enable or disable a project's regen subscription
+      description: 'Disabling keeps the subscription''s configuration and stops future
+        runs: jobs already queued for it are cancelled when the worker reaches them,
+        and nothing already published or delivered is touched. Enabling resumes it
+        from the next publish.
+
+
+        Disabling requires `projects:edit`; enabling also requires `versions:publish`.
+        Audited as `sdk.regen_subscription.enable` / `sdk.regen_subscription.disable`.'
+      operationId: patch_regen_subscription_v1_projects__tenant_slug___project_ref__sdk_regen_subscriptions__ecosystem__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Enableordisableaprojectsregensubscriptioauthorization schema.
+          - type: 'null'
+            description: Enableordisableaprojectsregensubscriptioauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Enableordisableaprojectsregensubscriptio Xapikey schema.
+          - type: 'null'
+            description: Enableordisableaprojectsregensubscriptio Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegenSubscriptionPatchRequest'
+              description: Request body for enableordisableaprojectsregensubscriptiorequest.
+        description: Request body for enable or disable a project's regen subscription.
+      responses:
+        '200':
+          description: Successful response for enable or disable a project's regen
+            subscription.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenSubscriptionOut'
+                description: Response payload for enableordisableaprojectsregensubscriptioresponse200.
+        '404':
+          description: Project or subscription not found.
+        '422':
+          description: The ecosystem is not one a subscription can name.
+    delete:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: Unsubscribe a project's SDK from its publish events
+      description: 'Removes the subscription. Future publishes no longer regenerate
+        this SDK, and jobs still queued for it are cancelled. Past runs, jobs, published
+        packages and pull requests are kept.
+
+
+        Requires `projects:edit`. Audited as `sdk.regen_subscription.delete`.'
+      operationId: delete_regen_subscription_v1_projects__tenant_slug___project_ref__sdk_regen_subscriptions__ecosystem__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: ecosystem
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Ecosystem
+          description: Ecosystem schema.
+        description: Path parameter identifying the ecosystem segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Unsubscribeaprojects Sdkfromitspublisheveauthorization schema.
+          - type: 'null'
+            description: Unsubscribeaprojects Sdkfromitspublisheveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Unsubscribeaprojects Sdkfromitspublisheve Xapikey schema.
+          - type: 'null'
+            description: Unsubscribeaprojects Sdkfromitspublisheve Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for unsubscribe a project's sdk from its
+            publish events.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Delete Regen Subscription V1 Projects  Tenant Slug   Project
+                  Ref  Sdk Regen Subscriptions  Ecosystem  Delete
+                description: Response Delete Regen Subscription V1 Projects  Tenant
+                  Slug   Project Ref  Sdk Regen Subscriptions  Ecosystem  Delete schema.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: The ecosystem is not one a subscription can name.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-regen-runs:
+    get:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: List what each publish regenerated and delivered
+      description: 'One entry per publish that had an active subscription, newest
+        first, each with its jobs: what the job did, the SDK-4.1 publish run it wrote
+        (package, version, archive digest) and the SDK-4.2 delivery run (pull request),
+        with links to both, and every attempt.
+
+
+        `status=dead_letter` lists the dead letter: runs with at least one job that
+        failed permanently or spent its attempts, each retryable with `POST …/sdk-regen-jobs/{jobId}/retry`.
+
+
+        Requires `versions:view`.'
+      operationId: list_regen_runs_v1_projects__tenant_slug___project_ref__sdk_regen_runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwhateachpublishregeneratedanddeliverstatus schema.
+          - type: 'null'
+            description: Listwhateachpublishregeneratedanddeliverstatus schema.
+          description: 'Only runs with a job in this status: pending, running, retrying,
+            succeeded, dead_letter, cancelled.'
+          title: Status
+        description: 'Only runs with a job in this status: pending, running, retrying,
+          succeeded, dead_letter, cancelled.'
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+          description: Offset schema.
+        description: Number of rows to skip before returning results.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwhateachpublishregeneratedanddeliverauthorization schema.
+          - type: 'null'
+            description: Listwhateachpublishregeneratedanddeliverauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwhateachpublishregeneratedanddeliver Xapikey schema.
+          - type: 'null'
+            description: Listwhateachpublishregeneratedanddeliver Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list what each publish regenerated
+            and delivered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenRunListResponse'
+                description: Response payload for listwhateachpublishregeneratedanddeliverresponse200.
+        '404':
+          description: Project not found in this tenant.
+        '422':
+          description: An unknown job status filter.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-regen-runs/{run_id}:
+    get:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: Read what one publish regenerated and delivered
+      description: 'The run and every job in it.
+
+
+        Requires `versions:view`.'
+      operationId: get_regen_run_v1_projects__tenant_slug___project_ref__sdk_regen_runs__run_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readwhatonepublishregeneratedanddelivereauthorization schema.
+          - type: 'null'
+            description: Readwhatonepublishregeneratedanddelivereauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readwhatonepublishregeneratedanddelivere Xapikey schema.
+          - type: 'null'
+            description: Readwhatonepublishregeneratedanddelivere Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read what one publish regenerated and
+            delivered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenRunModel'
+                description: Response payload for readwhatonepublishregeneratedanddelivereresponse200.
+        '404':
+          description: Project or run not found in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readwhatonepublishregeneratedanddelivereresponse422.
+  /v1/projects/{tenant_slug}/{project_ref}/sdk-regen-jobs/{job_id}/retry:
+    post:
+      tags:
+      - sdk-regen
+      - sdk-regen
+      summary: Retry a dead-lettered regen job
+      description: 'Puts a `dead_letter` job back on the queue with a fresh attempt
+        budget. It runs with the subscription as it is now, and skips any step that
+        already succeeded — a job that published its package and then failed to open
+        its pull request only delivers on the retry, pinned to the version it already
+        published.
+
+
+        Refused with `409` when the job is not dead-lettered, or when its subscription
+        was removed or disabled (unsubscribing stops future runs, retries included).
+
+
+        Requires `versions:publish`. Audited as `sdk.regen_job.retry`.'
+      operationId: retry_regen_job_v1_projects__tenant_slug___project_ref__sdk_regen_jobs__job_id__retry_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+          description: Job Id schema.
+        description: Asynchronous job identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Retryadeadletteredregenjobauthorization schema.
+          - type: 'null'
+            description: Retryadeadletteredregenjobauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Retryadeadletteredregenjob Xapikey schema.
+          - type: 'null'
+            description: Retryadeadletteredregenjob Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for retry a dead-lettered regen job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegenJobModel'
+                description: Response payload for retryadeadletteredregenjobresponse200.
+        '404':
+          description: Project or job not found in this tenant.
+        '409':
+          description: The job is not dead-lettered, or its subscription is not active.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for retryadeadletteredregenjobresponse422.
   /v1/catalog/{tenant_slug}:
     get:
       tags:
@@ -64143,13 +64777,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -65718,7 +66352,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: dce24fe6-c498-4376-ae4a-26bde6fd3223
+          example: 864fb03d-02b2-45e8-bea2-6e6cb9975ae3
         method:
           type: string
           title: Method
@@ -67861,7 +68495,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
         envelope:
           additionalProperties: true
           type: object
@@ -96273,6 +96907,581 @@ components:
         Values are the stable wire/display codes (kebab-case) surfaced to the UI and
 
         the sweep; they match the states in the roadmap state diagram.'
+    RegenDeliveryStepModel:
+      properties:
+        runId:
+          anyOf:
+          - type: string
+            description: Regen Delivery Step Model schema.
+          - type: 'null'
+            description: Regen Delivery Step Model schema.
+          title: Runid
+          description: Run ID.
+        status:
+          anyOf:
+          - type: string
+            description: Regen Delivery Step Model schema.
+          - type: 'null'
+            description: Regen Delivery Step Model schema.
+          title: Status
+          description: Status.
+        pullRequestNumber:
+          anyOf:
+          - type: integer
+            description: Regen Delivery Step Model schema.
+          - type: 'null'
+            description: Regen Delivery Step Model schema.
+          title: Pullrequestnumber
+          description: Pull Request Number.
+        pullRequestUrl:
+          anyOf:
+          - type: string
+            description: Regen Delivery Step Model schema.
+          - type: 'null'
+            description: Regen Delivery Step Model schema.
+          title: Pullrequesturl
+          description: Pull Request URL.
+        href:
+          anyOf:
+          - type: string
+            description: Regen Delivery Step Model schema.
+          - type: 'null'
+            description: Regen Delivery Step Model schema.
+          title: Href
+          description: Href.
+      additionalProperties: false
+      type: object
+      title: RegenDeliveryStepModel
+      description: "What a job's git step produced.\n\nAttributes:\n    run_id: The\
+        \ SDK-4.2 delivery run.\n    status: Its status (``opened``, ``updated``,\
+        \ ``unchanged``, ``up_to_date``, ``failed``…).\n    pull_request_number: The\
+        \ pull request opened or updated.\n    pull_request_url: Its web page.\n \
+        \   href: The delivery run in the SDK-4.2 history."
+    RegenJobErrorModel:
+      properties:
+        step:
+          anyOf:
+          - type: string
+            description: Regen Job Error Model schema.
+          - type: 'null'
+            description: Regen Job Error Model schema.
+          title: Step
+          description: Step.
+        code:
+          anyOf:
+          - type: string
+            description: Regen Job Error Model schema.
+          - type: 'null'
+            description: Regen Job Error Model schema.
+          title: Code
+          description: Code.
+        message:
+          anyOf:
+          - type: string
+            description: Regen Job Error Model schema.
+          - type: 'null'
+            description: Regen Job Error Model schema.
+          title: Message
+          description: Message.
+      additionalProperties: false
+      type: object
+      title: RegenJobErrorModel
+      description: "Why a job's latest attempt did not succeed (or, when cancelled,\
+        \ why it did not run).\n\nAttributes:\n    step: ``generate``, ``registry``,\
+        \ ``git`` or ``worker``; ``null`` for a cancellation.\n    code: A stable\
+        \ code.\n    message: What happened and what to do about it."
+    RegenJobModel:
+      properties:
+        jobId:
+          type: string
+          title: Jobid
+          description: Job ID.
+          example: example
+        runId:
+          type: string
+          title: Runid
+          description: Run ID.
+          example: example
+        subscriptionId:
+          anyOf:
+          - type: string
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Subscriptionid
+          description: Subscription ID.
+        subscriptionActive:
+          anyOf:
+          - type: boolean
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Subscriptionactive
+          description: Subscription Active.
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: Ecosystem.
+          example: example
+        deliveryMode:
+          type: string
+          title: Deliverymode
+          description: Delivery Mode.
+          example: example
+        options:
+          additionalProperties: true
+          type: object
+          title: Options
+          description: Options.
+        status:
+          type: string
+          title: Status
+          description: Status.
+          example: active
+        attemptCount:
+          type: integer
+          title: Attemptcount
+          description: Number of attempt.
+          example: 1
+        maxAttempts:
+          type: integer
+          title: Maxattempts
+          default: 4
+          description: Max Attempts.
+          example: 1
+        nextAttemptAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Nextattemptat
+          description: Next Attempt At.
+        retryable:
+          type: boolean
+          title: Retryable
+          default: false
+          description: Retryable.
+          example: false
+        publish:
+          anyOf:
+          - $ref: '#/components/schemas/RegenPublishStepModel'
+          - type: 'null'
+            description: Regen Job Model schema.
+          description: Publish.
+        delivery:
+          anyOf:
+          - $ref: '#/components/schemas/RegenDeliveryStepModel'
+          - type: 'null'
+            description: Regen Job Model schema.
+          description: Delivery.
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/RegenJobErrorModel'
+          - type: 'null'
+            description: Regen Job Model schema.
+          description: Error.
+        attempts:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Attempts
+          description: Attempts.
+          maxItems: 1000
+        retryHref:
+          anyOf:
+          - type: string
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Retryhref
+          description: Retry Href.
+        retryRequestedBy:
+          anyOf:
+          - type: string
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Retryrequestedby
+          description: Retry Requested By.
+        retryRequestedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Retryrequestedat
+          description: Retry Requested At.
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Updatedat
+          description: Updated At.
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Job Model schema.
+          - type: 'null'
+            description: Regen Job Model schema.
+          title: Finishedat
+          description: Finished At.
+      additionalProperties: false
+      type: object
+      required:
+      - jobId
+      - runId
+      - ecosystem
+      - deliveryMode
+      - status
+      - attemptCount
+      title: RegenJobModel
+      description: "One subscription's regeneration for one publish.\n\nAttributes:\n\
+        \    job_id: The job.\n    run_id: The publish event it belongs to.\n    subscription_id:\
+        \ The subscription it ran for; ``null`` once unsubscribed.\n    subscription_active:\
+        \ Whether that subscription is enabled now; ``null`` once removed.\n    ecosystem:\
+        \ ``npm`` or ``pypi``.\n    delivery_mode: The mode the latest attempt ran\
+        \ with.\n    options: The options the latest attempt ran with.\n    status:\
+        \ ``pending``, ``running``, ``retrying``, ``succeeded``, ``dead_letter`` or\n\
+        \        ``cancelled``.\n    attempt_count: Attempts in the current budget.\n\
+        \    max_attempts: The budget.\n    next_attempt_at: When a retrying job is\
+        \ next due.\n    retryable: Whether ``POST …/retry`` would accept it now.\n\
+        \    publish: The registry step's result, when it ran.\n    delivery: The\
+        \ git step's result, when it ran.\n    error: The latest failure (or cancellation\
+        \ reason).\n    attempts: One record per attempt, each naming the runs it\
+        \ wrote.\n    retry_href: Where to retry it, when it is retryable.\n    retry_requested_by:\
+        \ Who last retried it.\n    retry_requested_at: When.\n    created_at: When\
+        \ the publish queued it.\n    updated_at: When it last changed.\n    finished_at:\
+        \ When it reached its current terminal status."
+    RegenPublishStepModel:
+      properties:
+        runId:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Runid
+          description: Run ID.
+        status:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Status
+          description: Status.
+        packageName:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Packagename
+          description: Package Name.
+        packageVersion:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Packageversion
+          description: Package Version.
+        artifactSha256:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Artifactsha256
+          description: Artifact Sha256.
+        href:
+          anyOf:
+          - type: string
+            description: Regen Publish Step Model schema.
+          - type: 'null'
+            description: Regen Publish Step Model schema.
+          title: Href
+          description: Href.
+      additionalProperties: false
+      type: object
+      title: RegenPublishStepModel
+      description: "What a job's registry step produced.\n\nAttributes:\n    run_id:\
+        \ The SDK-4.1 publish run.\n    status: Its status (``published``, ``already_published``,\
+        \ ``dry_run``, ``failed``…).\n    package_name: The package.\n    package_version:\
+        \ The version published (or rehearsed).\n    artifact_sha256: The archive's\
+        \ digest.\n    href: The publish run in the SDK-4.1 history."
+    RegenRunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/RegenRunModel'
+          type: array
+          title: Runs
+          description: Runs.
+          maxItems: 1000
+        total:
+          type: integer
+          title: Total
+          description: Total.
+          example: 1
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+      additionalProperties: false
+      type: object
+      required:
+      - runs
+      - total
+      - limit
+      - offset
+      title: RegenRunListResponse
+      description: "A page of regen history.\n\nAttributes:\n    runs: The runs, newest\
+        \ first.\n    total: How many runs match.\n    limit: The page size used.\n\
+        \    offset: The offset used."
+    RegenRunModel:
+      properties:
+        runId:
+          type: string
+          title: Runid
+          description: Run ID.
+          example: example
+        status:
+          type: string
+          title: Status
+          description: Status.
+          example: active
+        versionId:
+          anyOf:
+          - type: string
+            description: Regen Run Model schema.
+          - type: 'null'
+            description: Regen Run Model schema.
+          title: Versionid
+          description: Version ID.
+        versionLine:
+          anyOf:
+          - type: string
+            description: Regen Run Model schema.
+          - type: 'null'
+            description: Regen Run Model schema.
+          title: Versionline
+          description: Version Line.
+        versionHref:
+          anyOf:
+          - type: string
+            description: Regen Run Model schema.
+          - type: 'null'
+            description: Regen Run Model schema.
+          title: Versionhref
+          description: Version Href.
+        publishedBy:
+          anyOf:
+          - type: string
+            description: Regen Run Model schema.
+          - type: 'null'
+            description: Regen Run Model schema.
+          title: Publishedby
+          description: Published By.
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Regen Run Model schema.
+          - type: 'null'
+            description: Regen Run Model schema.
+          title: Createdat
+          description: Created At.
+        jobs:
+          items:
+            $ref: '#/components/schemas/RegenJobModel'
+          type: array
+          title: Jobs
+          description: Jobs.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - runId
+      - status
+      title: RegenRunModel
+      description: "One publish event and the jobs it expanded into.\n\nAttributes:\n\
+        \    run_id: The run.\n    status: ``in_progress``, ``succeeded``, ``dead_letter``\
+        \ or ``cancelled``, read off its jobs.\n    version_id: The published revision;\
+        \ ``null`` once deleted.\n    version_line: Its version label.\n    version_href:\
+        \ The revision.\n    published_by: Who published it.\n    created_at: When\
+        \ it was published.\n    jobs: One per subscription that was active at the\
+        \ time."
+    RegenSubscriptionListResponse:
+      properties:
+        ecosystems:
+          items:
+            type: string
+          type: array
+          title: Ecosystems
+          description: Ecosystems.
+          maxItems: 1000
+        deliveryModes:
+          items:
+            type: string
+          type: array
+          title: Deliverymodes
+          description: Delivery Modes.
+          maxItems: 1000
+        subscriptions:
+          items:
+            $ref: '#/components/schemas/RegenSubscriptionOut'
+          type: array
+          title: Subscriptions
+          description: Subscriptions.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - ecosystems
+      - deliveryModes
+      - subscriptions
+      title: RegenSubscriptionListResponse
+      description: "A project's subscriptions.\n\nAttributes:\n    ecosystems: Which\
+        \ ecosystems can be subscribed.\n    delivery_modes: Which delivery modes\
+        \ exist.\n    subscriptions: One entry per subscribed ecosystem."
+    RegenSubscriptionOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: sdk.regen-subscription.v1
+          description: Schema Version.
+          example: 1.0.0
+        ecosystem:
+          type: string
+          title: Ecosystem
+          description: Ecosystem.
+          example: example
+        deliveryMode:
+          type: string
+          title: Deliverymode
+          description: Delivery Mode.
+          example: example
+        options:
+          additionalProperties: true
+          type: object
+          title: Options
+          description: Options.
+        active:
+          type: boolean
+          title: Active
+          default: true
+          description: Active.
+          example: false
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for regen subscription.
+          - type: 'null'
+            description: Response payload for regen subscription.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for regen subscription.
+          - type: 'null'
+            description: Response payload for regen subscription.
+          title: Updatedat
+          description: Updated At.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for regen subscription.
+          - type: 'null'
+            description: Response payload for regen subscription.
+          title: Updatedby
+          description: Updated By.
+      additionalProperties: false
+      type: object
+      required:
+      - ecosystem
+      - deliveryMode
+      title: RegenSubscriptionOut
+      description: "A subscription, as the API describes it.\n\nAttributes:\n    schema_version:\
+        \ The projection's shape.\n    ecosystem: ``npm`` or ``pypi``.\n    delivery_mode:\
+        \ ``registry``, ``git`` or ``registry_and_git``.\n    options: The normalised\
+        \ options (``{\"dryRun\": …}`` for a registry mode, ``{}`` for git).\n   \
+        \ active: Whether publishes regenerate this SDK.\n    created_at: When the\
+        \ subscription was first stored.\n    updated_at: When it was last changed.\n\
+        \    updated_by: Who last changed it."
+    RegenSubscriptionPatchRequest:
+      properties:
+        active:
+          type: boolean
+          title: Active
+          description: '`true` to enable, `false` to disable.'
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - active
+      title: RegenSubscriptionPatchRequest
+      description: "Body for enabling or disabling a subscription.\n\nAttributes:\n\
+        \    active: The new state."
+    RegenSubscriptionPutRequest:
+      properties:
+        deliveryMode:
+          type: string
+          title: Deliverymode
+          description: '`registry`, `git` or `registry_and_git`. No default.'
+          example: example
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for regen subscription put.
+          - type: 'null'
+            description: Request body for regen subscription put.
+          title: Options
+          description: '`{"dryRun": true}` rehearses registry releases. Registry modes
+            only.'
+        active:
+          type: boolean
+          title: Active
+          description: Whether publishes regenerate this SDK.
+          default: true
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - deliveryMode
+      title: RegenSubscriptionPutRequest
+      description: "Body for storing a subscription.\n\nAttributes:\n    delivery_mode:\
+        \ ``registry``, ``git`` or ``registry_and_git``. Required.\n    options: The\
+        \ options object (``{\"dryRun\": true}``), or omitted for the defaults.\n\
+        \    active: Whether publishes regenerate this SDK. Defaults to ``true``."
     RegistryAuditEntryOut:
       properties:
         id:
@@ -99217,7 +100426,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
       additionalProperties: false
       type: object
       required:
@@ -112057,13 +113266,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-11T00:28:17Z'
+          example: '2026-09-11T02:40:47Z'
         outcome:
           anyOf:
           - type: string

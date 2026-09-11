@@ -112,6 +112,7 @@ from .sdk_kit_routes import router as sdk_kit_router
 from .sdk_publish_routes import router as sdk_publish_router
 from .sdk_publish_routes import tenant_router as sdk_publish_tenant_router
 from .sdk_registry_credentials import validate_registry_credential_keys
+from .sdk_regen_routes import router as sdk_regen_router
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
@@ -146,7 +147,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.184.0",
+    version="1.185.0",
 )
 
 
@@ -309,6 +310,10 @@ app.include_router(sdk_publish_router)
 # after it too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged
 # `sdk-git-delivery` or `sdk-git-delivery-targets` (SDK-4.2, #4496).
 app.include_router(sdk_git_delivery_router)
+# sdk_regen_router shares the `/v1/projects` prefix for the same reason and is registered after it
+# too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged `sdk-regen-runs`,
+# `sdk-regen-jobs` or `sdk-regen-subscriptions` (SDK-4.3, #4497).
+app.include_router(sdk_regen_router)
 app.include_router(catalog_router)
 app.include_router(identity_router)
 app.include_router(compatibility_router)
@@ -470,6 +475,7 @@ _verification_schedule_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
 _repository_webhook_secret_task: asyncio.Task | None = None
 _repository_webhook_ip_range_task: asyncio.Task | None = None
+_sdk_regen_task: asyncio.Task | None = None
 
 
 @app.on_event("startup")
@@ -862,6 +868,39 @@ async def startup_event():
                 log.exception("repository webhook IP range refresh sweep")
             await asyncio.sleep(3600)
 
+    async def _sdk_regen_sweep() -> None:
+        """Regenerate and deliver subscribed SDKs after each publish (SDK-4.3, #4497).
+
+        Ticks on ``APIOME_SDK_REGEN_INTERVAL`` (default 30s). Each tick dead-letters jobs whose
+        worker outlived ``APIOME_SDK_REGEN_LEASE_SECONDS``, then claims and runs at most
+        ``APIOME_SDK_REGEN_BATCH_SIZE`` due jobs — each an SDK-4.1 registry publish and/or an
+        SDK-4.2 pull request. The claim is ``FOR UPDATE SKIP LOCKED``, so replicas share the queue.
+        Runs on a dedicated DB connection like the other sweeps. ``APIOME_SDK_REGEN_ENABLED=false``
+        halts it.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.sdk_regen_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+
+                def _run_regen() -> int:
+                    thread_db = Database()
+                    try:
+                        from .sdk_regen_worker import process_sdk_regen_sweep
+
+                        return process_sdk_regen_sweep(thread_db, apiome_version=app.version)
+                    finally:
+                        thread_db.close()
+
+                await asyncio.to_thread(_run_regen)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("sdk regen sweep")
+
     global _webhook_delivery_task
     _webhook_delivery_task = asyncio.create_task(_webhook_delivery_sweep())
     global _repository_file_scan_task
@@ -888,6 +927,8 @@ async def startup_event():
     _repository_webhook_ip_range_task = asyncio.create_task(
         _repository_webhook_ip_range_sweep()
     )
+    global _sdk_regen_task
+    _sdk_regen_task = asyncio.create_task(_sdk_regen_sweep())
 
 
 @app.on_event("shutdown")
@@ -981,6 +1022,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _repository_webhook_ip_range_task = None
+    global _sdk_regen_task
+    if _sdk_regen_task is not None:
+        _sdk_regen_task.cancel()
+        try:
+            await _sdk_regen_task
+        except asyncio.CancelledError:
+            pass
+        _sdk_regen_task = None
     db.close()
 
 
