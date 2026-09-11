@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 import psycopg2
@@ -66,9 +65,9 @@ from .sdk_registry_client import (
 from .sdk_registry_credentials import (
     ResolvedCredential,
     credential_encryption_configured,
-    redact_secrets,
     resolve_credential,
 )
+from .sdk_run_log import MAX_LOG_ENTRIES, RunLog
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +83,10 @@ __all__ = [
     "PublishError",
     "PublishOutcome",
     "PublishTransport",
+    "build_release_distribution",
     "publish",
+    "resolve_release_branding",
+    "resolve_release_series",
     "run_row_to_outcome",
 ]
 
@@ -99,10 +101,6 @@ RUN_STATUS_DRY_RUN = "dry_run"
 #: one insert; more than a handful of simultaneous publishes of one series is a caller problem, not
 #: something to spin on.
 MAX_CLAIM_ATTEMPTS = 5
-
-#: How many events one run's log keeps. A publish has a dozen steps; the cap exists so a
-#: pathological retry loop cannot grow a row without bound.
-MAX_LOG_ENTRIES = 200
 
 #: How a distribution is uploaded. Injected so tests exercise the whole pipeline — claim, build,
 #: outcome, ledger — without a network.
@@ -159,43 +157,6 @@ class PublishContext:
     version_record_id: str
     version_line: Optional[str]
     actor_id: Optional[str] = None
-
-
-@dataclass
-class _Log:
-    """A publish's event log, redacted on the way in.
-
-    Attributes:
-        secrets: The plaintext secrets in play. Every message is scrubbed of them before it is
-            kept, so no caller has to remember to do it.
-        entries: The events so far, oldest first.
-    """
-
-    secrets: List[str] = field(default_factory=list)
-    entries: List[Dict[str, Any]] = field(default_factory=list)
-
-    def add(self, step: str, message: str, *, level: str = "info") -> None:
-        """Append one event.
-
-        Args:
-            step: Which stage of the publish this belongs to.
-            message: What happened. Redacted before storage.
-            level: ``info``, ``warn`` or ``error``.
-        """
-        if len(self.entries) >= MAX_LOG_ENTRIES:
-            return
-        self.entries.append(
-            {
-                "at": datetime.now(timezone.utc).isoformat(),
-                "step": step,
-                "level": level,
-                "message": redact_secrets(message, self.secrets),
-            }
-        )
-
-    def redact(self, message: str) -> str:
-        """Scrub a message for use outside the log (an error field, say)."""
-        return redact_secrets(message, self.secrets)
 
 
 @dataclass(frozen=True)
@@ -281,8 +242,13 @@ def _require_ecosystem(ecosystem: str) -> str:
     return key
 
 
-def _resolve_branding(context: PublishContext, ecosystem: str) -> tuple[ResolvedBranding, str, str]:
+def resolve_release_branding(
+    context: PublishContext, ecosystem: str
+) -> tuple[ResolvedBranding, str, str]:
     """Resolve the SDK-3.4 branding and the package name to publish under.
+
+    Public because SDK-4.2's git delivery commits the same package a publish would upload, and so
+    must name it by the same rule.
 
     Args:
         context: The revision being published.
@@ -322,8 +288,11 @@ def _resolve_branding(context: PublishContext, ecosystem: str) -> tuple[Resolved
     return branding, name, settings.content_fingerprint
 
 
-def _resolve_series(context: PublishContext) -> ReleaseSeries:
+def resolve_release_series(context: PublishContext) -> ReleaseSeries:
     """Read the release series from the revision's version line.
+
+    Public for the same reason as :func:`resolve_release_branding`: a delivered SDK carries the
+    version number a publish of the same series would.
 
     Args:
         context: The revision being published.
@@ -381,7 +350,7 @@ def _resolve_credential(context: PublishContext, ecosystem: str) -> ResolvedCred
     return credential
 
 
-def _build(
+def build_release_distribution(
     api: CanonicalApi,
     *,
     context: PublishContext,
@@ -397,6 +366,9 @@ def _build(
     apiome_version: Optional[str],
 ) -> Distribution:
     """Build the distribution, turning a build refusal into a publish refusal.
+
+    Public because SDK-4.2 commits exactly this file list to a repository: one builder means a
+    delivered SDK and a published package cannot drift apart.
 
     Args:
         api: The revision's canonical model.
@@ -468,7 +440,7 @@ def _claim(
     series: ReleaseSeries,
     package_name: str,
     credential: ResolvedCredential,
-    log: _Log,
+    log: RunLog,
 ) -> tuple[Optional[Dict[str, Any]], int, str]:
     """Take the next free version number for this series, exclusively.
 
@@ -574,11 +546,11 @@ def publish(
             and returned as a failed outcome, because the run row is the thing worth having.
     """
     key = _require_ecosystem(ecosystem)
-    branding, package_name, fingerprint = _resolve_branding(context, key)
-    series = _resolve_series(context)
+    branding, package_name, fingerprint = resolve_release_branding(context, key)
+    series = resolve_release_series(context)
     credential = _resolve_credential(context, key)
 
-    log = _Log(secrets=[credential.token])
+    log = RunLog(secrets=[credential.token])
     log.add(
         "resolve",
         f"Publishing {context.project_slug} {context.version_line or context.version_record_id} "
@@ -613,7 +585,7 @@ def publish(
     run_id = str(run_row["id"]) if run_row else None
 
     try:
-        distribution = _build(
+        distribution = build_release_distribution(
             api,
             context=context,
             ecosystem=key,
@@ -710,7 +682,7 @@ def _dry_run(
     source_text: Optional[str],
     source_format: Optional[str],
     apiome_version: Optional[str],
-    log: _Log,
+    log: RunLog,
 ) -> PublishOutcome:
     """Validate a release without claiming a version or contacting the registry.
 
@@ -742,7 +714,7 @@ def _dry_run(
         f"{package_name}@{version}.",
     )
 
-    distribution = _build(
+    distribution = build_release_distribution(
         api,
         context=context,
         ecosystem=ecosystem,
@@ -815,7 +787,7 @@ def _finish(
     run_id: Optional[str],
     context: PublishContext,
     status: str,
-    log: _Log,
+    log: RunLog,
     *,
     artifact: Optional[Distribution] = None,
     error_code: Optional[str] = None,
@@ -866,7 +838,7 @@ def _outcome(
     counter: int,
     credential: ResolvedCredential,
     distribution: Distribution,
-    log: _Log,
+    log: RunLog,
     error_code: Optional[str] = None,
     error_message: Optional[str] = None,
 ) -> PublishOutcome:

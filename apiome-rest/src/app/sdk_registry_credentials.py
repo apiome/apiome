@@ -298,8 +298,8 @@ def _validate_token(token: Optional[str]) -> str:
     return candidate
 
 
-def redact_secrets(text: str, secrets: Iterable[str]) -> str:
-    """Replace every occurrence of a known secret with :data:`REDACTION_MARKER`.
+def redact_secrets(text: str, secrets: Iterable[str], *, marker: str = REDACTION_MARKER) -> str:
+    """Replace every occurrence of a known secret with a redaction marker.
 
     The belt to the pipeline's braces. Nothing in SDK-4.1 *writes* a token into a log line, but a
     registry's own error body is outside our control and could quote the credential it rejected,
@@ -312,6 +312,8 @@ def redact_secrets(text: str, secrets: Iterable[str]) -> str:
         text: The text about to be stored or logged.
         secrets: The plaintext secrets in play. Empty or very short entries are ignored: replacing
             every ``ab`` in a log would destroy it.
+        marker: What each secret becomes. Defaults to :data:`REDACTION_MARKER`; SDK-4.2's git
+            delivery passes its own so a log says which kind of secret a line once held.
 
     Returns:
         The text with each secret replaced.
@@ -319,7 +321,7 @@ def redact_secrets(text: str, secrets: Iterable[str]) -> str:
     redacted = text or ""
     for secret in secrets:
         if secret and len(secret) >= TOKEN_MIN_CHARS:
-            redacted = redacted.replace(secret, REDACTION_MARKER)
+            redacted = redacted.replace(secret, marker)
     return redacted
 
 
