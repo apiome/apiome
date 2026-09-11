@@ -31555,6 +31555,835 @@ class Database:
         )
         return dict(rows[0]) if rows else None
 
+    # -------------------------------------------------------------------------------------------
+    # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of a regen subscription.
+    _SDK_REGEN_SUBSCRIPTION_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        ecosystem,
+        delivery_mode,
+        options,
+        active,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by,
+        created_at,
+        updated_at
+    """
+
+    #: Every column of a regen run (one publish event), qualified by ``r``.
+    _SDK_REGEN_RUN_COLUMNS = """
+        r.id::text AS id,
+        r.tenant_id::text AS tenant_id,
+        r.project_id::text AS project_id,
+        r.version_id::text AS version_id,
+        r.version_line,
+        r.published_by::text AS published_by,
+        r.created_at
+    """
+
+    #: Every column of a regen job, qualified by ``j``.
+    _SDK_REGEN_JOB_COLUMNS = """
+        j.id::text AS id,
+        j.tenant_id::text AS tenant_id,
+        j.project_id::text AS project_id,
+        j.run_id::text AS run_id,
+        j.subscription_id::text AS subscription_id,
+        j.ecosystem,
+        j.delivery_mode,
+        j.options,
+        j.status,
+        j.attempt_count,
+        j.next_attempt_at,
+        j.claimed_at,
+        j.claim_token::text AS claim_token,
+        j.publish_run_id::text AS publish_run_id,
+        j.publish_status,
+        j.delivery_run_id::text AS delivery_run_id,
+        j.delivery_status,
+        j.package_name,
+        j.package_version,
+        j.regen_counter,
+        j.artifact_sha256,
+        j.pull_request_number,
+        j.pull_request_url,
+        j.error_step,
+        j.error_code,
+        j.error_message,
+        j.attempts,
+        j.retry_requested_by::text AS retry_requested_by,
+        j.retry_requested_at,
+        j.created_at,
+        j.updated_at,
+        j.finished_at
+    """
+
+    def list_sdk_regen_subscriptions(
+        self, tenant_id: str, project_id: str
+    ) -> List[Dict[str, Any]]:
+        """List a project's regen subscriptions, one per ecosystem (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose subscriptions to read.
+
+        Returns:
+            The rows ordered by ecosystem. Empty when the ids are not UUIDs, so a unit-test handle
+            never reaches the database.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_SUBSCRIPTION_COLUMNS}
+            FROM apiome.sdk_regen_subscriptions
+            WHERE tenant_id = %s::uuid AND project_id = %s::uuid
+            ORDER BY ecosystem
+            """,
+            (tenant_id, project_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_sdk_regen_subscription(
+        self, tenant_id: str, project_id: str, ecosystem: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one project's regen subscription for one ecosystem (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+
+        Returns:
+            The row, or ``None`` when there is none or the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_SUBSCRIPTION_COLUMNS}
+            FROM apiome.sdk_regen_subscriptions
+            WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND ecosystem = %s
+            LIMIT 1
+            """,
+            (tenant_id, project_id, ecosystem),
+        )
+        return dict(rows[0]) if rows else None
+
+    def upsert_sdk_regen_subscription(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        ecosystem: str,
+        delivery_mode: str,
+        options: Dict[str, Any],
+        active: bool,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store or replace a project's regen subscription for one ecosystem (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+            delivery_mode: ``registry``, ``git`` or ``registry_and_git``.
+            options: The normalised options object.
+            active: Whether publishes regenerate this SDK.
+            actor_id: The user configuring it.
+
+        Returns:
+            The stored row, or ``None`` when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.sdk_regen_subscriptions (
+                tenant_id, project_id, ecosystem, delivery_mode, options, active,
+                created_by, updated_by
+            ) VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::uuid, %s::uuid)
+            ON CONFLICT (tenant_id, project_id, ecosystem)
+            DO UPDATE SET
+                delivery_mode = EXCLUDED.delivery_mode,
+                options = EXCLUDED.options,
+                active = EXCLUDED.active,
+                updated_by = EXCLUDED.updated_by,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING {self._SDK_REGEN_SUBSCRIPTION_COLUMNS}
+            """,
+            (
+                tenant_id,
+                project_id,
+                ecosystem,
+                delivery_mode,
+                Json(options or {}),
+                bool(active),
+                actor,
+                actor,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def set_sdk_regen_subscription_active(
+        self,
+        tenant_id: str,
+        project_id: str,
+        ecosystem: str,
+        *,
+        active: bool,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Enable or disable a project's regen subscription for one ecosystem (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+            active: The new state.
+            actor_id: The user changing it.
+
+        Returns:
+            The updated row, or ``None`` when there is no such subscription or the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.sdk_regen_subscriptions
+            SET active = %s,
+                updated_by = %s::uuid,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND ecosystem = %s
+            RETURNING {self._SDK_REGEN_SUBSCRIPTION_COLUMNS}
+            """,
+            (bool(active), actor, tenant_id, project_id, ecosystem),
+        )
+        return dict(rows[0]) if rows else None
+
+    def delete_sdk_regen_subscription(
+        self, tenant_id: str, project_id: str, ecosystem: str
+    ) -> int:
+        """Remove a project's regen subscription for one ecosystem (SDK-4.3).
+
+        Past runs and jobs are kept: a job's ``subscription_id`` is ``ON DELETE SET NULL`` and it
+        carries its own copy of the ecosystem, mode and options it ran with. Jobs still queued are
+        cancelled by the worker when it reaches them.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            ecosystem: ``npm`` or ``pypi``.
+
+        Returns:
+            Rows removed — ``1`` when a subscription existed, ``0`` otherwise.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        return self._execute_write(
+            """
+            DELETE FROM apiome.sdk_regen_subscriptions
+            WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND ecosystem = %s
+            """,
+            (tenant_id, project_id, ecosystem),
+        )
+
+    def enqueue_sdk_regen_run(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        version_line: Optional[str],
+        published_by: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        """Expand one publish event into a run and one pending job per active subscription (SDK-4.3).
+
+        The run and its jobs are written by one statement, so a publish either queues its whole
+        matrix or none of it; and the run is written only when at least one subscription is
+        active, so a project that subscribes to nothing gains no rows.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project that was published.
+            version_id: The published revision.
+            version_line: Its version label.
+            published_by: The user who published it.
+
+        Returns:
+            The queued job rows (empty when no subscription is active or the ids are not UUIDs).
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        version = version_id if is_uuid_string(str(version_id or "")) else None
+        actor = published_by if is_uuid_string(str(published_by or "")) else None
+        rows = self.execute_query(
+            f"""
+            WITH subscriptions AS (
+                SELECT id, ecosystem, delivery_mode, options
+                FROM apiome.sdk_regen_subscriptions
+                WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND active
+            ),
+            run AS (
+                INSERT INTO apiome.sdk_regen_runs (
+                    tenant_id, project_id, version_id, version_line, published_by
+                )
+                SELECT %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid
+                WHERE EXISTS (SELECT 1 FROM subscriptions)
+                RETURNING id, tenant_id, project_id
+            )
+            INSERT INTO apiome.sdk_regen_jobs AS j (
+                tenant_id, project_id, run_id, subscription_id, ecosystem, delivery_mode, options,
+                status, next_attempt_at
+            )
+            SELECT run.tenant_id, run.project_id, run.id, s.id, s.ecosystem, s.delivery_mode,
+                   s.options, 'pending', CURRENT_TIMESTAMP
+            FROM run CROSS JOIN subscriptions s
+            RETURNING {self._SDK_REGEN_JOB_COLUMNS}
+            """,
+            (tenant_id, project_id, tenant_id, project_id, version, version_line, actor),
+        )
+        return [dict(row) for row in rows or []]
+
+    def claim_next_sdk_regen_job(self, claim_token: str) -> Optional[Dict[str, Any]]:
+        """Atomically claim the next due regen job, joined with what running it needs (SDK-4.3).
+
+        ``FOR UPDATE SKIP LOCKED`` makes the claim safe across replicas. A job is claimable only
+        when no *earlier* job of the same subscription is still queued, running or retrying, so a
+        subscription's publishes are regenerated in order — and a job waiting to retry holds back
+        only its own subscription, never another's.
+
+        Args:
+            claim_token: A fresh UUID identifying this claim; the worker closes the attempt with it.
+
+        Returns:
+            The claimed job (status ``running``, ``attempt_count`` already incremented) with the
+            run's ``version_id`` / ``version_line`` / ``published_by``, the tenant and project
+            slugs, and the subscription's *current* ``subscription_active`` /
+            ``subscription_delivery_mode`` / ``subscription_options`` (all ``NULL`` when it was
+            removed) — or ``None`` when nothing is due.
+        """
+        if not is_uuid_string(str(claim_token or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            WITH next_job AS (
+                SELECT j.id
+                FROM apiome.sdk_regen_jobs j
+                WHERE j.status IN ('pending', 'retrying')
+                  AND j.next_attempt_at IS NOT NULL
+                  AND j.next_attempt_at <= CURRENT_TIMESTAMP
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM apiome.sdk_regen_jobs earlier
+                      WHERE earlier.subscription_id = j.subscription_id
+                        AND earlier.status IN ('pending', 'running', 'retrying')
+                        AND (earlier.created_at, earlier.id) < (j.created_at, j.id)
+                  )
+                ORDER BY j.next_attempt_at ASC, j.created_at ASC, j.id ASC
+                FOR UPDATE OF j SKIP LOCKED
+                LIMIT 1
+            ),
+            claimed AS (
+                UPDATE apiome.sdk_regen_jobs j
+                SET status = 'running',
+                    attempt_count = j.attempt_count + 1,
+                    claimed_at = CURRENT_TIMESTAMP,
+                    claim_token = %s::uuid,
+                    updated_at = CURRENT_TIMESTAMP
+                FROM next_job
+                WHERE j.id = next_job.id
+                RETURNING j.*
+            )
+            SELECT {self._SDK_REGEN_JOB_COLUMNS},
+                   r.version_id::text AS version_id,
+                   r.version_line,
+                   r.published_by::text AS published_by,
+                   t.slug AS tenant_slug,
+                   p.slug AS project_slug,
+                   s.active AS subscription_active,
+                   s.delivery_mode AS subscription_delivery_mode,
+                   s.options AS subscription_options
+            FROM claimed j
+            JOIN apiome.sdk_regen_runs r ON r.id = j.run_id
+            JOIN apiome.tenants t ON t.id = j.tenant_id
+            JOIN apiome.projects p ON p.id = j.project_id
+            LEFT JOIN apiome.sdk_regen_subscriptions s ON s.id = j.subscription_id
+            """,
+            (claim_token,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def finish_sdk_regen_job_attempt(
+        self,
+        job_id: str,
+        claim_token: str,
+        *,
+        status: str,
+        next_attempt_at: Optional[datetime],
+        delivery_mode: str,
+        options: Dict[str, Any],
+        publish_run_id: Optional[str],
+        publish_status: Optional[str],
+        delivery_run_id: Optional[str],
+        delivery_status: Optional[str],
+        package_name: Optional[str],
+        package_version: Optional[str],
+        regen_counter: Optional[int],
+        artifact_sha256: Optional[str],
+        pull_request_number: Optional[int],
+        pull_request_url: Optional[str],
+        error_step: Optional[str],
+        error_code: Optional[str],
+        error_message: Optional[str],
+        attempt: Dict[str, Any],
+        max_attempt_entries: int,
+        worker_lost_code: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Close one claimed attempt with its outcome (SDK-4.3).
+
+        Every column is written explicitly — the worker carries forward what earlier attempts
+        produced — so a step that succeeded before is never blanked by one that was skipped now.
+
+        The update matches only the claim it was given (``claim_token``) and only while that claim
+        is still ``running`` or was dead-lettered *by the lease sweep* (``worker_lost_code``): a
+        worker that outlived its lease replaces the sweep's presumption with what really happened,
+        but can never overwrite a job that was retried and reclaimed since.
+
+        Args:
+            job_id: The job.
+            claim_token: The token its claim set.
+            status: ``succeeded``, ``retrying``, ``dead_letter`` or ``cancelled``.
+            next_attempt_at: When a ``retrying`` job is next due; ``None`` otherwise.
+            delivery_mode: The mode this attempt ran with.
+            options: The options this attempt ran with.
+            publish_run_id: The SDK-4.1 run the registry step wrote.
+            publish_status: That run's status.
+            delivery_run_id: The SDK-4.2 run the git step wrote.
+            delivery_status: That run's status.
+            package_name: The package the job produced.
+            package_version: Its version.
+            regen_counter: The counter a registry publish claimed.
+            artifact_sha256: The built archive's digest.
+            pull_request_number: The pull request opened or updated.
+            pull_request_url: Its web page.
+            error_step: The step that failed (``generate``, ``registry``, ``git``, ``worker``).
+            error_code: A stable failure code.
+            error_message: A redacted failure message.
+            attempt: The attempt record to append to ``attempts``.
+            max_attempt_entries: How many attempt records a job keeps (oldest dropped first).
+            worker_lost_code: The error code the lease sweep stamps on a job it dead-letters.
+
+        Returns:
+            The updated job, or ``None`` when the claim no longer matches (or the ids are not UUIDs).
+        """
+        if not (is_uuid_string(str(job_id or "")) and is_uuid_string(str(claim_token or ""))):
+            return None
+        terminal = status in ("succeeded", "dead_letter", "cancelled")
+        entry = Json([attempt])
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.sdk_regen_jobs j
+            SET status = %s,
+                next_attempt_at = %s,
+                delivery_mode = %s,
+                options = %s,
+                publish_run_id = %s::uuid,
+                publish_status = %s,
+                delivery_run_id = %s::uuid,
+                delivery_status = %s,
+                package_name = %s,
+                package_version = %s,
+                regen_counter = %s,
+                artifact_sha256 = %s,
+                pull_request_number = %s,
+                pull_request_url = %s,
+                error_step = %s,
+                error_code = %s,
+                error_message = %s,
+                attempts = CASE
+                    WHEN jsonb_array_length(j.attempts) >= %s THEN (j.attempts - 0) || %s::jsonb
+                    ELSE j.attempts || %s::jsonb
+                END,
+                finished_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE j.id = %s::uuid
+              AND j.claim_token = %s::uuid
+              AND (j.status = 'running' OR (j.status = 'dead_letter' AND j.error_code = %s))
+            RETURNING {self._SDK_REGEN_JOB_COLUMNS}
+            """,
+            (
+                status,
+                next_attempt_at,
+                delivery_mode,
+                Json(options or {}),
+                publish_run_id if is_uuid_string(str(publish_run_id or "")) else None,
+                publish_status,
+                delivery_run_id if is_uuid_string(str(delivery_run_id or "")) else None,
+                delivery_status,
+                package_name,
+                package_version,
+                regen_counter,
+                artifact_sha256,
+                pull_request_number,
+                pull_request_url,
+                error_step,
+                error_code,
+                error_message,
+                max(1, int(max_attempt_entries)),
+                entry,
+                entry,
+                terminal,
+                job_id,
+                claim_token,
+                worker_lost_code,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def save_sdk_regen_job_progress(
+        self,
+        job_id: str,
+        claim_token: str,
+        *,
+        publish_run_id: Optional[str],
+        publish_status: Optional[str],
+        package_name: Optional[str],
+        package_version: Optional[str],
+        regen_counter: Optional[int],
+        artifact_sha256: Optional[str],
+    ) -> int:
+        """Record a finished registry step while its job is still running (SDK-4.3).
+
+        Written before the git step starts, so a worker that dies during the pull request leaves
+        the publish on the job: the lease sweep's dead letter then shows what was published, and a
+        retry delivers that version instead of publishing another.
+
+        Args:
+            job_id: The job.
+            claim_token: The token its claim set; a mismatched or closed claim writes nothing.
+            publish_run_id: The SDK-4.1 run the step wrote.
+            publish_status: That run's status.
+            package_name: The package.
+            package_version: The version published.
+            regen_counter: The counter it claimed.
+            artifact_sha256: The archive's digest.
+
+        Returns:
+            Rows updated — ``1`` while the claim holds, ``0`` otherwise (or for non-UUID ids).
+        """
+        if not (is_uuid_string(str(job_id or "")) and is_uuid_string(str(claim_token or ""))):
+            return 0
+        return self._execute_write(
+            """
+            UPDATE apiome.sdk_regen_jobs
+            SET publish_run_id = %s::uuid,
+                publish_status = %s,
+                package_name = %s,
+                package_version = %s,
+                regen_counter = %s,
+                artifact_sha256 = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND claim_token = %s::uuid AND status = 'running'
+            """,
+            (
+                publish_run_id if is_uuid_string(str(publish_run_id or "")) else None,
+                publish_status,
+                package_name,
+                package_version,
+                regen_counter,
+                artifact_sha256,
+                job_id,
+                claim_token,
+            ),
+        )
+
+    def reap_stale_sdk_regen_jobs(
+        self,
+        *,
+        lease_seconds: int,
+        error_code: str,
+        error_message: str,
+        max_attempt_entries: int,
+    ) -> List[Dict[str, Any]]:
+        """Dead-letter every job a worker claimed and never closed within the lease (SDK-4.3).
+
+        A worker that died mid-job may already have uploaded a package or pushed a branch, so the
+        job is **not** retried automatically: it is dead-lettered for a person to check the
+        publish and delivery history first. The update is atomic, so two replicas sweeping at once
+        reap — and alert on — each job once.
+
+        Args:
+            lease_seconds: How long a claim may run before it is presumed lost.
+            error_code: The code stamped on a reaped job.
+            error_message: The message stamped on a reaped job.
+            max_attempt_entries: How many attempt records a job keeps.
+
+        Returns:
+            The reaped jobs, each with its run's ``version_id`` / ``version_line`` and the
+            ``project_slug``, which the dead-letter alert carries.
+        """
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.sdk_regen_jobs j
+            SET status = 'dead_letter',
+                next_attempt_at = NULL,
+                error_step = 'worker',
+                error_code = %s,
+                error_message = %s,
+                attempts = CASE
+                    WHEN jsonb_array_length(j.attempts) >= %s THEN (j.attempts - 0)
+                    ELSE j.attempts
+                END || jsonb_build_array(jsonb_build_object(
+                    'attempt', j.attempt_count,
+                    'startedAt', j.claimed_at,
+                    'finishedAt', CURRENT_TIMESTAMP,
+                    'outcome', 'dead_letter',
+                    'errorStep', 'worker',
+                    'errorCode', %s::text
+                )),
+                finished_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            FROM apiome.sdk_regen_runs r, apiome.projects p
+            WHERE r.id = j.run_id
+              AND p.id = j.project_id
+              AND j.status = 'running'
+              AND j.claimed_at < CURRENT_TIMESTAMP - (%s * INTERVAL '1 second')
+            RETURNING {self._SDK_REGEN_JOB_COLUMNS},
+                      r.version_id::text AS version_id,
+                      r.version_line,
+                      p.slug AS project_slug
+            """,
+            (
+                error_code,
+                error_message,
+                max(1, int(max_attempt_entries)),
+                error_code,
+                max(1, int(lease_seconds)),
+            ),
+        )
+        return [dict(row) for row in rows or []]
+
+    def list_sdk_regen_runs(
+        self,
+        tenant_id: str,
+        project_id: str,
+        *,
+        job_status: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List a project's regen runs (publish events), newest first (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to read.
+            job_status: Narrow to runs with at least one job in this status (``dead_letter``…).
+            limit: Page size.
+            offset: Rows to skip.
+
+        Returns:
+            The run rows. Empty when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return []
+        clauses, params = self._sdk_regen_run_filter(tenant_id, project_id, job_status)
+        params.extend([max(1, int(limit)), max(0, int(offset))])
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_RUN_COLUMNS}
+            FROM apiome.sdk_regen_runs r
+            WHERE {clauses}
+            ORDER BY r.created_at DESC, r.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows or []]
+
+    def count_sdk_regen_runs(
+        self, tenant_id: str, project_id: str, *, job_status: Optional[str] = None
+    ) -> int:
+        """Count a project's regen runs, for paging (SDK-4.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project whose history to count.
+            job_status: Narrow to runs with at least one job in this status.
+
+        Returns:
+            The number of runs, or ``0`` when the ids are not UUIDs.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        clauses, params = self._sdk_regen_run_filter(tenant_id, project_id, job_status)
+        rows = self.execute_query(
+            f"""
+            SELECT COUNT(*) AS total
+            FROM apiome.sdk_regen_runs r
+            WHERE {clauses}
+            """,
+            tuple(params),
+        )
+        return int(rows[0].get("total") or 0) if rows else 0
+
+    @staticmethod
+    def _sdk_regen_run_filter(
+        tenant_id: str, project_id: str, job_status: Optional[str]
+    ) -> Tuple[str, List[Any]]:
+        """Build the shared ``WHERE`` clause of the regen run listing and its count.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            job_status: Narrow to runs with a job in this status, when given.
+
+        Returns:
+            ``(clause, params)``.
+        """
+        clauses = ["r.tenant_id = %s::uuid", "r.project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if job_status:
+            clauses.append(
+                "EXISTS (SELECT 1 FROM apiome.sdk_regen_jobs j "
+                "WHERE j.run_id = r.id AND j.status = %s)"
+            )
+            params.append(job_status)
+        return " AND ".join(clauses), params
+
+    def get_sdk_regen_run(
+        self, tenant_id: str, project_id: str, run_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one regen run within a project (SDK-4.3).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the run must belong to.
+            run_id: The run.
+
+        Returns:
+            The row, or ``None`` when nothing matched or an id is not a UUID.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, run_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_RUN_COLUMNS}
+            FROM apiome.sdk_regen_runs r
+            WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid AND r.project_id = %s::uuid
+            """,
+            (run_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_sdk_regen_jobs_for_runs(
+        self, tenant_id: str, run_ids: Sequence[str]
+    ) -> List[Dict[str, Any]]:
+        """Return the jobs of several regen runs, with each subscription's current state (SDK-4.3).
+
+        Args:
+            tenant_id: The caller's tenant, which scopes the read.
+            run_ids: The runs whose jobs to read. Non-UUID entries are ignored.
+
+        Returns:
+            The job rows ordered by run then ecosystem, each with ``subscription_active`` (``NULL``
+            when the subscription was removed).
+        """
+        ids = [str(value) for value in run_ids or [] if is_uuid_string(str(value or ""))]
+        if not ids or not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_JOB_COLUMNS},
+                   s.active AS subscription_active
+            FROM apiome.sdk_regen_jobs j
+            LEFT JOIN apiome.sdk_regen_subscriptions s ON s.id = j.subscription_id
+            WHERE j.tenant_id = %s::uuid AND j.run_id = ANY(%s::uuid[])
+            ORDER BY j.run_id, j.ecosystem
+            """,
+            (tenant_id, ids),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_sdk_regen_job(self, tenant_id: str, job_id: str) -> Optional[Dict[str, Any]]:
+        """Return one regen job with its subscription's current state (SDK-4.3).
+
+        Args:
+            tenant_id: The caller's tenant, which scopes the read.
+            job_id: The job.
+
+        Returns:
+            The row with ``subscription_active``, or ``None`` when nothing matched or an id is not
+            a UUID.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(job_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SDK_REGEN_JOB_COLUMNS},
+                   s.active AS subscription_active
+            FROM apiome.sdk_regen_jobs j
+            LEFT JOIN apiome.sdk_regen_subscriptions s ON s.id = j.subscription_id
+            WHERE j.id = %s::uuid AND j.tenant_id = %s::uuid
+            """,
+            (job_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def retry_sdk_regen_job(
+        self,
+        tenant_id: str,
+        project_id: str,
+        job_id: str,
+        *,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Put a dead-lettered regen job back on the queue (SDK-4.3).
+
+        A compare-and-set on ``status = 'dead_letter'``, so two retries of one job queue it once.
+        The attempt budget restarts; the attempt log is kept.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the job must belong to.
+            job_id: The job to retry.
+            actor_id: The user asking for the retry.
+
+        Returns:
+            The re-queued job, or ``None`` when it is not dead-lettered (or not found, or an id is
+            not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, job_id)):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.sdk_regen_jobs j
+            SET status = 'pending',
+                attempt_count = 0,
+                next_attempt_at = CURRENT_TIMESTAMP,
+                error_step = NULL,
+                error_code = NULL,
+                error_message = NULL,
+                finished_at = NULL,
+                retry_requested_by = %s::uuid,
+                retry_requested_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE j.id = %s::uuid
+              AND j.tenant_id = %s::uuid
+              AND j.project_id = %s::uuid
+              AND j.status = 'dead_letter'
+            RETURNING {self._SDK_REGEN_JOB_COLUMNS}
+            """,
+            (actor, job_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
 
 # Global database instance
 db = Database()

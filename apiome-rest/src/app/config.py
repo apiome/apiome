@@ -1608,6 +1608,49 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Auto-regen on publish (SDK-4.3, #4497). A background async loop (app.sdk_regen_worker) runs the
+    # jobs a publish queues for each active SDK regen subscription: an SDK-4.1 registry publish
+    # and/or an SDK-4.2 pull request per job, with transient failures retried and permanent ones
+    # dead-lettered. Opt-in per subscription (a tenant with none costs one empty claim per tick).
+    #
+    # sdk_regen_enabled            Global kill switch. When False the sweep halts entirely for a tick
+    #                              (no claim, no publish, no pull request), for incident response.
+    #                              Queued jobs wait; nothing is lost.
+    # sdk_regen_interval_seconds   The sweep's tick floor: how often the loop wakes to claim due jobs.
+    # sdk_regen_batch_size         Max jobs run per tick. Each job builds a package and writes to a
+    #                              registry or GitHub, so the batch is bounded; the rest stay queued.
+    # sdk_regen_lease_seconds      How long a claimed job may run before the sweep presumes its
+    #                              worker lost and dead-letters it (never auto-retries it: the job
+    #                              may already have published).
+    sdk_regen_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGEN_ENABLED",
+            "sdk_regen_enabled",
+        ),
+    )
+    sdk_regen_interval_seconds: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGEN_INTERVAL",
+            "sdk_regen_interval_seconds",
+        ),
+    )
+    sdk_regen_batch_size: int = Field(
+        default=5,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGEN_BATCH_SIZE",
+            "sdk_regen_batch_size",
+        ),
+    )
+    sdk_regen_lease_seconds: int = Field(
+        default=1800,
+        validation_alias=AliasChoices(
+            "APIOME_SDK_REGEN_LEASE_SECONDS",
+            "sdk_regen_lease_seconds",
+        ),
+    )
+
     # Dependency-vulnerability lookup for the MCP supply-chain scan (CLX-3.2, #4856). OFF by default:
     # the trust-posture scan is fully offline unless an operator turns this on, which is what the
     # roadmap asks for ("start with local/offline tools; third-party scanning APIs are optional

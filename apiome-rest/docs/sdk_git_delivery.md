@@ -174,7 +174,8 @@ in the ledger.
 
 `deliver()` itself never raises for a delivery problem, which is what lets SDK-4.3's worker treat
 every attempt uniformly; the in-process `DeliveryOutcome.retryable` flag (not persisted) tells it
-which failures are worth retrying.
+which failures are worth retrying. See `sdk_regen_on_publish.md` for how a publish delivers
+automatically, pinned to the version the same job just published.
 
 ## Why no job queue, and no git binary
 

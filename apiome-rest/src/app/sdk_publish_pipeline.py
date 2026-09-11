@@ -186,6 +186,9 @@ class PublishOutcome:
         log: The event log.
         error_code: Set when the run failed.
         error_message: Set when the run failed, redacted.
+        retryable: Whether a failed upload could plausibly succeed if repeated unchanged (a
+            timeout or a registry 5xx). Not persisted — it is for an in-process caller such as
+            SDK-4.3's auto-regen worker, mirroring SDK-4.2's ``DeliveryOutcome.retryable``.
     """
 
     run_id: Optional[str]
@@ -210,6 +213,7 @@ class PublishOutcome:
     log: List[Dict[str, Any]] = field(default_factory=list)
     error_code: Optional[str] = None
     error_message: Optional[str] = None
+    retryable: bool = False
 
 
 # -------------------------------------------------------------------------------------------
@@ -644,6 +648,7 @@ def publish(
             log=log,
             error_code="sdk-publish-registry-refused",
             error_message=message,
+            retryable=exc.retryable,
         )
 
     status = (
@@ -841,6 +846,7 @@ def _outcome(
     log: RunLog,
     error_code: Optional[str] = None,
     error_message: Optional[str] = None,
+    retryable: bool = False,
 ) -> PublishOutcome:
     """Assemble the outcome a route returns.
 
@@ -859,6 +865,7 @@ def _outcome(
         log: The event log.
         error_code: Set when the run failed.
         error_message: Set when the run failed.
+        retryable: Whether a failed upload is worth repeating unchanged.
 
     Returns:
         The outcome.
@@ -886,6 +893,7 @@ def _outcome(
         log=list(log.entries),
         error_code=error_code,
         error_message=error_message,
+        retryable=retryable,
     )
 
 

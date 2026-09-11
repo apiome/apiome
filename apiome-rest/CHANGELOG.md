@@ -5,6 +5,62 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.320.0] - 2026-09-10
+
+### Added
+- **Auto-regen on publish (#4497, SDK-4.3)** — watch mode for SDKs. Subscribe a project's SDK once,
+  and every published version regenerates it and ships it: an SDK-4.1 registry publish, an SDK-4.2
+  pull request, or both. Nobody has to remember.
+
+  ```bash
+  # Every publish of widgets: publish the npm SDK, then open a PR carrying that same version
+  curl -sX PUT "$APIOME/v1/projects/acme/widgets/sdk-regen-subscriptions/npm" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"deliveryMode": "registry_and_git"}'
+
+  # What each publish did — and the dead letter
+  curl -s "$APIOME/v1/projects/acme/widgets/sdk-regen-runs?status=dead_letter" -H "Authorization: Bearer $TOKEN"
+  ```
+
+  - **Subscriptions** (apiome-db **V258** `sdk_regen_subscriptions`) — one per project per ecosystem,
+    with a `deliveryMode` of `registry`, `git` or `registry_and_git`, `options` and `active`.
+    `deliveryMode` has **no default**, because publishing to a public registry is irreversible.
+    `options` is a closed vocabulary: `dryRun` (registry modes only, default `false`) rehearses every
+    release, and an unknown option is refused, so a misspelt one can never silently publish. Listing
+    is `projects:view`. Subscribing or re-enabling needs `projects:edit` **and** `versions:publish`,
+    because a subscription publishes on the tenant's behalf on every later publish. Disabling or
+    unsubscribing needs only `projects:edit`.
+  - **The trigger** — the publish route queues a run (`sdk_regen_runs`) and one pending job per active
+    subscription (`sdk_regen_jobs`) in one statement, as a background task that never fails the
+    publish. A project with no active subscription gains no rows.
+  - **The worker** (`app.sdk_regen_worker`, ticking every `APIOME_SDK_REGEN_INTERVAL`) calls SDK-4.1's
+    `publish()` and SDK-4.2's `deliver()` **unchanged**, so an automatic release and a manual one are
+    identical. In `registry_and_git` mode the pull request is pinned to the version the publish just
+    claimed. Jobs are claimed with `FOR UPDATE SKIP LOCKED`, so replicas share the queue. A
+    subscription's publishes run in order, and one subscription's failure never blocks another's.
+  - **Failures go to a dead letter, like webhooks.** Transient failures (a registry 5xx, a GitHub
+    outage or rate limit) retry with backoff (4 attempts: 60s/5min/30min). Permanent ones (a missing
+    credential, no delivery target, a registry refusal) are dead-lettered at once with a message that
+    names the fix. A dead letter fans out an `sdk.regen.dead_lettered` push-webhook event and is
+    retried with `POST …/sdk-regen-jobs/{jobId}/retry` (`versions:publish`). **A step that succeeded
+    is never repeated**: a retry after a publish only delivers, and the registry result is written
+    to the job before the git step starts, so this holds even if the worker dies. A job still running
+    past `APIOME_SDK_REGEN_LEASE_SECONDS` is dead-lettered (`sdk-regen-worker-lost`), never retried
+    automatically, since it may already have published. A fresh claim token per attempt stops a stale
+    worker from overwriting a job that was retried since.
+  - **History links publish event → jobs → artifacts → deliveries.** Each run lists its jobs, and
+    each job gives the SDK-4.1 publish run (package, version, archive digest) and the SDK-4.2 delivery
+    run (pull request), with links to both ledgers and to the published version. Every attempt is
+    recorded against the runs it wrote.
+  - **Unsubscribing stops future runs without touching past artifacts.** Queued jobs for a disabled or
+    removed subscription are `cancelled`, and a removed subscription's dead letters can no longer be
+    retried. Runs, jobs, packages and pull requests already produced are kept (`ON DELETE SET NULL`).
+  - `PublishOutcome.retryable` (SDK-4.1, in-process only) now carries the registry's own
+    `RegistryUploadError.retryable`, mirroring SDK-4.2's `DeliveryOutcome.retryable`.
+  - Settings: `APIOME_SDK_REGEN_ENABLED` (kill switch), `APIOME_SDK_REGEN_INTERVAL`,
+    `APIOME_SDK_REGEN_BATCH_SIZE`, `APIOME_SDK_REGEN_LEASE_SECONDS`. No new RBAC resource and no new
+    credential. Documented in `docs/sdk_regen_on_publish.md`.
+
 ## [1.319.0] - 2026-09-10
 
 ### Added

@@ -185,4 +185,7 @@ failure: the upload may well have landed.
 * **The version rule** is a pure function (`app.sdk_publish_version`), so a PR branch name or a git
   tag can carry the same number a registry release would.
 * **The run ledger** already has a status vocabulary and an event log; SDK-4.3 (auto-regen on
-  publish) needs a subscription and a worker, not a second record of what happened.
+  publish) needs a subscription and a worker, not a second record of what happened — see
+  `sdk_regen_on_publish.md`. Its jobs call `publish()` unchanged and link to the run each attempt
+  wrote. `PublishOutcome.retryable` (in-process, not persisted) carries the registry's own
+  `RegistryUploadError.retryable`, so the worker retries a registry outage and dead-letters a refusal.

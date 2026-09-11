@@ -318,6 +318,21 @@ def test_a_refused_upload_fails_the_run_and_frees_the_number():
     assert outcome.error_code == "sdk-publish-registry-refused"
     # `failed` leaves the claim index's predicate, which is what releases the version number.
     assert ledger.finishes[-1]["status"] == RUN_STATUS_FAILED
+    # A 400 is not worth repeating unchanged.
+    assert outcome.retryable is False
+
+
+def test_a_refusal_the_registry_may_recover_from_is_reported_retryable():
+    """SDK-4.3's worker retries a registry outage automatically and dead-letters a refusal."""
+
+    def transport(distribution, credential):
+        raise RegistryUploadError("registry answered 503", http_status=503, retryable=True)
+
+    outcome, _ = _run(dry_run=False, transport=transport)
+    assert outcome.status == RUN_STATUS_FAILED
+    assert outcome.retryable is True
+    # In-process only: a stored run reads back not retryable.
+    assert run_row_to_outcome({"id": _RUN, "status": "failed"}).retryable is False
 
 
 def test_a_build_failure_after_the_claim_releases_it_too():
