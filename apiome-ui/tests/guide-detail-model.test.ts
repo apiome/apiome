@@ -20,12 +20,19 @@ import {
   guideReadOnlyReason,
   isRuleModified,
   modifiedRuleIds,
+  reviewerRoleOptions,
   ruleCategories,
   toRuleStateMap,
   unsavedRulesSentence,
   type GuideRule,
   type RuleStateMap,
 } from '../src/app/components/ade/styleGuides/guideDetail/guideDetailModel';
+import {
+  DEFAULT_REQUIRED_APPROVALS,
+  MAX_REQUIRED_APPROVALS,
+  normalizeRequiredApprovals,
+  normalizeRequiredReviewerRole,
+} from '../src/app/ade/dashboard/style-guides/api';
 import {
   MARKER_SEVERITY,
   previewMarkers,
@@ -349,5 +356,88 @@ describe('preview markers', () => {
 
   it('returns nothing for a clean run', () => {
     expect(previewMarkers([], {}, YAML)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// Approval policy (COL-2.3, #4519)
+// ---------------------------------------------------------------------------------------
+
+describe('normalizeRequiredApprovals', () => {
+  it('accepts whole numbers in range, including the strings a number input hands back', () => {
+    expect(normalizeRequiredApprovals(0)).toBe(0);
+    expect(normalizeRequiredApprovals(2)).toBe(2);
+    expect(normalizeRequiredApprovals('3')).toBe(3);
+    expect(normalizeRequiredApprovals(MAX_REQUIRED_APPROVALS)).toBe(MAX_REQUIRED_APPROVALS);
+  });
+
+  it('clamps above the reviewer cap rather than dropping the intent', () => {
+    expect(normalizeRequiredApprovals(99)).toBe(MAX_REQUIRED_APPROVALS);
+  });
+
+  it('never arms the gate from unusable input', () => {
+    for (const raw of ['', '   ', 'two', -1, null, undefined, {}]) {
+      expect(normalizeRequiredApprovals(raw)).toBe(DEFAULT_REQUIRED_APPROVALS);
+    }
+  });
+});
+
+describe('normalizeRequiredReviewerRole', () => {
+  it('canonicalizes a slug the way the API stores it', () => {
+    expect(normalizeRequiredReviewerRole(' Release-Manager ')).toBe('release-manager');
+    expect(normalizeRequiredReviewerRole('OWNER')).toBe('owner');
+  });
+
+  it('reads the empty option as "any approver"', () => {
+    expect(normalizeRequiredReviewerRole('')).toBeNull();
+    expect(normalizeRequiredReviewerRole('   ')).toBeNull();
+    expect(normalizeRequiredReviewerRole(null)).toBeNull();
+  });
+});
+
+describe('reviewerRoleOptions', () => {
+  const ROLES = [
+    { slug: 'owner', name: 'Owner' },
+    { slug: 'release-manager', name: 'Release Manager' },
+  ];
+
+  it('keeps the API order and prefers the display name', () => {
+    expect(reviewerRoleOptions(ROLES, null)).toEqual([
+      { slug: 'owner', label: 'Owner' },
+      { slug: 'release-manager', label: 'Release Manager' },
+    ]);
+  });
+
+  it('falls back to the slug when a role has no name', () => {
+    expect(reviewerRoleOptions([{ slug: 'auditor', name: '' }], null)).toEqual([
+      { slug: 'auditor', label: 'auditor' },
+    ]);
+  });
+
+  it('keeps a stored slug the roles list cannot explain, so saving cannot drop it', () => {
+    // The policy stores a slug; the role behind it may have been renamed or deleted.
+    expect(reviewerRoleOptions(ROLES, 'retired-role')).toEqual([
+      { slug: 'owner', label: 'Owner' },
+      { slug: 'release-manager', label: 'Release Manager' },
+      { slug: 'retired-role', label: 'retired-role' },
+    ]);
+  });
+
+  it('does not duplicate a stored slug that is in the list', () => {
+    expect(reviewerRoleOptions(ROLES, 'owner')).toHaveLength(2);
+  });
+
+  it('offers the stored slug alone when the viewer cannot read the roles', () => {
+    expect(reviewerRoleOptions([], 'release-manager')).toEqual([
+      { slug: 'release-manager', label: 'release-manager' },
+    ]);
+  });
+
+  it('ignores blank and duplicate slugs', () => {
+    const options = reviewerRoleOptions(
+      [{ slug: '', name: 'Nameless' }, { slug: 'owner', name: 'Owner' }, { slug: 'OWNER', name: 'Owner again' }],
+      null
+    );
+    expect(options).toEqual([{ slug: 'owner', label: 'Owner' }]);
   });
 });

@@ -38,6 +38,10 @@ import psycopg2
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .approval_policy import (
+    normalize_required_approvals,
+    normalize_required_reviewer_role,
+)
 from .breaking_publish_policy import normalize_breaking_publish_policy
 from .compatibility_engine import openapi_for_revision
 from .custom_rule_dsl import (
@@ -842,6 +846,10 @@ def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
         breaking_publish_policy=normalize_breaking_publish_policy(
             guide.get("breaking_publish_policy")
         ),
+        required_approvals=normalize_required_approvals(guide.get("required_approvals")),
+        required_reviewer_role=normalize_required_reviewer_role(
+            guide.get("required_reviewer_role")
+        ),
     )
 
 
@@ -873,8 +881,13 @@ async def put_style_guide_policy_settings(
 ) -> StyleGuidePolicySettingsOut:
     """Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).
 
-    Also carries the CTG-3.4 (#4478) breaking-publish guardrail level, which the publish
-    flow reads through the same guide-resolution chain.
+    Also carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3
+    (#4519) approval policy, both of which the publish flow reads through the same
+    guide-resolution chain.
+
+    ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the
+    stored role alone, sending ``null`` clears it. Every other field keeps the
+    omit-to-leave-unchanged rule the endpoint has always had.
     """
     _ = tenant_slug
     tenant_id = _require_tenant_admin(auth_data)
@@ -901,6 +914,15 @@ async def put_style_guide_policy_settings(
             if body.breaking_publish_policy is not None
             else None
         ),
+        required_approvals=(
+            normalize_required_approvals(body.required_approvals)
+            if body.required_approvals is not None
+            else None
+        ),
+        required_reviewer_role=normalize_required_reviewer_role(
+            body.required_reviewer_role
+        ),
+        set_required_reviewer_role="required_reviewer_role" in body.model_fields_set,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Style guide not found")

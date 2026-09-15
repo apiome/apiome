@@ -5,6 +5,48 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.324.0] - 2026-09-15
+
+### Added
+- **Approval policy & publish gate (#4519, COL-2.3)** — review outcomes become binding at publish
+  time. A tenant can require *n* approvals (optionally from a named role) before a draft version
+  may be published; publishing without them is refused, and the force-publish escape is audited.
+
+  ```bash
+  # Arm the gate on the governing style guide
+  curl -sX PUT "$APIOME/v1/style-guides/acme/$GUIDE_ID/policy" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"requiredApprovals": 2, "requiredReviewerRole": "release-manager"}'
+
+  # A publish that has not collected them is refused with 422 + the verdict
+  curl -sX POST "$APIOME/v1/versions/acme/pets/$REVISION/publish" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"shortMessage": "Ship it"}'
+  ```
+
+  - **Policy** (apiome-db **V262**): `style_guides.required_approvals` (`0` = off, the default,
+    capped at the 20-reviewer limit) and `style_guides.required_reviewer_role` (a `roles.slug`,
+    nullable). Both resolve through the GOV-1.4 guide chain — project assignment → tenant
+    assignment → tenant default — beside the CTG-3.4 breaking-publish level, and both are frozen
+    into each `style_guide_revisions` snapshot. Read/written at
+    `GET`/`PUT /v1/style-guides/{tenantSlug}/{guideId}/policy`, where `requiredReviewerRole` is
+    the one field for which *omitted* (leave alone) and *null* (clear) differ.
+  - **Gate**: only the version's **open** review and only its **current round** count. Blocked
+    with a stable `reason` for `no-review`, `changes-requested`, `spec-changed` (the content moved
+    since the round was requested, so its approvals are stale — COL-2.1's `spec_changed`),
+    `insufficient-approvals`, and `missing-required-role`. A reviewer's role is their effective
+    RBAC slug, so a tenant administrator resolves to `owner`.
+  - **422 contract**: `{"detail": {"message": …, "approvalGate": {…}}}`, the same shape the
+    breaking-publish guardrail and the verification policy use. Force-publishing
+    (`skipPublishChecks` + `forcePublishReason`) gets past it, exactly as it does for them.
+  - **Audit**: every publish an armed policy judged appends a `version.approval_policy_gate`
+    `workflow_audit` row with `action` of `satisfied`, `forced`, or `unavailable` — passing
+    verdicts included, so the trail can answer "who signed off on this release?".
+  - Faults degrade to `unavailable` and never block a publish; the degradation is audited rather
+    than silent.
+  - Documented in `docs/approval_publish_gate.md`; 46 tests in
+    `tests/test_approval_publish_gate.py`.
+
 ## [1.322.0] - 2026-09-14
 
 ### Added

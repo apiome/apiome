@@ -122,6 +122,10 @@ export interface GuidePolicySettings {
   ciOutcomes: GuideCiOutcomes;
   /** Breaking-publish guardrail level (CTG-3.4, #4478). */
   breakingPublishPolicy: BreakingPublishPolicyLevel;
+  /** Approvals a draft must carry before publish; `0` disables the gate (COL-2.3, #4519). */
+  requiredApprovals: number;
+  /** Role slug at least one approval must come from; `null` means any approver (COL-2.3). */
+  requiredReviewerRole: string | null;
 }
 
 /** One immutable policy pack version (CLX-1.3, #4850). */
@@ -183,6 +187,44 @@ export const BREAKING_PUBLISH_POLICY_OPTIONS: ReadonlyArray<{
       'Refuse the publish until the major version is bumped, or it is force-published with a reason.',
   },
 ];
+
+/** What a guide gets without configuring the approval gate (COL-2.3, #4519). */
+export const DEFAULT_REQUIRED_APPROVALS = 0;
+
+/**
+ * The most approvals a policy may demand (COL-2.3, #4519).
+ *
+ * Mirrors the reviewer cap a round can hold, and the V262 check constraint. A larger
+ * requirement would be permanently unsatisfiable rather than merely strict.
+ */
+export const MAX_REQUIRED_APPROVALS = 20;
+
+/**
+ * Coerce an approval-count field into the supported range.
+ *
+ * The editor's number input hands back `''` while it is being cleared and arbitrary text when
+ * a reader types one, so the draft is normalized on the way in rather than at save time.
+ *
+ * @param raw What the control reported.
+ * @returns A whole number in `0..MAX_REQUIRED_APPROVALS`; unusable input reads as no gate.
+ */
+export function normalizeRequiredApprovals(raw: unknown): number {
+  const value = typeof raw === 'number' ? raw : Number.parseInt(String(raw ?? ''), 10);
+  if (!Number.isFinite(value) || value < 0) return DEFAULT_REQUIRED_APPROVALS;
+  return Math.min(Math.trunc(value), MAX_REQUIRED_APPROVALS);
+}
+
+/**
+ * Coerce a reviewer-role field into the slug the API stores.
+ *
+ * @param raw What the control reported; `''` is the editor's "any approver" option.
+ * @returns The trimmed, lower-cased slug, or `null` when any approver counts.
+ */
+export function normalizeRequiredReviewerRole(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const slug = raw.trim().toLowerCase();
+  return slug ? slug : null;
+}
 
 /** Truncate a content fingerprint for list display. */
 export function truncatePolicyFingerprint(fingerprint: string, length = 12): string {

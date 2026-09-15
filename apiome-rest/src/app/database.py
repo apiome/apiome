@@ -3711,6 +3711,9 @@ class Database:
         required_coverage: Optional[List[Any]] = None,
         ci_outcomes: Optional[Dict[str, Any]] = None,
         breaking_publish_policy: Optional[str] = None,
+        required_approvals: Optional[int] = None,
+        required_reviewer_role: Optional[str] = None,
+        set_required_reviewer_role: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """Update draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 
@@ -3726,6 +3729,13 @@ class Database:
             breaking_publish_policy: New breaking-publish guardrail level (CTG-3.4, #4478) —
                 ``off`` / ``warn`` / ``block`` — or ``None`` to leave unchanged. The caller
                 normalizes; the V237 check constraint is the backstop.
+            required_approvals: New approval count for the COL-2.3 (#4519) publish gate
+                (``0`` disables it), or ``None`` to leave unchanged.
+            required_reviewer_role: The role slug at least one approval must come from, or
+                ``None`` to clear it. Only applied when ``set_required_reviewer_role`` is
+                true, because ``None`` here means "clear", not "leave alone".
+            set_required_reviewer_role: Whether ``required_reviewer_role`` is being written
+                at all — the one field where omitted and null are different requests.
 
         Returns:
             The updated guide row (subset of columns), or ``None`` when no custom guide matched.
@@ -3738,11 +3748,17 @@ class Database:
                 required_coverage = COALESCE(%s::jsonb, required_coverage),
                 ci_outcomes = COALESCE(%s::jsonb, ci_outcomes),
                 breaking_publish_policy = COALESCE(%s, breaking_publish_policy),
+                required_approvals = COALESCE(%s::integer, required_approvals),
+                required_reviewer_role = CASE
+                    WHEN %s::boolean THEN %s::varchar
+                    ELSE required_reviewer_role
+                END,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
             RETURNING id, name, description, source, is_default,
                       axis_gates, required_coverage, ci_outcomes,
-                      breaking_publish_policy, created_at, updated_at
+                      breaking_publish_policy, required_approvals,
+                      required_reviewer_role, created_at, updated_at
         """
         rows = self.execute_query(
             query,
@@ -3751,6 +3767,9 @@ class Database:
                 Json(required_coverage) if required_coverage is not None else None,
                 Json(ci_outcomes) if ci_outcomes is not None else None,
                 breaking_publish_policy,
+                required_approvals,
+                bool(set_required_reviewer_role),
+                required_reviewer_role,
                 guide_id,
                 tenant_id,
             ),
@@ -6253,9 +6272,11 @@ class Database:
                 (e.g. a slug) simply skips the project tier.
 
         Returns:
-            A dict with ``id`` / ``name`` / ``source`` / ``breaking_publish_policy`` for the
-            winning guide, or ``None`` when the tenant has no assignment and no default guide
-            (the caller then falls back to the in-code defaults).
+            A dict with ``id`` / ``name`` / ``source`` and the publish-gate policy columns
+            (``breaking_publish_policy``, ``required_approvals``,
+            ``required_reviewer_role``) for the winning guide, or ``None`` when the tenant has
+            no assignment and no default guide (the caller then falls back to the in-code
+            defaults).
         """
         if not tenant_id or not is_uuid_string(str(tenant_id)):
             return None
@@ -6263,7 +6284,8 @@ class Database:
             str(project_id) if project_id and is_uuid_string(str(project_id)) else None
         )
         query = """
-            SELECT g.id, g.name, g.source, g.breaking_publish_policy
+            SELECT g.id, g.name, g.source, g.breaking_publish_policy,
+                   g.required_approvals, g.required_reviewer_role
             FROM (
                 SELECT a.guide_id, 0 AS precedence
                 FROM apiome.style_guide_assignments a
@@ -6408,7 +6430,7 @@ class Database:
         query = """
             SELECT id, name, description, source, is_default,
                    axis_gates, required_coverage, ci_outcomes,
-                   breaking_publish_policy,
+                   breaking_publish_policy, required_approvals, required_reviewer_role,
                    external_lint_profile,
                    created_at, updated_at
             FROM apiome.style_guides

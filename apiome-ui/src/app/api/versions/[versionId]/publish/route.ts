@@ -52,6 +52,29 @@ function createAuthHeaders(user: SessionUser): Record<string, string> {
 }
 
 /**
+ * Read the sentence out of a FastAPI `detail`.
+ *
+ * The publish gates do not agree on the shape: the style-guide and documentation gates
+ * refuse with a plain string, while the structured ones — the CTG-3.4 breaking-publish
+ * guardrail, the ECA-3.1 verification policy, and the COL-2.3 approval gate — refuse with
+ * `{message, <gate payload>}` so a client can render the verdict. Returning the object
+ * verbatim put `[object Object]` in front of the reader, so the sentence is lifted out here
+ * and the payload is left to whichever panel asks for it.
+ *
+ * @param detail Whatever the REST error body carried under `detail`.
+ * @param defaultError The sentence to fall back to.
+ * @returns A displayable sentence.
+ */
+function describeRestDetail(detail: unknown, defaultError: string): string {
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  if (detail && typeof detail === 'object') {
+    const message = (detail as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return defaultError;
+}
+
+/**
  * Helper to handle REST API responses
  */
 async function handleRestResponse(response: Response, defaultError: string): Promise<{ data: unknown; error: string | null; status: number }> {
@@ -65,7 +88,11 @@ async function handleRestResponse(response: Response, defaultError: string): Pro
   const data = await response.json();
 
   if (!response.ok) {
-    return { data: null, error: data.detail || defaultError, status: response.status };
+    return {
+      data: null,
+      error: describeRestDetail(data.detail, defaultError),
+      status: response.status,
+    };
   }
 
   return { data, error: null, status: response.status };

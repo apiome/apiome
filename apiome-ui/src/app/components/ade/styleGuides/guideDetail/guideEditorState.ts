@@ -28,8 +28,11 @@ import * as React from 'react';
 import {
   DEFAULT_BREAKING_PUBLISH_POLICY,
   DEFAULT_GUIDE_CI_OUTCOMES,
+  DEFAULT_REQUIRED_APPROVALS,
   fetchProjectOptions,
   fetchVersionOptions,
+  normalizeRequiredApprovals,
+  normalizeRequiredReviewerRole,
   styleGuidesApi,
   styleGuidesApiWithValidation,
   type BreakingPublishPolicyLevel,
@@ -47,6 +50,7 @@ import {
   parseValidationDetail,
   type ServerValidationDetail,
 } from '@/app/ade/dashboard/style-guides/customRuleYamlMarkers';
+import { fetchRoles, type RoleRecord } from '@/app/components/ade/access/accessApi';
 
 import {
   enabledRuleCount,
@@ -476,6 +480,10 @@ export interface PolicyDraft {
   ciOutcomes: GuideCiOutcomes;
   /** What a breaking publish without a major bump does. */
   breakingPublishPolicy: BreakingPublishPolicyLevel;
+  /** Approvals a draft must carry before it can be published; `0` is no gate (COL-2.3). */
+  requiredApprovals: number;
+  /** Role slug at least one of those approvals must come from, or `null` for any (COL-2.3). */
+  requiredReviewerRole: string | null;
 }
 
 /**
@@ -490,6 +498,10 @@ export function toPolicyDraft(settings: GuidePolicySettings): PolicyDraft {
     requiredCoverage: [...settings.requiredCoverage],
     ciOutcomes: { ...DEFAULT_GUIDE_CI_OUTCOMES, ...settings.ciOutcomes },
     breakingPublishPolicy: settings.breakingPublishPolicy ?? DEFAULT_BREAKING_PUBLISH_POLICY,
+    requiredApprovals: normalizeRequiredApprovals(
+      settings.requiredApprovals ?? DEFAULT_REQUIRED_APPROVALS
+    ),
+    requiredReviewerRole: normalizeRequiredReviewerRole(settings.requiredReviewerRole),
   };
 }
 
@@ -509,6 +521,8 @@ export function isPolicyDirty(draft: PolicyDraft, baseline: PolicyDraft): boolea
     return true;
   }
   if (draft.breakingPublishPolicy !== baseline.breakingPublishPolicy) return true;
+  if (draft.requiredApprovals !== baseline.requiredApprovals) return true;
+  if (draft.requiredReviewerRole !== baseline.requiredReviewerRole) return true;
   const coverage = [...draft.requiredCoverage].sort();
   const savedCoverage = [...baseline.requiredCoverage].sort();
   if (coverage.length !== savedCoverage.length) return true;
@@ -534,12 +548,24 @@ export interface GuidePolicyState {
   dirty: boolean;
   /** The immutable snapshots, newest first as the API returns them. */
   versions: readonly GuidePolicyVersion[];
+  /**
+   * The tenant's roles, for the required-reviewer-role picker (COL-2.3).
+   *
+   * Empty when the viewer may not read them or the call failed — the picker then offers
+   * only "any approver" plus whatever slug is already stored, so a policy a reader cannot
+   * re-pick is still never silently dropped on save.
+   */
+  roles: readonly RoleRecord[];
   /** Change the quality axis floor; `''` removes it. */
   setQualityMinGrade: (minGrade: string) => void;
   /** Require, or stop requiring, evidence for one axis. */
   toggleCoverage: (axis: string, required: boolean) => void;
   /** Change the breaking-publish guardrail. */
   setBreakingPublishPolicy: (level: BreakingPublishPolicyLevel) => void;
+  /** Change how many approvals a publish needs; `0` switches the gate off. */
+  setRequiredApprovals: (approvals: number | string) => void;
+  /** Change the role one approval must come from; `''` means any approver counts. */
+  setRequiredReviewerRole: (slug: string) => void;
   /** Change one CI outcome switch. */
   setCiOutcome: (key: keyof GuideCiOutcomes, fail: boolean) => void;
   /** Throw the draft away. */
@@ -563,6 +589,7 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
   const [draft, setDraft] = React.useState<PolicyDraft | null>(null);
   const [baseline, setBaseline] = React.useState<PolicyDraft | null>(null);
   const [versions, setVersions] = React.useState<GuidePolicyVersion[]>([]);
+  const [roles, setRoles] = React.useState<RoleRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -590,6 +617,16 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+    // The role list only decorates one picker, so it is fetched apart from the policy: a
+    // reader without `members:view` still gets the policy form rather than an error banner.
+    void fetchRoles()
+      .then((list) => {
+        if (!cancelled) setRoles(list);
+      })
+      .catch(() => {
+        if (!cancelled) setRoles([]);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -627,6 +664,31 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
     [patch]
   );
 
+  const setRequiredApprovals = React.useCallback(
+    (approvals: number | string) =>
+      patch((prev) => {
+        const requiredApprovals = normalizeRequiredApprovals(approvals);
+        return {
+          ...prev,
+          requiredApprovals,
+          // Switching the gate off drops the role with it: a stored role that gates nothing
+          // would come back the moment someone raised the count again, which is not what
+          // "turn the approval gate off" means.
+          requiredReviewerRole: requiredApprovals >= 1 ? prev.requiredReviewerRole : null,
+        };
+      }),
+    [patch]
+  );
+
+  const setRequiredReviewerRole = React.useCallback(
+    (slug: string) =>
+      patch((prev) => ({
+        ...prev,
+        requiredReviewerRole: normalizeRequiredReviewerRole(slug),
+      })),
+    [patch]
+  );
+
   const setCiOutcome = React.useCallback(
     (key: keyof GuideCiOutcomes, fail: boolean) =>
       patch((prev) => ({ ...prev, ciOutcomes: { ...prev.ciOutcomes, [key]: fail } })),
@@ -646,6 +708,8 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
           requiredCoverage: draft.requiredCoverage,
           ciOutcomes: draft.ciOutcomes,
           breakingPublishPolicy: draft.breakingPublishPolicy,
+          requiredApprovals: draft.requiredApprovals,
+          requiredReviewerRole: draft.requiredReviewerRole,
           snapshot: true,
         }),
       });
@@ -674,9 +738,12 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
     error,
     dirty: draft && baseline ? isPolicyDirty(draft, baseline) : false,
     versions,
+    roles,
     setQualityMinGrade,
     toggleCoverage,
     setBreakingPublishPolicy,
+    setRequiredApprovals,
+    setRequiredReviewerRole,
     setCiOutcome,
     discard: () => setDraft(baseline),
     save,

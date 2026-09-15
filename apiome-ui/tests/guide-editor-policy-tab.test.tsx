@@ -61,7 +61,15 @@ const POLICY = {
     failOnAxisGates: true,
   },
   breakingPublishPolicy: 'warn',
+  requiredApprovals: 0,
+  requiredReviewerRole: null as string | null,
 };
+
+/** The tenant's roles, for the COL-2.3 required-reviewer-role picker. */
+const ROLES = [
+  { id: 'r1', slug: 'owner', name: 'Owner', is_builtin: true },
+  { id: 'r2', slug: 'release-manager', name: 'Release Manager', is_builtin: false },
+];
 
 const VERSIONS = {
   versions: [
@@ -102,6 +110,9 @@ function mockFetch() {
     if (url.includes('/api/access/permissions/me')) {
       return jsonResponse({ success: true, data: { is_admin: isAdmin, permissions: [] } });
     }
+    if (url.includes('/api/access/roles')) {
+      return jsonResponse({ success: true, data: ROLES });
+    }
     if (url.includes(`/api/style-guides/${GUIDE_ID}/policy-versions`)) {
       return jsonResponse({ success: true, data: VERSIONS });
     }
@@ -111,6 +122,8 @@ function mockFetch() {
         requiredCoverage: string[];
         ciOutcomes: typeof POLICY.ciOutcomes;
         breakingPublishPolicy: typeof POLICY.breakingPublishPolicy;
+        requiredApprovals: number;
+        requiredReviewerRole: string | null;
         snapshot: boolean;
       };
       return jsonResponse({
@@ -121,6 +134,8 @@ function mockFetch() {
           requiredCoverage: put.requiredCoverage,
           ciOutcomes: put.ciOutcomes,
           breakingPublishPolicy: put.breakingPublishPolicy,
+          requiredApprovals: put.requiredApprovals,
+          requiredReviewerRole: put.requiredReviewerRole,
         },
       });
     }
@@ -201,6 +216,8 @@ describe('PolicyTab', () => {
         failOnAxisGates: false,
       },
       breakingPublishPolicy: 'warn',
+      requiredApprovals: 0,
+      requiredReviewerRole: null,
       snapshot: true,
     });
   });
@@ -253,6 +270,92 @@ describe('PolicyTab', () => {
     expect(screen.queryByTestId('guide-policy-save')).toBeNull();
     expect(screen.getByLabelText('Fail on unwaived errors')).toBeDisabled();
     expect(screen.getByLabelText('Breaking-change publish policy')).toBeDisabled();
+    expect(screen.getByLabelText('Required approvals')).toBeDisabled();
+  });
+
+  /* --- Approval policy (COL-2.3, #4519) --- */
+
+  it('shows the approval gate off, with the role picker unusable until it is armed', async () => {
+    await renderPolicyTab();
+
+    expect(screen.getByLabelText('Required approvals')).toHaveValue(0);
+    const role = screen.getByLabelText('Required reviewer role');
+    expect(role).toHaveValue('');
+    expect(role).toBeDisabled();
+    expect(
+      screen.getByText(/Zero means no approval gate/),
+    ).toBeInTheDocument();
+  });
+
+  it('arms the gate, offers the tenant roles, and saves both settings', async () => {
+    await renderPolicyTab();
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '2' },
+    });
+    expect(
+      screen.getByText(/Publishing is blocked until the current review round has 2 approval/),
+    ).toBeInTheDocument();
+
+    const role = screen.getByLabelText('Required reviewer role');
+    expect(role).not.toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Release Manager' })).toBeInTheDocument();
+    fireEvent.change(role, { target: { value: 'release-manager' } });
+
+    fireEvent.click(screen.getByTestId('guide-policy-save'));
+
+    await waitFor(() => {
+      expect(calls.find((c) => c.method === 'PUT')).toBeDefined();
+    });
+    const put = calls.find((c) => c.method === 'PUT');
+    expect(put!.body).toMatchObject({
+      requiredApprovals: 2,
+      requiredReviewerRole: 'release-manager',
+      snapshot: true,
+    });
+  });
+
+  it('clamps an out-of-range approval count rather than sending it', async () => {
+    await renderPolicyTab();
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '99' },
+    });
+    expect(screen.getByLabelText('Required approvals')).toHaveValue(20);
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '-4' },
+    });
+    expect(screen.getByLabelText('Required approvals')).toHaveValue(0);
+  });
+
+  it('drops the required role when the gate is switched back off', async () => {
+    await renderPolicyTab();
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '1' },
+    });
+    fireEvent.change(screen.getByLabelText('Required reviewer role'), {
+      target: { value: 'owner' },
+    });
+    expect(screen.getByLabelText('Required reviewer role')).toHaveValue('owner');
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '0' },
+    });
+    expect(screen.getByLabelText('Required reviewer role')).toHaveValue('');
+  });
+
+  it('keeps Save disabled until an approval setting actually changes', async () => {
+    await renderPolicyTab();
+
+    const save = screen.getByTestId('guide-policy-save');
+    expect(save).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Required approvals'), {
+      target: { value: '3' },
+    });
+    expect(save).not.toBeDisabled();
   });
 
   /** HIVE-5.7's fourth acceptance criterion, on the tab the mockup gives no save bar. */
