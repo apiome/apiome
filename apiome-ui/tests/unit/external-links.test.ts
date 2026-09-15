@@ -6,6 +6,7 @@ import {
   getDesignerHomeHref,
   getExternalHomeCards,
   getExternalNavItems,
+  getStudioWorkspaceRoute,
   groupNavMenuItems,
   isNavMenuItemNavigable,
   resolveExternalLinkIcon,
@@ -115,6 +116,16 @@ describe('external-links (commercial products)', () => {
     expect(buildDesignerEditorHref('proj-1', 'ver-2', flags)).toBe(
       'https://studio.example.com/editor?projectId=proj-1&versionId=ver-2'
     );
+  });
+
+  it('resolves the Studio workspace route comment deep links target (COL-1.3)', () => {
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://studio.example.com';
+    expect(getStudioWorkspaceRoute(new Set(['paths']))).toBe('https://studio.example.com/workspace');
+    expect(getStudioWorkspaceRoute()).toBe('https://studio.example.com/workspace');
+    expect(getStudioWorkspaceRoute(new Set())).toBeNull();
+
+    process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+    expect(getStudioWorkspaceRoute()).toBe('/workspace');
   });
 
   it('resolves known lucide icon names', () => {
