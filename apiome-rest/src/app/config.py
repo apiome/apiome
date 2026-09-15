@@ -697,6 +697,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Comment creation rate limiting (COL-1.1, #4513). Opening a thread and replying both write a
+    # comment and resolve mentions against the tenant's members, so one user gets a per-tenant
+    # budget shared by the two create endpoints, on top of the global middleware. Shares
+    # ``rate_limit_window_seconds`` and honours the global ``rate_limit_enabled`` kill switch.
+    comment_create_rate_limit_per_minute: int = Field(
+        default=30,
+        validation_alias=AliasChoices(
+            "APIOME_COMMENT_CREATE_RATE_LIMIT_PER_MINUTE",
+            "comment_create_rate_limit_per_minute",
+        ),
+    )
+
     # Mock Server (#3615, RC1-2.2). Free-tier mocks auto-expire after a default TTL (capped at a
     # maximum) and are rate limited per instance on the data plane. Set
     # APIOME_MOCK_SERVER_ENABLED=false to disable provisioning + serving entirely.
