@@ -5,6 +5,38 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.322.0] - 2026-09-14
+
+### Added
+- **Comment anchor resilience (#4516, COL-1.4)** — a comment thread no longer silently disappears
+  when its element is deleted, and renames and moves are proven to keep it in place.
+
+  ```bash
+  # Threads whose element was deleted, with the element's last-known label
+  curl -s "$APIOME/v1/tenants/acme/projects/pets/comment-threads?version=1.0.0&status=orphaned" \
+    -H "Authorization: Bearer $TOKEN"
+
+  # Re-attach one to another element of the same version
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/comment-threads/<thread id>/relink" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"anchor_type": "property", "anchor_id": "<class property id>"}'
+  ```
+
+  - **Orphaning** (apiome-db **V260**): `status` gains `orphaned`, with `anchor_label` (the element's
+    name when it was deleted — `Customer`, `Customer.email`, `/customers/{id}`, `GET /customers/{id}`)
+    and `orphaned_at`. Database triggers orphan threads on every delete path: the class, property,
+    path, and operation DELETE routes, a whole-version source-change rewrite, and foreign-key cascades
+    (a class takes its properties' threads, a path its operations'). A resolved thread keeps its
+    resolution while orphaned.
+  - **Relink**: `POST …/comment-threads/{thread_id}/relink` `{anchor_type, anchor_id}` re-attaches an
+    orphaned thread to an element of its own version (or to the version). It comes back `resolved`
+    if it was, `open` otherwise. `404 comment-anchor-not-found` for a target outside the version,
+    `409 comment-thread-not-orphaned` for a thread that is not orphaned. Requires `projects:view`.
+  - Resolving or reopening an orphaned thread is `409 comment-thread-orphaned`. Replies still work.
+  - Renames and moves (class, property, path, operation, canvas position) are pinned by tests as
+    in-place updates keyed by the element id, and no orphan trigger watches a name column.
+  - Documented in `docs/comments.md`.
+
 ## [1.321.0] - 2026-09-14
 
 ### Added

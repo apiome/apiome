@@ -81,11 +81,13 @@ def test_migration_adds_no_rbac_resource_and_no_enum_type():
 
 def test_vocabularies_match_the_rest_models():
     from app.comment_mentions import MAX_MENTIONS
-    from app.comments import ANCHOR_TYPES, MAX_BODY_LENGTH, THREAD_STATUSES
+    from app.comments import ANCHOR_TYPES, MAX_BODY_LENGTH, STATUS_ORPHANED, THREAD_STATUSES
 
     statements = _statements()
     anchors = ", ".join(f"'{kind}'" for kind in ANCHOR_TYPES)
-    statuses = ", ".join(f"'{status}'" for status in THREAD_STATUSES)
+    # V259 shipped the first two statuses; V260 (COL-1.4) widens the CHECK with `orphaned`, and
+    # tests/test_comment_anchor_resilience_migration.py pins the full vocabulary there.
+    statuses = ", ".join(f"'{status}'" for status in THREAD_STATUSES if status != STATUS_ORPHANED)
     assert f"CHECK (anchor_type IN ({anchors}))" in statements
     assert f"CHECK (status IN ({statuses}))" in statements
     assert f"length(body) <= {MAX_BODY_LENGTH}" in statements

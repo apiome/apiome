@@ -12,7 +12,10 @@ semantics V259 and the SQL accessors promise:
 * resolving stamps ``resolved_by``/``resolved_at``, reopening clears both, and asking for the
   current status changes nothing;
 * deleting a thread's last comment deletes the thread;
-* only listed members are mentionable.
+* only listed members are mentionable;
+* deleting an element (:meth:`FakeCommentDb.delete_element`, standing in for V260's triggers)
+  orphans its live threads with a label, an orphaned thread ignores resolve/reopen, and a relink
+  moves the anchor only while the thread is orphaned and the target exists in its version (COL-1.4).
 
 The SQL text itself is exercised separately against a scratch database; this fake is for rules.
 """
@@ -68,6 +71,28 @@ class FakeCommentDb:
     def add_anchor(self, version_id: str, anchor_type: str, anchor_id: str) -> None:
         """Register an element that exists inside a version."""
         self.anchors.add((version_id, anchor_type, anchor_id))
+
+    def delete_element(self, anchor_type: str, anchor_id: str, label: str) -> int:
+        """Delete an element and orphan its live threads, as apiome-db V260's triggers do.
+
+        Args:
+            anchor_type: The element kind.
+            anchor_id: The element id.
+            label: The element's label at the moment of deletion.
+
+        Returns:
+            How many threads were orphaned.
+        """
+        self.anchors = {anchor for anchor in self.anchors if anchor[1:] != (anchor_type, anchor_id)}
+        orphaned = 0
+        for row in self.threads.values():
+            if row["anchor_type"] == anchor_type and row["anchor_id"] == anchor_id and row["status"] != "orphaned":
+                now = self._tick()
+                row.update(
+                    status="orphaned", anchor_label=label, orphaned_at=now, updated_at=now, last_activity_at=now
+                )
+                orphaned += 1
+        return orphaned
 
     def add_member(self, user_id: str, name: Optional[str], email: Optional[str]) -> None:
         """Register a mentionable tenant member."""
@@ -198,6 +223,8 @@ class FakeCommentDb:
             "anchor_type": anchor_type,
             "anchor_id": anchor_id,
             "status": "open",
+            "anchor_label": None,
+            "orphaned_at": None,
             "created_by": created_by,
             "resolved_by": None,
             "resolved_at": None,
@@ -344,9 +371,9 @@ class FakeCommentDb:
     def set_comment_thread_status(
         self, *, tenant_id: str, project_id: str, thread_id: str, status: str, actor_id: str
     ) -> bool:
-        """Resolve or reopen a thread; the current status is a no-op."""
+        """Resolve or reopen a thread; the current status, or an orphaned thread, is a no-op."""
         row = self._scoped_thread(tenant_id, project_id, thread_id)
-        if not row or row["status"] == status:
+        if not row or row["status"] in (status, "orphaned"):
             return False
         now = self._tick()
         resolved = status == "resolved"
@@ -354,6 +381,34 @@ class FakeCommentDb:
             status=status,
             resolved_by=actor_id if resolved else None,
             resolved_at=now if resolved else None,
+            updated_at=now,
+            last_activity_at=now,
+        )
+        return True
+
+    def relink_comment_thread(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        version_id: str,
+        anchor_type: str,
+        anchor_id: str,
+    ) -> bool:
+        """Move an orphaned thread's anchor when the target exists in its version."""
+        row = self._scoped_thread(tenant_id, project_id, thread_id)
+        if not row or row["status"] != "orphaned" or row["version_id"] != version_id:
+            return False
+        if not self.comment_anchor_exists(version_id=version_id, anchor_type=anchor_type, anchor_id=anchor_id):
+            return False
+        now = self._tick()
+        row.update(
+            anchor_type=anchor_type,
+            anchor_id=anchor_id,
+            status="resolved" if row["resolved_at"] else "open",
+            anchor_label=None,
+            orphaned_at=None,
             updated_at=now,
             last_activity_at=now,
         )

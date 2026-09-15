@@ -1,9 +1,11 @@
-# Comment threads (COL-1.1)
+# Comment threads (COL-1.1, COL-1.4)
 
 Element-anchored discussion for a project version: open a thread on a class, property, path,
-operation, or the version itself; reply in Markdown; mention teammates; resolve and reopen.
+operation, or the version itself; reply in Markdown; mention teammates; resolve and reopen. Threads
+survive renames and moves, and a thread whose element is deleted is orphaned rather than lost.
 
-- Storage: apiome-db `V259__comment_threads_4513.sql` (`comment_threads`, `comments`)
+- Storage: apiome-db `V259__comment_threads_4513.sql` (`comment_threads`, `comments`) and
+  `V260__comment_anchor_resilience_4516.sql` (orphan state and triggers)
 - Routes: `app/comment_routes.py`
 - Rules: `app/comment_store.py`
 - Mention parsing: `app/comment_mentions.py`
@@ -26,12 +28,12 @@ It never stores canvas coordinates, so a thread stays on its element when the el
 | `operation` | `path_operation` under a path of the version |
 | `version` | the version itself (`anchor_id = version_id`; may be omitted when opening) |
 
-The element must exist in that version when the thread is opened. What happens after the element
-is deleted is COL-1.4's job.
+The element must exist in that version when the thread is opened. What happens when it is renamed,
+moved, or deleted is described in [Renames, moves, and deletes](#renames-moves-and-deletes).
 
-A thread's `status` is `open` or `resolved`. Resolving records `resolved_by` and `resolved_at`.
-Reopening clears both. `last_activity_at` moves on every reply and status change, and lists sort
-by it.
+A thread's `status` is `open`, `resolved`, or `orphaned`. Resolving records `resolved_by` and
+`resolved_at`. Reopening clears both. `last_activity_at` moves on every reply and status change
+(orphaning and relinking included), and lists sort by it.
 
 A **comment** has a Markdown `body` (1–20,000 characters), an `author_id`, `mentions` (user ids),
 `edited_at` (null until it is edited), and `created_at`.
@@ -49,6 +51,7 @@ slug or id.
 | `DELETE` | `/comment-threads/{thread_id}` | Delete a thread and its comments → `204` |
 | `POST` | `/comment-threads/{thread_id}/resolve` | Resolve (no-op if already resolved) |
 | `POST` | `/comment-threads/{thread_id}/reopen` | Reopen (no-op if already open) |
+| `POST` | `/comment-threads/{thread_id}/relink` | Re-attach an orphaned thread to another element |
 | `POST` | `/comment-threads/{thread_id}/comments` | Reply → `201` |
 | `PATCH` | `/comment-threads/{thread_id}/comments/{comment_id}` | Edit a comment |
 | `DELETE` | `/comment-threads/{thread_id}/comments/{comment_id}` | Delete a comment |
@@ -70,7 +73,7 @@ POST /v1/tenants/acme/projects/pets/comment-threads
 List filters, which can be combined:
 
 - `version`: a revision id or label. Returns every thread on that version, whatever its anchor type.
-- `status`: `open` or `resolved`.
+- `status`: `open`, `resolved`, or `orphaned`.
 - `anchor_type`, `anchor_id`: one kind of element, or one element.
 - `mentions_me=true`: threads where any comment mentions the caller.
 - `limit` (1–200, default 50), `offset`.
@@ -82,13 +85,65 @@ Deleting a thread's **last** comment deletes the thread too. The response says s
 `{"deleted": true, "thread_deleted": true}`. A resolved thread still accepts replies and stays
 resolved.
 
+## Renames, moves, and deletes
+
+**Renames and moves keep the thread.** A thread stores the element's primary key, and every rename
+or move updates the element's row in place under that key: a class or property name, a pathname, an
+operation method or its summary/operationId, a canvas position, a domain folder. Nothing about the
+thread changes.
+
+**Deleting an element orphans its threads.** apiome-db V260 triggers run on every delete, whichever
+writer does it: the DELETE routes, the whole-version rewrite that applies a source change, or a
+foreign-key cascade. The thread then has:
+
+- `status: "orphaned"`;
+- `anchor_label`: the element's name at the moment it was deleted;
+- `orphaned_at`: when that happened;
+- `anchor_type` / `anchor_id`: unchanged, still naming the deleted element.
+
+| Deleted | Orphans threads on | `anchor_label` |
+|---|---|---|
+| A class (soft delete) | the class, and every property on it | `Customer`, `Customer.email` |
+| A class property | the property (and nested properties removed with it) | `Customer.email` |
+| A library property (soft delete) | the property | `email` |
+| A path | the path, and every operation on it | `/customers/{id}`, `GET /customers/{id}` |
+| An operation | the operation | `GET /customers/{id}` |
+
+A thread on a version is never orphaned. It is deleted along with the version.
+
+An orphaned thread can still be read, listed (`status=orphaned`), and replied to. Resolving or
+reopening it returns `409 comment-thread-orphaned`: relink it first. Its resolution is kept, so
+`resolved_at` can be set while `status` is `orphaned`.
+
+A thread stays orphaned if its element is later restored, because nothing in the API un-deletes an
+element. Relink it by hand in that case.
+
+**Relink** re-attaches an orphaned thread to any element of **its own version**:
+
+```json
+POST /v1/tenants/acme/projects/pets/comment-threads/{thread_id}/relink
+{ "anchor_type": "property", "anchor_id": "2b0e7c8e-8c43-4f3e-9a51-0d9c7f1b0a11" }
+```
+
+- The target must exist in the thread's version (`404 comment-anchor-not-found`). For a `version`
+  target, `anchor_id` may be omitted.
+- Only an orphaned thread can be relinked (`409 comment-thread-not-orphaned`).
+- The thread keeps its comments. It goes back to `resolved` if it was resolved before its element
+  was deleted, and to `open` otherwise. `anchor_label` and `orphaned_at` are cleared.
+- The write is one guarded `UPDATE`. If someone else relinks the thread first, or the target is
+  deleted in the meantime, nothing changes and you get the matching `409` or `404`.
+
+Applying a source change rewrites a version's classes and paths with **new ids**. Threads on that
+version's classes, properties, paths, and operations are orphaned by it, and can be relinked to the
+new elements.
+
 ## Permissions
 
 There is no comment RBAC resource.
 
 | Action | Who |
 |---|---|
-| List, read, open a thread, reply, resolve, reopen | Anyone with `projects:view` (a Viewer can comment) |
+| List, read, open a thread, reply, resolve, reopen, relink | Anyone with `projects:view` (a Viewer can comment) |
 | Edit or delete a comment | Its author, or a tenant administrator |
 | Delete a thread | The member who opened it, or a tenant administrator |
 
@@ -138,6 +193,7 @@ Refusals come back as `{"detail": {"code", "message"}}`:
 | 400 | `comment-invalid-anchor` (missing or malformed `anchor_id`, or a version anchor naming another version), `comment-empty-body` |
 | 403 | `comment-forbidden` (not the author, opener, or an admin); plain 403 without `projects:view` |
 | 404 | `comment-project-not-found`, `comment-version-not-found`, `comment-anchor-not-found`, `comment-thread-not-found`, `comment-not-found` |
+| 409 | `comment-thread-orphaned` (resolve/reopen an orphaned thread), `comment-thread-not-orphaned` (relink a thread that is not orphaned) |
 | 422 | Request validation (unknown `anchor_type`, a body over 20,000 characters, unknown fields such as `mentions`) |
 | 429 | `comment-rate-limited` |
 

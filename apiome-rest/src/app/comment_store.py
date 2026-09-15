@@ -16,6 +16,11 @@ The rules between the HTTP surface (:mod:`app.comment_routes`) and storage (apio
   Project read access itself is checked by the routes, before the store is called.
 * **Deletion.** Deleting a thread's last comment deletes the thread: a thread with nothing in it
   anchors a badge to an empty conversation.
+* **Orphans (COL-1.4, #4516).** Renaming or moving an element updates its row in place, so the
+  thread's id-based anchor is untouched. Deleting the element orphans the thread — apiome-db V260's
+  triggers set ``orphaned`` with the element's last-known label, whichever writer deleted it. An
+  orphaned thread still reads, lists, and takes replies, but cannot be resolved or reopened until it
+  is relinked to an element of its own version (:func:`relink_thread`).
 
 Refusals raise :class:`app.comments.CommentValidationError` with a stable code.
 """
@@ -36,11 +41,15 @@ from .comments import (
     CODE_INVALID_ANCHOR,
     CODE_PROJECT_NOT_FOUND,
     CODE_THREAD_NOT_FOUND,
+    CODE_THREAD_NOT_ORPHANED,
+    CODE_THREAD_ORPHANED,
     CODE_VERSION_NOT_FOUND,
+    STATUS_ORPHANED,
     CommentRecord,
     CommentThreadCreate,
     CommentThreadDetail,
     CommentThreadRecord,
+    CommentThreadRelink,
     CommentThreadSummary,
     CommentValidationError,
 )
@@ -57,6 +66,7 @@ __all__ = [
     "edit_comment",
     "get_thread",
     "list_threads",
+    "relink_thread",
     "resolve_body_mentions",
     "resolve_project",
     "resolve_version",
@@ -164,6 +174,66 @@ def _canonical_uuid(value: Optional[str]) -> Optional[str]:
     if not is_uuid_string(text):
         return None
     return str(uuid.UUID(text))
+
+
+def _resolve_anchor(
+    version_id: str, version_name: str, anchor_type: str, anchor_id: Optional[str]
+) -> str:
+    """Prove an anchor names an element of a version, and return its canonical id.
+
+    Shared by opening a thread and relinking one, so both accept exactly the same anchors.
+
+    Args:
+        version_id: The version's revision id.
+        version_name: How a refusal names the version (its label, or its id).
+        anchor_type: The element kind.
+        anchor_id: The element id as the client sent it; optional for a version anchor.
+
+    Returns:
+        The canonical anchor id — the version's own id for a version anchor.
+
+    Raises:
+        CommentValidationError: ``comment-invalid-anchor`` for a missing or malformed id, or a
+            version anchor naming another version; ``comment-anchor-not-found`` when the element
+            does not exist in the version now.
+    """
+    if anchor_type == ANCHOR_VERSION:
+        own = _canonical_uuid(version_id)
+        anchor = _canonical_uuid(anchor_id) if anchor_id else own
+        if anchor is None or anchor != own:
+            raise CommentValidationError(
+                CODE_INVALID_ANCHOR,
+                "a version anchor is the thread's own version; omit anchor_id or pass that version's id",
+            )
+        return anchor
+
+    anchor = _canonical_uuid(anchor_id)
+    if anchor is None:
+        raise CommentValidationError(
+            CODE_INVALID_ANCHOR,
+            f"a {anchor_type} anchor needs the element's id (a UUID) in anchor_id",
+        )
+    if not db.comment_anchor_exists(version_id=version_id, anchor_type=anchor_type, anchor_id=anchor):
+        raise CommentValidationError(
+            CODE_ANCHOR_NOT_FOUND, f"no {anchor_type} '{anchor}' in version '{version_name}'"
+        )
+    return anchor
+
+
+def _refuse_orphaned(row: Mapping[str, Any]) -> None:
+    """Refuse a status change on a thread whose element was deleted.
+
+    Args:
+        row: The thread row.
+
+    Raises:
+        CommentValidationError: ``comment-thread-orphaned`` when the thread is orphaned.
+    """
+    if row.get("status") == STATUS_ORPHANED:
+        raise CommentValidationError(
+            CODE_THREAD_ORPHANED,
+            "this thread's element was deleted; relink the thread to an element before resolving or reopening it",
+        )
 
 
 def _require_body(body: str) -> str:
@@ -406,28 +476,9 @@ def create_thread(
     project_id = str(project["id"])
     version = resolve_version(tenant_id, project_id, request.version)
     version_id = str(version["id"])
-
-    if request.anchor_type == ANCHOR_VERSION:
-        anchor_id = _canonical_uuid(request.anchor_id) if request.anchor_id else _canonical_uuid(version_id)
-        if anchor_id != _canonical_uuid(version_id):
-            raise CommentValidationError(
-                CODE_INVALID_ANCHOR,
-                "a version anchor is the thread's own version; omit anchor_id or pass that version's id",
-            )
-    else:
-        anchor_id = _canonical_uuid(request.anchor_id)
-        if anchor_id is None:
-            raise CommentValidationError(
-                CODE_INVALID_ANCHOR,
-                f"a {request.anchor_type} anchor needs the element's id (a UUID) in anchor_id",
-            )
-        if not db.comment_anchor_exists(
-            version_id=version_id, anchor_type=request.anchor_type, anchor_id=anchor_id
-        ):
-            raise CommentValidationError(
-                CODE_ANCHOR_NOT_FOUND,
-                f"no {request.anchor_type} '{anchor_id}' in version '{version.get('version_id') or version_id}'",
-            )
+    anchor_id = _resolve_anchor(
+        version_id, str(version.get("version_id") or version_id), request.anchor_type, request.anchor_id
+    )
 
     inserted = db.insert_comment_thread(
         tenant_id=tenant_id,
@@ -460,11 +511,13 @@ def set_thread_status(
         The thread as it now stands.
 
     Raises:
-        CommentValidationError: For an unknown project or thread.
+        CommentValidationError: For an unknown project or thread; ``comment-thread-orphaned`` when
+            the thread's element was deleted (before or during the change).
     """
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     row = _thread_row(tenant_id, project_id, thread_id)
+    _refuse_orphaned(row)
     if row.get("status") != status:
         db.set_comment_thread_status(
             tenant_id=tenant_id,
@@ -474,7 +527,64 @@ def set_thread_status(
             actor_id=actor_id,
         )
         row = _thread_row(tenant_id, project_id, str(row["id"]))
+        # The element may have been deleted between the read and the write; the write then did
+        # nothing, and saying so beats answering with a status the caller did not ask for.
+        _refuse_orphaned(row)
     return _thread_record(row)
+
+
+def relink_thread(
+    tenant_id: str, project_ref: str, thread_id: str, request: CommentThreadRelink
+) -> CommentThreadRecord:
+    """Re-attach an orphaned thread to another element of its own version — COL-1.4 (#4516).
+
+    The thread keeps its comments. It returns to ``resolved`` when it was resolved before its
+    element was deleted and to ``open`` otherwise; its orphan label and time are cleared.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_ref: Project slug or id.
+        thread_id: The thread.
+        request: The element to attach to.
+
+    Returns:
+        The thread as it now stands.
+
+    Raises:
+        CommentValidationError: ``comment-thread-not-orphaned`` for a thread still on a live element
+            (or one relinked by someone else first); ``comment-invalid-anchor`` /
+            ``comment-anchor-not-found`` for a target that is malformed or not in the thread's
+            version; not-found codes for an unknown project or thread.
+    """
+    project = resolve_project(tenant_id, project_ref)
+    project_id = str(project["id"])
+    row = _thread_row(tenant_id, project_id, thread_id)
+    not_orphaned = CommentValidationError(
+        CODE_THREAD_NOT_ORPHANED,
+        "only an orphaned thread can be relinked; this one is still anchored to its element",
+    )
+    if row.get("status") != STATUS_ORPHANED:
+        raise not_orphaned
+
+    version_id = str(row["version_id"])
+    anchor_id = _resolve_anchor(version_id, version_id, request.anchor_type, request.anchor_id)
+    relinked = db.relink_comment_thread(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        thread_id=str(row["id"]),
+        version_id=version_id,
+        anchor_type=request.anchor_type,
+        anchor_id=anchor_id,
+    )
+    if not relinked:
+        # The guarded write lost a race: someone relinked the thread first, or the target was
+        # deleted after it was checked.
+        if _thread_row(tenant_id, project_id, str(row["id"])).get("status") != STATUS_ORPHANED:
+            raise not_orphaned
+        raise CommentValidationError(
+            CODE_ANCHOR_NOT_FOUND, f"no {request.anchor_type} '{anchor_id}' in version '{version_id}'"
+        )
+    return _thread_record(_thread_row(tenant_id, project_id, str(row["id"])))
 
 
 def delete_thread(tenant_id: str, project_ref: str, thread_id: str, actor_id: str) -> None:

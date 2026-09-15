@@ -10,6 +10,9 @@ RBAC guard, the store's anchoring/ownership/deletion rules, and the mention reso
 * Anchors must exist in the named version, and a version anchor is the version itself.
 * Resolve/reopen stamps and clears resolution; deleting the last comment deletes the thread.
 * The list filters and paging; scoping across projects; the per-user create rate limit.
+* **Anchor resilience (COL-1.4, #4516).** A renamed element keeps its threads; deleting an element
+  orphans them with the last-known label; an orphaned thread cannot be resolved or reopened; relink
+  re-attaches it to a chosen element of its version and restores any earlier resolution.
 """
 
 from __future__ import annotations
@@ -163,6 +166,7 @@ _ROUTES = [
     ("delete", f"{BASE}/{MISSING}", None),
     ("post", f"{BASE}/{MISSING}/resolve", None),
     ("post", f"{BASE}/{MISSING}/reopen", None),
+    ("post", f"{BASE}/{MISSING}/relink", {"anchor_type": "class", "anchor_id": CLASS_ID}),
     ("post", f"{BASE}/{MISSING}/comments", {"body": "x"}),
     ("patch", f"{BASE}/{MISSING}/comments/{MISSING}", {"body": "x"}),
     ("delete", f"{BASE}/{MISSING}/comments/{MISSING}", None),
@@ -273,6 +277,7 @@ def test_every_comment_endpoint_is_in_the_openapi_contract(fake):
         "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}": {"get", "delete"},
         "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/resolve": {"post"},
         "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/reopen": {"post"},
+        "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/relink": {"post"},
         "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/comments": {"post"},
         "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/comments/{comment_id}": {
             "patch",
@@ -538,3 +543,202 @@ def test_reads_and_moderation_are_not_rate_limited(fake, act_as, tight_budget):
         assert client.get(BASE).status_code == 200
         assert client.patch(comment_url, json={"body": "edited"}).status_code == 200
         assert client.post(f"{BASE}/{thread_id}/resolve").status_code == 200
+
+
+# ---------------------------------------------------------------------------------------------
+# Anchor resilience — COL-1.4 (#4516)
+# ---------------------------------------------------------------------------------------------
+
+
+def _relink(thread_id: str, anchor_type: str, anchor_id: Optional[str] = None, base: str = BASE):
+    """Relink a thread and return the raw response."""
+    payload: Dict[str, Any] = {"anchor_type": anchor_type}
+    if anchor_id is not None:
+        payload["anchor_id"] = anchor_id
+    return client.post(f"{base}/{thread_id}/relink", json=payload)
+
+
+def test_a_renamed_element_keeps_its_threads(fake, act_as):
+    """The anchor is the element id; a rename changes the element's name, never its id."""
+    thread_id = _opened()["thread"]["id"]
+    # A rename is an in-place UPDATE keyed by the id (tests/test_comment_anchor_rename.py), and no
+    # orphan trigger watches a name column (tests/test_comment_anchor_resilience_migration.py): the
+    # element is still there under the same id afterwards, which is all a thread depends on.
+    assert fake.comment_anchor_exists(version_id=VERSION_1, anchor_type="class", anchor_id=CLASS_ID)
+
+    listing = client.get(BASE, params={"anchor_type": "class", "anchor_id": CLASS_ID}).json()
+    assert [t["id"] for t in listing["threads"]] == [thread_id]
+    thread = listing["threads"][0]
+    assert thread["status"] == "open"
+    assert thread["anchor_label"] is None and thread["orphaned_at"] is None
+
+
+def test_deleting_an_element_orphans_its_threads_with_the_last_known_label(fake, act_as):
+    open_on_class = _opened()["thread"]["id"]
+    resolved_on_class = _opened(body="second")["thread"]["id"]
+    client.post(f"{BASE}/{resolved_on_class}/resolve")
+    on_path = _opened(anchor_type="path", anchor_id=PATH_ID)["thread"]["id"]
+
+    assert fake.delete_element("class", CLASS_ID, "Customer") == 2
+
+    orphaned = client.get(BASE, params={"status": "orphaned"}).json()
+    assert {t["id"] for t in orphaned["threads"]} == {open_on_class, resolved_on_class}
+    for thread in orphaned["threads"]:
+        assert thread["anchor_label"] == "Customer"
+        assert thread["orphaned_at"] is not None
+        assert (thread["anchor_type"], thread["anchor_id"]) == ("class", CLASS_ID)
+    # Orphaned threads stay listed with the rest of the version, most recently orphaned on top.
+    everything = [t["id"] for t in client.get(BASE, params={"version": VERSION_1}).json()["threads"]]
+    assert set(everything[:2]) == {open_on_class, resolved_on_class}
+    assert everything[2] == on_path
+    assert client.get(f"{BASE}/{on_path}").json()["thread"]["status"] == "open"
+
+    detail = client.get(f"{BASE}/{open_on_class}").json()
+    assert detail["thread"]["status"] == "orphaned"
+    assert [c["body"] for c in detail["comments"]] == ["Why is this nullable?"]
+
+
+def test_an_orphaned_thread_still_takes_replies(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    assert client.post(f"{BASE}/{thread_id}/comments", json={"body": "where did it go?"}).status_code == 201
+    assert client.get(f"{BASE}/{thread_id}").json()["thread"]["comment_count"] == 2
+
+
+@pytest.mark.parametrize("action", ["resolve", "reopen"])
+def test_an_orphaned_thread_cannot_change_status_until_relinked(fake, act_as, action):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    response = client.post(f"{BASE}/{thread_id}/{action}")
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "comment-thread-orphaned"
+    assert client.get(f"{BASE}/{thread_id}").json()["thread"]["status"] == "orphaned"
+
+
+def test_an_element_deleted_during_a_status_change_is_reported(fake, act_as, monkeypatch):
+    thread_id = _opened()["thread"]["id"]
+
+    def deleted_first(**_kwargs: Any) -> bool:
+        fake.delete_element("class", CLASS_ID, "Customer")
+        return False
+
+    monkeypatch.setattr(fake, "set_comment_thread_status", deleted_first)
+    response = client.post(f"{BASE}/{thread_id}/resolve")
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "comment-thread-orphaned"
+
+
+def test_relink_reattaches_an_orphaned_thread_to_a_chosen_element(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    client.post(f"{BASE}/{thread_id}/comments", json={"body": "a reply that must survive"})
+    fake.delete_element("class", CLASS_ID, "Customer")
+
+    response = _relink(thread_id, "operation", OPERATION_ID.upper())
+    assert response.status_code == 200, response.text
+    thread = response.json()
+    assert (thread["anchor_type"], thread["anchor_id"]) == ("operation", OPERATION_ID)
+    assert thread["status"] == "open"
+    assert thread["anchor_label"] is None and thread["orphaned_at"] is None
+    assert thread["comment_count"] == 2
+
+    on_operation = client.get(BASE, params={"status": "open", "anchor_type": "operation", "anchor_id": OPERATION_ID})
+    assert [t["id"] for t in on_operation.json()["threads"]] == [thread_id]
+    assert client.get(BASE, params={"status": "orphaned"}).json()["total"] == 0
+
+
+def test_relink_restores_a_resolution_the_thread_had(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    act_as(BOB)
+    resolved = client.post(f"{BASE}/{thread_id}/resolve").json()
+    fake.delete_element("class", CLASS_ID, "Customer")
+
+    orphaned = client.get(f"{BASE}/{thread_id}").json()["thread"]
+    assert orphaned["status"] == "orphaned"
+    assert orphaned["resolved_at"] == resolved["resolved_at"]
+
+    act_as(ALICE)
+    relinked = _relink(thread_id, "property", PROPERTY_ID).json()
+    assert relinked["status"] == "resolved"
+    assert (relinked["resolved_by"], relinked["resolved_at"]) == (BOB, resolved["resolved_at"])
+
+
+def test_relink_to_the_version_itself_may_omit_the_id(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    thread = _relink(thread_id, "version").json()
+    assert (thread["anchor_type"], thread["anchor_id"]) == ("version", VERSION_1)
+
+
+def test_relink_refuses_a_thread_that_is_not_orphaned(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    response = _relink(thread_id, "path", PATH_ID)
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "comment-thread-not-orphaned"
+
+
+@pytest.mark.parametrize(
+    "anchor_type,anchor_id,status,code",
+    [
+        ("class", CLASS_ID, 404, "comment-anchor-not-found"),  # the deleted element itself
+        ("class", "0c6f3a52-5d0e-4a4b-9a52-6c1f8e0a0030", 404, "comment-anchor-not-found"),  # other version
+        ("path", None, 400, "comment-invalid-anchor"),
+        ("path", "not-a-uuid", 400, "comment-invalid-anchor"),
+        ("version", VERSION_2, 400, "comment-invalid-anchor"),
+    ],
+)
+def test_relink_target_must_be_an_element_of_the_threads_version(
+    fake, act_as, anchor_type, anchor_id, status, code
+):
+    fake.add_anchor(VERSION_2, "class", "0c6f3a52-5d0e-4a4b-9a52-6c1f8e0a0030")
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    response = _relink(thread_id, anchor_type, anchor_id)
+    assert response.status_code == status
+    assert response.json()["detail"]["code"] == code
+    assert client.get(f"{BASE}/{thread_id}").json()["thread"]["status"] == "orphaned"
+
+
+@pytest.mark.parametrize(
+    "payload", [{"anchor_type": "canvas", "anchor_id": PATH_ID}, {"anchor_type": "path", "anchor_id": PATH_ID, "x": 1}]
+)
+def test_relink_payload_vocabulary_is_enforced(fake, act_as, payload):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    assert client.post(f"{BASE}/{thread_id}/relink", json=payload).status_code == 422
+
+
+def test_a_relink_that_loses_a_race_says_why(fake, act_as, monkeypatch):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+
+    # The target was deleted between the check and the guarded write: still orphaned.
+    monkeypatch.setattr(fake, "relink_comment_thread", lambda **_kwargs: False)
+    missing = _relink(thread_id, "path", PATH_ID)
+    assert missing.status_code == 404
+    assert missing.json()["detail"]["code"] == "comment-anchor-not-found"
+
+    # Somebody else relinked it first: no longer orphaned.
+    def relinked_elsewhere(**_kwargs: Any) -> bool:
+        fake.threads[thread_id].update(status="open", anchor_label=None, orphaned_at=None)
+        return False
+
+    monkeypatch.setattr(fake, "relink_comment_thread", relinked_elsewhere)
+    raced = _relink(thread_id, "path", PATH_ID)
+    assert raced.status_code == 409
+    assert raced.json()["detail"]["code"] == "comment-thread-not-orphaned"
+
+
+def test_a_thread_cannot_be_relinked_through_another_project(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    response = _relink(thread_id, "path", PATH_ID, base="/v1/tenants/acme/projects/orders/comment-threads")
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "comment-thread-not-found"
+
+
+def test_relink_is_open_to_anyone_who_may_comment(fake, act_as):
+    thread_id = _opened()["thread"]["id"]
+    fake.delete_element("class", CLASS_ID, "Customer")
+    act_as(BOB)
+    fake.grants = {("projects", "view")}
+    assert _relink(thread_id, "path", PATH_ID).status_code == 200

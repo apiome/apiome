@@ -32397,7 +32397,7 @@ class Database:
     _COMMENT_THREAD_COLUMNS = """
         t.id::text AS id, t.tenant_id::text AS tenant_id, t.project_id::text AS project_id,
         t.version_id::text AS version_id, t.anchor_type, t.anchor_id::text AS anchor_id,
-        t.status, t.created_by::text AS created_by,
+        t.status, t.anchor_label, t.orphaned_at, t.created_by::text AS created_by,
         (SELECT cu.name FROM apiome.users cu WHERE cu.id = t.created_by) AS created_by_name,
         t.resolved_by::text AS resolved_by, t.resolved_at,
         t.created_at, t.updated_at, t.last_activity_at,
@@ -32920,7 +32920,8 @@ class Database:
         """Resolve or reopen a thread (COL-1.1, #4513).
 
         Resolving stamps who and when; reopening clears both, so a reopened thread never carries
-        a stale resolution. A thread already in the requested status is left untouched.
+        a stale resolution. A thread already in the requested status is left untouched, and so is
+        an orphaned one (COL-1.4, #4516) — its element was deleted, and only a relink moves it.
 
         Args:
             tenant_id: The caller's tenant.
@@ -32945,6 +32946,7 @@ class Database:
                 last_activity_at = CURRENT_TIMESTAMP
             WHERE t.id = %(thread)s::uuid AND t.tenant_id = %(tenant)s::uuid
               AND t.project_id = %(project)s::uuid AND t.status <> %(status)s
+              AND t.status <> 'orphaned'
             RETURNING t.id::text AS id
             """,
             {
@@ -32953,6 +32955,68 @@ class Database:
                 "thread": thread_id,
                 "tenant": tenant_id,
                 "project": project_id,
+            },
+        )
+        return bool(rows)
+
+    def relink_comment_thread(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        version_id: str,
+        anchor_type: str,
+        anchor_id: str,
+    ) -> bool:
+        """Re-attach an orphaned thread to another element of its own version (COL-1.4, #4516).
+
+        One guarded UPDATE: the anchor moves only while the thread is still orphaned **and** the
+        target exists in the thread's version at that moment — the per-type proof
+        :meth:`comment_anchor_exists` uses — so a concurrent relink, or a target deleted since the
+        caller checked it, leaves the thread untouched. The thread comes back ``resolved`` when it
+        carried a resolution before it was orphaned and ``open`` otherwise, and its orphan label and
+        time are cleared.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread.
+            version_id: The thread's own version; the target must be in it.
+            anchor_type: The kind of element to attach to.
+            anchor_id: That element's id (the version id for a version anchor).
+
+        Returns:
+            ``True`` when the thread was relinked; ``False`` when it is not orphaned, the element is
+            not in that version, the anchor type is unknown, or an id is not a UUID.
+        """
+        anchor_query = self._COMMENT_ANCHOR_QUERIES.get(anchor_type)
+        ids = (tenant_id, project_id, thread_id, version_id, anchor_id)
+        if anchor_query is None or not all(is_uuid_string(str(value or "")) for value in ids):
+            return False
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.comment_threads t
+            SET anchor_type = %(anchor_type)s,
+                anchor_id = %(anchor)s::uuid,
+                status = CASE WHEN t.resolved_at IS NULL THEN 'open' ELSE 'resolved' END,
+                anchor_label = NULL,
+                orphaned_at = NULL,
+                updated_at = CURRENT_TIMESTAMP,
+                last_activity_at = CURRENT_TIMESTAMP
+            WHERE t.id = %(thread)s::uuid AND t.tenant_id = %(tenant)s::uuid
+              AND t.project_id = %(project)s::uuid AND t.version_id = %(version)s::uuid
+              AND t.status = 'orphaned'
+              AND EXISTS ({anchor_query})
+            RETURNING t.id::text AS id
+            """,
+            {
+                "anchor_type": anchor_type,
+                "anchor": anchor_id,
+                "thread": thread_id,
+                "tenant": tenant_id,
+                "project": project_id,
+                "version": version_id,
             },
         )
         return bool(rows)
