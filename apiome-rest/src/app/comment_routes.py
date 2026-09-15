@@ -16,6 +16,11 @@ the tenant's members, so the two share a per-user, per-tenant budget
 middleware. Over budget is a ``429 comment-rate-limited`` with ``Retry-After``.
 
 **Mentions** are always resolved on the server; see :mod:`app.comment_mentions` for the grammar.
+
+**Anchor resilience (COL-1.4, #4516).** A thread anchors by element id, so a rename or move keeps it
+on its element. Deleting the element orphans the thread (apiome-db V260 triggers): it lists with
+``status=orphaned`` and the element's last-known ``anchor_label``, and ``…/relink`` re-attaches it to
+another element of its version. Resolving or reopening an orphaned thread is a ``409``.
 """
 
 from __future__ import annotations
@@ -36,6 +41,8 @@ from .comments import (
     CODE_PROJECT_NOT_FOUND,
     CODE_RATE_LIMITED,
     CODE_THREAD_NOT_FOUND,
+    CODE_THREAD_NOT_ORPHANED,
+    CODE_THREAD_ORPHANED,
     CODE_VERSION_NOT_FOUND,
     STATUS_OPEN,
     STATUS_RESOLVED,
@@ -45,6 +52,7 @@ from .comments import (
     CommentThreadCreate,
     CommentThreadDetail,
     CommentThreadRecord,
+    CommentThreadRelink,
     CommentThreadSummary,
     CommentValidationError,
     ThreadStatus,
@@ -66,6 +74,8 @@ _STATUS_BY_CODE = {
     CODE_THREAD_NOT_FOUND: 404,
     CODE_COMMENT_NOT_FOUND: 404,
     CODE_FORBIDDEN: 403,
+    CODE_THREAD_ORPHANED: 409,
+    CODE_THREAD_NOT_ORPHANED: 409,
 }
 
 _BASE = "/{tenant_slug}/projects/{project_ref}/comment-threads"
@@ -192,9 +202,10 @@ def enforce_comment_rate_limit(tenant_id: str, user_id: str) -> None:
         "comment and its comment count.\n\n"
         "Filters combine: `version` (revision id or version label) lists one version's threads — "
         "on its classes, properties, paths, and operations as well as on the version itself; "
-        "`status` keeps `open` or `resolved`; `anchor_type` and `anchor_id` narrow to one kind of "
-        "element or one element; `mentions_me=true` keeps threads with a comment mentioning the "
-        "caller.\n\n"
+        "`status` keeps `open`, `resolved`, or `orphaned` (threads whose element was deleted, "
+        "each carrying the element's last-known `anchor_label`); `anchor_type` and `anchor_id` "
+        "narrow to one kind of element or one element; `mentions_me=true` keeps threads with a "
+        "comment mentioning the caller.\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -202,7 +213,9 @@ async def list_comment_threads(
     tenant_slug: str,
     project_ref: str,
     version: Optional[str] = Query(default=None, description="Revision id or version label."),
-    status: Optional[ThreadStatus] = Query(default=None, description="`open` or `resolved`."),
+    status: Optional[ThreadStatus] = Query(
+        default=None, description="`open`, `resolved`, or `orphaned`."
+    ),
     anchor_type: Optional[AnchorType] = Query(default=None, description="Element kind."),
     anchor_id: Optional[str] = Query(default=None, description="Element id."),
     mentions_me: bool = Query(
@@ -390,7 +403,8 @@ async def _set_status(
         The thread as it now stands.
 
     Raises:
-        HTTPException: 404 for an unknown project or thread, 403 without ``projects:view``.
+        HTTPException: 404 for an unknown project or thread, 403 without ``projects:view``, 409
+            for an orphaned thread.
     """
     tenant_id, user_id = _commenter(auth_data)
     try:
@@ -405,7 +419,8 @@ async def _set_status(
     summary="Resolve a comment thread",
     description=(
         "Mark a thread resolved, recording who resolved it and when. Resolving a thread that is "
-        "already resolved changes nothing.\n\n"
+        "already resolved changes nothing. An orphaned thread must be relinked first "
+        "(`409 comment-thread-orphaned`).\n\n"
         "Requires `projects:view` — anyone taking part in the discussion may resolve it."
     ),
 )
@@ -436,7 +451,7 @@ async def resolve_comment_thread(
     summary="Reopen a comment thread",
     description=(
         "Reopen a resolved thread, clearing its resolution. Reopening an open thread changes "
-        "nothing.\n\n"
+        "nothing. An orphaned thread must be relinked first (`409 comment-thread-orphaned`).\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -459,6 +474,54 @@ async def reopen_comment_thread(
     """
     _ = tenant_slug
     return await _set_status(project_ref, thread_id, STATUS_OPEN, auth_data)
+
+
+@router.post(
+    f"{_BASE}/{{thread_id}}/relink",
+    response_model=CommentThreadRecord,
+    summary="Relink an orphaned comment thread",
+    description=(
+        "Re-attach an **orphaned** thread — one whose element was deleted — to another element of "
+        "the thread's own version: a `class`, `property`, `path`, `operation`, or the `version` "
+        "itself (for which `anchor_id` may be omitted).\n\n"
+        "The thread keeps every comment. It returns to `resolved` if it was resolved before its "
+        "element was deleted, and to `open` otherwise; `anchor_label` and `orphaned_at` are "
+        "cleared.\n\n"
+        "The target must exist in the thread's version (`404 comment-anchor-not-found`). A thread "
+        "that is still anchored to a live element cannot be relinked "
+        "(`409 comment-thread-not-orphaned`).\n\n"
+        "Requires `projects:view` — anyone taking part in the discussion may relink it."
+    ),
+)
+async def relink_comment_thread(
+    tenant_slug: str,
+    project_ref: str,
+    thread_id: str,
+    body: CommentThreadRelink,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CommentThreadRecord:
+    """Relink an orphaned thread to an element of its version.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_ref: Project slug or id.
+        thread_id: The thread.
+        body: The element to attach to.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The relinked thread.
+
+    Raises:
+        HTTPException: 400 for a malformed anchor, 404 for an unknown project, thread, or element,
+            409 for a thread that is not orphaned, 403 without ``projects:view``.
+    """
+    tenant_id, _user_id = _commenter(auth_data)
+    _ = tenant_slug
+    try:
+        return comment_store.relink_thread(tenant_id, project_ref, thread_id, body)
+    except CommentValidationError as exc:
+        raise _http_error(exc) from exc
 
 
 # ---------------------------------------------------------------------------------------------

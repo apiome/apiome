@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.186.0
+  version: 1.187.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -12304,9 +12304,10 @@ paths:
 
         Filters combine: `version` (revision id or version label) lists one version''s
         threads — on its classes, properties, paths, and operations as well as on
-        the version itself; `status` keeps `open` or `resolved`; `anchor_type` and
-        `anchor_id` narrow to one kind of element or one element; `mentions_me=true`
-        keeps threads with a comment mentioning the caller.
+        the version itself; `status` keeps `open`, `resolved`, or `orphaned` (threads
+        whose element was deleted, each carrying the element''s last-known `anchor_label`);
+        `anchor_type` and `anchor_id` narrow to one kind of element or one element;
+        `mentions_me=true` keeps threads with a comment mentioning the caller.
 
 
         Requires `projects:view`.'
@@ -12348,13 +12349,14 @@ paths:
           - enum:
             - open
             - resolved
+            - orphaned
             type: string
             description: Listaprojectscommentthreadsstatus schema.
           - type: 'null'
             description: Listaprojectscommentthreadsstatus schema.
-          description: '`open` or `resolved`.'
+          description: '`open`, `resolved`, or `orphaned`.'
           title: Status
-        description: '`open` or `resolved`.'
+        description: '`open`, `resolved`, or `orphaned`.'
       - name: anchor_type
         in: query
         required: false
@@ -12693,7 +12695,8 @@ paths:
       - comments
       summary: Resolve a comment thread
       description: 'Mark a thread resolved, recording who resolved it and when. Resolving
-        a thread that is already resolved changes nothing.
+        a thread that is already resolved changes nothing. An orphaned thread must
+        be relinked first (`409 comment-thread-orphaned`).
 
 
         Requires `projects:view` — anyone taking part in the discussion may resolve
@@ -12770,7 +12773,8 @@ paths:
       - comments
       summary: Reopen a comment thread
       description: 'Reopen a resolved thread, clearing its resolution. Reopening an
-        open thread changes nothing.
+        open thread changes nothing. An orphaned thread must be relinked first (`409
+        comment-thread-orphaned`).
 
 
         Requires `projects:view`.'
@@ -12840,6 +12844,103 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for reopenacommentthreadresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/relink:
+    post:
+      tags:
+      - comments
+      summary: Relink an orphaned comment thread
+      description: 'Re-attach an **orphaned** thread — one whose element was deleted
+        — to another element of the thread''s own version: a `class`, `property`,
+        `path`, `operation`, or the `version` itself (for which `anchor_id` may be
+        omitted).
+
+
+        The thread keeps every comment. It returns to `resolved` if it was resolved
+        before its element was deleted, and to `open` otherwise; `anchor_label` and
+        `orphaned_at` are cleared.
+
+
+        The target must exist in the thread''s version (`404 comment-anchor-not-found`).
+        A thread that is still anchored to a live element cannot be relinked (`409
+        comment-thread-not-orphaned`).
+
+
+        Requires `projects:view` — anyone taking part in the discussion may relink
+        it.'
+      operationId: relink_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__relink_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: thread_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Thread Id
+          description: Thread Id schema.
+        description: Path parameter identifying the thread id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Relinkanorphanedcommentthreadauthorization schema.
+          - type: 'null'
+            description: Relinkanorphanedcommentthreadauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Relinkanorphanedcommentthread Xapikey schema.
+          - type: 'null'
+            description: Relinkanorphanedcommentthread Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentThreadRelink'
+              description: Request body for relinkanorphanedcommentthreadrequest.
+        description: Request body for relink an orphaned comment thread.
+      responses:
+        '200':
+          description: Successful response for relink an orphaned comment thread.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentThreadRecord'
+                description: Response payload for relinkanorphanedcommentthreadresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for relinkanorphanedcommentthreadresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/comments:
     post:
       tags:
@@ -65483,16 +65584,38 @@ components:
           type: string
           title: Anchor Id
           description: The anchored element's stable id. Equals `version_id` for a
-            version anchor.
+            version anchor. On an orphaned thread it is the id of the element that
+            was deleted.
           example: anchor_01h2xcejqtf3fz5y5j0v8k9m2p
         status:
           type: string
           enum:
           - open
           - resolved
+          - orphaned
           title: Status
-          description: Status.
+          description: '`open`, `resolved`, or `orphaned` — the anchored element was
+            deleted; relink the thread to re-attach it.'
           example: open
+        anchor_label:
+          anyOf:
+          - type: string
+            description: Comment Thread schema.
+          - type: 'null'
+            description: Comment Thread schema.
+          title: Anchor Label
+          description: The deleted element's last-known label (`Customer`, `Customer.email`,
+            `/customers`, `GET /customers`), captured when it was deleted. Set exactly
+            while `orphaned`.
+        orphaned_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Comment Thread schema.
+          - type: 'null'
+            description: Comment Thread schema.
+          title: Orphaned At
+          description: When the anchored element was deleted. Set exactly while `orphaned`.
         created_by:
           anyOf:
           - type: string
@@ -65543,7 +65666,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -65566,6 +65689,37 @@ components:
       - last_activity_at
       title: CommentThreadRecord
       description: One stored thread, without its comments.
+    CommentThreadRelink:
+      properties:
+        anchor_type:
+          type: string
+          enum:
+          - class
+          - property
+          - path
+          - operation
+          - version
+          title: Anchor Type
+          description: Anchor Type.
+          example: class
+        anchor_id:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Comment Thread Relink schema.
+          - type: 'null'
+            description: Comment Thread Relink schema.
+          title: Anchor Id
+          description: Anchor ID.
+      additionalProperties: false
+      type: object
+      required:
+      - anchor_type
+      title: CommentThreadRelink
+      description: "Re-attach an orphaned thread to another element of its own version.\n\
+        \nAttributes:\n    anchor_type: The kind of element to attach to.\n    anchor_id:\
+        \ That element's stable id. Optional for a version anchor, where it can only\
+        \ be\n        the thread's own version id."
     CommentThreadSummary:
       properties:
         id:
@@ -65603,16 +65757,38 @@ components:
           type: string
           title: Anchor Id
           description: The anchored element's stable id. Equals `version_id` for a
-            version anchor.
+            version anchor. On an orphaned thread it is the id of the element that
+            was deleted.
           example: anchor_01h2xcejqtf3fz5y5j0v8k9m2p
         status:
           type: string
           enum:
           - open
           - resolved
+          - orphaned
           title: Status
-          description: Status.
+          description: '`open`, `resolved`, or `orphaned` — the anchored element was
+            deleted; relink the thread to re-attach it.'
           example: open
+        anchor_label:
+          anyOf:
+          - type: string
+            description: Comment Thread schema.
+          - type: 'null'
+            description: Comment Thread schema.
+          title: Anchor Label
+          description: The deleted element's last-known label (`Customer`, `Customer.email`,
+            `/customers`, `GET /customers`), captured when it was deleted. Set exactly
+            while `orphaned`.
+        orphaned_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Comment Thread schema.
+          - type: 'null'
+            description: Comment Thread schema.
+          title: Orphaned At
+          description: When the anchored element was deleted. Set exactly while `orphaned`.
         created_by:
           anyOf:
           - type: string
@@ -65663,7 +65839,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -66037,13 +66213,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -67612,7 +67788,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 81c36970-59a5-4396-a335-17de68143b1e
+          example: c1f7b8cf-d18e-478b-ba7d-f10cdf600787
         method:
           type: string
           title: Method
@@ -69755,7 +69931,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         envelope:
           additionalProperties: true
           type: object
@@ -101686,7 +101862,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
       additionalProperties: false
       type: object
       required:
@@ -114526,13 +114702,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-15T00:20:05Z'
+          example: '2026-09-15T01:32:34Z'
         outcome:
           anyOf:
           - type: string
