@@ -5,6 +5,43 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.321.0] - 2026-09-14
+
+### Added
+- **Comment threads (#4513, COL-1.1)** — discussion now lives next to the specification instead of in
+  Slack screenshots. Open a thread on a class, property, path, operation, or a whole version; reply
+  in Markdown; mention teammates; resolve and reopen.
+
+  ```bash
+  # Ask about a class on version 1.0.0 and mention a teammate
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/comment-threads" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+    -d '{"version": "1.0.0", "anchor_type": "class", "anchor_id": "<class id>", "body": "Nullable, @bob.brown?"}'
+
+  # Everything open on that version that mentions me
+  curl -s "$APIOME/v1/tenants/acme/projects/pets/comment-threads?version=1.0.0&status=open&mentions_me=true" \
+    -H "Authorization: Bearer $TOKEN"
+  ```
+
+  - **Storage** (apiome-db **V259**): `comment_threads` (tenant, project, version, `anchor_type` +
+    `anchor_id`, `status`, resolution stamps, `last_activity_at`) and `comments` (`thread_id`,
+    `author_id`, Markdown `body`, `mentions uuid[]`, `edited_at`). A thread is anchored by the
+    element's **primary key**, never canvas coordinates, and the element must exist in the named
+    version when the thread is opened.
+  - **Endpoints** under `…/projects/{project_ref}/comment-threads`: list (filters `version`, `status`,
+    `anchor_type`, `anchor_id`, `mentions_me`; paged with a `total`; each row carries its opening
+    comment), open, read, delete, `resolve`, `reopen`, and `…/comments` to reply, edit, and delete.
+    Deleting a thread's last comment deletes the thread.
+  - **Permissions**: no new RBAC resource. `projects:view` is enough to read, comment, resolve, and
+    reopen. Editing or deleting a comment is limited to its author or a tenant administrator, and
+    deleting a thread to whoever opened it or a tenant administrator (`403 comment-forbidden`).
+  - **Mentions** are resolved on the server against active and pending members, by full email, email
+    local part, or display name without spaces. A handle shared by several members resolves to
+    nobody. Code, escapes, addresses, and URLs are never mentions, and an edit re-resolves them.
+  - **Rate limit**: opening and replying share a per-user budget,
+    `APIOME_COMMENT_CREATE_RATE_LIMIT_PER_MINUTE` (default 30); over it returns
+    `429 comment-rate-limited`. Documented in `docs/comments.md`.
+
 ## [1.320.0] - 2026-09-10
 
 ### Added

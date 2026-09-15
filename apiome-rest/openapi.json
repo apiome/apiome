@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.185.0",
+    "version": "1.186.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -16004,6 +16004,1139 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for importa pactfileintoaconsumercontractresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "List a project's comment threads",
+        "description": "A page of the project's threads, most recently active first, each with its opening comment and its comment count.\n\nFilters combine: `version` (revision id or version label) lists one version's threads \u2014 on its classes, properties, paths, and operations as well as on the version itself; `status` keeps `open` or `resolved`; `anchor_type` and `anchor_id` narrow to one kind of element or one element; `mentions_me=true` keeps threads with a comment mentioning the caller.\n\nRequires `projects:view`.",
+        "operationId": "list_comment_threads_v1_tenants__tenant_slug__projects__project_ref__comment_threads_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectscommentthreadsversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreadsversion schema."
+                }
+              ],
+              "description": "Revision id or version label.",
+              "title": "Version"
+            },
+            "description": "Revision id or version label."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "resolved"
+                  ],
+                  "type": "string",
+                  "description": "Listaprojectscommentthreadsstatus schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreadsstatus schema."
+                }
+              ],
+              "description": "`open` or `resolved`.",
+              "title": "Status"
+            },
+            "description": "`open` or `resolved`."
+          },
+          {
+            "name": "anchor_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "class",
+                    "property",
+                    "path",
+                    "operation",
+                    "version"
+                  ],
+                  "type": "string",
+                  "description": "Listaprojectscommentthreadsanchortype schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreadsanchortype schema."
+                }
+              ],
+              "description": "Element kind.",
+              "title": "Anchor Type"
+            },
+            "description": "Element kind."
+          },
+          {
+            "name": "anchor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectscommentthreadsanchorid schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreadsanchorid schema."
+                }
+              ],
+              "description": "Element id.",
+              "title": "Anchor Id"
+            },
+            "description": "Element id."
+          },
+          {
+            "name": "mentions_me",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only threads with a comment mentioning the caller.",
+              "default": false,
+              "title": "Mentions Me"
+            },
+            "description": "Only threads with a comment mentioning the caller."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Threads to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Threads to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectscommentthreadsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreadsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectscommentthreads Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectscommentthreads Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's comment threads.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentThreadListResponse",
+                  "description": "Response payload for listaprojectscommentthreadsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojectscommentthreadsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Open a comment thread on an element",
+        "description": "Open a thread on one element of a version \u2014 a `class`, `property`, `path`, `operation`, or the `version` itself \u2014 together with its first comment.\n\nThe anchor is the element's **stable id**, never a canvas position, and the element must exist in the named version. For a `version` anchor `anchor_id` may be omitted; if given it must be that version's id.\n\n`@name` tokens in the Markdown body are resolved **server-side** against the tenant's members (full email, email local part, or display name without spaces) and stored in the comment's `mentions`. A handle matching several members resolves to nobody.\n\nRequires `projects:view` \u2014 read access to a project grants commenting. Rate limited per user (shared with replies).",
+        "operationId": "open_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Openacommentthreadonanelementauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Openacommentthreadonanelementauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Openacommentthreadonanelement Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Openacommentthreadonanelement Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentThreadCreate",
+                "description": "Request body for openacommentthreadonanelementrequest."
+              }
+            }
+          },
+          "description": "Request body for open a comment thread on an element."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for open a comment thread on an element.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentThreadDetail",
+                  "description": "Response payload for openacommentthreadonanelementresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for openacommentthreadonanelementresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}": {
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Read a comment thread",
+        "description": "A thread with all of its comments, oldest first.\n\nRequires `projects:view`.",
+        "operationId": "read_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readacommentthreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readacommentthreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readacommentthread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readacommentthread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a comment thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentThreadDetail",
+                  "description": "Response payload for readacommentthreadresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readacommentthreadresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Delete a comment thread",
+        "description": "Delete a thread and every comment in it.\n\nRequires `projects:view`, and the caller must be the member who opened the thread or a tenant administrator (`403 comment-forbidden` otherwise).",
+        "operationId": "delete_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteacommentthreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteacommentthreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteacommentthread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteacommentthread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete a comment thread."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteacommentthreadresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/resolve": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Resolve a comment thread",
+        "description": "Mark a thread resolved, recording who resolved it and when. Resolving a thread that is already resolved changes nothing.\n\nRequires `projects:view` \u2014 anyone taking part in the discussion may resolve it.",
+        "operationId": "resolve_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__resolve_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Resolveacommentthreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Resolveacommentthreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Resolveacommentthread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Resolveacommentthread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for resolve a comment thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentThreadRecord",
+                  "description": "Response payload for resolveacommentthreadresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for resolveacommentthreadresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/reopen": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Reopen a comment thread",
+        "description": "Reopen a resolved thread, clearing its resolution. Reopening an open thread changes nothing.\n\nRequires `projects:view`.",
+        "operationId": "reopen_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__reopen_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Reopenacommentthreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Reopenacommentthreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Reopenacommentthread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Reopenacommentthread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for reopen a comment thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentThreadRecord",
+                  "description": "Response payload for reopenacommentthreadresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for reopenacommentthreadresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/comments": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Reply to a comment thread",
+        "description": "Add a Markdown comment to a thread. `@name` mentions are resolved server-side, as when opening a thread. A resolved thread accepts replies and stays resolved.\n\nRequires `projects:view`. Rate limited per user (shared with opening threads).",
+        "operationId": "reply_to_comment_thread_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__comments_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replytoacommentthreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replytoacommentthreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replytoacommentthread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replytoacommentthread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentBody",
+                "description": "Request body for replytoacommentthreadrequest."
+              }
+            }
+          },
+          "description": "Request body for reply to a comment thread."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for reply to a comment thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentRecord",
+                  "description": "Response payload for replytoacommentthreadresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for replytoacommentthreadresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads/{thread_id}/comments/{comment_id}": {
+      "patch": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Edit a comment",
+        "description": "Replace a comment's Markdown. Mentions are re-resolved from the new text and `edited_at` is stamped.\n\nRequires `projects:view`, and the caller must be the comment's author or a tenant administrator (`403 comment-forbidden` otherwise).",
+        "operationId": "edit_comment_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__comments__comment_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Comment Id",
+              "description": "Comment Id schema."
+            },
+            "description": "Path parameter identifying the comment id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Editacommentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Editacommentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Editacomment Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Editacomment Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentBody",
+                "description": "Request body for editacommentrequest."
+              }
+            }
+          },
+          "description": "Request body for edit a comment."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for edit a comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentRecord",
+                  "description": "Response payload for editacommentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for editacommentresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Delete a comment",
+        "description": "Delete a comment. Deleting a thread's **last** comment deletes the thread as well, which the response reports as `thread_deleted: true`.\n\nRequires `projects:view`, and the caller must be the comment's author or a tenant administrator (`403 comment-forbidden` otherwise).",
+        "operationId": "delete_comment_v1_tenants__tenant_slug__projects__project_ref__comment_threads__thread_id__comments__comment_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id",
+              "description": "Thread Id schema."
+            },
+            "description": "Path parameter identifying the thread id segment."
+          },
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Comment Id",
+              "description": "Comment Id schema."
+            },
+            "description": "Path parameter identifying the comment id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteacommentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteacommentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteacomment Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteacomment Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete a comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDeletionResponse",
+                  "description": "Response payload for deleteacommentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteacommentresponse422."
                 }
               }
             }
@@ -86526,6 +87659,598 @@
         "title": "CloseTailResponse",
         "description": "The outcome of closing a live tail session."
       },
+      "CommentBody": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Body",
+            "description": "Body.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "CommentBody",
+        "description": "A comment's Markdown text, for a reply or an edit."
+      },
+      "CommentDeletionResponse": {
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted",
+            "description": "Always true; a comment that is not there is a 404.",
+            "example": false
+          },
+          "thread_deleted": {
+            "type": "boolean",
+            "title": "Thread Deleted",
+            "description": "True when this was the thread's last comment, so the thread was deleted too.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "deleted",
+          "thread_deleted"
+        ],
+        "title": "CommentDeletionResponse",
+        "description": "The outcome of deleting a comment."
+      },
+      "CommentRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The comment id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id",
+            "description": "The thread the comment belongs to.",
+            "example": "thread_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "author_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment schema."
+              }
+            ],
+            "title": "Author Id",
+            "description": "Who wrote it; null once that user has been deleted."
+          },
+          "author_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment schema."
+              }
+            ],
+            "title": "Author Name",
+            "description": "The author's display name."
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
+            "description": "The comment text, as Markdown.",
+            "example": "example"
+          },
+          "mentions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mentions",
+            "description": "User ids of the tenant members the body's `@name` tokens resolved to, server-side, when the comment was last written.",
+            "maxItems": 1000
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Comment schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment schema."
+              }
+            ],
+            "title": "Edited At",
+            "description": "When the comment was last edited; null when never edited."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When the comment was written.",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "thread_id",
+          "body",
+          "created_at"
+        ],
+        "title": "CommentRecord",
+        "description": "One stored comment."
+      },
+      "CommentThreadCreate": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Version",
+            "description": "Version.",
+            "example": "1.0.0"
+          },
+          "anchor_type": {
+            "type": "string",
+            "enum": [
+              "class",
+              "property",
+              "path",
+              "operation",
+              "version"
+            ],
+            "title": "Anchor Type",
+            "description": "Anchor Type.",
+            "example": "class"
+          },
+          "anchor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Comment Thread Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread Create schema."
+              }
+            ],
+            "title": "Anchor Id",
+            "description": "Anchor ID."
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Body",
+            "description": "Body.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "anchor_type",
+          "body"
+        ],
+        "title": "CommentThreadCreate",
+        "description": "Open a thread on an element, with its first comment.\n\nAttributes:\n    version: The version the element belongs to \u2014 its revision id or its version label.\n    anchor_type: The kind of element.\n    anchor_id: The element's stable id. Optional for a version anchor, where it can only be\n        the version's own id.\n    body: The first comment, as Markdown."
+      },
+      "CommentThreadDetail": {
+        "properties": {
+          "thread": {
+            "$ref": "#/components/schemas/CommentThreadRecord",
+            "description": "Thread."
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/CommentRecord"
+            },
+            "type": "array",
+            "title": "Comments",
+            "description": "The thread's comments, oldest first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "thread"
+        ],
+        "title": "CommentThreadDetail",
+        "description": "A thread with every comment in it."
+      },
+      "CommentThreadListResponse": {
+        "properties": {
+          "threads": {
+            "items": {
+              "$ref": "#/components/schemas/CommentThreadSummary"
+            },
+            "type": "array",
+            "title": "Threads",
+            "description": "Threads, most recently active first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many threads this page holds.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many threads match the filters in all.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "CommentThreadListResponse",
+        "description": "A page of a project's threads."
+      },
+      "CommentThreadRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The thread id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The version (revision) whose element is discussed.",
+            "example": "1.0.0"
+          },
+          "anchor_type": {
+            "type": "string",
+            "enum": [
+              "class",
+              "property",
+              "path",
+              "operation",
+              "version"
+            ],
+            "title": "Anchor Type",
+            "description": "The kind of element the thread is anchored to.",
+            "example": "class"
+          },
+          "anchor_id": {
+            "type": "string",
+            "title": "Anchor Id",
+            "description": "The anchored element's stable id. Equals `version_id` for a version anchor.",
+            "example": "anchor_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "open"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Who opened the thread."
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Created By Name",
+            "description": "Their display name."
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Resolved By",
+            "description": "Who resolved it, when resolved."
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Resolved At",
+            "description": "When it was resolved."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "last_activity_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Activity At",
+            "description": "The latest reply or status change.",
+            "example": "2026-09-15T00:20:05Z"
+          },
+          "comment_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Comment Count",
+            "description": "How many comments the thread holds.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "project_id",
+          "version_id",
+          "anchor_type",
+          "anchor_id",
+          "status",
+          "created_at",
+          "updated_at",
+          "last_activity_at"
+        ],
+        "title": "CommentThreadRecord",
+        "description": "One stored thread, without its comments."
+      },
+      "CommentThreadSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The thread id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The version (revision) whose element is discussed.",
+            "example": "1.0.0"
+          },
+          "anchor_type": {
+            "type": "string",
+            "enum": [
+              "class",
+              "property",
+              "path",
+              "operation",
+              "version"
+            ],
+            "title": "Anchor Type",
+            "description": "The kind of element the thread is anchored to.",
+            "example": "class"
+          },
+          "anchor_id": {
+            "type": "string",
+            "title": "Anchor Id",
+            "description": "The anchored element's stable id. Equals `version_id` for a version anchor.",
+            "example": "anchor_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "open"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Who opened the thread."
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Created By Name",
+            "description": "Their display name."
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Resolved By",
+            "description": "Who resolved it, when resolved."
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Comment Thread schema."
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "title": "Resolved At",
+            "description": "When it was resolved."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "last_activity_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Activity At",
+            "description": "The latest reply or status change.",
+            "example": "2026-09-15T00:20:05Z"
+          },
+          "comment_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Comment Count",
+            "description": "How many comments the thread holds.",
+            "default": 0,
+            "example": 1
+          },
+          "root_comment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommentRecord"
+              },
+              {
+                "type": "null",
+                "description": "Comment Thread schema."
+              }
+            ],
+            "description": "The comment that opened the thread."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "project_id",
+          "version_id",
+          "anchor_type",
+          "anchor_id",
+          "status",
+          "created_at",
+          "updated_at",
+          "last_activity_at"
+        ],
+        "title": "CommentThreadSummary",
+        "description": "A thread as a list read returns it: the thread plus its opening comment."
+      },
       "CompatibilityCheckRequest": {
         "properties": {
           "baseRevisionId": {
@@ -86944,14 +88669,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -88976,7 +90701,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "864fb03d-02b2-45e8-bea2-6e6cb9975ae3"
+            "example": "81c36970-59a5-4396-a335-17de68143b1e"
           },
           "method": {
             "type": "string",
@@ -91503,7 +93228,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -131917,7 +133642,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           }
         },
         "additionalProperties": false,
@@ -148351,14 +150076,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-11T02:40:47Z"
+            "example": "2026-09-15T00:20:05Z"
           },
           "outcome": {
             "anyOf": [

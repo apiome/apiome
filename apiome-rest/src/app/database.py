@@ -32384,6 +32384,629 @@ class Database:
         )
         return dict(rows[0]) if rows else None
 
+    # ------------------------------------------------------------------
+    # Comment threads & comments (COL-1.1, #4513)
+    # ------------------------------------------------------------------
+    #
+    # Storage for apiome-db V259. Every accessor scopes by tenant and project (or reads through a
+    # thread that the caller has already scoped), and treats a non-UUID id as "not found" rather
+    # than letting Postgres raise. Authorization — project read access, author-or-admin edits —
+    # is app.comment_store's job, not this layer's.
+
+    #: Thread columns over ``apiome.comment_threads t``, with the opener's name and the count.
+    _COMMENT_THREAD_COLUMNS = """
+        t.id::text AS id, t.tenant_id::text AS tenant_id, t.project_id::text AS project_id,
+        t.version_id::text AS version_id, t.anchor_type, t.anchor_id::text AS anchor_id,
+        t.status, t.created_by::text AS created_by,
+        (SELECT cu.name FROM apiome.users cu WHERE cu.id = t.created_by) AS created_by_name,
+        t.resolved_by::text AS resolved_by, t.resolved_at,
+        t.created_at, t.updated_at, t.last_activity_at,
+        (SELECT count(*) FROM apiome.comments cc WHERE cc.thread_id = t.id)::int AS comment_count
+    """
+
+    #: Comment columns over ``apiome.comments c``, with the author's name.
+    _COMMENT_COLUMNS = """
+        c.id::text AS id, c.thread_id::text AS thread_id, c.author_id::text AS author_id,
+        (SELECT au.name FROM apiome.users au WHERE au.id = c.author_id) AS author_name,
+        c.body, c.mentions::text[] AS mentions, c.edited_at, c.created_at
+    """
+
+    #: How to prove an anchor exists inside a version, per anchor type. A property anchor is either
+    #: a property as it appears on a class of the version (``class_properties``) or an entry in the
+    #: project's property library (``properties``); the two tables' ids never collide.
+    _COMMENT_ANCHOR_QUERIES = {
+        "version": """
+            SELECT 1 FROM apiome.versions v
+            WHERE v.id = %(anchor)s::uuid AND v.id = %(version)s::uuid AND v.deleted_at IS NULL
+        """,
+        "class": """
+            SELECT 1 FROM apiome.classes c
+            WHERE c.id = %(anchor)s::uuid AND c.version_id = %(version)s::uuid
+              AND c.deleted_at IS NULL
+        """,
+        "property": """
+            SELECT 1 FROM apiome.class_properties cp
+            JOIN apiome.classes c ON c.id = cp.class_id
+            WHERE cp.id = %(anchor)s::uuid AND c.version_id = %(version)s::uuid
+              AND c.deleted_at IS NULL
+            UNION ALL
+            SELECT 1 FROM apiome.properties p
+            JOIN apiome.versions v ON v.project_id = p.project_id
+            WHERE p.id = %(anchor)s::uuid AND v.id = %(version)s::uuid AND p.deleted_at IS NULL
+        """,
+        "path": """
+            SELECT 1 FROM apiome.version_path vp
+            WHERE vp.id = %(anchor)s::uuid AND vp.version_id = %(version)s::uuid
+        """,
+        "operation": """
+            SELECT 1 FROM apiome.path_operation po
+            JOIN apiome.version_path vp ON vp.id = po.version_path_id
+            WHERE po.id = %(anchor)s::uuid AND vp.version_id = %(version)s::uuid
+        """,
+    }
+
+    def comment_anchor_exists(self, *, version_id: str, anchor_type: str, anchor_id: str) -> bool:
+        """Whether an element of the given kind exists inside a version (COL-1.1, #4513).
+
+        Args:
+            version_id: The version (revision) id the thread is opened on.
+            anchor_type: ``class``, ``property``, ``path``, ``operation``, or ``version``.
+            anchor_id: The element's id.
+
+        Returns:
+            ``True`` when the element exists in that version; ``False`` for an unknown anchor type,
+            a non-UUID id, or an element of another version.
+        """
+        query = self._COMMENT_ANCHOR_QUERIES.get(anchor_type)
+        if query is None:
+            return False
+        if not is_uuid_string(str(version_id or "")) or not is_uuid_string(str(anchor_id or "")):
+            return False
+        rows = self.execute_query(
+            f"SELECT EXISTS ({query}) AS present",
+            {"anchor": anchor_id, "version": version_id},
+        )
+        return bool(rows and rows[0].get("present"))
+
+    def insert_comment_thread(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        anchor_type: str,
+        anchor_id: str,
+        created_by: str,
+        body: str,
+        mentions: List[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Open a thread together with its first comment, in one statement (COL-1.1, #4513).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            version_id: The version whose element is discussed.
+            anchor_type: The element kind.
+            anchor_id: The element id (the version id for a version anchor).
+            created_by: The opening user, also the first comment's author.
+            body: The first comment's Markdown.
+            mentions: User ids the body mentions.
+
+        Returns:
+            ``{"thread_id", "comment_id"}``, or ``None`` when any id is not a UUID.
+        """
+        ids = (tenant_id, project_id, version_id, anchor_id, created_by, *mentions)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        rows = self.execute_query(
+            """
+            WITH thread AS (
+                INSERT INTO apiome.comment_threads (
+                    tenant_id, project_id, version_id, anchor_type, anchor_id, created_by
+                )
+                VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid)
+                RETURNING id
+            ), reply AS (
+                INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
+                SELECT thread.id, %s::uuid, %s, %s::uuid[] FROM thread
+                RETURNING id, thread_id
+            )
+            SELECT reply.thread_id::text AS thread_id, reply.id::text AS comment_id FROM reply
+            """,
+            (
+                tenant_id,
+                project_id,
+                version_id,
+                anchor_type,
+                anchor_id,
+                created_by,
+                created_by,
+                body,
+                list(mentions),
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def get_comment_thread(
+        self, *, tenant_id: str, project_id: str, thread_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one thread inside a tenant's project (COL-1.1, #4513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread.
+
+        Returns:
+            The thread row, or ``None`` when it is not there (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, thread_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._COMMENT_THREAD_COLUMNS}
+            FROM apiome.comment_threads t
+            WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+            """,
+            (thread_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def _comment_thread_filters(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        status: Optional[str],
+        anchor_type: Optional[str],
+        anchor_id: Optional[str],
+        mentioned_user_id: Optional[str],
+    ) -> Optional[Tuple[str, List[Any]]]:
+        """Build the WHERE clause shared by the thread list and count reads.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only threads on this version, when given.
+            status: Only threads in this status, when given.
+            anchor_type: Only threads on this element kind, when given.
+            anchor_id: Only threads on this element, when given.
+            mentioned_user_id: Only threads with a comment mentioning this user, when given.
+
+        Returns:
+            ``(sql, params)``, or ``None`` when any supplied id is not a UUID (nothing can match).
+        """
+        ids = [tenant_id, project_id]
+        ids.extend(value for value in (version_id, anchor_id, mentioned_user_id) if value)
+        if not all(is_uuid_string(str(value)) for value in ids):
+            return None
+        clauses = ["t.tenant_id = %s::uuid", "t.project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if version_id:
+            clauses.append("t.version_id = %s::uuid")
+            params.append(version_id)
+        if status:
+            clauses.append("t.status = %s")
+            params.append(status)
+        if anchor_type:
+            clauses.append("t.anchor_type = %s")
+            params.append(anchor_type)
+        if anchor_id:
+            clauses.append("t.anchor_id = %s::uuid")
+            params.append(anchor_id)
+        if mentioned_user_id:
+            clauses.append(
+                "EXISTS (SELECT 1 FROM apiome.comments mc"
+                " WHERE mc.thread_id = t.id AND mc.mentions @> ARRAY[%s::uuid])"
+            )
+            params.append(mentioned_user_id)
+        return " AND ".join(clauses), params
+
+    def list_comment_threads(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        status: Optional[str] = None,
+        anchor_type: Optional[str] = None,
+        anchor_id: Optional[str] = None,
+        mentioned_user_id: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """A page of a project's threads, most recently active first (COL-1.1, #4513).
+
+        Each row carries the thread's opening comment as ``root_*`` columns, so a list needs no
+        second read per thread.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only threads on this version, when given.
+            status: Only threads in this status, when given.
+            anchor_type: Only threads on this element kind, when given.
+            anchor_id: Only threads on this element, when given.
+            mentioned_user_id: Only threads with a comment mentioning this user, when given.
+            limit: Page size.
+            offset: Rows to skip.
+
+        Returns:
+            The thread rows (empty when an id is not a UUID).
+        """
+        built = self._comment_thread_filters(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_id=version_id,
+            status=status,
+            anchor_type=anchor_type,
+            anchor_id=anchor_id,
+            mentioned_user_id=mentioned_user_id,
+        )
+        if built is None:
+            return []
+        where, params = built
+        rows = self.execute_query(
+            f"""
+            SELECT {self._COMMENT_THREAD_COLUMNS},
+                   root.root_id, root.root_author_id, root.root_author_name, root.root_body,
+                   root.root_mentions, root.root_edited_at, root.root_created_at
+            FROM apiome.comment_threads t
+            LEFT JOIN LATERAL (
+                SELECT c.id::text AS root_id, c.author_id::text AS root_author_id,
+                       (SELECT ru.name FROM apiome.users ru WHERE ru.id = c.author_id)
+                           AS root_author_name,
+                       c.body AS root_body, c.mentions::text[] AS root_mentions,
+                       c.edited_at AS root_edited_at, c.created_at AS root_created_at
+                FROM apiome.comments c
+                WHERE c.thread_id = t.id
+                ORDER BY c.created_at ASC, c.id ASC
+                LIMIT 1
+            ) root ON TRUE
+            WHERE {where}
+            ORDER BY t.last_activity_at DESC, t.id ASC
+            LIMIT %s OFFSET %s
+            """,
+            (*params, int(limit), int(offset)),
+        )
+        return [dict(row) for row in rows]
+
+    def count_comment_threads(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        status: Optional[str] = None,
+        anchor_type: Optional[str] = None,
+        anchor_id: Optional[str] = None,
+        mentioned_user_id: Optional[str] = None,
+    ) -> int:
+        """How many threads :meth:`list_comment_threads` would page through (COL-1.1, #4513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only threads on this version, when given.
+            status: Only threads in this status, when given.
+            anchor_type: Only threads on this element kind, when given.
+            anchor_id: Only threads on this element, when given.
+            mentioned_user_id: Only threads with a comment mentioning this user, when given.
+
+        Returns:
+            The total (0 when an id is not a UUID).
+        """
+        built = self._comment_thread_filters(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            version_id=version_id,
+            status=status,
+            anchor_type=anchor_type,
+            anchor_id=anchor_id,
+            mentioned_user_id=mentioned_user_id,
+        )
+        if built is None:
+            return 0
+        where, params = built
+        rows = self.execute_query(
+            f"SELECT count(*)::int AS total FROM apiome.comment_threads t WHERE {where}",
+            tuple(params),
+        )
+        return int(rows[0]["total"]) if rows else 0
+
+    def list_comments(self, *, thread_id: str) -> List[Dict[str, Any]]:
+        """A thread's comments, oldest first (COL-1.1, #4513).
+
+        The caller scopes the thread (via :meth:`get_comment_thread`) before reading its comments.
+
+        Args:
+            thread_id: The thread.
+
+        Returns:
+            The comment rows (empty when the id is not a UUID).
+        """
+        if not is_uuid_string(str(thread_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._COMMENT_COLUMNS}
+            FROM apiome.comments c
+            WHERE c.thread_id = %s::uuid
+            ORDER BY c.created_at ASC, c.id ASC
+            """,
+            (thread_id,),
+        )
+        return [dict(row) for row in rows]
+
+    def get_comment(self, *, thread_id: str, comment_id: str) -> Optional[Dict[str, Any]]:
+        """Read one comment of a thread (COL-1.1, #4513).
+
+        Args:
+            thread_id: The thread the comment must belong to (already scoped by the caller).
+            comment_id: The comment.
+
+        Returns:
+            The comment row, or ``None`` when it is not in that thread (or an id is not a UUID).
+        """
+        if not is_uuid_string(str(thread_id or "")) or not is_uuid_string(str(comment_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._COMMENT_COLUMNS}
+            FROM apiome.comments c
+            WHERE c.id = %s::uuid AND c.thread_id = %s::uuid
+            """,
+            (comment_id, thread_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_comment(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        author_id: str,
+        body: str,
+        mentions: List[str],
+    ) -> Optional[str]:
+        """Reply to a thread and mark the thread active (COL-1.1, #4513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread.
+            author_id: The replying user.
+            body: The Markdown reply.
+            mentions: User ids the body mentions.
+
+        Returns:
+            The new comment's id, or ``None`` when the thread is not in that project (or an id is
+            not a UUID).
+        """
+        ids = (tenant_id, project_id, thread_id, author_id, *mentions)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        rows = self.execute_query(
+            """
+            WITH reply AS (
+                INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
+                SELECT t.id, %s::uuid, %s, %s::uuid[]
+                FROM apiome.comment_threads t
+                WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+                RETURNING id, thread_id
+            ), touched AS (
+                UPDATE apiome.comment_threads t
+                SET last_activity_at = CURRENT_TIMESTAMP
+                FROM reply
+                WHERE t.id = reply.thread_id
+                RETURNING t.id
+            )
+            SELECT reply.id::text AS comment_id FROM reply
+            """,
+            (author_id, body, list(mentions), thread_id, tenant_id, project_id),
+        )
+        return str(rows[0]["comment_id"]) if rows else None
+
+    def update_comment(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        comment_id: str,
+        body: str,
+        mentions: List[str],
+    ) -> bool:
+        """Replace a comment's body and mentions and stamp the edit (COL-1.1, #4513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread the comment must belong to.
+            comment_id: The comment.
+            body: The new Markdown.
+            mentions: User ids the new body mentions.
+
+        Returns:
+            ``True`` when a comment was updated.
+        """
+        ids = (tenant_id, project_id, thread_id, comment_id, *mentions)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return False
+        rows = self.execute_query(
+            """
+            UPDATE apiome.comments c
+            SET body = %s, mentions = %s::uuid[], edited_at = CURRENT_TIMESTAMP
+            FROM apiome.comment_threads t
+            WHERE c.id = %s::uuid AND c.thread_id = t.id
+              AND t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+            RETURNING c.id::text AS id
+            """,
+            (body, list(mentions), comment_id, thread_id, tenant_id, project_id),
+        )
+        return bool(rows)
+
+    def delete_comment(
+        self, *, tenant_id: str, project_id: str, thread_id: str, comment_id: str
+    ) -> Dict[str, bool]:
+        """Delete a comment, and its thread when it was the last one (COL-1.1, #4513).
+
+        The thread row is locked first, so two concurrent deletes of a thread's last two comments
+        cannot both see "one comment left" and leave an empty thread behind, and a reply racing the
+        deletion waits for it rather than landing in a thread that is about to disappear.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread the comment must belong to.
+            comment_id: The comment.
+
+        Returns:
+            ``{"deleted": bool, "thread_deleted": bool}``.
+        """
+        outcome = {"deleted": False, "thread_deleted": False}
+        ids = (tenant_id, project_id, thread_id, comment_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return outcome
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT t.id FROM apiome.comment_threads t
+                    WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+                    FOR UPDATE
+                    """,
+                    (thread_id, tenant_id, project_id),
+                )
+                if cursor.fetchone() is not None:
+                    cursor.execute(
+                        "DELETE FROM apiome.comments WHERE id = %s::uuid AND thread_id = %s::uuid",
+                        (comment_id, thread_id),
+                    )
+                    outcome["deleted"] = cursor.rowcount > 0
+                    if outcome["deleted"]:
+                        cursor.execute(
+                            """
+                            DELETE FROM apiome.comment_threads t
+                            WHERE t.id = %s::uuid
+                              AND NOT EXISTS (
+                                  SELECT 1 FROM apiome.comments c WHERE c.thread_id = t.id
+                              )
+                            """,
+                            (thread_id,),
+                        )
+                        outcome["thread_deleted"] = cursor.rowcount > 0
+            conn.commit()
+            return outcome
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    def set_comment_thread_status(
+        self, *, tenant_id: str, project_id: str, thread_id: str, status: str, actor_id: str
+    ) -> bool:
+        """Resolve or reopen a thread (COL-1.1, #4513).
+
+        Resolving stamps who and when; reopening clears both, so a reopened thread never carries
+        a stale resolution. A thread already in the requested status is left untouched.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread.
+            status: ``open`` or ``resolved``.
+            actor_id: The acting user.
+
+        Returns:
+            ``True`` when the status changed.
+        """
+        ids = (tenant_id, project_id, thread_id, actor_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return False
+        rows = self.execute_query(
+            """
+            UPDATE apiome.comment_threads t
+            SET status = %(status)s,
+                resolved_by = CASE WHEN %(status)s = 'resolved' THEN %(actor)s::uuid END,
+                resolved_at = CASE WHEN %(status)s = 'resolved' THEN CURRENT_TIMESTAMP END,
+                updated_at = CURRENT_TIMESTAMP,
+                last_activity_at = CURRENT_TIMESTAMP
+            WHERE t.id = %(thread)s::uuid AND t.tenant_id = %(tenant)s::uuid
+              AND t.project_id = %(project)s::uuid AND t.status <> %(status)s
+            RETURNING t.id::text AS id
+            """,
+            {
+                "status": status,
+                "actor": actor_id,
+                "thread": thread_id,
+                "tenant": tenant_id,
+                "project": project_id,
+            },
+        )
+        return bool(rows)
+
+    def delete_comment_thread(self, *, tenant_id: str, project_id: str, thread_id: str) -> bool:
+        """Delete a thread and every comment in it (COL-1.1, #4513).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the thread must belong to.
+            thread_id: The thread.
+
+        Returns:
+            ``True`` when a thread was deleted.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, thread_id)):
+            return False
+        rows = self.execute_query(
+            """
+            DELETE FROM apiome.comment_threads t
+            WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+            RETURNING t.id::text AS id
+            """,
+            (thread_id, tenant_id, project_id),
+        )
+        return bool(rows)
+
+    def list_comment_mention_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """The tenant members an ``@name`` mention may resolve to (COL-1.1, #4513).
+
+        Active and pending (invited) members are mentionable; a suspended member, whose access is
+        blocked, is not — and neither is a deleted account.
+
+        Args:
+            tenant_id: The tenant.
+
+        Returns:
+            ``{"user_id", "name", "email"}`` rows (empty when the id is not a UUID).
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT u.id::text AS user_id, u.name, u.email
+            FROM apiome.tenant_users tu
+            JOIN apiome.users u ON u.id = tu.user_id
+            WHERE tu.tenant_id = %s::uuid
+              AND tu.status IN ('active', 'pending')
+              AND u.deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        return [dict(row) for row in rows]
+
 
 # Global database instance
 db = Database()
