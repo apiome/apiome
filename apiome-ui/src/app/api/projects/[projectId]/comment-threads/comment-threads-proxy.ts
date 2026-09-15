@@ -172,13 +172,15 @@ export async function fetchCommentThreadPage(
  *
  * @param auth - The caller.
  * @param projectRef - The project id or slug.
+ * @param versionId - Only one version's threads, by (already sanitized) revision id (COL-2.2).
  * @returns The open threads read and apiome-rest's total of open threads (which can exceed the
  *   threads read when the cap is reached).
  * @throws RestCommentThreadsError when any page fails.
  */
 export async function collectOpenCommentThreads(
   auth: CommentThreadsAuth,
-  projectRef: string
+  projectRef: string,
+  versionId?: string | null
 ): Promise<{ threads: DiscussionThread[]; total: number }> {
   const threads: DiscussionThread[] = [];
   let total = 0;
@@ -188,6 +190,7 @@ export async function collectOpenCommentThreads(
       limit: String(REST_THREAD_PAGE_LIMIT),
       offset: String(threads.length),
     });
+    if (versionId) params.set('version', versionId);
     const page = await fetchCommentThreadPage(auth, projectRef, params);
     total = page.total;
     threads.push(...page.threads);

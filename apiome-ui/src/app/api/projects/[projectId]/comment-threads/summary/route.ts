@@ -8,6 +8,9 @@
  * - **Unresolved per element** for each row, and the unfiltered unresolved total for the tab: the
  *   project's open threads read page by page and counted with `unresolvedCommentCounts` — the
  *   Studio badges' own rule.
+ *
+ * A `version` revision id (the review page's Discussion tab, COL-2.2) narrows both kinds to that
+ * version's threads.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -26,9 +29,10 @@ import {
 } from '../comment-threads-proxy';
 
 /**
- * GET /api/projects/[projectId]/comment-threads/summary?anchor_type&mentions_me
+ * GET /api/projects/[projectId]/comment-threads/summary?anchor_type&mentions_me&version
  *
- * @param request - The browser's request; `anchor_type` and `mentions_me` narrow the status totals.
+ * @param request - The browser's request; `anchor_type` and `mentions_me` narrow the status totals,
+ *   and `version` narrows every number to one version.
  * @param context - The route parameters.
  * @returns `{success: true, ...DiscussionSummary}` or `{success: false, error}`.
  */
@@ -54,6 +58,8 @@ export async function GET(
       const anchorType = filters.get('anchor_type');
       if (anchorType) query.set('anchor_type', anchorType);
       if (filters.get('mentions_me') === 'true') query.set('mentions_me', 'true');
+      const version = filters.get('version');
+      if (version) query.set('version', version);
       return query;
     };
 
@@ -64,7 +70,7 @@ export async function GET(
           return [status, page.total] as const;
         })
       ),
-      collectOpenCommentThreads(auth, projectId),
+      collectOpenCommentThreads(auth, projectId, filters.get('version')),
     ]);
 
     const summary: DiscussionSummary = {

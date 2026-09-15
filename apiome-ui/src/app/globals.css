@@ -31913,3 +31913,399 @@ tr:focus-within .pub-url__glyph {
   font-size: var(--fs-xs);
   color: var(--fg-muted);
 }
+
+/* ==========================================================================
+   REVIEW PAGE  (COL-2.2, #4518)
+   --------------------------------------------------------------------------
+   `/ade/reviews/{id}` — one review of a draft version: the Changes, Spec and
+   Discussion tabs beside a reviewers card, and a sticky decision bar at the
+   foot of the page's scroll container.
+
+   Borrows rather than restates: `PageHeader`'s tab strip, `Badge`, `Alert`,
+   `Segmented`, `FormField` + `Textarea`, `EmptyState`, `LoadingState`, the
+   read-only code and diff viewers, `.mono` for pointers, and the Discussion
+   panel with its own `.disc-*` rules. `.rvw-*` is only the layout, the
+   reviewers card, the grouped changes and the decision bar.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. Quiet text is
+   `--fg-muted`, never `--fg-subtle`; nothing fades. Every flex or grid holder
+   of a name, a note or a pointer has a zero minimum and those texts break
+   anywhere, so a long path never scrolls the document sideways. The aside is
+   DESIGN.md §8's 340 px detail column, in rem, and stacks under the main
+   column below 68rem, as the style-guide editor does.
+   ========================================================================== */
+
+.rvw {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 21.25rem);
+  gap: var(--space-4);
+  align-items: start;
+  min-inline-size: 0;
+}
+
+@media (max-width: 68rem) {
+  .rvw {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rvw-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.rvw-aside {
+  min-inline-size: 0;
+}
+
+.rvw-pane {
+  min-inline-size: 0;
+}
+
+.rvw-tab__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.rvw-state {
+  padding: var(--space-4);
+}
+
+.rvw-min-h {
+  min-block-size: 12rem;
+}
+
+/* ---- The reviewers card ------------------------------------------------- */
+
+.rvw-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.rvw-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rvw-card__title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.rvw-card__meta {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.rvw-card__subtitle {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rvw-card__empty {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.rvw-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-start: var(--space-3);
+  box-shadow: inset 0 1px 0 var(--border);
+}
+
+.rvw-round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rvw-round__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.rvw-people {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rvw-person {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.rvw-person__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rvw-person__name {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.rvw-person__you {
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.rvw-person__when {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.rvw-person__note {
+  padding-inline-start: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-shadow: inset 1px 0 0 var(--border);
+}
+
+/* ---- Changes ------------------------------------------------------------ */
+
+.rvw-changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.rvw-changes__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rvw-changes__compare {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.rvw-changes__baseline {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.rvw-severities {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.rvw-severity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.rvw-severity__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rvw-severity__count {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.rvw-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.rvw-group__name {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.rvw-change-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rvw-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.rvw-change:last-child {
+  box-shadow: none;
+}
+
+.rvw-change__summary {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.rvw-change__pointer {
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.rvw-diff {
+  min-inline-size: 0;
+}
+
+/* ---- Spec --------------------------------------------------------------- */
+
+.rvw-spec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.rvw-spec__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Monaco needs a definite box: the viewer fills this block (`height="100%"`). */
+.rvw-spec__viewer {
+  block-size: min(70vh, 48rem);
+  min-inline-size: 0;
+}
+
+/* ---- The decision bar ---------------------------------------------------
+   Sticky inside `.page` (the scroll container), like `.gd-save-bar`, so the
+   reviewer can decide from whichever tab they are reading. */
+
+.rvw-decision {
+  position: sticky;
+  inset-block-end: var(--space-4);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin-block-start: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--border);
+}
+
+.rvw-decision__field {
+  min-inline-size: 0;
+}
+
+.rvw-decision__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  min-inline-size: 0;
+}
+
+.rvw-decision__message {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.rvw-decision__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rvw-decision__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.rvw-decision__status .rvw-decision__message {
+  color: var(--fg);
+}
+
+.rvw-decision__glyph {
+  inline-size: var(--icon-button);
+  block-size: var(--icon-button);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.rvw-decision__quote {
+  margin: 0;
+  padding-inline-start: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  box-shadow: inset 1px 0 0 var(--border);
+}

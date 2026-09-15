@@ -270,16 +270,20 @@ export const ANCHOR_TYPE_LABELS: Readonly<Record<CommentAnchorType, string>> = {
  *
  * @param filters - The panel's filters.
  * @param paging - The page to read.
+ * @param versionId - Narrow to one version's threads, by revision id (the review page, COL-2.2);
+ *   every version of the project when omitted.
  * @returns The query string, including its leading `?`.
  */
 export function discussionListParams(
   filters: Readonly<DiscussionFilters>,
-  paging: { limit?: number; offset?: number } = {}
+  paging: { limit?: number; offset?: number } = {},
+  versionId?: string | null
 ): string {
   const params = new URLSearchParams();
   if (filters.status !== 'all') params.set('status', filters.status);
   if (filters.mentionsMe) params.set('mentions_me', 'true');
   if (filters.elementType !== 'all') params.set('anchor_type', filters.elementType);
+  if (versionId) params.set('version', versionId);
   params.set('limit', String(paging.limit ?? DISCUSSION_PAGE_SIZE));
   params.set('offset', String(paging.offset ?? 0));
   return `?${params.toString()}`;
@@ -290,12 +294,17 @@ export function discussionListParams(
  * counts. Status itself is not sent — the summary counts every status.
  *
  * @param filters - The panel's filters.
+ * @param versionId - Narrow the counts to one version's threads, by revision id (COL-2.2).
  * @returns The query string, including its leading `?`, or `''` when nothing narrows.
  */
-export function discussionSummaryParams(filters: Readonly<DiscussionFilters>): string {
+export function discussionSummaryParams(
+  filters: Readonly<DiscussionFilters>,
+  versionId?: string | null
+): string {
   const params = new URLSearchParams();
   if (filters.mentionsMe) params.set('mentions_me', 'true');
   if (filters.elementType !== 'all') params.set('anchor_type', filters.elementType);
+  if (versionId) params.set('version', versionId);
   const query = params.toString();
   return query ? `?${query}` : '';
 }
@@ -323,7 +332,9 @@ function parseCount(raw: string | null): number | null {
  * Only the panel's filters survive: an unknown key is dropped, an unknown `status` or
  * `anchor_type` is dropped (so the list widens to every status rather than failing), `mentions_me`
  * is forwarded only as `true`, and `limit` is clamped to 1–{@link REST_THREAD_PAGE_LIMIT}.
- * `version` and `anchor_id` are deliberately not forwarded — the panel is project-wide.
+ * `version` is forwarded only as a revision id (a UUID) — the review page's Discussion tab narrows to
+ * the version under review (COL-2.2); a version label or anything else is dropped, so the list stays
+ * project-wide. `anchor_id` is deliberately not forwarded.
  *
  * @param input - The browser's query.
  * @returns The query to send upstream.
@@ -335,6 +346,8 @@ export function sanitizeThreadListParams(input: ParamReader): URLSearchParams {
   const anchorType = input.get('anchor_type');
   if (isCommentAnchorType(anchorType)) out.set('anchor_type', anchorType);
   if (input.get('mentions_me') === 'true') out.set('mentions_me', 'true');
+  const version = input.get('version');
+  if (isUuid(version)) out.set('version', version);
   const limit = parseCount(input.get('limit'));
   out.set(
     'limit',

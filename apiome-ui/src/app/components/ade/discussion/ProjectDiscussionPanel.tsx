@@ -70,6 +70,11 @@ export interface ProjectDiscussionPanelProps {
   workspaceRoute: string | null;
   /** Called with the project's unresolved total whenever the summary loads. */
   onUnresolvedTotalChange?: (total: number) => void;
+  /**
+   * Narrow the list and every count to one version's threads, by revision id — the review page's
+   * Discussion tab (COL-2.2, #4518). Every version of the project when omitted.
+   */
+  versionId?: string;
   /** Reference time for relative dates, in epoch ms; tests pin it. Defaults to mount time. */
   now?: number;
 }
@@ -208,6 +213,7 @@ export function ProjectDiscussionPanel({
   versions,
   workspaceRoute,
   onUnresolvedTotalChange,
+  versionId,
   now,
 }: ProjectDiscussionPanelProps) {
   const [filters, setFilters] = React.useState<DiscussionFilters>(DEFAULT_DISCUSSION_FILTERS);
@@ -219,8 +225,8 @@ export function ProjectDiscussionPanel({
   const [mountedAt] = React.useState(() => Date.now());
 
   const routeBase = `/api/projects/${encodeURIComponent(projectId)}/comment-threads`;
-  const listKey = discussionListParams(filters, { limit: DISCUSSION_PAGE_SIZE, offset: 0 });
-  const summaryKey = discussionSummaryParams(filters);
+  const listKey = discussionListParams(filters, { limit: DISCUSSION_PAGE_SIZE, offset: 0 }, versionId);
+  const summaryKey = discussionSummaryParams(filters, versionId);
 
   // The latest callback, without re-reading the summary each time the parent re-renders.
   const onTotalRef = React.useRef(onUnresolvedTotalChange);
@@ -312,10 +318,11 @@ export function ProjectDiscussionPanel({
     setMoreError(null);
     try {
       const json = await getEnvelope<DiscussionThreadPageShape>(
-        `${routeBase}${discussionListParams(filters, {
-          limit: DISCUSSION_PAGE_SIZE,
-          offset: current.threads.length,
-        })}`
+        `${routeBase}${discussionListParams(
+          filters,
+          { limit: DISCUSSION_PAGE_SIZE, offset: current.threads.length },
+          versionId
+        )}`
       );
       if (!json.success || !Array.isArray(json.threads)) {
         setMoreError(json.error || 'Failed to load more comment threads');

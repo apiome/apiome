@@ -166,6 +166,14 @@ describe('GET comment-threads', () => {
     });
   });
 
+  test('forwards a version revision id, narrowing to that version (COL-2.2)', async () => {
+    const revision = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const fetchMock = mockRest(() => ({ status: 200, body: { threads: [], count: 0, total: 0, limit: 50, offset: 0 } }));
+    await listThreads(request('', `?status=open&version=${revision}`), context());
+    const [url] = upstreamUrls(fetchMock);
+    expect(url.searchParams.get('version')).toBe(revision);
+  });
+
   test('adds each thread its anchor context, null when unresolved', async () => {
     mockRest(() => ({
       status: 200,
@@ -231,6 +239,18 @@ describe('GET comment-threads', () => {
 });
 
 describe('GET comment-threads/summary', () => {
+  test('narrows every total and the open-thread read to a version (COL-2.2)', async () => {
+    const revision = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    const fetchMock = mockRest(() => ({ status: 200, body: { threads: [], count: 0, total: 0, limit: 1, offset: 0 } }));
+    const res = await summarizeThreads(request('/summary', `?version=${revision}`), context());
+    expect(res.status).toBe(200);
+    const urls = upstreamUrls(fetchMock);
+    expect(urls.length).toBeGreaterThan(0);
+    for (const url of urls) {
+      expect(url.searchParams.get('version')).toBe(revision);
+    }
+  });
+
   test('totals each status under the filters and counts open threads per element', async () => {
     const totals: Record<string, number> = { open: 3, resolved: 4, orphaned: 1 };
     const fetchMock = mockRest((url) => {
