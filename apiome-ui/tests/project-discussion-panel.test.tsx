@@ -175,6 +175,14 @@ describe('the list', () => {
     expect(screen.getByTestId('discussion-status-open')).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it("narrows the list and the counts to one version for the review page's Discussion tab (COL-2.2)", async () => {
+    await renderPanel({ versionId: REV_2 });
+    expect(listCalls()).toEqual([
+      `/api/projects/${PROJECT_ID}/comment-threads?status=open&version=${REV_2}&limit=50&offset=0`,
+    ]);
+    expect(summaryCalls()).toEqual([`/api/projects/${PROJECT_ID}/comment-threads/summary?version=${REV_2}`]);
+  });
+
   it('draws each thread: element, kind, status, version, opening comment, author, activity, replies', async () => {
     await renderPanel();
     const row = screen.getByTestId('discussion-thread-thread-class');

@@ -20,7 +20,6 @@ import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Copy, Download, FileJson2 } from 'lucide-react';
 import { toast } from 'sonner';
-import YAML from 'yaml';
 
 import { Button } from '@/app/components/ui/Button';
 import { Dialog, DialogContent, DialogFooter } from '@/app/components/ui/Dialog';
@@ -32,11 +31,12 @@ import VersionExportPanel from '@/app/components/ade/dashboard/export/VersionExp
 
 import { VersionDialogHead } from './VersionDialogChrome';
 import { versionLabel, type Version } from './versionsModel';
+import { SPEC_FORMATS, renderSpec, specDownloadName, type SpecFormat } from './specRendering';
 
-/** The two renderings the viewer offers, in tab order. */
-export const SPEC_FORMATS = ['json', 'yaml'] as const;
-
-export type SpecFormat = (typeof SPEC_FORMATS)[number];
+// The renderings moved to `specRendering.ts` so the review page's Spec tab (COL-2.2) shares them;
+// they stay exported from here for this module's existing importers.
+export { SPEC_FORMATS, renderSpec, specDownloadName };
+export type { SpecFormat };
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -62,36 +62,6 @@ export interface SpecViewerDialogProps {
   onFormatChange: (next: SpecFormat) => void;
   /** Bumped when a new export lands, so the recent-exports card re-reads. */
   recentExportsRefresh: number;
-}
-
-/**
- * The spec in the chosen rendering.
- *
- * @param spec The JSON text.
- * @param format The rendering.
- * @returns The text to show, copy or download.
- */
-export function renderSpec(spec: string, format: SpecFormat): string {
-  if (format === 'json') return spec;
-  return YAML.stringify(JSON.parse(spec || '{}'));
-}
-
-/**
- * The file name a download is saved as — `payments-api-2-3-1-openapi.json`.
- *
- * @param projectSlug The project's slug, or `undefined`.
- * @param versionId The version label, or `undefined`.
- * @param format The rendering.
- * @returns The file name.
- */
-export function specDownloadName(
-  projectSlug: string | undefined,
-  versionId: string | undefined,
-  format: SpecFormat
-): string {
-  const slug = projectSlug || 'api';
-  const version = versionId?.replace(/\./g, '-') || '1-0-0';
-  return `${slug}-${version}-openapi.${format === 'json' ? 'json' : 'yaml'}`;
 }
 
 /**

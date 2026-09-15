@@ -112,6 +112,17 @@ describe('filters', () => {
     );
   });
 
+  it('narrows the list and the summary to one version when given its revision id (COL-2.2)', () => {
+    const revision = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, { limit: 5 }, revision)).toBe(
+      `?status=open&version=${revision}&limit=5&offset=0`
+    );
+    expect(discussionSummaryParams(DEFAULT_DISCUSSION_FILTERS, revision)).toBe(`?version=${revision}`);
+    expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, {}, null)).toBe(
+      `?status=open&limit=${DISCUSSION_PAGE_SIZE}&offset=0`
+    );
+  });
+
   it('sends only the count-shaping filters to the summary', () => {
     expect(discussionSummaryParams(DEFAULT_DISCUSSION_FILTERS)).toBe('');
     expect(discussionSummaryParams({ status: 'resolved', mentionsMe: true, elementType: 'path' })).toBe(
@@ -136,6 +147,13 @@ describe('sanitizeThreadListParams', () => {
     expect(out.get('anchor_id')).toBeNull();
     expect(out.get('tenant_slug')).toBeNull();
     expect(out.get('status')).toBe('open');
+  });
+
+  it('forwards a version only as a revision id, never as a label (COL-2.2)', () => {
+    const revision = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    expect(sanitizeThreadListParams(new URLSearchParams(`version=${revision}`)).get('version')).toBe(revision);
+    expect(sanitizeThreadListParams(new URLSearchParams('version=2.0.0')).get('version')).toBeNull();
+    expect(sanitizeThreadListParams(new URLSearchParams("version=' OR 1=1")).get('version')).toBeNull();
   });
 
   it('drops unknown statuses and kinds rather than failing', () => {
