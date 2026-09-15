@@ -50,6 +50,19 @@ from .revision_deprecation import (
     successor_revision_id_from_metadata,
 )
 from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
+from .review_lifecycle import (
+    AUDIT_DECISION,
+    AUDIT_RE_REQUESTED,
+    AUDIT_REQUESTED,
+    AUDIT_STATE_CHANGED,
+    AUDIT_WITHDRAWN,
+    RECORDABLE_DECISIONS,
+    STATE_DRAFT,
+    STATE_IN_REVIEW,
+    can_re_request,
+    can_record_decision,
+    state_after_decisions,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -33070,6 +33083,602 @@ class Database:
             (tenant_id,),
         )
         return [dict(row) for row in rows]
+
+    # -----------------------------------------------------------------------------------------
+    # Review requests & decisions (COL-2.1, #4517)
+    # -----------------------------------------------------------------------------------------
+
+    #: Review columns over :data:`_REVIEW_FROM`: the review, its version label, the requester's
+    #: name, and the tally of the current round.
+    _REVIEW_COLUMNS = """
+        r.id::text AS id, r.tenant_id::text AS tenant_id, r.project_id::text AS project_id,
+        r.version_id::text AS version_id,
+        (SELECT rv.version_id FROM apiome.versions rv WHERE rv.id = r.version_id) AS version_label,
+        r.requested_by::text AS requested_by,
+        (SELECT ru.name FROM apiome.users ru WHERE ru.id = r.requested_by) AS requested_by_name,
+        r.state, r.round, r.spec_fingerprint,
+        tally.reviewer_count, tally.approved_count, tally.changes_requested_count, tally.pending_count,
+        r.closed_at, r.closed_by::text AS closed_by, r.created_at, r.updated_at
+    """
+
+    #: ``apiome.reviews r`` joined to the tally of its current round.
+    _REVIEW_FROM = """
+        apiome.reviews r
+        LEFT JOIN LATERAL (
+            SELECT count(*)::int AS reviewer_count,
+                   (count(*) FILTER (WHERE rr.decision = 'approve'))::int AS approved_count,
+                   (count(*) FILTER (WHERE rr.decision = 'request_changes'))::int
+                       AS changes_requested_count,
+                   (count(*) FILTER (WHERE rr.decision = 'pending'))::int AS pending_count
+            FROM apiome.review_reviewers rr
+            WHERE rr.review_id = r.id AND rr.round = r.round
+        ) tally ON TRUE
+    """
+
+    def _review_tx(self, work: Any) -> Any:
+        """Run one review write in a transaction (COL-2.1, #4517).
+
+        Args:
+            work: A callable taking the cursor. Returning ``None`` means its guard did not hold,
+                and everything it wrote is rolled back; any other value commits.
+
+        Returns:
+            Whatever ``work`` returned.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                result = work(cursor)
+            if result is None:
+                conn.rollback()
+            else:
+                conn.commit()
+            return result
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    @staticmethod
+    def _insert_review_audit(
+        cursor: Any,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        action: str,
+        actor_id: Optional[str],
+        detail: Dict[str, Any],
+    ) -> None:
+        """Append a ``review.*`` row to ``workflow_audit`` inside the caller's transaction.
+
+        Unlike :meth:`insert_workflow_audit`, this is not best-effort: the audit row commits or
+        rolls back together with the change it records.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant.
+            project_id: The project.
+            version_id: The reviewed version.
+            action: A ``review.*`` action from :mod:`app.review_lifecycle`.
+            actor_id: The acting user.
+            detail: Structured context; always includes ``review_id`` and ``round``.
+        """
+        cursor.execute(
+            """
+            INSERT INTO apiome.workflow_audit
+              (tenant_id, project_id, version_id, action, outcome, actor_id, detail)
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, 'success', %s::uuid, %s::jsonb)
+            """,
+            (tenant_id, project_id, version_id, action, actor_id, json.dumps(detail)),
+        )
+
+    @staticmethod
+    def _lock_open_review(
+        cursor: Any, *, tenant_id: str, project_id: str, review_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Lock an open review of a project for the rest of the transaction.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant.
+            project_id: The project.
+            review_id: The review.
+
+        Returns:
+            ``{"state", "round", "version_id"}``, or ``None`` when there is no such open review.
+        """
+        cursor.execute(
+            """
+            SELECT r.state, r.round, r.version_id::text AS version_id
+            FROM apiome.reviews r
+            WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid AND r.project_id = %s::uuid
+              AND r.closed_at IS NULL
+            FOR UPDATE
+            """,
+            (review_id, tenant_id, project_id),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def get_review(self, *, tenant_id: str, project_id: str, review_id: str) -> Optional[Dict[str, Any]]:
+        """Read one review inside a tenant's project (COL-2.1, #4517).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the review must belong to.
+            review_id: The review.
+
+        Returns:
+            The review row, or ``None`` when it is not there (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, review_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._REVIEW_COLUMNS}
+            FROM {self._REVIEW_FROM}
+            WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid AND r.project_id = %s::uuid
+            """,
+            (review_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def get_open_review_for_version(
+        self, *, tenant_id: str, project_id: str, version_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read a version's open review, if it has one (COL-2.1, #4517).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: The version.
+
+        Returns:
+            The review row, or ``None``.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, version_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._REVIEW_COLUMNS}
+            FROM {self._REVIEW_FROM}
+            WHERE r.version_id = %s::uuid AND r.tenant_id = %s::uuid AND r.project_id = %s::uuid
+              AND r.closed_at IS NULL
+            """,
+            (version_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    @staticmethod
+    def _review_filters(
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        state: Optional[str],
+        open_only: Optional[bool],
+    ) -> Optional[Tuple[str, List[Any]]]:
+        """Build the WHERE clause shared by the review list and count reads.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only reviews of this version, when given.
+            state: Only reviews in this state, when given.
+            open_only: ``True`` for open reviews, ``False`` for withdrawn ones, ``None`` for both.
+
+        Returns:
+            ``(sql, params)``, or ``None`` when any supplied id is not a UUID (nothing can match).
+        """
+        ids = [tenant_id, project_id, *([version_id] if version_id else [])]
+        if not all(is_uuid_string(str(value)) for value in ids):
+            return None
+        clauses = ["r.tenant_id = %s::uuid", "r.project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if version_id:
+            clauses.append("r.version_id = %s::uuid")
+            params.append(version_id)
+        if state:
+            clauses.append("r.state = %s")
+            params.append(state)
+        if open_only is True:
+            clauses.append("r.closed_at IS NULL")
+        elif open_only is False:
+            clauses.append("r.closed_at IS NOT NULL")
+        return " AND ".join(clauses), params
+
+    def list_reviews(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        state: Optional[str] = None,
+        open_only: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """A page of a project's reviews, most recently active first (COL-2.1, #4517).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only reviews of this version, when given.
+            state: Only reviews in this state, when given.
+            open_only: ``True`` for open reviews, ``False`` for withdrawn ones, ``None`` for both.
+            limit: Page size.
+            offset: Rows to skip.
+
+        Returns:
+            The review rows (empty when an id is not a UUID).
+        """
+        built = self._review_filters(
+            tenant_id=tenant_id, project_id=project_id, version_id=version_id, state=state, open_only=open_only
+        )
+        if built is None:
+            return []
+        where, params = built
+        rows = self.execute_query(
+            f"""
+            SELECT {self._REVIEW_COLUMNS}
+            FROM {self._REVIEW_FROM}
+            WHERE {where}
+            ORDER BY r.updated_at DESC, r.id ASC
+            LIMIT %s OFFSET %s
+            """,
+            (*params, int(limit), int(offset)),
+        )
+        return [dict(row) for row in rows]
+
+    def count_reviews(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        state: Optional[str] = None,
+        open_only: Optional[bool] = None,
+    ) -> int:
+        """How many reviews :meth:`list_reviews` would page through (COL-2.1, #4517).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only reviews of this version, when given.
+            state: Only reviews in this state, when given.
+            open_only: ``True`` for open reviews, ``False`` for withdrawn ones, ``None`` for both.
+
+        Returns:
+            The total (0 when an id is not a UUID).
+        """
+        built = self._review_filters(
+            tenant_id=tenant_id, project_id=project_id, version_id=version_id, state=state, open_only=open_only
+        )
+        if built is None:
+            return 0
+        where, params = built
+        rows = self.execute_query(
+            f"SELECT count(*)::int AS total FROM apiome.reviews r WHERE {where}", tuple(params)
+        )
+        return int(rows[0]["total"]) if rows else 0
+
+    def list_review_reviewers(self, *, review_id: str) -> List[Dict[str, Any]]:
+        """Every reviewer row of a review, across all rounds (COL-2.1, #4517).
+
+        Args:
+            review_id: The (already scoped) review.
+
+        Returns:
+            Rows ordered by round, then reviewer name, oldest round first (empty for a non-UUID).
+        """
+        if not is_uuid_string(str(review_id or "")):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT rr.id::text AS id, rr.review_id::text AS review_id, rr.round,
+                   rr.user_id::text AS user_id,
+                   (SELECT u.name FROM apiome.users u WHERE u.id = rr.user_id) AS user_name,
+                   rr.decision, rr.note, rr.decided_at, rr.created_at
+            FROM apiome.review_reviewers rr
+            WHERE rr.review_id = %s::uuid
+            ORDER BY rr.round ASC, user_name ASC NULLS LAST, rr.id ASC
+            """,
+            (review_id,),
+        )
+        return [dict(row) for row in rows]
+
+    def insert_review(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        requested_by: str,
+        reviewer_ids: Sequence[str],
+        spec_fingerprint: str,
+    ) -> Optional[str]:
+        """Request a review: the review, its round-1 reviewers, and the audit row (COL-2.1, #4517).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            version_id: The version under review.
+            requested_by: The requesting user.
+            reviewer_ids: The reviewers' user ids (validated tenant members).
+            spec_fingerprint: Fingerprint of the content round 1 judges.
+
+        Returns:
+            The new review id, or ``None`` when the version already has an open review or any id
+            is not a UUID.
+        """
+        ids = (tenant_id, project_id, version_id, requested_by, *reviewer_ids)
+        if not reviewer_ids or not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+
+        def work(cursor: Any) -> Optional[str]:
+            cursor.execute(
+                """
+                INSERT INTO apiome.reviews (tenant_id, project_id, version_id, requested_by, spec_fingerprint)
+                VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s)
+                ON CONFLICT (version_id) WHERE closed_at IS NULL DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (tenant_id, project_id, version_id, requested_by, spec_fingerprint),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            review_id = str(row["id"])
+            cursor.execute(
+                """
+                INSERT INTO apiome.review_reviewers (review_id, round, user_id)
+                SELECT %s::uuid, 1, reviewer FROM unnest(%s::uuid[]) AS reviewer
+                """,
+                (review_id, list(reviewer_ids)),
+            )
+            self._insert_review_audit(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=version_id,
+                action=AUDIT_REQUESTED,
+                actor_id=requested_by,
+                detail={
+                    "review_id": review_id,
+                    "round": 1,
+                    "from_state": STATE_DRAFT,
+                    "to_state": STATE_IN_REVIEW,
+                    "reviewers": list(reviewer_ids),
+                    "spec_fingerprint": spec_fingerprint,
+                },
+            )
+            return review_id
+
+        return self._review_tx(work)
+
+    def re_request_review(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        review_id: str,
+        expected_round: int,
+        reviewer_ids: Sequence[str],
+        spec_fingerprint: str,
+        actor_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Start a review's next round with fresh pending reviewers (COL-2.1, #4517).
+
+        Earlier rounds' rows are not touched. The review is locked first, so a concurrent decision
+        or re-request cannot interleave.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            review_id: The review.
+            expected_round: The round the caller read; a different current round means somebody
+                else re-requested first.
+            reviewer_ids: The new round's reviewers.
+            spec_fingerprint: Fingerprint of the content the new round judges.
+            actor_id: The re-requesting user.
+
+        Returns:
+            ``{"round", "from_state"}``, or ``None`` when the review is not open, not at
+            ``expected_round``, or an id is not a UUID.
+        """
+        ids = (tenant_id, project_id, review_id, actor_id, *reviewer_ids)
+        if not reviewer_ids or not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            current = self._lock_open_review(
+                cursor, tenant_id=tenant_id, project_id=project_id, review_id=review_id
+            )
+            if not current or int(current["round"]) != int(expected_round):
+                return None
+            if not can_re_request(str(current["state"])):
+                return None
+            next_round = int(current["round"]) + 1
+            cursor.execute(
+                """
+                UPDATE apiome.reviews
+                SET state = %s, round = %s, spec_fingerprint = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid
+                """,
+                (STATE_IN_REVIEW, next_round, spec_fingerprint, review_id),
+            )
+            cursor.execute(
+                """
+                INSERT INTO apiome.review_reviewers (review_id, round, user_id)
+                SELECT %s::uuid, %s, reviewer FROM unnest(%s::uuid[]) AS reviewer
+                """,
+                (review_id, next_round, list(reviewer_ids)),
+            )
+            self._insert_review_audit(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=str(current["version_id"]),
+                action=AUDIT_RE_REQUESTED,
+                actor_id=actor_id,
+                detail={
+                    "review_id": review_id,
+                    "round": next_round,
+                    "previous_round": int(current["round"]),
+                    "from_state": str(current["state"]),
+                    "to_state": STATE_IN_REVIEW,
+                    "reviewers": list(reviewer_ids),
+                    "spec_fingerprint": spec_fingerprint,
+                },
+            )
+            return {"round": next_round, "from_state": str(current["state"])}
+
+        return self._review_tx(work)
+
+    def record_review_decision(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        review_id: str,
+        expected_round: int,
+        user_id: str,
+        decision: str,
+        note: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Record one reviewer's decision and move the review's state (COL-2.1, #4517).
+
+        Under a lock on the review: the reviewer's pending row on the current round becomes the
+        decision, the round's decisions are read back and folded with
+        :func:`app.review_lifecycle.state_after_decisions`, the review takes that state, and the
+        decision — plus the state change, when there is one — is audited.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            review_id: The review.
+            expected_round: The round the caller read.
+            user_id: The deciding reviewer.
+            decision: ``approve`` or ``request_changes``.
+            note: The optional note.
+
+        Returns:
+            ``{"from_state", "to_state"}``, or ``None`` when the review is not open and
+            ``in_review`` at ``expected_round``, the reviewer has no pending row in it, the
+            decision is not recordable, or an id is not a UUID.
+        """
+        if decision not in RECORDABLE_DECISIONS:
+            return None
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, review_id, user_id)):
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            current = self._lock_open_review(
+                cursor, tenant_id=tenant_id, project_id=project_id, review_id=review_id
+            )
+            if not current or int(current["round"]) != int(expected_round):
+                return None
+            if not can_record_decision(str(current["state"])):
+                return None
+            cursor.execute(
+                """
+                UPDATE apiome.review_reviewers
+                SET decision = %s, note = %s, decided_at = CURRENT_TIMESTAMP
+                WHERE review_id = %s::uuid AND round = %s AND user_id = %s::uuid AND decision = 'pending'
+                RETURNING id
+                """,
+                (decision, note, review_id, int(expected_round), user_id),
+            )
+            if not cursor.fetchone():
+                return None
+            cursor.execute(
+                "SELECT decision FROM apiome.review_reviewers WHERE review_id = %s::uuid AND round = %s",
+                (review_id, int(expected_round)),
+            )
+            to_state = state_after_decisions(row["decision"] for row in cursor.fetchall())
+            cursor.execute(
+                "UPDATE apiome.reviews SET state = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s::uuid",
+                (to_state, review_id),
+            )
+            audit = {
+                "tenant_id": tenant_id,
+                "project_id": project_id,
+                "version_id": str(current["version_id"]),
+                "actor_id": user_id,
+            }
+            self._insert_review_audit(
+                cursor,
+                **audit,
+                action=AUDIT_DECISION,
+                detail={
+                    "review_id": review_id,
+                    "round": int(expected_round),
+                    "reviewer": user_id,
+                    "decision": decision,
+                    "has_note": note is not None,
+                },
+            )
+            from_state = str(current["state"])
+            if to_state != from_state:
+                self._insert_review_audit(
+                    cursor,
+                    **audit,
+                    action=AUDIT_STATE_CHANGED,
+                    detail={
+                        "review_id": review_id,
+                        "round": int(expected_round),
+                        "from_state": from_state,
+                        "to_state": to_state,
+                    },
+                )
+            return {"from_state": from_state, "to_state": to_state}
+
+        return self._review_tx(work)
+
+    def withdraw_review(self, *, tenant_id: str, project_id: str, review_id: str, actor_id: str) -> bool:
+        """Close an open review and audit it (COL-2.1, #4517).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            review_id: The review.
+            actor_id: The withdrawing user.
+
+        Returns:
+            ``True`` when the review was open and is now closed.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, review_id, actor_id)):
+            return False
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.reviews r
+                SET closed_at = CURRENT_TIMESTAMP, closed_by = %s::uuid, updated_at = CURRENT_TIMESTAMP
+                WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid AND r.project_id = %s::uuid
+                  AND r.closed_at IS NULL
+                RETURNING r.version_id::text AS version_id, r.state, r.round
+                """,
+                (actor_id, review_id, tenant_id, project_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            self._insert_review_audit(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=str(row["version_id"]),
+                action=AUDIT_WITHDRAWN,
+                actor_id=actor_id,
+                detail={"review_id": review_id, "round": int(row["round"]), "state": str(row["state"])},
+            )
+            return True
+
+        return bool(self._review_tx(work))
 
 
 # Global database instance
