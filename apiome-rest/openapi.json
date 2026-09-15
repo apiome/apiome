@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.187.0",
+    "version": "1.188.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -17259,6 +17259,881 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for deleteacommentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/reviews": {
+      "get": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "List a project's reviews",
+        "description": "A page of the project's reviews, most recently active first, each with the tally of its current round.\n\nFilters combine: `version` (revision id or version label), `state` (`in_review`, `approved`, `changes_requested`), and `open` (`true` for open reviews, `false` for withdrawn ones).\n\nRequires `projects:view`.",
+        "operationId": "list_reviews_v1_tenants__tenant_slug__projects__project_ref__reviews_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsreviewsversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsreviewsversion schema."
+                }
+              ],
+              "description": "Revision id or version label.",
+              "title": "Version"
+            },
+            "description": "Revision id or version label."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "in_review",
+                    "approved",
+                    "changes_requested"
+                  ],
+                  "type": "string",
+                  "description": "Listaprojectsreviewsstate schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsreviewsstate schema."
+                }
+              ],
+              "description": "Review state.",
+              "title": "State"
+            },
+            "description": "Review state."
+          },
+          {
+            "name": "open",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean",
+                  "description": "Listaprojectsreviewsopen schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsreviewsopen schema."
+                }
+              ],
+              "description": "Open (`true`) or withdrawn (`false`) reviews only.",
+              "title": "Open"
+            },
+            "description": "Open (`true`) or withdrawn (`false`) reviews only."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Reviews to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Reviews to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsreviewsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsreviewsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsreviews Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsreviews Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's reviews.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewListResponse",
+                  "description": "Response payload for listaprojectsreviewsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojectsreviewsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Request a review of a draft version",
+        "description": "Ask named reviewers whether a draft (unpublished) version is ready: `draft \u2192 in_review`, round 1, every reviewer `pending`.\n\nReviewers are tenant member user ids (at most 20, duplicates collapsed) and cannot include the requester (`400 review-self-review`). A published version cannot be reviewed (`409 review-version-published`), and a version has at most one open review (`409 review-already-open`). The round records the fingerprint of the version's current content.\n\nRequires `versions:edit`.",
+        "operationId": "request_review_v1_tenants__tenant_slug__projects__project_ref__reviews_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for requestareviewofadraftversionauthorization."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for requestareviewofadraftversionauthorization."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for requestareviewofadraftversion xapikey."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for requestareviewofadraftversion xapikey."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequestCreate",
+                "description": "Request body for requestareviewofadraftversionrequest."
+              }
+            }
+          },
+          "description": "Request body for request a review of a draft version."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for request a review of a draft version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetail",
+                  "description": "Request body for requestareviewofadraftversionresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Request body for requestareviewofadraftversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/reviews/{review_id}": {
+      "get": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Read a review",
+        "description": "A review with its current round's reviewers, every earlier round's decisions (unchanged since they were recorded), and `spec_changed` \u2014 true when the version's content no longer matches the round being decided.\n\nRequires `projects:view`.",
+        "operationId": "read_review_v1_tenants__tenant_slug__projects__project_ref__reviews__review_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Review Id",
+              "description": "Review Id schema."
+            },
+            "description": "Path parameter identifying the review id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readareviewauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readareviewauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readareview Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readareview Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a review.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetail",
+                  "description": "Response payload for readareviewresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readareviewresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/review": {
+      "get": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Read a version's review status",
+        "description": "Where a version stands in review: `draft` when it has no open review, otherwise the open review's state together with the review.\n\nRequires `projects:view`.",
+        "operationId": "read_version_review_status_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__review_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionsreviewstatusauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionsreviewstatusauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionsreviewstatus Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionsreviewstatus Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a version's review status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionReviewStatus",
+                  "description": "Response payload for readaversionsreviewstatusresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaversionsreviewstatusresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/reviews/{review_id}/decision": {
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Record a review decision",
+        "description": "Record the caller's `approve` or `request_changes`, with an optional note, on the current round. Any `request_changes` moves the review to `changes_requested`; once every reviewer approved it is `approved`.\n\nA decision is recorded once and never changes (`409 review-already-decided`); a round that is already decided takes no more (`409 review-not-in-review`); and a round whose content changed must be re-requested first (`409 review-spec-changed`).\n\nRequires `projects:view`, and the caller must be a reviewer of the current round (`403 review-not-reviewer`).",
+        "operationId": "record_review_decision_v1_tenants__tenant_slug__projects__project_ref__reviews__review_id__decision_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Review Id",
+              "description": "Review Id schema."
+            },
+            "description": "Path parameter identifying the review id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordareviewdecisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordareviewdecisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordareviewdecision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordareviewdecision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDecisionCreate",
+                "description": "Request body for recordareviewdecisionrequest."
+              }
+            }
+          },
+          "description": "Request body for record a review decision."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for record a review decision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetail",
+                  "description": "Response payload for recordareviewdecisionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for recordareviewdecisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/reviews/{review_id}/re-request": {
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Re-request a review after the spec changed",
+        "description": "Start the next round once the version's content has changed: every reviewer is asked again with a fresh `pending` decision, and the earlier rounds' decisions stay as history. Stale approvals never carry over to changed content.\n\n`reviewers` replaces the reviewer list for the new round; omit it to ask the current round's reviewers again. An unchanged spec is a `409 review-spec-unchanged`.\n\nRequires `versions:edit`.",
+        "operationId": "re_request_review_v1_tenants__tenant_slug__projects__project_ref__reviews__review_id__re_request_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Review Id",
+              "description": "Review Id schema."
+            },
+            "description": "Path parameter identifying the review id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for rerequestareviewafterthespecchangedauthorization."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for rerequestareviewafterthespecchangedauthorization."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for rerequestareviewafterthespecchanged xapikey."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for rerequestareviewafterthespecchanged xapikey."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewReRequest"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for rerequestareviewafterthespecchangedrequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for re-request a review after the spec changed."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for re-request a review after the spec changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetail",
+                  "description": "Request body for rerequestareviewafterthespecchangedresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Request body for rerequestareviewafterthespecchangedresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/reviews/{review_id}/withdraw": {
+      "post": {
+        "tags": [
+          "reviews"
+        ],
+        "summary": "Withdraw a review",
+        "description": "Close an open review. Its state and decisions stay as recorded, and the version can be sent for review again.\n\nRequires `versions:edit`, and the caller must be the member who requested the review or a tenant administrator (`403 review-forbidden`).",
+        "operationId": "withdraw_review_v1_tenants__tenant_slug__projects__project_ref__reviews__review_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Review Id",
+              "description": "Review Id schema."
+            },
+            "description": "Path parameter identifying the review id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Withdrawareviewauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Withdrawareviewauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Withdrawareview Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Withdrawareview Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for withdraw a review.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewDetail",
+                  "description": "Response payload for withdrawareviewresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for withdrawareviewresponse422."
                 }
               }
             }
@@ -88204,7 +89079,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -88432,7 +89307,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -88890,14 +89765,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -90922,7 +91797,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "c1f7b8cf-d18e-478b-ba7d-f10cdf600787"
+            "example": "39432dad-68db-4d82-be73-d21ad6904f16"
           },
           "method": {
             "type": "string",
@@ -93449,7 +94324,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -133863,7 +134738,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           }
         },
         "additionalProperties": false,
@@ -133977,6 +134852,486 @@
         ],
         "title": "RetentionResponse",
         "description": "Outcome of a retention sweep."
+      },
+      "ReviewDecisionCreate": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "request_changes"
+            ],
+            "title": "Decision",
+            "description": "Decision.",
+            "example": "approve"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000,
+                "description": "Review Decision Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Review Decision Create schema."
+              }
+            ],
+            "title": "Note",
+            "description": "Note."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ReviewDecisionCreate",
+        "description": "Record a reviewer's decision.\n\nAttributes:\n    decision: ``approve`` or ``request_changes``.\n    note: An optional explanation."
+      },
+      "ReviewDetail": {
+        "properties": {
+          "review": {
+            "$ref": "#/components/schemas/ReviewRecord",
+            "description": "Review."
+          },
+          "reviewers": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewerDecisionRecord"
+            },
+            "type": "array",
+            "title": "Reviewers",
+            "description": "The current round's reviewers and their decisions.",
+            "maxItems": 1000
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewerDecisionRecord"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Every earlier round's rows, unchanged since they were recorded; oldest round first.",
+            "maxItems": 1000
+          },
+          "spec_changed": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Spec Changed",
+            "description": "True when the version's content no longer matches the current round's `spec_fingerprint` \u2014 its decisions are stale and the review should be re-requested. Null for a withdrawn review."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "review"
+        ],
+        "title": "ReviewDetail",
+        "description": "A review with its reviewers, its decision history, and whether its content is stale."
+      },
+      "ReviewListResponse": {
+        "properties": {
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewRecord"
+            },
+            "type": "array",
+            "title": "Reviews",
+            "description": "Reviews, most recently active first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many reviews this page holds.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many reviews match the filters in all.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ReviewListResponse",
+        "description": "A page of a project's reviews."
+      },
+      "ReviewReRequest": {
+        "properties": {
+          "reviewers": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20,
+                "minItems": 1,
+                "description": "Request body for review re."
+              },
+              {
+                "type": "null",
+                "description": "Request body for review re."
+              }
+            ],
+            "title": "Reviewers",
+            "description": "Reviewers."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ReviewReRequest",
+        "description": "Re-request a review after the spec changed.\n\nAttributes:\n    reviewers: The reviewers to ask in the new round; omit to ask the current round's\n        reviewers again."
+      },
+      "ReviewRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The review id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The version (revision) under review.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "The version's label, e.g. `1.2.0`."
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Requested By",
+            "description": "Who requested the review."
+          },
+          "requested_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Requested By Name",
+            "description": "Their display name."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "in_review",
+              "approved",
+              "changes_requested"
+            ],
+            "title": "State",
+            "description": "`in_review`, `approved`, or `changes_requested`.",
+            "example": "in_review"
+          },
+          "round": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Round",
+            "description": "The current round; each re-request starts the next one.",
+            "example": 1
+          },
+          "spec_fingerprint": {
+            "type": "string",
+            "title": "Spec Fingerprint",
+            "description": "Fingerprint of the content the current round judges (sha256 of the rebuilt OpenAPI document).",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "reviewer_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Reviewer Count",
+            "description": "Reviewers in the current round.",
+            "default": 0,
+            "example": 1
+          },
+          "approved_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Approved Count",
+            "description": "Current-round approvals.",
+            "default": 0,
+            "example": 1
+          },
+          "changes_requested_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Changes Requested Count",
+            "description": "Current-round change requests.",
+            "default": 0,
+            "example": 1
+          },
+          "pending_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Count",
+            "description": "Current-round reviewers yet to decide.",
+            "default": 0,
+            "example": 1
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Closed At",
+            "description": "When the review was withdrawn; null while it is open."
+          },
+          "closed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Review schema."
+              }
+            ],
+            "title": "Closed By",
+            "description": "Who withdrew it."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "The latest request, re-request, decision, or withdrawal.",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "project_id",
+          "version_id",
+          "state",
+          "round",
+          "spec_fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReviewRecord",
+        "description": "One stored review, with the tally of its current round."
+      },
+      "ReviewRequestCreate": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Version",
+            "description": "Version.",
+            "example": "1.0.0"
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Reviewers",
+            "description": "Reviewers."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "reviewers"
+        ],
+        "title": "ReviewRequestCreate",
+        "description": "Request a review of a draft version.\n\nAttributes:\n    version: The version \u2014 its revision id or its version label.\n    reviewers: User ids of the tenant members to ask; the requester cannot be one of them."
+      },
+      "ReviewerDecisionRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The reviewer row id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "review_id": {
+            "type": "string",
+            "title": "Review Id",
+            "description": "Review ID.",
+            "example": "review_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "round": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Round",
+            "description": "The round this row belongs to.",
+            "example": 1
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Reviewer Decision schema."
+              },
+              {
+                "type": "null",
+                "description": "Reviewer Decision schema."
+              }
+            ],
+            "title": "User Id",
+            "description": "The reviewer; null once that user has been deleted."
+          },
+          "user_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Reviewer Decision schema."
+              },
+              {
+                "type": "null",
+                "description": "Reviewer Decision schema."
+              }
+            ],
+            "title": "User Name",
+            "description": "The reviewer's display name."
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "request_changes",
+              "pending"
+            ],
+            "title": "Decision",
+            "description": "`approve`, `request_changes`, or `pending`. A pending row in an earlier round was superseded by a re-request before the reviewer decided.",
+            "example": "approve"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Reviewer Decision schema."
+              },
+              {
+                "type": "null",
+                "description": "Reviewer Decision schema."
+              }
+            ],
+            "title": "Note",
+            "description": "The note recorded with the decision."
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Reviewer Decision schema."
+              },
+              {
+                "type": "null",
+                "description": "Reviewer Decision schema."
+              }
+            ],
+            "title": "Decided At",
+            "description": "When the decision was recorded; null while pending."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When the reviewer was asked (the round's request time).",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "review_id",
+          "round",
+          "decision",
+          "created_at"
+        ],
+        "title": "ReviewerDecisionRecord",
+        "description": "One reviewer's row in one round of a review."
       },
       "RevisionDeprecationWarningOut": {
         "properties": {
@@ -150297,14 +151652,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-15T01:32:34Z"
+            "example": "2026-09-15T03:26:51Z"
           },
           "outcome": {
             "anyOf": [
@@ -154940,6 +156295,69 @@
         "type": "object",
         "title": "VersionPublishRequest",
         "description": "Publish: optional last-minute revision note / changelog applied before freeze."
+      },
+      "VersionReviewStatus": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Project version identifier or semantic version label, depending on context.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Version Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Review schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Version Label."
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "description": "Whether the version is published; published versions cannot be reviewed.",
+            "example": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in_review",
+              "approved",
+              "changes_requested"
+            ],
+            "title": "State",
+            "description": "The open review's state, or `draft` when the version has no open review.",
+            "example": "draft"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewDetail"
+              },
+              {
+                "type": "null",
+                "description": "Version Review schema."
+              }
+            ],
+            "description": "The open review, when there is one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version_id",
+          "published",
+          "state"
+        ],
+        "title": "VersionReviewStatus",
+        "description": "Where one version stands in review."
       },
       "VersionSchema": {
         "properties": {
