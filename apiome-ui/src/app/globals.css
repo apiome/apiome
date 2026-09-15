@@ -10066,6 +10066,12 @@ button.auth-divider:disabled {
   max-inline-size: 22rem;
 }
 
+/* The approval count is at most two digits (COL-2.3 caps it at 20), so a full-width field
+   would read as an invitation to type a sentence into it. */
+.gd-policy-number {
+  max-inline-size: 8rem;
+}
+
 .gd-switch-list {
   display: flex;
   flex-direction: column;

@@ -43,6 +43,10 @@ import json
 import logging
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .approval_policy import (
+    normalize_required_approvals,
+    normalize_required_reviewer_role,
+)
 from .breaking_publish_policy import normalize_breaking_publish_policy
 from .policy_evaluate import (
     default_axis_gates,
@@ -150,6 +154,12 @@ def guide_snapshot(
             "ciOutcomes": default_ci_outcomes(guide.get("ci_outcomes")),
             "breakingPublishPolicy": normalize_breaking_publish_policy(
                 guide.get("breaking_publish_policy")
+            ),
+            "requiredApprovals": normalize_required_approvals(
+                guide.get("required_approvals")
+            ),
+            "requiredReviewerRole": normalize_required_reviewer_role(
+                guide.get("required_reviewer_role")
             ),
         },
     }

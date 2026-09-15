@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
 
+from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .database import db
@@ -38,6 +39,7 @@ class PublishPrecheckOutcome:
         error_findings: Error-severity findings (rule id + location) when lint succeeded.
         verification_decision: ECA-3.1 evidence-backed policy decision when evaluated.
         breaking_publish_guardrail: CTG-3.4 semver guardrail payload when assessed.
+        approval_gate: COL-2.3 approval-policy verdict when assessed.
     """
 
     lint_error_count: Optional[int] = None
@@ -47,6 +49,7 @@ class PublishPrecheckOutcome:
     error_findings: Optional[tuple[Dict[str, str], ...]] = None
     verification_decision: Optional[Dict[str, Any]] = None
     breaking_publish_guardrail: Optional[Dict[str, Any]] = None
+    approval_gate: Optional[Dict[str, Any]] = None
 
 
 def enforce_publish_prechecks(
@@ -70,13 +73,15 @@ def enforce_publish_prechecks(
     Since CTG-3.4 (#4478) the semver guardrail is assessed against the previous *published*
     revision; under the ``block`` policy level a breaking change without a major-version bump
     is refused, and under ``warn`` it is only reported on the outcome.
+    Since COL-2.3 (#4519) the tenant's approval policy is applied last: a draft that has not
+    collected the required review approvals is refused with the same 422 contract.
 
     Returns:
         The observed :class:`PublishPrecheckOutcome`.
 
     Raises:
         HTTPException: 422 for documentation gaps, style-guide errors, a blocking
-            verification-policy decision, or a blocked breaking publish.
+            verification-policy decision, a blocked breaking publish, or unmet approvals.
         HTTPException: 409 when compatibility is breaking and ``allow_breaking`` is false.
     """
     if bool(request.skip_publish_checks):
@@ -207,12 +212,64 @@ def enforce_publish_prechecks(
         head_spec=head_spec,
     )
 
-    return _with_verification_policy(
+    outcome = _with_verification_policy(
         outcome,
         tenant_id=tenant_id,
         project_id=project_id,
         version_record_id=version_record_id,
     )
+
+    return _with_approval_gate(
+        outcome,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version=existing,
+    )
+
+
+def _with_approval_gate(
+    outcome: PublishPrecheckOutcome,
+    *,
+    tenant_id: str,
+    project_id: str,
+    version: Dict[str, Any],
+) -> PublishPrecheckOutcome:
+    """Attach the COL-2.3 verdict and refuse publish when the approval policy is unmet.
+
+    Runs last of the gates on purpose: it is the only one whose answer a *person* has to
+    change, so a publisher who has already been told about a lint error or a missing major
+    bump fixes those first rather than collecting approvals for a revision they are about to
+    edit — which would invalidate the approvals anyway.
+
+    Args:
+        outcome: The precheck outcome so far.
+        tenant_id: Tenant context.
+        project_id: Project of the revision being published.
+        version: The candidate revision row.
+
+    Returns:
+        ``outcome`` with ``approval_gate`` set — always a payload, including the ``disabled``
+        and ``unavailable`` cases, so a caller can tell "checked and clean" from "not checked".
+
+    Raises:
+        HTTPException: 422 when the policy is armed and the version does not meet it.
+    """
+    assessment = assess_approval_gate(
+        tenant_id=tenant_id, project_id=project_id, version=version
+    )
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"{assessment.message()} Collect the required approvals, relax the "
+                    "tenant approval policy, or force-publish with a reason."
+                ),
+                "approvalGate": payload,
+            },
+        )
+    return replace(outcome, approval_gate=payload)
 
 
 def _with_breaking_publish_guardrail(

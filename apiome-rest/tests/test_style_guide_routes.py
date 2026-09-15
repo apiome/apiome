@@ -1053,6 +1053,115 @@ def test_put_policy_leaves_the_breaking_publish_level_unchanged_when_omitted():
     assert update.call_args.kwargs["breaking_publish_policy"] is None
 
 
+# ---------------------------------------------------------------------------
+# Approval policy (COL-2.3, #4519)
+# ---------------------------------------------------------------------------
+
+
+def test_get_policy_reports_no_approval_gate_for_a_guide_predating_v262():
+    """A NULL column reads as the documented default: the gate is off."""
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id",
+        return_value=_custom_row(required_approvals=None, required_reviewer_role=None),
+    ):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["requiredApprovals"] == 0
+    assert body["requiredReviewerRole"] is None
+
+
+def test_get_policy_returns_the_stored_approval_settings():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id",
+        return_value=_custom_row(
+            required_approvals=2, required_reviewer_role=" Release-Manager "
+        ),
+    ):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["requiredApprovals"] == 2
+    assert body["requiredReviewerRole"] == "release-manager"
+
+
+def test_put_policy_persists_the_approval_settings(governance):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(
+            required_approvals=2, required_reviewer_role="release-manager"
+        ),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={
+                "requiredApprovals": 2,
+                "requiredReviewerRole": "Release-Manager",
+                "snapshot": False,
+            },
+        )
+
+    assert r.status_code == 200
+    assert r.json()["requiredApprovals"] == 2
+    assert update.call_args.kwargs["required_approvals"] == 2
+    assert update.call_args.kwargs["required_reviewer_role"] == "release-manager"
+    assert update.call_args.kwargs["set_required_reviewer_role"] is True
+    assert governance.record.call_args.kwargs["change_kind"] == "policy_changed"
+
+
+def test_put_policy_leaves_the_approval_settings_unchanged_when_omitted():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredCoverage": ["quality"], "snapshot": False},
+        )
+
+    assert r.status_code == 200
+    assert update.call_args.kwargs["required_approvals"] is None
+    assert update.call_args.kwargs["set_required_reviewer_role"] is False
+
+
+def test_put_policy_clears_the_required_role_when_null_is_sent():
+    """Omitted and null differ for this one field: null is a request to clear it."""
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(required_approvals=1, required_reviewer_role=None),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredReviewerRole": None, "snapshot": False},
+        )
+
+    assert r.status_code == 200
+    assert r.json()["requiredReviewerRole"] is None
+    assert update.call_args.kwargs["required_reviewer_role"] is None
+    assert update.call_args.kwargs["set_required_reviewer_role"] is True
+
+
+@pytest.mark.parametrize("bad", [-1, 21, "two"])
+def test_put_policy_rejects_an_out_of_range_approval_count(bad):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredApprovals": bad, "snapshot": False},
+        )
+
+    assert r.status_code == 422
+
+
 def test_put_policy_rejects_an_unknown_breaking_publish_level():
     with patch(
         "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()

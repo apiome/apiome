@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.188.0
+  version: 1.189.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -17055,10 +17055,21 @@ paths:
         (CLX-1.3, #4850).
 
 
-        Also carries the CTG-3.4 (#4478) breaking-publish guardrail level, which the
-        publish
+        Also carries the CTG-3.4 (#4478) breaking-publish guardrail level and the
+        COL-2.3
 
-        flow reads through the same guide-resolution chain.'
+        (#4519) approval policy, both of which the publish flow reads through the
+        same
+
+        guide-resolution chain.
+
+
+        ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it
+        leaves the
+
+        stored role alone, sending ``null`` clears it. Every other field keeps the
+
+        omit-to-leave-unchanged rule the endpoint has always had.'
       operationId: put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put
       parameters:
       - name: tenant_slug
@@ -66297,7 +66308,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -66470,7 +66481,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -66844,13 +66855,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -68419,7 +68430,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 39432dad-68db-4d82-be73-d21ad6904f16
+          example: 11f5ae92-ca02-4a0b-9524-690cd143ef59
         method:
           type: string
           title: Method
@@ -70562,7 +70573,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         envelope:
           additionalProperties: true
           type: object
@@ -102493,7 +102504,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
       additionalProperties: false
       type: object
       required:
@@ -109509,6 +109520,25 @@ components:
             major bump (CTG-3.4): off, warn (default), or block.'
           default: warn
           example: warn
+        requiredApprovals:
+          type: integer
+          maximum: 20.0
+          minimum: 0.0
+          title: Requiredapprovals
+          description: Review approvals a draft must carry before it can be published
+            (COL-2.3); 0 (default) disables the approval gate.
+          default: 0
+          example: 1
+        requiredReviewerRole:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Response payload for style guide policy settings.
+          - type: 'null'
+            description: Response payload for style guide policy settings.
+          title: Requiredreviewerrole
+          description: Role slug at least one of those approvals must come from (COL-2.3);
+            null means any approver counts.
       type: object
       required:
       - guideId
@@ -109553,6 +109583,27 @@ components:
             description: Request body for style guide policy settings put.
           title: Breakingpublishpolicy
           description: Breaking-publish guardrail level (CTG-3.4); omit to leave unchanged.
+        requiredApprovals:
+          anyOf:
+          - type: integer
+            maximum: 20.0
+            minimum: 0.0
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Requiredapprovals
+          description: Approvals required before publish (COL-2.3); 0 disables the
+            gate, omit to leave unchanged.
+        requiredReviewerRole:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for style guide policy settings put.
+          - type: 'null'
+            description: Request body for style guide policy settings put.
+          title: Requiredreviewerrole
+          description: Role slug at least one approval must come from (COL-2.3); send
+            null to clear it, omit to leave unchanged.
         snapshot:
           type: boolean
           title: Snapshot
@@ -115696,13 +115747,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-15T03:26:51Z'
+          example: '2026-09-15T23:11:16Z'
         outcome:
           anyOf:
           - type: string

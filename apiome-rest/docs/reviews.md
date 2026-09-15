@@ -138,3 +138,11 @@ the store reports what changed (`review-closed`, `review-not-in-review`, `review
 `review-already-open`, or `review-conflict`). The spec fingerprint is compared before the lock
 because rebuilding the document is expensive. An edit that lands between that check and the write
 is caught by `spec_changed` on the next read, and by COL-2.3 at publish.
+
+## Publish gate (COL-2.3)
+
+Review outcomes become binding at publish time when the tenant's governing style guide requires
+approvals: `POST …/publish` refuses a draft (`422`) whose current round has not collected them,
+and treats a `spec_changed` round as not approved. See
+[approval_publish_gate.md](approval_publish_gate.md) for the policy, the statuses, and the
+audited force-publish escape.

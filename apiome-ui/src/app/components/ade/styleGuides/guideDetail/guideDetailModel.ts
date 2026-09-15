@@ -303,3 +303,47 @@ export function guideReadOnlyReason(
   if (!isAdmin) return 'member';
   return null;
 }
+
+// ---------------------------------------------------------------------------------------
+// Approval policy (COL-2.3, #4519)
+// ---------------------------------------------------------------------------------------
+
+/** One choice in the required-reviewer-role picker. */
+export interface ReviewerRoleOption {
+  /** The `roles.slug` the API stores and the publish gate compares. */
+  slug: string;
+  /** What the picker shows — the role's display name, falling back to its slug. */
+  label: string;
+}
+
+/**
+ * The role choices the approval policy offers, with the stored one always among them.
+ *
+ * The policy stores a *slug*, never a role id, so a role that is later renamed or deleted
+ * leaves a setting the roles list cannot explain. Dropping it from the options would be the
+ * worst outcome available: the `select` would fall back to "Any approver" and the next save
+ * would silently relax the tenant's gate. So an unmatched stored slug is kept as its own
+ * option, labelled with the slug itself, and a reader has to clear it deliberately.
+ *
+ * @param roles The tenant's roles, as `GET /api/access/roles` returns them. Empty when the
+ *   viewer may not read them.
+ * @param selected The slug currently stored on the policy, or `null` for any approver.
+ * @returns The options, built-in roles first as the API orders them, with any unmatched
+ *   stored slug appended.
+ */
+export function reviewerRoleOptions(
+  roles: readonly { slug?: string | null; name?: string | null }[],
+  selected: string | null
+): ReviewerRoleOption[] {
+  const options: ReviewerRoleOption[] = [];
+  const seen = new Set<string>();
+  for (const role of roles) {
+    const slug = (role.slug ?? '').trim().toLowerCase();
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    options.push({ slug, label: (role.name ?? '').trim() || slug });
+  }
+  const stored = (selected ?? '').trim().toLowerCase();
+  if (stored && !seen.has(stored)) options.push({ slug: stored, label: stored });
+  return options;
+}

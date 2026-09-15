@@ -8,6 +8,7 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/app/components/ui/Card';
 import { Checkbox } from '@/app/components/ui/Checkbox';
+import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Spinner } from '@/app/components/ui/Spinner';
@@ -16,6 +17,7 @@ import { buildGovernanceDocsHref, POLICY_DOCS_PAGE } from '@/app/utils/lint-axis
 
 import {
   BREAKING_PUBLISH_POLICY_OPTIONS,
+  MAX_REQUIRED_APPROVALS,
   POLICY_COVERAGE_AXES,
   POLICY_GRADE_OPTIONS,
   truncatePolicyFingerprint,
@@ -24,6 +26,7 @@ import {
 } from '@/app/ade/dashboard/style-guides/api';
 
 import { formatPolicyInstant } from '../styleGuidesModel';
+import { reviewerRoleOptions } from './guideDetailModel';
 import type { GuidePolicyState } from './guideEditorState';
 
 /**
@@ -33,9 +36,10 @@ import type { GuidePolicyState } from './guideEditorState';
  *
  * The gates applied when lint evidence is judged against this guide: the quality floor, the
  * axes that must carry evidence at all, what a breaking publish without a major bump does,
- * and the three outcomes `GET …/lint/gate` reports as failed. Saving snapshots an immutable
- * policy version, which is why the history sits under the form rather than behind a link —
- * a gate whose changes cannot be seen is not governance.
+ * how many review approvals a publish needs (COL-2.3, #4519), and the three outcomes
+ * `GET …/lint/gate` reports as failed. Saving snapshots an immutable policy version, which
+ * is why the history sits under the form rather than behind a link — a gate whose changes
+ * cannot be seen is not governance.
  *
  * ### What HIVE-5.7 changed
  *
@@ -120,6 +124,10 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
   const breaking = BREAKING_PUBLISH_POLICY_OPTIONS.find(
     (option) => option.value === draft.breakingPublishPolicy
   );
+  // A role on its own gates nothing, so the picker follows the count rather than standing
+  // on its own — which is also what the REST gate does with the pair.
+  const approvalGateArmed = draft.requiredApprovals >= 1;
+  const roleOptions = reviewerRoleOptions(state.roles, draft.requiredReviewerRole);
 
   return (
     <div className="gd-policy" data-testid="guide-policy-panel">
@@ -215,6 +223,67 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
               ))}
             </select>
             <p className="sg-field__hint">{breaking?.description}</p>
+          </div>
+
+          <div>
+            <h4 className="sg-section-title">Review approvals</h4>
+            <p className="sg-section-desc">
+              How many review approvals a draft version must carry before it can be
+              published (COL-2.3). Publishing without them is refused; an author can still
+              force-publish with a reason, which is recorded in the audit trail.
+            </p>
+            <div className="gd-policy-grid">
+              <div className="sg-field">
+                <Label htmlFor="required-approvals">Required approvals</Label>
+                <Input
+                  id="required-approvals"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={MAX_REQUIRED_APPROVALS}
+                  step={1}
+                  className="sg-num gd-policy-number"
+                  aria-label="Required approvals"
+                  aria-describedby="required-approvals-hint"
+                  value={draft.requiredApprovals}
+                  disabled={disabled}
+                  onChange={(event) => state.setRequiredApprovals(event.target.value)}
+                />
+                <p className="sg-field__hint" id="required-approvals-hint">
+                  {approvalGateArmed
+                    ? `Publishing is blocked until the current review round has ${draft.requiredApprovals} approval(s).`
+                    : 'Zero means no approval gate — publishing never waits for a review.'}
+                </p>
+              </div>
+
+              <div className="sg-field">
+                <Label htmlFor="required-reviewer-role">
+                  Required reviewer role{' '}
+                  <span className="sg-field__optional">(optional)</span>
+                </Label>
+                <select
+                  id="required-reviewer-role"
+                  aria-label="Required reviewer role"
+                  aria-describedby="required-reviewer-role-hint"
+                  className="hive-control sg-select gd-policy-select"
+                  value={draft.requiredReviewerRole ?? ''}
+                  disabled={disabled || !approvalGateArmed}
+                  onChange={(event) => state.setRequiredReviewerRole(event.target.value)}
+                >
+                  <option value="">Any approver</option>
+                  {roleOptions.map((option) => (
+                    <option key={option.slug} value={option.slug}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="sg-field__hint" id="required-reviewer-role-hint">
+                  {approvalGateArmed
+                    ? 'At least one of those approvals must come from a member with this role. Tenant administrators count as Owner.'
+                    : 'Set a required approval count first — a role on its own gates nothing.'}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div>

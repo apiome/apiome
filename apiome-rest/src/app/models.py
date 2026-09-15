@@ -6286,6 +6286,25 @@ class StyleGuidePolicySettingsOut(BaseModel):
             "(CTG-3.4): off, warn (default), or block."
         ),
     )
+    required_approvals: int = Field(
+        default=0,
+        ge=0,
+        le=20,
+        serialization_alias="requiredApprovals",
+        description=(
+            "Review approvals a draft must carry before it can be published (COL-2.3); "
+            "0 (default) disables the approval gate."
+        ),
+    )
+    required_reviewer_role: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        serialization_alias="requiredReviewerRole",
+        description=(
+            "Role slug at least one of those approvals must come from (COL-2.3); "
+            "null means any approver counts."
+        ),
+    )
 
 
 class StyleGuidePolicySettingsPutRequest(BaseModel):
@@ -6313,6 +6332,27 @@ class StyleGuidePolicySettingsPutRequest(BaseModel):
         validation_alias=AliasChoices("breakingPublishPolicy", "breaking_publish_policy"),
         serialization_alias="breakingPublishPolicy",
         description="Breaking-publish guardrail level (CTG-3.4); omit to leave unchanged.",
+    )
+    required_approvals: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=20,
+        validation_alias=AliasChoices("requiredApprovals", "required_approvals"),
+        serialization_alias="requiredApprovals",
+        description=(
+            "Approvals required before publish (COL-2.3); 0 disables the gate, "
+            "omit to leave unchanged."
+        ),
+    )
+    required_reviewer_role: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        validation_alias=AliasChoices("requiredReviewerRole", "required_reviewer_role"),
+        serialization_alias="requiredReviewerRole",
+        description=(
+            "Role slug at least one approval must come from (COL-2.3); send null to clear "
+            "it, omit to leave unchanged."
+        ),
     )
     snapshot: bool = Field(
         default=True,
