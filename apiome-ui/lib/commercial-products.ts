@@ -61,6 +61,11 @@ function resolveStudioEditorHref(): string {
   return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.editor);
 }
 
+/** The Studio's unified workspace route, relative on the studio surface and absolute elsewhere. */
+function resolveStudioWorkspaceHref(): string {
+  return resolveStudioSurfaceHref(STUDIO_APP_ROUTES.workspace);
+}
+
 function isAbsoluteHref(href: string): boolean {
   return href.startsWith('http://') || href.startsWith('https://');
 }
@@ -78,6 +83,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
 
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
+  const workspaceHref = resolveStudioWorkspaceHref();
   const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
 
   return [
@@ -90,6 +96,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
         'Schema design and API path modeling in one suite — canvas, versions, tags, and OpenAPI operations.',
       href: suiteHref,
       editorHref,
+      workspaceHref,
       icon: 'Layers',
       accent: 'from-violet-500 to-fuchsia-600',
       glow: 'group-hover:shadow-fuchsia-500/20',

@@ -500,6 +500,40 @@ describe('the header', () => {
     fireEvent.click(screen.getByTestId('versions-tab-timeline'));
     await screen.findByTestId('versions-table');
   });
+
+  it('counts unresolved threads on the Discussion tab and opens the project discussion (COL-1.3)', async () => {
+    installFetch([
+      {
+        test: /\/comment-threads\?status=open&limit=1&offset=0$/,
+        reply: () => ({ success: true, threads: [], count: 0, total: 3, limit: 1, offset: 0 }),
+      },
+      {
+        test: /\/comment-threads\?status=open&limit=50&offset=0$/,
+        reply: () => ({ success: true, threads: [], count: 0, total: 0, limit: 50, offset: 0 }),
+      },
+      {
+        test: /\/comment-threads\/summary$/,
+        reply: () => ({
+          success: true,
+          statusTotals: { open: 2, resolved: 0, orphaned: 0 },
+          unresolvedTotal: 2,
+          unresolvedByAnchor: {},
+          truncated: false,
+        }),
+      },
+    ]);
+    await renderVersions();
+    const tab = screen.getByTestId('versions-tab-discussion');
+    await waitFor(() => expect(within(tab).getByTestId('versions-tab-discussion-count')).toHaveTextContent('3'));
+    expect(tab).toHaveAttribute('title', '3 unresolved comment threads');
+
+    fireEvent.click(tab);
+    expect(await screen.findByTestId('project-discussion-panel')).toBeInTheDocument();
+    expect(tab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByTestId('versions-table')).not.toBeInTheDocument();
+    // The panel's summary is fresher than the tab's first read, and replaces it.
+    await waitFor(() => expect(within(tab).getByTestId('versions-tab-discussion-count')).toHaveTextContent('2'));
+  });
 });
 
 // ---------------------------------------------------------------------------------------

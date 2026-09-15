@@ -24,6 +24,7 @@ import {
   History,
   ShieldCheck,
   Upload,
+  MessagesSquare,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -62,6 +63,9 @@ import {
 import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
+import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
+import { useProjectUnresolvedTotal } from '../../../components/ade/discussion/useProjectUnresolvedTotal';
+import { getStudioWorkspaceRoute } from '@lib/external-links';
 import PageHeader from '../../../components/shell/PageHeader';
 import { Page, PageBody } from '../../../components/shell/pageChrome';
 import { cn } from '@lib/utils';
@@ -365,9 +369,9 @@ const Versions = () => {
     toVersionLabel?: string;
   } | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-  /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476) vs the Schema Test Bench (IXH-5.3, #5115). */
+  /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476) vs the Schema Test Bench (IXH-5.3, #5115) vs the project Discussion panel (COL-1.3, #4515). */
   const [versionsMainTab, setVersionsMainTab] = useState<
-    'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion'
+    'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion' | 'discussion'
   >('timeline');
   /* Change reports are part of the git-like publication flow, so the UI gate
      is the union of the env opt-out and the master git-like feature flag.
@@ -2973,8 +2977,14 @@ const Versions = () => {
     ),
   );
   const showConversionTab = conversionHistory.rows.length > 0;
+  /** Every project has a Discussion tab (COL-1.3, #4515); its count is the unresolved-thread total. */
+  const showDiscussionTab = Boolean(selectedProjectId);
+  const [discussionUnresolved, setDiscussionUnresolved] = useProjectUnresolvedTotal(selectedProjectId);
+  /** Where a thread's "open in Studio" link points; null when the suite is not configured. */
+  const studioWorkspaceRoute = useMemo(() => getStudioWorkspaceRoute(), []);
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
+    (versionsMainTab === 'discussion' && !showDiscussionTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
     (versionsMainTab === 'test-bench' && !showTestBenchTab) ||
@@ -3248,6 +3258,30 @@ const Versions = () => {
           Conversion
         </button>
       ) : null}
+      {showDiscussionTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'discussion'}
+          data-testid="versions-tab-discussion"
+          className={tabTriggerClass({ active: effectiveMainTab === 'discussion' })}
+          title={
+            discussionUnresolved
+              ? `${discussionUnresolved} unresolved comment thread${discussionUnresolved === 1 ? '' : 's'}`
+              : 'Comment threads on this project'
+          }
+          onClick={() => setVersionsMainTab('discussion')}
+        >
+          <MessagesSquare className="ver-tab-glyph" aria-hidden />
+          Discussion
+          {/* COL-1.3: the unresolved total, drawn only when there is something to resolve. */}
+          {discussionUnresolved ? (
+            <span className={TAB_COUNT_CLASS} data-testid="versions-tab-discussion-count">
+              {discussionUnresolved}
+            </span>
+          ) : null}
+        </button>
+      ) : null}
     </div>
   ) : undefined;
 
@@ -3461,6 +3495,18 @@ const Versions = () => {
             projectId={selectedProjectId}
             versions={versions}
             onOpenDiff={handleOpenDiffFromChanges}
+          />
+        ) : null}
+
+        {showDiscussionTab && effectiveMainTab === 'discussion' ? (
+          /* Project Discussion (COL-1.3, #4515): every comment thread of the project, each linking
+             into the Studio with its element focused and its thread open. */
+          <ProjectDiscussionPanel
+            key={selectedProjectId}
+            projectId={selectedProjectId}
+            versions={versions}
+            workspaceRoute={studioWorkspaceRoute}
+            onUnresolvedTotalChange={setDiscussionUnresolved}
           />
         ) : null}
 

@@ -33,6 +33,8 @@ export type ExternalLinkEntry = {
   href: string;
   /** Optional deep link base for post-import "open in editor" flows. */
   editorHref?: string;
+  /** The Studio's unified workspace route, which comment-thread deep links target (COL-1.3). */
+  workspaceHref?: string;
   icon: string;
   /**
    * @deprecated Pre-Hive Tailwind gradient pair for the home card. The launcher draws a
@@ -365,6 +367,21 @@ export function getDesignerHomeHref(entitledFlags?: Set<string>): string | null 
   const suite = getExternalLinkById('suite');
   if (suite?.href) return suite.href;
   return null;
+}
+
+/**
+ * The Studio workspace route that comment-thread deep links are appended to (COL-1.3, #4515).
+ *
+ * @param entitledFlags - The tenant's entitled feature flags, when known; without the suite
+ *   entitlement there is no Studio to link to.
+ * @returns The workspace route (absolute unless this app is the studio surface), or null when the
+ *   suite is not entitled or not configured.
+ */
+export function getStudioWorkspaceRoute(entitledFlags?: Set<string>): string | null {
+  if (!hasSuiteEntitlement(entitledFlags)) {
+    return null;
+  }
+  return getExternalLinkById('suite')?.workspaceHref || null;
 }
 
 /** Deep link into a commercial studio editor after import completes. */

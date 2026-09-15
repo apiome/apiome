@@ -31754,3 +31754,162 @@ tr:focus-within .pub-url__glyph {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ==========================================================================
+   PROJECT DISCUSSION  (COL-1.3, #4515)
+   --------------------------------------------------------------------------
+   The Discussion tab on `/ade/dashboard/versions?projectId=…` — every comment
+   thread of the project, narrowed by status, mentions and element type, each
+   row linking into the Studio with its element focused and its thread open.
+
+   The panel sits in the Versions screen's own `.vdlg-panel` card and borrows
+   rather than restates: `DataTable`'s toolbar and filter chips, `Badge`, `Alert`,
+   `.mono` (HIVE-1.4) for pathnames, and the app-wide `*:focus-visible` ring.
+   `.disc-*` is only the list.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. The element name
+   is the row's one link and is inked `--fg`, underlined on hover and focus,
+   rather than `--accent`, which measures under 4.5:1 on the surface in three
+   themes (HIVE-8.1's finding). Nothing fades: quiet text is `--fg-muted`.
+   ========================================================================== */
+
+.disc {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.disc-facets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.disc-chip-glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.disc-note {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.disc-state {
+  padding: var(--space-4);
+}
+
+.disc-min-h {
+  min-block-size: 12rem;
+}
+
+.disc-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.disc-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.disc-thread:last-child {
+  box-shadow: none;
+}
+
+.disc-thread__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.disc-thread__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.disc-thread__link:hover .disc-thread__element,
+.disc-thread__link:focus-visible .disc-thread__element {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.disc-thread__element {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.disc-thread__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.disc-thread__version {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.disc-thread__excerpt {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.disc-thread__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.disc-thread__unresolved {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.disc-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: inset 0 1px 0 var(--border);
+}
+
+.disc-more__error {
+  flex-basis: 100%;
+}
+
+.disc-more__count {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}

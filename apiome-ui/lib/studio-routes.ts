@@ -10,4 +10,6 @@ export const STUDIO_APP_ROUTES = {
   editor: '/editor',
   paths: '/paths',
   code: '/code',
+  /** The unified canvas; comment deep links (COL-1.2 format, used by COL-1.3 #4515) land here. */
+  workspace: '/workspace',
 } as const;
