@@ -20,6 +20,8 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { OPEN_ACTIONS, useOpenAction } from '@/app/components/shell/openActions';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
+import { useOpenReviews } from '@/app/hooks/useOpenReviews';
+import { lookupReview } from '@lib/review-status';
 import { Button } from '@/app/components/ui/Button';
 import {
   DataTableBulkAction,
@@ -178,6 +180,11 @@ export default function ProjectsClient() {
   React.useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  // Every open review of the workspace (COL-2.4, #4520), collapsed to one summary per project.
+  // One read for the whole list: apiome-rest addresses reviews per project, so a card-per-call
+  // read would cost one round trip per project to draw at most one pill each.
+  const { byProjectId: reviewsByProjectId } = useOpenReviews({ enabled: Boolean(currentTenantId) });
 
   /** The Deleted chip cannot outlive the switch that reveals deleted rows. */
   React.useEffect(() => {
@@ -783,6 +790,7 @@ export default function ProjectsClient() {
                 projects={visible}
                 historyById={historyById}
                 loading={loading}
+                reviewsByProjectId={reviewsByProjectId}
                 error={loadError}
                 onRetry={() => void loadProjects()}
                 sort={sort}
@@ -821,6 +829,7 @@ export default function ProjectsClient() {
                         key={project.id}
                         project={project}
                         qualityHistory={historyById[project.id] ?? []}
+                        reviewSummary={lookupReview(reviewsByProjectId, project.id)}
                         busy={busy}
                         onOpenQuality={(target) => openScores(target, 'quality')}
                         onOpenLint={(target) => openScores(target, 'lint')}

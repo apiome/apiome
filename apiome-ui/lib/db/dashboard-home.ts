@@ -13,8 +13,9 @@
  *   the list stored-first precisely so that rendering a score costs no lint run, and Home is
  *   not the surface to reintroduce one.
  * - **Needs attention** — the sunset schedule (`versions.metadata.sunsetAt`, the same column
- *   the sunset timeline reads), blocking findings in the stored lint report, and API keys near
- *   expiry.
+ *   the sunset timeline reads), blocking findings in the stored lint report, API keys near
+ *   expiry, and the reviews the reader owes a decision on or has had changes requested on
+ *   (COL-2.4, #4520).
  * - **Publishing pulse** — `versions.published_at` over twelve weeks.
  *
  * Everything derived from those rows lives in `./dashboard-home-model.ts`, which is React- and
@@ -56,6 +57,7 @@ import {
   keyAttention,
   lintAttention,
   rankAttention,
+  reviewAttention,
   revisionStatus,
   sunsetAttention,
   type AttentionItem,
@@ -64,6 +66,7 @@ import {
   type KeyRow,
   type LintRow,
   type PulseWeek,
+  type ReviewAttentionRow,
   type SunsetRow,
 } from './dashboard-home-model';
 
@@ -450,6 +453,67 @@ async function loadPulse(userId: string): Promise<PulseWeek[]> {
   return bucketPublishesByWeek(instants, new Date());
 }
 
+/**
+ * The open reviews this reader has something to do about (COL-2.4, #4520).
+ *
+ * Two situations, and only two — the `LEFT JOIN` decides which by matching a **pending row of the
+ * current round** for this reader:
+ *
+ * - they still owe a decision (`rr.id IS NOT NULL`), or
+ * - they requested the review and it came back `changes_requested`.
+ *
+ * The join is restricted to `rr.round = r.round` for the same reason COL-2.3's publish gate
+ * counts only that round: an earlier round's pending row is history, not a task. Withdrawn
+ * reviews (`closed_at`) are excluded — withdrawing is how you say there is nothing to do.
+ *
+ * @param userId The reader, from the session.
+ * @returns Candidate rows, longest-waiting first.
+ */
+async function loadReviewRows(userId: string): Promise<ReviewAttentionRow[]> {
+  const result = await connectionPool.query(
+    `SELECT
+       r.id::text AS review_id,
+       r.state,
+       v.version_id,
+       p.name AS project_name,
+       (rr.id IS NOT NULL) AS awaiting_me
+     FROM apiome.reviews r
+     JOIN apiome.projects p ON p.id = r.project_id
+     JOIN apiome.versions v ON v.id = r.version_id
+     LEFT JOIN apiome.review_reviewers rr
+            ON rr.review_id = r.id
+           AND rr.round = r.round
+           AND rr.user_id = $1::uuid
+           AND rr.decision = 'pending'
+     WHERE p.tenant_id IN ${MEMBER_TENANTS}
+       AND p.deleted_at IS NULL
+       AND v.deleted_at IS NULL
+       AND r.closed_at IS NULL
+       AND (
+         (r.state = 'in_review' AND rr.id IS NOT NULL)
+         OR (r.state = 'changes_requested' AND r.requested_by = $1::uuid)
+       )
+     ORDER BY r.updated_at ASC
+     LIMIT $2`,
+    [userId, ATTENTION_CANDIDATES],
+  );
+
+  return result.rows.flatMap((row) => {
+    const reviewId = asText(row.review_id);
+    const versionLabel = asText(row.version_id);
+    if (!reviewId || !versionLabel) return [];
+    return [
+      {
+        reviewId,
+        versionLabel,
+        projectName: asText(row.project_name) ?? 'Untitled project',
+        state: asText(row.state) ?? 'in_review',
+        awaitingMe: row.awaiting_me === true,
+      } satisfies ReviewAttentionRow,
+    ];
+  });
+}
+
 /* -------------------------------------------------------------------------
    The entry point
    ------------------------------------------------------------------------- */
@@ -458,8 +522,8 @@ async function loadPulse(userId: string): Promise<PulseWeek[]> {
  * Everything Home shows beyond the stats, the activity list and the checklist.
  *
  * The reader is the signed-in session; a signed-out call resolves to the empty payload without
- * touching the database. The four sections load concurrently and independently — one failing
- * costs its own panel and nothing else.
+ * touching the database. The sections load concurrently and independently — one failing costs its
+ * own panel and nothing else.
  *
  * @returns The assembled payload, or {@link emptyDashboardHome} when there is no session.
  */
@@ -470,26 +534,29 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
   if (!userId) return emptyDashboardHome();
   const tenantId = user?.current_tenant_id;
 
-  const [workspaceName, continueProjects, sunsetRows, lintRows, keyRows, pulse] = await Promise.all([
-    tenantId
-      ? section<string | null>('workspace name', () => loadWorkspaceName(userId, tenantId), null)
-      : Promise.resolve(null),
-    section<ContinueProject[]>(
-      'continue projects',
-      () => loadContinueProjects(userId, CONTINUE_PROJECT_LIMIT),
-      [],
-    ),
-    section<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
-    section<LintRow[]>('lint gate', () => loadLintRows(userId), []),
-    section<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
-    section<PulseWeek[]>('publishing pulse', () => loadPulse(userId), []),
-  ]);
+  const [workspaceName, continueProjects, sunsetRows, lintRows, keyRows, reviewRows, pulse] =
+    await Promise.all([
+      tenantId
+        ? section<string | null>('workspace name', () => loadWorkspaceName(userId, tenantId), null)
+        : Promise.resolve(null),
+      section<ContinueProject[]>(
+        'continue projects',
+        () => loadContinueProjects(userId, CONTINUE_PROJECT_LIMIT),
+        [],
+      ),
+      section<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
+      section<LintRow[]>('lint gate', () => loadLintRows(userId), []),
+      section<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
+      section<ReviewAttentionRow[]>('reviews', () => loadReviewRows(userId), []),
+      section<PulseWeek[]>('publishing pulse', () => loadPulse(userId), []),
+    ]);
 
   const now = new Date();
   const attention: AttentionItem[] = rankAttention([
     sunsetAttention(sunsetRows, now),
     lintAttention(lintRows),
     keyAttention(keyRows, now),
+    reviewAttention(reviewRows),
   ]);
 
   return { workspaceName, continueProjects, attention, pulse };

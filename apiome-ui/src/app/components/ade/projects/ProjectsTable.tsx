@@ -47,6 +47,8 @@ import {
   type DataTableSortState,
 } from '@/app/components/ui/DataTable';
 import { Sparkline, ringTier } from '@/app/components/ui/metrics';
+import { ReviewStatusPill } from '@/app/components/ade/reviews/ReviewStatusPill';
+import { lookupReview, type ProjectReviewSummary } from '@lib/review-status';
 import { cn } from '@lib/utils';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
 
@@ -93,6 +95,11 @@ export interface ProjectsTableProps {
   historyById: ProjectQualityHistoryMap;
   /** True while the first read is in flight. */
   loading?: boolean;
+  /**
+   * Each project's open reviews, collapsed to one summary (COL-2.4, #4520), keyed by project id.
+   * `null` while the read is in flight, which draws no pill rather than a wrong one.
+   */
+  reviewsByProjectId?: ReadonlyMap<string, ProjectReviewSummary> | null;
   /** Why the list could not be read. Replaces the body with a retry. */
   error?: string | null;
   /** Retry the read. */
@@ -136,6 +143,7 @@ export default function ProjectsTable({
   projects,
   historyById,
   loading = false,
+  reviewsByProjectId = null,
   error = null,
   onRetry,
   sort,
@@ -233,11 +241,19 @@ export default function ProjectsTable({
         sortable: true,
         cell: (project) => {
           const lifecycle = projectLifecycle(project);
+          const review = lookupReview(reviewsByProjectId, project.id);
           return (
             <span className="prj-status">
               <Badge status={lifecycle} dot>
                 {PROJECT_LIFECYCLE_LABEL[lifecycle]}
               </Badge>
+              {/* COL-2.4: the same pill the cards view draws, in the same cell as the
+                  lifecycle — two facts about the project, not one replacing the other. */}
+              <ReviewStatusPill
+                review={review?.review}
+                moreCount={review?.moreCount ?? 0}
+                data-testid={`projects-review-${project.id}`}
+              />
               {/* A deleted project remembers whether it was enabled, and undelete restores
                   it — so the second pill is what the row will go back to, not a second
                   state it is in now. Only drawn when the two differ. */}
@@ -374,7 +390,7 @@ export default function ProjectsTable({
         skeletonWidth: '4rem',
       },
     ],
-    [busy, historyById, onDelete, onEdit, onOpen, onOpenTrend, onPermanentDelete, onRestore]
+    [busy, historyById, onDelete, onEdit, onOpen, onOpenTrend, onPermanentDelete, onRestore, reviewsByProjectId]
   );
 
   return (

@@ -49,7 +49,9 @@ import {
 } from '@/app/components/ui/DataTable';
 import { VersionLintBadge } from '@/app/components/ade/dashboard/VersionLintBadge';
 import { VersionMockCell, type VersionMockChange } from '@/app/components/ade/dashboard/VersionMockCell';
+import { ReviewStatusPill } from '@/app/components/ade/reviews/ReviewStatusPill';
 import { mockUsageSeriesKey } from '@/app/utils/mock-usage-series';
+import { lookupReview, type ReviewStatusRow } from '@lib/review-status';
 import { cn } from '@lib/utils';
 
 import { VersionRowMenu } from './VersionRowMenu';
@@ -85,6 +87,11 @@ export interface VersionsTableProps {
   tagsByVersionId: ReadonlyMap<string, readonly VersionTagRow[]>;
   /** Which revisions already have frozen class schemas. */
   hasClassSchemaMap: Readonly<Record<string, boolean>>;
+  /**
+   * The project's open reviews, keyed by revision id (COL-2.4, #5313 column *Status*). `null`
+   * while the read is in flight, which draws no pill rather than a wrong one.
+   */
+  reviewsByVersionId?: ReadonlyMap<string, ReviewStatusRow> | null;
   /** Whether the viewer is a tenant admin (resolved). */
   effectiveIsAdmin: boolean;
   /** The viewer's user id. */
@@ -130,6 +137,7 @@ export default function VersionsTable({
   headRevisionId,
   tagsByVersionId,
   hasClassSchemaMap,
+  reviewsByVersionId = null,
   effectiveIsAdmin,
   currentUserId,
   hasBranches,
@@ -231,6 +239,13 @@ export default function VersionsTable({
                   Disabled
                 </Badge>
               ) : null}
+              {/* COL-2.4: the review pill sits *beside* the lifecycle badge rather than
+                  replacing it — "Draft" and "In review" are two different facts about the
+                  same row, and a reader publishing needs both. */}
+              <ReviewStatusPill
+                review={lookupReview(reviewsByVersionId, version.id)}
+                data-testid={`versions-review-${version.id}`}
+              />
             </span>
           );
         },
@@ -342,6 +357,7 @@ export default function VersionsTable({
       onRowAction,
       projectId,
       projectSlug,
+      reviewsByVersionId,
       tagsByVersionId,
     ]
   );

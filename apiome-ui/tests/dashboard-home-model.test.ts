@@ -25,6 +25,7 @@ import {
   keyAttention,
   lintAttention,
   rankAttention,
+  reviewAttention,
   revisionStatus,
   sunsetAttention,
   sunsetInstantOf,
@@ -32,6 +33,7 @@ import {
   type AttentionItem,
   type KeyRow,
   type LintRow,
+  type ReviewAttentionRow,
   type SunsetRow,
 } from '@lib/db/dashboard-home-model';
 
@@ -281,6 +283,56 @@ describe('keyAttention', () => {
   it('ignores an expiry beyond the attention window', () => {
     const far = new Date(NOW.getTime() + (KEY_EXPIRY_ATTENTION_DAYS + 3) * 86_400_000).toISOString();
     expect(keyAttention([{ ...row, expiresAt: far }], NOW)).toHaveLength(0);
+  });
+});
+
+describe('reviewAttention (COL-2.4, #4520)', () => {
+  const row: ReviewAttentionRow = {
+    reviewId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    versionLabel: '2.0.0',
+    projectName: 'Payments API',
+    state: 'in_review',
+    awaitingMe: true,
+  };
+
+  it('asks the reader for the decision they owe, and links to that review', () => {
+    const [item] = reviewAttention([row]);
+    expect(item.kind).toBe('review');
+    expect(item.title).toBe('Your review of Payments API 2.0.0 is waiting');
+    expect(item.detail).toContain('Approve it or request changes');
+    expect(item.href).toBe(`/ade/reviews/${row.reviewId}`);
+    expect(item.tone).toBe('warn');
+  });
+
+  it("is louder when the reader's own revision came back with changes requested", () => {
+    const [item] = reviewAttention([
+      { ...row, state: 'changes_requested', awaitingMe: false },
+    ]);
+    expect(item.title).toBe('Changes requested on Payments API 2.0.0');
+    expect(item.detail).toContain('re-request');
+    expect(item.tone).toBe('danger');
+  });
+
+  it('ranks a review as available now, the way a blocking lint finding is', () => {
+    expect(reviewAttention([row]).map((item) => item.urgency)).toEqual([0]);
+    const lint = lintAttention([
+      { versionRowId: 'v', versionLabel: '1', projectName: 'p', errorCount: 1 },
+    ]);
+    expect(lint[0].urgency).toBe(0);
+  });
+
+  it('keeps ids unique across sources, so two panels cannot collide on a React key', () => {
+    const [item] = reviewAttention([row]);
+    expect(item.id).toBe(`review:${row.reviewId}`);
+  });
+
+  it('falls back to the revisions list rather than linking to /ade/reviews/undefined', () => {
+    const [item] = reviewAttention([{ ...row, reviewId: '' }]);
+    expect(item.href).toBe(ATTENTION_HREF.review);
+  });
+
+  it('has no rows to show when nothing is open', () => {
+    expect(reviewAttention([])).toEqual([]);
   });
 });
 

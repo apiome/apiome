@@ -37,7 +37,9 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyStateArt } from '@/app/components/ui/EmptyState';
 import { Ring } from '@/app/components/ui/metrics';
+import { ReviewStatusPill } from '@/app/components/ade/reviews/ReviewStatusPill';
 import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history-dag';
+import type { ProjectReviewSummary } from '@lib/review-status';
 import { cn } from '@lib/utils';
 
 import {
@@ -62,6 +64,11 @@ export interface ProjectCardProps {
   project: Project;
   /** Its browser-local quality snapshots, oldest first. */
   qualityHistory?: readonly ProjectQualitySnapshot[];
+  /**
+   * The project's open reviews, collapsed to the most urgent one (COL-2.4, #4520). Absent or
+   * null draws no pill — which is what a project with nothing in review should look like.
+   */
+  reviewSummary?: ProjectReviewSummary | null;
   /** Open the scores dialog on its Quality tab. */
   onOpenQuality: (project: Project) => void;
   /** Open the scores dialog on its Lint tab. */
@@ -86,6 +93,7 @@ export interface ProjectCardProps {
 export default function ProjectCard({
   project,
   qualityHistory = [],
+  reviewSummary = null,
   onOpenQuality,
   onOpenLint,
   onEdit,
@@ -128,9 +136,20 @@ export default function ProjectCard({
               {project.slug ? ` · ${project.slug}` : ''}
             </p>
           </div>
-          <Badge status={lifecycle} dot data-testid="project-card-status">
-            {PROJECT_LIFECYCLE_LABEL[lifecycle]}
-          </Badge>
+          {/* The lifecycle badge and the review pill are two different facts, so they sit
+              together rather than one replacing the other. The pill is a link, so its holder
+              has to be raised above `.prj-card__link`'s stretched hit area — but only when
+              there is a pill, so a project with nothing in review gives up no card surface. */}
+          <span className={cn('prj-status', reviewSummary && 'prj-card__above')}>
+            <Badge status={lifecycle} dot data-testid="project-card-status">
+              {PROJECT_LIFECYCLE_LABEL[lifecycle]}
+            </Badge>
+            <ReviewStatusPill
+              review={reviewSummary?.review}
+              moreCount={reviewSummary?.moreCount ?? 0}
+              data-testid="project-card-review"
+            />
+          </span>
         </div>
 
         <p className="prj-card__summary">{projectSummaryText(project)}</p>
