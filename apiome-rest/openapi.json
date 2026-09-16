@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.190.0",
+    "version": "1.191.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -18134,6 +18134,856 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for withdrawareviewresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/bindings": {
+      "get": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "List a project's branch-to-draft bindings",
+        "description": "A page of the project's bindings, newest first \u2014 active ones and the released rows that are their history.\n\nFilters combine: `version` (revision id or version label) and `active` (`true` for the live bindings, `false` for released ones).\n\nRequires `projects:view`.",
+        "operationId": "list_bindings_v1_tenants__tenant_slug__projects__project_ref__bindings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsbranchtodraftbindingsversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsbranchtodraftbindingsversion schema."
+                }
+              ],
+              "description": "Revision id or version label.",
+              "title": "Version"
+            },
+            "description": "Revision id or version label."
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean",
+                  "description": "Listaprojectsbranchtodraftbindingsactive schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsbranchtodraftbindingsactive schema."
+                }
+              ],
+              "description": "Active (`true`) or released (`false`) bindings only.",
+              "title": "Active"
+            },
+            "description": "Active (`true`) or released (`false`) bindings only."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Bindings to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Bindings to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsbranchtodraftbindingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsbranchtodraftbindingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsbranchtodraftbindings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsbranchtodraftbindings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's branch-to-draft bindings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindingListResponse",
+                  "description": "Response payload for listaprojectsbranchtodraftbindingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojectsbranchtodraftbindingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/bindings/{binding_id}": {
+      "get": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Read one binding",
+        "description": "A binding with its outstanding sync candidates and the ones already settled.\n\nRequires `projects:view`.",
+        "operationId": "read_binding_v1_tenants__tenant_slug__projects__project_ref__bindings__binding_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "binding_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Binding Id",
+              "description": "Binding Id schema."
+            },
+            "description": "Path parameter identifying the binding id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonebindingauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonebindingauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonebinding Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonebinding Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftBindingDetail",
+                  "description": "Response payload for readonebindingresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonebindingresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/binding": {
+      "get": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Read a version's repository binding",
+        "description": "Where a version stands: its active binding with everything outstanding on it, and the bindings it has had before.\n\nRequires `projects:view`.",
+        "operationId": "read_version_binding_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionsrepositorybindingauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionsrepositorybindingauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionsrepositorybinding Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionsrepositorybinding Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a version's repository binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionBindingStatus",
+                  "description": "Response payload for readaversionsrepositorybindingresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaversionsrepositorybindingresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Bind a draft version to a repository ref",
+        "description": "Make this draft the API review unit of one repository ref and source path. The ref is resolved and the selection read through a **stored** credential before anything is written \u2014 that read is the authorization check, and it is what produces the commit and the `sha256:` source digest the binding records.\n\nName the repository with either `repository_id` (a registered tenant repository, whose linked-account credential authorizes the read) or `repo_url` (with an optional `linked_account_id` of your own). Credentials are never accepted in the body.\n\nA published version cannot be bound (`409 binding-version-published`), and a version has at most one active binding: pass `replace: true` to release the current one and bind anew, or the request is refused with `409 binding-already-bound`. The released row stays as history.\n\nRequires `versions:edit`.",
+        "operationId": "bind_version_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Bindadraftversiontoarepositoryrefauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Bindadraftversiontoarepositoryrefauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Bindadraftversiontoarepositoryref Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Bindadraftversiontoarepositoryref Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftBindingCreate",
+                "description": "Request body for bindadraftversiontoarepositoryrefrequest."
+              }
+            }
+          },
+          "description": "Request body for bind a draft version to a repository ref."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for bind a draft version to a repository ref.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftBindingDetail",
+                  "description": "Response payload for bindadraftversiontoarepositoryrefresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for bindadraftversiontoarepositoryrefresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Release a version's repository binding",
+        "description": "Stop this draft being the review unit of its ref. The binding row is **kept** \u2014 stamped released, with who released it and when \u2014 and any outstanding sync candidates on it are superseded, because a released binding can never act on one.\n\nRequires `versions:edit`.",
+        "operationId": "release_version_binding_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Releaseaversionsrepositorybindingauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Releaseaversionsrepositorybindingauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Releaseaversionsrepositorybinding Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Releaseaversionsrepositorybinding Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for release a version's repository binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftBindingRecord",
+                  "description": "Response payload for releaseaversionsrepositorybindingresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for releaseaversionsrepositorybindingresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/binding/check": {
+      "post": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Check whether the bound ref has moved",
+        "description": "Ask the provider where the bound ref is now. When it has moved, a **sync candidate** is recorded \u2014 the commit and digest the binding is at, and the commit the ref moved to \u2014 and nothing about the draft changes. When it has not, the request is refused with `409 binding-unchanged`.\n\nThis is the same thing a push to the ref does through the repository webhook; it exists so a binding can be reconciled without waiting for one.\n\nRequires `versions:edit`.",
+        "operationId": "check_version_binding_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_check_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkwhethertheboundrefhasmovedauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkwhethertheboundrefhasmovedauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkwhethertheboundrefhasmoved Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkwhethertheboundrefhasmoved Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for check whether the bound ref has moved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftBindingDetail",
+                  "description": "Response payload for checkwhethertheboundrefhasmovedresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for checkwhethertheboundrefhasmovedresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/binding/candidates/{candidate_id}": {
+      "post": {
+        "tags": [
+          "draft-bindings"
+        ],
+        "summary": "Settle an outstanding sync candidate",
+        "description": "Decide what happens to an observed ref update.\n\n`applied` records that the draft is in sync with the candidate's commit: the source is re-read at that commit \u2014 so the digest stored is one that was actually fetched \u2014 and the binding's synchronized pair advances to it, which is the base the next update is compared against. It does **not** modify the draft; three-way synchronization (GNC-2.3) settles a candidate this way after it has applied the changes.\n\n`dismissed` leaves the binding exactly where it is.\n\nA candidate settles once: a settled one is refused with `409 binding-candidate-resolved`.\n\nRequires `versions:edit`.",
+        "operationId": "resolve_binding_candidate_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_candidates__candidate_id__post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id",
+              "description": "Candidate Id schema."
+            },
+            "description": "Path parameter identifying the candidate id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settleanoutstandingsynccandidateauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settleanoutstandingsynccandidateauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settleanoutstandingsynccandidate Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settleanoutstandingsynccandidate Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncCandidateResolve",
+                "description": "Request body for settleanoutstandingsynccandidaterequest."
+              }
+            }
+          },
+          "description": "Request body for settle an outstanding sync candidate."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for settle an outstanding sync candidate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftBindingDetail",
+                  "description": "Response payload for settleanoutstandingsynccandidateresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for settleanoutstandingsynccandidateresponse422."
                 }
               }
             }
@@ -82834,6 +83684,53 @@
         "title": "AvailableSurfaceResponse",
         "description": "The picker's catalogue for one stored version."
       },
+      "BindingListResponse": {
+        "properties": {
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/DraftBindingRecord"
+            },
+            "type": "array",
+            "title": "Bindings",
+            "description": "Bindings, newest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many bindings this page holds.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many bindings match the filters in all.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "BindingListResponse",
+        "description": "A page of a project's bindings."
+      },
       "BotPresetBody": {
         "properties": {
           "key": {
@@ -89417,7 +90314,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "comment_count": {
             "type": "integer",
@@ -89645,7 +90542,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "comment_count": {
             "type": "integer",
@@ -90103,14 +91000,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -92135,7 +93032,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "00848020-bf96-40b7-bcb0-2a3ff1fecb00"
+            "example": "0688921f-68a6-40c8-9b30-5ebd8f26d605"
           },
           "method": {
             "type": "string",
@@ -94662,7 +95559,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -96182,6 +97079,363 @@
         "type": "object",
         "title": "DomainUpdateRequest",
         "description": "Request model for renaming or reordering a domain.\n\nEvery field is optional and only the supplied ones are written; renaming a domain never moves\nit in the tree unless ``sort_order`` is given too."
+      },
+      "DraftBindingCreate": {
+        "properties": {
+          "repository_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding Create schema."
+              }
+            ],
+            "title": "Repository Id",
+            "description": "Registered tenant repository to bind to."
+          },
+          "repo_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding Create schema."
+              }
+            ],
+            "title": "Repo Url",
+            "description": "Repository URL, when no registered repository is used."
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Draft Binding Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding Create schema."
+              }
+            ],
+            "title": "Ref",
+            "description": "Branch or tag; defaults to the repository's default branch."
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 1024,
+            "title": "Path",
+            "description": "Path or glob selecting the source; empty selects the whole tree.",
+            "default": "",
+            "example": "/resources/{id}"
+          },
+          "linked_account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding Create schema."
+              }
+            ],
+            "title": "Linked Account Id",
+            "description": "The caller's own linked account whose stored token authorizes the read."
+          },
+          "replace": {
+            "type": "boolean",
+            "title": "Replace",
+            "description": "Release the version's current binding and bind it anew. Without it a version that is already bound is refused with `binding-already-bound`.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DraftBindingCreate",
+        "description": "Bind a draft version to a repository ref and source path.\n\nExactly one of ``repository_id`` and ``repo_url`` identifies the repository: a registered\ntenant repository (whose stored linked-account credential authorizes the read) or a URL, for a\npublic repository or one the caller's own linked account can reach. A credential is never\naccepted in the body."
+      },
+      "DraftBindingDetail": {
+        "properties": {
+          "binding": {
+            "$ref": "#/components/schemas/DraftBindingRecord",
+            "description": "Binding."
+          },
+          "pending": {
+            "items": {
+              "$ref": "#/components/schemas/SyncCandidateRecord"
+            },
+            "type": "array",
+            "title": "Pending",
+            "description": "Outstanding sync candidates, newest first.",
+            "maxItems": 1000
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/SyncCandidateRecord"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Settled candidates, newest first \u2014 applied, dismissed, and superseded.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "binding"
+        ],
+        "title": "DraftBindingDetail",
+        "description": "A binding with what is outstanding on it and what has already been settled."
+      },
+      "DraftBindingRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The binding id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "The bound draft version (revision).",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "The version's label, e.g. `1.2.0`."
+          },
+          "repository_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Repository Id",
+            "description": "The registered tenant repository the binding was authorized through; null once that registration is removed, which leaves the binding readable but unusable."
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "`github`, `gitlab`, or `bitbucket`.",
+            "example": "example"
+          },
+          "repo_full_name": {
+            "type": "string",
+            "title": "Repo Full Name",
+            "description": "Lowercased `owner/name`.",
+            "example": "Example"
+          },
+          "repo_url": {
+            "type": "string",
+            "title": "Repo Url",
+            "description": "Canonical repository URL.",
+            "example": "https://example.com/resource"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref",
+            "description": "Branch or tag the draft is the review unit of.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path or glob selecting the source; empty is the whole tree.",
+            "default": "",
+            "example": "/resources/{id}"
+          },
+          "commit_sha": {
+            "type": "string",
+            "title": "Commit Sha",
+            "description": "Commit the binding is currently synchronized with.",
+            "example": "example"
+          },
+          "source_digest": {
+            "type": "string",
+            "title": "Source Digest",
+            "description": "`sha256:` digest of the selected source at `commit_sha`.",
+            "example": "example"
+          },
+          "synchronized_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Synchronized At",
+            "description": "When `commit_sha` / `source_digest` last moved.",
+            "example": "2026-09-16T23:17:38Z"
+          },
+          "browse_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Browse Url",
+            "description": "Human URL for the bound source at `commit_sha`."
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "description": "True while this is the draft's binding.",
+            "example": false
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Who bound it; null once that user is deleted."
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Created By Name",
+            "description": "Their display name."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "released_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Released At",
+            "description": "When it stopped being the draft's binding; null while it is."
+          },
+          "released_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Released By",
+            "description": "Who released it."
+          },
+          "release_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "replaced",
+                  "unbound",
+                  "repository_removed"
+                ],
+                "description": "Draft Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Draft Binding schema."
+              }
+            ],
+            "title": "Release Reason",
+            "description": "`replaced`, `unbound`, or `repository_removed`."
+          },
+          "pending_candidate_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Candidate Count",
+            "description": "Outstanding sync candidates on this binding.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "project_id",
+          "version_id",
+          "provider",
+          "repo_full_name",
+          "repo_url",
+          "ref",
+          "commit_sha",
+          "source_digest",
+          "synchronized_at",
+          "active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DraftBindingRecord",
+        "description": "One stored binding \u2014 active or released."
       },
       "DriftFinding": {
         "properties": {
@@ -135309,7 +136563,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           }
         },
         "additionalProperties": false,
@@ -146332,6 +147586,247 @@
         "title": "SurfaceSelection",
         "description": "A whole picked surface, as the UI picker submits it.\n\nAttributes:\n    operations: The picked operations. Refused when empty \u2014 an empty contract declares\n        nothing and would silently exempt the consumer from every future analysis.\n    note: Optional free text explaining the revision."
       },
+      "SyncCandidateRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The candidate id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "binding_id": {
+            "type": "string",
+            "title": "Binding Id",
+            "description": "Binding ID.",
+            "example": "binding_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref",
+            "description": "The ref the movement was seen on.",
+            "example": "example"
+          },
+          "from_commit_sha": {
+            "type": "string",
+            "title": "From Commit Sha",
+            "description": "The binding's synchronized commit when it was observed.",
+            "example": "example"
+          },
+          "from_digest": {
+            "type": "string",
+            "title": "From Digest",
+            "description": "The binding's source digest when it was observed.",
+            "example": "example"
+          },
+          "to_commit_sha": {
+            "type": "string",
+            "title": "To Commit Sha",
+            "description": "The commit the ref now points at.",
+            "example": "example"
+          },
+          "to_digest": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "To Digest",
+            "description": "Digest of the selected source at `to_commit_sha`; null until that source has been read, because a provider delivery names a commit and not a document."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "webhook",
+              "manual",
+              "sweep"
+            ],
+            "title": "Origin",
+            "description": "`webhook`, `manual`, or `sweep`.",
+            "example": "webhook"
+          },
+          "delivery_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Delivery Id",
+            "description": "Provider delivery that raised it."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "applied",
+              "dismissed",
+              "superseded"
+            ],
+            "title": "Status",
+            "description": "`pending`, `applied`, `dismissed`, or `superseded`.",
+            "example": "pending"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Detected At",
+            "description": "Detected At timestamp (ISO 8601).",
+            "example": "2026-09-16T23:17:38Z"
+          },
+          "detected_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Detected By",
+            "description": "Who raised it, for a manual check."
+          },
+          "detected_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Detected By Name",
+            "description": "Their display name."
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Resolved At",
+            "description": "When it settled; null while pending."
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Resolved By",
+            "description": "Who settled it."
+          },
+          "resolved_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Resolved By Name",
+            "description": "Their display name."
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate schema."
+              }
+            ],
+            "title": "Resolution Note",
+            "description": "Why, in the resolver's words."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "binding_id",
+          "tenant_id",
+          "ref",
+          "from_commit_sha",
+          "from_digest",
+          "to_commit_sha",
+          "origin",
+          "status",
+          "detected_at"
+        ],
+        "title": "SyncCandidateRecord",
+        "description": "One observed movement of a bound ref."
+      },
+      "SyncCandidateResolve": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "applied",
+              "dismissed"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "applied"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Sync Candidate Resolve schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Candidate Resolve schema."
+              }
+            ],
+            "title": "Note",
+            "description": "Note."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "SyncCandidateResolve",
+        "description": "Settle an outstanding sync candidate.\n\nAttributes:\n    status: ``applied`` \u2014 the draft is now in sync with the candidate's commit, so the\n        binding's synchronized pair advances to it \u2014 or ``dismissed``, which leaves the\n        binding exactly where it is.\n    note: Why, kept with the settled row."
+      },
       "SynthesizedInstance": {
         "properties": {
           "id": {
@@ -152304,14 +153799,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-16T02:32:03Z"
+            "example": "2026-09-16T23:17:38Z"
           },
           "outcome": {
             "anyOf": [
@@ -154214,6 +155709,72 @@
         ],
         "title": "VerifyResponse",
         "description": "The outcome of an ownership check."
+      },
+      "VersionBindingStatus": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Project version identifier or semantic version label, depending on context.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Version Binding schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Binding schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Version Label."
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "description": "Published versions cannot be bound; an existing binding stays readable.",
+            "example": false
+          },
+          "bound": {
+            "type": "boolean",
+            "title": "Bound",
+            "description": "Whether the version has an active binding.",
+            "example": false
+          },
+          "binding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DraftBindingDetail"
+              },
+              {
+                "type": "null",
+                "description": "Version Binding schema."
+              }
+            ],
+            "description": "The active binding, when there is one."
+          },
+          "released": {
+            "items": {
+              "$ref": "#/components/schemas/DraftBindingRecord"
+            },
+            "type": "array",
+            "title": "Released",
+            "description": "Previously active bindings, newest first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version_id",
+          "published",
+          "bound"
+        ],
+        "title": "VersionBindingStatus",
+        "description": "Where one version stands with respect to a repository."
       },
       "VersionBranchCreateRequest": {
         "properties": {

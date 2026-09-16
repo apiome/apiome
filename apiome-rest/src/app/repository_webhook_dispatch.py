@@ -54,7 +54,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .repository_webhook_ingest import (
@@ -168,6 +168,7 @@ class WebhookIngestResult:
         repository_id: The repository the delivery drove, when it resolved to one.
         branch: The branch the delivery was about, when parsed.
         poll_due: True when the repository was made due for the refresh sweep.
+        binding_candidates: Sync candidates raised on drafts bound to the moved ref (GNC-2.1).
     """
 
     outcome: str
@@ -176,6 +177,7 @@ class WebhookIngestResult:
     repository_id: Optional[str] = None
     branch: Optional[str] = None
     poll_due: bool = False
+    binding_candidates: int = 0
 
 
 def _first_header(headers: Mapping[str, Any], names: Tuple[str, ...]) -> Optional[str]:
@@ -355,6 +357,81 @@ def _tracked_branches(db: Any, repository_id: str) -> List[str]:
             "repository webhook tracked-branch lookup failed repository_id=%s", repository_id
         )
         return []
+
+
+def _moved_ref(event: ParsedWebhookEvent) -> Optional[Tuple[str, str]]:
+    """The ref and commit a delivery reports as having moved, for binding purposes (GNC-2.1).
+
+    A push moves the branch it names. A pull request does **not** move its base branch — its head
+    commit belongs to the head branch — so only a same-repository head is reported, and only for an
+    action that means the head actually moved. A fork head is not a ref of this repository at all.
+
+    Args:
+        event: The parsed delivery.
+
+    Returns:
+        ``(ref, commit_sha)``, or ``None`` when the delivery moved no ref of this repository.
+    """
+    if not event.head_sha:
+        return None
+    if event.kind == EVENT_KIND_PUSH:
+        return (event.branch, event.head_sha) if event.branch else None
+    if event.kind == EVENT_KIND_PULL_REQUEST:
+        if not event.pr_head_in_repo or not event.pr_head_branch:
+            return None
+        if event.action and event.action not in PULL_REQUEST_ACTIONS:
+            return None
+        return event.pr_head_branch, event.head_sha
+    return None
+
+
+def _raise_binding_candidates(
+    db: Any,
+    subscription: Mapping[str, Any],
+    event: ParsedWebhookEvent,
+    delivery: DeliveryHeaders,
+) -> int:
+    """Turn a reported ref movement into sync candidates on the drafts bound to it (GNC-2.1).
+
+    Deliberately **outside** the tracked-branch gate the scan dispatch applies: a branch a draft is
+    bound to need never have been imported from, and a binding is exactly the durable review unit
+    that gate has no knowledge of. Nothing about any draft changes — a candidate is a row saying
+    "this ref moved", which someone then applies or dismisses.
+
+    Best-effort by design: a binding-store fault must not turn a verified delivery into a 500 the
+    provider will retry forever. The count rides on the acceptance audit, so a failure shows up as
+    a missing candidate against a recorded delivery rather than as silence.
+
+    Args:
+        db: Database handle.
+        subscription: The verified subscription.
+        event: The parsed delivery.
+        delivery: The delivery's provider metadata; its id is the redelivery idempotency key.
+
+    Returns:
+        How many candidates were raised.
+    """
+    moved = _moved_ref(event)
+    if not moved:
+        return 0
+    ref, head_sha = moved
+    try:
+        from .draft_binding_store import record_ref_update
+
+        return record_ref_update(
+            db,
+            repository_id=str(subscription["repository_id"]),
+            ref=ref,
+            to_commit_sha=head_sha,
+            delivery_id=delivery.delivery_id,
+        )
+    except Exception:
+        _logger.exception(
+            "draft binding sync candidates not raised repository_id=%s ref=%s",
+            subscription.get("repository_id"),
+            ref,
+        )
+        return 0
 
 
 def _dispatch_push(
@@ -619,6 +696,10 @@ def ingest_webhook_delivery(
             repository_id=str(subscription["repository_id"]),
         )
 
+    # GNC-2.1: a moved ref becomes a sync candidate on every draft bound to it, whether or not the
+    # scan dispatch below finds anything to do with the delivery.
+    binding_candidates = _raise_binding_candidates(db, subscription, event, delivery)
+
     if event.kind == EVENT_KIND_PUSH:
         result = _dispatch_push(db, subscription, event)
     elif event.kind == EVENT_KIND_PULL_REQUEST:
@@ -629,6 +710,7 @@ def ingest_webhook_delivery(
             reason=REASON_MALFORMED_PAYLOAD,
             repository_id=str(subscription["repository_id"]),
         )
+    result = replace(result, binding_candidates=binding_candidates)
 
     row, stored = _record(
         db,
@@ -650,6 +732,7 @@ def ingest_webhook_delivery(
             reason=None,
             repository_id=result.repository_id,
             branch=result.branch,
+            binding_candidates=result.binding_candidates,
         )
 
     # Any delivery that got this far verified, so it counts towards "the hook is firing"
@@ -657,7 +740,9 @@ def ingest_webhook_delivery(
     # audit answers "which push caused this re-import" and an ignored delivery caused none.
     _touch(db, subscription, delivery)
 
-    if result.outcome in (OUTCOME_ENQUEUED, OUTCOME_PREVIEW_SCAN):
+    # An accepted delivery is audited; so is one that did no scan work but moved a bound ref,
+    # because "which push raised this sync candidate" is the same question the ledger exists for.
+    if result.outcome in (OUTCOME_ENQUEUED, OUTCOME_PREVIEW_SCAN) or result.binding_candidates:
         _audit(
             db,
             action=WEBHOOK_ACCEPTED_ACTION,
@@ -675,6 +760,8 @@ def ingest_webhook_delivery(
                 "outcome": result.outcome,
                 "jobsEnqueued": result.jobs_enqueued,
                 "pollDue": result.poll_due,
+                # Drafts bound to the moved ref that now have a sync candidate (GNC-2.1, #4737).
+                "bindingCandidates": result.binding_candidates,
                 # Which of the subscription's two secrets verified this delivery (REPO-4.7).
                 # `previous` means the provider is still signing with the outgoing secret and
                 # this delivery only worked because the grace window is open — the audit trail
