@@ -110,6 +110,7 @@ export default function AdeAppShell({ children }: AdeAppShellProps) {
           userName={user?.name}
           userEmail={user?.email}
           userId={userId}
+          currentTenantId={currentTenantId}
           iconRail={iconRail}
         />
       )}

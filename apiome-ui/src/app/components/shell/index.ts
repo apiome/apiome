@@ -84,6 +84,8 @@ export {
   registerShortcutSheetHost,
   subscribeShortcutSheet,
 } from './shortcutSheetBus';
+export { default as NotificationsMenu } from './NotificationsMenu';
+export type { NotificationsMenuProps } from './NotificationsMenu';
 export { default as UserMenu } from './UserMenu';
 export type { UserMenuProps } from './UserMenu';
 export { default as WorkspaceSwitcher, formatWorkspaceMeta, WORKSPACE_ROLE_TONE } from './WorkspaceSwitcher';

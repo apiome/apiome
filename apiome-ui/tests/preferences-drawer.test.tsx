@@ -47,6 +47,8 @@ import {
   matchesShortcutChord,
 } from '../lib/shortcuts';
 import { TABS } from '../src/app/components/ade/PreferencesDrawer';
+import { NOTIFICATION_TYPES } from '../lib/notifications';
+import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
 import type { PreferencesTabId } from '../src/app/components/ade/preferences/preferencesDrawerBus';
 import { ThemeProvider } from '../src/app/providers/ThemeProvider';
 
@@ -485,7 +487,7 @@ describe('the other tabs', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('offers no notification controls while none can be delivered', async () => {
+  it('switches the five in-app notification types on and off (COL-3.2, #4522)', async () => {
     const user = userEvent.setup();
     renderHost();
     await openPane(user);
@@ -493,9 +495,35 @@ describe('the other tabs', () => {
     await user.click(screen.getByRole('tab', { name: 'Notifications' }));
     const panel = screen.getByTestId('preferences-notifications');
 
-    expect(panel).toHaveTextContent('Notifications are not available yet');
-    expect(within(panel).queryByRole('switch')).not.toBeInTheDocument();
-    expect(within(panel).queryByRole('checkbox')).not.toBeInTheDocument();
+    // One switch per event type COL-3.1 writes, all on until the reader says otherwise.
+    const switches = within(panel).getAllByRole('switch');
+    expect(switches).toHaveLength(NOTIFICATION_TYPES.length);
+    for (const control of switches) expect(control).toHaveAttribute('aria-checked', 'true');
+
+    const mention = panel.querySelector('[data-switch="notify-mention"]') as HTMLElement;
+    await user.click(mention);
+
+    // Applied immediately, to the same kind of `localStorage` key the rest of the pane
+    // writes — and read back by the bell and the notification centre.
+    expect(mention).toHaveAttribute('aria-checked', 'false');
+    expect(window.localStorage.getItem(NOTIFICATION_PREFERENCE_KEYS.mention)).toBe('off');
+
+    await user.click(mention);
+    expect(window.localStorage.getItem(NOTIFICATION_PREFERENCE_KEYS.mention)).toBe('on');
+  });
+
+  it('still says that email and chat delivery are not here yet', async () => {
+    const user = userEvent.setup();
+    renderHost();
+    await openPane(user);
+
+    await user.click(screen.getByRole('tab', { name: 'Notifications' }));
+    const panel = screen.getByTestId('preferences-notifications');
+
+    // The five switches govern the in-app centre only. A tab that let the reader infer
+    // otherwise would be the same mistake HIVE-1.4 left it empty to avoid.
+    expect(panel).toHaveTextContent('Email digests and chat delivery are not available yet');
+    expect(panel).toHaveTextContent('apply to this device');
   });
 
   it('documents only shortcuts that are bound right now (HIVE-3.7, #5293)', async () => {

@@ -64,6 +64,7 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
+import { isUuid } from '@lib/comment-discussion';
 import { useProjectUnresolvedTotal } from '../../../components/ade/discussion/useProjectUnresolvedTotal';
 import { getStudioWorkspaceRoute } from '@lib/external-links';
 import PageHeader from '../../../components/shell/PageHeader';
@@ -375,6 +376,8 @@ const Versions = () => {
   const [versionsMainTab, setVersionsMainTab] = useState<
     'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion' | 'discussion'
   >('timeline');
+  /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
+  const [focusThreadId, setFocusThreadId] = useState<string | null>(null);
   /* Change reports are part of the git-like publication flow, so the UI gate
      is the union of the env opt-out and the master git-like feature flag.
      When git-like is off, all change-report panels, tabs, and publish-preview
@@ -745,6 +748,29 @@ const Versions = () => {
       return projects.find((p) => isProjectPublishable(p))?.id ?? '';
     });
   }, [projects, searchParams]);
+
+  /**
+   * The COL-3.2 deep link: `?tab=discussion&thread=<id>` (#4522).
+   *
+   * A notification about a mention or a resolved thread lands here, and has to arrive on
+   * the Discussion tab with its own thread picked out — a reader sent to a project's
+   * timeline to go looking for the comment they were told about has not been deep-linked.
+   *
+   * The applied value is remembered in a ref so a re-render caused by anything else cannot
+   * drag the reader back to the tab the URL names: the link decides the tab *once*, when it
+   * changes, and their next click owns it after that. Following a second notification while
+   * already on this screen is a soft navigation with new parameters, which this sees.
+   */
+  const appliedDeepLinkRef = useRef<string | null>(null);
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const thread = searchParams.get('thread');
+    const applied = `${tab ?? ''}|${thread ?? ''}`;
+    if (appliedDeepLinkRef.current === applied) return;
+    appliedDeepLinkRef.current = applied;
+    if (tab === 'discussion') setVersionsMainTab('discussion');
+    setFocusThreadId(thread && isUuid(thread) ? thread : null);
+  }, [searchParams]);
 
   useEffect(() => {
     if (selectedProjectId) {
@@ -3524,6 +3550,7 @@ const Versions = () => {
             versions={versions}
             workspaceRoute={studioWorkspaceRoute}
             onUnresolvedTotalChange={setDiscussionUnresolved}
+            focusThreadId={focusThreadId}
           />
         ) : null}
 

@@ -9,14 +9,21 @@ import { openPreferences } from '@/app/components/ade/preferences/preferencesDra
 import { cn } from '@lib/utils';
 import { HELP_ROUTE } from './appShellRoutes';
 import { RAIL_ITEM_CLASS, RAIL_ITEM_HOVER_CLASS, RailTooltip } from './railChrome';
+import NotificationsMenu from './NotificationsMenu';
 import UserMenu from './UserMenu';
 
 /**
  * The rail footer (HIVE-3.4, #5290; `DESIGN.md` §5.2 region 5).
  *
- * Three rows, in the order the mockup draws them (`docs/mockups/assets/hive.js`
- * `.rail__bottom`): **Help & docs**, **Preferences** (`⌘,`), and the user button — an
- * avatar with a name and an email that opens the account menu.
+ * Four rows, in the order the mockup draws them (`docs/mockups/assets/hive.js`
+ * `.rail__bottom`), plus one this epic did not have: **Notifications**, **Help & docs**,
+ * **Preferences** (`⌘,`), and the user button — an avatar with a name and an email that
+ * opens the account menu.
+ *
+ * The bell is COL-3.2 (#4522). It is here rather than above the page because the header
+ * that would have carried it is the one HIVE-3.8 retired — this footer is where the rest
+ * of that header's right-hand cluster already went — and it is *first* because it is the
+ * only row whose content changes while the reader is looking at it.
  *
  * This region is the reason the top bar can be retired. Everything the header's right-hand
  * cluster carried now has a home: the profile menu and the version badge in
@@ -24,10 +31,10 @@ import UserMenu from './UserMenu';
  * clicks in. HIVE-3.1 shipped an interim version of this file with a profile *link* where
  * the menu now is; that link is gone, and nothing it reached went with it.
  *
- * Two rows and a menu rather than everything in the menu, because the two are what a
- * reader wants without deciding to go looking: help when they are stuck, and preferences
- * because the theme, the density and the font size are the settings people actually
- * change. `DESIGN.md` §5.2 makes the same call.
+ * Help and Preferences are rows rather than entries in the account menu, because the two
+ * are what a reader wants without deciding to go looking: help when they are stuck, and
+ * preferences because the theme, the density and the font size are the settings people
+ * actually change. `DESIGN.md` §5.2 makes the same call.
  */
 
 /** Props for {@link RailFooter}. */
@@ -38,6 +45,13 @@ export interface RailFooterProps {
   userEmail?: string | null;
   /** Stable id the avatar tint is hashed from; falls back to the name. */
   userId?: string | null;
+  /**
+   * The caller's current tenant, when the session names one.
+   *
+   * Only the notification bell needs it: an inbox is tenant-scoped, and without one there
+   * is nothing to read.
+   */
+  currentTenantId?: string | null;
   /** Whether the rail is drawing icon-only, in which case every label moves to a tooltip. */
   iconRail: boolean;
   /**
@@ -53,17 +67,20 @@ export interface RailFooterProps {
  * The rail footer.
  *
  * @param props See {@link RailFooterProps}.
- * @returns Help, preferences and the user menu, above a hairline.
+ * @returns Notifications, help, preferences and the user menu, above a hairline.
  */
 export default function RailFooter({
   userName,
   userEmail,
   userId,
+  currentTenantId,
   iconRail,
   signOutTo,
 }: RailFooterProps) {
   return (
     <div className="shrink-0 space-y-0.5 border-t border-border px-3 py-2">
+      <NotificationsMenu currentTenantId={currentTenantId} iconRail={iconRail} />
+
       <RailTooltip label="Help & docs" when={iconRail}>
         <Link
           href={HELP_ROUTE}
