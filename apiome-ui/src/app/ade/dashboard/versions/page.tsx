@@ -6,6 +6,7 @@ import { useAuthSession } from '@lib/auth/session-client';
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Check,
+  GitBranch,
   GitBranchPlus,
   Loader2,
   Package,
@@ -64,6 +65,7 @@ import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
 import { ProjectDiscussionPanel } from '../../../components/ade/discussion/ProjectDiscussionPanel';
+import { VersionBindingPanel } from '../../../components/ade/bindings';
 import { isUuid } from '@lib/comment-discussion';
 import { useProjectUnresolvedTotal } from '../../../components/ade/discussion/useProjectUnresolvedTotal';
 import { getStudioWorkspaceRoute } from '@lib/external-links';
@@ -372,9 +374,9 @@ const Versions = () => {
     toVersionLabel?: string;
   } | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
-  /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476) vs the Schema Test Bench (IXH-5.3, #5115) vs the project Discussion panel (COL-1.3, #4515). */
+  /** Timeline vs publication change report (CR-05, #2703; gated by `NEXT_PUBLIC_CHANGE_REPORT_UI`) vs stored changelog (CTG-3.2, #4476) vs the Schema Test Bench (IXH-5.3, #5115) vs the project Discussion panel (COL-1.3, #4515) vs the repository binding (GNC-2.1, #4737). */
   const [versionsMainTab, setVersionsMainTab] = useState<
-    'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion' | 'discussion'
+    'timeline' | 'change-report' | 'changes' | 'test-bench' | 'conversion' | 'discussion' | 'repository'
   >('timeline');
   /** The thread a COL-3.2 notification deep link asked the Discussion tab to pick out (#4522). */
   const [focusThreadId, setFocusThreadId] = useState<string | null>(null);
@@ -3025,8 +3027,11 @@ const Versions = () => {
   const [discussionUnresolved, setDiscussionUnresolved] = useProjectUnresolvedTotal(selectedProjectId);
   /** Where a thread's "open in Studio" link points; null when the suite is not configured. */
   const studioWorkspaceRoute = useMemo(() => getStudioWorkspaceRoute(), []);
+  /** Every project has a Repository tab (GNC-2.1, #4737): a draft is bound to a branch from there. */
+  const showRepositoryTab = Boolean(selectedProjectId);
   /** The tab actually rendered: falls back to the timeline when the selected tab's surface is unavailable. */
   const effectiveMainTab =
+    (versionsMainTab === 'repository' && !showRepositoryTab) ||
     (versionsMainTab === 'discussion' && !showDiscussionTab) ||
     (versionsMainTab === 'change-report' && !showChangeReportTab) ||
     (versionsMainTab === 'changes' && !showChangesTab) ||
@@ -3325,6 +3330,20 @@ const Versions = () => {
           ) : null}
         </button>
       ) : null}
+      {showRepositoryTab ? (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={effectiveMainTab === 'repository'}
+          data-testid="versions-tab-repository"
+          className={tabTriggerClass({ active: effectiveMainTab === 'repository' })}
+          title="Bind a draft version to a repository branch and source path"
+          onClick={() => setVersionsMainTab('repository')}
+        >
+          <GitBranch className="ver-tab-glyph" aria-hidden />
+          Repository
+        </button>
+      ) : null}
     </div>
   ) : undefined;
 
@@ -3552,6 +3571,19 @@ const Versions = () => {
             onUnresolvedTotalChange={setDiscussionUnresolved}
             focusThreadId={focusThreadId}
           />
+        ) : null}
+
+        {showRepositoryTab && effectiveMainTab === 'repository' && selectedProjectId ? (
+          /* Repository binding (GNC-2.1, #4737): which branch and source path this draft is the
+             API review unit of, and what is waiting to be decided about it. */
+          <Card className="ver-panel">
+            <VersionBindingPanel
+              key={selectedProjectId}
+              projectId={selectedProjectId}
+              versions={versions}
+              initialVersionId={selectedVersion?.id ?? null}
+            />
+          </Card>
         ) : null}
 
         {showTestBenchTab && effectiveMainTab === 'test-bench' && selectedProject?.slug ? (

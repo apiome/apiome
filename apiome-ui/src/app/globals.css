@@ -32802,3 +32802,273 @@ tr:focus-within .pub-url__glyph {
     inset 3px 0 0 var(--honey),
     inset 0 -1px 0 var(--border);
 }
+
+/* ==========================================================================
+   Repository binding (GNC-2.1, #4737) — `components/ade/bindings`
+   ==========================================================================
+   The Repository tab of the Versions screen: which branch and source path a
+   draft is the review unit of, and what is waiting to be decided about it.
+
+   The panel sits in the Versions screen's own `.ver-panel` card and borrows
+   rather than restates: `FormField`, `Input`, `.hive-control` for the two
+   native pickers, `Badge` for every state, `Alert`, `EmptyState`,
+   `LoadingState`, and `.mono` (HIVE-1.4) for refs, paths, and digests.
+   `.bnd-*` is only the layout.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. Quiet text is
+   `--fg-muted`, never a fade; the one link is inked `--fg` and underlined on
+   hover and focus rather than `--accent`, which measures under 4.5:1 on this
+   surface in three themes (HIVE-8.1's finding).
+   ========================================================================== */
+
+.bnd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  padding: var(--space-4);
+}
+
+.bnd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.bnd-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.bnd-select {
+  min-inline-size: 12rem;
+  max-inline-size: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.bnd-state {
+  padding: var(--space-4);
+}
+
+/* ---- the binding itself ------------------------------------------------- */
+
+.bnd-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.bnd-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.bnd-card__title {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.bnd-card__glyph {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.bnd-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  text-decoration: none;
+}
+
+.bnd-card__link:hover,
+.bnd-card__link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.bnd-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.bnd-facts__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.bnd-facts__row dt {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.bnd-facts__row dd {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.bnd-facts__digest {
+  font-size: var(--fs-xs);
+}
+
+/* ---- binding form ------------------------------------------------------- */
+
+.bnd-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.bnd-form__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.bnd-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.bnd-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+/* ---- candidates and history --------------------------------------------- */
+
+.bnd-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.bnd-section__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.bnd-section__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.bnd-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
+
+.bnd-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.bnd-candidate__what {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.bnd-candidate__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.bnd-candidate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-1);
+}
+
+.bnd-settled {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.bnd-settled__what {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.bnd-settled__who,
+.bnd-settled__note {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.bnd-settled--released .bnd-settled__what {
+  color: var(--fg-muted);
+}

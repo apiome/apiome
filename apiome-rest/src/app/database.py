@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 import bcrypt
 import numpy as np
 import psycopg2
+from psycopg2 import errors as pg_errors
 from psycopg2.extras import Json, RealDictCursor
 
 from .axis_score import (
@@ -17,6 +18,16 @@ from .axis_score import (
     mcp_axis_evaluation,
 )
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
+from .draft_bindings import (
+    AUDIT_BOUND as AUDIT_BINDING_BOUND,
+    AUDIT_CANDIDATE_RAISED as AUDIT_BINDING_CANDIDATE_RAISED,
+    AUDIT_CANDIDATE_RESOLVED as AUDIT_BINDING_CANDIDATE_RESOLVED,
+    AUDIT_REBOUND as AUDIT_BINDING_REBOUND,
+    AUDIT_RELEASED as AUDIT_BINDING_RELEASED,
+    RELEASE_REASON_REPLACED,
+    RELEASE_REASON_REPOSITORY_REMOVED,
+    STATUS_APPLIED as STATUS_BINDING_APPLIED,
+)
 from .jsonschema_generator import generate_class_jsonschema_spec
 from .lint_evidence import (
     SUBJECT_CATALOG_REVISION,
@@ -19103,24 +19114,42 @@ class Database:
             raise e
 
     def delete_tenant_repository(self, tenant_id: str, repository_id: str) -> bool:
-        """Soft-delete a tenant repository (sets ``deleted_at``). Returns True if a row was updated."""
-        q = """
-            UPDATE apiome.tenant_repositories
-            SET deleted_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
-            RETURNING id
+        """Soft-delete a tenant repository (sets ``deleted_at``). Returns True if a row was updated.
+
+        De-registering also releases every draft binding authorized through this repository
+        (GNC-2.1, #4737), in the same transaction: the credential those bindings read with is gone,
+        so none of them can raise or apply another sync candidate, and an "active" binding nobody
+        can act on would be a lie. The rows stay as history, stamped ``repository_removed``.
+
+        Args:
+            tenant_id: The owning tenant.
+            repository_id: The repository to de-register.
+
+        Returns:
+            ``True`` when a registration was found and soft-deleted.
         """
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(q, (repository_id, tenant_id))
-                row = cursor.fetchone()
-                conn.commit()
-                return bool(row)
-        except Exception as e:
-            conn.rollback()
-            raise e
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, repository_id)):
+            return False
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.tenant_repositories
+                SET deleted_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+                RETURNING id
+                """,
+                (repository_id, tenant_id),
+            )
+            if not cursor.fetchone():
+                return None
+            self._release_bindings_for_repository(
+                cursor, tenant_id=tenant_id, repository_id=repository_id
+            )
+            return True
+
+        return bool(self._guarded_tx(work))
 
     # -----------------------------------------------------------------------
     # MCP Catalog — endpoint registration & management (MCAT-3.1, #3663)
@@ -33301,7 +33330,7 @@ class Database:
     """
 
     @staticmethod
-    def _insert_review_audit(
+    def _insert_workflow_audit_tx(
         cursor: Any,
         *,
         tenant_id: str,
@@ -33311,19 +33340,22 @@ class Database:
         actor_id: Optional[str],
         detail: Dict[str, Any],
     ) -> None:
-        """Append a ``review.*`` row to ``workflow_audit`` inside the caller's transaction.
+        """Append one ``workflow_audit`` row inside the caller's open transaction.
 
         Unlike :meth:`insert_workflow_audit`, this is not best-effort: the audit row commits or
-        rolls back together with the change it records.
+        rolls back together with the change it records. Introduced for review transitions
+        (COL-2.1, #4517) and shared by branch-to-draft bindings (GNC-2.1, #4737), whose binds,
+        releases, and sync candidates carry the same evidence requirement.
 
         Args:
             cursor: The open transaction's cursor.
             tenant_id: The tenant.
             project_id: The project.
-            version_id: The reviewed version.
-            action: A ``review.*`` action from :mod:`app.review_lifecycle`.
+            version_id: The version the event concerns.
+            action: The workflow verb — a ``review.*`` action from :mod:`app.review_lifecycle` or a
+                ``binding.*`` action from :mod:`app.draft_bindings`.
             actor_id: The acting user.
-            detail: Structured context; always includes ``review_id`` and ``round``.
+            detail: Structured context for the event.
         """
         cursor.execute(
             """
@@ -33601,7 +33633,7 @@ class Database:
                 """,
                 (review_id, list(reviewer_ids)),
             )
-            self._insert_review_audit(
+            self._insert_workflow_audit_tx(
                 cursor,
                 tenant_id=tenant_id,
                 project_id=project_id,
@@ -33688,7 +33720,7 @@ class Database:
                 """,
                 (review_id, next_round, list(reviewer_ids)),
             )
-            self._insert_review_audit(
+            self._insert_workflow_audit_tx(
                 cursor,
                 tenant_id=tenant_id,
                 project_id=project_id,
@@ -33789,7 +33821,7 @@ class Database:
                 "version_id": str(current["version_id"]),
                 "actor_id": user_id,
             }
-            self._insert_review_audit(
+            self._insert_workflow_audit_tx(
                 cursor,
                 **audit,
                 action=AUDIT_DECISION,
@@ -33803,7 +33835,7 @@ class Database:
             )
             from_state = str(current["state"])
             if to_state != from_state:
-                self._insert_review_audit(
+                self._insert_workflow_audit_tx(
                     cursor,
                     **audit,
                     action=AUDIT_STATE_CHANGED,
@@ -33859,7 +33891,7 @@ class Database:
             row = cursor.fetchone()
             if not row:
                 return None
-            self._insert_review_audit(
+            self._insert_workflow_audit_tx(
                 cursor,
                 tenant_id=tenant_id,
                 project_id=project_id,
@@ -34107,6 +34139,797 @@ class Database:
         )
         return [str(row["user_id"]) for row in rows]
 
+    # -----------------------------------------------------------------------------------------
+    # Branch-to-draft bindings (GNC-2.1, #4737)
+    # -----------------------------------------------------------------------------------------
+
+    #: Binding columns, with the binder's display name and the version's label read fresh rather
+    #: than stored, and the outstanding-candidate tally computed alongside.
+    _BINDING_COLUMNS = """
+        b.id::text AS id, b.tenant_id::text AS tenant_id, b.project_id::text AS project_id,
+        b.version_id::text AS version_id, v.version_id AS version_label,
+        b.repository_id::text AS repository_id,
+        b.provider, b.repo_full_name, b.repo_url, b.ref, b.path,
+        b.commit_sha, b.source_digest, b.synchronized_at,
+        (b.released_at IS NULL) AS active,
+        b.created_by::text AS created_by,
+        (SELECT cu.name FROM apiome.users cu WHERE cu.id = b.created_by) AS created_by_name,
+        b.created_at, b.updated_at,
+        b.released_at, b.released_by::text AS released_by, b.release_reason,
+        COALESCE(pending.count, 0)::int AS pending_candidate_count
+    """
+
+    #: The joins ``_BINDING_COLUMNS`` reads from. The version label comes from the bound revision;
+    #: the tally is a lateral so a binding with no candidates still produces a row.
+    _BINDING_FROM = """
+        apiome.draft_repository_bindings b
+        JOIN apiome.versions v ON v.id = b.version_id
+        LEFT JOIN LATERAL (
+            SELECT COUNT(*) AS count
+            FROM apiome.draft_binding_sync_candidates c
+            WHERE c.binding_id = b.id AND c.status = 'pending'
+        ) pending ON TRUE
+    """
+
+    #: Sync-candidate columns, with both actors' display names read fresh.
+    _BINDING_CANDIDATE_COLUMNS = """
+        c.id::text AS id, c.binding_id::text AS binding_id, c.tenant_id::text AS tenant_id,
+        c.ref, c.from_commit_sha, c.from_digest, c.to_commit_sha, c.to_digest,
+        c.origin, c.delivery_id, c.status,
+        c.detected_at, c.detected_by::text AS detected_by,
+        (SELECT du.name FROM apiome.users du WHERE du.id = c.detected_by) AS detected_by_name,
+        c.resolved_at, c.resolved_by::text AS resolved_by,
+        (SELECT ru.name FROM apiome.users ru WHERE ru.id = c.resolved_by) AS resolved_by_name,
+        c.resolution_note
+    """
+
+    def get_draft_binding(
+        self, *, tenant_id: str, project_id: str, binding_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one binding inside a tenant's project (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project the binding must belong to.
+            binding_id: The binding.
+
+        Returns:
+            The binding row, or ``None`` when it is not there (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, binding_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._BINDING_COLUMNS}
+            FROM {self._BINDING_FROM}
+            WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid AND b.project_id = %s::uuid
+            """,
+            (binding_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def get_active_draft_binding(
+        self, *, tenant_id: str, project_id: str, version_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read a version's active binding, if it has one (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: The version.
+
+        Returns:
+            The binding row, or ``None``.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, version_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._BINDING_COLUMNS}
+            FROM {self._BINDING_FROM}
+            WHERE b.version_id = %s::uuid AND b.tenant_id = %s::uuid AND b.project_id = %s::uuid
+              AND b.released_at IS NULL
+            """,
+            (version_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    @staticmethod
+    def _draft_binding_filters(
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str],
+        active: Optional[bool],
+    ) -> Optional[Tuple[str, List[Any]]]:
+        """Build the WHERE clause shared by the binding list and count reads.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only bindings of this version, when given.
+            active: ``True`` for active bindings, ``False`` for released ones, ``None`` for both.
+
+        Returns:
+            ``(sql, params)``, or ``None`` when any supplied id is not a UUID (nothing can match).
+        """
+        ids = [tenant_id, project_id, *([version_id] if version_id else [])]
+        if not all(is_uuid_string(str(value)) for value in ids):
+            return None
+        clauses = ["b.tenant_id = %s::uuid", "b.project_id = %s::uuid"]
+        params: List[Any] = [tenant_id, project_id]
+        if version_id:
+            clauses.append("b.version_id = %s::uuid")
+            params.append(version_id)
+        if active is True:
+            clauses.append("b.released_at IS NULL")
+        elif active is False:
+            clauses.append("b.released_at IS NOT NULL")
+        return " AND ".join(clauses), params
+
+    def list_draft_bindings(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        active: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List a project's bindings, active and released, newest first (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only this version's bindings.
+            active: Only active or only released bindings.
+            limit: Page size.
+            offset: Bindings to skip.
+
+        Returns:
+            The page of binding rows.
+        """
+        built = self._draft_binding_filters(
+            tenant_id=tenant_id, project_id=project_id, version_id=version_id, active=active
+        )
+        if built is None:
+            return []
+        where_sql, params = built
+        rows = self.execute_query(
+            f"""
+            SELECT {self._BINDING_COLUMNS}
+            FROM {self._BINDING_FROM}
+            WHERE {where_sql}
+            ORDER BY b.created_at DESC, b.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params + [max(1, int(limit)), max(0, int(offset))]),
+        )
+        return [dict(row) for row in rows]
+
+    def count_draft_bindings(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: Optional[str] = None,
+        active: Optional[bool] = None,
+    ) -> int:
+        """Count the bindings :meth:`list_draft_bindings` would page through.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project.
+            version_id: Only this version's bindings.
+            active: Only active or only released bindings.
+
+        Returns:
+            The total.
+        """
+        built = self._draft_binding_filters(
+            tenant_id=tenant_id, project_id=project_id, version_id=version_id, active=active
+        )
+        if built is None:
+            return 0
+        where_sql, params = built
+        rows = self.execute_query(
+            f"SELECT COUNT(*)::int AS total FROM apiome.draft_repository_bindings b WHERE {where_sql}",
+            tuple(params),
+        )
+        return int(rows[0]["total"]) if rows else 0
+
+    def list_binding_sync_candidates(
+        self,
+        *,
+        tenant_id: str,
+        binding_id: str,
+        pending_only: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List one binding's sync candidates, newest first (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The caller's tenant.
+            binding_id: The binding.
+            pending_only: ``True`` for outstanding candidates, ``False`` for settled ones,
+                ``None`` for both.
+            limit: Page size.
+            offset: Candidates to skip.
+
+        Returns:
+            The page of candidate rows.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, binding_id)):
+            return []
+        clauses = ["c.tenant_id = %s::uuid", "c.binding_id = %s::uuid"]
+        params: List[Any] = [tenant_id, binding_id]
+        if pending_only is True:
+            clauses.append("c.status = 'pending'")
+        elif pending_only is False:
+            clauses.append("c.status <> 'pending'")
+        rows = self.execute_query(
+            f"""
+            SELECT {self._BINDING_CANDIDATE_COLUMNS}
+            FROM apiome.draft_binding_sync_candidates c
+            WHERE {" AND ".join(clauses)}
+            ORDER BY c.detected_at DESC, c.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params + [max(1, int(limit)), max(0, int(offset))]),
+        )
+        return [dict(row) for row in rows]
+
+    def get_binding_sync_candidate(
+        self, *, tenant_id: str, binding_id: str, candidate_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one sync candidate of one binding (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The caller's tenant.
+            binding_id: The binding the candidate must belong to.
+            candidate_id: The candidate.
+
+        Returns:
+            The candidate row, or ``None``.
+        """
+        ids = (tenant_id, binding_id, candidate_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._BINDING_CANDIDATE_COLUMNS}
+            FROM apiome.draft_binding_sync_candidates c
+            WHERE c.id = %s::uuid AND c.binding_id = %s::uuid AND c.tenant_id = %s::uuid
+            """,
+            (candidate_id, binding_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def find_active_bindings_for_repository_ref(
+        self, *, repository_id: str, ref: str
+    ) -> List[Dict[str, Any]]:
+        """Find the active bindings a repository ref update concerns (GNC-2.1, #4737).
+
+        The webhook path's only read. Bindings whose registration has been removed
+        (``repository_id IS NULL``) are unreachable by construction, which is the intent: a
+        de-registered repository has no verified credential to read the new commit with.
+
+        Args:
+            repository_id: The registered tenant repository the delivery resolved to.
+            ref: The short ref (no ``refs/heads/`` prefix) the delivery was about.
+
+        Returns:
+            One row per active binding: ``id``, ``tenant_id``, ``project_id``, ``version_id``,
+            ``commit_sha``, ``source_digest``, ``path``.
+        """
+        if not is_uuid_string(str(repository_id or "")) or not str(ref or "").strip():
+            return []
+        rows = self.execute_query(
+            """
+            SELECT b.id::text AS id, b.tenant_id::text AS tenant_id,
+                   b.project_id::text AS project_id, b.version_id::text AS version_id,
+                   b.commit_sha, b.source_digest, b.path, b.ref
+            FROM apiome.draft_repository_bindings b
+            WHERE b.repository_id = %s::uuid AND b.ref = %s AND b.released_at IS NULL
+            ORDER BY b.created_at
+            """,
+            (repository_id, str(ref).strip()),
+        )
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def _lock_draft_binding(
+        cursor: Any, *, tenant_id: str, binding_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Lock one binding for the rest of the transaction.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant.
+            binding_id: The binding.
+
+        Returns:
+            ``{"project_id", "version_id", "ref", "path", "commit_sha", "source_digest",
+            "released"}``, or ``None`` when there is no such binding in the tenant.
+        """
+        cursor.execute(
+            """
+            SELECT b.project_id::text AS project_id, b.version_id::text AS version_id,
+                   b.ref, b.path, b.commit_sha, b.source_digest,
+                   (b.released_at IS NOT NULL) AS released
+            FROM apiome.draft_repository_bindings b
+            WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid
+            FOR UPDATE
+            """,
+            (binding_id, tenant_id),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def _release_bindings_for_repository(
+        self, cursor: Any, *, tenant_id: str, repository_id: str
+    ) -> int:
+        """Release every active binding of a de-registered repository, inside the caller's tx.
+
+        The releaser is NULL: nobody released these bindings personally, the registration they
+        depended on went away. Their outstanding candidates are superseded for the same reason a
+        release supersedes them — a binding that cannot be read from can never settle one.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant.
+            repository_id: The repository being de-registered.
+
+        Returns:
+            How many bindings were released.
+        """
+        cursor.execute(
+            """
+            UPDATE apiome.draft_repository_bindings b
+            SET released_at = CURRENT_TIMESTAMP, release_reason = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE b.repository_id = %s::uuid AND b.tenant_id = %s::uuid AND b.released_at IS NULL
+            RETURNING b.id::text AS id, b.project_id::text AS project_id,
+                      b.version_id::text AS version_id, b.ref, b.commit_sha
+            """,
+            (RELEASE_REASON_REPOSITORY_REMOVED, repository_id, tenant_id),
+        )
+        released = [dict(row) for row in (cursor.fetchall() or [])]
+        for binding in released:
+            cursor.execute(
+                """
+                UPDATE apiome.draft_binding_sync_candidates
+                SET status = 'superseded', resolved_at = CURRENT_TIMESTAMP
+                WHERE binding_id = %s::uuid AND status = 'pending'
+                """,
+                (binding["id"],),
+            )
+            superseded = int(cursor.rowcount or 0)
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=str(binding["project_id"]),
+                version_id=str(binding["version_id"]),
+                action=AUDIT_BINDING_RELEASED,
+                actor_id=None,
+                detail={
+                    "binding_id": str(binding["id"]),
+                    "reason": RELEASE_REASON_REPOSITORY_REMOVED,
+                    "repository_id": repository_id,
+                    "ref": str(binding["ref"]),
+                    "commit_sha": str(binding["commit_sha"]),
+                    "candidates_superseded": superseded,
+                },
+            )
+        return len(released)
+
+    def insert_draft_binding(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        repository_id: Optional[str],
+        provider: str,
+        repo_full_name: str,
+        repo_url: str,
+        ref: str,
+        path: str,
+        commit_sha: str,
+        source_digest: str,
+        created_by: str,
+        replace: bool,
+    ) -> Optional[Dict[str, Any]]:
+        """Bind a draft version to a repository ref, releasing the current binding if asked.
+
+        The version's active binding — when there is one — is locked for the transaction, so two
+        concurrent binds cannot both see "nothing bound". When there is none to lock, V264's
+        partial unique index is the backstop and the loser is answered ``None``.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project.
+            version_id: The draft version being bound.
+            repository_id: The registered repository the read was authorized through, if any.
+            provider: Provider key.
+            repo_full_name: Lowercased ``owner/name``.
+            repo_url: Canonical repository URL.
+            ref: Short ref.
+            path: Path or glob selecting the source.
+            commit_sha: The commit the digest was taken at.
+            source_digest: Digest of the selected source at that commit.
+            created_by: The binding user.
+            replace: Release an existing active binding first; without it an already-bound version
+                is refused.
+
+        Returns:
+            ``{"binding_id", "released_binding_id"}``, or ``None`` when the version was already
+            bound and ``replace`` was not asked for, or when a concurrent bind won the race.
+        """
+        ids = (tenant_id, project_id, version_id, created_by)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        if repository_id is not None and not is_uuid_string(str(repository_id)):
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                SELECT id::text AS id FROM apiome.draft_repository_bindings
+                WHERE version_id = %s::uuid AND tenant_id = %s::uuid AND released_at IS NULL
+                FOR UPDATE
+                """,
+                (version_id, tenant_id),
+            )
+            existing = cursor.fetchone()
+            released_id: Optional[str] = None
+            if existing:
+                if not replace:
+                    return None
+                released_id = str(existing["id"])
+                cursor.execute(
+                    """
+                    UPDATE apiome.draft_repository_bindings
+                    SET released_at = CURRENT_TIMESTAMP, released_by = %s::uuid,
+                        release_reason = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid AND released_at IS NULL
+                    """,
+                    (created_by, RELEASE_REASON_REPLACED, released_id),
+                )
+
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.draft_repository_bindings (
+                        tenant_id, project_id, version_id, repository_id, provider,
+                        repo_full_name, repo_url, ref, path, commit_sha, source_digest, created_by
+                    )
+                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
+                            %s, %s, %s, %s, %s, %s, %s::uuid)
+                    RETURNING id::text AS id
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        version_id,
+                        repository_id,
+                        provider,
+                        repo_full_name,
+                        repo_url,
+                        ref,
+                        path,
+                        commit_sha,
+                        source_digest,
+                        created_by,
+                    ),
+                )
+            except pg_errors.UniqueViolation:
+                # Another bind committed between the lock attempt and here: there was no row to
+                # lock, so both saw "nothing bound". The index is the arbiter; the loser is told
+                # nothing happened and the store re-reads to name the refusal.
+                return None
+            row = cursor.fetchone()
+            if not row:
+                return None
+            binding_id = str(row["id"])
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=version_id,
+                action=(AUDIT_BINDING_REBOUND if released_id else AUDIT_BINDING_BOUND),
+                actor_id=created_by,
+                detail={
+                    "binding_id": binding_id,
+                    "released_binding_id": released_id,
+                    "repository_id": repository_id,
+                    "provider": provider,
+                    "repository_full_name": repo_full_name,
+                    "ref": ref,
+                    "path": path,
+                    "commit_sha": commit_sha,
+                    "source_digest": source_digest,
+                },
+            )
+            return {"binding_id": binding_id, "released_binding_id": released_id}
+
+        return self._guarded_tx(work)
+
+    def release_draft_binding(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        binding_id: str,
+        actor_id: Optional[str],
+        reason: str,
+    ) -> bool:
+        """Release an active binding, keeping the row as history (GNC-2.1, #4737).
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project.
+            binding_id: The binding.
+            actor_id: The releasing user, or ``None`` for a system release.
+            reason: One of ``app.draft_bindings.RELEASE_REASONS``.
+
+        Returns:
+            ``True`` when the binding was active and is now released.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, project_id, binding_id)):
+            return False
+        if actor_id is not None and not is_uuid_string(str(actor_id)):
+            return False
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.draft_repository_bindings b
+                SET released_at = CURRENT_TIMESTAMP, released_by = %s::uuid,
+                    release_reason = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid AND b.project_id = %s::uuid
+                  AND b.released_at IS NULL
+                RETURNING b.version_id::text AS version_id, b.ref, b.commit_sha
+                """,
+                (actor_id, reason, binding_id, tenant_id, project_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            # Outstanding candidates of a released binding can never be acted on; settling them
+            # here keeps "pending" meaning "still decidable" everywhere it is read.
+            cursor.execute(
+                """
+                UPDATE apiome.draft_binding_sync_candidates
+                SET status = 'superseded', resolved_at = CURRENT_TIMESTAMP, resolved_by = %s::uuid
+                WHERE binding_id = %s::uuid AND status = 'pending'
+                """,
+                (actor_id, binding_id),
+            )
+            superseded = int(cursor.rowcount or 0)
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=str(row["version_id"]),
+                action=AUDIT_BINDING_RELEASED,
+                actor_id=actor_id,
+                detail={
+                    "binding_id": binding_id,
+                    "reason": reason,
+                    "ref": str(row["ref"]),
+                    "commit_sha": str(row["commit_sha"]),
+                    "candidates_superseded": superseded,
+                },
+            )
+            return True
+
+        return bool(self._guarded_tx(work))
+
+    def raise_binding_sync_candidate(
+        self,
+        *,
+        tenant_id: str,
+        binding_id: str,
+        to_commit_sha: str,
+        origin: str,
+        delivery_id: Optional[str] = None,
+        detected_by: Optional[str] = None,
+        to_digest: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Record that a bound ref moved, as a pending candidate (GNC-2.1, #4737).
+
+        Nothing about the draft changes. The binding is locked so the ``from`` pair is the one the
+        candidate is really measured against, and the insert is ``ON CONFLICT DO NOTHING`` against
+        both of V264's partial unique indexes — a redelivery of the same head, and a redelivery of
+        a candidate somebody already dismissed, are both no-ops. Any older outstanding candidate on
+        the same binding is superseded, so at most one is ever decidable.
+
+        Args:
+            tenant_id: The tenant.
+            binding_id: The binding whose ref moved.
+            to_commit_sha: The commit the ref now points at.
+            origin: ``webhook``, ``manual``, or ``sweep``.
+            delivery_id: The provider delivery that reported it, when there was one.
+            detected_by: The user who asked for the check, for a manual one.
+            to_digest: Digest of the source at the new commit, when it has already been read.
+
+        Returns:
+            ``{"candidate_id", "superseded"}`` when a candidate was raised, or ``None`` when
+            nothing was — the binding is gone or released, the ref has not actually moved, or the
+            candidate already exists.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, binding_id)):
+            return None
+        if detected_by is not None and not is_uuid_string(str(detected_by)):
+            return None
+        head = str(to_commit_sha or "").strip()
+        if not head:
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            binding = self._lock_draft_binding(cursor, tenant_id=tenant_id, binding_id=binding_id)
+            if not binding or binding["released"]:
+                return None
+            if str(binding["commit_sha"]) == head:
+                # The ref is exactly where the binding already is: there is nothing to synchronize.
+                return None
+            cursor.execute(
+                """
+                INSERT INTO apiome.draft_binding_sync_candidates (
+                    binding_id, tenant_id, ref, from_commit_sha, from_digest,
+                    to_commit_sha, to_digest, origin, delivery_id, detected_by
+                )
+                VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
+                ON CONFLICT DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (
+                    binding_id,
+                    tenant_id,
+                    str(binding["ref"]),
+                    str(binding["commit_sha"]),
+                    str(binding["source_digest"]),
+                    head,
+                    to_digest,
+                    origin,
+                    delivery_id,
+                    detected_by,
+                ),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            candidate_id = str(row["id"])
+            cursor.execute(
+                """
+                UPDATE apiome.draft_binding_sync_candidates
+                SET status = 'superseded', resolved_at = CURRENT_TIMESTAMP
+                WHERE binding_id = %s::uuid AND status = 'pending' AND id <> %s::uuid
+                """,
+                (binding_id, candidate_id),
+            )
+            superseded = int(cursor.rowcount or 0)
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=str(binding["project_id"]),
+                version_id=str(binding["version_id"]),
+                action=AUDIT_BINDING_CANDIDATE_RAISED,
+                actor_id=detected_by,
+                detail={
+                    "binding_id": binding_id,
+                    "candidate_id": candidate_id,
+                    "ref": str(binding["ref"]),
+                    "from_commit_sha": str(binding["commit_sha"]),
+                    "to_commit_sha": head,
+                    "origin": origin,
+                    "delivery_id": delivery_id,
+                    "superseded": superseded,
+                },
+            )
+            return {"candidate_id": candidate_id, "superseded": superseded}
+
+        return self._guarded_tx(work)
+
+    def resolve_binding_sync_candidate(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        binding_id: str,
+        candidate_id: str,
+        status: str,
+        actor_id: str,
+        note: Optional[str] = None,
+        to_digest: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Settle an outstanding candidate, advancing the binding when it is applied.
+
+        ``applied`` means the draft is in sync with the candidate's commit, so the binding's
+        synchronized pair moves to it — that pair is the base GNC-2.3's three-way synchronization
+        diffs the next update against, and leaving it behind would make every later comparison
+        replay changes already reconciled. ``dismissed`` leaves the binding exactly where it is.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project, for the audit row.
+            binding_id: The binding.
+            candidate_id: The candidate to settle.
+            status: ``applied`` or ``dismissed``.
+            actor_id: The resolving user.
+            note: Why, kept with the settled row.
+            to_digest: Digest of the source at the candidate's commit. Required to apply — the
+                binding's digest must describe content that was actually read.
+
+        Returns:
+            ``{"candidate_id", "commit_sha", "source_digest"}`` on success, or ``None`` when the
+            candidate was not pending, the binding is released, or an id is not a UUID.
+        """
+        ids = (tenant_id, project_id, binding_id, candidate_id, actor_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        if status == STATUS_BINDING_APPLIED and not (to_digest or "").strip():
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            binding = self._lock_draft_binding(cursor, tenant_id=tenant_id, binding_id=binding_id)
+            if not binding or binding["released"] or str(binding["project_id"]) != str(project_id):
+                return None
+            cursor.execute(
+                """
+                UPDATE apiome.draft_binding_sync_candidates
+                SET status = %s, to_digest = COALESCE(%s, to_digest),
+                    resolved_at = CURRENT_TIMESTAMP, resolved_by = %s::uuid, resolution_note = %s
+                WHERE id = %s::uuid AND binding_id = %s::uuid AND tenant_id = %s::uuid
+                  AND status = 'pending'
+                RETURNING to_commit_sha, from_commit_sha
+                """,
+                (status, to_digest, actor_id, note, candidate_id, binding_id, tenant_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            commit_sha = str(binding["commit_sha"])
+            source_digest = str(binding["source_digest"])
+            if status == STATUS_BINDING_APPLIED:
+                commit_sha = str(row["to_commit_sha"])
+                source_digest = str(to_digest)
+                cursor.execute(
+                    """
+                    UPDATE apiome.draft_repository_bindings
+                    SET commit_sha = %s, source_digest = %s,
+                        synchronized_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (commit_sha, source_digest, binding_id),
+                )
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=str(binding["version_id"]),
+                action=AUDIT_BINDING_CANDIDATE_RESOLVED,
+                actor_id=actor_id,
+                detail={
+                    "binding_id": binding_id,
+                    "candidate_id": candidate_id,
+                    "status": status,
+                    "from_commit_sha": str(row["from_commit_sha"]),
+                    "to_commit_sha": str(row["to_commit_sha"]),
+                    "commit_sha": commit_sha,
+                    "source_digest": source_digest,
+                },
+            )
+            return {
+                "candidate_id": candidate_id,
+                "commit_sha": commit_sha,
+                "source_digest": source_digest,
+            }
+
+        return self._guarded_tx(work)
 
 # Global database instance
 db = Database()

@@ -100,6 +100,10 @@ class FakeDb:
     def list_repository_import_spec_branches(self, repository_id):
         return list(self.tracked_branches)
 
+    def find_active_bindings_for_repository_ref(self, *, repository_id, ref):
+        # No draft is bound here; the binding path (GNC-2.1) has its own suite.
+        return []
+
     # -- writes --------------------------------------------------------------------------
 
     def record_repository_webhook_event(self, **kwargs):

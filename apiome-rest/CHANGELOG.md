@@ -5,6 +5,57 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.326.0] - 2026-09-16
+
+### Added
+- **Branch-to-draft binding (#4737, GNC-2.1)** — repository import creates a snapshot; it does not
+  create a durable review unit. A **binding** now pins one draft version to one provider,
+  repository, ref and source path, together with the digest of the source it is synchronized with,
+  and every observed movement of that ref becomes an explicit, auditable **sync candidate** instead
+  of quietly rewriting the draft.
+
+  ```bash
+  # Bind a draft to a branch. The ref is resolved and the selection read through a STORED
+  # credential first: that read is the authorization check, and it produces the commit and digest.
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/binding" \
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+       -d '{"repository_id":"…","ref":"main","path":"spec/openapi.yaml"}'
+
+  # Has the branch moved? A moved ref records a candidate; nothing about the draft changes.
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/binding/check" \
+       -H "Authorization: Bearer $TOKEN"
+
+  # Decide: `applied` re-reads the source at that commit and advances the binding's base;
+  # `dismissed` leaves it exactly where it is. A candidate settles once.
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/binding/candidates/$ID" \
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+       -d '{"status":"dismissed","note":"not ours to take"}'
+  ```
+
+  - apiome-db **V264**: `apiome.draft_repository_bindings` (one active binding per draft, backed by
+    a partial unique index; released rows kept as history and frozen by a trigger) and
+    `apiome.draft_binding_sync_candidates` (idempotent per target commit *and* per provider
+    delivery, settling exactly once). What a binding names never changes — only the synchronized
+    pair (`commit_sha`, `source_digest`) moves, and only while it is active.
+  - apiome-rest `app.draft_bindings` (vocabulary, models, codes, the digest — all pure),
+    `app.draft_binding_store` (the rules), `app.draft_binding_routes` (seven endpoints), and the
+    accessors at the end of `database.py`, whose `binding.*` audit rows are written **inside** each
+    write's transaction.
+  - **Authorization is a proven read, not a claim.** Binding, checking, and applying each resolve a
+    stored linked-account credential and actually read the ref and the selection through the
+    provider before anything is written. No token is ever accepted from a request body.
+  - **A ref update never rewrites a draft.** A verified provider delivery on a bound ref raises a
+    candidate through the *existing* REPO-4.3 webhook endpoint — deliberately outside its
+    tracked-branch gate, because a bound branch need never have been imported from. A push moves the
+    branch it names; a pull request moves its head branch, never its base.
+  - De-registering a repository releases every binding it authorized, in the same transaction as the
+    soft delete, reason `repository_removed`.
+  - `Database._insert_review_audit` was generalized to `_insert_workflow_audit_tx`; COL-2.1's five
+    call sites are unchanged in behaviour.
+  - Documented in `apiome-rest/docs/draft_bindings.md`. Writing back to the provider (check runs, PR
+    status) is GNC-2.2; merging repository changes into a draft is GNC-2.3, which will settle the
+    same candidates once it can reconcile without silent overwrite.
+
 ## [1.325.0] - 2026-09-15
 
 ### Added
