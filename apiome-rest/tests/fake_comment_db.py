@@ -26,8 +26,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from tests.fake_notification_db import NotificationDbMixin
 
-class FakeCommentDb:
+
+class FakeCommentDb(NotificationDbMixin):
     """A storage double for comment threads, projects, versions, members, and the RBAC guard.
 
     Attributes:
@@ -50,6 +52,7 @@ class FakeCommentDb:
         self.comments: Dict[str, Dict[str, Any]] = {}
         self.member_reads = 0
         self._now = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+        NotificationDbMixin.__init__(self)
 
     # -----------------------------------------------------------------------------------------
     # Seeding
@@ -210,8 +213,9 @@ class FakeCommentDb:
         created_by: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Open a thread with its first comment."""
+        """Open a thread with its first comment, and fan its mentions out with it."""
         now = self._tick()
         thread_id = str(uuid.uuid4())
         comment_id = str(uuid.uuid4())
@@ -241,7 +245,9 @@ class FakeCommentDb:
             "edited_at": None,
             "created_at": now,
         }
-        return {"thread_id": thread_id, "comment_id": comment_id}
+        produced = {"thread_id": thread_id, "comment_id": comment_id}
+        self._fan_out(tenant_id, notify, produced)
+        return produced
 
     def get_comment_thread(
         self, *, tenant_id: str, project_id: str, thread_id: str
@@ -317,8 +323,9 @@ class FakeCommentDb:
         author_id: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> Optional[str]:
-        """Reply to a thread and mark it active."""
+        """Reply to a thread, mark it active, and fan the reply's mentions out with it."""
         thread = self._scoped_thread(tenant_id, project_id, thread_id)
         if not thread:
             return None
@@ -334,6 +341,7 @@ class FakeCommentDb:
             "created_at": now,
         }
         thread["last_activity_at"] = now
+        self._fan_out(tenant_id, notify, {"thread_id": thread_id, "comment_id": comment_id})
         return comment_id
 
     def update_comment(
@@ -345,12 +353,14 @@ class FakeCommentDb:
         comment_id: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> bool:
         """Replace a comment's body and mentions, stamping the edit."""
         row = self.comments.get(comment_id)
         if not self._scoped_thread(tenant_id, project_id, thread_id) or not row or row["thread_id"] != thread_id:
             return False
         row.update(body=body, mentions=list(mentions), edited_at=self._tick())
+        self._fan_out(tenant_id, notify, {"thread_id": thread_id, "comment_id": comment_id})
         return True
 
     def delete_comment(
@@ -369,7 +379,14 @@ class FakeCommentDb:
         return outcome
 
     def set_comment_thread_status(
-        self, *, tenant_id: str, project_id: str, thread_id: str, status: str, actor_id: str
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        status: str,
+        actor_id: str,
+        notify: Optional[Any] = None,
     ) -> bool:
         """Resolve or reopen a thread; the current status, or an orphaned thread, is a no-op."""
         row = self._scoped_thread(tenant_id, project_id, thread_id)
@@ -384,6 +401,7 @@ class FakeCommentDb:
             updated_at=now,
             last_activity_at=now,
         )
+        self._fan_out(tenant_id, notify, {"thread_id": thread_id})
         return True
 
     def relink_comment_thread(

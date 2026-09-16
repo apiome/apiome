@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from app import comment_store
+from app import comment_store, notification_store
 from app.comments import CommentThreadCreate, CommentValidationError
 from tests.fake_comment_db import FakeCommentDb
 
@@ -35,6 +35,7 @@ def fake(monkeypatch) -> FakeCommentDb:
     store.add_member(AUTHOR, "Ada Author", "ada@example.com")
     store.admins.add((TENANT, ADMIN))
     monkeypatch.setattr(comment_store, "db", store)
+    monkeypatch.setattr(notification_store, "db", store)
     return store
 
 

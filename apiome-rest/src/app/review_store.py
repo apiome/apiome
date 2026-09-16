@@ -33,7 +33,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from . import comment_store
+from . import comment_store, notification_store
 from .comments import CommentValidationError
 from .compatibility_engine import openapi_for_revision
 from .database import db
@@ -540,6 +540,9 @@ def request_review(
         requested_by=actor,
         reviewer_ids=reviewers,
         spec_fingerprint=fingerprint,
+        notify=notification_store.review_requested_notifier(
+            project=project, version=version, actor_id=actor, reviewers=reviewers
+        ),
     )
     if not review_id:
         # The partial unique index turned the insert away: another request landed first.
@@ -602,6 +605,9 @@ def re_request_review(
         reviewer_ids=reviewers,
         spec_fingerprint=fingerprint,
         actor_id=actor,
+        notify=notification_store.review_requested_notifier(
+            project=project, version=version, actor_id=actor, reviewers=reviewers
+        ),
     )
     fresh = _review_row(tenant_id, project_id, str(row["id"]))
     if not outcome:
@@ -674,6 +680,9 @@ def record_decision(
         user_id=actor,
         decision=request.decision,
         note=note,
+        notify=notification_store.review_decision_notifier(
+            project=project, version=version, actor_id=actor, requested_by=row.get("requested_by")
+        ),
     )
     fresh = _review_row(tenant_id, project_id, str(row["id"]))
     if not outcome:

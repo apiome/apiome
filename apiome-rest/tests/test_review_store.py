@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from app import comment_store, review_store
+from app import comment_store, notification_store, review_store
 from app.reviews import (
     CODE_ALREADY_DECIDED,
     CODE_ALREADY_OPEN,
@@ -43,6 +43,7 @@ def fake(monkeypatch) -> FakeReviewDb:
         store.add_member(user_id, name, f"{name.lower()}@example.com")
     monkeypatch.setattr(comment_store, "db", store)
     monkeypatch.setattr(review_store, "db", store)
+    monkeypatch.setattr(notification_store, "db", store)
     monkeypatch.setattr(review_store, "spec_fingerprint", store.spec_fingerprint)
     return store
 

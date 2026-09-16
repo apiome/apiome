@@ -90,13 +90,16 @@ def is_valid_permission(resource: str, action: str) -> bool:
     return resource in RESOURCES and action in ACTIONS
 
 
-def _resolve_actor_id(db: Any, auth_data: Dict[str, Any]) -> Optional[str]:
+def resolve_actor_id(db: Any, auth_data: Dict[str, Any]) -> Optional[str]:
     """
     Resolve the acting user id for attribution/authorization.
 
     JWT: the ``user_id`` claim. API key: ``user_id`` when the key carries one, otherwise the tenant's
     fallback creator (legacy keys). Uses the *passed* ``db`` so route unit-tests that patch their
     module-level ``db`` exercise the guard against the same double.
+
+    Public because a route that acts only on the caller's *own* rows — the notification inbox
+    (COL-3.1, #4521) — needs the same identity without a ``resource:action`` to enforce.
     """
     raw = auth_data.get("user_id")
     if raw is not None and str(raw).strip() != "":
@@ -106,6 +109,10 @@ def _resolve_actor_id(db: Any, auth_data: Dict[str, Any]) -> Optional[str]:
         if tenant_id is not None and str(tenant_id).strip() != "":
             return db.get_fallback_creator_user_id_for_tenant(str(tenant_id))
     return None
+
+
+#: The spelling the guards in this module use; the same function.
+_resolve_actor_id = resolve_actor_id
 
 
 def _audit_denied(

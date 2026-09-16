@@ -16,13 +16,11 @@ The SQL text itself was exercised against a scratch database built from the real
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
-from typing import Any, List, Optional, Sequence
 
 import psycopg2
 import pytest
 
-from app.database import Database
+from tests.scripted_connection import ScriptedConnection, database_with
 
 TENANT = "9b1d2e30-4f5a-4b6c-8d7e-0f1a2b3c0001"
 PROJECT = "9b1d2e30-4f5a-4b6c-8d7e-0f1a2b3c0002"
@@ -33,66 +31,10 @@ BOB = "9b1d2e30-4f5a-4b6c-8d7e-0f1a2b3c0102"
 DAVE = "9b1d2e30-4f5a-4b6c-8d7e-0f1a2b3c0103"
 
 
-class _Cursor:
-    """A cursor that answers each statement with the connection's next scripted rows."""
-
-    def __init__(self, conn: "_Connection") -> None:
-        self._conn = conn
-        self._rows: List[Any] = []
-
-    def __enter__(self) -> "_Cursor":
-        return self
-
-    def __exit__(self, *exc: Any) -> bool:
-        return False
-
-    def execute(self, sql: str, params: Optional[Sequence[Any]] = None) -> None:
-        self._conn.statements.append((" ".join(sql.split()), params))
-        if self._conn.fail_on is not None and len(self._conn.statements) == self._conn.fail_on:
-            raise psycopg2.DatabaseError("boom")
-        self._rows = self._conn.responses.pop(0) if self._conn.responses else []
-
-    def fetchone(self) -> Any:
-        return self._rows[0] if self._rows else None
-
-    def fetchall(self) -> List[Any]:
-        return list(self._rows)
-
-
-class _Connection:
-    """A connection that records statements, commits, and rollbacks."""
-
-    def __init__(self, responses: Sequence[List[Any]], fail_on: Optional[int] = None) -> None:
-        self.responses = list(responses)
-        self.fail_on = fail_on
-        self.statements: List[Any] = []
-        self.commits = 0
-        self.rollbacks = 0
-        self.autocommit = True
-        self.closed = False
-        self.info = SimpleNamespace(transaction_status=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
-
-    def cursor(self) -> _Cursor:
-        return _Cursor(self)
-
-    def commit(self) -> None:
-        self.commits += 1
-
-    def rollback(self) -> None:
-        self.rollbacks += 1
-
-
-def _database(monkeypatch, conn: Optional[_Connection]) -> Database:
-    """A Database whose connection is ``conn``; connecting at all fails when ``conn`` is None."""
-    database = Database()
-
-    def connect() -> _Connection:
-        if conn is None:
-            raise AssertionError("a guarded call must not reach the database")
-        return conn
-
-    monkeypatch.setattr(database, "connect", connect)
-    return database
+# The scripted connection is shared with the notification accessor tests (COL-3.1, #4521); the
+# private spellings below keep this file's assertions unchanged.
+_Connection = ScriptedConnection
+_database = database_with
 
 
 def _audits(conn: _Connection):
