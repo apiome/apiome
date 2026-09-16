@@ -12,9 +12,10 @@
  *    `metadata.lifecycle`, `metadata.sunsetAt`) and the badge needs one word. {@link
  *    revisionStatus} settles the precedence, in the vocabulary `ui/statusVocabulary` already
  *    knows, so Home's badge and the Versions list cannot disagree.
- * 2. **What needs attention** — three unrelated sources (a sunset schedule, a stored lint
- *    report, a key's expiry) become one ranked list. Urgency is *days*, not source, so a key
- *    expiring tomorrow outranks a sunset three weeks out.
+ * 2. **What needs attention** — four unrelated sources (a sunset schedule, a stored lint
+ *    report, a key's expiry, and an open review — COL-2.4, #4520) become one ranked list.
+ *    Urgency is *days*, not source, so a key expiring tomorrow outranks a sunset three weeks
+ *    out.
  * 3. **The publishing pulse** — publish instants become twelve fixed weekly buckets. Bucketing
  *    here rather than in SQL keeps the query a plain `SELECT` of timestamps and makes the
  *    boundary arithmetic (which is where week bucketing goes wrong) testable against a fixed
@@ -83,8 +84,8 @@ export interface ContinueProject {
   touchedKind: 'edited' | 'published';
 }
 
-/** Which of the three sources an attention row came from. */
-export type AttentionKind = 'sunset' | 'lint' | 'key';
+/** Which of the four sources an attention row came from. */
+export type AttentionKind = 'sunset' | 'lint' | 'key' | 'review';
 
 /** One row of "Needs attention". */
 export interface AttentionItem {
@@ -263,11 +264,42 @@ export interface KeyRow {
   expiresAt: string;
 }
 
+/**
+ * A row of the review query: an open review this reader has something to do about
+ * (COL-2.4, #4520).
+ *
+ * Only two situations are rows — the query says which by setting {@link awaitingMe}:
+ *
+ * - the reader is a **pending reviewer of the current round**, so a decision is owed *by them*;
+ * - the reader **requested** the review and it came back `changes_requested`, so the work is
+ *   theirs again.
+ *
+ * Everything else about a review is news rather than a task: a reviewer's approval of somebody
+ * else's revision does not need the author's attention until they try to publish, and COL-2.4's
+ * pills already put that on the version row and the project card.
+ */
+export interface ReviewAttentionRow {
+  /** The review, which is also the `/ade/reviews/{id}` segment. */
+  reviewId: string;
+  /** The reviewed revision's label, e.g. `2.0.0`. */
+  versionLabel: string;
+  /** The project it belongs to. */
+  projectName: string;
+  /** Where the review stands. */
+  state: string;
+  /** True when the reader still owes a decision on the current round. */
+  awaitingMe: boolean;
+}
+
 /** Where each kind of attention row sends the reader. Routes that exist today, per the ticket. */
 export const ATTENTION_HREF: Readonly<Record<AttentionKind, string>> = {
   sunset: '/ade/dashboard/versions/sunset-timeline',
   lint: '/ade/dashboard/lint-workspace',
   key: '/ade/dashboard/api-keys',
+  // A review row links to its *own* page, `/ade/reviews/{id}`; this is the fallback for a row
+  // whose id did not survive the read, which lands the reader on the revisions list rather than
+  // on `/ade/reviews/undefined`.
+  review: '/ade/dashboard/versions',
 };
 
 /**
@@ -348,7 +380,38 @@ export function keyAttention(rows: readonly KeyRow[], now: Date): AttentionItem[
 }
 
 /**
- * Merge the three sources into the one list the panel draws.
+ * Turn open reviews into attention rows (COL-2.4, #4520).
+ *
+ * A review has no deadline, so — like a blocking lint finding — it is ranked as though its
+ * deadline were today: it is work available right now, more urgent than anything still in the
+ * future and less urgent than a date already missed.
+ *
+ * @param rows Reviews the reader owes a decision on, or had changes requested on.
+ * @returns One item per review.
+ */
+export function reviewAttention(rows: readonly ReviewAttentionRow[]): AttentionItem[] {
+  return rows.map((row) => {
+    const subject = `${row.projectName} ${row.versionLabel}`;
+    return {
+      id: `review:${row.reviewId}`,
+      kind: 'review' as const,
+      // Waiting on the reader is a task; changes requested on their own revision is a refusal,
+      // and it is what the COL-2.3 publish gate blocks on — the same grammar `lint` has.
+      tone: row.awaitingMe ? ('warn' as const) : ('danger' as const),
+      title: row.awaitingMe
+        ? `Your review of ${subject} is waiting`
+        : `Changes requested on ${subject}`,
+      detail: row.awaitingMe
+        ? 'Approve it or request changes on the review page'
+        : 'Address the feedback, then re-request the review',
+      href: row.reviewId ? `/ade/reviews/${encodeURIComponent(row.reviewId)}` : ATTENTION_HREF.review,
+      urgency: 0,
+    };
+  });
+}
+
+/**
+ * Merge the four sources into the one list the panel draws.
  *
  * Sorted by urgency — days remaining, so a missed deadline sorts first — then by title, which
  * makes the order deterministic when several things fall due on the same day. That matters for

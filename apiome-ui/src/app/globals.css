@@ -32315,3 +32315,71 @@ tr:focus-within .pub-url__glyph {
   overflow-wrap: anywhere;
   box-shadow: inset 1px 0 0 var(--border);
 }
+
+/* ==========================================================================
+   REVIEW STATUS SURFACES  (COL-2.4, #4520)
+   --------------------------------------------------------------------------
+   The pill that tells a reader a revision is in review before they reach the
+   review page — on version rows, project cards, the projects table and the
+   publish dialog — and the link out of the dialog's review panel.
+
+   Borrows rather than restates: the pill *is* `Badge` with the review's state
+   as its vocabulary string, so its tone comes from `statusVocabulary.ts` and
+   follows the reader's theme; the publish panel wears the `.ver-gate` chrome
+   the three existing gates already declare. `.rvs-*` is only what holds those
+   pieces together — the link box around the badge, its focus ring, and the
+   dialog's text link.
+
+   Token-only, nothing frozen in pixels beyond the focus hairline, and both
+   rules carry a zero minimum so a pill next to a long version label can never
+   push a table cell sideways.
+   ========================================================================== */
+
+.rvs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  border-radius: var(--r-full);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The badge already carries its own tint, so the hover affordance is the ring
+   the rest of the app spends on "this is a link", not a second fill. */
+.rvs-pill:hover {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.rvs-pill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rvs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--accent-fg);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.rvs-link:hover {
+  text-decoration: underline;
+}
+
+.rvs-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+.rvs-link svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+}

@@ -323,6 +323,17 @@ export const STATUS_TONE: Readonly<Record<string, StatusTone>> = {
   stable: 'ok',
   new: 'honey',
 
+  // ---- Review states (COL-2.1; surfaced by COL-2.4, #4520) -----------------
+  // The three states `reviews.state` stores, spelled exactly as the column does so a surface
+  // hands over the API's own string. `in_review` is the same amber as the `review` lifecycle
+  // word above — a decision is owed — and the two spellings are both listed because the
+  // lifecycle badge and the review pill sit side by side on a version row and must agree.
+  // `changes_requested` is `danger` rather than `warn`: it is a refusal, and it is what the
+  // COL-2.3 publish gate blocks on, which is the same grammar `failed` and `blocked` have.
+  in_review: 'warn',
+  approved: 'ok',
+  changes_requested: 'danger',
+
   // ---- Marked by a person --------------------------------------------------
   pinned: 'honey',
   starred: 'honey',

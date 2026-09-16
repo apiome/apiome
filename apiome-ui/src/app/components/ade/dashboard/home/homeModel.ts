@@ -28,6 +28,7 @@ import {
   Globe,
   KeyRound,
   Library,
+  MessageSquareCheck,
   Network,
   Upload,
   UserPlus,
@@ -403,6 +404,8 @@ export const ATTENTION_ICON: Readonly<Record<AttentionKind, LucideIcon>> = {
   sunset: Globe,
   lint: BellRing,
   key: KeyRound,
+  /** A review waiting on the reader, or one that came back with changes (COL-2.4, #4520). */
+  review: MessageSquareCheck,
 };
 
 /* -------------------------------------------------------------------------

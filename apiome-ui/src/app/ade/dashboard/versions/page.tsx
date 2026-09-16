@@ -213,6 +213,8 @@ import {
 import type { VersionLintReport } from '@/app/utils/version-lint-report';
 import type { VerificationPolicyDecision } from '../style-guides/verification-policy-api';
 import { useMockUsage } from '@/app/hooks/useMockUsage';
+import { useOpenReviews } from '@/app/hooks/useOpenReviews';
+import { lookupReview } from '@lib/review-status';
 
 /** Where the breadcrumb's first crumb goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -586,6 +588,18 @@ const Versions = () => {
   const { seriesByVersion: mockUsageByVersion } = useMockUsage({
     enabled: Boolean(selectedProject?.slug),
     projectSlug: selectedProject?.slug ?? null,
+  });
+
+  // The selected project's open reviews (COL-2.4, #4520). One read feeds both the table's
+  // Status column and the publish dialog's review panel, so a row and the dialog opened from
+  // it can never disagree about where a revision stands.
+  const {
+    byVersionId: reviewsByVersionId,
+    loading: reviewsLoading,
+    refresh: refreshOpenReviews,
+  } = useOpenReviews({
+    enabled: Boolean(selectedProjectId),
+    projectId: selectedProjectId || null,
   });
 
   /** Fold a successful mock toggle round-trip back into the versions table state (#4443). */
@@ -1583,6 +1597,9 @@ const Versions = () => {
         setShowPublishDialog(false);
         setPublishVersionId(null);
         await loadVersions();
+        // Publishing does not close an open review (COL-2.3 left that out), but it does move
+        // the revision, so the pills are re-read rather than left on the state they had.
+        refreshOpenReviews();
       } else {
         await alertDialog({ message: response.error || 'Failed to publish', variant: 'error' });
       }
@@ -3661,6 +3678,7 @@ const Versions = () => {
                   headRevisionId={headRevisionId}
                   tagsByVersionId={tagsByVersionId}
                   hasClassSchemaMap={hasClassSchemaMap}
+                  reviewsByVersionId={reviewsByVersionId}
                   effectiveIsAdmin={!!effectiveIsAdmin}
                   currentUserId={currentUserId}
                   hasBranches={versionBranches.length > 0}
@@ -3798,6 +3816,8 @@ const Versions = () => {
         }}
         version={publishVersion}
         projectSlug={selectedProject?.slug}
+        review={lookupReview(reviewsByVersionId, publishVersionId)}
+        reviewLoading={reviewsLoading}
         visibility={publishVisibility}
         onVisibilityChange={setPublishVisibility}
         note={publishShortMessage}

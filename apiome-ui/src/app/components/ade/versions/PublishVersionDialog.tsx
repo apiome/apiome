@@ -18,6 +18,14 @@
  * `publishForceReasonMissing` from what they report, and still disables the Publish button on
  * their union. This dialog receives those four booleans and draws them; it decides nothing.
  *
+ * ### The review panel (COL-2.4, #4520)
+ *
+ * A fourth card sits **above** the three gates: where the revision stands in review, the current
+ * round's tally, and a link to `/ade/reviews/{id}`. COL-2.3's approval gate is resolved by
+ * apiome-rest at publish time and refuses with a `422`; this is what stops that refusal being the
+ * first a publisher hears of a review. Like the change report, it reports and decides nothing —
+ * the four blockers below are unchanged, and a review never disables the Publish button.
+ *
  * ### Force publish
  *
  * The checkbox, the amber "prechecks will be bypassed" banner and the required reason are 1:1
@@ -54,6 +62,8 @@ import { Textarea } from '@/app/components/ui/Textarea';
 import { PublishGuideViolationsPanel } from '@/app/components/ade/dashboard/PublishGuideViolationsPanel';
 import { BreakingPublishGuardrailPanel } from '@/app/components/ade/dashboard/BreakingPublishGuardrailPanel';
 import VerificationPolicyDecisionPanel from '@/app/components/ade/dashboard/VerificationPolicyDecisionPanel';
+import { ReviewStatusPanel } from '@/app/components/ade/reviews/ReviewStatusPanel';
+import type { ReviewStatusRow } from '@lib/review-status';
 import type { BreakingPublishGuardrail } from '@/app/utils/breaking-publish-guardrail';
 import type { VersionLintReport } from '@/app/utils/version-lint-report';
 import type { VerificationPolicyDecision } from '@/app/ade/dashboard/style-guides/verification-policy-api';
@@ -109,6 +119,13 @@ export interface PublishVersionDialogProps {
   version: Version | null;
   /** The owning project's slug, for the verification policy evaluation. */
   projectSlug?: string;
+  /**
+   * The revision's open review (COL-2.4), or null when it has none. Read by the screen, not by
+   * this dialog, so the row and the dialog always agree.
+   */
+  review?: ReviewStatusRow | null;
+  /** True while that read is in flight — the panel waits rather than claiming "no review". */
+  reviewLoading?: boolean;
   visibility: PublishVisibility;
   onVisibilityChange: (next: PublishVisibility) => void;
   /** The revision note frozen with this publish. */
@@ -147,6 +164,8 @@ export default function PublishVersionDialog({
   onOpenChange,
   version,
   projectSlug,
+  review = null,
+  reviewLoading = false,
   visibility,
   onVisibilityChange,
   note,
@@ -325,6 +344,7 @@ export default function PublishVersionDialog({
               </h3>
               {version ? (
                 <>
+                  <ReviewStatusPanel review={review} loading={reviewLoading} />
                   <PublishGuideViolationsPanel
                     projectId={version.project_id}
                     versionId={version.id}
