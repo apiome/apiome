@@ -234,6 +234,7 @@ class FakeReviewDb(FakeCommentDb):
         requested_by: str,
         reviewer_ids: Sequence[str],
         spec_fingerprint: str,
+        notify: Optional[Any] = None,
     ) -> Optional[str]:
         """Request a review; ``None`` when the version already has an open review."""
         self._run_interleave()
@@ -270,6 +271,7 @@ class FakeReviewDb(FakeCommentDb):
                 "spec_fingerprint": spec_fingerprint,
             },
         )
+        self._fan_out(tenant_id, notify, {"review_id": review_id, "round": 1})
         return review_id
 
     def _open_review(self, tenant_id: str, project_id: str, review_id: str) -> Optional[Dict[str, Any]]:
@@ -287,6 +289,7 @@ class FakeReviewDb(FakeCommentDb):
         reviewer_ids: Sequence[str],
         spec_fingerprint: str,
         actor_id: str,
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """Start the next round; ``None`` when the guard fails."""
         self._run_interleave()
@@ -312,6 +315,7 @@ class FakeReviewDb(FakeCommentDb):
                 "spec_fingerprint": spec_fingerprint,
             },
         )
+        self._fan_out(tenant_id, notify, {"review_id": review_id, "round": next_round})
         return {"round": next_round, "from_state": from_state}
 
     def record_review_decision(
@@ -324,6 +328,7 @@ class FakeReviewDb(FakeCommentDb):
         user_id: str,
         decision: str,
         note: Optional[str],
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """Record a decision and fold the round; ``None`` when the guard fails."""
         self._run_interleave()
@@ -358,6 +363,17 @@ class FakeReviewDb(FakeCommentDb):
                 user_id,
                 {"review_id": review_id, "round": expected_round, "from_state": from_state, "to_state": to_state},
             )
+        self._fan_out(
+            tenant_id,
+            notify,
+            {
+                "review_id": review_id,
+                "round": expected_round,
+                "decision": decision,
+                "from_state": from_state,
+                "to_state": to_state,
+            },
+        )
         return {"from_state": from_state, "to_state": to_state}
 
     def withdraw_review(self, *, tenant_id: str, project_id: str, review_id: str, actor_id: str) -> bool:

@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 import pytest
 from fastapi.testclient import TestClient
 
-from app import comment_routes, comment_store
+from app import comment_routes, comment_store, notification_store
 from app.auth import validate_authentication
 from app.config import settings
 from app.main import app
@@ -70,6 +70,7 @@ def fake(monkeypatch) -> FakeCommentDb:
     store.admins.add((TENANT, CAROL_ADMIN))
     monkeypatch.setattr(comment_store, "db", store)
     monkeypatch.setattr(comment_routes, "db", store)
+    monkeypatch.setattr(notification_store, "db", store)
     return store
 
 

@@ -151,6 +151,7 @@ from .version_pull_payload import filter_version_pull_dump, resolve_pull_section
 from .version_quality_capture import capture_version_quality_score
 
 from .mock_settings_util import is_private_mock_mode
+from . import notification_store
 
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
@@ -2123,6 +2124,15 @@ async def publish_version(
         description=merged_sm,
         change_log=merged_cl,
         published_immutable=bool(pub_immutable),
+        # COL-3.1 (#4521): tell the version's collaborators — its review participants and its
+        # thread participants — in the publish's own transaction, so a published version always
+        # has its inbox rows and a refused publish never leaves any.
+        notify=notification_store.version_published_notifier(
+            tenant_id=auth_data["tenant_id"],
+            project=proj_pub or {"id": project_id},
+            version=existing,
+            actor_id=user_id,
+        ),
     )
 
     if not version:

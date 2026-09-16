@@ -29,8 +29,9 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from . import notification_store
 from .comment_mentions import MentionCandidate, resolve_mentions
 from .comments import (
     ANCHOR_VERSION,
@@ -45,6 +46,7 @@ from .comments import (
     CODE_THREAD_ORPHANED,
     CODE_VERSION_NOT_FOUND,
     STATUS_ORPHANED,
+    STATUS_RESOLVED,
     CommentRecord,
     CommentThreadCreate,
     CommentThreadDetail,
@@ -384,6 +386,47 @@ def _comment_row(thread_id: str, comment_id: str) -> Dict[str, Any]:
     return row
 
 
+def _mention_notifier(
+    tenant_id: str,
+    project: Mapping[str, Any],
+    thread: Mapping[str, Any],
+    *,
+    actor_id: Optional[str],
+    body: str,
+    mentions: List[str],
+    already_mentioned: Sequence[str] = (),
+) -> Optional[Any]:
+    """Build the mention fan-out for a comment written on an existing thread (COL-3.1, #4521).
+
+    The version is read only when the comment actually names somebody, so an ordinary reply costs
+    no extra query.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project: The project row.
+        thread: The thread row the comment belongs to.
+        actor_id: The comment's author.
+        body: The comment's Markdown.
+        mentions: The user ids its ``@name`` tokens resolved to.
+        already_mentioned: Members the previous text of an edited comment already named.
+
+    Returns:
+        The notifier, or ``None`` when the comment names nobody new.
+    """
+    if not mentions:
+        return None
+    return notification_store.comment_mention_notifier(
+        project=project,
+        version=db.get_version_by_id(str(thread.get("version_id") or ""), tenant_id),
+        anchor_type=str(thread.get("anchor_type") or ""),
+        anchor_id=thread.get("anchor_id"),
+        actor_id=actor_id,
+        body=body,
+        mentions=mentions,
+        already_mentioned=already_mentioned,
+    )
+
+
 # ---------------------------------------------------------------------------------------------
 # Threads
 # ---------------------------------------------------------------------------------------------
@@ -480,6 +523,7 @@ def create_thread(
         version_id, str(version.get("version_id") or version_id), request.anchor_type, request.anchor_id
     )
 
+    mentions = resolve_body_mentions(tenant_id, body)
     inserted = db.insert_comment_thread(
         tenant_id=tenant_id,
         project_id=project_id,
@@ -488,7 +532,16 @@ def create_thread(
         anchor_id=anchor_id,
         created_by=actor_id,
         body=body,
-        mentions=resolve_body_mentions(tenant_id, body),
+        mentions=mentions,
+        notify=notification_store.comment_mention_notifier(
+            project=project,
+            version=version,
+            anchor_type=request.anchor_type,
+            anchor_id=anchor_id,
+            actor_id=actor_id,
+            body=body,
+            mentions=mentions,
+        ),
     )
     if not inserted:
         raise CommentValidationError(CODE_FORBIDDEN, "a comment must be attributable to a user")
@@ -519,12 +572,21 @@ def set_thread_status(
     row = _thread_row(tenant_id, project_id, thread_id)
     _refuse_orphaned(row)
     if row.get("status") != status:
+        notify = None
+        if status == STATUS_RESOLVED:
+            notify = notification_store.thread_resolved_notifier(
+                project=project,
+                version=db.get_version_by_id(str(row["version_id"]), tenant_id),
+                thread=row,
+                actor_id=actor_id,
+            )
         db.set_comment_thread_status(
             tenant_id=tenant_id,
             project_id=project_id,
             thread_id=str(row["id"]),
             status=status,
             actor_id=actor_id,
+            notify=notify,
         )
         row = _thread_row(tenant_id, project_id, str(row["id"]))
         # The element may have been deleted between the read and the write; the write then did
@@ -638,13 +700,17 @@ def add_comment(
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     row = _thread_row(tenant_id, project_id, thread_id)
+    mentions = resolve_body_mentions(tenant_id, text)
     comment_id = db.insert_comment(
         tenant_id=tenant_id,
         project_id=project_id,
         thread_id=str(row["id"]),
         author_id=actor_id,
         body=text,
-        mentions=resolve_body_mentions(tenant_id, text),
+        mentions=mentions,
+        notify=_mention_notifier(
+            tenant_id, project, row, actor_id=actor_id, body=text, mentions=mentions
+        ),
     )
     if not comment_id:
         raise CommentValidationError(CODE_THREAD_NOT_FOUND, f"no thread '{thread_id}' in this project")
@@ -680,13 +746,23 @@ def edit_comment(
         raise CommentValidationError(
             CODE_FORBIDDEN, "only the comment's author or a tenant administrator can edit it"
         )
+    mentions = resolve_body_mentions(tenant_id, text)
     updated = db.update_comment(
         tenant_id=tenant_id,
         project_id=project_id,
         thread_id=str(thread["id"]),
         comment_id=str(comment["id"]),
         body=text,
-        mentions=resolve_body_mentions(tenant_id, text),
+        mentions=mentions,
+        notify=_mention_notifier(
+            tenant_id,
+            project,
+            thread,
+            actor_id=actor_id,
+            body=text,
+            mentions=mentions,
+            already_mentioned=[str(item) for item in (comment.get("mentions") or [])],
+        ),
     )
     if not updated:
         raise CommentValidationError(CODE_COMMENT_NOT_FOUND, f"no comment '{comment_id}' in this thread")

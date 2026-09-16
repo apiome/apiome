@@ -5,6 +5,49 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.325.0] - 2026-09-15
+
+### Added
+- **Notification model & fan-out (#4521, COL-3.1)** — the collaboration roadmap stops depending on
+  people polling pages. Every mention, review request, decision, thread resolution and publish now
+  writes one inbox row per person it concerns, **in the same transaction as the event itself**, and
+  three endpoints read that inbox.
+
+  ```bash
+  # The bell badge
+  curl -s "$APIOME/v1/tenants/acme/notifications/unread-count" -H "Authorization: Bearer $TOKEN"
+  # {"total":3,"by_type":{"mention":2,"review_requested":1,"review_decision":0,…}}
+
+  # The list behind the notification centre
+  curl -s "$APIOME/v1/tenants/acme/notifications?unread=true&limit=20" -H "Authorization: Bearer $TOKEN"
+
+  # Clearing it
+  curl -sX POST "$APIOME/v1/tenants/acme/notifications/read" \
+    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"all": true}'
+  ```
+
+  - **Storage** (apiome-db **V263**): `notifications` — recipient, tenant, `type`, `payload jsonb`,
+    `read_at`, plus the actor and the project/version the row points at, so a deleted destination
+    takes its dead links with it while "somebody mentioned you" survives that somebody leaving.
+  - **Five event types**: `mention` (an edit notifies only the members it *newly* names),
+    `review_requested` (every round's reviewers), `review_decision` (the member who asked for the
+    review), `thread_resolved` (everyone who took part), `version_published` (the version's
+    collaborators — its review and thread participants). Nobody is ever notified of their own
+    action, and a recipient set is bounded at 200.
+  - **Transactional fan-out**: each write accessor takes a `notify` callable and runs it inside its
+    own transaction, so a committed event always has its rows and a refused one leaves none. The
+    insert joins `users`, so a recipient deleted mid-flight is skipped rather than rolling the
+    event back.
+  - **Retention**: a statement-level trigger keeps each inbox to its newest 500 rows, so the bound
+    holds for every writer rather than depending on each one to remember.
+  - **API**: `GET /v1/tenants/{tenantSlug}/notifications` (filters `unread`, `type`, paged),
+    `GET …/notifications/unread-count` (total and per type, zeroes included), and
+    `POST …/notifications/read` (`ids` or `all`, idempotent, answering with the new count). All
+    three need only authentication — an inbox is the caller's own, which no `resource:action` can
+    express — and listing never marks anything read.
+  - Documented in `docs/notifications.md`. Per-type delivery preferences are **not** stored yet;
+    COL-3.2 needs them and should filter on read, not at write time.
+
 ## [1.324.0] - 2026-09-15
 
 ### Added

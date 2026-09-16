@@ -397,6 +397,93 @@ class Database:
         conn.autocommit = False
         return prev
 
+    def _guarded_tx(self, work: Any) -> Any:
+        """Run one guarded multi-statement write in a transaction.
+
+        Introduced for review writes (COL-2.1, #4517) and shared by every write that has to commit
+        several statements together — a comment and the inbox rows it fans out to (COL-3.1, #4521)
+        among them.
+
+        Args:
+            work: A callable taking the cursor. Returning ``None`` means its guard did not hold,
+                and everything it wrote is rolled back; any other value commits.
+
+        Returns:
+            Whatever ``work`` returned.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                result = work(cursor)
+            if result is None:
+                conn.rollback()
+            else:
+                conn.commit()
+            return result
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+
+    @staticmethod
+    def _insert_notifications(
+        cursor: Any,
+        *,
+        tenant_id: str,
+        notify: Optional[Any],
+        produced: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Write an event's inbox rows inside the caller's transaction (COL-3.1, #4521).
+
+        Fan-out is deliberately **not** best-effort. The rows commit or roll back with the comment,
+        decision, or publish that caused them, so a committed event always has its notifications and
+        a rolled-back one never leaves any behind. ``notify`` is a callable rather than a list
+        because most payloads need an id the write itself generated (the new thread, comment, or
+        review); it is called with what the write produced, once the write's guard has held.
+
+        Args:
+            cursor: The open transaction's cursor.
+            tenant_id: The tenant every row belongs to.
+            notify: ``None`` for a write that notifies nobody, otherwise a callable taking the
+                ``produced`` mapping and returning ``NotificationDraft`` objects
+                (:mod:`app.notification_fanout`).
+            produced: What the write generated, passed to ``notify`` (ids, mostly).
+
+        Returns:
+            How many inbox rows were written.
+        """
+        if notify is None:
+            return 0
+        drafts = [draft for draft in (notify(dict(produced or {})) or []) if draft.user_id]
+        if not drafts:
+            return 0
+        cursor.execute(
+            """
+            INSERT INTO apiome.notifications
+                (tenant_id, user_id, type, payload, actor_id, project_id, version_id)
+            SELECT %s::uuid, item.user_id, item.type, item.payload,
+                   item.actor_id, item.project_id, item.version_id
+            FROM unnest(%s::uuid[], %s::text[], %s::jsonb[], %s::uuid[], %s::uuid[], %s::uuid[])
+                AS item(user_id, type, payload, actor_id, project_id, version_id)
+            -- A recipient who was deleted between resolving the set and writing it is skipped
+            -- rather than raising: fan-out must never be the reason a publish or a decision
+            -- rolls back.
+            JOIN apiome.users u ON u.id = item.user_id AND u.deleted_at IS NULL
+            """,
+            (
+                tenant_id,
+                [draft.user_id for draft in drafts],
+                [draft.type for draft in drafts],
+                [json.dumps(draft.payload or {}) for draft in drafts],
+                [draft.actor_id for draft in drafts],
+                [draft.project_id for draft in drafts],
+                [draft.version_id for draft in drafts],
+            ),
+        )
+        return int(cursor.rowcount or 0)
+
     def get_version_by_slugs(self, tenant_slug: str, project_slug: str, version_id: str) -> Optional[Dict[str, Any]]:
         """Get version information by tenant, project, and version slugs."""
         query = """
@@ -8163,10 +8250,15 @@ class Database:
         description: Optional[str] = None,
         change_log: Optional[str] = None,
         published_immutable: bool = True,
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """Publish a version (only owner or tenant admin can publish). Captures class schemas to apiome.class_schema.
 
         description and change_log are written in the same update as publish (validated in routes).
+
+        ``notify`` is the publish fan-out (COL-3.1, #4521): it is called with ``{"version_id"}``
+        once the publish has actually happened, and its inbox rows commit with it — a publish the
+        permission guard turned away notifies nobody.
         """
         query = """
             UPDATE apiome.versions v
@@ -8247,6 +8339,12 @@ class Database:
                                 ON CONFLICT (version_id, class_id)
                                 DO UPDATE SET schema = EXCLUDED.schema, updated_at = CURRENT_TIMESTAMP
                             """, (version_record_id, class_data['id'], schema_json))
+                    self._insert_notifications(
+                        cursor,
+                        tenant_id=tenant_id,
+                        notify=notify,
+                        produced={"version_id": version_record_id},
+                    )
                 conn.commit()
                 return result
         except Exception as e:
@@ -32514,8 +32612,9 @@ class Database:
         created_by: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Open a thread together with its first comment, in one statement (COL-1.1, #4513).
+        """Open a thread together with its first comment (COL-1.1, #4513).
 
         Args:
             tenant_id: Owning tenant.
@@ -32526,6 +32625,8 @@ class Database:
             created_by: The opening user, also the first comment's author.
             body: The first comment's Markdown.
             mentions: User ids the body mentions.
+            notify: Mention fan-out (COL-3.1, #4521), called with ``{"thread_id", "comment_id"}``
+                and written in the same transaction as the thread.
 
         Returns:
             ``{"thread_id", "comment_id"}``, or ``None`` when any id is not a UUID.
@@ -32533,34 +32634,45 @@ class Database:
         ids = (tenant_id, project_id, version_id, anchor_id, created_by, *mentions)
         if not all(is_uuid_string(str(value or "")) for value in ids):
             return None
-        rows = self.execute_query(
-            """
-            WITH thread AS (
-                INSERT INTO apiome.comment_threads (
-                    tenant_id, project_id, version_id, anchor_type, anchor_id, created_by
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                WITH thread AS (
+                    INSERT INTO apiome.comment_threads (
+                        tenant_id, project_id, version_id, anchor_type, anchor_id, created_by
+                    )
+                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid)
+                    RETURNING id
+                ), reply AS (
+                    INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
+                    SELECT thread.id, %s::uuid, %s, %s::uuid[] FROM thread
+                    RETURNING id, thread_id
                 )
-                VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s::uuid)
-                RETURNING id
-            ), reply AS (
-                INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
-                SELECT thread.id, %s::uuid, %s, %s::uuid[] FROM thread
-                RETURNING id, thread_id
+                SELECT reply.thread_id::text AS thread_id, reply.id::text AS comment_id FROM reply
+                """,
+                (
+                    tenant_id,
+                    project_id,
+                    version_id,
+                    anchor_type,
+                    anchor_id,
+                    created_by,
+                    created_by,
+                    body,
+                    list(mentions),
+                ),
             )
-            SELECT reply.thread_id::text AS thread_id, reply.id::text AS comment_id FROM reply
-            """,
-            (
-                tenant_id,
-                project_id,
-                version_id,
-                anchor_type,
-                anchor_id,
-                created_by,
-                created_by,
-                body,
-                list(mentions),
-            ),
-        )
-        return dict(rows[0]) if rows else None
+            row = cursor.fetchone()
+            if not row:
+                return None
+            produced = dict(row)
+            self._insert_notifications(
+                cursor, tenant_id=tenant_id, notify=notify, produced=produced
+            )
+            return produced
+
+        return self._guarded_tx(work)
 
     def get_comment_thread(
         self, *, tenant_id: str, project_id: str, thread_id: str
@@ -32805,6 +32917,7 @@ class Database:
         author_id: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> Optional[str]:
         """Reply to a thread and mark the thread active (COL-1.1, #4513).
 
@@ -32815,6 +32928,8 @@ class Database:
             author_id: The replying user.
             body: The Markdown reply.
             mentions: User ids the body mentions.
+            notify: Mention fan-out (COL-3.1, #4521), called with ``{"thread_id", "comment_id"}``
+                and written in the same transaction as the reply.
 
         Returns:
             The new comment's id, or ``None`` when the thread is not in that project (or an id is
@@ -32823,26 +32938,40 @@ class Database:
         ids = (tenant_id, project_id, thread_id, author_id, *mentions)
         if not all(is_uuid_string(str(value or "")) for value in ids):
             return None
-        rows = self.execute_query(
-            """
-            WITH reply AS (
-                INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
-                SELECT t.id, %s::uuid, %s, %s::uuid[]
-                FROM apiome.comment_threads t
-                WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
-                RETURNING id, thread_id
-            ), touched AS (
-                UPDATE apiome.comment_threads t
-                SET last_activity_at = CURRENT_TIMESTAMP
-                FROM reply
-                WHERE t.id = reply.thread_id
-                RETURNING t.id
+
+        def work(cursor: Any) -> Optional[str]:
+            cursor.execute(
+                """
+                WITH reply AS (
+                    INSERT INTO apiome.comments (thread_id, author_id, body, mentions)
+                    SELECT t.id, %s::uuid, %s, %s::uuid[]
+                    FROM apiome.comment_threads t
+                    WHERE t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+                    RETURNING id, thread_id
+                ), touched AS (
+                    UPDATE apiome.comment_threads t
+                    SET last_activity_at = CURRENT_TIMESTAMP
+                    FROM reply
+                    WHERE t.id = reply.thread_id
+                    RETURNING t.id
+                )
+                SELECT reply.id::text AS comment_id FROM reply
+                """,
+                (author_id, body, list(mentions), thread_id, tenant_id, project_id),
             )
-            SELECT reply.id::text AS comment_id FROM reply
-            """,
-            (author_id, body, list(mentions), thread_id, tenant_id, project_id),
-        )
-        return str(rows[0]["comment_id"]) if rows else None
+            row = cursor.fetchone()
+            if not row:
+                return None
+            comment_id = str(row["comment_id"])
+            self._insert_notifications(
+                cursor,
+                tenant_id=tenant_id,
+                notify=notify,
+                produced={"thread_id": thread_id, "comment_id": comment_id},
+            )
+            return comment_id
+
+        return self._guarded_tx(work)
 
     def update_comment(
         self,
@@ -32853,6 +32982,7 @@ class Database:
         comment_id: str,
         body: str,
         mentions: List[str],
+        notify: Optional[Any] = None,
     ) -> bool:
         """Replace a comment's body and mentions and stamp the edit (COL-1.1, #4513).
 
@@ -32863,6 +32993,8 @@ class Database:
             comment_id: The comment.
             body: The new Markdown.
             mentions: User ids the new body mentions.
+            notify: Mention fan-out for the members the edit *newly* names (COL-3.1, #4521), called
+                with ``{"thread_id", "comment_id"}`` and written in the same transaction.
 
         Returns:
             ``True`` when a comment was updated.
@@ -32870,18 +33002,30 @@ class Database:
         ids = (tenant_id, project_id, thread_id, comment_id, *mentions)
         if not all(is_uuid_string(str(value or "")) for value in ids):
             return False
-        rows = self.execute_query(
-            """
-            UPDATE apiome.comments c
-            SET body = %s, mentions = %s::uuid[], edited_at = CURRENT_TIMESTAMP
-            FROM apiome.comment_threads t
-            WHERE c.id = %s::uuid AND c.thread_id = t.id
-              AND t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
-            RETURNING c.id::text AS id
-            """,
-            (body, list(mentions), comment_id, thread_id, tenant_id, project_id),
-        )
-        return bool(rows)
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.comments c
+                SET body = %s, mentions = %s::uuid[], edited_at = CURRENT_TIMESTAMP
+                FROM apiome.comment_threads t
+                WHERE c.id = %s::uuid AND c.thread_id = t.id
+                  AND t.id = %s::uuid AND t.tenant_id = %s::uuid AND t.project_id = %s::uuid
+                RETURNING c.id::text AS id
+                """,
+                (body, list(mentions), comment_id, thread_id, tenant_id, project_id),
+            )
+            if not cursor.fetchone():
+                return None
+            self._insert_notifications(
+                cursor,
+                tenant_id=tenant_id,
+                notify=notify,
+                produced={"thread_id": thread_id, "comment_id": comment_id},
+            )
+            return True
+
+        return bool(self._guarded_tx(work))
 
     def delete_comment(
         self, *, tenant_id: str, project_id: str, thread_id: str, comment_id: str
@@ -32950,7 +33094,14 @@ class Database:
                 pass
 
     def set_comment_thread_status(
-        self, *, tenant_id: str, project_id: str, thread_id: str, status: str, actor_id: str
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        thread_id: str,
+        status: str,
+        actor_id: str,
+        notify: Optional[Any] = None,
     ) -> bool:
         """Resolve or reopen a thread (COL-1.1, #4513).
 
@@ -32964,6 +33115,9 @@ class Database:
             thread_id: The thread.
             status: ``open`` or ``resolved``.
             actor_id: The acting user.
+            notify: Resolution fan-out (COL-3.1, #4521), called with ``{"thread_id"}`` and written
+                in the same transaction — so a status change that did not happen (an orphaned or
+                already-resolved thread) notifies nobody.
 
         Returns:
             ``True`` when the status changed.
@@ -32971,28 +33125,37 @@ class Database:
         ids = (tenant_id, project_id, thread_id, actor_id)
         if not all(is_uuid_string(str(value or "")) for value in ids):
             return False
-        rows = self.execute_query(
-            """
-            UPDATE apiome.comment_threads t
-            SET status = %(status)s,
-                resolved_by = CASE WHEN %(status)s = 'resolved' THEN %(actor)s::uuid END,
-                resolved_at = CASE WHEN %(status)s = 'resolved' THEN CURRENT_TIMESTAMP END,
-                updated_at = CURRENT_TIMESTAMP,
-                last_activity_at = CURRENT_TIMESTAMP
-            WHERE t.id = %(thread)s::uuid AND t.tenant_id = %(tenant)s::uuid
-              AND t.project_id = %(project)s::uuid AND t.status <> %(status)s
-              AND t.status <> 'orphaned'
-            RETURNING t.id::text AS id
-            """,
-            {
-                "status": status,
-                "actor": actor_id,
-                "thread": thread_id,
-                "tenant": tenant_id,
-                "project": project_id,
-            },
-        )
-        return bool(rows)
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.comment_threads t
+                SET status = %(status)s,
+                    resolved_by = CASE WHEN %(status)s = 'resolved' THEN %(actor)s::uuid END,
+                    resolved_at = CASE WHEN %(status)s = 'resolved' THEN CURRENT_TIMESTAMP END,
+                    updated_at = CURRENT_TIMESTAMP,
+                    last_activity_at = CURRENT_TIMESTAMP
+                WHERE t.id = %(thread)s::uuid AND t.tenant_id = %(tenant)s::uuid
+                  AND t.project_id = %(project)s::uuid AND t.status <> %(status)s
+                  AND t.status <> 'orphaned'
+                RETURNING t.id::text AS id
+                """,
+                {
+                    "status": status,
+                    "actor": actor_id,
+                    "thread": thread_id,
+                    "tenant": tenant_id,
+                    "project": project_id,
+                },
+            )
+            if not cursor.fetchone():
+                return None
+            self._insert_notifications(
+                cursor, tenant_id=tenant_id, notify=notify, produced={"thread_id": thread_id}
+            )
+            return True
+
+        return bool(self._guarded_tx(work))
 
     def relink_comment_thread(
         self,
@@ -33136,32 +33299,6 @@ class Database:
             WHERE rr.review_id = r.id AND rr.round = r.round
         ) tally ON TRUE
     """
-
-    def _review_tx(self, work: Any) -> Any:
-        """Run one review write in a transaction (COL-2.1, #4517).
-
-        Args:
-            work: A callable taking the cursor. Returning ``None`` means its guard did not hold,
-                and everything it wrote is rolled back; any other value commits.
-
-        Returns:
-            Whatever ``work`` returned.
-        """
-        conn = self.connect()
-        prev_autocommit = self._begin_tx(conn)
-        try:
-            with conn.cursor() as cursor:
-                result = work(cursor)
-            if result is None:
-                conn.rollback()
-            else:
-                conn.commit()
-            return result
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.autocommit = prev_autocommit
 
     @staticmethod
     def _insert_review_audit(
@@ -33421,6 +33558,7 @@ class Database:
         requested_by: str,
         reviewer_ids: Sequence[str],
         spec_fingerprint: str,
+        notify: Optional[Any] = None,
     ) -> Optional[str]:
         """Request a review: the review, its round-1 reviewers, and the audit row (COL-2.1, #4517).
 
@@ -33431,6 +33569,8 @@ class Database:
             requested_by: The requesting user.
             reviewer_ids: The reviewers' user ids (validated tenant members).
             spec_fingerprint: Fingerprint of the content round 1 judges.
+            notify: Review-request fan-out (COL-3.1, #4521), called with ``{"review_id", "round"}``
+                and written in the same transaction as the review.
 
         Returns:
             The new review id, or ``None`` when the version already has an open review or any id
@@ -33477,9 +33617,15 @@ class Database:
                     "spec_fingerprint": spec_fingerprint,
                 },
             )
+            self._insert_notifications(
+                cursor,
+                tenant_id=tenant_id,
+                notify=notify,
+                produced={"review_id": review_id, "round": 1},
+            )
             return review_id
 
-        return self._review_tx(work)
+        return self._guarded_tx(work)
 
     def re_request_review(
         self,
@@ -33491,6 +33637,7 @@ class Database:
         reviewer_ids: Sequence[str],
         spec_fingerprint: str,
         actor_id: str,
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """Start a review's next round with fresh pending reviewers (COL-2.1, #4517).
 
@@ -33506,6 +33653,8 @@ class Database:
             reviewer_ids: The new round's reviewers.
             spec_fingerprint: Fingerprint of the content the new round judges.
             actor_id: The re-requesting user.
+            notify: Review-request fan-out (COL-3.1, #4521), called with ``{"review_id", "round"}``
+                for the new round and written in the same transaction.
 
         Returns:
             ``{"round", "from_state"}``, or ``None`` when the review is not open, not at
@@ -33556,9 +33705,15 @@ class Database:
                     "spec_fingerprint": spec_fingerprint,
                 },
             )
+            self._insert_notifications(
+                cursor,
+                tenant_id=tenant_id,
+                notify=notify,
+                produced={"review_id": review_id, "round": next_round},
+            )
             return {"round": next_round, "from_state": str(current["state"])}
 
-        return self._review_tx(work)
+        return self._guarded_tx(work)
 
     def record_review_decision(
         self,
@@ -33570,6 +33725,7 @@ class Database:
         user_id: str,
         decision: str,
         note: Optional[str],
+        notify: Optional[Any] = None,
     ) -> Optional[Dict[str, Any]]:
         """Record one reviewer's decision and move the review's state (COL-2.1, #4517).
 
@@ -33586,6 +33742,8 @@ class Database:
             user_id: The deciding reviewer.
             decision: ``approve`` or ``request_changes``.
             note: The optional note.
+            notify: Decision fan-out (COL-3.1, #4521), called with ``{"review_id", "round",
+                "decision", "from_state", "to_state"}`` and written in the same transaction.
 
         Returns:
             ``{"from_state", "to_state"}``, or ``None`` when the review is not open and
@@ -33656,9 +33814,21 @@ class Database:
                         "to_state": to_state,
                     },
                 )
+            self._insert_notifications(
+                cursor,
+                tenant_id=tenant_id,
+                notify=notify,
+                produced={
+                    "review_id": review_id,
+                    "round": int(expected_round),
+                    "decision": decision,
+                    "from_state": from_state,
+                    "to_state": to_state,
+                },
+            )
             return {"from_state": from_state, "to_state": to_state}
 
-        return self._review_tx(work)
+        return self._guarded_tx(work)
 
     def withdraw_review(self, *, tenant_id: str, project_id: str, review_id: str, actor_id: str) -> bool:
         """Close an open review and audit it (COL-2.1, #4517).
@@ -33700,7 +33870,242 @@ class Database:
             )
             return True
 
-        return bool(self._review_tx(work))
+        return bool(self._guarded_tx(work))
+
+    # -----------------------------------------------------------------------------------------
+    # Notification inbox (COL-3.1, #4521)
+    # -----------------------------------------------------------------------------------------
+
+    #: Notification columns, with the actor's display name read fresh rather than stored.
+    _NOTIFICATION_COLUMNS = """
+        n.id::text AS id, n.tenant_id::text AS tenant_id, n.user_id::text AS user_id,
+        n.type, n.payload,
+        n.actor_id::text AS actor_id,
+        (SELECT au.name FROM apiome.users au WHERE au.id = n.actor_id) AS actor_name,
+        n.project_id::text AS project_id, n.version_id::text AS version_id,
+        n.read_at, n.created_at
+    """
+
+    @staticmethod
+    def _notification_filters(
+        *, tenant_id: str, user_id: str, unread_only: bool, type_filter: Optional[str]
+    ) -> Optional[Tuple[str, List[Any]]]:
+        """Build the WHERE clause shared by the inbox list and count reads.
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller — an inbox is only ever their own.
+            unread_only: Only rows the caller has not read.
+            type_filter: Only this notification type, when given.
+
+        Returns:
+            ``(sql, params)``, or ``None`` when an id is not a UUID (nothing can match).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, user_id)):
+            return None
+        clauses = ["n.tenant_id = %s::uuid", "n.user_id = %s::uuid"]
+        params: List[Any] = [tenant_id, user_id]
+        if unread_only:
+            clauses.append("n.read_at IS NULL")
+        if type_filter:
+            clauses.append("n.type = %s")
+            params.append(type_filter)
+        return " AND ".join(clauses), params
+
+    def list_notifications(
+        self,
+        *,
+        tenant_id: str,
+        user_id: str,
+        unread_only: bool = False,
+        type_filter: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """A page of one user's inbox, newest first (COL-3.1, #4521).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            unread_only: Only unread notifications.
+            type_filter: Only this type.
+            limit: Page size.
+            offset: Notifications to skip.
+
+        Returns:
+            The rows, newest first; empty when an id is not a UUID.
+        """
+        built = self._notification_filters(
+            tenant_id=tenant_id, user_id=user_id, unread_only=unread_only, type_filter=type_filter
+        )
+        if built is None:
+            return []
+        where, params = built
+        rows = self.execute_query(
+            f"""
+            SELECT {self._NOTIFICATION_COLUMNS}
+            FROM apiome.notifications n
+            WHERE {where}
+            ORDER BY n.created_at DESC, n.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple([*params, int(limit), int(offset)]),
+        )
+        return [dict(row) for row in rows]
+
+    def count_notifications(
+        self,
+        *,
+        tenant_id: str,
+        user_id: str,
+        unread_only: bool = False,
+        type_filter: Optional[str] = None,
+    ) -> int:
+        """How many notifications :meth:`list_notifications` would page through (COL-3.1, #4521).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            unread_only: Only unread notifications.
+            type_filter: Only this type.
+
+        Returns:
+            The total; ``0`` when an id is not a UUID.
+        """
+        built = self._notification_filters(
+            tenant_id=tenant_id, user_id=user_id, unread_only=unread_only, type_filter=type_filter
+        )
+        if built is None:
+            return 0
+        where, params = built
+        rows = self.execute_query(
+            f"SELECT count(*)::int AS total FROM apiome.notifications n WHERE {where}",
+            tuple(params),
+        )
+        return int(rows[0]["total"]) if rows else 0
+
+    def count_unread_notifications_by_type(self, *, tenant_id: str, user_id: str) -> Dict[str, int]:
+        """One user's unread count, split by type — the bell badge (COL-3.1, #4521).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+
+        Returns:
+            ``{type: unread}`` for the types that have any; empty when an id is not a UUID.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, user_id)):
+            return {}
+        rows = self.execute_query(
+            """
+            SELECT n.type, count(*)::int AS unread
+            FROM apiome.notifications n
+            WHERE n.tenant_id = %s::uuid AND n.user_id = %s::uuid AND n.read_at IS NULL
+            GROUP BY n.type
+            """,
+            (tenant_id, user_id),
+        )
+        return {str(row["type"]): int(row["unread"]) for row in rows}
+
+    def mark_notifications_read(
+        self,
+        *,
+        tenant_id: str,
+        user_id: str,
+        notification_ids: Optional[Sequence[str]] = None,
+        all_unread: bool = False,
+    ) -> int:
+        """Stamp ``read_at`` on the caller's unread notifications (COL-3.1, #4521).
+
+        Only the caller's own rows in their own tenant are ever touched, so an id belonging to
+        somebody else is simply not updated rather than refused — an inbox must not become an
+        oracle for which notification ids exist.
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The caller.
+            notification_ids: The notifications to mark; ignored when ``all_unread`` is set.
+            all_unread: Mark the caller's whole inbox read.
+
+        Returns:
+            How many rows went from unread to read.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, user_id)):
+            return 0
+        ids = [str(value) for value in (notification_ids or []) if is_uuid_string(str(value or ""))]
+        if not all_unread and not ids:
+            return 0
+        clause = "" if all_unread else " AND n.id = ANY(%s::uuid[])"
+        params: List[Any] = [tenant_id, user_id] if all_unread else [tenant_id, user_id, ids]
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.notifications n
+            SET read_at = CURRENT_TIMESTAMP
+            WHERE n.tenant_id = %s::uuid AND n.user_id = %s::uuid AND n.read_at IS NULL{clause}
+            RETURNING n.id::text AS id
+            """,
+            tuple(params),
+        )
+        return len(rows)
+
+    def list_version_collaborators(
+        self, *, tenant_id: str, project_id: str, version_id: str
+    ) -> List[str]:
+        """Who worked on a version — the publish fan-out's recipients (COL-3.1, #4521).
+
+        Collaboration is read from what the version actually holds: whoever requested or was asked
+        for one of its reviews, and whoever opened or replied to one of its comment threads. Only
+        members of the tenant are returned, so somebody who has since left is not sent an inbox row
+        in a tenant they can no longer read.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project.
+            version_id: The version.
+
+        Returns:
+            The collaborators' user ids, ordered; empty when an id is not a UUID.
+        """
+        ids = (tenant_id, project_id, version_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT DISTINCT participant::text AS user_id
+            FROM (
+                SELECT r.requested_by AS participant
+                FROM apiome.reviews r
+                WHERE r.tenant_id = %(tenant)s::uuid AND r.project_id = %(project)s::uuid
+                  AND r.version_id = %(version)s::uuid
+                UNION
+                SELECT rr.user_id
+                FROM apiome.review_reviewers rr
+                JOIN apiome.reviews r ON r.id = rr.review_id
+                WHERE r.tenant_id = %(tenant)s::uuid AND r.project_id = %(project)s::uuid
+                  AND r.version_id = %(version)s::uuid
+                UNION
+                SELECT t.created_by
+                FROM apiome.comment_threads t
+                WHERE t.tenant_id = %(tenant)s::uuid AND t.project_id = %(project)s::uuid
+                  AND t.version_id = %(version)s::uuid
+                UNION
+                SELECT c.author_id
+                FROM apiome.comments c
+                JOIN apiome.comment_threads t ON t.id = c.thread_id
+                WHERE t.tenant_id = %(tenant)s::uuid AND t.project_id = %(project)s::uuid
+                  AND t.version_id = %(version)s::uuid
+            ) participants
+            JOIN apiome.tenant_users tu
+              ON tu.user_id = participants.participant AND tu.tenant_id = %(tenant)s::uuid
+            JOIN apiome.users u ON u.id = participants.participant
+            WHERE participants.participant IS NOT NULL
+              AND tu.status IN ('active', 'pending')
+              AND u.deleted_at IS NULL
+            ORDER BY user_id
+            """,
+            {"tenant": tenant_id, "project": project_id, "version": version_id},
+        )
+        return [str(row["user_id"]) for row in rows]
 
 
 # Global database instance

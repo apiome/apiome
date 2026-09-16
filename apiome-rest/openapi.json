@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.189.0",
+    "version": "1.190.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -18134,6 +18134,344 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for withdrawareviewresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List the caller's notifications",
+        "description": "A page of the caller's own inbox in this tenant, newest first. Each row carries the event's `type`, the `payload` its sentence and deep link need, who caused it, and the project and version it points at.\n\nFilters combine: `unread` (only what has not been read) and `type`.\n\nReading the list never marks anything read. Requires only authentication \u2014 an inbox is the caller's own, so there is no permission to grant.",
+        "operationId": "list_notifications_v1_tenants__tenant_slug__notifications_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "unread",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only unread notifications.",
+              "default": false,
+              "title": "Unread"
+            },
+            "description": "Only unread notifications."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "mention",
+                    "review_requested",
+                    "review_decision",
+                    "thread_resolved",
+                    "version_published"
+                  ],
+                  "type": "string",
+                  "description": "Listthecallersnotificationstype schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listthecallersnotificationstype schema."
+                }
+              ],
+              "description": "Only this event type.",
+              "title": "Type"
+            },
+            "description": "Only this event type."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Notifications to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Notifications to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listthecallersnotificationsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listthecallersnotificationsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listthecallersnotifications Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listthecallersnotifications Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the caller's notifications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse",
+                  "description": "Response payload for listthecallersnotificationsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listthecallersnotificationsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Count the caller's unread notifications",
+        "description": "How many notifications the caller has not read in this tenant, in total and per type (every type is reported, zeroes included). This is the bell badge.\n\nRequires only authentication.",
+        "operationId": "unread_notification_count_v1_tenants__tenant_slug__notifications_unread_count_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Countthecallersunreadnotificationsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Countthecallersunreadnotificationsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Countthecallersunreadnotifications Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Countthecallersunreadnotifications Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for count the caller's unread notifications.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCount",
+                  "description": "Response payload for countthecallersunreadnotificationsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for countthecallersunreadnotificationsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/notifications/read": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark the caller's notifications read",
+        "description": "Mark the notifications named by `ids` read, or the caller's whole inbox with `{\"all\": true}`. Marking is idempotent: a notification that was already read is not counted again, and an id that is not the caller's own simply matches nothing.\n\nAnswers with how many rows changed and the unread count that follows, so a client can update its badge without a second call.\n\nRequires only authentication.",
+        "operationId": "mark_notifications_read_v1_tenants__tenant_slug__notifications_read_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Markthecallersnotificationsreadauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Markthecallersnotificationsreadauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Markthecallersnotificationsread Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Markthecallersnotificationsread Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReadRequest",
+                "description": "Request body for markthecallersnotificationsreadrequest."
+              }
+            }
+          },
+          "description": "Request body for mark the caller's notifications read."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for mark the caller's notifications read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkReadResponse",
+                  "description": "Response payload for markthecallersnotificationsreadresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for markthecallersnotificationsreadresponse422."
                 }
               }
             }
@@ -89079,7 +89417,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -89307,7 +89645,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -89765,14 +90103,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -91797,7 +92135,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "11f5ae92-ca02-4a0b-9524-690cd143ef59"
+            "example": "00848020-bf96-40b7-bcb0-2a3ff1fecb00"
           },
           "method": {
             "type": "string",
@@ -94324,7 +94662,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -109166,6 +109504,62 @@
         "title": "ManifestTarget",
         "description": "The target descriptor + version provenance a manifest was built for (EFP-1.1)."
       },
+      "MarkReadRequest": {
+        "properties": {
+          "ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 500,
+                "description": "Request body for mark read."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mark read."
+              }
+            ],
+            "title": "Ids",
+            "description": "Notification ids to mark read."
+          },
+          "all": {
+            "type": "boolean",
+            "title": "All",
+            "description": "Mark the caller's whole inbox read instead.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MarkReadRequest",
+        "description": "Mark some \u2014 or all \u2014 of the caller's notifications read.\n\nAttributes:\n    ids: The notifications to mark. Ignored when ``all`` is set.\n    all: Mark every unread notification of the caller in this tenant."
+      },
+      "MarkReadResponse": {
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Updated",
+            "description": "How many notifications went from unread to read.",
+            "example": 1
+          },
+          "unread": {
+            "$ref": "#/components/schemas/UnreadCount",
+            "description": "The caller's unread count after the change."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "updated",
+          "unread"
+        ],
+        "title": "MarkReadResponse",
+        "description": "What a mark-read call changed."
+      },
       "MatchedDiff": {
         "properties": {
           "entry": {
@@ -122811,6 +123205,183 @@
         "title": "NativeHierarchy",
         "description": "How much of the format's own structure the analysis tree preserves."
       },
+      "NotificationListResponse": {
+        "properties": {
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationRecord"
+            },
+            "type": "array",
+            "title": "Notifications",
+            "description": "Notifications, newest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many notifications this page holds.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many match the filters in all.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "NotificationListResponse",
+        "description": "A page of the caller's inbox."
+      },
+      "NotificationRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The notification id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "The recipient \u2014 always the calling user.",
+            "example": "user_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "mention",
+              "review_requested",
+              "review_decision",
+              "thread_resolved",
+              "version_published"
+            ],
+            "title": "Type",
+            "description": "Which kind of event this is.",
+            "example": "mention"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "description": "What the notification's sentence and deep link need: `project_slug`, `project_name` and `version_label` throughout, plus `thread_id`/`comment_id`/`anchor_type`/`anchor_id`/`excerpt` for a comment event and `review_id`/`round`/`decision` for a review one."
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Notification schema."
+              },
+              {
+                "type": "null",
+                "description": "Notification schema."
+              }
+            ],
+            "title": "Actor Id",
+            "description": "Who caused the event; null once that user has been deleted."
+          },
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Notification schema."
+              },
+              {
+                "type": "null",
+                "description": "Notification schema."
+              }
+            ],
+            "title": "Actor Name",
+            "description": "Their display name, read fresh."
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Notification schema."
+              },
+              {
+                "type": "null",
+                "description": "Notification schema."
+              }
+            ],
+            "title": "Project Id",
+            "description": "The project the event happened in."
+          },
+          "version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Notification schema."
+              },
+              {
+                "type": "null",
+                "description": "Notification schema."
+              }
+            ],
+            "title": "Version Id",
+            "description": "The version the event happened on."
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Notification schema."
+              },
+              {
+                "type": "null",
+                "description": "Notification schema."
+              }
+            ],
+            "title": "Read At",
+            "description": "When the recipient read it; null exactly while unread."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When the event happened.",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "user_id",
+          "type",
+          "created_at"
+        ],
+        "title": "NotificationRecord",
+        "description": "One stored notification, as the caller's inbox returns it."
+      },
       "OpenApiChangeReportRequest": {
         "properties": {
           "baselineOpenApi": {
@@ -134738,7 +135309,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           }
         },
         "additionalProperties": false,
@@ -149930,6 +150501,32 @@
         "title": "UnlinkArtifactsRequest",
         "description": "Remove one project from a shared identity group (pairwise unlink)."
       },
+      "UnreadCount": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Unread notifications in this tenant.",
+            "example": 1
+          },
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Type",
+            "description": "Unread count per type; every type is present, zeroes included."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "UnreadCount",
+        "description": "How much of the caller's inbox is unread \u2014 the bell badge (COL-3.2)."
+      },
       "UnresolvedInteraction": {
         "properties": {
           "reason": {
@@ -151707,14 +152304,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-15T23:11:16Z"
+            "example": "2026-09-16T02:32:03Z"
           },
           "outcome": {
             "anyOf": [
