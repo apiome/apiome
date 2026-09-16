@@ -255,6 +255,41 @@ describe('deep links into Studio', () => {
   });
 });
 
+describe('a notification deep link (COL-3.2, #4522)', () => {
+  it('picks out the thread the link named, and scrolls to it', async () => {
+    // jsdom has no layout, so `scrollIntoView` is not implemented; spying on it is also
+    // how the test asserts that the *right* row was scrolled to.
+    const scrollIntoView = jest.fn();
+    Element.prototype.scrollIntoView = scrollIntoView as unknown as Element['scrollIntoView'];
+
+    await renderPanel({ focusThreadId: 'thread-operation' });
+
+    const focused = screen.getByTestId('discussion-thread-thread-operation');
+    expect(focused).toHaveAttribute('data-focused', 'true');
+    expect(focused.className).toContain('disc-thread--focused');
+    expect(screen.getByTestId('discussion-thread-thread-class')).not.toHaveAttribute('data-focused');
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+    expect(scrollIntoView.mock.instances[0]).toBe(focused);
+  });
+
+  it('picks out nothing at all when the thread is not on the loaded page', async () => {
+    const scrollIntoView = jest.fn();
+    Element.prototype.scrollIntoView = scrollIntoView as unknown as Element['scrollIntoView'];
+
+    // A jump to the wrong row would be a lie; no jump is the honest outcome.
+    await renderPanel({ focusThreadId: 'thread-that-is-not-here' });
+
+    expect(document.querySelectorAll('[data-focused="true"]')).toHaveLength(0);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('is off by default, so the panel is unchanged without a deep link', async () => {
+    await renderPanel();
+    expect(document.querySelectorAll('[data-focused="true"]')).toHaveLength(0);
+  });
+});
+
 describe('counts', () => {
   it('draws the summary on the chips, on each row, and reports the tab total', async () => {
     const onTotal = jest.fn();

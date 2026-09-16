@@ -75,6 +75,16 @@ export interface ProjectDiscussionPanelProps {
    * Discussion tab (COL-2.2, #4518). Every version of the project when omitted.
    */
   versionId?: string;
+  /**
+   * Pick this thread out of the list — the COL-3.2 notification deep link (#4522).
+   *
+   * A notification about a mention or a resolved thread arrives as
+   * `?tab=discussion&thread=<id>`, and the reader has been promised the thread it named.
+   * The matching row is tinted and scrolled to once the page holding it has loaded; a
+   * thread that is not on the loaded page (or no longer exists) simply highlights nothing,
+   * because a panel that jumped somewhere else would be worse than one that did not jump.
+   */
+  focusThreadId?: string | null;
   /** Reference time for relative dates, in epoch ms; tests pin it. Defaults to mount time. */
   now?: number;
 }
@@ -131,6 +141,7 @@ function emptyDescription(filters: Readonly<DiscussionFilters>): string {
  * @param props.versionLabel - Its version, as printed.
  * @param props.href - Its Studio deep link, or null.
  * @param props.unresolvedOnElement - Open threads on its element (the canvas badge number).
+ * @param props.focused - True when a deep link named this thread (COL-3.2).
  * @param props.now - Reference time for the relative date.
  */
 function DiscussionThreadRow({
@@ -138,12 +149,14 @@ function DiscussionThreadRow({
   versionLabel,
   href,
   unresolvedOnElement,
+  focused,
   now,
 }: {
   thread: DiscussionThread;
   versionLabel: string;
   href: string | null;
   unresolvedOnElement: number;
+  focused: boolean;
   now: number;
 }) {
   const label = threadElementLabel(thread);
@@ -162,7 +175,12 @@ function DiscussionThreadRow({
   );
 
   return (
-    <li className="disc-thread" data-testid={`discussion-thread-${thread.id}`} data-status={thread.status}>
+    <li
+      className={cn('disc-thread', focused && 'disc-thread--focused')}
+      data-testid={`discussion-thread-${thread.id}`}
+      data-status={thread.status}
+      data-focused={focused ? 'true' : undefined}
+    >
       <div className="disc-thread__head">
         {href ? (
           <a className="disc-thread__link" href={href} data-testid="discussion-thread-link">
@@ -212,6 +230,7 @@ export function ProjectDiscussionPanel({
   projectId,
   versions,
   workspaceRoute,
+  focusThreadId,
   onUnresolvedTotalChange,
   versionId,
   now,
@@ -300,6 +319,27 @@ export function ProjectDiscussionPanel({
   const unresolvedByAnchor = summary?.data.unresolvedByAnchor ?? {};
   const referenceTime = now ?? mountedAt;
 
+  /** The `<ul>`, so a deep-linked thread can be found without reaching into the document. */
+  const listRef = React.useRef<HTMLUListElement | null>(null);
+
+  // Bring a deep-linked thread into view once the page holding it has rendered (COL-3.2,
+  // #4522). Tinting the row is not enough on a project with forty threads: the reader was
+  // sent here by a notification and should arrive looking at what it was about.
+  //
+  // A thread that is not on the loaded page scrolls nothing. That is the honest outcome —
+  // the panel's filters default to open threads, and a resolved one the reader followed
+  // from its "resolved" notification is reachable by changing the filter, whereas a jump to
+  // the wrong row would be a lie.
+  React.useEffect(() => {
+    if (!focusThreadId || !current) return;
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-testid="discussion-thread-${focusThreadId}"]`
+    );
+    // `center` rather than `start`: the row is meant to be read, not parked under the
+    // filter bar that sits above the list.
+    row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focusThreadId, current]);
+
   /**
    * Change some filters and forget the last "load more" failure.
    *
@@ -358,7 +398,12 @@ export function ProjectDiscussionPanel({
   } else if (current) {
     body = (
       <>
-        <ul className="disc-list" aria-label="Comment threads" data-testid="discussion-thread-list">
+        <ul
+          ref={listRef}
+          className="disc-list"
+          aria-label="Comment threads"
+          data-testid="discussion-thread-list"
+        >
           {current.threads.map((thread) => (
             <DiscussionThreadRow
               key={thread.id}
@@ -366,6 +411,7 @@ export function ProjectDiscussionPanel({
               versionLabel={versionLabels.get(thread.version_id) ?? `Revision ${thread.version_id.slice(0, 8)}`}
               href={discussionThreadHref(workspaceRoute, thread)}
               unresolvedOnElement={unresolvedByAnchor[commentAnchorKey(thread.anchor_type, thread.anchor_id)] ?? 0}
+              focused={thread.id === focusThreadId}
               now={referenceTime}
             />
           ))}
