@@ -12,8 +12,8 @@ resolved to, and gives every later push to that ref somewhere to land.
 - Models, codes, and the digest: `app/draft_bindings.py`
 - Provider deliveries: `app/repository_webhook_dispatch.py` (REPO-4.3's endpoint, unchanged)
 
-This is the base for the provider webhook and status adapter (GNC-2.2) and three-way spec
-synchronization (GNC-2.3).
+This is the base for the provider webhook and status adapter
+([GNC-2.2](provider_checks.md)) and three-way spec synchronization (GNC-2.3).
 
 ## The one rule
 
@@ -183,6 +183,9 @@ same transaction** as the change it records — not best-effort — and is reada
 - **It does not change a draft.** Applying a candidate moves the binding's synchronized pointer and
   nothing else; merging repository changes into a draft is GNC-2.3, which will settle the same
   candidates once it can reconcile without silent overwrite.
-- **It writes nothing back to the provider.** Check runs and PR status are GNC-2.2.
+- **It writes nothing back to the provider.** Check runs and PR status are GNC-2.2, which builds
+  on this schema exactly as predicted and needed no migration to it — see
+  [provider_checks.md](provider_checks.md).
 - **Only `github` can be read today** (`app.git_intake`). `gitlab` and `bitbucket` are accepted by
-  the schema and the vocabulary so GNC-2.2's adapters need no migration.
+  the schema and the vocabulary, and GNC-2.2 ships a status adapter for all three — so a draft on
+  either can be *reported on* before it can be *read from*.

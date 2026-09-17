@@ -1132,6 +1132,45 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Provider check publishing (GNC-2.2, #4738). A normalized check verdict about a bound
+    # draft's commit, put back on the provider through the status adapter.
+    #
+    # provider_checks_enabled          Kill switch for the publish half. When False a verdict is
+    #                                  still recorded and every attempt is still ledgered — as
+    #                                  `suppressed` — but nothing is sent to any provider. The
+    #                                  recording half is never gated: a check that was not
+    #                                  published is evidence; a check that was never recorded is
+    #                                  nothing.
+    # provider_checks_webhook_seed_enabled
+    #                                  Whether a provider delivery that moves a bound ref seeds a
+    #                                  `pending` check on the new commit. Separate from the switch
+    #                                  above so a deployment can publish checks it is asked for
+    #                                  without announcing one on every push.
+    # provider_checks_details_base_url The base the default details link is built from, e.g.
+    #                                  https://app.apiome.dev. Unset leaves a seeded check with no
+    #                                  link rather than a broken one.
+    provider_checks_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_PROVIDER_CHECKS_ENABLED",
+            "provider_checks_enabled",
+        ),
+    )
+    provider_checks_webhook_seed_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "APIOME_PROVIDER_CHECKS_WEBHOOK_SEED",
+            "provider_checks_webhook_seed_enabled",
+        ),
+    )
+    provider_checks_details_base_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "APIOME_PROVIDER_CHECKS_DETAILS_BASE_URL",
+            "provider_checks_details_base_url",
+        ),
+    )
+
     # Webhook signing-secret rotation (REPO-4.7, #2785). A rotation mints a new secret and
     # keeps the outgoing one verifying for a grace window, so deliveries already in flight —
     # and deliveries a provider keeps signing until its hook is updated — do not start

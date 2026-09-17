@@ -44,6 +44,12 @@ from .mcp_facets import (
     UNGRADED_VALUE,
     UNKNOWN_VALUE,
 )
+from .provider_checks import (
+    AUDIT_CHECK_PUBLISHED,
+    AUDIT_CHECK_RECORDED,
+    ORIGIN_API as CHECK_ORIGIN_API,
+    STATE_PENDING as CHECK_STATE_PENDING,
+)
 from .push_webhook_crypto import encrypt_signing_secret
 from .repository_spec_catalog import (
     DEFAULT_SPEC_SORT,
@@ -34928,6 +34934,512 @@ class Database:
                 "commit_sha": commit_sha,
                 "source_digest": source_digest,
             }
+
+        return self._guarded_tx(work)
+
+    # -----------------------------------------------------------------------------------------
+    # Provider check runs (GNC-2.2, #4738)
+    # -----------------------------------------------------------------------------------------
+
+    #: Check-run columns, with the recorder's display name, the version's label and the bound ref
+    #: read fresh rather than stored, and the most recent publish attempt joined alongside.
+    _CHECK_COLUMNS = """
+        r.id::text AS id, r.tenant_id::text AS tenant_id, r.binding_id::text AS binding_id,
+        r.project_id::text AS project_id, r.version_id::text AS version_id,
+        v.version_id AS version_label,
+        r.provider, r.repo_full_name, b.ref, r.commit_sha, r.pr_number,
+        r.name, r.state, r.title, r.summary, r.details_url,
+        r.external_id, r.origin, r.delivery_id, r.attempt,
+        r.started_at, r.completed_at,
+        r.created_by::text AS created_by,
+        (SELECT cu.name FROM apiome.users cu WHERE cu.id = r.created_by) AS created_by_name,
+        r.created_at, r.updated_at,
+        last_publish.outcome AS last_publish_outcome,
+        last_publish.error_code AS last_publish_error
+    """
+
+    #: The joins ``_CHECK_COLUMNS`` reads from. The ref comes from the binding, so a check never
+    #: stores a branch name that could drift from the binding's; the publish tail is a lateral so a
+    #: check nobody has tried to publish still produces a row.
+    _CHECK_FROM = """
+        apiome.provider_check_runs r
+        JOIN apiome.draft_repository_bindings b ON b.id = r.binding_id
+        JOIN apiome.versions v ON v.id = r.version_id
+        LEFT JOIN LATERAL (
+            SELECT d.outcome, d.error_code
+            FROM apiome.provider_check_deliveries d
+            WHERE d.check_run_id = r.id
+            ORDER BY d.created_at DESC, d.id DESC
+            LIMIT 1
+        ) last_publish ON TRUE
+    """
+
+    #: Publish-attempt columns. No credential is stored on these rows, so every one is projectable.
+    _CHECK_DELIVERY_COLUMNS = """
+        d.id::text AS id, d.check_run_id::text AS check_run_id, d.provider, d.state,
+        d.outcome, d.status_code, d.external_id, d.error_code, d.error_message, d.created_at
+    """
+
+    def get_provider_check_run(
+        self, *, tenant_id: str, check_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one check run inside a tenant (GNC-2.2, #4738).
+
+        Args:
+            tenant_id: The tenant.
+            check_id: The check run.
+
+        Returns:
+            The check row, or ``None`` when it is not there (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, check_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_COLUMNS}
+            FROM {self._CHECK_FROM}
+            WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid
+            """,
+            (check_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_provider_check_runs(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str] = None,
+        binding_id: Optional[str] = None,
+        version_id: Optional[str] = None,
+        commit_sha: Optional[str] = None,
+        state: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's check runs, newest first (GNC-2.2, #4738).
+
+        Args:
+            tenant_id: The tenant.
+            project_id: Only this project's checks.
+            binding_id: Only this binding's checks.
+            version_id: Only this version's checks.
+            commit_sha: Only checks about this commit.
+            state: Only checks in this normalized state.
+            limit: Page size.
+            offset: Checks to skip.
+
+        Returns:
+            One row per check, newest first.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        clauses = ["r.tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        if project_id:
+            if not is_uuid_string(str(project_id)):
+                return []
+            clauses.append("r.project_id = %s::uuid")
+            params.append(project_id)
+        if binding_id:
+            if not is_uuid_string(str(binding_id)):
+                return []
+            clauses.append("r.binding_id = %s::uuid")
+            params.append(binding_id)
+        if version_id:
+            if not is_uuid_string(str(version_id)):
+                return []
+            clauses.append("r.version_id = %s::uuid")
+            params.append(version_id)
+        if commit_sha:
+            clauses.append("r.commit_sha = %s")
+            params.append(str(commit_sha).strip())
+        if state:
+            clauses.append("r.state = %s")
+            params.append(str(state).strip())
+        params.extend([int(limit), int(offset)])
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_COLUMNS}
+            FROM {self._CHECK_FROM}
+            WHERE {' AND '.join(clauses)}
+            ORDER BY r.created_at DESC, r.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows]
+
+    def list_provider_check_deliveries(
+        self, *, check_run_id: str, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List one check's publish attempts, newest first (GNC-2.2, #4738).
+
+        Args:
+            check_run_id: The check run.
+            limit: Page size.
+
+        Returns:
+            One row per attempt.
+        """
+        if not is_uuid_string(str(check_run_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_DELIVERY_COLUMNS}
+            FROM apiome.provider_check_deliveries d
+            WHERE d.check_run_id = %s::uuid
+            ORDER BY d.created_at DESC, d.id DESC
+            LIMIT %s
+            """,
+            (check_run_id, int(limit)),
+        )
+        return [dict(row) for row in rows]
+
+    def find_provider_check_delivery(
+        self, *, check_run_id: str, request_fingerprint: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find a publish attempt already on a check's ledger (GNC-2.2, #4738).
+
+        Read before a publish, so an attempt that would repeat one already dispatched never reaches
+        the provider at all. The unique index is what *guarantees* one ledger row per verdict; this
+        read is what turns that guarantee into "and no second call was made", which is the half a
+        provider can actually feel.
+
+        Args:
+            check_run_id: The check run.
+            request_fingerprint: Fingerprint of the verdict about to be published.
+
+        Returns:
+            The matching attempt, or ``None`` when this verdict has not been published before.
+        """
+        if not is_uuid_string(str(check_run_id or "")) or not str(request_fingerprint or ""):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_DELIVERY_COLUMNS}
+            FROM apiome.provider_check_deliveries d
+            WHERE d.check_run_id = %s::uuid AND d.request_fingerprint = %s
+            """,
+            (check_run_id, str(request_fingerprint)),
+        )
+        return dict(rows[0]) if rows else None
+
+    def find_authorized_bindings_for_check(
+        self, *, repository_id: str, ref: str
+    ) -> List[Dict[str, Any]]:
+        """Find the active bindings a ref update can be reported against (GNC-2.2, #4738).
+
+        The webhook's check-seeding read, and the meaning of the ticket's "provider events resolve
+        to an **authorized** branch binding": a row comes back only while the binding is active and
+        its registration is intact, because the registration is the credential a verdict would be
+        published with. A de-registered repository (``repository_id IS NULL``) matches nothing —
+        the same rule :meth:`find_active_bindings_for_repository_ref` relies on, restated here
+        because this read also needs the provider coordinates a publish is addressed by, which the
+        candidate read has no use for.
+
+        Args:
+            repository_id: The registered tenant repository the delivery resolved to.
+            ref: The short ref (no ``refs/heads/`` prefix) the delivery was about.
+
+        Returns:
+            One row per authorized binding, with everything a publish needs.
+        """
+        if not is_uuid_string(str(repository_id or "")) or not str(ref or "").strip():
+            return []
+        rows = self.execute_query(
+            """
+            SELECT b.id::text AS id, b.tenant_id::text AS tenant_id,
+                   b.project_id::text AS project_id, b.version_id::text AS version_id,
+                   b.repository_id::text AS repository_id,
+                   b.provider, b.repo_full_name, b.repo_url, b.ref, b.path, b.commit_sha
+            FROM apiome.draft_repository_bindings b
+            WHERE b.repository_id = %s::uuid AND b.ref = %s AND b.released_at IS NULL
+            ORDER BY b.created_at
+            """,
+            (repository_id, str(ref).strip()),
+        )
+        return [dict(row) for row in rows]
+
+    def upsert_provider_check_run(
+        self,
+        *,
+        tenant_id: str,
+        binding_id: str,
+        commit_sha: str,
+        name: str,
+        state: str,
+        title: str = "",
+        summary: str = "",
+        details_url: str = "",
+        pr_number: Optional[int] = None,
+        origin: str = CHECK_ORIGIN_API,
+        delivery_id: Optional[str] = None,
+        created_by: Optional[str] = None,
+        rerun: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Record a check verdict, creating it or moving the one that already exists.
+
+        The idempotency the ticket asks for, in one statement: V265's
+        ``UNIQUE (binding_id, commit_sha, name)`` means the same check on the same commit is the
+        same row, so a redelivered webhook, a retried request and a re-run of a check suite all
+        land on one verdict a reviewer can read. ``completed_at`` is set from the state rather than
+        passed in, because the two are one fact and V265's CHECK refuses them disagreeing.
+
+        The binding is locked and read first: it supplies the project, version and provider
+        coordinates, and a released binding — or one whose registration is gone — records nothing,
+        because there is no longer any authorized way to publish what would be recorded.
+
+        Args:
+            tenant_id: The tenant.
+            binding_id: The binding the check belongs to.
+            commit_sha: The commit the verdict is about.
+            name: The check's stable name.
+            state: ``pending``, ``pass``, ``fail`` or ``skipped``.
+            title: The one-line title.
+            summary: The longer explanation.
+            details_url: Where the check points a reviewer.
+            pr_number: The pull request the commit belongs to, when known.
+            origin: ``webhook``, ``api`` or ``sweep``; kept from the first record.
+            delivery_id: The delivery that seeded it; kept from the first record.
+            created_by: The acting user, when a person recorded it.
+            rerun: Advance the attempt counter — this is a fresh run of the same check.
+
+        Returns:
+            ``{"check_id", "created", "state", "attempt"}``, or ``None`` when the binding is gone,
+            released, or no longer has a registration.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, binding_id)):
+            return None
+        if created_by is not None and not is_uuid_string(str(created_by)):
+            return None
+        head = str(commit_sha or "").strip()
+        check_name = str(name or "").strip()
+        if not head or not check_name:
+            return None
+
+        # One fact, told twice, which V265's CHECK refuses to let disagree: a check that is not
+        # pending has finished, and a check that has finished has a completion time. Passed as a
+        # parameter rather than interpolated so the statement is fixed text.
+        finished = state != CHECK_STATE_PENDING
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            # Locks the binding and reads the coordinates a check is stamped with in one go; the
+            # shared _lock_draft_binding does not carry the provider columns a publish needs.
+            cursor.execute(
+                """
+                SELECT b.project_id::text AS project_id, b.version_id::text AS version_id,
+                       b.repository_id::text AS repository_id, b.provider, b.repo_full_name,
+                       (b.released_at IS NOT NULL) AS released
+                FROM apiome.draft_repository_bindings b
+                WHERE b.id = %s::uuid AND b.tenant_id = %s::uuid
+                FOR UPDATE
+                """,
+                (binding_id, tenant_id),
+            )
+            binding = cursor.fetchone()
+            if not binding or binding["released"] or not binding["repository_id"]:
+                # A check is recordable only while the binding is live *and* its registration
+                # authorizes it — without one there is no credential a verdict could be published
+                # with, and a verdict nobody can publish is not a check.
+                return None
+
+            cursor.execute(
+                """
+                INSERT INTO apiome.provider_check_runs AS existing (
+                    tenant_id, binding_id, project_id, version_id, provider, repo_full_name,
+                    commit_sha, pr_number, name, state, title, summary, details_url,
+                    origin, delivery_id, created_by, started_at, completed_at
+                )
+                VALUES (
+                    %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s::uuid, CURRENT_TIMESTAMP,
+                    CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END
+                )
+                ON CONFLICT (binding_id, commit_sha, name) DO UPDATE
+                SET state = EXCLUDED.state,
+                    title = EXCLUDED.title,
+                    summary = EXCLUDED.summary,
+                    details_url = EXCLUDED.details_url,
+                    pr_number = COALESCE(EXCLUDED.pr_number, existing.pr_number),
+                    attempt = existing.attempt + CASE WHEN %s THEN 1 ELSE 0 END,
+                    started_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE existing.started_at END,
+                    completed_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id::text AS id, state, attempt, (xmax = 0) AS created
+                """,
+                (
+                    tenant_id,
+                    binding_id,
+                    str(binding["project_id"]),
+                    str(binding["version_id"]),
+                    str(binding["provider"]),
+                    str(binding["repo_full_name"]),
+                    head,
+                    pr_number,
+                    check_name,
+                    state,
+                    title,
+                    summary,
+                    details_url,
+                    origin,
+                    delivery_id,
+                    created_by,
+                    finished,
+                    bool(rerun),
+                    bool(rerun),
+                    finished,
+                ),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            check_id = str(row["id"])
+            created = bool(row["created"])
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=str(binding["project_id"]),
+                version_id=str(binding["version_id"]),
+                action=AUDIT_CHECK_RECORDED,
+                actor_id=created_by,
+                detail={
+                    "check_id": check_id,
+                    "binding_id": binding_id,
+                    "name": check_name,
+                    "commit_sha": head,
+                    "state": state,
+                    "origin": origin,
+                    "delivery_id": delivery_id,
+                    "attempt": int(row["attempt"]),
+                    "created": created,
+                },
+            )
+            return {
+                "check_id": check_id,
+                "created": created,
+                "state": str(row["state"]),
+                "attempt": int(row["attempt"]),
+            }
+
+        return self._guarded_tx(work)
+
+    def record_provider_check_delivery(
+        self,
+        *,
+        tenant_id: str,
+        check_run_id: str,
+        provider: str,
+        state: str,
+        request_fingerprint: str,
+        outcome: str,
+        status_code: Optional[int] = None,
+        external_id: Optional[str] = None,
+        error_code: Optional[str] = None,
+        error_message: str = "",
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Append one publish attempt to the ledger, and carry the provider's id onto the check.
+
+        The insert is ``ON CONFLICT DO NOTHING`` against V265's
+        ``UNIQUE (check_run_id, request_fingerprint)``: an attempt that would have sent bytes
+        already sent is not a second attempt. ``None`` therefore means "this publish already
+        happened", which is exactly what a caller needs in order not to call the provider again.
+
+        A dispatched attempt also writes ``external_id`` back onto the check run, so the next
+        publish of that check *moves* the provider's record rather than stacking a second one
+        beside it.
+
+        Args:
+            tenant_id: The tenant.
+            check_run_id: The check the attempt belongs to.
+            provider: The provider the attempt addressed.
+            state: The state that was published.
+            request_fingerprint: Fingerprint of the request; the idempotency key.
+            outcome: ``dispatched``, ``suppressed`` or ``failed``.
+            status_code: The provider's HTTP status, when a request went out.
+            external_id: The provider's id for the check, when it returned one.
+            error_code: Stable reason for a refusal.
+            error_message: The provider's message, already redacted by the caller.
+            actor_id: The acting user, when a person triggered the publish.
+
+        Returns:
+            ``{"delivery_id", "outcome"}``, or ``None`` when an identical attempt is already on
+            the ledger or the check run does not belong to this tenant.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, check_run_id)):
+            return None
+        if actor_id is not None and not is_uuid_string(str(actor_id)):
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                SELECT id::text AS id, project_id::text AS project_id,
+                       version_id::text AS version_id, name
+                FROM apiome.provider_check_runs
+                WHERE id = %s::uuid AND tenant_id = %s::uuid
+                FOR UPDATE
+                """,
+                (check_run_id, tenant_id),
+            )
+            check = cursor.fetchone()
+            if not check:
+                return None
+            cursor.execute(
+                """
+                INSERT INTO apiome.provider_check_deliveries (
+                    check_run_id, tenant_id, provider, state, request_fingerprint,
+                    outcome, status_code, external_id, error_code, error_message
+                )
+                VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (check_run_id, request_fingerprint) DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (
+                    check_run_id,
+                    tenant_id,
+                    provider,
+                    state,
+                    request_fingerprint,
+                    outcome,
+                    status_code,
+                    external_id,
+                    error_code,
+                    error_message or "",
+                ),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            if external_id:
+                cursor.execute(
+                    """
+                    UPDATE apiome.provider_check_runs
+                    SET external_id = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid AND external_id IS DISTINCT FROM %s
+                    """,
+                    (external_id, check_run_id, external_id),
+                )
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=str(check["project_id"]),
+                version_id=str(check["version_id"]),
+                action=AUDIT_CHECK_PUBLISHED,
+                actor_id=actor_id,
+                detail={
+                    "check_id": check_run_id,
+                    "delivery_id": str(row["id"]),
+                    "name": str(check["name"]),
+                    "provider": provider,
+                    "state": state,
+                    "outcome": outcome,
+                    "status_code": status_code,
+                    "error_code": error_code,
+                },
+            )
+            return {"delivery_id": str(row["id"]), "outcome": outcome}
 
         return self._guarded_tx(work)
 

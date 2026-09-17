@@ -5,6 +5,70 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.327.0] - 2026-09-16
+
+### Added
+- **Provider webhook and status adapter (#4738, GNC-2.2)** — GNC-2.1 gave a draft a durable
+  relationship to a repository ref, but nothing could answer the provider: a pull request that
+  changed an API showed no verdict from this platform, because there was nowhere to record one and
+  nothing to send it with. Both halves now exist — a **normalized check model** that belongs to the
+  platform rather than to any provider, and one **status adapter** interface with GitHub, GitLab
+  and Bitbucket behind it.
+
+  ```bash
+  # Record a verdict about the commit this draft is bound to, and put it on the pull request.
+  # (binding, commit, name) identifies the check, so the same call twice is one verdict.
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/binding/checks" \
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+       -d '{"name":"apiome/api-change","state":"fail","title":"2 breaking changes",
+            "summary":"`GET /pets` lost a required field.","details_url":"https://…"}'
+
+  # What did the provider actually do with it?
+  curl -s "$APIOME/v1/tenants/acme/projects/pets/checks/$CHECK_ID" \
+       -H "Authorization: Bearer $TOKEN"
+  ```
+
+  - **Four words, provider-independent**: `pending` / `pass` / `fail` / `skipped`. The three
+    providers disagree about what a status even is — GitHub splits it into `status` and
+    `conclusion`, GitLab has one commit `state`, Bitbucket has build states in capitals and no
+    `skipped` at all — so storing any one of them would make the other two lossy translations.
+    Only `pass` ever maps to a provider's passing status: a skip is "we did not look", which is not
+    "we looked and it is fine".
+  - apiome-db **V265**: `apiome.provider_check_runs` (one verdict per binding, commit and check
+    name, backed by a unique index — the re-run idempotency — with `completed_at` tied to the state
+    by a CHECK and the identity frozen by a trigger) and `apiome.provider_check_deliveries` (an
+    append-only publish ledger, one row per distinct verdict sent, which may not claim a reach it
+    did not have).
+  - apiome-rest `app.provider_checks` (vocabulary, models, codes, the provider spelling tables and
+    the fingerprint — all pure), `app.provider_status_adapter` (one `StatusAdapter` contract;
+    GitHub check runs, GitLab commit statuses, Bitbucket build statuses), `app.provider_check_store`
+    (the rules), `app.provider_check_routes` (four endpoints), and the accessors at the end of
+    `database.py`, whose `check.recorded` / `check.published` audit rows are written **inside** each
+    write's transaction.
+  - **Recording comes before publishing, always.** A verdict is written first and only then offered
+    to the provider, so a refusal appends a `failed` row to the publish ledger and the verdict
+    stands. A check recorded and not published is evidence; a check published and not recorded is a
+    green tick with nothing behind it.
+  - **Idempotent twice over.** Re-recording the same verdict moves one row rather than fanning out a
+    second, and each publish carries a fingerprint of the *verdict* — not of the HTTP call, which
+    changes once a provider hands back an id — consulted **before** the adapter runs. A redelivered
+    webhook therefore costs the provider nothing, not just us.
+  - **A delivery resolves to an authorized binding, or to nothing.** A verified push or PR on a
+    bound ref now seeds a `pending` check beside GNC-2.1's sync candidate, through the *existing*
+    REPO-4.3 endpoint and deliberately outside its tracked-branch gate. Authorized means the binding
+    is active *and* its repository registration still exists — that registration is the credential a
+    verdict is published with. Both halves are best-effort: neither can turn a verified delivery
+    into a 500 the provider would retry forever. The acceptance audit carries `checksSeeded`.
+  - **Browser clients never receive repository tokens, and cannot supply one.** The token is
+    resolved in server memory from the binding's registration (the same vault lookup an import
+    uses); V265 has no token column on either table, not an encrypted one; the request and response
+    models forbid extras; and a provider's refusal is redacted before it is stored.
+  - New settings: `APIOME_PROVIDER_CHECKS_ENABLED` (publish kill switch — recording is never
+    gated), `APIOME_PROVIDER_CHECKS_WEBHOOK_SEED`, `APIOME_PROVIDER_CHECKS_DETAILS_BASE_URL`.
+  - Documented in `apiome-rest/docs/provider_checks.md`. This ticket **produces** no verdicts — it
+    carries them; the check suite that decides one is GNC-3.1. Making a check *required* stays a
+    provider-side branch protection setting, which is the repository owner's to make.
+
 ## [1.326.0] - 2026-09-16
 
 ### Added

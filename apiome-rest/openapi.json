@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.191.0",
+    "version": "1.192.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -18984,6 +18984,575 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for settleanoutstandingsynccandidateresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/checks": {
+      "get": {
+        "tags": [
+          "provider-checks"
+        ],
+        "summary": "List a project's provider check runs",
+        "description": "A page of the project's normalized check verdicts, newest first. Each is one of `pending`, `pass`, `fail` or `skipped` about one commit of one bound draft.\n\nFilters combine: `version` (revision id or version label), `commit_sha`, and `state`.\n\nNo repository credential appears anywhere in the response.\n\nRequires `projects:view`.",
+        "operationId": "list_checks_v1_tenants__tenant_slug__projects__project_ref__checks_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsprovidercheckrunsversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsprovidercheckrunsversion schema."
+                }
+              ],
+              "description": "Revision id or version label.",
+              "title": "Version"
+            },
+            "description": "Revision id or version label."
+          },
+          {
+            "name": "commit_sha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsprovidercheckrunscommitsha schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsprovidercheckrunscommitsha schema."
+                }
+              ],
+              "description": "Only checks about this commit.",
+              "title": "Commit Sha"
+            },
+            "description": "Only checks about this commit."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsprovidercheckrunsstate schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsprovidercheckrunsstate schema."
+                }
+              ],
+              "description": "Only checks in this state: pending, pass, fail, skipped.",
+              "title": "State"
+            },
+            "description": "Only checks in this state: pending, pass, fail, skipped."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Check runs to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Check runs to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsprovidercheckrunsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsprovidercheckrunsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaprojectsprovidercheckruns Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaprojectsprovidercheckruns Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a project's provider check runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckListResponse",
+                  "description": "Response payload for listaprojectsprovidercheckrunsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaprojectsprovidercheckrunsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/checks/{check_id}": {
+      "get": {
+        "tags": [
+          "provider-checks"
+        ],
+        "summary": "Read one check run",
+        "description": "One normalized verdict with every attempt to publish it to the provider: what state was sent, whether it was `dispatched`, `suppressed` or `failed`, the provider's status code, and its refusal \u2014 redacted, because a provider's error body is outside our control.\n\nRequires `projects:view`.",
+        "operationId": "read_check_v1_tenants__tenant_slug__projects__project_ref__checks__check_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "check_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Check Id",
+              "description": "Check Id schema."
+            },
+            "description": "Path parameter identifying the check id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonecheckrunauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonecheckrunauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonecheckrun Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonecheckrun Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one check run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunDetail",
+                  "description": "Response payload for readonecheckrunresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonecheckrunresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/binding/checks": {
+      "get": {
+        "tags": [
+          "provider-checks"
+        ],
+        "summary": "List a version's provider check runs",
+        "description": "The checks recorded against this version's binding, newest first.\n\nRequires `projects:view`.",
+        "operationId": "list_version_checks_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_checks_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "commit_sha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaversionsprovidercheckrunscommitsha schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaversionsprovidercheckrunscommitsha schema."
+                }
+              ],
+              "description": "Only checks about this commit.",
+              "title": "Commit Sha"
+            },
+            "description": "Only checks about this commit."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Check runs to skip.",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Check runs to skip."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaversionsprovidercheckrunsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaversionsprovidercheckrunsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listaversionsprovidercheckruns Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listaversionsprovidercheckruns Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a version's provider check runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckListResponse",
+                  "description": "Response payload for listaversionsprovidercheckrunsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listaversionsprovidercheckrunsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "provider-checks"
+        ],
+        "summary": "Record a check verdict against a version's binding",
+        "description": "Record one normalized verdict \u2014 `pending`, `pass`, `fail` or `skipped` \u2014 about a commit of the ref this draft is bound to, and publish it to the provider.\n\n**Idempotent.** `(binding, commit, name)` identifies the check, so the same call twice is one verdict a reviewer reads, not two they have to reconcile. Pass `rerun: true` to say this is a fresh run of the same check, which advances its attempt counter.\n\n`commit_sha` defaults to the commit the binding is synchronized with. `publish: false` records the verdict without sending it, which is useful while a check suite is being developed against a real repository \u2014 the attempt is still ledgered, as `suppressed`.\n\n**Recording never fails because publishing did.** A provider that refuses the write leaves a `failed` row on the check's publish ledger and a `201` here: a verdict that was recorded and not published is evidence, and losing it would be worse than not showing it. Read the check back to see what the provider did.\n\nThe repository token is resolved server-side from the registration the binding was authorized through; a credential is never accepted in the body.\n\nRequires `versions:edit`.",
+        "operationId": "record_check_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_checks_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordacheckverdictagainstaversionsbindiauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordacheckverdictagainstaversionsbindiauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordacheckverdictagainstaversionsbindi Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordacheckverdictagainstaversionsbindi Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckRunUpsert",
+                "description": "Request body for recordacheckverdictagainstaversionsbindirequest."
+              }
+            }
+          },
+          "description": "Request body for record a check verdict against a version's binding."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for record a check verdict against a version's binding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunDetail",
+                  "description": "Response payload for recordacheckverdictagainstaversionsbindiresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for recordacheckverdictagainstaversionsbindiresponse422."
                 }
               }
             }
@@ -89141,6 +89710,586 @@
         "title": "ChangedPageBody",
         "description": "ChangedPageBody schema."
       },
+      "CheckDeliveryRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The delivery id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "check_run_id": {
+            "type": "string",
+            "title": "Check Run Id",
+            "description": "Check Run ID.",
+            "example": "check_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "`github`, `gitlab`, or `bitbucket`.",
+            "example": "example"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "pass",
+              "fail",
+              "skipped"
+            ],
+            "title": "State",
+            "description": "The state this attempt published.",
+            "example": "pending"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "dispatched",
+              "suppressed",
+              "failed"
+            ],
+            "title": "Outcome",
+            "description": "`dispatched` (accepted), `suppressed` (deliberately not sent), or `failed`.",
+            "example": "dispatched"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Check Delivery schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Delivery schema."
+              }
+            ],
+            "title": "Status Code",
+            "description": "The provider's HTTP status, when a request went out."
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Delivery schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Delivery schema."
+              }
+            ],
+            "title": "External Id",
+            "description": "The provider's id for the check, when it returned one."
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Delivery schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Delivery schema."
+              }
+            ],
+            "title": "Error Code",
+            "description": "Stable reason for a refusal."
+          },
+          "error_message": {
+            "type": "string",
+            "title": "Error Message",
+            "description": "The provider's message, redacted before it was stored.",
+            "default": "",
+            "example": "Example validation message."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "check_run_id",
+          "provider",
+          "state",
+          "outcome",
+          "created_at"
+        ],
+        "title": "CheckDeliveryRecord",
+        "description": "One attempt to publish a verdict to a provider."
+      },
+      "CheckListResponse": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckRunRecord"
+            },
+            "type": "array",
+            "title": "Checks",
+            "description": "Check runs, newest first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many check runs this page holds.",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "description": "The page size used.",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "description": "The offset used.",
+            "example": 0
+          },
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Providers",
+            "description": "Providers a verdict can be published to through the status adapter.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count",
+          "limit",
+          "offset"
+        ],
+        "title": "CheckListResponse",
+        "description": "A page of a project's check runs."
+      },
+      "CheckRunDetail": {
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/CheckRunRecord",
+            "description": "Check."
+          },
+          "deliveries": {
+            "items": {
+              "$ref": "#/components/schemas/CheckDeliveryRecord"
+            },
+            "type": "array",
+            "title": "Deliveries",
+            "description": "Publish attempts, newest first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "check"
+        ],
+        "title": "CheckRunDetail",
+        "description": "A check run with the publish attempts behind it."
+      },
+      "CheckRunRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The check run id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "binding_id": {
+            "type": "string",
+            "title": "Binding Id",
+            "description": "The branch-to-draft binding the check belongs to.",
+            "example": "binding_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Project version identifier or semantic version label, depending on context.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "The version's label."
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "`github`, `gitlab`, or `bitbucket`.",
+            "example": "example"
+          },
+          "repo_full_name": {
+            "type": "string",
+            "title": "Repo Full Name",
+            "description": "Lowercased `owner/name`.",
+            "example": "Example"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Ref",
+            "description": "The bound ref, read from the binding."
+          },
+          "commit_sha": {
+            "type": "string",
+            "title": "Commit Sha",
+            "description": "The commit the verdict is about.",
+            "example": "example"
+          },
+          "pr_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Pr Number",
+            "description": "The pull request the commit belongs to, when one was named."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The check's stable name, e.g. `apiome/api-change`.",
+            "example": "Pet"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "pass",
+              "fail",
+              "skipped"
+            ],
+            "title": "State",
+            "description": "`pending`, `pass`, `fail`, or `skipped`.",
+            "example": "pending"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "The one-line title a reviewer sees.",
+            "default": "",
+            "example": "example"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "The longer explanation.",
+            "default": "",
+            "example": "List pets"
+          },
+          "details_url": {
+            "type": "string",
+            "title": "Details Url",
+            "description": "Where the check points a reviewer.",
+            "default": "",
+            "example": "https://example.com/resource"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "External Id",
+            "description": "The provider's own id for the check, when it has one."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "webhook",
+              "api",
+              "sweep"
+            ],
+            "title": "Origin",
+            "description": "`webhook`, `api`, or `sweep`.",
+            "example": "webhook"
+          },
+          "delivery_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Delivery Id",
+            "description": "The provider delivery that seeded it."
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Attempt",
+            "description": "How many times this check has been run.",
+            "example": 1
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "Started At timestamp (ISO 8601).",
+            "example": "2026-09-17T00:32:03Z"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Completed At",
+            "description": "When it left `pending`; null exactly while it is pending."
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Who recorded it, when a person did."
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Created By Name",
+            "description": "Their display name."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "last_publish_outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "dispatched",
+                  "suppressed",
+                  "failed"
+                ],
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Last Publish Outcome",
+            "description": "What the most recent publish attempt did."
+          },
+          "last_publish_error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Check Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run schema."
+              }
+            ],
+            "title": "Last Publish Error",
+            "description": "Stable reason code of the most recent failed attempt."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "binding_id",
+          "project_id",
+          "version_id",
+          "provider",
+          "repo_full_name",
+          "commit_sha",
+          "name",
+          "state",
+          "origin",
+          "attempt",
+          "started_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CheckRunRecord",
+        "description": "One normalized check verdict about one commit."
+      },
+      "CheckRunUpsert": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Name",
+            "description": "The check's stable name; the same name on the same commit is the same check.",
+            "default": "apiome/api-change",
+            "example": "Pet"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "pass",
+              "fail",
+              "skipped"
+            ],
+            "title": "State",
+            "description": "`pending`, `pass`, `fail`, or `skipped`.",
+            "default": "pending",
+            "example": "pending"
+          },
+          "commit_sha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Check Run Upsert schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run Upsert schema."
+              }
+            ],
+            "title": "Commit Sha",
+            "description": "The commit to report against; defaults to the binding's synchronized commit."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "title": "Title",
+            "description": "One-line title.",
+            "default": "",
+            "example": "example"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 16000,
+            "title": "Summary",
+            "description": "The longer explanation.",
+            "default": "",
+            "example": "List pets"
+          },
+          "details_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Details Url",
+            "description": "Where the check points a reviewer; a failure should be a reason, not a log.",
+            "default": "",
+            "example": "https://example.com/resource"
+          },
+          "pr_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0,
+                "description": "Check Run Upsert schema."
+              },
+              {
+                "type": "null",
+                "description": "Check Run Upsert schema."
+              }
+            ],
+            "title": "Pr Number",
+            "description": "The pull request the commit belongs to, when known."
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "description": "Publish the verdict to the provider as well as recording it. False records it only \u2014 useful while a check suite is being developed against a real repository.",
+            "default": true,
+            "example": false
+          },
+          "rerun": {
+            "type": "boolean",
+            "title": "Rerun",
+            "description": "Treat this as a fresh run of the same check: the attempt counter advances. Without it, re-recording the same verdict leaves the row exactly as it is.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CheckRunUpsert",
+        "description": "Record a check verdict against a version's active binding.\n\nIdempotent by construction: ``(binding, commit, name)`` identifies the check, so the same call\ntwice is one verdict. A credential is never accepted in the body \u2014 the repository token is\nresolved server-side from the binding's registration."
+      },
       "ChecklistItemBody": {
         "properties": {
           "id": {
@@ -90314,7 +91463,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -90542,7 +91691,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "comment_count": {
             "type": "integer",
@@ -91000,14 +92149,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -93032,7 +94181,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "0688921f-68a6-40c8-9b30-5ebd8f26d605"
+            "example": "213b803b-fc80-4e46-bd6a-11f38ca83d86"
           },
           "method": {
             "type": "string",
@@ -95559,7 +96708,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -97295,7 +98444,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "browse_url": {
             "anyOf": [
@@ -136563,7 +137712,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           }
         },
         "additionalProperties": false,
@@ -147686,7 +148835,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "detected_by": {
             "anyOf": [
@@ -153799,14 +154948,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-16T23:17:38Z"
+            "example": "2026-09-17T00:32:03Z"
           },
           "outcome": {
             "anyOf": [

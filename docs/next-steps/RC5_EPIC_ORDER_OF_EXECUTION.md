@@ -148,8 +148,8 @@ approvals exist; a spec change visibly invalidates a stale approval; reviewers a
 
 | # | Ticket | Depends on |
 |---|---|---|
-| 1 | [GNC-2.1 · Branch-to-draft binding #4737](https://github.com/apiome/apiome/issues/4737) | COL-1.x/2.x; REPO-1.x ✅, RAR capture ✅ |
-| 2 | [GNC-2.2 · Provider webhook and status adapter #4738](https://github.com/apiome/apiome/issues/4738) | 2.1; reuse REPO-4.3/4.7 signed webhooks ✅. GitHub first |
+| 1 | [GNC-2.1 · Branch-to-draft binding #4737](https://github.com/apiome/apiome/issues/4737) ✅ | COL-1.x/2.x; REPO-1.x ✅, RAR capture ✅ |
+| 2 | [GNC-2.2 · Provider webhook and status adapter #4738](https://github.com/apiome/apiome/issues/4738) ✅ | 2.1; reuse REPO-4.3/4.7 signed webhooks ✅. GitHub first |
 | 3 | [GNC-2.3 · Three-way spec synchronization #4739](https://github.com/apiome/apiome/issues/4739) | 2.1, 2.2 — **no write-back path in this PR** |
 | 4 | [GNC-3.1 · API change check suite #4740](https://github.com/apiome/apiome/issues/4740) | 2.2; CTG-2.2 ✅, GOV-2.5 ✅, SGD-2.1 manifest ✅, **CTG-4.5 (Wave 1)** |
 

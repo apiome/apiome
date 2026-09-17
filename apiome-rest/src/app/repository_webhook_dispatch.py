@@ -169,6 +169,7 @@ class WebhookIngestResult:
         branch: The branch the delivery was about, when parsed.
         poll_due: True when the repository was made due for the refresh sweep.
         binding_candidates: Sync candidates raised on drafts bound to the moved ref (GNC-2.1).
+        checks_seeded: Pending provider checks announced on the moved ref's commit (GNC-2.2).
     """
 
     outcome: str
@@ -178,6 +179,7 @@ class WebhookIngestResult:
     branch: Optional[str] = None
     poll_due: bool = False
     binding_candidates: int = 0
+    checks_seeded: int = 0
 
 
 def _first_header(headers: Mapping[str, Any], names: Tuple[str, ...]) -> Optional[str]:
@@ -428,6 +430,61 @@ def _raise_binding_candidates(
     except Exception:
         _logger.exception(
             "draft binding sync candidates not raised repository_id=%s ref=%s",
+            subscription.get("repository_id"),
+            ref,
+        )
+        return 0
+
+
+def _seed_binding_checks(
+    db: Any,
+    subscription: Mapping[str, Any],
+    event: ParsedWebhookEvent,
+    delivery: DeliveryHeaders,
+) -> int:
+    """Announce a pending check on the drafts bound to a ref this delivery moved (GNC-2.2, #4738).
+
+    Sits beside :func:`_raise_binding_candidates` and reads the same movement, deliberately outside
+    the tracked-branch gate for the same reason: a branch a draft is bound to need never have been
+    imported from, and the binding — not the import spec — is what a reviewer is looking at.
+
+    The two do different jobs. A sync candidate is a question asked *here* ("this ref moved; what do
+    you want to do?"). A check is an answer given *there*, on the pull request, and at this instant
+    the only honest answer is ``pending``: the platform has seen the commit and is looking at it.
+    GNC-3.1's suite replaces that with a verdict.
+
+    Best-effort by design, exactly like the candidates: publishing a check reaches a provider over
+    the network, and a provider having a bad day must not turn a verified delivery into a 500 the
+    sending provider will retry forever. The count rides on the acceptance audit, so a failure shows
+    up as a missing check against a recorded delivery rather than as silence.
+
+    Args:
+        db: Database handle.
+        subscription: The verified subscription.
+        event: The parsed delivery.
+        delivery: The delivery's provider metadata; its id is recorded on the seeded check.
+
+    Returns:
+        How many checks were seeded.
+    """
+    moved = _moved_ref(event)
+    if not moved:
+        return 0
+    ref, head_sha = moved
+    try:
+        from .provider_check_store import seed_checks_for_ref_update
+
+        return seed_checks_for_ref_update(
+            db,
+            repository_id=str(subscription["repository_id"]),
+            ref=ref,
+            commit_sha=head_sha,
+            delivery_id=delivery.delivery_id,
+            pr_number=event.pr_number,
+        )
+    except Exception:
+        _logger.exception(
+            "provider checks not seeded repository_id=%s ref=%s",
             subscription.get("repository_id"),
             ref,
         )
@@ -700,6 +757,10 @@ def ingest_webhook_delivery(
     # scan dispatch below finds anything to do with the delivery.
     binding_candidates = _raise_binding_candidates(db, subscription, event, delivery)
 
+    # GNC-2.2: and the drafts bound to it announce a pending check on the provider, so the pull
+    # request shows that this platform is looking at the change before it has a verdict.
+    checks_seeded = _seed_binding_checks(db, subscription, event, delivery)
+
     if event.kind == EVENT_KIND_PUSH:
         result = _dispatch_push(db, subscription, event)
     elif event.kind == EVENT_KIND_PULL_REQUEST:
@@ -710,7 +771,9 @@ def ingest_webhook_delivery(
             reason=REASON_MALFORMED_PAYLOAD,
             repository_id=str(subscription["repository_id"]),
         )
-    result = replace(result, binding_candidates=binding_candidates)
+    result = replace(
+        result, binding_candidates=binding_candidates, checks_seeded=checks_seeded
+    )
 
     row, stored = _record(
         db,
@@ -733,6 +796,7 @@ def ingest_webhook_delivery(
             repository_id=result.repository_id,
             branch=result.branch,
             binding_candidates=result.binding_candidates,
+            checks_seeded=result.checks_seeded,
         )
 
     # Any delivery that got this far verified, so it counts towards "the hook is firing"
@@ -742,7 +806,11 @@ def ingest_webhook_delivery(
 
     # An accepted delivery is audited; so is one that did no scan work but moved a bound ref,
     # because "which push raised this sync candidate" is the same question the ledger exists for.
-    if result.outcome in (OUTCOME_ENQUEUED, OUTCOME_PREVIEW_SCAN) or result.binding_candidates:
+    if (
+        result.outcome in (OUTCOME_ENQUEUED, OUTCOME_PREVIEW_SCAN)
+        or result.binding_candidates
+        or result.checks_seeded
+    ):
         _audit(
             db,
             action=WEBHOOK_ACCEPTED_ACTION,
@@ -762,6 +830,8 @@ def ingest_webhook_delivery(
                 "pollDue": result.poll_due,
                 # Drafts bound to the moved ref that now have a sync candidate (GNC-2.1, #4737).
                 "bindingCandidates": result.binding_candidates,
+                # Pending provider checks announced on the moved ref's commit (GNC-2.2, #4738).
+                "checksSeeded": result.checks_seeded,
                 # Which of the subscription's two secrets verified this delivery (REPO-4.7).
                 # `previous` means the provider is still signing with the outgoing secret and
                 # this delivery only worked because the grace window is open — the audit trail
