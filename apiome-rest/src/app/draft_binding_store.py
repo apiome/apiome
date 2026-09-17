@@ -70,7 +70,7 @@ from .draft_bindings import (
     normalize_repo_full_name,
     source_digest,
 )
-from .git_intake import GitIntakeError, GitSelector, fetch_git_fileset
+from .git_intake import GitFilesetResult, GitIntakeError, GitSelector, fetch_git_fileset
 
 __all__ = [
     "BindingFilters",
@@ -80,8 +80,10 @@ __all__ = [
     "get_binding",
     "list_bindings",
     "read_source",
+    "read_source_fileset",
     "record_ref_update",
     "release_binding",
+    "require_active_binding",
     "resolve_candidate",
     "resolve_project",
     "resolve_version",
@@ -304,6 +306,55 @@ def read_source(
     Raises:
         DraftBindingValidationError: With the refusal the provider's answer maps to.
     """
+    resolved, _fileset = read_source_fileset(
+        tenant_id,
+        user_id,
+        repo_url=repo_url,
+        ref=ref,
+        path=path,
+        repository_id=repository_id,
+        linked_account_id=linked_account_id,
+    )
+    return resolved
+
+
+def read_source_fileset(
+    tenant_id: str,
+    user_id: str,
+    *,
+    repo_url: str,
+    ref: Optional[str],
+    path: str,
+    repository_id: Optional[str] = None,
+    linked_account_id: Optional[str] = None,
+    require_root: bool = False,
+) -> Tuple[ResolvedSource, GitFilesetResult]:
+    """Perform the proven read and hand back the files it produced as well as the digest.
+
+    :func:`read_source` needs only the commit and the digest, which is all a binding stores. Three-
+    way synchronization (:mod:`app.spec_sync_store`) needs the *documents*, and re-fetching them
+    through a second call would double every provider read. The two therefore share one function,
+    and ``read_source`` keeps its narrower return so nothing downstream of GNC-2.1 changed.
+
+    Args:
+        tenant_id: The caller's tenant.
+        user_id: The acting user.
+        repo_url: Repository URL.
+        ref: Branch, tag or commit; ``None`` uses the repository's default branch.
+        path: Path or glob selecting the source.
+        repository_id: Registered repository whose stored credential authorizes the read.
+        linked_account_id: The caller's own linked account, when no registration is used.
+        require_root: Whether the selection must resolve to one root document. A binding does not
+            care (a selection may hold several independent specs); a merge does, because it merges
+            one document.
+
+    Returns:
+        ``(proven read, the fileset it read)``. The digest is over the members either way, so a
+        rooted and an unrooted read of the same commit produce the same digest.
+
+    Raises:
+        DraftBindingValidationError: With the refusal the provider's answer maps to.
+    """
     token = _stored_token(
         tenant_id,
         user_id,
@@ -312,13 +363,13 @@ def read_source(
     )
     selector = GitSelector(repo_url=repo_url, ref=(ref or None), path=normalize_path(path))
     try:
-        result = fetch_git_fileset(selector, access_token=token, require_root=False)
+        result = fetch_git_fileset(selector, access_token=token, require_root=require_root)
     except GitIntakeError as exc:
         code = _INTAKE_CODE_MAP.get(getattr(exc, "code", ""), CODE_INVALID_SOURCE)
         raise DraftBindingValidationError(code, str(exc)) from exc
 
     provenance = result.provenance
-    return ResolvedSource(
+    resolved = ResolvedSource(
         provider=provenance.provider,
         repo_url=provenance.repo_url,
         repo_full_name=normalize_repo_full_name(provenance.owner, provenance.repo),
@@ -327,6 +378,7 @@ def read_source(
         digest=source_digest(result.members),
         member_count=len(result.members),
     )
+    return resolved, result
 
 
 # ---------------------------------------------------------------------------------------------
@@ -497,7 +549,7 @@ def version_binding_status(
 # ---------------------------------------------------------------------------------------------
 
 
-def _require_active_binding(
+def require_active_binding(
     tenant_id: str, project_id: str, version_id: str
 ) -> Dict[str, Any]:
     """Read the version's active binding or refuse.
@@ -633,7 +685,7 @@ def release_binding(
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     version = resolve_version(tenant_id, project_id, version_ref)
-    binding = _require_active_binding(tenant_id, project_id, str(version["id"]))
+    binding = require_active_binding(tenant_id, project_id, str(version["id"]))
     binding_id = str(binding["id"])
     released = db.release_draft_binding(
         tenant_id=tenant_id,
@@ -679,7 +731,7 @@ def check_for_updates(
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     version = resolve_version(tenant_id, project_id, version_ref)
-    binding = _require_active_binding(tenant_id, project_id, str(version["id"]))
+    binding = require_active_binding(tenant_id, project_id, str(version["id"]))
     binding_id = str(binding["id"])
 
     source = read_source(
@@ -744,7 +796,7 @@ def resolve_candidate(
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     version = resolve_version(tenant_id, project_id, version_ref)
-    binding = _require_active_binding(tenant_id, project_id, str(version["id"]))
+    binding = require_active_binding(tenant_id, project_id, str(version["id"]))
     binding_id = str(binding["id"])
 
     candidate = db.get_binding_sync_candidate(

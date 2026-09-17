@@ -13,7 +13,8 @@ resolved to, and gives every later push to that ref somewhere to land.
 - Provider deliveries: `app/repository_webhook_dispatch.py` (REPO-4.3's endpoint, unchanged)
 
 This is the base for the provider webhook and status adapter
-([GNC-2.2](provider_checks.md)) and three-way spec synchronization (GNC-2.3).
+([GNC-2.2](provider_checks.md)) and three-way spec synchronization
+([GNC-2.3](spec_sync.md)).
 
 ## The one rule
 
@@ -66,8 +67,8 @@ what produces the `commit_sha` and the `source_digest` the binding stores.
 `source_digest` is `sha256:<hex>` over the selection's members: every member's path and body,
 length-prefixed and NUL-separated, in sorted path order. Renaming a file, moving content between two
 files, and adding an empty one therefore all change it, none of which a hash of the concatenated
-bodies would catch. It is the base GNC-2.3's three-way synchronization will diff a ref update
-against. (The spelling matches `openapi_source_fingerprint`; the two are different things and are
+bodies would catch. It is the base [three-way synchronization](spec_sync.md) diffs a ref
+update against. (The spelling matches `openapi_source_fingerprint`; the two are different things and are
 never mistaken for one another's format.)
 
 ## Sync candidates
@@ -107,7 +108,8 @@ change". A ref that has not moved is `409 binding-unchanged`.
 - **`applied`** records that the draft is in sync with the candidate's commit. The source is
   **re-read at that commit** first — so the digest stored is one that was actually fetched, never
   asserted from a delivery payload — and the binding's synchronized pair advances to it. It does
-  **not** modify the draft; GNC-2.3 will settle a candidate this way after it has applied changes.
+  **not** modify the draft; [three-way synchronization](spec_sync.md) settles a candidate this way
+  once its merge has been dealt with.
 - **`dismissed`** leaves the binding exactly where it is.
 - `superseded` is the system's alone, and is not accepted over HTTP.
 - A candidate settles **once** (`409 binding-candidate-resolved`); a trigger refuses every later
@@ -181,8 +183,9 @@ same transaction** as the change it records — not best-effort — and is reada
 ## What this ticket deliberately does not do
 
 - **It does not change a draft.** Applying a candidate moves the binding's synchronized pointer and
-  nothing else; merging repository changes into a draft is GNC-2.3, which will settle the same
-  candidates once it can reconcile without silent overwrite.
+  nothing else. Reconciling repository changes with a draft is
+  [GNC-2.3](spec_sync.md), which merges the two against their common base and settles the same
+  candidates — and which likewise never rewrites a draft.
 - **It writes nothing back to the provider.** Check runs and PR status are GNC-2.2, which builds
   on this schema exactly as predicted and needed no migration to it — see
   [provider_checks.md](provider_checks.md).

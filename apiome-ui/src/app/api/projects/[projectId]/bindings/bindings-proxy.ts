@@ -94,12 +94,27 @@ export function versionRefFromQuery(url: string): string | null {
 }
 
 /**
+ * The apiome-rest URL of one of a project's endpoints.
+ *
+ * @param tenantSlug - The tenant slug.
+ * @param projectRef - The project id or slug from the URL.
+ * @param suffix - The path under the project, e.g. `/sync-plans/123`.
+ * @returns The absolute URL.
+ */
+export function restProjectUrl(tenantSlug: string, projectRef: string, suffix = ''): string {
+  return (
+    `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenantSlug)}` +
+    `/projects/${encodeURIComponent(projectRef)}${suffix}`
+  );
+}
+
+/**
  * The apiome-rest URL of one version's binding endpoints.
  *
  * @param tenantSlug - The tenant slug.
  * @param projectRef - The project id or slug from the URL.
  * @param versionRef - The revision id or version label.
- * @param suffix - A sub-resource, e.g. `/check`.
+ * @param suffix - A sub-resource, e.g. `/check` or `/sync`.
  * @returns The absolute URL.
  */
 export function restBindingUrl(
@@ -108,10 +123,10 @@ export function restBindingUrl(
   versionRef: string,
   suffix = ''
 ): string {
-  return (
-    `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenantSlug)}` +
-    `/projects/${encodeURIComponent(projectRef)}/versions/${encodeURIComponent(versionRef)}` +
-    `/binding${suffix}`
+  return restProjectUrl(
+    tenantSlug,
+    projectRef,
+    `/versions/${encodeURIComponent(versionRef)}/binding${suffix}`
   );
 }
 
@@ -162,15 +177,54 @@ export async function callRestBinding(
   versionRef: string,
   init: { method?: 'GET' | 'POST' | 'DELETE'; suffix?: string; body?: unknown } = {}
 ): Promise<unknown> {
-  const response = await fetch(
+  return callRestUrl(
+    auth,
     restBindingUrl(auth.tenantSlug, projectRef, versionRef, init.suffix ?? ''),
-    {
-      method: init.method ?? 'GET',
-      headers: createRestAuthHeaders(auth.user),
-      body: init.body === undefined ? undefined : JSON.stringify(init.body),
-      cache: 'no-store',
-    }
+    init
   );
+}
+
+/**
+ * Call one of the project-level endpoints these routes forward to, and parse its reply.
+ *
+ * The merge results of GNC-2.3 are addressed under the project rather than under a version — a
+ * plan id is unique on its own — so they need this rather than {@link callRestBinding}. Everything
+ * else about the call is identical, which is why both share {@link callRestUrl}.
+ *
+ * @param auth - The caller.
+ * @param projectRef - The project id or slug.
+ * @param init - `method`, the path `suffix` under the project, and the sanitized `body`.
+ * @returns The parsed reply.
+ * @throws RestBindingsError when apiome-rest refuses or answers with something unreadable.
+ */
+export async function callRestProject(
+  auth: BindingsAuth,
+  projectRef: string,
+  init: { method?: 'GET' | 'POST' | 'DELETE'; suffix?: string; body?: unknown } = {}
+): Promise<unknown> {
+  return callRestUrl(auth, restProjectUrl(auth.tenantSlug, projectRef, init.suffix ?? ''), init);
+}
+
+/**
+ * Issue one signed call to apiome-rest and parse its reply.
+ *
+ * @param auth - The caller.
+ * @param url - The absolute apiome-rest URL.
+ * @param init - `method` and the sanitized `body`.
+ * @returns The parsed reply.
+ * @throws RestBindingsError when apiome-rest refuses or answers with something unreadable.
+ */
+async function callRestUrl(
+  auth: BindingsAuth,
+  url: string,
+  init: { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown }
+): Promise<unknown> {
+  const response = await fetch(url, {
+    method: init.method ?? 'GET',
+    headers: createRestAuthHeaders(auth.user),
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    cache: 'no-store',
+  });
 
   const raw = await response.text();
   let payload: unknown = null;

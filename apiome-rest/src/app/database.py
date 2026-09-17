@@ -51,6 +51,12 @@ from .provider_checks import (
     STATE_PENDING as CHECK_STATE_PENDING,
 )
 from .push_webhook_crypto import encrypt_signing_secret
+from .spec_sync import (
+    AUDIT_CONFLICT_RESOLVED as AUDIT_SYNC_CONFLICT_RESOLVED,
+    AUDIT_PLANNED as AUDIT_SYNC_PLANNED,
+    STATUS_CONFLICTED as SYNC_STATUS_CONFLICTED,
+    STATUS_RESOLVED as SYNC_STATUS_RESOLVED,
+)
 from .repository_spec_catalog import (
     DEFAULT_SPEC_SORT,
     SPEC_FORMAT_SQL,
@@ -35442,6 +35448,464 @@ class Database:
             return {"delivery_id": str(row["id"]), "outcome": outcome}
 
         return self._guarded_tx(work)
+
+    # -----------------------------------------------------------------------------------------
+    # Draft sync plans (GNC-2.3, #4739)
+    # -----------------------------------------------------------------------------------------
+
+    #: Plan columns, with the runner's display name read fresh rather than stored.
+    _SYNC_PLAN_COLUMNS = """
+        p.id::text AS id, p.tenant_id::text AS tenant_id, p.binding_id::text AS binding_id,
+        p.project_id::text AS project_id, p.version_id::text AS version_id,
+        p.candidate_id::text AS candidate_id,
+        p.base_commit_sha, p.base_digest, p.git_commit_sha, p.git_digest, p.draft_digest,
+        p.plan_fingerprint, p.status,
+        p.auto_applied_count, p.local_count, p.agreed_count,
+        p.conflict_count, p.unresolved_count, p.conflicts_truncated,
+        p.changes, p.source_file, p.source_member_count, p.guard,
+        p.computed_by::text AS computed_by,
+        (SELECT cu.name FROM apiome.users cu WHERE cu.id = p.computed_by) AS computed_by_name,
+        p.created_at, p.updated_at
+    """
+
+    #: Conflict columns, with the resolver's display name read fresh rather than stored.
+    _SYNC_CONFLICT_COLUMNS = """
+        c.id::text AS id, c.plan_id::text AS plan_id,
+        c.pointer, c.scope, c.group_key, c.label, c.git_kind, c.draft_kind,
+        c.base_value, c.git_value, c.draft_value,
+        c.source_file, c.source_line, c.source_url,
+        c.resolution, c.resolved_at, c.resolved_by::text AS resolved_by,
+        (SELECT ru.name FROM apiome.users ru WHERE ru.id = c.resolved_by) AS resolved_by_name,
+        c.resolution_note, c.created_at
+    """
+
+    def find_draft_sync_plan(
+        self, *, tenant_id: str, binding_id: str, plan_fingerprint: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find the stored merge of one binding's three documents, by its rerun key.
+
+        This is what makes a rerun both idempotent and free: the fingerprint is computable from
+        the binding, the two commits and the draft's digest — all known before any provider read —
+        so an unchanged trio is answered from storage without fetching two commits again.
+
+        Args:
+            tenant_id: The tenant.
+            binding_id: The binding.
+            plan_fingerprint: The rerun key.
+
+        Returns:
+            The plan row, or ``None``.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, binding_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SYNC_PLAN_COLUMNS}
+            FROM apiome.draft_sync_plans p
+            WHERE p.tenant_id = %s::uuid AND p.binding_id = %s::uuid
+              AND p.plan_fingerprint = %s
+            """,
+            (tenant_id, binding_id, plan_fingerprint),
+        )
+        return dict(rows[0]) if rows else None
+
+    def get_draft_sync_plan(
+        self, *, tenant_id: str, project_id: str, plan_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one merge result inside a project.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project the plan must belong to.
+            plan_id: The plan.
+
+        Returns:
+            The plan row, or ``None`` when nothing in that project matches.
+        """
+        ids = (tenant_id, project_id, plan_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SYNC_PLAN_COLUMNS}
+            FROM apiome.draft_sync_plans p
+            WHERE p.id = %s::uuid AND p.tenant_id = %s::uuid AND p.project_id = %s::uuid
+            """,
+            (plan_id, tenant_id, project_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_draft_sync_plans(
+        self, *, tenant_id: str, version_id: str, limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """List a version's merge results, newest first.
+
+        Args:
+            tenant_id: The tenant.
+            version_id: The version.
+            limit: How many to return.
+
+        Returns:
+            The plan rows.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, version_id)):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SYNC_PLAN_COLUMNS}
+            FROM apiome.draft_sync_plans p
+            WHERE p.tenant_id = %s::uuid AND p.version_id = %s::uuid
+            ORDER BY p.created_at DESC
+            LIMIT %s
+            """,
+            (tenant_id, version_id, max(1, int(limit))),
+        )
+        return list(rows or [])
+
+    def list_draft_sync_conflicts(self, *, tenant_id: str, plan_id: str) -> List[Dict[str, Any]]:
+        """List one plan's conflicts, outstanding ones first and then in pointer order.
+
+        Args:
+            tenant_id: The tenant.
+            plan_id: The plan.
+
+        Returns:
+            The conflict rows.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, plan_id)):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SYNC_CONFLICT_COLUMNS}
+            FROM apiome.draft_sync_conflicts c
+            WHERE c.tenant_id = %s::uuid AND c.plan_id = %s::uuid
+            ORDER BY (c.resolution IS NOT NULL), c.pointer
+            """,
+            (tenant_id, plan_id),
+        )
+        return list(rows or [])
+
+    def get_draft_sync_conflict(
+        self, *, tenant_id: str, plan_id: str, conflict_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Read one conflict of one plan.
+
+        Args:
+            tenant_id: The tenant.
+            plan_id: The plan the conflict must belong to.
+            conflict_id: The conflict.
+
+        Returns:
+            The conflict row, or ``None``.
+        """
+        ids = (tenant_id, plan_id, conflict_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._SYNC_CONFLICT_COLUMNS}
+            FROM apiome.draft_sync_conflicts c
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid AND c.plan_id = %s::uuid
+            """,
+            (conflict_id, tenant_id, plan_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def record_draft_sync_plan(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        binding_id: str,
+        candidate_id: Optional[str],
+        base_commit_sha: str,
+        base_digest: str,
+        git_commit_sha: str,
+        git_digest: str,
+        draft_digest: str,
+        plan_fingerprint: str,
+        status: str,
+        auto_applied_count: int,
+        local_count: int,
+        agreed_count: int,
+        changes: List[Dict[str, Any]],
+        conflicts: List[Dict[str, Any]],
+        conflicts_truncated: bool,
+        source_file: str,
+        source_member_count: int,
+        guard: str,
+        actor_id: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Store one merge result and its conflicts, or return the one already stored.
+
+        The plan and every conflict commit together: a merge result whose conflicts are missing
+        would read as clean, which is the one way this table could cause the damage the whole
+        ticket exists to prevent. The insert is ``ON CONFLICT DO NOTHING`` on the rerun key, so a
+        second run of the same three documents finds the first run's row rather than writing a
+        second answer to the same question.
+
+        Nothing here touches the version it describes. A merge result is a reading.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project, for scoping and the audit row.
+            version_id: The bound draft.
+            binding_id: The binding.
+            candidate_id: The ref movement that prompted the merge, when one did.
+            base_commit_sha: The commit the binding is synchronized with.
+            base_digest: Fileset digest of the selection at that commit.
+            git_commit_sha: The commit the ref moved to.
+            git_digest: Fileset digest of the selection read there.
+            draft_digest: Content fingerprint of the reconstructed draft document.
+            plan_fingerprint: The rerun key.
+            status: ``clean``, ``mergeable``, or ``conflicted``.
+            auto_applied_count: Incoming changes applied deterministically.
+            local_count: Places only the draft changed.
+            agreed_count: Places both sides changed to the same value.
+            changes: The applied changes, as JSON-compatible dicts.
+            conflicts: The conflicts, as JSON-compatible dicts.
+            conflicts_truncated: Whether the merge found more collisions than are being stored.
+            source_file: Repository-relative path of the incoming document.
+            source_member_count: How many files the selection resolved to.
+            guard: Why the result may not become an edit of the draft.
+            actor_id: Who ran the merge.
+
+        Returns:
+            ``{"plan_id", "created"}`` — ``created`` is false when an identical merge was already
+            stored — or ``None`` when an id is not a UUID.
+        """
+        ids = [tenant_id, project_id, version_id, binding_id]
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        candidate = candidate_id if is_uuid_string(str(candidate_id or "")) else None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        unresolved = len(conflicts)
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                INSERT INTO apiome.draft_sync_plans
+                  (tenant_id, binding_id, project_id, version_id, candidate_id,
+                   base_commit_sha, base_digest, git_commit_sha, git_digest, draft_digest,
+                   plan_fingerprint, status,
+                   auto_applied_count, local_count, agreed_count,
+                   conflict_count, unresolved_count, conflicts_truncated,
+                   changes, source_file, source_member_count, guard, computed_by)
+                VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid,
+                        %s, %s, %s, %s, %s,
+                        %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s::jsonb, %s, %s, %s, %s::uuid)
+                ON CONFLICT (binding_id, plan_fingerprint) DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (
+                    tenant_id,
+                    binding_id,
+                    project_id,
+                    version_id,
+                    candidate,
+                    base_commit_sha,
+                    base_digest,
+                    git_commit_sha,
+                    git_digest,
+                    draft_digest,
+                    plan_fingerprint,
+                    status,
+                    auto_applied_count,
+                    local_count,
+                    agreed_count,
+                    len(conflicts),
+                    unresolved,
+                    bool(conflicts_truncated),
+                    json.dumps(changes),
+                    source_file,
+                    source_member_count,
+                    guard,
+                    actor,
+                ),
+            )
+            row = cursor.fetchone()
+            if not row:
+                # The rerun key collided: an identical merge is already stored, and re-deriving it
+                # would only produce the same answer with a different id.
+                cursor.execute(
+                    """
+                    SELECT id::text AS id FROM apiome.draft_sync_plans
+                    WHERE binding_id = %s::uuid AND plan_fingerprint = %s
+                    """,
+                    (binding_id, plan_fingerprint),
+                )
+                existing = cursor.fetchone()
+                if not existing:
+                    return None
+                return {"plan_id": str(existing["id"]), "created": False}
+
+            plan_id = str(row["id"])
+            for conflict in conflicts:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.draft_sync_conflicts
+                      (plan_id, tenant_id, pointer, scope, group_key, label,
+                       git_kind, draft_kind, base_value, git_value, draft_value,
+                       source_file, source_line, source_url)
+                    VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s,
+                            %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
+                            %s, %s, %s)
+                    ON CONFLICT (plan_id, pointer) DO NOTHING
+                    """,
+                    (
+                        plan_id,
+                        tenant_id,
+                        conflict.get("pointer", ""),
+                        conflict.get("scope", "document"),
+                        conflict.get("group_key", ""),
+                        conflict.get("label", ""),
+                        conflict.get("git_kind", "update"),
+                        conflict.get("draft_kind", "update"),
+                        json.dumps(conflict.get("base_value")),
+                        json.dumps(conflict.get("git_value")),
+                        json.dumps(conflict.get("draft_value")),
+                        conflict.get("source_file", ""),
+                        conflict.get("source_line"),
+                        conflict.get("source_url", ""),
+                    ),
+                )
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=version_id,
+                action=AUDIT_SYNC_PLANNED,
+                actor_id=actor,
+                detail={
+                    "plan_id": plan_id,
+                    "binding_id": binding_id,
+                    "candidate_id": candidate,
+                    "base_commit_sha": base_commit_sha,
+                    "git_commit_sha": git_commit_sha,
+                    "draft_digest": draft_digest,
+                    "status": status,
+                    "auto_applied_count": auto_applied_count,
+                    "conflict_count": len(conflicts),
+                    "conflicts_truncated": bool(conflicts_truncated),
+                    "guard": guard,
+                },
+            )
+            return {"plan_id": plan_id, "created": True}
+
+        return self._guarded_tx(work)
+
+    def resolve_draft_sync_conflict(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        plan_id: str,
+        conflict_id: str,
+        resolution: str,
+        actor_id: str,
+        note: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Settle one conflict towards one side, and move the plan on when it was the last.
+
+        The plan's ``unresolved_count`` is recomputed from the rows the transaction can see under
+        the plan's row lock rather than decremented, so two people settling the last two conflicts
+        at once cannot leave a plan claiming an outstanding conflict that no longer exists. Exactly
+        as with a review decision, the state is derived from the decisions, never accumulated.
+
+        Settling changes nothing about the draft. It records which side a person chose.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project, for scoping and the audit row.
+            plan_id: The plan the conflict belongs to.
+            conflict_id: The conflict.
+            resolution: ``git`` or ``draft``.
+            actor_id: The resolving user.
+            note: Why, kept with the settled row.
+
+        Returns:
+            ``{"conflict_id", "resolution", "status", "unresolved_count"}``, or ``None`` when the
+            conflict was already settled, the plan is not this project's, or an id is not a UUID.
+        """
+        ids = (tenant_id, project_id, plan_id, conflict_id, actor_id)
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                SELECT id::text AS id, version_id::text AS version_id,
+                       binding_id::text AS binding_id, conflict_count
+                FROM apiome.draft_sync_plans
+                WHERE id = %s::uuid AND tenant_id = %s::uuid AND project_id = %s::uuid
+                FOR UPDATE
+                """,
+                (plan_id, tenant_id, project_id),
+            )
+            plan = cursor.fetchone()
+            if not plan:
+                return None
+            cursor.execute(
+                """
+                UPDATE apiome.draft_sync_conflicts
+                SET resolution = %s, resolved_at = CURRENT_TIMESTAMP,
+                    resolved_by = %s::uuid, resolution_note = %s
+                WHERE id = %s::uuid AND plan_id = %s::uuid AND tenant_id = %s::uuid
+                  AND resolution IS NULL
+                RETURNING pointer
+                """,
+                (resolution, actor_id, note, conflict_id, plan_id, tenant_id),
+            )
+            settled = cursor.fetchone()
+            if not settled:
+                return None
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS outstanding FROM apiome.draft_sync_conflicts
+                WHERE plan_id = %s::uuid AND resolution IS NULL
+                """,
+                (plan_id,),
+            )
+            outstanding = int((cursor.fetchone() or {}).get("outstanding") or 0)
+            status = SYNC_STATUS_CONFLICTED if outstanding else SYNC_STATUS_RESOLVED
+            cursor.execute(
+                """
+                UPDATE apiome.draft_sync_plans
+                SET unresolved_count = %s, status = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid
+                """,
+                (outstanding, status, plan_id),
+            )
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=str(plan["version_id"]),
+                action=AUDIT_SYNC_CONFLICT_RESOLVED,
+                actor_id=actor_id,
+                detail={
+                    "plan_id": plan_id,
+                    "binding_id": str(plan["binding_id"]),
+                    "conflict_id": conflict_id,
+                    "pointer": str(settled["pointer"]),
+                    "resolution": resolution,
+                    "status": status,
+                    "unresolved_count": outstanding,
+                },
+            )
+            return {
+                "conflict_id": conflict_id,
+                "resolution": resolution,
+                "status": status,
+                "unresolved_count": outstanding,
+            }
+
+        return self._guarded_tx(work)
+
 
 # Global database instance
 db = Database()

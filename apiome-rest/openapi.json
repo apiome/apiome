@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.192.0",
+    "version": "1.193.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -19553,6 +19553,565 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for recordacheckverdictagainstaversionsbindiresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/binding/sync": {
+      "get": {
+        "tags": [
+          "spec-sync"
+        ],
+        "summary": "Read a version's synchronization state",
+        "description": "The most recent three-way merge of this draft against its repository ref, with its conflicts, plus the merges before it.\n\nNo provider is contacted: this is what is already known. A result whose `stale` flag is set was computed against a draft that has since been edited.\n\nRequires `projects:view`.",
+        "operationId": "read_version_sync_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_sync_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionssynchronizationstateauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionssynchronizationstateauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaversionssynchronizationstate Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaversionssynchronizationstate Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a version's synchronization state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSyncStatus",
+                  "description": "Response payload for readaversionssynchronizationstateresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for readaversionssynchronizationstateresponse404."
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaversionssynchronizationstateresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "spec-sync"
+        ],
+        "summary": "Merge a bound draft against its repository ref",
+        "description": "Reads the bound selection at the commit this draft is synchronized with (the base) and at the commit its branch moved to, rebuilds the draft's own document, and merges the three.\n\nIncoming changes that touch nothing the draft touched are recorded as applied; every overlap becomes a conflict naming its JSON Pointer, its repository file and line, and the base, incoming and current values side by side.\n\n**The draft is never modified.** A merge result is a reading of three documents; what to do about it is a separate decision.\n\nRe-running a merge of the same three documents returns the result already stored rather than computing a second answer to the same question, so a redelivered webhook or a double-click costs nothing.\n\nRequires `versions:edit`, and proves the tenant's stored credential can read the repository.",
+        "operationId": "compute_plan_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__binding_sync_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "version_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Ref",
+              "description": "Version Ref schema."
+            },
+            "description": "Path parameter identifying the version ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Mergeabounddraftagainstitsrepositoryrefauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Mergeabounddraftagainstitsrepositoryrefauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Mergeabounddraftagainstitsrepositoryref Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Mergeabounddraftagainstitsrepositoryref Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncPlanCompute",
+                "default": {
+                  "refresh": false
+                },
+                "description": "Request body for mergeabounddraftagainstitsrepositoryrefrequest."
+              }
+            }
+          },
+          "description": "Request body for merge a bound draft against its repository ref."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for merge a bound draft against its repository ref.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPlanDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse200."
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse403."
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse404."
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse409."
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse422."
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for mergeabounddraftagainstitsrepositoryrefresponse502."
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/sync-plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "spec-sync"
+        ],
+        "summary": "Read one merge result",
+        "description": "One three-way merge with every conflict it found \u2014 outstanding ones first \u2014 each carrying the base, incoming and current values and the repository file and line it lives at.\n\nRequires `projects:view`.",
+        "operationId": "read_plan_v1_tenants__tenant_slug__projects__project_ref__sync_plans__plan_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan Id",
+              "description": "Plan Id schema."
+            },
+            "description": "Path parameter identifying the plan id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonemergeresultauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonemergeresultauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonemergeresult Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonemergeresult Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one merge result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPlanDetail",
+                  "description": "Response payload for readonemergeresultresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for readonemergeresultresponse404."
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonemergeresultresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/sync-plans/{plan_id}/conflicts/{conflict_id}": {
+      "post": {
+        "tags": [
+          "spec-sync"
+        ],
+        "summary": "Settle one conflict of a merge result",
+        "description": "Records which side wins at one pointer: `git` takes the repository's value, `draft` keeps the version's.\n\nSettling **records a decision and nothing else** \u2014 it does not edit the draft, take anything from the repository, or move the binding. A settlement is final; the merge moves to `resolved` once none are outstanding.\n\nRequires `versions:edit`.",
+        "operationId": "resolve_conflict_v1_tenants__tenant_slug__projects__project_ref__sync_plans__plan_id__conflicts__conflict_id__post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Ref",
+              "description": "Project Ref schema."
+            },
+            "description": "Path parameter identifying the project ref segment."
+          },
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plan Id",
+              "description": "Plan Id schema."
+            },
+            "description": "Path parameter identifying the plan id segment."
+          },
+          {
+            "name": "conflict_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conflict Id",
+              "description": "Conflict Id schema."
+            },
+            "description": "Path parameter identifying the conflict id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settleoneconflictofamergeresultauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settleoneconflictofamergeresultauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Settleoneconflictofamergeresult Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Settleoneconflictofamergeresult Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncConflictResolve",
+                "description": "Request body for settleoneconflictofamergeresultrequest."
+              }
+            }
+          },
+          "description": "Request body for settle one conflict of a merge result."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for settle one conflict of a merge result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPlanDetail",
+                  "description": "Response payload for settleoneconflictofamergeresultresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for settleoneconflictofamergeresultresponse404."
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncErrorDetail",
+                  "description": "Response payload for settleoneconflictofamergeresultresponse409."
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for settleoneconflictofamergeresultresponse422."
                 }
               }
             }
@@ -90078,7 +90637,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "completed_at": {
             "anyOf": [
@@ -91463,7 +92022,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "comment_count": {
             "type": "integer",
@@ -91691,7 +92250,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "comment_count": {
             "type": "integer",
@@ -92149,14 +92708,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -94181,7 +94740,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "213b803b-fc80-4e46-bd6a-11f38ca83d86"
+            "example": "2e0f0793-83b6-456b-b2c6-9f1fe0843e6f"
           },
           "method": {
             "type": "string",
@@ -96708,7 +97267,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -98444,7 +99003,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "browse_url": {
             "anyOf": [
@@ -122352,6 +122911,86 @@
         "title": "MembershipActivationResponse",
         "description": "Result of ``POST /v1/onboarding/membership-activation``."
       },
+      "MergeChange": {
+        "properties": {
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "RFC 6901 pointer of the changed value.",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "addition",
+              "update",
+              "deletion"
+            ],
+            "title": "Kind",
+            "description": "`addition`, `update`, or `deletion`.",
+            "example": "addition"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "`document`, `path`, `operation`, `component`, or `schema`.",
+            "example": "example"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group",
+            "description": "Stable group key within the scope, e.g. `GET /pets`.",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "One line describing the change.",
+            "example": "example"
+          },
+          "before": {
+            "title": "Before",
+            "description": "The base value; null for an addition."
+          },
+          "after": {
+            "title": "After",
+            "description": "The incoming value; null for a deletion."
+          },
+          "source_file": {
+            "type": "string",
+            "title": "Source File",
+            "description": "Repository file the incoming value is in.",
+            "default": "",
+            "example": "example"
+          },
+          "source_line": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Merge Change schema."
+              },
+              {
+                "type": "null",
+                "description": "Merge Change schema."
+              }
+            ],
+            "title": "Source Line",
+            "description": "1-based line in `source_file`, when it could be located."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pointer",
+          "kind",
+          "scope",
+          "group",
+          "label"
+        ],
+        "title": "MergeChange",
+        "description": "One incoming change the merge applied because nothing in the draft touched it."
+      },
       "MergeSessionStatusPatchRequest": {
         "properties": {
           "status": {
@@ -137712,7 +138351,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           }
         },
         "additionalProperties": false,
@@ -148835,7 +149474,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "detected_by": {
             "anyOf": [
@@ -148975,6 +149614,567 @@
         ],
         "title": "SyncCandidateResolve",
         "description": "Settle an outstanding sync candidate.\n\nAttributes:\n    status: ``applied`` \u2014 the draft is now in sync with the candidate's commit, so the\n        binding's synchronized pair advances to it \u2014 or ``dismissed``, which leaves the\n        binding exactly where it is.\n    note: Why, kept with the settled row."
+      },
+      "SyncConflictRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The conflict id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "plan_id": {
+            "type": "string",
+            "title": "Plan Id",
+            "description": "Plan ID.",
+            "example": "plan_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pointer": {
+            "type": "string",
+            "title": "Pointer",
+            "description": "RFC 6901 pointer of the collision.",
+            "example": "example"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "`document`, `path`, `operation`, `component`, or `schema`.",
+            "example": "example"
+          },
+          "group_key": {
+            "type": "string",
+            "title": "Group Key",
+            "description": "Stable group key within the scope.",
+            "default": "",
+            "example": "example"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "One line describing the collision.",
+            "default": "",
+            "example": "example"
+          },
+          "git_kind": {
+            "type": "string",
+            "enum": [
+              "addition",
+              "update",
+              "deletion"
+            ],
+            "title": "Git Kind",
+            "description": "What the repository did here.",
+            "example": "addition"
+          },
+          "draft_kind": {
+            "type": "string",
+            "enum": [
+              "addition",
+              "update",
+              "deletion"
+            ],
+            "title": "Draft Kind",
+            "description": "What the draft did here.",
+            "example": "addition"
+          },
+          "base_value": {
+            "title": "Base Value",
+            "description": "The value at the merge base."
+          },
+          "git_value": {
+            "title": "Git Value",
+            "description": "The repository's value."
+          },
+          "draft_value": {
+            "title": "Draft Value",
+            "description": "The draft's value."
+          },
+          "source_file": {
+            "type": "string",
+            "title": "Source File",
+            "description": "Repository file the incoming value is in.",
+            "default": "",
+            "example": "example"
+          },
+          "source_line": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0,
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Source Line",
+            "description": "1-based line in `source_file`, when it could be located."
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url",
+            "description": "Human URL for that file and line.",
+            "default": "",
+            "example": "https://example.com/resource"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "git",
+                  "draft"
+                ],
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Resolution",
+            "description": "`git`, `draft`, or null while outstanding."
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Resolved At",
+            "description": "When it settled."
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Resolved By",
+            "description": "Who settled it."
+          },
+          "resolved_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Resolved By Name",
+            "description": "Their display name."
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Conflict schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict schema."
+              }
+            ],
+            "title": "Resolution Note",
+            "description": "Why, in their words."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "plan_id",
+          "pointer",
+          "scope",
+          "git_kind",
+          "draft_kind",
+          "created_at"
+        ],
+        "title": "SyncConflictRecord",
+        "description": "One stored conflict \u2014 outstanding or settled."
+      },
+      "SyncConflictResolve": {
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "git",
+              "draft"
+            ],
+            "title": "Resolution",
+            "description": "Resolution.",
+            "example": "git"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "Sync Conflict Resolve schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Conflict Resolve schema."
+              }
+            ],
+            "title": "Note",
+            "description": "Note."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resolution"
+        ],
+        "title": "SyncConflictResolve",
+        "description": "Settle one conflict towards one side.\n\nAttributes:\n    resolution: ``git`` takes the repository's value, ``draft`` keeps the version's. There is\n        no third option: a merge result records a decision, it does not edit a document.\n    note: Why, kept with the settled row."
+      },
+      "SyncErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "The stable refusal code a client branches on.",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "A human-readable explanation.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "SyncErrorDetail",
+        "description": "The body of every refusal from this surface."
+      },
+      "SyncPlanCompute": {
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Plan Compute schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Plan Compute schema."
+              }
+            ],
+            "title": "Candidate Id",
+            "description": "The outstanding sync candidate to merge. Defaults to the binding's oldest pending candidate, which is the one a reader is looking at."
+          },
+          "refresh": {
+            "type": "boolean",
+            "title": "Refresh",
+            "description": "Re-read both commits even when a merge of the same three documents is already stored. The stored result is still what is returned when the inputs are unchanged, because the same inputs cannot produce a different merge.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SyncPlanCompute",
+        "description": "Compute a three-way merge of a bound draft against its repository ref."
+      },
+      "SyncPlanDetail": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/SyncPlanRecord",
+            "description": "Plan."
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/SyncConflictRecord"
+            },
+            "type": "array",
+            "title": "Conflicts",
+            "description": "Every conflict, outstanding ones first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "plan"
+        ],
+        "title": "SyncPlanDetail",
+        "description": "A merge result with its conflicts."
+      },
+      "SyncPlanRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The plan id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "binding_id": {
+            "type": "string",
+            "title": "Binding Id",
+            "description": "Binding ID.",
+            "example": "binding_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to.",
+            "example": "prj_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Project version identifier or semantic version label, depending on context.",
+            "example": "1.0.0"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Plan schema."
+              }
+            ],
+            "title": "Candidate Id",
+            "description": "The ref movement that prompted the merge, when one did."
+          },
+          "base_commit_sha": {
+            "type": "string",
+            "title": "Base Commit Sha",
+            "description": "The commit the binding is synchronized with.",
+            "example": "example"
+          },
+          "base_digest": {
+            "type": "string",
+            "title": "Base Digest",
+            "description": "Fileset digest of the selection at `base_commit_sha`.",
+            "example": "example"
+          },
+          "git_commit_sha": {
+            "type": "string",
+            "title": "Git Commit Sha",
+            "description": "The commit the ref moved to.",
+            "example": "example"
+          },
+          "git_digest": {
+            "type": "string",
+            "title": "Git Digest",
+            "description": "Fileset digest of the selection read at `git_commit_sha`.",
+            "example": "example"
+          },
+          "draft_digest": {
+            "type": "string",
+            "title": "Draft Digest",
+            "description": "Content fingerprint of the reconstructed draft document.",
+            "example": "example"
+          },
+          "plan_fingerprint": {
+            "type": "string",
+            "title": "Plan Fingerprint",
+            "description": "The rerun idempotency key.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "clean",
+              "mergeable",
+              "conflicted",
+              "resolved"
+            ],
+            "title": "Status",
+            "description": "`clean`, `mergeable`, `conflicted`, or `resolved`.",
+            "example": "clean"
+          },
+          "auto_applied_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Auto Applied Count",
+            "description": "Incoming changes applied deterministically.",
+            "example": 1
+          },
+          "local_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Local Count",
+            "description": "Places only the draft changed.",
+            "example": 1
+          },
+          "agreed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Agreed Count",
+            "description": "Places both sides changed to the same value.",
+            "example": 1
+          },
+          "conflict_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Conflict Count",
+            "description": "Collisions the merge found and stored.",
+            "example": 1
+          },
+          "unresolved_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Unresolved Count",
+            "description": "Collisions still waiting on somebody.",
+            "example": 1
+          },
+          "conflicts_truncated": {
+            "type": "boolean",
+            "title": "Conflicts Truncated",
+            "description": "True when the merge found more collisions than a plan stores, so the ones below are a page of a longer list.",
+            "default": false,
+            "example": false
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/MergeChange"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "The applied incoming changes.",
+            "maxItems": 1000
+          },
+          "source_file": {
+            "type": "string",
+            "title": "Source File",
+            "description": "Repository file the incoming document is.",
+            "default": "",
+            "example": "example"
+          },
+          "source_member_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Member Count",
+            "description": "Files the selection resolved to.",
+            "default": 0,
+            "example": 1
+          },
+          "guard": {
+            "type": "string",
+            "enum": [
+              "none",
+              "review_decided",
+              "version_published"
+            ],
+            "title": "Guard",
+            "description": "Why the result may not become an edit of the draft, when it may not.",
+            "example": "none"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "description": "True when the draft has been edited since the merge ran, so the result describes a document that no longer exists.",
+            "default": false,
+            "example": false
+          },
+          "computed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Plan schema."
+              }
+            ],
+            "title": "Computed By",
+            "description": "Who ran the merge."
+          },
+          "computed_by_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Sync Plan schema."
+              },
+              {
+                "type": "null",
+                "description": "Sync Plan schema."
+              }
+            ],
+            "title": "Computed By Name",
+            "description": "Their display name."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601).",
+            "example": "2026-07-12T00:00:00Z"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "binding_id",
+          "project_id",
+          "version_id",
+          "base_commit_sha",
+          "base_digest",
+          "git_commit_sha",
+          "git_digest",
+          "draft_digest",
+          "plan_fingerprint",
+          "status",
+          "auto_applied_count",
+          "local_count",
+          "agreed_count",
+          "conflict_count",
+          "unresolved_count",
+          "guard",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SyncPlanRecord",
+        "description": "One stored three-way merge result."
       },
       "SynthesizedInstance": {
         "properties": {
@@ -154948,14 +156148,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-09-17T00:32:03Z"
+            "example": "2026-09-17T01:40:19Z"
           },
           "outcome": {
             "anyOf": [
@@ -160201,6 +161401,65 @@
         ],
         "title": "VersionSupport",
         "description": "How a format's version is supported \u2014 a claim about the *version*, not the grammar.\n\nKept to three members on purpose. A fourth grade (\"mostly\") would be a way of not answering,\nand the construct-level boundaries a reader actually needs are already published by the\ncapability registry's ``unsupported_constructs`` and ``canonical_projection``."
+      },
+      "VersionSyncStatus": {
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "title": "Version Id",
+            "description": "Project version identifier or semantic version label, depending on context.",
+            "example": "1.0.0"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Version Sync schema."
+              },
+              {
+                "type": "null",
+                "description": "Version Sync schema."
+              }
+            ],
+            "title": "Version Label",
+            "description": "Version Label."
+          },
+          "bound": {
+            "type": "boolean",
+            "title": "Bound",
+            "description": "Whether the version has an active binding to merge against.",
+            "example": false
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncPlanDetail"
+              },
+              {
+                "type": "null",
+                "description": "Version Sync schema."
+              }
+            ],
+            "description": "The most recent merge result, with its conflicts."
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/SyncPlanRecord"
+            },
+            "type": "array",
+            "title": "History",
+            "description": "Earlier merge results, newest first.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version_id",
+          "bound"
+        ],
+        "title": "VersionSyncStatus",
+        "description": "Where one version stands with respect to merging its repository ref."
       },
       "VersionTagCreateRequest": {
         "properties": {

@@ -204,6 +204,10 @@ class GitFilesetResult:
         provenance: Repository, ref, and resolved commit.
         skipped: Tree entries excluded from the selection, each with a reason.
         ambiguous_roots: Runner-up root candidates, when detection had to choose.
+        member_prefix: The static directory prefix stripped from every member key, including
+            its trailing slash. ``member_prefix + key`` is a member's **repository-relative**
+            path, which is what a caller needs to link a member back to the provider's file
+            browser (GNC-2.3) — the keys alone cannot be, since they are selection-relative.
     """
 
     members: Dict[str, str]
@@ -212,6 +216,7 @@ class GitFilesetResult:
     provenance: GitProvenance
     skipped: Tuple[GitSkippedMember, ...] = ()
     ambiguous_roots: Tuple[str, ...] = ()
+    member_prefix: str = ""
 
     def total_bytes(self) -> int:
         """Return the decoded size of every member, in bytes."""
@@ -708,6 +713,7 @@ def fetch_git_fileset(
         provenance=provenance,
         skipped=tuple(skipped),
         ambiguous_roots=ambiguous,
+        member_prefix=prefix,
     )
 
 
@@ -869,6 +875,8 @@ def fetch_git_files(
         provenance=provenance,
         skipped=tuple(skipped),
         ambiguous_roots=(),
+        # Members are already keyed from the repository root here, so nothing was stripped.
+        member_prefix="",
     )
 
 

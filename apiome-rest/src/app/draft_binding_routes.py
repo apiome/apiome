@@ -59,12 +59,14 @@ from .draft_bindings import (
 )
 from .permissions import Action, Resource, enforce_permission
 
-__all__ = ["router"]
+__all__ = ["STATUS_BY_CODE", "router"]
 
 router = APIRouter(prefix="/v1/tenants", tags=["draft-bindings"])
 
-#: A refusal maps onto the HTTP status of its kind; anything else is a 400.
-_STATUS_BY_CODE = {
+#: A refusal maps onto the HTTP status of its kind; anything else is a 400. Public because the
+#: synchronization surface (GNC-2.3) answers the same repository refusals and must not invent a
+#: second opinion about what any of them means.
+STATUS_BY_CODE = {
     CODE_PROJECT_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
     CODE_NOT_FOUND: 404,
@@ -140,7 +142,7 @@ def _http_error(exc: DraftBindingValidationError) -> HTTPException:
         The ``HTTPException`` to raise, always carrying ``{"code", "message"}``.
     """
     return HTTPException(
-        status_code=_STATUS_BY_CODE.get(exc.code, 400),
+        status_code=STATUS_BY_CODE.get(exc.code, 400),
         detail={"code": exc.code, "message": str(exc)},
     )
 

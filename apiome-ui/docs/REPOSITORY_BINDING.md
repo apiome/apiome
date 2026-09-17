@@ -79,3 +79,58 @@ hairlines, no fade — and every holder of a long `owner/repo @ branch · path` 
 digest has `min-inline-size: 0` and `overflow-wrap: anywhere`, so a narrow window never scrolls
 sideways. `bindings-css.test.ts` pins all of it, in both directions: a class the component spells
 must be declared, and a declared class must be spelled.
+
+---
+
+# Three-way synchronization (GNC-2.3, #4739)
+
+Binding says *that* a branch moved. The **Synchronization** section under the binding says *what
+moved* — and, where the repository and this draft moved the same thing, asks which one wins.
+
+A bound draft has three descriptions of the same API: the repository at the commit the draft was
+last synchronized with (the **base**), the repository at the commit its branch moved to (**Git**),
+and the draft itself. A merge measures both sides against the base, so incoming changes that touch
+nothing anybody has been editing are separable from the ones that collide.
+
+> **Nothing on this surface changes the draft.** Merging reads three documents and records a result;
+> settling a conflict records which side a person chose. That is why the section says "would apply"
+> rather than "applied", and why the two buttons say *take* and *keep* rather than *accept* and
+> *revert* — there is nothing to revert, because nothing has happened to the version.
+
+## What a reader sees
+
+| Part | What it says |
+|---|---|
+| Status badge | `Nothing to merge`, `Merges cleanly`, `Conflicts`, `Conflicts settled` |
+| The three digests | the base commit, the incoming commit, and the draft's content fingerprint — the evidence of *which bytes* the result describes |
+| **Would apply** | every incoming change that touches nothing this draft changed, with its pointer and its group (`GET /pets`) |
+| **Needs a decision** | every collision, with the base, repository and draft values side by side and a link to the exact line of the repository file |
+| Stale warning | the draft has been edited since the merge ran, so the result describes a document that no longer exists |
+| Guard | a reviewer already recorded a decision on this version, or the version is published |
+
+## Routes
+
+| Route | apiome-rest | Enforced upstream |
+|---|---|---|
+| `GET /api/projects/{id}/bindings/sync?version=` | `GET …/versions/{v}/binding/sync` | `projects:view` |
+| `POST /api/projects/{id}/bindings/sync?version=` | `POST …/versions/{v}/binding/sync` | `versions:edit` **and a proven read of both commits** |
+| `POST /api/projects/{id}/bindings/sync/plans/{pid}/conflicts/{cid}` | `POST …/sync-plans/{pid}/conflicts/{cid}` | `versions:edit` |
+
+They share `bindings-proxy.ts` with the binding routes, so there is one place that decides the
+tenant from the session, signs the token, and reads apiome-rest's `{code, message}` refusals. Only
+what `lib/spec-sync.ts` whitelists is forwarded: `candidate_id` and `refresh` on a merge,
+`resolution` and `note` on a settlement. A `resolution` that is neither `git` nor `draft` is refused
+in the BFF rather than forwarded, so a hand-made request gets a sentence instead of a 422.
+
+Merging is idempotent upstream: the same three documents return the merge already stored rather
+than fetching two commits to prove it would be the same. **Merge again** forces the re-read anyway,
+which is what a reader wants after pushing a fix.
+
+## Styles
+
+`.syn-*` is layout only, in its own banner-bounded block of `globals.css`; everything with a skin is
+borrowed (`Badge`, `Alert`, `Button`, `Input`, `EmptyState`, `LoadingState`, `.mono`). The rule this
+section adds to the binding block's is that **three JSON values side by side never push the panel
+sideways**: each value wraps (`white-space: pre-wrap`, `overflow-wrap: anywhere`), scrolls inside its
+own bounded column, and every holder of one has `min-inline-size: 0`. `spec-sync-css.test.ts` pins
+all of it, in both directions.

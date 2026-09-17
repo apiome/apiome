@@ -182,6 +182,6 @@ Every verdict is a `check.recorded` row and every publish attempt a `check.publi
 - **It does not make a check required.** Whether a merge is blocked on it is a provider-side branch
   protection setting, which is the repository owner's to make and not ours to set.
 - **It does not change a draft.** A delivery still only ever raises a sync candidate (GNC-2.1);
-  merging repository changes into a draft is GNC-2.3.
+  merging repository changes into a draft is [GNC-2.3](spec_sync.md).
 - **It reads nothing from the provider.** The adapters write a status and read back only what the
   provider returns about the status it was just given.
