@@ -12,12 +12,15 @@
  * change**. When a bound branch moves — through a provider webhook, or because somebody pressed
  * "Check for updates" here — a *sync candidate* appears, saying which commit the branch left and
  * which it arrived at. The draft is untouched until somebody applies or dismisses it, and
- * whichever they choose is recorded. Three-way synchronization (GNC-2.3) will settle the same
- * candidates once it can merge.
+ * whichever they choose is recorded.
  *
  * Every rule about who may do this lives in apiome-rest: reading needs `projects:view`, every
  * write needs `versions:edit`, and binding additionally has to *prove* the tenant's stored
  * credential can read the repository before a row is written. The panel shows what comes back.
+ *
+ * Deciding *what a movement actually changed* is the Synchronization section below it
+ * ({@link VersionSyncPanel}, GNC-2.3), which merges the three documents and shows the collisions —
+ * and which likewise never rewrites the draft.
  */
 
 import * as React from 'react';
@@ -31,6 +34,7 @@ import { FormField } from '@/app/components/ui/FormField';
 import { Input } from '@/app/components/ui/Input';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { formatRelativeWhen } from '@/app/components/ade/repositories/repositoryDetailModel';
+import { VersionSyncPanel } from './VersionSyncPanel';
 import { cn } from '@lib/utils';
 import {
   BINDING_STATE_LABEL,
@@ -502,6 +506,15 @@ export function VersionBindingPanel({
             ))}
           </ul>
         </div>
+      ) : null}
+
+      {binding ? (
+        <VersionSyncPanel
+          projectId={projectId}
+          versionId={versionId}
+          bound={Boolean(binding)}
+          now={now}
+        />
       ) : null}
 
       {settled.length > 0 ? (

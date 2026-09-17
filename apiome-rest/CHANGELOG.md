@@ -5,6 +5,71 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.328.0] - 2026-09-16
+
+### Added
+- **Three-way spec synchronization (#4739, GNC-2.3)** — a bound draft has three descriptions of the
+  same API — the repository at the commit it is synchronized with (the **base**), the repository at
+  the commit its branch has moved to (**Git**), and the version as this platform has it (the
+  **draft**) — and they drift apart independently. Copying either repository side over the draft
+  destroys whatever somebody was editing and invalidates whatever reviewers already decided. A
+  **semantic three-way merge** now measures both sides against the base, applies the incoming
+  changes that touch nothing the draft touched, and hands back every overlap as an explicit
+  conflict.
+
+  ```bash
+  # The branch moved. What would land, and what collides?
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/binding/sync" \
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}'
+
+  # Decide one collision. `git` takes the repository's value; `draft` keeps the version's.
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/sync-plans/$PLAN/conflicts/$CONFLICT" \
+       -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+       -d '{"resolution":"git","note":"the rename was agreed in review"}'
+  ```
+
+  - **A merge result is a reading, never a write.** There is no code path from this surface to the
+    canonical model, to `versions`, or to a review — not in the store, not in the accessors, and not
+    in the schema. Computing a merge writes one row; settling a conflict records which side a person
+    chose. Both leave the draft exactly where it was, which is what makes it safe for a webhook to
+    raise a candidate and for anyone at all to merge it.
+  - apiome-db **V266**: `apiome.draft_sync_plans` (one merge per binding and trio of documents,
+    recording the base, Git and draft digests it was computed from, what merged and how much did
+    not, with the identity frozen by a trigger and a CHECK that keeps the status and the two counts
+    from disagreeing) and `apiome.draft_sync_conflicts` (one row per overlap, carrying all three
+    values with the repository file and line it lives at, settled once towards `git` or `draft`).
+  - apiome-rest `app.spec_sync` (vocabulary, models, the merge engine, the plan fingerprint and the
+    YAML/JSON line locator — all pure), `app.spec_sync_store` (the rules), `app.spec_sync_routes`
+    (four endpoints), and the accessors at the end of `database.py`, whose `sync.planned` /
+    `sync.conflict_resolved` audit rows are written **inside** each write's transaction.
+  - **Conflicts are located, not just named.** Each carries its RFC 6901 pointer, the shared
+    `document`/`path`/`operation`/`component`/`schema` grouping every other change list in the
+    product uses, what each side did to the base, all three values, and the repository file, 1-based
+    line and link at the commit. Lines come from *composing* the incoming document rather than
+    loading it, and a mapping entry reports its key's line — in block YAML the value of `summary:`
+    starts on the next line, which is not where anybody would look. A value too large to send to a
+    browser is replaced by its size, and a merge that collides in more places than one result holds
+    says so on the row — a result that quietly dropped findings would read as *less* conflicted than
+    it is.
+  - **Three proven reads, never a payload.** Both commits are fetched through the same
+    credential-resolving read binding uses, so a repository the tenant cannot reach is answered
+    `403 binding-repository-forbidden` rather than merged from a guess. And the base is re-read and
+    re-hashed first: if it no longer matches the digest the binding recorded, history was rewritten
+    underneath the merge base and the request refuses with `sync-base-drifted` instead of guessing
+    which side changed what.
+  - **Reruns are free, not just idempotent.** The rerun key is taken over the binding and the three
+    documents' digests — all known before any network call — so re-merging an unchanged trio returns
+    the stored result without fetching two commits to prove it would be the same. The draft is
+    identified by its content digest rather than its revision id, because an edited revision is a
+    different document; a stored result whose draft has moved on reads as `stale`.
+  - **Work that already exists is reported, not trampled.** A result carries a `guard` — `none`,
+    `review_decided` (an open review's current round already holds a decision) or
+    `version_published`. A guard never refuses the merge: knowing exactly what would collide is
+    precisely what such a reader needs.
+  - Documented in `apiome-rest/docs/spec_sync.md`. This ticket deliberately **writes nothing back to
+    Git** and **applies nothing to a draft**; the merged document is computed and proven
+    deterministic, but turning it into an edit is a separate, explicit act with no storage here.
+
 ## [1.327.0] - 2026-09-16
 
 ### Added

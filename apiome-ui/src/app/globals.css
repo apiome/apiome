@@ -33072,3 +33072,341 @@ tr:focus-within .pub-url__glyph {
 .bnd-settled--released .bnd-settled__what {
   color: var(--fg-muted);
 }
+
+/* ==========================================================================
+   Three-way synchronization (GNC-2.3, #4739) — `components/ade/bindings`
+   ==========================================================================
+   The Synchronization section under the Repository binding: what a merge of
+   the repository's changes with this draft would apply, and every place the
+   two collided.
+
+   The section sits inside the `.bnd` panel and borrows rather than restates:
+   `Badge` for the merge status, `Alert` for a stale result and a guard,
+   `Button`, `Input`, `EmptyState`, `LoadingState`, and `.mono` (HIVE-1.4) for
+   pointers, shas, digests and the three values. `.syn-*` is only the layout.
+
+   A conflict shows three values side by side, so the one rule this section
+   adds to the binding block's is that a value never pushes the panel sideways:
+   every `<pre>` wraps and scrolls inside its own column, and every holder of
+   one has a zero minimum.
+
+   Token-only: no hex, no px beyond hairlines, no bare colour. Quiet text is
+   `--fg-muted`, never a fade; the source link is inked `--fg` and underlined
+   on hover and focus rather than `--accent`, which measures under 4.5:1 on
+   this surface in three themes (HIVE-8.1's finding).
+   ========================================================================== */
+
+.syn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.syn-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-head__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.syn-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.syn-head__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.syn-state {
+  padding: var(--space-4);
+}
+
+/* ---- the merge result --------------------------------------------------- */
+
+.syn-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.syn-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-card__what {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.syn-card__when {
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.syn-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.syn-facts__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.syn-facts__row dt {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.syn-facts__value {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+/* ---- change and conflict lists ------------------------------------------ */
+
+.syn-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-section__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.syn-section__note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.syn-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-inline-size: 0;
+}
+
+.syn-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.syn-change__kind {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.syn-change__group {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.syn-change__pointer {
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.syn-conflict {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.syn-conflict__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-conflict__pointer {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.syn-conflict__group {
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.syn-conflict__link,
+.syn-conflict__where {
+  margin-inline-start: auto;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.syn-conflict__link:hover,
+.syn-conflict__link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* ---- the three sides, side by side -------------------------------------- */
+
+.syn-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.syn-side__label {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.syn-side__value {
+  margin: 0;
+  min-inline-size: 0;
+  max-block-size: 12rem;
+  overflow: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- deciding ----------------------------------------------------------- */
+
+.syn-conflict__decide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.syn-conflict__note {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.syn-conflict__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.syn-conflict__settled {
+  margin: 0;
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.syn-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+/* ---- earlier merges ----------------------------------------------------- */
+
+.syn-past {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.syn-past__what {
+  min-inline-size: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.syn-past__when {
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
