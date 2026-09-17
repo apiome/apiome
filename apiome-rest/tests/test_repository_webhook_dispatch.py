@@ -104,6 +104,10 @@ class FakeDb:
         # No draft is bound here; the binding path (GNC-2.1) has its own suite.
         return []
 
+    def find_authorized_bindings_for_check(self, *, repository_id, ref):
+        # Likewise for the status adapter (GNC-2.2): nothing bound, so nothing to report on.
+        return []
+
     # -- writes --------------------------------------------------------------------------
 
     def record_repository_webhook_event(self, **kwargs):

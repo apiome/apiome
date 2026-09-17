@@ -48,6 +48,8 @@ class FakeDb:
         self.bindings = bindings or {}
         self.tracked_branches = list(tracked_branches)
         self.raised: List[Dict[str, Any]] = []
+        self.checks: Dict[Any, str] = {}
+        self.seeded_checks: List[Dict[str, Any]] = []
         self.seen_deliveries: set = set()
         self.events: List[Dict[str, Any]] = []
         self.audits: List[Dict[str, Any]] = []
@@ -77,6 +79,26 @@ class FakeDb:
             for binding_id in self.bindings.get((repository_id, ref), [])
         ]
 
+    def find_authorized_bindings_for_check(self, *, repository_id, ref):
+        # GNC-2.2 reads the same bindings through its own accessor, because publishing a check
+        # needs the provider coordinates the candidate read has no use for.
+        return [
+            {
+                "id": binding_id,
+                "tenant_id": _TENANT,
+                "project_id": "p",
+                "version_id": f"v-{binding_id}",
+                "repository_id": repository_id,
+                "provider": "github",
+                "repo_full_name": _REPO,
+                "repo_url": f"https://github.com/{_REPO}",
+                "ref": ref,
+                "path": "",
+                "commit_sha": "a" * 40,
+            }
+            for binding_id in self.bindings.get((repository_id, ref), [])
+        ]
+
     # -- writes --------------------------------------------------------------------------
 
     def raise_binding_sync_candidate(self, **kwargs):
@@ -86,6 +108,20 @@ class FakeDb:
         self.seen_deliveries.add(key)
         self.raised.append(kwargs)
         return {"candidate_id": f"c-{len(self.raised)}", "superseded": 0}
+
+    def upsert_provider_check_run(self, **kwargs):
+        key = (kwargs["binding_id"], kwargs["commit_sha"], kwargs["name"])
+        if key in self.checks:
+            return {"check_id": self.checks[key], "created": False, "state": kwargs["state"], "attempt": 1}
+        check_id = f"chk-{len(self.checks)}"
+        self.checks[key] = check_id
+        self.seeded_checks.append(kwargs)
+        return {"check_id": check_id, "created": True, "state": kwargs["state"], "attempt": 1}
+
+    def get_provider_check_run(self, *, tenant_id, check_id):
+        # The seeded check is never published in this suite: the store's own tests drive the
+        # adapters, and the point here is that the dispatch reaches the seeding at all.
+        return None
 
     def record_repository_webhook_event(self, **kwargs):
         row = {"id": f"evt-{len(self.events)}", **kwargs}

@@ -72,6 +72,20 @@ of one can produce a version, and the repository is never made poll-due by a PR.
 A PR whose head lives in a fork is recorded and skipped — that branch is not in this
 repository's tree, so the walker cannot reach it under the repository's own credentials.
 
+**Bound drafts** — deliberately *outside* the tracked-branch gate above, because a branch a draft
+is bound to need never have been imported from. When a delivery moves a ref some draft is bound to
+([GNC-2.1](draft_bindings.md)), two more things happen, side by side:
+
+1. a **sync candidate** is raised on each bound draft — a row saying "this ref moved", which
+   somebody then applies or dismisses; nothing about the draft changes; and
+2. a **pending check** is announced on the commit and published to the provider
+   ([GNC-2.2](provider_checks.md)), so the pull request shows that this platform is looking at the
+   change before it has a verdict.
+
+Both are best-effort: neither a binding-store fault nor a provider refusing a status can turn a
+verified delivery into a 500 the provider would retry forever. How many of each a delivery produced
+is on its acceptance audit row, as `bindingCandidates` and `checksSeeded`.
+
 ## The signing secret
 
 Each repository gets its own 256-bit secret, minted at registration time and stored Fernet-
