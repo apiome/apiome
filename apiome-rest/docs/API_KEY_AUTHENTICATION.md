@@ -25,6 +25,8 @@ def validate_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:
 - Queries `apiome.api_keys` table with JOINs to `apiome.tenants`
 - Validates:
   - Key prefix matches
+  - Key is a workspace key (`kind = 'workspace'`); AGX-3.1 agent keys are MCP-only credentials
+    and never authenticate REST calls (see [agent_keys.md](agent_keys.md))
   - Key is not deleted
   - Key is enabled
   - Tenant is not deleted and enabled

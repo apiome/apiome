@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.196.0
+  version: 1.197.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11192,6 +11192,389 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for deleteanupstreamcredentialresponse422.
+  /v1/tenants/{tenant_slug}/agent-keys:
+    get:
+      tags:
+      - agent-access
+      summary: List agent keys
+      description: 'An agent key is the credential an AI agent presents to Apiome''s
+        MCP agent runtime. It is bound to one agent toolset, may only list and call
+        the tools named in its allowlist (and enabled in the toolset), and can expire.
+        It is not a REST credential: the REST API refuses it on every route.
+
+
+        Responses carry metadata only (name, prefix, toolset, allowlist, status, timestamps);
+        the secret is returned once, by create, and never again.
+
+
+        Newest first. `toolsetId` narrows the list to one toolset''s keys; revoked
+        keys are left out unless `includeRevoked=true`.
+
+
+        Requires `api_keys:view`.'
+      operationId: list_agent_keys_route_v1_tenants__tenant_slug__agent_keys_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolsetId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+            description: Listagentkeystoolset ID schema.
+          - type: 'null'
+            description: Listagentkeystoolset ID schema.
+          title: Toolsetid
+          description: Toolsetid schema.
+        description: 'Query parameter: toolset id.'
+      - name: includeRevoked
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Includerevoked
+          description: Includerevoked schema.
+        description: 'Query parameter: include revoked.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listagentkeysauthorization schema.
+          - type: 'null'
+            description: Listagentkeysauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listagentkeys Xapikey schema.
+          - type: 'null'
+            description: Listagentkeys Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list agent keys.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentKeyListResponse'
+                description: Response payload for listagentkeysresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listagentkeysresponse422.
+    post:
+      tags:
+      - agent-access
+      summary: Create an agent key
+      description: 'An agent key is the credential an AI agent presents to Apiome''s
+        MCP agent runtime. It is bound to one agent toolset, may only list and call
+        the tools named in its allowlist (and enabled in the toolset), and can expire.
+        It is not a REST credential: the REST API refuses it on every route.
+
+
+        The body names the key, the `toolsetId` it is bound to, its `toolAllowlist`
+        (MCP tool names, `^[A-Za-z0-9_-]{1,64}$`, at most 1024; no wildcard, and an
+        empty list permits nothing) and an optional future `expiresAt`.
+
+
+        The response includes `secret` (`ak_…`): **it is shown only once**. Present
+        it to the MCP agent runtime as `Authorization: Bearer <secret>`.
+
+
+        Requires `api_keys:create`. Audited as `agent.key.create`.'
+      operationId: create_agent_key_route_v1_tenants__tenant_slug__agent_keys_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanagentkeyauthorization schema.
+          - type: 'null'
+            description: Createanagentkeyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanagentkey Xapikey schema.
+          - type: 'null'
+            description: Createanagentkey Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentKeyCreate'
+              description: Request body for createanagentkeyrequest.
+        description: Request body for create an agent key.
+      responses:
+        '201':
+          description: Successful response for create an agent key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentKeyCreated'
+                description: Response payload for createanagentkeyresponse201.
+        '409':
+          description: The tenant already has an API key with that name.
+        '422':
+          description: A tool name, the name or the expiry is not acceptable.
+  /v1/tenants/{tenant_slug}/agent-keys/{key_id}:
+    get:
+      tags:
+      - agent-access
+      summary: Describe an agent key
+      description: 'Responses carry metadata only (name, prefix, toolset, allowlist,
+        status, timestamps); the secret is returned once, by create, and never again.
+        Revoked keys are described too, with `status: revoked`.
+
+
+        Requires `api_keys:view`.'
+      operationId: get_agent_key_route_v1_tenants__tenant_slug__agent_keys__key_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: key_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Key Id
+          description: Key Id schema.
+        description: Path parameter identifying the key id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Describeanagentkeyauthorization schema.
+          - type: 'null'
+            description: Describeanagentkeyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Describeanagentkey Xapikey schema.
+          - type: 'null'
+            description: Describeanagentkey Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for describe an agent key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentKeyOut'
+                description: Response payload for describeanagentkeyresponse200.
+        '404':
+          description: No such agent key in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for describeanagentkeyresponse422.
+    delete:
+      tags:
+      - agent-access
+      summary: Revoke an agent key
+      description: 'Revoke the key. The MCP runtime checks the key on every request,
+        so the agent''s next request is refused. Revoking a revoked key is a no-op
+        `204`; the key stays listable with `includeRevoked=true`.
+
+
+        Requires `api_keys:delete`. Audited once as `agent.key.revoke`.'
+      operationId: revoke_agent_key_route_v1_tenants__tenant_slug__agent_keys__key_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: key_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Key Id
+          description: Key Id schema.
+        description: Path parameter identifying the key id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Revokeanagentkeyauthorization schema.
+          - type: 'null'
+            description: Revokeanagentkeyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Revokeanagentkey Xapikey schema.
+          - type: 'null'
+            description: Revokeanagentkey Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for revoke an agent key.
+        '404':
+          description: No such agent key in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for revokeanagentkeyresponse422.
+  /v1/tenants/{tenant_slug}/agent-keys/{key_id}/allowlist:
+    put:
+      tags:
+      - agent-access
+      summary: Replace an agent key's tool allowlist
+      description: 'Replace the whole allowlist with `toolAllowlist`. The MCP runtime
+        reads it on every request, so the agent''s next `tools/list` shows the new
+        set and its next `tools/call` is judged against it.
+
+
+        Requires `api_keys:edit`. Audited as `agent.key.allowlist_update`, with the
+        list before and after.'
+      operationId: update_agent_key_allowlist_route_v1_tenants__tenant_slug__agent_keys__key_id__allowlist_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: key_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Key Id
+          description: Key Id schema.
+        description: Path parameter identifying the key id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanagentkeystoolallowlistauthorization schema.
+          - type: 'null'
+            description: Replaceanagentkeystoolallowlistauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanagentkeystoolallowlist Xapikey schema.
+          - type: 'null'
+            description: Replaceanagentkeystoolallowlist Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentKeyAllowlistUpdate'
+              description: Request body for replaceanagentkeystoolallowlistrequest.
+        description: Request body for replace an agent key's tool allowlist.
+      responses:
+        '200':
+          description: Successful response for replace an agent key's tool allowlist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentKeyOut'
+                description: Response payload for replaceanagentkeystoolallowlistresponse200.
+        '404':
+          description: No such agent key in this tenant.
+        '409':
+          description: The key is revoked; its allowlist can no longer change.
+        '422':
+          description: An entry is not an MCP tool name.
   /v1/tenants/{tenant_slug}/verification-runs:
     post:
       tags:
@@ -63109,6 +63492,371 @@ components:
       - policyVersion
       title: AddVersionResponse
       description: The outcome of adding a version.
+    AgentKeyAllowlistUpdate:
+      properties:
+        toolAllowlist:
+          items:
+            type: string
+          type: array
+          maxItems: 1024
+          title: Toolallowlist
+          description: Tool Allowlist.
+      additionalProperties: false
+      type: object
+      required:
+      - toolAllowlist
+      title: AgentKeyAllowlistUpdate
+      description: 'Body of ``PUT /v1/tenants/{t}/agent-keys/{id}/allowlist``: the
+        whole new list.'
+    AgentKeyCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: Agent Key Create schema.
+          - type: 'null'
+            description: Agent Key Create schema.
+          title: Description
+          description: Free-text description.
+        toolsetId:
+          type: string
+          format: uuid
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        toolAllowlist:
+          items:
+            type: string
+          type: array
+          maxItems: 1024
+          title: Toolallowlist
+          description: Tool Allowlist.
+        expiresAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Key Create schema.
+          - type: 'null'
+            description: Agent Key Create schema.
+          title: Expiresat
+          description: Expires At.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - toolsetId
+      - toolAllowlist
+      title: AgentKeyCreate
+      description: "Body of ``POST /v1/tenants/{t}/agent-keys``.\n\nAttributes:\n\
+        \    name: Human name, unique in the tenant (across workspace and agent keys,\
+        \ revoked included).\n    description: Optional purpose note.\n    toolset_id:\
+        \ The agent toolset the key is bound to.\n    tool_allowlist: MCP tool names\
+        \ the key may list and call.\n    expires_at: Optional expiry; must be in\
+        \ the future. A naive value is read as UTC."
+    AgentKeyCreated:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-key.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        kind:
+          type: string
+          const: agent
+          title: Kind
+          default: agent
+          description: Kind.
+          example: agent
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Description
+          description: Free-text description.
+        keyPrefix:
+          type: string
+          title: Keyprefix
+          description: Key Prefix.
+          example: example
+        toolsetId:
+          type: string
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        toolAllowlist:
+          items:
+            type: string
+          type: array
+          title: Toolallowlist
+          description: Tool Allowlist.
+          maxItems: 100
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - expired
+          - revoked
+          title: Status
+          description: Status.
+          example: active
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        expiresAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Expiresat
+          description: Expires At.
+        revokedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Revokedat
+          description: Revoked At.
+        lastUsedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Lastusedat
+          description: Last Used At.
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: Created At.
+          example: example
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Updatedat
+          description: Updated At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Agent Key Created schema.
+          - type: 'null'
+            description: Agent Key Created schema.
+          title: Createdby
+          description: Created By.
+        secret:
+          type: string
+          title: Secret
+          description: The agent key. Shown only in this response; store it now.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - keyPrefix
+      - toolsetId
+      - toolAllowlist
+      - status
+      - enabled
+      - createdAt
+      - secret
+      title: AgentKeyCreated
+      description: 'The create response: the key''s metadata plus its plaintext secret,
+        shown this once.'
+    AgentKeyListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-key.v1
+          description: Schema Version.
+          example: 1.0.0
+        keys:
+          items:
+            $ref: '#/components/schemas/AgentKeyOut'
+          type: array
+          title: Keys
+          description: Keys.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - keys
+      title: AgentKeyListResponse
+      description: "A tenant's agent keys, described.\n\nAttributes:\n    schema_version:\
+        \ The projection's shape.\n    keys: One entry per key, newest first."
+    AgentKeyOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-key.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        kind:
+          type: string
+          const: agent
+          title: Kind
+          default: agent
+          description: Kind.
+          example: agent
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Description
+          description: Free-text description.
+        keyPrefix:
+          type: string
+          title: Keyprefix
+          description: Key Prefix.
+          example: example
+        toolsetId:
+          type: string
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        toolAllowlist:
+          items:
+            type: string
+          type: array
+          title: Toolallowlist
+          description: Tool Allowlist.
+          maxItems: 100
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - expired
+          - revoked
+          title: Status
+          description: Status.
+          example: active
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        expiresAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Expiresat
+          description: Expires At.
+        revokedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Revokedat
+          description: Revoked At.
+        lastUsedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Lastusedat
+          description: Last Used At.
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: Created At.
+          example: example
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Updatedat
+          description: Updated At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Response payload for agent key.
+          - type: 'null'
+            description: Response payload for agent key.
+          title: Createdby
+          description: Created By.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - keyPrefix
+      - toolsetId
+      - toolAllowlist
+      - status
+      - enabled
+      - createdAt
+      title: AgentKeyOut
+      description: "An agent key, described. Never carries the secret or its hash.\n\
+        \nAttributes:\n    schema_version: The projection's shape.\n    id: The key\
+        \ id.\n    kind: Always ``agent``.\n    name: Human name.\n    description:\
+        \ Purpose note, if any.\n    key_prefix: The first 12 characters of the secret\
+        \ plus ``...``, for recognising it.\n    toolset_id: The toolset the key is\
+        \ bound to.\n    tool_allowlist: The tool names it may use, sorted.\n    status:\
+        \ ``active``, ``disabled``, ``expired`` or ``revoked`` (see :func:`key_status`).\n\
+        \    enabled: The key's enabled flag.\n    expires_at: When it stops working,\
+        \ if ever.\n    revoked_at: When it was revoked, if it was.\n    last_used_at:\
+        \ When it last authenticated, if ever.\n    created_at: When it was created.\n\
+        \    updated_at: When its row last changed.\n    created_by: The user who\
+        \ created it, if known."
     AnalysisMetrics:
       properties:
         nodeCount:
@@ -68635,7 +69383,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         completed_at:
           anyOf:
           - type: string
@@ -70089,7 +70837,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -70262,7 +71010,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -70636,13 +71384,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -72211,7 +72959,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: a4852864-022e-44a8-b6e6-307bf6003993
+          example: d1a13598-0831-4086-9eb3-2c9cbb1512ae
         method:
           type: string
           title: Method
@@ -74354,7 +75102,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         envelope:
           additionalProperties: true
           type: object
@@ -75734,7 +76482,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         browse_url:
           anyOf:
           - type: string
@@ -106820,7 +107568,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
       additionalProperties: false
       type: object
       required:
@@ -115619,7 +116367,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         detected_by:
           anyOf:
           - type: string
@@ -121076,13 +121824,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T03:30:16Z'
+          example: '2026-09-18T04:12:45Z'
         outcome:
           anyOf:
           - type: string

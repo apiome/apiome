@@ -1099,6 +1099,18 @@ describe('Database Helper - API Key Functions', () => {
     expect(keys[0].name).toBe('Production Key');
   });
 
+  test('getApiKeysForTenant lists workspace keys only, never AGX-3.1 agent keys', async () => {
+    const { getApiKeysForTenant } = await import('../lib/db/helper');
+    mockQuery.mockResolvedValue({ rows: [] });
+
+    await getApiKeysForTenant('tenant-1');
+
+    const [sql, params] = mockQuery.mock.calls[0];
+    expect(sql).toContain("kind = 'workspace'");
+    expect(sql).toContain('deleted_at IS NULL');
+    expect(params).toEqual(['tenant-1']);
+  });
+
   test('createApiKey should create new API key', async () => {
     const { createApiKey } = await import('../lib/db/helper');
     const crypto = require('crypto');

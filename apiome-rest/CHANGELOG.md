@@ -5,6 +5,45 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.332.0] - 2026-09-17
+
+### Added
+- **Agent keys (#4537, AGX-3.1)**: a new kind of API key for AI agents. Each one is bound to one
+  agent toolset, limited to an explicit tool allowlist, and can expire. It is the credential an
+  agent presents to the MCP agent runtime, and the identity that quotas (AGX-3.2) and usage
+  analytics (AGX-3.3 / 3.4) will attach to.
+
+  ```bash
+  curl -sX POST "$APIOME/v1/tenants/acme/agent-keys" \
+       -H "Authorization: Bearer $JWT" -H 'Content-Type: application/json' \
+       -d '{"name": "claude-desktop", "toolsetId": "'"$TOOLSET"'",
+            "toolAllowlist": ["listPets", "getPetById"], "expiresAt": "2026-12-31T00:00:00Z"}'
+  ```
+
+  - **`api_keys` extended (V269).** `kind` (`workspace` | `agent`; existing rows are
+    `workspace`), `toolset_id` and `tool_allowlist` (a JSON array of AGX-1.1 tool names, at most
+    1024, no wildcard). `expires_at` is reused. CHECKs keep the two kinds exclusive and pin agent
+    keys to the scope `agent:invoke`.
+  - **Five routes** under `/v1/tenants/{t}/agent-keys`: list (`?toolsetId`, `?includeRevoked`),
+    create, get, `PUT …/{id}/allowlist`, and `DELETE …/{id}` (revoke, idempotent). Guarded by the
+    existing `api_keys` view / create / edit / delete permissions; no new RBAC resource.
+  - **Secret shown once.** The secret is `ak_` + 64 hex characters, returned only by create. Rows
+    store a bcrypt hash and the usual lookup prefix; no response carries the hash.
+  - **Audited.** `agent.key.create`, `agent.key.allowlist_update` (the list before and after) and
+    `agent.key.revoke` go to the access audit, with metadata only.
+  - **Enforced in apiome-mcp.** `apiome_mcp.agent_access.AgentAccessMiddleware` narrows
+    `tools/list` and `tools/call` to the toolset's enabled tools ∩ the allowlist. A revoke,
+    expiry or allowlist edit applies to the agent's next request. Until AGX-1.2 (#4530) supplies
+    toolset curation, it fails closed.
+  - `toolset_id` has no foreign key yet (`agent_toolsets` is AGX-1.2). Docs:
+    `docs/agent_keys.md`.
+
+### Security
+- **An agent key never authenticates a REST call.** `validate_api_key` now selects
+  `kind = 'workspace'` keys only, and falls back to the older queries on a pre-V269 database.
+  Separately, no REST scope-allowlist entry accepts `agent:invoke`, so an agent key would get a
+  `403` on every route even if the kind filter were bypassed.
+
 ## [1.331.0] - 2026-09-17
 
 ### Added

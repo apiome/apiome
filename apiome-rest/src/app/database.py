@@ -1073,6 +1073,11 @@ class Database:
         Uses the same key_prefix format as the UI (first 12 chars + '...') for lookup,
         then verifies the full key against the stored bcrypt key_hash.
 
+        Only **workspace** keys authenticate here. An AGX-3.1 agent key (``kind = 'agent'``, V269)
+        is an MCP credential bound to one toolset and a tool allowlist; accepting it as a REST
+        credential would turn it into a tenant-wide key. On a database older than V269 there is no
+        ``kind`` column and no agent key, so the lookup falls back to the older queries.
+
         Args:
             api_key: The API key to validate
 
@@ -1085,6 +1090,20 @@ class Database:
         # Match UI format: key_prefix is first 12 characters + '...'
         key_prefix = api_key[:12] + '...'
 
+        query_workspace_kind = """
+            SELECT ak.id, ak.tenant_id, ak.created_by_user_id, ak.key_hash, ak.expires_at, ak.enabled,
+                   ak.scopes,
+                   t.id as tenant_id, t.slug as tenant_slug, t.name as tenant_name
+            FROM apiome.api_keys ak
+            JOIN apiome.tenants t ON ak.tenant_id = t.id
+            WHERE ak.key_prefix = %s
+              AND ak.kind = 'workspace'
+              AND ak.deleted_at IS NULL
+              AND ak.enabled = true
+              AND t.deleted_at IS NULL
+              AND t.enabled = true
+              AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
+        """
         query_with_scopes = """
             SELECT ak.id, ak.tenant_id, ak.created_by_user_id, ak.key_hash, ak.expires_at, ak.enabled,
                    ak.scopes,
@@ -1123,7 +1142,18 @@ class Database:
               AND (ak.expires_at IS NULL OR ak.expires_at > CURRENT_TIMESTAMP)
         """
         try:
-            results = self.execute_query(query_with_scopes, (key_prefix,))
+            try:
+                results = self.execute_query(query_workspace_kind, (key_prefix,))
+            except Exception as e_kind:
+                # Pre-V269: no `kind` column, hence no agent keys to exclude.
+                root_k = e_kind.__cause__ if getattr(e_kind, "__cause__", None) else e_kind
+                msg_k = str(e_kind).lower()
+                if getattr(root_k, "pgcode", None) == "42703" or (
+                    "kind" in msg_k and "does not exist" in msg_k
+                ):
+                    results = self.execute_query(query_with_scopes, (key_prefix,))
+                else:
+                    raise
         except Exception as e:
             root = e.__cause__ if getattr(e, "__cause__", None) else e
             pgcode = getattr(root, "pgcode", None)
@@ -31185,6 +31215,208 @@ class Database:
             """,
             (tenant_id, credential_id, toolset_id, outcome),
         )
+
+    # ------------------------------------------------------------------------------------------
+    # Agent keys — AGX-3.1 (#4537). `api_keys` rows with kind = 'agent' (V269).
+    # ------------------------------------------------------------------------------------------
+
+    #: An agent key's metadata. Never the hash: no accessor below returns ``key_hash``.
+    _AGENT_KEY_COLUMNS = """
+        ak.id::text AS id,
+        ak.tenant_id::text AS tenant_id,
+        ak.name,
+        ak.description,
+        ak.key_prefix,
+        ak.toolset_id::text AS toolset_id,
+        ak.tool_allowlist,
+        ak.expires_at,
+        ak.enabled,
+        ak.deleted_at AS revoked_at,
+        ak.last_used_at,
+        ak.created_at,
+        ak.updated_at,
+        ak.created_by_user_id::text AS created_by
+    """
+
+    def list_agent_keys(
+        self,
+        tenant_id: str,
+        *,
+        toolset_id: Optional[str] = None,
+        include_revoked: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """Return a tenant's agent keys, newest first (AGX-3.1).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: When set, only keys bound to this toolset.
+            include_revoked: When ``True``, revoked (soft-deleted) keys are included.
+
+        Returns:
+            Metadata rows. Empty when an id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id) or (
+            toolset_id is not None and not self._upstream_scope_ok(toolset_id)
+        ):
+            return []
+        clauses = ["ak.tenant_id = %s::uuid", "ak.kind = 'agent'"]
+        params: List[Any] = [tenant_id]
+        if toolset_id is not None:
+            clauses.append("ak.toolset_id = %s::uuid")
+            params.append(toolset_id)
+        if not include_revoked:
+            clauses.append("ak.deleted_at IS NULL")
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_KEY_COLUMNS}
+            FROM apiome.api_keys ak
+            WHERE {' AND '.join(clauses)}
+            ORDER BY ak.created_at DESC, ak.id
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_agent_key(self, tenant_id: str, key_id: str) -> Optional[Dict[str, Any]]:
+        """Return one agent key's metadata, revoked or not (AGX-3.1).
+
+        Args:
+            tenant_id: The caller's tenant.
+            key_id: The key.
+
+        Returns:
+            The row, or ``None`` when no agent key has that id in the tenant.
+        """
+        if not self._upstream_scope_ok(tenant_id, key_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_KEY_COLUMNS}
+            FROM apiome.api_keys ak
+            WHERE ak.id = %s::uuid AND ak.tenant_id = %s::uuid AND ak.kind = 'agent'
+            """,
+            (key_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_agent_key(
+        self,
+        *,
+        tenant_id: str,
+        name: str,
+        description: Optional[str],
+        key_hash: str,
+        key_prefix: str,
+        toolset_id: str,
+        tool_allowlist: List[str],
+        expires_at: Optional[datetime],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store a new agent key (AGX-3.1).
+
+        The row is ``kind = 'agent'`` with exactly the ``agent:invoke`` scope, which V269's CHECKs
+        require of every agent key. ``ON CONFLICT DO NOTHING`` on the tenant's name: key names are
+        unique per tenant across both kinds, revoked keys included.
+
+        Args:
+            tenant_id: Owning tenant.
+            name: Human name, unique in the tenant.
+            description: Optional purpose note.
+            key_hash: bcrypt hash of the secret. Never the secret.
+            key_prefix: The lookup prefix (first 12 characters + ``...``).
+            toolset_id: The agent toolset the key is bound to.
+            tool_allowlist: The tool names it may use, already validated and normalized.
+            expires_at: Optional expiry.
+            actor_id: The user creating it.
+
+        Returns:
+            The stored row's metadata, or ``None`` when the name is taken (or an id is not a
+            UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.api_keys AS ak (
+                tenant_id, name, description, key_hash, key_prefix, expires_at,
+                created_by_user_id, scopes, kind, toolset_id, tool_allowlist
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, %s,
+                %s::uuid, ARRAY['agent:invoke']::text[], 'agent', %s::uuid, %s::jsonb
+            )
+            ON CONFLICT (tenant_id, name) DO NOTHING
+            RETURNING {self._AGENT_KEY_COLUMNS}
+            """,
+            (
+                tenant_id,
+                name,
+                description,
+                key_hash,
+                key_prefix,
+                expires_at,
+                actor,
+                toolset_id,
+                json.dumps(list(tool_allowlist)),
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def update_agent_key_allowlist(
+        self, tenant_id: str, key_id: str, tool_allowlist: List[str]
+    ) -> Optional[Dict[str, Any]]:
+        """Replace an active agent key's tool allowlist (AGX-3.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            key_id: The key.
+            tool_allowlist: The new list, already validated and normalized.
+
+        Returns:
+            The row after the update, or ``None`` when no *unrevoked* agent key has that id.
+        """
+        if not self._upstream_scope_ok(tenant_id, key_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.api_keys AS ak
+            SET tool_allowlist = %s::jsonb, updated_at = CURRENT_TIMESTAMP
+            WHERE ak.id = %s::uuid AND ak.tenant_id = %s::uuid
+              AND ak.kind = 'agent' AND ak.deleted_at IS NULL
+            RETURNING {self._AGENT_KEY_COLUMNS}
+            """,
+            (json.dumps(list(tool_allowlist)), key_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def revoke_agent_key(self, tenant_id: str, key_id: str) -> Optional[Dict[str, Any]]:
+        """Revoke an agent key: soft-delete it and clear ``enabled`` (AGX-3.1).
+
+        Only an unrevoked key matches, so a second revoke changes nothing and keeps the first
+        revocation time.
+
+        Args:
+            tenant_id: Owning tenant.
+            key_id: The key.
+
+        Returns:
+            The row after revocation, or ``None`` when no unrevoked agent key has that id.
+        """
+        if not self._upstream_scope_ok(tenant_id, key_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.api_keys AS ak
+            SET deleted_at = CURRENT_TIMESTAMP,
+                enabled = false,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE ak.id = %s::uuid AND ak.tenant_id = %s::uuid
+              AND ak.kind = 'agent' AND ak.deleted_at IS NULL
+            RETURNING {self._AGENT_KEY_COLUMNS}
+            """,
+            (key_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
 
     def next_sdk_publish_counter(
         self, tenant_id: str, project_id: str, ecosystem: str, release_series: str
