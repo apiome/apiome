@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/billing.invoice.",
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getInvoice",
+      "operation": "http://example.com/billing.BillingInterface.getInvoice",
+      "output": {
+        "schema": {
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "invoiceId": {
+              "type": "string"
+            },
+            "issuedOn": {
+              "type": "string"
+            },
+            "total": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/billing.invoice"
+      }
+    }
+  ]
+}

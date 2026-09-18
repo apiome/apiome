@@ -1,0 +1,545 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Stress operation 1.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op1",
+      "operation": "GET /stress/v1/widgets/op1",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 11.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op11",
+      "operation": "GET /stress/v1/widgets/op11",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 13.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op13",
+      "operation": "GET /stress/v1/widgets/op13",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 15.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op15",
+      "operation": "GET /stress/v1/widgets/op15",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 17.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op17",
+      "operation": "GET /stress/v1/widgets/op17",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 19.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op19",
+      "operation": "GET /stress/v1/widgets/op19",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 3.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op3",
+      "operation": "GET /stress/v1/widgets/op3",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 5.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op5",
+      "operation": "GET /stress/v1/widgets/op5",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 7.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op7",
+      "operation": "GET /stress/v1/widgets/op7",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 9.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op9",
+      "operation": "GET /stress/v1/widgets/op9",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 10.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op10",
+      "operation": "POST /stress/v1/widgets/op10",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 12.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op12",
+      "operation": "POST /stress/v1/widgets/op12",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 14.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op14",
+      "operation": "POST /stress/v1/widgets/op14",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 16.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op16",
+      "operation": "POST /stress/v1/widgets/op16",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 18.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op18",
+      "operation": "POST /stress/v1/widgets/op18",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 2.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op2",
+      "operation": "POST /stress/v1/widgets/op2",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 20.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op20",
+      "operation": "POST /stress/v1/widgets/op20",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 4.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op4",
+      "operation": "POST /stress/v1/widgets/op4",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 6.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op6",
+      "operation": "POST /stress/v1/widgets/op6",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    },
+    {
+      "description": "Stress operation 8.\n\nReturns Widget.",
+      "inputSchema": {
+        "properties": {
+          "n": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "stress_widgets_op8",
+      "operation": "POST /stress/v1/widgets/op8",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Widget"
+      }
+    }
+  ]
+}

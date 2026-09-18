@@ -1,0 +1,155 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetOrder",
+      "operation": "example.orders.v1.OrderService.GetOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customer_id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit_price": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "note": {
+              "type": "string"
+            },
+            "order_id": {
+              "type": "string"
+            },
+            "placed_at": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "lines",
+            "placed_at"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.v1.Order"
+      }
+    },
+    {
+      "description": "Returns example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "customer_id": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                },
+                "unit_price": {}
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "placed_at": {},
+          "status": {
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lines",
+          "placed_at"
+        ],
+        "type": "object"
+      },
+      "name": "PlaceOrder",
+      "operation": "example.orders.v1.OrderService.PlaceOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customer_id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit_price": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "note": {
+              "type": "string"
+            },
+            "order_id": {
+              "type": "string"
+            },
+            "placed_at": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "lines",
+            "placed_at"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.v1.Order"
+      }
+    }
+  ]
+}

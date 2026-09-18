@@ -1,0 +1,161 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Invoicing.Invoice).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listInvoices",
+      "operation": "GET /Invoices",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Amount": {},
+            "BillTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "InvoiceId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "InvoiceId"
+          ],
+          "type": "object"
+        },
+        "shape": "Invoicing.Invoice",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Invoicing.Invoice).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getInvoice",
+      "operation": "GET /Invoices({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Amount": {},
+            "BillTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "InvoiceId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "InvoiceId"
+          ],
+          "type": "object"
+        },
+        "shape": "Invoicing.Invoice",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Invoicing.Invoice).",
+      "inputSchema": {
+        "properties": {
+          "Amount": {},
+          "BillTo": {
+            "properties": {
+              "City": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              },
+              "PostalCode": {
+                "type": "string"
+              },
+              "Street": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "InvoiceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "InvoiceId"
+        ],
+        "type": "object"
+      },
+      "name": "createInvoice",
+      "operation": "POST /Invoices",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Amount": {},
+            "BillTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "InvoiceId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "InvoiceId"
+          ],
+          "type": "object"
+        },
+        "shape": "Invoicing.Invoice",
+        "status": "201"
+      }
+    }
+  ]
+}

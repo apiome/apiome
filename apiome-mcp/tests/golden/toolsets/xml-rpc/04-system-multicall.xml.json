@@ -1,0 +1,13 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "system_multicall",
+      "operation": "system.multicall.system.multicall"
+    }
+  ]
+}

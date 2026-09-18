@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns eliza.v1.SayResponse.",
+      "inputSchema": {
+        "properties": {
+          "sentence": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "Say",
+      "operation": "eliza.v1.ElizaService.Say",
+      "output": {
+        "schema": {
+          "properties": {
+            "sentence": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "eliza.v1.SayResponse"
+      }
+    }
+  ]
+}

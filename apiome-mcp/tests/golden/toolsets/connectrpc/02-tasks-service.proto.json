@@ -1,0 +1,228 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns tasks.v1.Task.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CompleteTask",
+      "operation": "tasks.v1.TaskService.CompleteTask",
+      "output": {
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "state": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "tasks.v1.Task"
+      }
+    },
+    {
+      "description": "Returns tasks.v1.Task.",
+      "inputSchema": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "labels"
+        ],
+        "type": "object"
+      },
+      "name": "CreateTask",
+      "operation": "tasks.v1.TaskService.CreateTask",
+      "output": {
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "state": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "tasks.v1.Task"
+      }
+    },
+    {
+      "description": "Returns tasks.v1.Task.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetTask",
+      "operation": "tasks.v1.TaskService.GetTask",
+      "output": {
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "state": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "tasks.v1.Task"
+      }
+    },
+    {
+      "description": "Returns tasks.v1.ListTasksResponse.",
+      "inputSchema": {
+        "properties": {
+          "page_size": {},
+          "page_token": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ListTasks",
+      "operation": "tasks.v1.TaskService.ListTasks",
+      "output": {
+        "schema": {
+          "properties": {
+            "next_page_token": {
+              "type": "string"
+            },
+            "tasks": {
+              "items": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "labels": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "state": {
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "type": "integer"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "tasks"
+          ],
+          "type": "object"
+        },
+        "shape": "tasks.v1.ListTasksResponse"
+      }
+    }
+  ]
+}

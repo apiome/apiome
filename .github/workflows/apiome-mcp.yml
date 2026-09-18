@@ -10,6 +10,9 @@ on:
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
       - 'apiome-db/**'
+      # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
+      # corpus, so a fixture or manifest edit alone must re-run the drift gate.
+      - 'apiome-ui/examples/**'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -19,6 +22,9 @@ on:
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
       - 'apiome-db/**'
+      # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
+      # corpus, so a fixture or manifest edit alone must re-run the drift gate.
+      - 'apiome-ui/examples/**'
   workflow_dispatch:
 
 jobs:
@@ -125,6 +131,19 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
         working-directory: apiome-mcp
+
+      # The AGX-1.4 golden toolset suite compiles every corpus entry, and the protobuf /
+      # connectrpc (buf) and asyncapi (asyncapi-parser) entries skip without their bundled
+      # tool. Install the pinned toolchain into apiome-rest/.tools, where the editable
+      # apiome-rest resolves it, so the drift gate covers the whole corpus.
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install the corpus toolchain (buf, asyncapi-parser)
+        run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser
+        working-directory: apiome-rest
 
       - name: Ruff lint
         run: uv run ruff check .

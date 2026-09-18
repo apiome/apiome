@@ -6,6 +6,20 @@ import pytest
 from psycopg_pool import AsyncConnectionPool
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register ``--update-golden``, which regenerates the AGX-1.4 golden toolsets.
+
+    With the flag, ``tests/test_toolset_goldens.py`` rewrites each golden from a fresh
+    compile and deletes orphans instead of comparing (see ``docs/TOOLSET_GOLDENS.md``).
+    """
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="Regenerate tests/golden/toolsets/ from the compiler instead of comparing against it.",
+    )
+
+
 @pytest.fixture(autouse=True)
 def reset_mcp_logging_state() -> None:
     from apiome_mcp.logging_config import reset_logging_state_for_tests

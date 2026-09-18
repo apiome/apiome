@@ -1,0 +1,205 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.Warehouse.Bin).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listBins",
+      "operation": "GET /Bins",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Flags": {
+              "enum": [
+                0,
+                1,
+                2,
+                4,
+                8
+              ],
+              "type": "integer"
+            },
+            "Location": {},
+            "Sku": {},
+            "Slots": {
+              "items": {
+                "properties": {
+                  "Height": {},
+                  "Length": {},
+                  "Width": {}
+                },
+                "required": [
+                  "Height",
+                  "Length",
+                  "Width"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "Code",
+            "Slots"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Warehouse.Bin",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Warehouse.Bin).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getBin",
+      "operation": "GET /Bins({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Flags": {
+              "enum": [
+                0,
+                1,
+                2,
+                4,
+                8
+              ],
+              "type": "integer"
+            },
+            "Location": {},
+            "Sku": {},
+            "Slots": {
+              "items": {
+                "properties": {
+                  "Height": {},
+                  "Length": {},
+                  "Width": {}
+                },
+                "required": [
+                  "Height",
+                  "Length",
+                  "Width"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "Code",
+            "Slots"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Warehouse.Bin",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Warehouse.Bin).",
+      "inputSchema": {
+        "properties": {
+          "Code": {
+            "type": "string"
+          },
+          "Flags": {
+            "enum": [
+              0,
+              1,
+              2,
+              4,
+              8
+            ],
+            "type": "integer"
+          },
+          "Location": {},
+          "Sku": {},
+          "Slots": {
+            "items": {
+              "properties": {
+                "Height": {},
+                "Length": {},
+                "Width": {}
+              },
+              "required": [
+                "Height",
+                "Length",
+                "Width"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "Code",
+          "Slots"
+        ],
+        "type": "object"
+      },
+      "name": "createBin",
+      "operation": "POST /Bins",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Flags": {
+              "enum": [
+                0,
+                1,
+                2,
+                4,
+                8
+              ],
+              "type": "integer"
+            },
+            "Location": {},
+            "Sku": {},
+            "Slots": {
+              "items": {
+                "properties": {
+                  "Height": {},
+                  "Length": {},
+                  "Width": {}
+                },
+                "required": [
+                  "Height",
+                  "Length",
+                  "Width"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "Code",
+            "Slots"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Warehouse.Bin",
+        "status": "201"
+      }
+    }
+  ]
+}

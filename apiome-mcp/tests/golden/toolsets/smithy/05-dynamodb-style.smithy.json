@@ -1,0 +1,119 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.dynamodb.GetItemOutput.",
+      "inputSchema": {
+        "properties": {
+          "consistentRead": {
+            "type": "boolean"
+          },
+          "tableName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableName"
+        ],
+        "type": "object"
+      },
+      "name": "GetItem",
+      "operation": "example.dynamodb.DynamoDbLike.GetItem",
+      "output": {
+        "schema": {
+          "description": "Query items sharing",
+          "properties": {
+            "item": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "example.dynamodb.GetItemOutput"
+      }
+    },
+    {
+      "description": "Returns example.dynamodb.PutItemOutput.",
+      "inputSchema": {
+        "properties": {
+          "item": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "tableName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item",
+          "tableName"
+        ],
+        "type": "object"
+      },
+      "name": "PutItem",
+      "operation": "example.dynamodb.DynamoDbLike.PutItem",
+      "output": {
+        "schema": {
+          "properties": {
+            "consumedCapacityUnits": {}
+          },
+          "type": "object"
+        },
+        "shape": "example.dynamodb.PutItemOutput"
+      }
+    },
+    {
+      "description": "Returns example.dynamodb.QueryOutput.",
+      "inputSchema": {
+        "properties": {
+          "expressionValues": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "keyConditionExpression": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "scanIndexForward": {
+            "type": "boolean"
+          },
+          "tableName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "keyConditionExpression",
+          "tableName"
+        ],
+        "type": "object"
+      },
+      "name": "Query",
+      "operation": "example.dynamodb.DynamoDbLike.Query",
+      "output": {
+        "schema": {
+          "properties": {
+            "count": {
+              "type": "integer"
+            },
+            "items": {
+              "items": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "lastEvaluatedKey": {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "example.dynamodb.QueryOutput"
+      }
+    }
+  ]
+}

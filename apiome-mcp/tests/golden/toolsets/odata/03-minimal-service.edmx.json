@@ -1,0 +1,81 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.Minimal.Item).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listItems",
+      "operation": "GET /Items",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {}
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Minimal.Item",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Minimal.Item).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getItem",
+      "operation": "GET /Items({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {}
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Minimal.Item",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Minimal.Item).",
+      "inputSchema": {
+        "properties": {
+          "Id": {}
+        },
+        "required": [
+          "Id"
+        ],
+        "type": "object"
+      },
+      "name": "createItem",
+      "operation": "POST /Items",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {}
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Minimal.Item",
+        "status": "201"
+      }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Reservation.",
+      "inputSchema": {
+        "properties": {
+          "prettyPrint": {
+            "description": "Pretty-print response.",
+            "type": "boolean"
+          },
+          "reservationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reservationId"
+        ],
+        "type": "object"
+      },
+      "name": "booking_reservations_get",
+      "operation": "GET /booking/v1/reservations/{reservationId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "nights": {
+              "type": "integer"
+            },
+            "room": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Reservation"
+      }
+    },
+    {
+      "description": "Create a reservation.\n\nReturns Reservation.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nights": {
+            "type": "integer"
+          },
+          "prettyPrint": {
+            "description": "Pretty-print response.",
+            "type": "boolean"
+          },
+          "room": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "booking_reservations_create",
+      "operation": "POST /booking/v1/reservations",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "nights": {
+              "type": "integer"
+            },
+            "room": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Reservation"
+      }
+    }
+  ]
+}

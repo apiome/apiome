@@ -127,6 +127,9 @@ Every schema, input and output alike, is reduced to the portable keyword subset
   mapping change alters output for an unchanged spec.
 - `validate_mcp_tool` re-checks every tool before a toolset is returned: an invalid
   toolset raises `McpToolMappingError` instead of shipping.
+- The whole examples corpus is pinned as golden toolsets (AGX-1.4). A change that alters
+  compiled output fails CI until its goldens are regenerated in the same PR; see
+  [TOOLSET_GOLDENS.md](TOOLSET_GOLDENS.md).
 
 ## Known limitation
 
@@ -152,3 +155,6 @@ is for the normalizer to fix; it is not a compiler rule.
   - an in-process round trip: the compiled tools are served by a throwaway FastMCP server
     and listed and called through an MCP client, well-formed arguments validate and
     arrive, and malformed ones are rejected.
+- `apiome-mcp/tests/test_toolset_goldens.py` is the golden corpus. Every corpus entry must
+  recompile to its checked-in golden byte for byte, and every stored tool must be
+  MCP-valid ([TOOLSET_GOLDENS.md](TOOLSET_GOLDENS.md)).

@@ -1,0 +1,89 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "merchantId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "Settlement_report",
+      "operation": "GET /reports/settlement"
+    },
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "captureMode": {
+            "type": "string"
+          },
+          "card": {},
+          "merchantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "captureMode",
+          "card",
+          "merchantId"
+        ],
+        "type": "object"
+      },
+      "name": "Authorize_a_payment",
+      "operation": "POST /authorizations",
+      "output": {}
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "authorizationId": {
+            "type": "string"
+          },
+          "finalCapture": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "authorizationId",
+          "amount",
+          "finalCapture"
+        ],
+        "type": "object"
+      },
+      "name": "Capture_an_authorization",
+      "operation": "POST /authorizations/{authorizationId}/captures"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "authorizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorizationId"
+        ],
+        "type": "object"
+      },
+      "name": "Void_an_authorization",
+      "operation": "POST /authorizations/{authorizationId}/void"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Get_access_token",
+      "operation": "POST /oauth/token"
+    }
+  ]
+}

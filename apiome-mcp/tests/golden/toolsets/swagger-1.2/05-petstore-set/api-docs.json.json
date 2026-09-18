@@ -1,0 +1,212 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Open a cart\n\nReturns HTTP 201 application/json (Cart): Cart created",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createCart",
+      "operation": "POST /carts",
+      "output": {
+        "description": "Cart created",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "cartId": {
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "format": "int32",
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "total": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "cartId"
+          ],
+          "type": "object"
+        },
+        "shape": "Cart",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Add an item to a cart\n\nReturns HTTP 200 application/json (Cart): Successful response",
+      "inputSchema": {
+        "properties": {
+          "cartId": {
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cartId",
+          "quantity",
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "addCartItem",
+      "operation": "POST /carts/{cartId}/items",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "cartId": {
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "format": "int32",
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "total": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "cartId"
+          ],
+          "type": "object"
+        },
+        "shape": "Cart",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List products\n\nReturns HTTP 200 application/json (array of Product): Successful response",
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listProducts",
+      "operation": "GET /products",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "price": {
+                "format": "double",
+                "type": "number"
+              },
+              "sku": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "price",
+              "sku"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Fetch a product\n\nReturns HTTP 200 application/json (Product): Successful response",
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "getProduct",
+      "operation": "GET /products/{sku}",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "category": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price": {
+              "format": "double",
+              "type": "number"
+            },
+            "sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "price",
+            "sku"
+          ],
+          "type": "object"
+        },
+        "shape": "Product",
+        "status": "200"
+      }
+    }
+  ]
+}

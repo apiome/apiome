@@ -1,0 +1,56 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/globalweather.GetCitiesByCountryResponse.",
+      "inputSchema": {
+        "properties": {
+          "CountryName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetCitiesByCountry",
+      "operation": "http://example.com/globalweather.GlobalWeatherSoap.GetCitiesByCountry",
+      "output": {
+        "schema": {
+          "properties": {
+            "GetCitiesByCountryResult": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/globalweather.GetCitiesByCountryResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/globalweather.GetWeatherResponse.",
+      "inputSchema": {
+        "properties": {
+          "CityName": {
+            "type": "string"
+          },
+          "CountryName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetWeather",
+      "operation": "http://example.com/globalweather.GlobalWeatherSoap.GetWeather",
+      "output": {
+        "schema": {
+          "properties": {
+            "GetWeatherResult": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/globalweather.GetWeatherResponse"
+      }
+    }
+  ]
+}

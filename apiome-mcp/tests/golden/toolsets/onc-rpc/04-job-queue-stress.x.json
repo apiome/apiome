@@ -1,0 +1,176 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "JOB_CANCEL",
+      "operation": "JOB_PROG.JOB_PROG.JOB_CANCEL"
+    },
+    {
+      "description": "Returns JOB_PROG.job_status_res.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "JOB_STATUS",
+      "operation": "JOB_PROG.JOB_PROG.JOB_STATUS",
+      "output": {
+        "schema": {
+          "anyOf": [
+            {},
+            {},
+            {},
+            {
+              "properties": {
+                "code": {},
+                "detail": {
+                  "maxLength": 256,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "detail"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "shape": "JOB_PROG.job_status_res"
+      }
+    },
+    {
+      "description": "Returns JOB_PROG.job_status_res.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "JOB_STATUS2",
+      "operation": "JOB_PROG.JOB_PROG.JOB_STATUS2",
+      "output": {
+        "schema": {
+          "anyOf": [
+            {},
+            {},
+            {},
+            {
+              "properties": {
+                "code": {},
+                "detail": {
+                  "maxLength": 256,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "detail"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "shape": "JOB_PROG.job_status_res"
+      }
+    },
+    {
+      "description": "Returns JOB_PROG.job_state.",
+      "inputSchema": {
+        "properties": {
+          "command": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "type": "string"
+          },
+          "submitted_at": {},
+          "urgent": {}
+        },
+        "required": [
+          "command",
+          "id",
+          "submitted_at",
+          "urgent"
+        ],
+        "type": "object"
+      },
+      "name": "JOB_SUBMIT",
+      "operation": "JOB_PROG.JOB_PROG.JOB_SUBMIT",
+      "output": {
+        "schema": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "shape": "JOB_PROG.job_state"
+      }
+    },
+    {
+      "description": "Returns JOB_PROG.job_state.",
+      "inputSchema": {
+        "properties": {
+          "command": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 36,
+            "type": "string"
+          },
+          "submitted_at": {},
+          "urgent": {}
+        },
+        "required": [
+          "command",
+          "id",
+          "submitted_at",
+          "urgent"
+        ],
+        "type": "object"
+      },
+      "name": "JOB_SUBMIT2",
+      "operation": "JOB_PROG.JOB_PROG.JOB_SUBMIT2",
+      "output": {
+        "schema": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "shape": "JOB_PROG.job_state"
+      }
+    }
+  ]
+}

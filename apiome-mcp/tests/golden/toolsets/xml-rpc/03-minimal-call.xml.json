@@ -1,0 +1,13 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "system_ping",
+      "operation": "system.ping.system.ping"
+    }
+  ]
+}

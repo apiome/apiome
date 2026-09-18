@@ -1,0 +1,111 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v1_api_items_itemId",
+      "operation": "DELETE /v1/api/items/{itemId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "x-tenant-id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "x-tenant-id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_api_items",
+      "operation": "GET /v1/api/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "itemId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_api_items_itemId",
+      "operation": "GET /v1/api/items/{itemId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "q": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_api_search",
+      "operation": "GET /v1/api/search"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x-tenant-id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "x-tenant-id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_api_items",
+      "operation": "POST /v1/api/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "password",
+          "username"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_api_session",
+      "operation": "POST /v1/api/session"
+    }
+  ]
+}

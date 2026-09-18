@@ -1,0 +1,96 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.telemetry.Window.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "aggregate",
+      "operation": "com.example.telemetry.Telemetry.aggregate",
+      "output": {
+        "schema": {
+          "properties": {
+            "buckets": {
+              "items": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "nested": {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              "type": "object"
+            },
+            "series": {
+              "additionalProperties": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "com.example.telemetry.Window"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "flush",
+      "operation": "com.example.telemetry.Telemetry.flush"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "flagsByte": {},
+          "sensorId": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              16,
+              32,
+              48,
+              64
+            ],
+            "type": "integer"
+          },
+          "shortCode": {},
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "timestamp": {},
+          "value": {}
+        },
+        "required": [
+          "sensorId",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "name": "record",
+      "operation": "com.example.telemetry.Telemetry.record"
+    }
+  ]
+}

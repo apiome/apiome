@@ -1,0 +1,81 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "issuer": {},
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                },
+                "unitPrice": {}
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "total": {}
+        },
+        "type": "object"
+      },
+      "name": "issue",
+      "operation": "Billing.issue",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "description": "Returns Invoice.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "lookup",
+      "operation": "Billing.lookup",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "issuer": {},
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "total": {}
+          },
+          "type": "object"
+        },
+        "shape": "Invoice"
+      }
+    }
+  ]
+}

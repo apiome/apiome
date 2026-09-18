@@ -1,0 +1,132 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.telemetry.v1.ExportResponse.",
+      "inputSchema": {
+        "properties": {
+          "collection_window": {},
+          "logs": {
+            "items": {
+              "properties": {
+                "attributes": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "body": {
+                  "type": "string"
+                },
+                "observed_at": {},
+                "raw_agent_line": {
+                  "type": "string"
+                },
+                "severity": {
+                  "enum": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "type": "integer"
+                },
+                "span_id": {},
+                "trace_id": {}
+              },
+              "required": [
+                "attributes"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "metrics": {
+            "items": {
+              "properties": {
+                "labels": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "observed_at": {},
+                "unit": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {},
+                  "type": "array"
+                }
+              },
+              "required": [
+                "labels",
+                "name",
+                "values"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "resource": {
+            "properties": {
+              "attributes": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "host": {
+                "type": "string"
+              },
+              "service_name": {
+                "type": "string"
+              },
+              "service_version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "attributes",
+              "service_name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "logs",
+          "metrics",
+          "resource"
+        ],
+        "type": "object"
+      },
+      "name": "Export",
+      "operation": "example.telemetry.v1.TelemetryService.Export",
+      "output": {
+        "schema": {
+          "properties": {
+            "accepted": {},
+            "rejected": {},
+            "rejection_reasons": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "accepted",
+            "rejected",
+            "rejection_reasons"
+          ],
+          "type": "object"
+        },
+        "shape": "example.telemetry.v1.ExportResponse"
+      }
+    }
+  ]
+}

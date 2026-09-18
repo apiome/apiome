@@ -1,0 +1,100 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns KV_PROG.kv_status.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "KV_DELETE",
+      "operation": "KV_PROG.KV_PROG.KV_DELETE",
+      "output": {
+        "schema": {
+          "enum": [
+            0,
+            1,
+            2
+          ],
+          "type": "integer"
+        },
+        "shape": "KV_PROG.kv_status"
+      }
+    },
+    {
+      "description": "Returns KV_PROG.kv_get_res.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "KV_GET",
+      "operation": "KV_PROG.KV_PROG.KV_GET",
+      "output": {
+        "schema": {
+          "anyOf": [
+            {
+              "properties": {
+                "key": {
+                  "maxLength": 256,
+                  "type": "string"
+                },
+                "value": {}
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "type": "object"
+            },
+            {}
+          ]
+        },
+        "shape": "KV_PROG.kv_get_res"
+      }
+    },
+    {
+      "description": "Returns KV_PROG.kv_status.",
+      "inputSchema": {
+        "properties": {
+          "key": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "value": {}
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "type": "object"
+      },
+      "name": "KV_PUT",
+      "operation": "KV_PROG.KV_PROG.KV_PUT",
+      "output": {
+        "schema": {
+          "enum": [
+            0,
+            1,
+            2
+          ],
+          "type": "integer"
+        },
+        "shape": "KV_PROG.kv_status"
+      }
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "A book catalog entry\n\nReturns example.bookstore.BookSummary.",
+      "inputSchema": {
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "isbn": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "author",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "CreateBook",
+      "operation": "example.bookstore.BookstoreService.CreateBook",
+      "output": {
+        "schema": {
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "bookId": {
+              "type": "string"
+            },
+            "isbn": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "bookId",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "example.bookstore.BookSummary"
+      }
+    },
+    {
+      "description": "Returns example.bookstore.BookSummary.",
+      "inputSchema": {
+        "properties": {
+          "bookId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookId"
+        ],
+        "type": "object"
+      },
+      "name": "GetBook",
+      "operation": "example.bookstore.BookstoreService.GetBook",
+      "output": {
+        "schema": {
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "bookId": {
+              "type": "string"
+            },
+            "isbn": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "bookId",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "example.bookstore.BookSummary"
+      }
+    },
+    {
+      "description": "Returns example.bookstore.ListBooksOutput.",
+      "inputSchema": {
+        "properties": {
+          "pageSize": {
+            "type": "integer"
+          },
+          "pageToken": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ListBooks",
+      "operation": "example.bookstore.BookstoreService.ListBooks",
+      "output": {
+        "schema": {
+          "properties": {
+            "books": {
+              "items": {
+                "properties": {
+                  "author": {
+                    "type": "string"
+                  },
+                  "bookId": {
+                    "type": "string"
+                  },
+                  "isbn": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "author",
+                  "bookId",
+                  "title"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "nextPageToken": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "books"
+          ],
+          "type": "object"
+        },
+        "shape": "example.bookstore.ListBooksOutput"
+      }
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns payments.v1.Payment.",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "properties": {
+              "currency_code": {
+                "type": "string"
+              },
+              "minor_units": {}
+            },
+            "type": "object"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "payee_account": {
+            "type": "string"
+          },
+          "payer_account": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CreatePayment",
+      "operation": "payments.v1.PaymentService.CreatePayment",
+      "output": {
+        "schema": {
+          "properties": {
+            "amount": {
+              "properties": {
+                "currency_code": {
+                  "type": "string"
+                },
+                "minor_units": {}
+              },
+              "type": "object"
+            },
+            "id": {
+              "type": "string"
+            },
+            "payee_account": {
+              "type": "string"
+            },
+            "payer_account": {
+              "type": "string"
+            },
+            "state": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "payments.v1.Payment"
+      }
+    },
+    {
+      "description": "Returns payments.v1.Payment.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetPayment",
+      "operation": "payments.v1.PaymentService.GetPayment",
+      "output": {
+        "schema": {
+          "properties": {
+            "amount": {
+              "properties": {
+                "currency_code": {
+                  "type": "string"
+                },
+                "minor_units": {}
+              },
+              "type": "object"
+            },
+            "id": {
+              "type": "string"
+            },
+            "payee_account": {
+              "type": "string"
+            },
+            "payer_account": {
+              "type": "string"
+            },
+            "state": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "payments.v1.Payment"
+      }
+    }
+  ]
+}

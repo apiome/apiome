@@ -1,0 +1,41 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Asynchronous step — the order-accepted event on the events broker.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_orderEvents_receiveOrderAccepted",
+      "operation": "orderToCash#awaitOrderAccepted"
+    },
+    {
+      "description": "Asynchronous step — settlement completes on a different channel.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_orderEvents_receivePaymentSettled",
+      "operation": "orderToCash#awaitSettlement"
+    },
+    {
+      "description": "Back to REST once the event has been seen.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_orders_getInvoice",
+      "operation": "orderToCash#fetchInvoice"
+    },
+    {
+      "description": "Synchronous REST call that creates the order.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_orders_createOrder",
+      "operation": "orderToCash#placeOrder"
+    }
+  ]
+}

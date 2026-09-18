@@ -1,0 +1,161 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.payments.Payment.",
+      "inputSchema": {
+        "properties": {
+          "amountMinor": {},
+          "currency": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amountMinor",
+          "currency",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "authorize",
+      "operation": "com.example.payments.PaymentService.authorize",
+      "output": {
+        "schema": {
+          "properties": {
+            "amountMinor": {},
+            "currency": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "reference": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amountMinor",
+            "currency",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.payments.Payment"
+      }
+    },
+    {
+      "description": "Returns com.example.payments.Payment.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "capture",
+      "operation": "com.example.payments.PaymentService.capture",
+      "output": {
+        "schema": {
+          "properties": {
+            "amountMinor": {},
+            "currency": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "reference": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amountMinor",
+            "currency",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.payments.Payment"
+      }
+    },
+    {
+      "description": "Returns com.example.payments.Payment.",
+      "inputSchema": {
+        "properties": {
+          "amountMinor": {},
+          "paymentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "paymentId"
+        ],
+        "type": "object"
+      },
+      "name": "refund",
+      "operation": "com.example.payments.PaymentService.refund",
+      "output": {
+        "schema": {
+          "properties": {
+            "amountMinor": {},
+            "currency": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "method": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "reference": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "amountMinor",
+            "currency",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.payments.Payment"
+      }
+    }
+  ]
+}

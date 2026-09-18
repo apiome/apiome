@@ -1,0 +1,73 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Get a user by ID\n\nReturns User.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "user",
+      "operation": "Query.user",
+      "output": {
+        "schema": {
+          "description": "A simple user type for testing basic GraphQL import",
+          "properties": {
+            "age": {},
+            "createdAt": {},
+            "email": {},
+            "id": {},
+            "isActive": {},
+            "name": {}
+          },
+          "required": [
+            "email",
+            "id",
+            "isActive",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    },
+    {
+      "description": "List all users\n\nReturns array of User.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "users",
+      "operation": "Query.users",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A simple user type for testing basic GraphQL import",
+            "properties": {
+              "age": {},
+              "createdAt": {},
+              "email": {},
+              "id": {},
+              "isActive": {},
+              "name": {}
+            },
+            "required": [
+              "email",
+              "id",
+              "isActive",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of User"
+      }
+    }
+  ]
+}

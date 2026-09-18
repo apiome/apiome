@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns PingRequester.PING-RESPONSE.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "GET /ping",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "PingRequester.PING-RESPONSE"
+      }
+    }
+  ]
+}

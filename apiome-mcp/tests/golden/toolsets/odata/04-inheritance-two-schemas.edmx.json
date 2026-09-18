@@ -1,0 +1,353 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.CreditNote).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listCreditNotes",
+      "operation": "GET /CreditNotes",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Reason": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Example.Core.CreditNote",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.CreditNote).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getCreditNote",
+      "operation": "GET /CreditNotes({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Reason": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Example.Core.CreditNote",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Core.CreditNote).",
+      "inputSchema": {
+        "properties": {
+          "Reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "createCreditNote",
+      "operation": "POST /CreditNotes",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Reason": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Example.Core.CreditNote",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.InvoiceLine).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listInvoiceLines",
+      "operation": "GET /InvoiceLines",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Description": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "UnitPrice": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Quantity"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.InvoiceLine",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.InvoiceLine).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getInvoiceLine",
+      "operation": "GET /InvoiceLines({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Description": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "UnitPrice": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Quantity"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.InvoiceLine",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Core.InvoiceLine).",
+      "inputSchema": {
+        "properties": {
+          "Description": {
+            "type": "string"
+          },
+          "Quantity": {},
+          "UnitPrice": {
+            "properties": {
+              "Amount": {},
+              "Currency": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Amount",
+              "Currency"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "Quantity"
+        ],
+        "type": "object"
+      },
+      "name": "createInvoiceLine",
+      "operation": "POST /InvoiceLines",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Description": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "UnitPrice": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Quantity"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.InvoiceLine",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.Invoice).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listInvoices",
+      "operation": "GET /Invoices",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Number": {
+              "type": "string"
+            },
+            "Total": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Number"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.Invoice",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Core.Invoice).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getInvoice",
+      "operation": "GET /Invoices({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Number": {
+              "type": "string"
+            },
+            "Total": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Number"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.Invoice",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Core.Invoice).",
+      "inputSchema": {
+        "properties": {
+          "Number": {
+            "type": "string"
+          },
+          "Total": {
+            "properties": {
+              "Amount": {},
+              "Currency": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "Amount",
+              "Currency"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "Number"
+        ],
+        "type": "object"
+      },
+      "name": "createInvoice",
+      "operation": "POST /Invoices",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Number": {
+              "type": "string"
+            },
+            "Total": {
+              "properties": {
+                "Amount": {},
+                "Currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "Amount",
+                "Currency"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "Number"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Core.Invoice",
+        "status": "201"
+      }
+    }
+  ]
+}

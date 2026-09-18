@@ -1,0 +1,115 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Shelf.",
+      "inputSchema": {
+        "properties": {
+          "shelfId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "shelfId"
+        ],
+        "type": "object"
+      },
+      "name": "library_shelves_get",
+      "operation": "GET /library/v1/shelves/{shelfId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "meta": {
+                    "properties": {
+                      "addedAt": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "array"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Shelf"
+      }
+    },
+    {
+      "description": "Returns ShelfItem.",
+      "inputSchema": {
+        "properties": {
+          "meta": {
+            "properties": {
+              "addedAt": {
+                "type": "string"
+              },
+              "tags": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "shelfId": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "shelfId"
+        ],
+        "type": "object"
+      },
+      "name": "library_shelves_items_insert",
+      "operation": "POST /library/v1/shelves/{shelfId}/items",
+      "output": {
+        "schema": {
+          "properties": {
+            "meta": {
+              "properties": {
+                "addedAt": {
+                  "type": "string"
+                },
+                "tags": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "sku": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "ShelfItem"
+      }
+    }
+  ]
+}

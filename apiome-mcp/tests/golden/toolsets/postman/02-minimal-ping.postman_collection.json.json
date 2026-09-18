@@ -1,0 +1,14 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Liveness probe.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Ping",
+      "operation": "GET /ping"
+    }
+  ]
+}

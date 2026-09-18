@@ -1,0 +1,27 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "http://example.com/ping.PingInterface.ping",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    }
+  ]
+}

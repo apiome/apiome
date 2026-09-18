@@ -1,0 +1,71 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Cancel an order that has not shipped yet.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "Cancel_order",
+      "operation": "DELETE /orders/{orderId}"
+    },
+    {
+      "description": "List orders, optionally filtered by status.",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "List_orders",
+      "operation": "GET /orders"
+    },
+    {
+      "description": "Fetch a single order by id.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "Get_order",
+      "operation": "GET /orders/{orderId}"
+    },
+    {
+      "description": "Place a new order.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "items": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "customerId",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "Place_order",
+      "operation": "POST /orders"
+    }
+  ]
+}

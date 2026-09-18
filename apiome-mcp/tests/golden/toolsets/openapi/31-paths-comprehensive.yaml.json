@@ -1,0 +1,325 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Delete item\n\nReturns HTTP 204 with no body: No content",
+      "inputSchema": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteItem",
+      "operation": "DELETE /api/items/{itemId}",
+      "output": {
+        "description": "No content",
+        "status": "204"
+      }
+    },
+    {
+      "description": "Get item by ID\n\nReturns HTTP 200 application/json (Item): Success",
+      "inputSchema": {
+        "properties": {
+          "fields": {
+            "description": "Sparse fields",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "getItem",
+      "operation": "GET /api/items/{itemId}",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Item name",
+              "type": "string"
+            },
+            "value": {
+              "description": "Numeric value",
+              "type": "number"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Item",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Search with multiple param locations\n\nReturns HTTP 200 application/json (object): Search results",
+      "inputSchema": {
+        "properties": {
+          "X-Request-ID": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "GET /api/search",
+      "output": {
+        "description": "Search results",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "results": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "object",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create item\n\nReturns HTTP 201 application/json (Item): Created",
+      "inputSchema": {
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Item name",
+            "type": "string"
+          },
+          "value": {
+            "description": "Numeric value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "X-Tenant-ID",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createItem",
+      "operation": "POST /api/items",
+      "output": {
+        "description": "Created",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier",
+              "format": "uuid",
+              "type": "string"
+            },
+            "name": {
+              "description": "Item name",
+              "type": "string"
+            },
+            "value": {
+              "description": "Numeric value",
+              "type": "number"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Item",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Create session (cookie param example)\n\nReturns HTTP 200 application/json (object): Session created",
+      "inputSchema": {
+        "properties": {
+          "X-Client-Version": {
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "format": "uri",
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object"
+      },
+      "name": "createSession",
+      "operation": "POST /api/session",
+      "output": {
+        "description": "Session created",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "expires_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "token": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "object",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List items\n\nReturns HTTP 200 application/json (object): Paginated list",
+      "inputSchema": {
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "per_page": {
+            "default": 20,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "q": {
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "name",
+              "createdAt",
+              "-name",
+              "-createdAt"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-Tenant-ID"
+        ],
+        "type": "object"
+      },
+      "name": "listItems",
+      "operation": "GET /api/items",
+      "output": {
+        "description": "Paginated list",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "data": {
+              "items": {
+                "properties": {
+                  "createdAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "Unique identifier",
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Item name",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Numeric value",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "page": {
+              "type": "integer"
+            },
+            "total": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "object",
+        "status": "200"
+      }
+    }
+  ]
+}

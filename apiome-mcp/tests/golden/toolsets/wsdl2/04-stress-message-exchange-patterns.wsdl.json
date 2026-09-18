@@ -1,0 +1,79 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "inOnly",
+      "operation": "http://example.com/meps.MepInterface.inOnly"
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "inOptionalOut",
+      "operation": "http://example.com/meps.MepInterface.inOptionalOut",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "inOut",
+      "operation": "http://example.com/meps.MepInterface.inOut",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "robustInOnly",
+      "operation": "http://example.com/meps.MepInterface.robustInOnly"
+    }
+  ]
+}

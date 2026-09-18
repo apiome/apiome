@@ -1,0 +1,68 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create a charge\n\nAuthorizes and captures a charge in one call.\n\nReturns HTTP 201 application/json (Charge): The charge was created.",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "description": "Amount in minor units.",
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "currency": {
+            "description": "ISO 4217 currency code.",
+            "pattern": "^[A-Z]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "name": "createCharge",
+      "operation": "POST /charges",
+      "output": {
+        "description": "The charge was created.",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "One settled or pending charge.",
+          "properties": {
+            "amount": {
+              "description": "Amount in minor units.",
+              "type": "integer"
+            },
+            "currency": {
+              "description": "ISO 4217 currency code.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Stable charge identifier.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Lifecycle state of the charge.",
+              "enum": [
+                "pending",
+                "succeeded",
+                "failed"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency",
+            "id",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Charge",
+        "status": "201"
+      }
+    }
+  ]
+}

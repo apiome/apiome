@@ -1,0 +1,108 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.weather.CurrentConditions.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "GetCurrentConditions",
+      "operation": "example.weather.WeatherService.GetCurrentConditions",
+      "output": {
+        "schema": {
+          "properties": {
+            "city": {
+              "type": "string"
+            },
+            "condition": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "temperature": {}
+          },
+          "required": [
+            "city"
+          ],
+          "type": "object"
+        },
+        "shape": "example.weather.CurrentConditions"
+      }
+    },
+    {
+      "description": "Returns example.weather.Forecast.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "GetForecast",
+      "operation": "example.weather.WeatherService.GetForecast",
+      "output": {
+        "schema": {
+          "properties": {
+            "city": {
+              "type": "string"
+            },
+            "days": {
+              "description": "Returns the multi-",
+              "items": {
+                "properties": {
+                  "condition": {
+                    "enum": [
+                      0,
+                      1,
+                      2,
+                      3
+                    ],
+                    "type": "integer"
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "high": {},
+                  "low": {}
+                },
+                "required": [
+                  "date"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "city",
+            "days"
+          ],
+          "type": "object"
+        },
+        "shape": "example.weather.Forecast"
+      }
+    }
+  ]
+}

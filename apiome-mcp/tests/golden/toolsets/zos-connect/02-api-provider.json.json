@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns CustomerProvider.GET-CUSTOMER-RESPONSE.",
+      "inputSchema": {
+        "properties": {
+          "CUST-ID": {
+            "description": "Path parameter `customerId`",
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "name": "getCustomer",
+      "operation": "GET /customers/{customerId}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "CustomerProvider.GET-CUSTOMER-RESPONSE"
+      }
+    },
+    {
+      "description": "Returns CustomerProvider.UPDATE-CUSTOMER-RESPONSE.",
+      "inputSchema": {
+        "properties": {
+          "CUST-ID": {
+            "description": "Path parameter `customerId`",
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "name": "updateCustomer",
+      "operation": "PUT /customers/{customerId}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "CustomerProvider.UPDATE-CUSTOMER-RESPONSE"
+      }
+    }
+  ]
+}

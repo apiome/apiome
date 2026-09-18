@@ -1,0 +1,237 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (VitalSignsPanel.Observation).",
+      "inputSchema": {
+        "properties": {
+          "_count": {}
+        },
+        "type": "object"
+      },
+      "name": "searchObservation",
+      "operation": "GET /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "category": {
+              "description": "Classification: vital-signs",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "component": {
+              "description": "One component per individual vital sign",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "effective[x]": {
+              "description": "Clinically relevant time of the panel",
+              "type": "string"
+            },
+            "status": {
+              "description": "Status of the observation (registered, preliminary, final, amended)",
+              "type": "string"
+            },
+            "subject": {
+              "properties": {},
+              "type": "object"
+            },
+            "value[x]": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "category",
+            "code",
+            "component",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "VitalSignsPanel.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (VitalSignsPanel.Observation).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "readObservation",
+      "operation": "GET /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "category": {
+              "description": "Classification: vital-signs",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "component": {
+              "description": "One component per individual vital sign",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "effective[x]": {
+              "description": "Clinically relevant time of the panel",
+              "type": "string"
+            },
+            "status": {
+              "description": "Status of the observation (registered, preliminary, final, amended)",
+              "type": "string"
+            },
+            "subject": {
+              "properties": {},
+              "type": "object"
+            },
+            "value[x]": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "category",
+            "code",
+            "component",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "VitalSignsPanel.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (VitalSignsPanel.Observation).",
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "description": "Classification: vital-signs",
+            "items": {
+              "properties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "code": {
+            "properties": {},
+            "type": "object"
+          },
+          "component": {
+            "description": "One component per individual vital sign",
+            "items": {
+              "properties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "effective[x]": {
+            "description": "Clinically relevant time of the panel",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status of the observation (registered, preliminary, final, amended)",
+            "type": "string"
+          },
+          "subject": {
+            "properties": {},
+            "type": "object"
+          },
+          "value[x]": {
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "category",
+          "code",
+          "component",
+          "status",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "name": "createObservation",
+      "operation": "POST /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "category": {
+              "description": "Classification: vital-signs",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "component": {
+              "description": "One component per individual vital sign",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "effective[x]": {
+              "description": "Clinically relevant time of the panel",
+              "type": "string"
+            },
+            "status": {
+              "description": "Status of the observation (registered, preliminary, final, amended)",
+              "type": "string"
+            },
+            "subject": {
+              "properties": {},
+              "type": "object"
+            },
+            "value[x]": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "category",
+            "code",
+            "component",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "VitalSignsPanel.Observation",
+        "status": "201"
+      }
+    }
+  ]
+}

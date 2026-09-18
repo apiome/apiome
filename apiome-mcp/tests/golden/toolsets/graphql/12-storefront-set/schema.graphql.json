@@ -1,0 +1,239 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Fetch any object by its global ID\n\nReturns Node.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "node",
+      "operation": "Query.node",
+      "output": {
+        "schema": {
+          "description": "An object with a globally unique ID",
+          "properties": {
+            "id": {}
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "Node"
+      }
+    },
+    {
+      "description": "Look up one product by SKU\n\nReturns Product.",
+      "inputSchema": {
+        "properties": {
+          "sku": {}
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "product",
+      "operation": "Query.product",
+      "output": {
+        "schema": {
+          "description": "A sellable product in the storefront",
+          "properties": {
+            "averageRating": {},
+            "createdAt": {
+              "description": "ISO 8601 date-time string"
+            },
+            "description": {},
+            "id": {},
+            "inStock": {},
+            "name": {},
+            "priceCents": {},
+            "reviews": {
+              "description": "Reviews posted for this product",
+              "items": {
+                "description": "A customer review of a product",
+                "properties": {
+                  "author": {},
+                  "body": {},
+                  "id": {},
+                  "postedAt": {
+                    "description": "ISO 8601 date-time string"
+                  },
+                  "product": {},
+                  "rating": {},
+                  "title": {}
+                },
+                "required": [
+                  "author",
+                  "id",
+                  "postedAt",
+                  "product",
+                  "rating"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "sku": {}
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "inStock",
+            "name",
+            "priceCents",
+            "reviews",
+            "sku"
+          ],
+          "type": "object"
+        },
+        "shape": "Product"
+      }
+    },
+    {
+      "description": "List products, newest first\n\nReturns array of Product.",
+      "inputSchema": {
+        "properties": {
+          "after": {},
+          "first": {
+            "default": 20
+          }
+        },
+        "type": "object"
+      },
+      "name": "products",
+      "operation": "Query.products",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A sellable product in the storefront",
+            "properties": {
+              "averageRating": {},
+              "createdAt": {
+                "description": "ISO 8601 date-time string"
+              },
+              "description": {},
+              "id": {},
+              "inStock": {},
+              "name": {},
+              "priceCents": {},
+              "reviews": {
+                "description": "Reviews posted for this product",
+                "items": {
+                  "description": "A customer review of a product",
+                  "properties": {
+                    "author": {},
+                    "body": {},
+                    "id": {},
+                    "postedAt": {
+                      "description": "ISO 8601 date-time string"
+                    },
+                    "product": {},
+                    "rating": {},
+                    "title": {}
+                  },
+                  "required": [
+                    "author",
+                    "id",
+                    "postedAt",
+                    "product",
+                    "rating"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "sku": {}
+            },
+            "required": [
+              "createdAt",
+              "id",
+              "inStock",
+              "name",
+              "priceCents",
+              "reviews",
+              "sku"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product"
+      }
+    },
+    {
+      "description": "Look up one review by its global ID\n\nReturns Review.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "review",
+      "operation": "Query.review",
+      "output": {
+        "schema": {
+          "description": "A customer review of a product",
+          "properties": {
+            "author": {},
+            "body": {},
+            "id": {},
+            "postedAt": {
+              "description": "ISO 8601 date-time string"
+            },
+            "product": {
+              "description": "A sellable product in the storefront",
+              "properties": {
+                "averageRating": {},
+                "createdAt": {
+                  "description": "ISO 8601 date-time string"
+                },
+                "description": {},
+                "id": {},
+                "inStock": {},
+                "name": {},
+                "priceCents": {},
+                "reviews": {
+                  "description": "Reviews posted for this product",
+                  "items": {},
+                  "type": "array"
+                },
+                "sku": {}
+              },
+              "required": [
+                "createdAt",
+                "id",
+                "inStock",
+                "name",
+                "priceCents",
+                "reviews",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "rating": {},
+            "title": {}
+          },
+          "required": [
+            "author",
+            "id",
+            "postedAt",
+            "product",
+            "rating"
+          ],
+          "type": "object"
+        },
+        "shape": "Review"
+      }
+    }
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.edam.Note.",
+      "inputSchema": {
+        "properties": {
+          "active": {},
+          "content": {
+            "type": "string"
+          },
+          "created": {},
+          "guid": {
+            "type": "string"
+          },
+          "notebookGuid": {
+            "type": "string"
+          },
+          "tagGuids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated": {}
+        },
+        "type": "object"
+      },
+      "name": "createNote",
+      "operation": "com.example.edam.NoteStore.createNote",
+      "output": {
+        "schema": {
+          "properties": {
+            "active": {},
+            "content": {
+              "type": "string"
+            },
+            "created": {},
+            "guid": {
+              "type": "string"
+            },
+            "notebookGuid": {
+              "type": "string"
+            },
+            "tagGuids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": {
+              "type": "string"
+            },
+            "updated": {}
+          },
+          "type": "object"
+        },
+        "shape": "com.example.edam.Note"
+      }
+    },
+    {
+      "description": "Returns com.example.edam.NoteList.",
+      "inputSchema": {
+        "properties": {
+          "ascending": {},
+          "notebookGuid": {
+            "type": "string"
+          },
+          "order": {},
+          "words": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "findNotes",
+      "operation": "com.example.edam.NoteStore.findNotes",
+      "output": {
+        "schema": {
+          "properties": {
+            "notes": {
+              "items": {
+                "properties": {
+                  "active": {},
+                  "content": {
+                    "type": "string"
+                  },
+                  "created": {},
+                  "guid": {
+                    "type": "string"
+                  },
+                  "notebookGuid": {
+                    "type": "string"
+                  },
+                  "tagGuids": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "updated": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "startIndex": {},
+            "totalNotes": {}
+          },
+          "required": [
+            "notes",
+            "startIndex",
+            "totalNotes"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.edam.NoteList"
+      }
+    },
+    {
+      "description": "Returns com.example.edam.Note.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getNote",
+      "operation": "com.example.edam.NoteStore.getNote",
+      "output": {
+        "schema": {
+          "properties": {
+            "active": {},
+            "content": {
+              "type": "string"
+            },
+            "created": {},
+            "guid": {
+              "type": "string"
+            },
+            "notebookGuid": {
+              "type": "string"
+            },
+            "tagGuids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": {
+              "type": "string"
+            },
+            "updated": {}
+          },
+          "type": "object"
+        },
+        "shape": "com.example.edam.Note"
+      }
+    },
+    {
+      "description": "Returns i32.",
+      "inputSchema": {
+        "properties": {
+          "ascending": {},
+          "notebookGuid": {
+            "type": "string"
+          },
+          "order": {},
+          "words": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getNoteCount",
+      "operation": "com.example.edam.NoteStore.getNoteCount",
+      "output": {
+        "schema": {},
+        "shape": "i32"
+      }
+    },
+    {
+      "description": "Returns com.example.edam.Notebook.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getNotebook",
+      "operation": "com.example.edam.NoteStore.getNotebook",
+      "output": {
+        "schema": {
+          "properties": {
+            "defaultNotebook": {},
+            "guid": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "serviceCreated": {},
+            "serviceUpdated": {}
+          },
+          "type": "object"
+        },
+        "shape": "com.example.edam.Notebook"
+      }
+    },
+    {
+      "description": "Returns array of com.example.edam.Notebook.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listNotebooks",
+      "operation": "com.example.edam.NoteStore.listNotebooks",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "defaultNotebook": {},
+              "guid": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "serviceCreated": {},
+              "serviceUpdated": {}
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of com.example.edam.Notebook"
+      }
+    }
+  ]
+}

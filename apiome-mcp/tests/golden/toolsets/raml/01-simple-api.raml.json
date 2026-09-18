@@ -1,0 +1,149 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List all books.\n\nReturns Book.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_books",
+      "operation": "GET /books",
+      "output": {
+        "schema": {
+          "description": "A book in the store.",
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "price": {},
+            "published": {
+              "description": "Publication date.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "Fetch a book by id.\n\nReturns Book.",
+      "inputSchema": {
+        "properties": {
+          "bookId": {
+            "description": "Identifier of the book.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_books_bookId",
+      "operation": "GET /books/{bookId}",
+      "output": {
+        "schema": {
+          "description": "A book in the store.",
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "price": {},
+            "published": {
+              "description": "Publication date.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "Add a new book.\n\nReturns Book.",
+      "inputSchema": {
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "price": {},
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "author",
+          "price",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "POST_books",
+      "operation": "POST /books",
+      "output": {
+        "schema": {
+          "description": "A book in the store.",
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "price": {},
+            "published": {
+              "description": "Publication date.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    }
+  ]
+}

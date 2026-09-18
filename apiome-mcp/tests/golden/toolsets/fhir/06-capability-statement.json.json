@@ -1,0 +1,277 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (CapabilityStatement.CapabilityStatement).",
+      "inputSchema": {
+        "properties": {
+          "_count": {}
+        },
+        "type": "object"
+      },
+      "name": "searchCapabilityStatement",
+      "operation": "GET /CapabilityStatement",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string"
+            },
+            "fhirVersion": {
+              "type": "string"
+            },
+            "format": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": "string"
+            },
+            "implementation": {
+              "properties": {},
+              "type": "object"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "rest": {
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "software": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "date",
+            "fhirVersion",
+            "format",
+            "id",
+            "kind",
+            "publisher",
+            "rest",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "CapabilityStatement.CapabilityStatement",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (CapabilityStatement.CapabilityStatement).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "readCapabilityStatement",
+      "operation": "GET /CapabilityStatement/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string"
+            },
+            "fhirVersion": {
+              "type": "string"
+            },
+            "format": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": "string"
+            },
+            "implementation": {
+              "properties": {},
+              "type": "object"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "rest": {
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "software": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "date",
+            "fhirVersion",
+            "format",
+            "id",
+            "kind",
+            "publisher",
+            "rest",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "CapabilityStatement.CapabilityStatement",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (CapabilityStatement.CapabilityStatement).",
+      "inputSchema": {
+        "properties": {
+          "_comment": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "fhirVersion": {
+            "type": "string"
+          },
+          "format": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "implementation": {
+            "properties": {},
+            "type": "object"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "rest": {
+            "items": {
+              "properties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "software": {
+            "properties": {},
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_comment",
+          "date",
+          "fhirVersion",
+          "format",
+          "id",
+          "kind",
+          "publisher",
+          "rest",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "createCapabilityStatement",
+      "operation": "POST /CapabilityStatement",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string"
+            },
+            "fhirVersion": {
+              "type": "string"
+            },
+            "format": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": "string"
+            },
+            "implementation": {
+              "properties": {},
+              "type": "object"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "publisher": {
+              "type": "string"
+            },
+            "rest": {
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "software": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "date",
+            "fhirVersion",
+            "format",
+            "id",
+            "kind",
+            "publisher",
+            "rest",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "CapabilityStatement.CapabilityStatement",
+        "status": "201"
+      }
+    }
+  ]
+}

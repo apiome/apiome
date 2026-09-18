@@ -1,0 +1,168 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/catalog.Category.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listCategories",
+      "operation": "GET /categories",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "productCount": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalog.Category"
+      }
+    },
+    {
+      "description": "Returns http://example.com/catalog.Category.",
+      "inputSchema": {
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId"
+        ],
+        "type": "object"
+      },
+      "name": "getCategory",
+      "operation": "GET /categories/{categoryId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "productCount": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalog.Category"
+      }
+    },
+    {
+      "description": "Returns http://example.com/catalog.Product.",
+      "inputSchema": {
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId"
+        ],
+        "type": "object"
+      },
+      "name": "listProducts",
+      "operation": "GET /categories/{categoryId}/products",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "inStock": {},
+            "name": {
+              "type": "string"
+            },
+            "price": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalog.Product"
+      }
+    },
+    {
+      "description": "Returns http://example.com/catalog.Product.",
+      "inputSchema": {
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "productId"
+        ],
+        "type": "object"
+      },
+      "name": "getProduct",
+      "operation": "GET /categories/{categoryId}/products/{productId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "inStock": {},
+            "name": {
+              "type": "string"
+            },
+            "price": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalog.Product"
+      }
+    },
+    {
+      "description": "Returns http://example.com/catalog.Product.",
+      "inputSchema": {
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "inStock": {},
+          "name": {
+            "type": "string"
+          },
+          "price": {}
+        },
+        "required": [
+          "categoryId"
+        ],
+        "type": "object"
+      },
+      "name": "addProduct",
+      "operation": "POST /categories/{categoryId}/products",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "inStock": {},
+            "name": {
+              "type": "string"
+            },
+            "price": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalog.Product"
+      }
+    }
+  ]
+}

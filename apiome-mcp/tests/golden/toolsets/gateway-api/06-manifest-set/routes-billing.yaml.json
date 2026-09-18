@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_invoices",
+      "operation": "GET /invoices"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_ledger",
+      "operation": "GET /ledger"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_ledger",
+      "operation": "POST /ledger"
+    }
+  ]
+}

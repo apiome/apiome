@@ -1,0 +1,394 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Add a comment to an issue or pull request\n\nReturns AddCommentPayload.",
+      "inputSchema": {
+        "properties": {
+          "input": {
+            "description": "Input for adding a comment to a subject",
+            "properties": {
+              "body": {},
+              "clientMutationId": {},
+              "subjectId": {}
+            },
+            "required": [
+              "body",
+              "subjectId"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "name": "addComment",
+      "operation": "Mutation.addComment",
+      "output": {
+        "schema": {
+          "description": "Payload returned after adding a comment",
+          "properties": {
+            "clientMutationId": {},
+            "subject": {
+              "description": "An object with a globally unique ID",
+              "properties": {
+                "id": {}
+              },
+              "required": [
+                "id"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "AddCommentPayload"
+      }
+    },
+    {
+      "description": "Fetch any object by its global ID\n\nReturns Node.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "node",
+      "operation": "Query.node",
+      "output": {
+        "schema": {
+          "description": "An object with a globally unique ID",
+          "properties": {
+            "id": {}
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "Node"
+      }
+    },
+    {
+      "description": "Look up a repository by owner and name\n\nReturns Repository.",
+      "inputSchema": {
+        "properties": {
+          "name": {},
+          "owner": {}
+        },
+        "required": [
+          "name",
+          "owner"
+        ],
+        "type": "object"
+      },
+      "name": "repository",
+      "operation": "Query.repository",
+      "output": {
+        "schema": {
+          "description": "A code repository",
+          "properties": {
+            "createdAt": {},
+            "description": {},
+            "forkCount": {},
+            "id": {},
+            "isArchived": {},
+            "isPrivate": {},
+            "issues": {
+              "description": "A page of issues",
+              "properties": {
+                "nodes": {
+                  "items": {
+                    "description": "An issue on a repository",
+                    "properties": {
+                      "author": {
+                        "description": "A user account on the platform",
+                        "type": "object"
+                      },
+                      "body": {},
+                      "closedAt": {},
+                      "createdAt": {},
+                      "id": {},
+                      "number": {},
+                      "state": {
+                        "description": "The state of an issue",
+                        "enum": [
+                          "OPEN",
+                          "CLOSED"
+                        ],
+                        "type": "string"
+                      },
+                      "title": {}
+                    },
+                    "required": [
+                      "createdAt",
+                      "id",
+                      "number",
+                      "state",
+                      "title"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pageInfo": {
+                  "description": "Pagination metadata for a connection",
+                  "properties": {
+                    "endCursor": {},
+                    "hasNextPage": {},
+                    "hasPreviousPage": {},
+                    "startCursor": {}
+                  },
+                  "required": [
+                    "hasNextPage",
+                    "hasPreviousPage"
+                  ],
+                  "type": "object"
+                },
+                "totalCount": {}
+              },
+              "required": [
+                "pageInfo",
+                "totalCount"
+              ],
+              "type": "object"
+            },
+            "name": {},
+            "nameWithOwner": {},
+            "owner": {
+              "description": "A user account on the platform",
+              "properties": {
+                "avatarUrl": {},
+                "bio": {},
+                "createdAt": {},
+                "id": {},
+                "login": {},
+                "name": {},
+                "repositories": {
+                  "description": "A page of repositories",
+                  "properties": {
+                    "nodes": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "pageInfo": {
+                      "description": "Pagination metadata for a connection",
+                      "properties": {
+                        "endCursor": {},
+                        "hasNextPage": {},
+                        "hasPreviousPage": {},
+                        "startCursor": {}
+                      },
+                      "required": [
+                        "hasNextPage",
+                        "hasPreviousPage"
+                      ],
+                      "type": "object"
+                    },
+                    "totalCount": {}
+                  },
+                  "required": [
+                    "pageInfo",
+                    "totalCount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "avatarUrl",
+                "createdAt",
+                "id",
+                "login",
+                "repositories"
+              ],
+              "type": "object"
+            },
+            "pullRequest": {
+              "description": "A pull request on a repository",
+              "properties": {
+                "author": {
+                  "description": "A user account on the platform",
+                  "properties": {
+                    "avatarUrl": {},
+                    "bio": {},
+                    "createdAt": {},
+                    "id": {},
+                    "login": {},
+                    "name": {},
+                    "repositories": {
+                      "description": "A page of repositories",
+                      "properties": {
+                        "nodes": {
+                          "type": "array"
+                        },
+                        "pageInfo": {
+                          "description": "Pagination metadata for a connection",
+                          "type": "object"
+                        },
+                        "totalCount": {}
+                      },
+                      "required": [
+                        "pageInfo",
+                        "totalCount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "avatarUrl",
+                    "createdAt",
+                    "id",
+                    "login",
+                    "repositories"
+                  ],
+                  "type": "object"
+                },
+                "baseRefName": {},
+                "headRefName": {},
+                "id": {},
+                "merged": {},
+                "mergedAt": {},
+                "number": {},
+                "state": {
+                  "description": "The state of a pull request",
+                  "enum": [
+                    "OPEN",
+                    "CLOSED",
+                    "MERGED"
+                  ],
+                  "type": "string"
+                },
+                "title": {}
+              },
+              "required": [
+                "baseRefName",
+                "headRefName",
+                "id",
+                "merged",
+                "number",
+                "state",
+                "title"
+              ],
+              "type": "object"
+            },
+            "stargazerCount": {}
+          },
+          "required": [
+            "createdAt",
+            "forkCount",
+            "id",
+            "isArchived",
+            "isPrivate",
+            "issues",
+            "name",
+            "nameWithOwner",
+            "owner",
+            "stargazerCount"
+          ],
+          "type": "object"
+        },
+        "shape": "Repository"
+      }
+    },
+    {
+      "description": "The currently authenticated user\n\nReturns User.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "viewer",
+      "operation": "Query.viewer",
+      "output": {
+        "schema": {
+          "description": "A user account on the platform",
+          "properties": {
+            "avatarUrl": {},
+            "bio": {},
+            "createdAt": {},
+            "id": {},
+            "login": {},
+            "name": {},
+            "repositories": {
+              "description": "A page of repositories",
+              "properties": {
+                "nodes": {
+                  "items": {
+                    "description": "A code repository",
+                    "properties": {
+                      "createdAt": {},
+                      "description": {},
+                      "forkCount": {},
+                      "id": {},
+                      "isArchived": {},
+                      "isPrivate": {},
+                      "issues": {
+                        "description": "A page of issues",
+                        "type": "object"
+                      },
+                      "name": {},
+                      "nameWithOwner": {},
+                      "owner": {},
+                      "pullRequest": {
+                        "description": "A pull request on a repository",
+                        "type": "object"
+                      },
+                      "stargazerCount": {}
+                    },
+                    "required": [
+                      "createdAt",
+                      "forkCount",
+                      "id",
+                      "isArchived",
+                      "isPrivate",
+                      "issues",
+                      "name",
+                      "nameWithOwner",
+                      "owner",
+                      "stargazerCount"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pageInfo": {
+                  "description": "Pagination metadata for a connection",
+                  "properties": {
+                    "endCursor": {},
+                    "hasNextPage": {},
+                    "hasPreviousPage": {},
+                    "startCursor": {}
+                  },
+                  "required": [
+                    "hasNextPage",
+                    "hasPreviousPage"
+                  ],
+                  "type": "object"
+                },
+                "totalCount": {}
+              },
+              "required": [
+                "pageInfo",
+                "totalCount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "avatarUrl",
+            "createdAt",
+            "id",
+            "login",
+            "repositories"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    }
+  ]
+}

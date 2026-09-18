@@ -1,0 +1,336 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List archives with optional filters.\n\nReturns ArchiveEntry.",
+      "inputSchema": {
+        "properties": {
+          "createdAfter": {
+            "description": "Only archives created after this date.",
+            "type": "string"
+          },
+          "state": {
+            "description": "Filter by lifecycle state.",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_archives",
+      "operation": "GET /archives",
+      "output": {
+        "schema": {
+          "description": "One archive held in the vault.",
+          "properties": {
+            "attachments": {
+              "description": "Files stored in the archive.",
+              "items": {
+                "description": "Binary payload metadata.",
+                "properties": {
+                  "checksum": {
+                    "description": "Optional SHA-256 checksum supplied by the client.",
+                    "type": "string"
+                  },
+                  "content": {},
+                  "fileName": {
+                    "description": "Original client-side file name.",
+                    "type": "string"
+                  },
+                  "sizeBytes": {}
+                },
+                "required": [
+                  "content",
+                  "fileName",
+                  "sizeBytes"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "createdOn": {
+              "description": "Creation date.",
+              "type": "string"
+            },
+            "dailyCutoff": {
+              "description": "Daily ingest cutoff time, if configured.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Archive identifier.",
+              "type": "string"
+            },
+            "sealedAt": {
+              "description": "When the archive was sealed, if it was.",
+              "type": "string"
+            },
+            "state": {
+              "description": "Lifecycle state of an archive.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "tags": {}
+          },
+          "required": [
+            "createdOn",
+            "id",
+            "state",
+            "tags"
+          ],
+          "type": "object"
+        },
+        "shape": "ArchiveEntry"
+      }
+    },
+    {
+      "description": "Fetch one archive.\n\nReturns ArchiveEntry.",
+      "inputSchema": {
+        "properties": {
+          "archiveId": {
+            "description": "Identifier of the archive.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "archiveId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_archives_archiveId",
+      "operation": "GET /archives/{archiveId}",
+      "output": {
+        "schema": {
+          "description": "One archive held in the vault.",
+          "properties": {
+            "attachments": {
+              "description": "Files stored in the archive.",
+              "items": {
+                "description": "Binary payload metadata.",
+                "properties": {
+                  "checksum": {
+                    "description": "Optional SHA-256 checksum supplied by the client.",
+                    "type": "string"
+                  },
+                  "content": {},
+                  "fileName": {
+                    "description": "Original client-side file name.",
+                    "type": "string"
+                  },
+                  "sizeBytes": {}
+                },
+                "required": [
+                  "content",
+                  "fileName",
+                  "sizeBytes"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "createdOn": {
+              "description": "Creation date.",
+              "type": "string"
+            },
+            "dailyCutoff": {
+              "description": "Daily ingest cutoff time, if configured.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Archive identifier.",
+              "type": "string"
+            },
+            "sealedAt": {
+              "description": "When the archive was sealed, if it was.",
+              "type": "string"
+            },
+            "state": {
+              "description": "Lifecycle state of an archive.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "tags": {}
+          },
+          "required": [
+            "createdOn",
+            "id",
+            "state",
+            "tags"
+          ],
+          "type": "object"
+        },
+        "shape": "ArchiveEntry"
+      }
+    },
+    {
+      "description": "Existence probe without a response body.",
+      "inputSchema": {
+        "properties": {
+          "archiveId": {
+            "description": "Identifier of the archive.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "archiveId"
+        ],
+        "type": "object"
+      },
+      "name": "HEAD_archives_archiveId",
+      "operation": "HEAD /archives/{archiveId}"
+    },
+    {
+      "description": "Discover the allowed methods.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "OPTIONS_archives_archiveId_attachments",
+      "operation": "OPTIONS /archives/{archiveId}/attachments"
+    },
+    {
+      "description": "Partially update archive metadata.\n\nReturns ArchiveEntry.",
+      "inputSchema": {
+        "properties": {
+          "archiveId": {
+            "description": "Identifier of the archive.",
+            "type": "string"
+          },
+          "body": {}
+        },
+        "required": [
+          "archiveId"
+        ],
+        "type": "object"
+      },
+      "name": "PATCH_archives_archiveId",
+      "operation": "PATCH /archives/{archiveId}",
+      "output": {
+        "schema": {
+          "description": "One archive held in the vault.",
+          "properties": {
+            "attachments": {
+              "description": "Files stored in the archive.",
+              "items": {
+                "description": "Binary payload metadata.",
+                "properties": {
+                  "checksum": {
+                    "description": "Optional SHA-256 checksum supplied by the client.",
+                    "type": "string"
+                  },
+                  "content": {},
+                  "fileName": {
+                    "description": "Original client-side file name.",
+                    "type": "string"
+                  },
+                  "sizeBytes": {}
+                },
+                "required": [
+                  "content",
+                  "fileName",
+                  "sizeBytes"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "createdOn": {
+              "description": "Creation date.",
+              "type": "string"
+            },
+            "dailyCutoff": {
+              "description": "Daily ingest cutoff time, if configured.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Archive identifier.",
+              "type": "string"
+            },
+            "sealedAt": {
+              "description": "When the archive was sealed, if it was.",
+              "type": "string"
+            },
+            "state": {
+              "description": "Lifecycle state of an archive.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "tags": {}
+          },
+          "required": [
+            "createdOn",
+            "id",
+            "state",
+            "tags"
+          ],
+          "type": "object"
+        },
+        "shape": "ArchiveEntry"
+      }
+    },
+    {
+      "description": "Attach a file to the archive.\n\nReturns Attachment.",
+      "inputSchema": {
+        "properties": {
+          "checksum": {
+            "description": "Optional SHA-256 checksum supplied by the client.",
+            "type": "string"
+          },
+          "content": {},
+          "fileName": {
+            "description": "Original client-side file name.",
+            "type": "string"
+          },
+          "sizeBytes": {}
+        },
+        "required": [
+          "content",
+          "fileName",
+          "sizeBytes"
+        ],
+        "type": "object"
+      },
+      "name": "POST_archives_archiveId_attachments",
+      "operation": "POST /archives/{archiveId}/attachments",
+      "output": {
+        "schema": {
+          "description": "Binary payload metadata.",
+          "properties": {
+            "checksum": {
+              "description": "Optional SHA-256 checksum supplied by the client.",
+              "type": "string"
+            },
+            "content": {},
+            "fileName": {
+              "description": "Original client-side file name.",
+              "type": "string"
+            },
+            "sizeBytes": {}
+          },
+          "required": [
+            "content",
+            "fileName",
+            "sizeBytes"
+          ],
+          "type": "object"
+        },
+        "shape": "Attachment"
+      }
+    }
+  ]
+}

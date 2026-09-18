@@ -1,0 +1,91 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "remove",
+      "operation": "DELETE /orders/{id}"
+    },
+    {
+      "description": "Returns HTTP 200 application/json (array of OrderStore.Order).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "GET /orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of OrderStore.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (OrderStore.Order).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read",
+      "operation": "GET /orders/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "OrderStore.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (OrderStore.Order).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "update",
+      "operation": "PUT /orders/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "OrderStore.Order",
+        "status": "200"
+      }
+    }
+  ]
+}

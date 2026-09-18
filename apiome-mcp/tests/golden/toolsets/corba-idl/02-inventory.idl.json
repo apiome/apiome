@@ -1,0 +1,64 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns i32.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "count",
+      "operation": "Inventory.Stock.count",
+      "output": {
+        "schema": {},
+        "shape": "i32"
+      }
+    },
+    {
+      "description": "Returns Inventory.Item.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "lookup",
+      "operation": "Inventory.Stock.lookup",
+      "output": {
+        "schema": {
+          "properties": {
+            "quantity": {},
+            "sku": {
+              "type": "string"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "quantity",
+            "sku",
+            "tags"
+          ],
+          "type": "object"
+        },
+        "shape": "Inventory.Item"
+      }
+    }
+  ]
+}

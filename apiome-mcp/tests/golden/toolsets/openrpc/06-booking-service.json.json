@@ -1,0 +1,125 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Reserve a room for a time window.\n\nReturns Booking.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "bookRoom",
+      "operation": "Room Booking API.bookRoom",
+      "output": {
+        "schema": {
+          "description": "A confirmed room reservation.",
+          "properties": {
+            "bookingId": {
+              "type": "string"
+            },
+            "end": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "organizer": {
+              "format": "email",
+              "type": "string"
+            },
+            "roomId": {
+              "type": "string"
+            },
+            "start": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "confirmed",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "bookingId",
+            "end",
+            "roomId",
+            "start",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Booking"
+      }
+    },
+    {
+      "description": "Cancel an existing booking.\n\nReturns boolean.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "cancelBooking",
+      "operation": "Room Booking API.cancelBooking",
+      "output": {
+        "schema": {
+          "type": "boolean"
+        },
+        "shape": "boolean"
+      }
+    },
+    {
+      "description": "List rooms, optionally filtered by capacity.\n\nReturns array of Room.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "listRooms",
+      "operation": "Room Booking API.listRooms",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A bookable meeting room.",
+            "properties": {
+              "capacity": {
+                "type": "integer"
+              },
+              "floor": {
+                "type": "integer"
+              },
+              "hasVideoConference": {
+                "type": "boolean"
+              },
+              "name": {
+                "type": "string"
+              },
+              "roomId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "capacity",
+              "name",
+              "roomId"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Room"
+      }
+    }
+  ]
+}

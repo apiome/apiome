@@ -1,0 +1,114 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns double.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "deposit",
+      "operation": "Banking.Bank.deposit",
+      "output": {
+        "schema": {},
+        "shape": "double"
+      }
+    },
+    {
+      "description": "Returns Banking.Account.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getAccount",
+      "operation": "Banking.Bank.getAccount",
+      "output": {
+        "schema": {
+          "properties": {
+            "balance": {},
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "balance",
+            "id",
+            "kind",
+            "owner"
+          ],
+          "type": "object"
+        },
+        "shape": "Banking.Account"
+      }
+    },
+    {
+      "description": "Returns Banking.Account.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "openAccount",
+      "operation": "Banking.Bank.openAccount",
+      "output": {
+        "schema": {
+          "properties": {
+            "balance": {},
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "owner": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "balance",
+            "id",
+            "kind",
+            "owner"
+          ],
+          "type": "object"
+        },
+        "shape": "Banking.Account"
+      }
+    },
+    {
+      "description": "Returns double.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "withdraw",
+      "operation": "Banking.Bank.withdraw",
+      "output": {
+        "schema": {},
+        "shape": "double"
+      }
+    }
+  ]
+}

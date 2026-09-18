@@ -1,0 +1,114 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Product.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "product",
+      "operation": "Query.product",
+      "output": {
+        "schema": {
+          "description": "Product with various field types",
+          "properties": {
+            "createdAt": {
+              "description": "Custom scalar for date/time"
+            },
+            "description": {},
+            "id": {},
+            "inStock": {},
+            "metadata": {
+              "description": "Custom scalar for JSON data"
+            },
+            "name": {},
+            "price": {},
+            "priceFloat": {},
+            "rating": {},
+            "stockCount": {},
+            "tags": {
+              "description": "Product tags",
+              "items": {},
+              "type": "array"
+            },
+            "updatedAt": {
+              "description": "Custom scalar for date/time"
+            }
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "inStock",
+            "name",
+            "price",
+            "priceFloat",
+            "tags"
+          ],
+          "type": "object"
+        },
+        "shape": "Product"
+      }
+    },
+    {
+      "description": "Returns array of Product.",
+      "inputSchema": {
+        "properties": {
+          "limit": {},
+          "offset": {}
+        },
+        "type": "object"
+      },
+      "name": "products",
+      "operation": "Query.products",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "Product with various field types",
+            "properties": {
+              "createdAt": {
+                "description": "Custom scalar for date/time"
+              },
+              "description": {},
+              "id": {},
+              "inStock": {},
+              "metadata": {
+                "description": "Custom scalar for JSON data"
+              },
+              "name": {},
+              "price": {},
+              "priceFloat": {},
+              "rating": {},
+              "stockCount": {},
+              "tags": {
+                "description": "Product tags",
+                "items": {},
+                "type": "array"
+              },
+              "updatedAt": {
+                "description": "Custom scalar for date/time"
+              }
+            },
+            "required": [
+              "createdAt",
+              "id",
+              "inStock",
+              "name",
+              "price",
+              "priceFloat",
+              "tags"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product"
+      }
+    }
+  ]
+}

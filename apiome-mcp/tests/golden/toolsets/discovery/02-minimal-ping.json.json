@@ -1,0 +1,25 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Return ok.\n\nReturns Pong.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping_probe_get",
+      "operation": "GET /v1/ping",
+      "output": {
+        "schema": {
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Pong"
+      }
+    }
+  ]
+}

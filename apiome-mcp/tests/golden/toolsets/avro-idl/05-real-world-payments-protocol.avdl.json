@@ -1,0 +1,332 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Authorize a card payment.\n\nReturns com.example.payments.v3.AuthorizationResponse.",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "properties": {
+              "amount": {},
+              "currency": {
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "type": "integer"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "type": "object"
+          },
+          "captureMode": {
+            "enum": [
+              0,
+              1
+            ],
+            "type": "integer"
+          },
+          "card": {
+            "properties": {
+              "cardholderNameHint": {
+                "type": "string"
+              },
+              "expiryMonth": {
+                "type": "integer"
+              },
+              "expiryYear": {
+                "type": "integer"
+              },
+              "networkToken": {
+                "description": "Network token, never a PAN.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "expiryMonth",
+              "expiryYear",
+              "networkToken"
+            ],
+            "type": "object"
+          },
+          "merchantId": {
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "risk": {
+            "properties": {
+              "deviceFingerprint": {
+                "type": "string"
+              },
+              "ipCountry": {
+                "type": "string"
+              },
+              "merchantSignals": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "velocityLastHour": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "merchantSignals"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "amount",
+          "captureMode",
+          "card",
+          "merchantId",
+          "requestId",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "name": "authorize",
+      "operation": "com.example.payments.v3.PaymentService.authorize",
+      "output": {
+        "schema": {
+          "properties": {
+            "authorizationId": {
+              "type": "string"
+            },
+            "authorizedAmount": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ],
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ],
+              "type": "object"
+            },
+            "decidedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "networkCode": {
+              "type": "string"
+            },
+            "requestId": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "result": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "authorizationId",
+            "decidedAt",
+            "requestId",
+            "result"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.payments.v3.AuthorizationResponse"
+      }
+    },
+    {
+      "description": "Capture a previously approved authorization.\n\nReturns com.example.payments.v3.AuthorizationResponse.",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "properties": {
+              "amount": {},
+              "currency": {
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "type": "integer"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "type": "object"
+          },
+          "authorizationId": {
+            "type": "string"
+          },
+          "finalCapture": {}
+        },
+        "required": [
+          "amount",
+          "authorizationId",
+          "finalCapture"
+        ],
+        "type": "object"
+      },
+      "name": "capture",
+      "operation": "com.example.payments.v3.PaymentService.capture",
+      "output": {
+        "schema": {
+          "properties": {
+            "authorizationId": {
+              "type": "string"
+            },
+            "authorizedAmount": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ],
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ],
+              "type": "object"
+            },
+            "decidedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "networkCode": {
+              "type": "string"
+            },
+            "requestId": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "result": {
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "authorizationId",
+            "decidedAt",
+            "requestId",
+            "result"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.payments.v3.AuthorizationResponse"
+      }
+    },
+    {
+      "description": "Settlement notices are pushed, not requested.",
+      "inputSchema": {
+        "properties": {
+          "authorizationId": {
+            "type": "string"
+          },
+          "settledAmount": {
+            "properties": {
+              "amount": {},
+              "currency": {
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "type": "integer"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "type": "object"
+          },
+          "settlementDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorizationId",
+          "settledAmount",
+          "settlementDate"
+        ],
+        "type": "object"
+      },
+      "name": "settled",
+      "operation": "com.example.payments.v3.PaymentService.settled"
+    },
+    {
+      "description": "Void an authorization that has not settled.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "voidAuthorization",
+      "operation": "com.example.payments.v3.PaymentService.voidAuthorization"
+    }
+  ]
+}

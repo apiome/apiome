@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "fetchByOperationPath",
+      "operation": "probeEverything#fetchByOperationPath"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "legacyXmlProbe",
+      "operation": "probeEverything#legacyXmlProbe"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_catalogue_searchProducts",
+      "operation": "probeEverything#searchByOperationId"
+    }
+  ]
+}

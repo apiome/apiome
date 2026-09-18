@@ -1,0 +1,129 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (SimpleObservation.Observation).",
+      "inputSchema": {
+        "properties": {
+          "_count": {}
+        },
+        "type": "object"
+      },
+      "name": "searchObservation",
+      "operation": "GET /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "description": "registered | preliminary | final | amended",
+              "type": "string"
+            },
+            "valueQuantity": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "SimpleObservation.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (SimpleObservation.Observation).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "readObservation",
+      "operation": "GET /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "description": "registered | preliminary | final | amended",
+              "type": "string"
+            },
+            "valueQuantity": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "SimpleObservation.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (SimpleObservation.Observation).",
+      "inputSchema": {
+        "properties": {
+          "code": {
+            "properties": {},
+            "type": "object"
+          },
+          "status": {
+            "description": "registered | preliminary | final | amended",
+            "type": "string"
+          },
+          "valueQuantity": {
+            "properties": {},
+            "type": "object"
+          }
+        },
+        "required": [
+          "code",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "createObservation",
+      "operation": "POST /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "code": {
+              "properties": {},
+              "type": "object"
+            },
+            "status": {
+              "description": "registered | preliminary | final | amended",
+              "type": "string"
+            },
+            "valueQuantity": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "required": [
+            "code",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "SimpleObservation.Observation",
+        "status": "201"
+      }
+    }
+  ]
+}

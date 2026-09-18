@@ -1,0 +1,25 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Search the news index for matching articles.\n\nReturns http://example.com/newssearch.ResultSet.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "GET /newsSearch",
+      "output": {
+        "schema": {
+          "properties": {
+            "firstResultPosition": {},
+            "totalResultsAvailable": {},
+            "totalResultsReturned": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/newssearch.ResultSet"
+      }
+    }
+  ]
+}

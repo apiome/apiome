@@ -1,0 +1,30 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_storefront_addCartItem",
+      "operation": "checkout#addItem"
+    },
+    {
+      "description": "Open an empty cart.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_storefront_createCart",
+      "operation": "checkout#createCart"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_storefront_payCart",
+      "operation": "checkout#pay"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "accept"
+        ],
+        "type": "object"
+      },
+      "name": "GET_users",
+      "operation": "GET /users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "email",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_users",
+      "operation": "POST /users"
+    }
+  ]
+}

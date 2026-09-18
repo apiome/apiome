@@ -1,0 +1,31 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Return a SHA-256 hex digest of the provided text.",
+      "inputSchema": {
+        "properties": {
+          "text": {
+            "description": "Text to hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "hash_text",
+      "operation": "06-tools-wrapper-object.hash_text"
+    },
+    {
+      "description": "Return the current UTC timestamp as an ISO-8601 string.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "now",
+      "operation": "06-tools-wrapper-object.now"
+    }
+  ]
+}

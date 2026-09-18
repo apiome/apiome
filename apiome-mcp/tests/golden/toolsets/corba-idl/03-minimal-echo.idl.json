@@ -1,0 +1,27 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "echo",
+      "operation": "Ping.Echo.echo",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    }
+  ]
+}

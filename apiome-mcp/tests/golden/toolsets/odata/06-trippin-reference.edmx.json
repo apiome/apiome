@@ -1,0 +1,573 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Airline).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listAirlines",
+      "operation": "GET /Airlines",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AirlineCode": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AirlineCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airline",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Airline).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getAirline",
+      "operation": "GET /Airlines({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AirlineCode": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AirlineCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airline",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.TripPin.Airline).",
+      "inputSchema": {
+        "properties": {
+          "AirlineCode": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "AirlineCode"
+        ],
+        "type": "object"
+      },
+      "name": "createAirline",
+      "operation": "POST /Airlines",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AirlineCode": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AirlineCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airline",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Airport).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listAirports",
+      "operation": "GET /Airports",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "IataCode": {
+              "type": "string"
+            },
+            "IcaoCode": {
+              "type": "string"
+            },
+            "Location": {
+              "properties": {
+                "Address": {
+                  "type": "string"
+                },
+                "City": {
+                  "properties": {
+                    "CountryRegion": {
+                      "type": "string"
+                    },
+                    "Name": {
+                      "type": "string"
+                    },
+                    "Region": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "IcaoCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airport",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Airport).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getAirport",
+      "operation": "GET /Airports({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "IataCode": {
+              "type": "string"
+            },
+            "IcaoCode": {
+              "type": "string"
+            },
+            "Location": {
+              "properties": {
+                "Address": {
+                  "type": "string"
+                },
+                "City": {
+                  "properties": {
+                    "CountryRegion": {
+                      "type": "string"
+                    },
+                    "Name": {
+                      "type": "string"
+                    },
+                    "Region": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "IcaoCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airport",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.TripPin.Airport).",
+      "inputSchema": {
+        "properties": {
+          "IataCode": {
+            "type": "string"
+          },
+          "IcaoCode": {
+            "type": "string"
+          },
+          "Location": {
+            "properties": {
+              "Address": {
+                "type": "string"
+              },
+              "City": {
+                "properties": {
+                  "CountryRegion": {
+                    "type": "string"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "Region": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "Name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "IcaoCode"
+        ],
+        "type": "object"
+      },
+      "name": "createAirport",
+      "operation": "POST /Airports",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "IataCode": {
+              "type": "string"
+            },
+            "IcaoCode": {
+              "type": "string"
+            },
+            "Location": {
+              "properties": {
+                "Address": {
+                  "type": "string"
+                },
+                "City": {
+                  "properties": {
+                    "CountryRegion": {
+                      "type": "string"
+                    },
+                    "Name": {
+                      "type": "string"
+                    },
+                    "Region": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "IcaoCode"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Airport",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Person).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listPeople",
+      "operation": "GET /People",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AddressInfo": {
+              "items": {
+                "properties": {
+                  "Address": {
+                    "type": "string"
+                  },
+                  "City": {
+                    "properties": {
+                      "CountryRegion": {
+                        "type": "string"
+                      },
+                      "Name": {
+                        "type": "string"
+                      },
+                      "Region": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "Emails": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "FirstName": {
+              "type": "string"
+            },
+            "Gender": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "LastName": {
+              "type": "string"
+            },
+            "UserName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AddressInfo",
+            "Emails",
+            "FirstName",
+            "UserName"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Person",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.TripPin.Person).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getPeople",
+      "operation": "GET /People({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AddressInfo": {
+              "items": {
+                "properties": {
+                  "Address": {
+                    "type": "string"
+                  },
+                  "City": {
+                    "properties": {
+                      "CountryRegion": {
+                        "type": "string"
+                      },
+                      "Name": {
+                        "type": "string"
+                      },
+                      "Region": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "Emails": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "FirstName": {
+              "type": "string"
+            },
+            "Gender": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "LastName": {
+              "type": "string"
+            },
+            "UserName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AddressInfo",
+            "Emails",
+            "FirstName",
+            "UserName"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Person",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.TripPin.Person).",
+      "inputSchema": {
+        "properties": {
+          "AddressInfo": {
+            "items": {
+              "properties": {
+                "Address": {
+                  "type": "string"
+                },
+                "City": {
+                  "properties": {
+                    "CountryRegion": {
+                      "type": "string"
+                    },
+                    "Name": {
+                      "type": "string"
+                    },
+                    "Region": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "Emails": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "FirstName": {
+            "type": "string"
+          },
+          "Gender": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          },
+          "LastName": {
+            "type": "string"
+          },
+          "UserName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "AddressInfo",
+          "Emails",
+          "FirstName",
+          "UserName"
+        ],
+        "type": "object"
+      },
+      "name": "createPeople",
+      "operation": "POST /People",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "AddressInfo": {
+              "items": {
+                "properties": {
+                  "Address": {
+                    "type": "string"
+                  },
+                  "City": {
+                    "properties": {
+                      "CountryRegion": {
+                        "type": "string"
+                      },
+                      "Name": {
+                        "type": "string"
+                      },
+                      "Region": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "Emails": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "FirstName": {
+              "type": "string"
+            },
+            "Gender": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "LastName": {
+              "type": "string"
+            },
+            "UserName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "AddressInfo",
+            "Emails",
+            "FirstName",
+            "UserName"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.TripPin.Person",
+        "status": "201"
+      }
+    }
+  ]
+}

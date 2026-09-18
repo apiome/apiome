@@ -1,0 +1,61 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "drop-table",
+      "operation": "examples:stress-lab.store.drop-table"
+    },
+    {
+      "description": "Returns examples:stress-lab.store.table.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "open-table",
+      "operation": "examples:stress-lab.store.open-table",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "examples:stress-lab.store.table"
+      }
+    },
+    {
+      "description": "Returns tuple.",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "probe",
+      "operation": "examples:stress-lab.stress.probe",
+      "output": {
+        "schema": {},
+        "shape": "tuple"
+      }
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns examples.inventory.v1.Item.",
+      "inputSchema": {
+        "properties": {
+          "delta": {},
+          "reason": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "AdjustStock",
+      "operation": "examples.inventory.v1.InventoryService.AdjustStock",
+      "output": {
+        "schema": {
+          "properties": {
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            },
+            "quantity": {},
+            "sku": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "examples.inventory.v1.Item"
+      }
+    },
+    {
+      "description": "Returns examples.inventory.v1.Item.",
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetItem",
+      "operation": "examples.inventory.v1.InventoryService.GetItem",
+      "output": {
+        "schema": {
+          "properties": {
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            },
+            "quantity": {},
+            "sku": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "examples.inventory.v1.Item"
+      }
+    },
+    {
+      "description": "Returns examples.inventory.v1.ListItemsResponse.",
+      "inputSchema": {
+        "properties": {
+          "page_size": {},
+          "page_token": {
+            "type": "string"
+          },
+          "status_filter": {
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ListItems",
+      "operation": "examples.inventory.v1.InventoryService.ListItems",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      0,
+                      1,
+                      2,
+                      3
+                    ],
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next_page_token": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "examples.inventory.v1.ListItemsResponse"
+      }
+    }
+  ]
+}

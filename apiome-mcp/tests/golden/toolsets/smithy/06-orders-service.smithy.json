@@ -1,0 +1,217 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "CancelOrder",
+      "operation": "example.orders.OrderService.CancelOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPriceMinor": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "totalMinor": {}
+          },
+          "required": [
+            "customerId",
+            "lines",
+            "orderId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.Order"
+      }
+    },
+    {
+      "description": "Returns example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "unitPriceMinor": {}
+              },
+              "required": [
+                "quantity",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "customerId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "CreateOrder",
+      "operation": "example.orders.OrderService.CreateOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPriceMinor": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "totalMinor": {}
+          },
+          "required": [
+            "customerId",
+            "lines",
+            "orderId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.Order"
+      }
+    },
+    {
+      "description": "Returns example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "GetOrder",
+      "operation": "example.orders.OrderService.GetOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPriceMinor": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "totalMinor": {}
+          },
+          "required": [
+            "customerId",
+            "lines",
+            "orderId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.Order"
+      }
+    }
+  ]
+}

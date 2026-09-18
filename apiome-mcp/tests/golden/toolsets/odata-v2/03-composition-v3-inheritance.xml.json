@@ -1,0 +1,297 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Fleet.Contract).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listContracts",
+      "operation": "GET /Contracts",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ContractId": {
+              "type": "string"
+            },
+            "Level": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "StartsOn": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ContractId"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Contract",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Fleet.Contract).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getContract",
+      "operation": "GET /Contracts({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ContractId": {
+              "type": "string"
+            },
+            "Level": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "StartsOn": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ContractId"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Contract",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Fleet.Contract).",
+      "inputSchema": {
+        "properties": {
+          "ContractId": {
+            "type": "string"
+          },
+          "Level": {
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          },
+          "StartsOn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ContractId"
+        ],
+        "type": "object"
+      },
+      "name": "createContract",
+      "operation": "POST /Contracts",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ContractId": {
+              "type": "string"
+            },
+            "Level": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "StartsOn": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ContractId"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Contract",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Fleet.Vehicle).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listVehicles",
+      "operation": "GET /Vehicles",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "HomeDepot": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Registered": {
+              "type": "string"
+            },
+            "Vin": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Vin"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Vehicle",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Fleet.Vehicle).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getVehicle",
+      "operation": "GET /Vehicles({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "HomeDepot": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Registered": {
+              "type": "string"
+            },
+            "Vin": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Vin"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Vehicle",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Fleet.Vehicle).",
+      "inputSchema": {
+        "properties": {
+          "HomeDepot": {
+            "properties": {
+              "City": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              },
+              "PostalCode": {
+                "type": "string"
+              },
+              "Street": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "Registered": {
+            "type": "string"
+          },
+          "Vin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Vin"
+        ],
+        "type": "object"
+      },
+      "name": "createVehicle",
+      "operation": "POST /Vehicles",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "HomeDepot": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Registered": {
+              "type": "string"
+            },
+            "Vin": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Vin"
+          ],
+          "type": "object"
+        },
+        "shape": "Fleet.Vehicle",
+        "status": "201"
+      }
+    }
+  ]
+}

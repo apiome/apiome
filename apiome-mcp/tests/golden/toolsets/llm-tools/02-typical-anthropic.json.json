@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Open a support ticket with a subject and body.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Full ticket body in markdown",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Ticket priority",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "description": "Short ticket subject line",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "create_ticket",
+      "operation": "02-typical-anthropic.create_ticket"
+    },
+    {
+      "description": "Search the product documentation corpus and return matching passages.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of hits to return",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Natural-language search query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "search_docs",
+      "operation": "02-typical-anthropic.search_docs"
+    }
+  ]
+}

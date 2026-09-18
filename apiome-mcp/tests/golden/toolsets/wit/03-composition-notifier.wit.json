@@ -1,0 +1,139 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns uint64.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "now",
+      "operation": "examples:notify.notifier.now",
+      "output": {
+        "schema": {},
+        "shape": "uint64"
+      }
+    },
+    {
+      "description": "Returns bool.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "check",
+      "operation": "examples:notify.notifier.health.check",
+      "output": {
+        "schema": {},
+        "shape": "bool"
+      }
+    },
+    {
+      "description": "Returns examples:notify.events.level.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "min-level",
+      "operation": "examples:notify.publisher.min-level",
+      "output": {
+        "schema": {
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "type": "string"
+        },
+        "shape": "examples:notify.events.level"
+      }
+    },
+    {
+      "description": "Returns bool.",
+      "inputSchema": {
+        "properties": {
+          "id": {},
+          "payload": {
+            "items": {},
+            "type": "array"
+          },
+          "topic": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "payload",
+          "topic"
+        ],
+        "type": "object"
+      },
+      "name": "publish",
+      "operation": "examples:notify.publisher.publish",
+      "output": {
+        "schema": {},
+        "shape": "bool"
+      }
+    },
+    {
+      "description": "Returns uint32.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "items": {
+              "properties": {
+                "id": {},
+                "payload": {
+                  "items": {},
+                  "type": "array"
+                },
+                "topic": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "payload",
+                "topic"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "publish-batch",
+      "operation": "examples:notify.publisher.publish-batch",
+      "output": {
+        "schema": {},
+        "shape": "uint32"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {},
+          "payload": {
+            "items": {},
+            "type": "array"
+          },
+          "topic": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "payload",
+          "topic"
+        ],
+        "type": "object"
+      },
+      "name": "on-event",
+      "operation": "examples:notify.subscriber.on-event"
+    }
+  ]
+}

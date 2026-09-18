@@ -1,0 +1,70 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/banking.GetBalanceResponse.",
+      "inputSchema": {
+        "properties": {
+          "account": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetBalance",
+      "operation": "http://example.com/banking.TransferPort.GetBalance",
+      "output": {
+        "schema": {
+          "properties": {
+            "asOf": {
+              "type": "string"
+            },
+            "balance": {},
+            "currency": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/banking.GetBalanceResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/banking.TransferFundsResponse.",
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "currency": {
+            "type": "string"
+          },
+          "fromAccount": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "toAccount": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "TransferFunds",
+      "operation": "http://example.com/banking.TransferPort.TransferFunds",
+      "output": {
+        "schema": {
+          "properties": {
+            "bookedAt": {
+              "type": "string"
+            },
+            "transactionId": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/banking.TransferFundsResponse"
+      }
+    }
+  ]
+}

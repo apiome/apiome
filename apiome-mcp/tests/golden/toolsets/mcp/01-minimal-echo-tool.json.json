@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Return the supplied message unchanged.",
+      "inputSchema": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "name": "echo",
+      "operation": "echo.tools.echo"
+    }
+  ]
+}

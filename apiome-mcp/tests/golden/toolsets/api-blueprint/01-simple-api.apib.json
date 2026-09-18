@@ -1,0 +1,130 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns application/json (Task).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_all_tasks",
+      "operation": "GET /tasks",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "done": {},
+            "dueDate": {
+              "description": "Due date (ISO 8601).",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique task identifier.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Short summary of the task.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Task"
+      }
+    },
+    {
+      "description": "Returns application/json (Task).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Unique task identifier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Get_a_task",
+      "operation": "GET /tasks/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "done": {},
+            "dueDate": {
+              "description": "Due date (ISO 8601).",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique task identifier.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Short summary of the task.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Task"
+      }
+    },
+    {
+      "description": "Returns application/json (Task).",
+      "inputSchema": {
+        "properties": {
+          "dueDate": {
+            "description": "Due date (ISO 8601).",
+            "type": "string"
+          },
+          "title": {
+            "description": "Short summary of the task.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "Create_a_task",
+      "operation": "POST /tasks",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "done": {},
+            "dueDate": {
+              "description": "Due date (ISO 8601).",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique task identifier.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Short summary of the task.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Task"
+      }
+    }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List books in the catalog.\n\nReturns BookList.",
+      "inputSchema": {
+        "properties": {
+          "alt": {
+            "description": "Data format for the response.",
+            "type": "string"
+          },
+          "maxResults": {
+            "type": "integer"
+          },
+          "q": {
+            "description": "Search query.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "bookstore_books_list",
+      "operation": "GET /bookstore/v1/books",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "authors": {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "id": {
+                    "description": "Book id.",
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "AVAILABLE",
+                      "CHECKED_OUT",
+                      "LOST"
+                    ],
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "totalItems": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "BookList"
+      }
+    },
+    {
+      "description": "Get a single book.\n\nReturns Book.",
+      "inputSchema": {
+        "properties": {
+          "alt": {
+            "description": "Data format for the response.",
+            "type": "string"
+          },
+          "bookId": {
+            "description": "Book id.",
+            "type": "string"
+          },
+          "projection": {
+            "description": "Response projection.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookId"
+        ],
+        "type": "object"
+      },
+      "name": "bookstore_books_get",
+      "operation": "GET /bookstore/v1/books/{bookId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "authors": {
+              "items": {
+                "properties": {
+                  "bio": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "id": {
+              "description": "Book id.",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "AVAILABLE",
+                "CHECKED_OUT",
+                "LOST"
+              ],
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "List reviews for a book.\n\nReturns.",
+      "inputSchema": {
+        "properties": {
+          "alt": {
+            "description": "Data format for the response.",
+            "type": "string"
+          },
+          "bookId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookId"
+        ],
+        "type": "object"
+      },
+      "name": "bookstore_books_reviews_list",
+      "operation": "GET /bookstore/v1/books/{bookId}/reviews",
+      "output": {
+        "schema": {}
+      }
+    },
+    {
+      "description": "Create a book.\n\nReturns Book.",
+      "inputSchema": {
+        "properties": {
+          "alt": {
+            "description": "Data format for the response.",
+            "type": "string"
+          },
+          "authors": {
+            "items": {
+              "properties": {
+                "bio": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "id": {
+            "description": "Book id.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "AVAILABLE",
+              "CHECKED_OUT",
+              "LOST"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "bookstore_books_insert",
+      "operation": "POST /bookstore/v1/books",
+      "output": {
+        "schema": {
+          "properties": {
+            "authors": {
+              "items": {
+                "properties": {
+                  "bio": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "id": {
+              "description": "Book id.",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "AVAILABLE",
+                "CHECKED_OUT",
+                "LOST"
+              ],
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "Check out a book.\n\nReturns CheckoutReceipt.",
+      "inputSchema": {
+        "properties": {
+          "alt": {
+            "description": "Data format for the response.",
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "patronId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "bookstore_checkouts_create",
+      "operation": "POST /bookstore/v1/checkouts",
+      "output": {
+        "schema": {
+          "properties": {
+            "bookId": {
+              "type": "string"
+            },
+            "dueDate": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "CheckoutReceipt"
+      }
+    }
+  ]
+}

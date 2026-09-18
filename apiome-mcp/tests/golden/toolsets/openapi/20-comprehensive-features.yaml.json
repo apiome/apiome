@@ -1,0 +1,511 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List orders\n\nReturns HTTP 200 application/json (array of AdvancedOrder): List of orders",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "confirmed",
+              "processing",
+              "shipped",
+              "delivered",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "GET /orders",
+      "output": {
+        "description": "List of orders",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "Advanced order schema with comprehensive constraints",
+            "properties": {
+              "customer": {
+                "description": "Customer information"
+              },
+              "items": {
+                "description": "Order line items",
+                "items": {},
+                "maxItems": 100,
+                "minItems": 1,
+                "type": "array"
+              },
+              "metadata": {
+                "description": "Additional metadata"
+              },
+              "orderId": {
+                "description": "Unique order identifier",
+                "format": "uuid",
+                "type": "string"
+              },
+              "orderNumber": {
+                "description": "Human-readable order number",
+                "pattern": "^ORD-[0-9]{8}$",
+                "type": "string"
+              },
+              "paymentMethod": {
+                "enum": [
+                  "credit_card",
+                  "paypal",
+                  "bank_transfer"
+                ],
+                "type": "string"
+              },
+              "shippingAddress": {},
+              "status": {
+                "description": "Current order status",
+                "enum": [
+                  "pending",
+                  "confirmed",
+                  "processing",
+                  "shipped",
+                  "delivered",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              "timestamps": {
+                "description": "Order event timestamps",
+                "items": {},
+                "type": "array"
+              },
+              "totals": {
+                "description": "Order totals"
+              }
+            },
+            "required": [
+              "customer",
+              "items",
+              "orderId",
+              "orderNumber",
+              "shippingAddress",
+              "status",
+              "totals"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of AdvancedOrder",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get order by ID\n\nReturns HTTP 200 application/json (AdvancedOrder): Success",
+      "inputSchema": {
+        "properties": {
+          "include": {
+            "description": "Comma-separated relations to include",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "orderId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "getOrderById",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "Advanced order schema with comprehensive constraints",
+          "properties": {
+            "customer": {
+              "description": "Customer information"
+            },
+            "items": {
+              "description": "Order line items",
+              "items": {},
+              "maxItems": 100,
+              "minItems": 1,
+              "type": "array"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "orderId": {
+              "description": "Unique order identifier",
+              "format": "uuid",
+              "type": "string"
+            },
+            "orderNumber": {
+              "description": "Human-readable order number",
+              "pattern": "^ORD-[0-9]{8}$",
+              "type": "string"
+            },
+            "paymentMethod": {
+              "enum": [
+                "credit_card",
+                "paypal",
+                "bank_transfer"
+              ],
+              "type": "string"
+            },
+            "shippingAddress": {},
+            "status": {
+              "description": "Current order status",
+              "enum": [
+                "pending",
+                "confirmed",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "timestamps": {
+              "description": "Order event timestamps",
+              "items": {},
+              "type": "array"
+            },
+            "totals": {
+              "description": "Order totals"
+            }
+          },
+          "required": [
+            "customer",
+            "items",
+            "orderId",
+            "orderNumber",
+            "shippingAddress",
+            "status",
+            "totals"
+          ],
+          "type": "object"
+        },
+        "shape": "AdvancedOrder",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create an order\n\nReturns HTTP 201 application/json (AdvancedOrder): Created",
+      "inputSchema": {
+        "properties": {
+          "customer": {
+            "description": "Customer information"
+          },
+          "items": {
+            "description": "Order line items",
+            "items": {},
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "metadata": {
+            "description": "Additional metadata"
+          },
+          "orderId": {
+            "description": "Unique order identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderNumber": {
+            "description": "Human-readable order number",
+            "pattern": "^ORD-[0-9]{8}$",
+            "type": "string"
+          },
+          "paymentMethod": {
+            "enum": [
+              "credit_card",
+              "paypal",
+              "bank_transfer"
+            ],
+            "type": "string"
+          },
+          "shippingAddress": {},
+          "status": {
+            "description": "Current order status",
+            "enum": [
+              "pending",
+              "confirmed",
+              "processing",
+              "shipped",
+              "delivered",
+              "cancelled"
+            ],
+            "type": "string"
+          },
+          "timestamps": {
+            "description": "Order event timestamps",
+            "items": {},
+            "type": "array"
+          },
+          "totals": {
+            "description": "Order totals"
+          }
+        },
+        "required": [
+          "customer",
+          "items",
+          "orderId",
+          "orderNumber",
+          "shippingAddress",
+          "status",
+          "totals"
+        ],
+        "type": "object"
+      },
+      "name": "createOrder",
+      "operation": "POST /orders",
+      "output": {
+        "description": "Created",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "Advanced order schema with comprehensive constraints",
+          "properties": {
+            "customer": {
+              "description": "Customer information"
+            },
+            "items": {
+              "description": "Order line items",
+              "items": {},
+              "maxItems": 100,
+              "minItems": 1,
+              "type": "array"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "orderId": {
+              "description": "Unique order identifier",
+              "format": "uuid",
+              "type": "string"
+            },
+            "orderNumber": {
+              "description": "Human-readable order number",
+              "pattern": "^ORD-[0-9]{8}$",
+              "type": "string"
+            },
+            "paymentMethod": {
+              "enum": [
+                "credit_card",
+                "paypal",
+                "bank_transfer"
+              ],
+              "type": "string"
+            },
+            "shippingAddress": {},
+            "status": {
+              "description": "Current order status",
+              "enum": [
+                "pending",
+                "confirmed",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "timestamps": {
+              "description": "Order event timestamps",
+              "items": {},
+              "type": "array"
+            },
+            "totals": {
+              "description": "Order totals"
+            }
+          },
+          "required": [
+            "customer",
+            "items",
+            "orderId",
+            "orderNumber",
+            "shippingAddress",
+            "status",
+            "totals"
+          ],
+          "type": "object"
+        },
+        "shape": "AdvancedOrder",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Update order\n\nReturns HTTP 200 application/json (AdvancedOrder): Success",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Advanced order schema with comprehensive constraints",
+            "properties": {
+              "customer": {
+                "description": "Customer information"
+              },
+              "items": {
+                "description": "Order line items",
+                "items": {},
+                "maxItems": 100,
+                "minItems": 1,
+                "type": "array"
+              },
+              "metadata": {
+                "description": "Additional metadata"
+              },
+              "orderId": {
+                "description": "Unique order identifier",
+                "format": "uuid",
+                "type": "string"
+              },
+              "orderNumber": {
+                "description": "Human-readable order number",
+                "pattern": "^ORD-[0-9]{8}$",
+                "type": "string"
+              },
+              "paymentMethod": {
+                "enum": [
+                  "credit_card",
+                  "paypal",
+                  "bank_transfer"
+                ],
+                "type": "string"
+              },
+              "shippingAddress": {},
+              "status": {
+                "description": "Current order status",
+                "enum": [
+                  "pending",
+                  "confirmed",
+                  "processing",
+                  "shipped",
+                  "delivered",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              "timestamps": {
+                "description": "Order event timestamps",
+                "items": {},
+                "type": "array"
+              },
+              "totals": {
+                "description": "Order totals"
+              }
+            },
+            "required": [
+              "customer",
+              "items",
+              "orderId",
+              "orderNumber",
+              "shippingAddress",
+              "status",
+              "totals"
+            ],
+            "type": "object"
+          },
+          "orderId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "updateOrder",
+      "operation": "PUT /orders/{orderId}",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "Advanced order schema with comprehensive constraints",
+          "properties": {
+            "customer": {
+              "description": "Customer information"
+            },
+            "items": {
+              "description": "Order line items",
+              "items": {},
+              "maxItems": 100,
+              "minItems": 1,
+              "type": "array"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "orderId": {
+              "description": "Unique order identifier",
+              "format": "uuid",
+              "type": "string"
+            },
+            "orderNumber": {
+              "description": "Human-readable order number",
+              "pattern": "^ORD-[0-9]{8}$",
+              "type": "string"
+            },
+            "paymentMethod": {
+              "enum": [
+                "credit_card",
+                "paypal",
+                "bank_transfer"
+              ],
+              "type": "string"
+            },
+            "shippingAddress": {},
+            "status": {
+              "description": "Current order status",
+              "enum": [
+                "pending",
+                "confirmed",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "timestamps": {
+              "description": "Order event timestamps",
+              "items": {},
+              "type": "array"
+            },
+            "totals": {
+              "description": "Order totals"
+            }
+          },
+          "required": [
+            "customer",
+            "items",
+            "orderId",
+            "orderNumber",
+            "shippingAddress",
+            "status",
+            "totals"
+          ],
+          "type": "object"
+        },
+        "shape": "AdvancedOrder",
+        "status": "200"
+      }
+    }
+  ]
+}

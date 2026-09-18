@@ -112,6 +112,12 @@ output, merged `inputSchema`) via ``apiome_mcp.tool_compiler`` — a re-export o
 ``app.mcp_tool_mapping`` shared with SDK-4.5 and MFX-32.1. It does not change the catalog
 ``tools/list``; see **[docs/TOOL_COMPILER.md](docs/TOOL_COMPILER.md)** (#4529).
 
+**Tool-schema regression corpus (AGX-1.4):** every examples-corpus spec's compiled toolset
+is checked in under ``tests/golden/toolsets/``. CI fails when a recompile drifts from its
+golden or a stored tool is not MCP-valid. Regenerate with
+``uv run pytest tests/test_toolset_goldens.py --update-golden``; see
+**[docs/TOOLSET_GOLDENS.md](docs/TOOLSET_GOLDENS.md)** (#4532).
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

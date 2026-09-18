@@ -1,0 +1,461 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.BusinessPartner).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listBusinessPartnerSet",
+      "operation": "GET /BusinessPartnerSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Address": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CompanyName": {
+              "type": "string"
+            },
+            "CreatedAt": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "LegalForm": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Address",
+            "BusinessPartnerID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.BusinessPartner",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.BusinessPartner).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getBusinessPartnerSet",
+      "operation": "GET /BusinessPartnerSet({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Address": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CompanyName": {
+              "type": "string"
+            },
+            "CreatedAt": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "LegalForm": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Address",
+            "BusinessPartnerID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.BusinessPartner",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (ZBP_SRV.BusinessPartner).",
+      "inputSchema": {
+        "properties": {
+          "Address": {
+            "properties": {
+              "City": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              },
+              "PostalCode": {
+                "type": "string"
+              },
+              "Street": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "BusinessPartnerID": {
+            "type": "string"
+          },
+          "CompanyName": {
+            "type": "string"
+          },
+          "CreatedAt": {
+            "type": "string"
+          },
+          "CurrencyCode": {
+            "type": "string"
+          },
+          "LegalForm": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Address",
+          "BusinessPartnerID"
+        ],
+        "type": "object"
+      },
+      "name": "createBusinessPartnerSet",
+      "operation": "POST /BusinessPartnerSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Address": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Country": {
+                  "type": "string"
+                },
+                "PostalCode": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CompanyName": {
+              "type": "string"
+            },
+            "CreatedAt": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "LegalForm": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Address",
+            "BusinessPartnerID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.BusinessPartner",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.SalesOrderLineItem).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listSalesOrderLineItemSet",
+      "operation": "GET /SalesOrderLineItemSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemPosition": {
+              "type": "string"
+            },
+            "ProductID": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "QuantityUnit": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemPosition",
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrderLineItem",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.SalesOrderLineItem).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getSalesOrderLineItemSet",
+      "operation": "GET /SalesOrderLineItemSet({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemPosition": {
+              "type": "string"
+            },
+            "ProductID": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "QuantityUnit": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemPosition",
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrderLineItem",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (ZBP_SRV.SalesOrderLineItem).",
+      "inputSchema": {
+        "properties": {
+          "ItemPosition": {
+            "type": "string"
+          },
+          "ProductID": {
+            "type": "string"
+          },
+          "Quantity": {},
+          "QuantityUnit": {
+            "type": "string"
+          },
+          "SalesOrderID": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ItemPosition",
+          "SalesOrderID"
+        ],
+        "type": "object"
+      },
+      "name": "createSalesOrderLineItemSet",
+      "operation": "POST /SalesOrderLineItemSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemPosition": {
+              "type": "string"
+            },
+            "ProductID": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "QuantityUnit": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemPosition",
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrderLineItem",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.SalesOrder).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listSalesOrderSet",
+      "operation": "GET /SalesOrderSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "GrossAmount": {},
+            "LifecycleStatus": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrder",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.SalesOrder).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getSalesOrderSet",
+      "operation": "GET /SalesOrderSet({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "GrossAmount": {},
+            "LifecycleStatus": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrder",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (ZBP_SRV.SalesOrder).",
+      "inputSchema": {
+        "properties": {
+          "BusinessPartnerID": {
+            "type": "string"
+          },
+          "CurrencyCode": {
+            "type": "string"
+          },
+          "GrossAmount": {},
+          "LifecycleStatus": {
+            "type": "string"
+          },
+          "SalesOrderID": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "SalesOrderID"
+        ],
+        "type": "object"
+      },
+      "name": "createSalesOrderSet",
+      "operation": "POST /SalesOrderSet",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "GrossAmount": {},
+            "LifecycleStatus": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrder",
+        "status": "201"
+      }
+    }
+  ]
+}

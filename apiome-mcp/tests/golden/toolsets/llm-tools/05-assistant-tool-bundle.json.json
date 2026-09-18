@@ -1,0 +1,101 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create a GitHub issue in a repository with title, body, and labels.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Issue body in markdown",
+            "type": "string"
+          },
+          "labels": {
+            "description": "Label names to apply",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "owner": {
+            "description": "Repository owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name",
+            "type": "string"
+          },
+          "title": {
+            "description": "Issue title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "create_issue",
+      "operation": "05-assistant-tool-bundle.create_issue"
+    },
+    {
+      "description": "List GitHub repositories visible to the authenticated user for a given org.",
+      "inputSchema": {
+        "properties": {
+          "org": {
+            "description": "GitHub organization login",
+            "type": "string"
+          },
+          "visibility": {
+            "description": "Repository visibility filter",
+            "enum": [
+              "all",
+              "public",
+              "private"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "org"
+        ],
+        "type": "object"
+      },
+      "name": "list_repos",
+      "operation": "05-assistant-tool-bundle.list_repos"
+    },
+    {
+      "description": "Dispatch a GitHub Actions workflow_dispatch event.",
+      "inputSchema": {
+        "properties": {
+          "owner": {
+            "description": "Repository owner login",
+            "type": "string"
+          },
+          "ref": {
+            "default": "main",
+            "description": "Git ref to run against",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name",
+            "type": "string"
+          },
+          "workflow_id": {
+            "description": "Workflow file name or numeric id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "workflow_id"
+        ],
+        "type": "object"
+      },
+      "name": "run_workflow",
+      "operation": "05-assistant-tool-bundle.run_workflow"
+    }
+  ]
+}

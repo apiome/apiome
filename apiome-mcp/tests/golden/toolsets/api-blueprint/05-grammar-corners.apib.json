@@ -1,0 +1,227 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns application/json (Ticket).",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "description": "Filter the collection by ticket status.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "List_tickets",
+      "operation": "GET /tickets",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "assignee": {
+              "description": "Current assignee, if any.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Ticket identifier.",
+              "type": "string"
+            },
+            "priority": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "subject": {
+              "description": "Short subject line.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "Ticket"
+      }
+    },
+    {
+      "description": "Returns application/json (Ticket).",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of results to return."
+          },
+          "q": {
+            "description": "Full-text query string.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Filter the collection by ticket status.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "q",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "Search_tickets",
+      "operation": "GET /tickets/search",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "assignee": {
+              "description": "Current assignee, if any.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Ticket identifier.",
+              "type": "string"
+            },
+            "priority": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "subject": {
+              "description": "Short subject line.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "Ticket"
+      }
+    },
+    {
+      "description": "Returns application/json (Ticket).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Ticket identifier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Get_a_ticket",
+      "operation": "GET /tickets/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "assignee": {
+              "description": "Current assignee, if any.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Ticket identifier.",
+              "type": "string"
+            },
+            "priority": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "subject": {
+              "description": "Short subject line.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "Ticket"
+      }
+    },
+    {
+      "description": "Returns application/json (Ticket).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Ticket identifier.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the ticket is being closed.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "Close_a_ticket",
+      "operation": "POST /tickets/{id}/close",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "assignee": {
+              "description": "Current assignee, if any.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Ticket identifier.",
+              "type": "string"
+            },
+            "priority": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            },
+            "subject": {
+              "description": "Short subject line.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "status",
+            "subject"
+          ],
+          "type": "object"
+        },
+        "shape": "Ticket"
+      }
+    }
+  ]
+}

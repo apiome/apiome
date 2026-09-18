@@ -1,0 +1,213 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.Catalog.Category).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listCategories",
+      "operation": "GET /Categories",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Category",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Catalog.Category).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getCategorie",
+      "operation": "GET /Categories({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Category",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Catalog.Category).",
+      "inputSchema": {
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Id",
+          "Name"
+        ],
+        "type": "object"
+      },
+      "name": "createCategorie",
+      "operation": "POST /Categories",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Category",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Catalog.Product).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listProducts",
+      "operation": "GET /Products",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "InStock": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {}
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Catalog.Product).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getProduct",
+      "operation": "GET /Products({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "InStock": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {}
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Catalog.Product).",
+      "inputSchema": {
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "InStock": {},
+          "Name": {
+            "type": "string"
+          },
+          "Price": {}
+        },
+        "required": [
+          "Id",
+          "Name"
+        ],
+        "type": "object"
+      },
+      "name": "createProduct",
+      "operation": "POST /Products",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "InStock": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {}
+          },
+          "required": [
+            "Id",
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Catalog.Product",
+        "status": "201"
+      }
+    }
+  ]
+}

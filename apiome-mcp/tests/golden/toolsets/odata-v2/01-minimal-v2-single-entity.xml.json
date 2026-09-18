@@ -1,0 +1,101 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Ping.Beacon).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listBeacons",
+      "operation": "GET /Beacons",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "SeenAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Ping.Beacon",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Ping.Beacon).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getBeacon",
+      "operation": "GET /Beacons({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "SeenAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Ping.Beacon",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Ping.Beacon).",
+      "inputSchema": {
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "SeenAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Id"
+        ],
+        "type": "object"
+      },
+      "name": "createBeacon",
+      "operation": "POST /Beacons",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {
+              "type": "string"
+            },
+            "SeenAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Ping.Beacon",
+        "status": "201"
+      }
+    }
+  ]
+}

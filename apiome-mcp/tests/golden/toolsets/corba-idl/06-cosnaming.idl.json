@@ -1,0 +1,171 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "destroy",
+      "operation": "CosNaming.BindingIterator.destroy"
+    },
+    {
+      "description": "Returns CosNaming.Binding.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "nextOne",
+      "operation": "CosNaming.BindingIterator.nextOne",
+      "output": {
+        "schema": {
+          "properties": {
+            "bindingName": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "bindingType": {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "bindingName",
+            "bindingType"
+          ],
+          "type": "object"
+        },
+        "shape": "CosNaming.Binding"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "bind",
+      "operation": "CosNaming.NamingContext.bind"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "destroy_2",
+      "operation": "CosNaming.NamingContext.destroy"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "CosNaming.NamingContext.list"
+    },
+    {
+      "description": "Returns NamingContext.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "newContext",
+      "operation": "CosNaming.NamingContext.newContext",
+      "output": {
+        "schema": {},
+        "shape": "NamingContext"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "rebind",
+      "operation": "CosNaming.NamingContext.rebind"
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "kind"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "resolve",
+      "operation": "CosNaming.NamingContext.resolve",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "kind"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "unbind",
+      "operation": "CosNaming.NamingContext.unbind"
+    }
+  ]
+}

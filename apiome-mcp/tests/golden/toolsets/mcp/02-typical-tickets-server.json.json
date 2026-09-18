@@ -1,0 +1,140 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Summarize a ticket thread for a handover note.",
+      "inputSchema": {
+        "properties": {
+          "audience": {
+            "description": "Who the summary is for.",
+            "type": "string"
+          },
+          "ticketId": {
+            "description": "Ticket to summarize.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketId"
+        ],
+        "type": "object"
+      },
+      "name": "summarize_ticket",
+      "operation": "Acme Support Tickets.prompts.summarize_ticket"
+    },
+    {
+      "description": "Snapshot of the frontline ticket queue.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "frontline-queue",
+      "operation": "Acme Support Tickets.resources.frontline-queue"
+    },
+    {
+      "description": "One ticket rendered as JSON.",
+      "inputSchema": {
+        "properties": {
+          "ticketId": {
+            "description": "`ticketId` from the resource template.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketId"
+        ],
+        "type": "object"
+      },
+      "name": "ticket",
+      "operation": "Acme Support Tickets.resources.ticket"
+    },
+    {
+      "description": "Close a ticket with a resolution note.",
+      "inputSchema": {
+        "properties": {
+          "resolution": {
+            "type": "string"
+          },
+          "ticketId": {
+            "pattern": "^TCK-[0-9]{6}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketId",
+          "resolution"
+        ],
+        "type": "object"
+      },
+      "name": "close_ticket",
+      "operation": "Acme Support Tickets.tools.close_ticket"
+    },
+    {
+      "description": "Open a new support ticket for a customer.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "format": "email",
+            "type": "string"
+          },
+          "priority": {
+            "default": "normal",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "body",
+          "customerEmail"
+        ],
+        "type": "object"
+      },
+      "name": "create_ticket",
+      "operation": "Acme Support Tickets.tools.create_ticket"
+    },
+    {
+      "description": "Full-text search across open support tickets.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "query": {
+            "description": "Free-text query.",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "pending",
+              "closed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "search_tickets",
+      "operation": "Acme Support Tickets.tools.search_tickets"
+    }
+  ]
+}

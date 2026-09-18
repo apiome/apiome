@@ -1,0 +1,118 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns METRICS_PROG.query_res.",
+      "inputSchema": {
+        "properties": {
+          "hostname": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "name_prefix": {
+            "maxLength": 128,
+            "type": "string"
+          }
+        },
+        "required": [
+          "hostname",
+          "name_prefix"
+        ],
+        "type": "object"
+      },
+      "name": "METRICS_QUERY",
+      "operation": "METRICS_PROG.METRICS_PROG.METRICS_QUERY",
+      "output": {
+        "schema": {
+          "properties": {
+            "matches": {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    0,
+                    1
+                  ],
+                  "type": "integer"
+                },
+                "name": {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                "timestamp": {},
+                "value": {}
+              },
+              "required": [
+                "kind",
+                "name",
+                "timestamp",
+                "value"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "matches"
+          ],
+          "type": "object"
+        },
+        "shape": "METRICS_PROG.query_res"
+      }
+    },
+    {
+      "description": "Returns METRICS_PROG.report_res.",
+      "inputSchema": {
+        "properties": {
+          "hostname": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "samples": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  0,
+                  1
+                ],
+                "type": "integer"
+              },
+              "name": {
+                "maxLength": 128,
+                "type": "string"
+              },
+              "timestamp": {},
+              "value": {}
+            },
+            "required": [
+              "kind",
+              "name",
+              "timestamp",
+              "value"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "hostname",
+          "samples"
+        ],
+        "type": "object"
+      },
+      "name": "METRICS_REPORT",
+      "operation": "METRICS_PROG.METRICS_PROG.METRICS_REPORT",
+      "output": {
+        "schema": {
+          "properties": {
+            "accepted": {},
+            "rejected": {}
+          },
+          "required": [
+            "accepted",
+            "rejected"
+          ],
+          "type": "object"
+        },
+        "shape": "METRICS_PROG.report_res"
+      }
+    }
+  ]
+}

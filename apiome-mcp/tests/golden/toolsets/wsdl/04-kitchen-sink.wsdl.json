@@ -1,0 +1,78 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "raisedAt": {
+            "type": "string"
+          },
+          "sensorId": {
+            "type": "string"
+          },
+          "severity": {}
+        },
+        "type": "object"
+      },
+      "name": "RaiseAlarm",
+      "operation": "http://example.com/telemetry.AlarmPort.RaiseAlarm"
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "GetSensorStatus",
+      "operation": "http://example.com/telemetry.IngestionPort.GetSensorStatus",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "description": "Returns http://example.com/telemetry.IngestResult.",
+      "inputSchema": {
+        "properties": {
+          "readings": {
+            "properties": {
+              "capturedAt": {
+                "type": "string"
+              },
+              "sensorId": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "value": {}
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "name": "SubmitBatch",
+      "operation": "http://example.com/telemetry.IngestionPort.SubmitBatch",
+      "output": {
+        "schema": {
+          "properties": {
+            "accepted": {},
+            "rejected": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/telemetry.IngestResult"
+      }
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/bookstore.Book.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listBooks",
+      "operation": "GET /books",
+      "output": {
+        "schema": {
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "price": {},
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/bookstore.Book"
+      }
+    },
+    {
+      "description": "Returns http://example.com/bookstore.Book.",
+      "inputSchema": {
+        "properties": {
+          "bookId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookId"
+        ],
+        "type": "object"
+      },
+      "name": "getBook",
+      "operation": "GET /books/{bookId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "price": {},
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/bookstore.Book"
+      }
+    },
+    {
+      "description": "Returns http://example.com/bookstore.Book.",
+      "inputSchema": {
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "price": {},
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "createBook",
+      "operation": "POST /books",
+      "output": {
+        "schema": {
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "price": {},
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/bookstore.Book"
+      }
+    }
+  ]
+}

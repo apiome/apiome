@@ -1,0 +1,153 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Example.Orders.Order).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "GET /Orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {},
+            "ShipTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Status": {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Orders.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Orders.Order).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "GET /Orders({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {},
+            "ShipTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Status": {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Orders.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Example.Orders.Order).",
+      "inputSchema": {
+        "properties": {
+          "Id": {},
+          "ShipTo": {
+            "properties": {
+              "City": {
+                "type": "string"
+              },
+              "Street": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "Status": {
+            "enum": [
+              0,
+              1
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "Id"
+        ],
+        "type": "object"
+      },
+      "name": "createOrder",
+      "operation": "POST /Orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Id": {},
+            "ShipTo": {
+              "properties": {
+                "City": {
+                  "type": "string"
+                },
+                "Street": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "Status": {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "Id"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Orders.Order",
+        "status": "201"
+      }
+    }
+  ]
+}

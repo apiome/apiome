@@ -1,0 +1,183 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {
+          "taskId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteTask",
+      "operation": "DELETE /tasks/{taskId}",
+      "output": {}
+    },
+    {
+      "description": "List tasks, optionally filtered by assignee or completion.\n\nReturns http://example.com/tasks.Task.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listTasks",
+      "operation": "GET /tasks",
+      "output": {
+        "schema": {
+          "properties": {
+            "assignee": {
+              "type": "string"
+            },
+            "done": {},
+            "dueDate": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/tasks.Task"
+      }
+    },
+    {
+      "description": "Returns http://example.com/tasks.Task.",
+      "inputSchema": {
+        "properties": {
+          "taskId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId"
+        ],
+        "type": "object"
+      },
+      "name": "getTask",
+      "operation": "GET /tasks/{taskId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "assignee": {
+              "type": "string"
+            },
+            "done": {},
+            "dueDate": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/tasks.Task"
+      }
+    },
+    {
+      "description": "Returns http://example.com/tasks.Task.",
+      "inputSchema": {
+        "properties": {
+          "assignee": {
+            "type": "string"
+          },
+          "done": {},
+          "dueDate": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "createTask",
+      "operation": "POST /tasks",
+      "output": {
+        "schema": {
+          "properties": {
+            "assignee": {
+              "type": "string"
+            },
+            "done": {},
+            "dueDate": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/tasks.Task"
+      }
+    },
+    {
+      "description": "Returns http://example.com/tasks.Task.",
+      "inputSchema": {
+        "properties": {
+          "assignee": {
+            "type": "string"
+          },
+          "done": {},
+          "dueDate": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "taskId"
+        ],
+        "type": "object"
+      },
+      "name": "replaceTask",
+      "operation": "PUT /tasks/{taskId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "assignee": {
+              "type": "string"
+            },
+            "done": {},
+            "dueDate": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/tasks.Task"
+      }
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_orders_id",
+      "operation": "DELETE /orders/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_health",
+      "operation": "GET /health"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "status",
+          "accept"
+        ],
+        "type": "object"
+      },
+      "name": "GET_orders",
+      "operation": "GET /orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_orders_id",
+      "operation": "GET /orders/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "items": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "content-type",
+          "currency",
+          "customerId",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "POST_orders",
+      "operation": "POST /orders"
+    }
+  ]
+}

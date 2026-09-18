@@ -1,0 +1,467 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Delete a pet\n\nReturns HTTP 204 with no body: Pet deleted",
+      "inputSchema": {
+        "properties": {
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "deletePet",
+      "operation": "DELETE /pets/{petId}",
+      "output": {
+        "description": "Pet deleted",
+        "status": "204"
+      }
+    },
+    {
+      "description": "List all pets\n\nReturns HTTP 200 application/json (array of Pet): A paged array of pets",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "description": "How many items to return at one time",
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "status": {
+            "description": "Filter by status",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listPets",
+      "operation": "GET /pets",
+      "output": {
+        "description": "A paged array of pets",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "A pet in the store",
+            "properties": {
+              "category": {
+                "description": "A category for a pet",
+                "properties": {
+                  "id": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "name": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "createdAt": {
+                "description": "When the pet was created",
+                "format": "date-time",
+                "type": "string"
+              },
+              "id": {
+                "description": "Unique identifier for the pet",
+                "format": "int64",
+                "type": "integer"
+              },
+              "metadata": {
+                "description": "Additional metadata"
+              },
+              "name": {
+                "description": "Name of the pet",
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              "photoUrls": {
+                "description": "URLs of pet photos",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "status": {
+                "description": "Pet status in the store",
+                "enum": [
+                  "available",
+                  "pending",
+                  "sold"
+                ],
+                "type": "string"
+              },
+              "tag": {
+                "description": "Optional tag for the pet",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get a pet by ID\n\nReturns HTTP 200 application/json (Pet): Expected response to a valid request",
+      "inputSchema": {
+        "properties": {
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "getPetById",
+      "operation": "GET /pets/{petId}",
+      "output": {
+        "description": "Expected response to a valid request",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A pet in the store",
+          "properties": {
+            "category": {
+              "description": "A category for a pet",
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "createdAt": {
+              "description": "When the pet was created",
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "photoUrls": {
+              "description": "URLs of pet photos",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "description": "Pet status in the store",
+              "enum": [
+                "available",
+                "pending",
+                "sold"
+              ],
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for the pet",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a pet\n\nReturns HTTP 201 application/json (Pet): Pet created",
+      "inputSchema": {
+        "properties": {
+          "categoryId": {
+            "description": "Category ID",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Name of the pet",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "default": "available",
+            "enum": [
+              "available",
+              "pending"
+            ],
+            "type": "string"
+          },
+          "tag": {
+            "description": "Optional tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createPet",
+      "operation": "POST /pets",
+      "output": {
+        "description": "Pet created",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A pet in the store",
+          "properties": {
+            "category": {
+              "description": "A category for a pet",
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "createdAt": {
+              "description": "When the pet was created",
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "photoUrls": {
+              "description": "URLs of pet photos",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "description": "Pet status in the store",
+              "enum": [
+                "available",
+                "pending",
+                "sold"
+              ],
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for the pet",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Upload pet image\n\nReturns HTTP 200 application/json (UploadResponse): Image uploaded",
+      "inputSchema": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "file": {
+            "format": "binary",
+            "type": "string"
+          },
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "uploadPetImage",
+      "operation": "POST /pets/{petId}/upload",
+      "output": {
+        "description": "Image uploaded",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "Response from file upload",
+          "properties": {
+            "size": {
+              "description": "File size in bytes",
+              "format": "int64",
+              "type": "integer"
+            },
+            "success": {
+              "description": "Whether upload succeeded",
+              "type": "boolean"
+            },
+            "url": {
+              "description": "URL of uploaded file",
+              "format": "uri",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "UploadResponse",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Update a pet\n\nReturns HTTP 200 application/json (Pet): Pet updated",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "description": "New name for the pet",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "pending",
+              "sold"
+            ],
+            "type": "string"
+          },
+          "tag": {
+            "description": "New tag",
+            "type": "string"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "updatePet",
+      "operation": "PUT /pets/{petId}",
+      "output": {
+        "description": "Pet updated",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A pet in the store",
+          "properties": {
+            "category": {
+              "description": "A category for a pet",
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "createdAt": {
+              "description": "When the pet was created",
+              "format": "date-time",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "metadata": {
+              "description": "Additional metadata"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "photoUrls": {
+              "description": "URLs of pet photos",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "description": "Pet status in the store",
+              "enum": [
+                "available",
+                "pending",
+                "sold"
+              ],
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for the pet",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "200"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Liveness probe\n\nReturns HTTP 200 application/json (string): Successful response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "GET /ping",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string",
+        "status": "200"
+      }
+    }
+  ]
+}

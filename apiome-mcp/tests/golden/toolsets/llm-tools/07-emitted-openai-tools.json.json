@@ -1,0 +1,171 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create item",
+      "inputSchema": {
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Item name",
+            "type": "string"
+          },
+          "value": {
+            "description": "Numeric value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "X-Tenant-ID",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createItem",
+      "operation": "07-emitted-openai-tools.createItem"
+    },
+    {
+      "description": "Create session (cookie param example)",
+      "inputSchema": {
+        "properties": {
+          "X-Client-Version": {
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "format": "uri",
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object"
+      },
+      "name": "createSession",
+      "operation": "07-emitted-openai-tools.createSession"
+    },
+    {
+      "description": "Delete item",
+      "inputSchema": {
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteItem",
+      "operation": "07-emitted-openai-tools.deleteItem"
+    },
+    {
+      "description": "Get item by ID",
+      "inputSchema": {
+        "properties": {
+          "fields": {
+            "description": "Sparse fields",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "getItem",
+      "operation": "07-emitted-openai-tools.getItem"
+    },
+    {
+      "description": "List items",
+      "inputSchema": {
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "per_page": {
+            "default": 20,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "q": {
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "name",
+              "createdAt",
+              "-name",
+              "-createdAt"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "X-Tenant-ID"
+        ],
+        "type": "object"
+      },
+      "name": "listItems",
+      "operation": "07-emitted-openai-tools.listItems"
+    },
+    {
+      "description": "Search with multiple param locations",
+      "inputSchema": {
+        "properties": {
+          "X-Request-ID": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q"
+        ],
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "07-emitted-openai-tools.search"
+    }
+  ]
+}

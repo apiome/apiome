@@ -1,0 +1,214 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Order.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "order",
+      "operation": "Query.order",
+      "output": {
+        "schema": {
+          "description": "Order with status",
+          "properties": {
+            "createdAt": {},
+            "id": {},
+            "items": {
+              "items": {
+                "description": "Item in an order",
+                "properties": {
+                  "productId": {},
+                  "productName": {},
+                  "quantity": {},
+                  "unitPrice": {}
+                },
+                "required": [
+                  "productId",
+                  "productName",
+                  "quantity",
+                  "unitPrice"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "priority": {
+              "description": "Priority levels",
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "URGENT",
+                "CRITICAL"
+              ],
+              "type": "string"
+            },
+            "status": {
+              "description": "Order status enumeration",
+              "enum": [
+                "PENDING",
+                "CONFIRMED",
+                "PROCESSING",
+                "SHIPPED",
+                "DELIVERED",
+                "CANCELLED",
+                "REFUNDED"
+              ],
+              "type": "string"
+            },
+            "userId": {}
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "items",
+            "status",
+            "userId"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    },
+    {
+      "description": "Returns array of Order.",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "description": "Order status enumeration",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "PROCESSING",
+              "SHIPPED",
+              "DELIVERED",
+              "CANCELLED",
+              "REFUNDED"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "ordersByStatus",
+      "operation": "Query.ordersByStatus",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "Order with status",
+            "properties": {
+              "createdAt": {},
+              "id": {},
+              "items": {
+                "items": {
+                  "description": "Item in an order",
+                  "properties": {
+                    "productId": {},
+                    "productName": {},
+                    "quantity": {},
+                    "unitPrice": {}
+                  },
+                  "required": [
+                    "productId",
+                    "productName",
+                    "quantity",
+                    "unitPrice"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "priority": {
+                "description": "Priority levels",
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "URGENT",
+                  "CRITICAL"
+                ],
+                "type": "string"
+              },
+              "status": {
+                "description": "Order status enumeration",
+                "enum": [
+                  "PENDING",
+                  "CONFIRMED",
+                  "PROCESSING",
+                  "SHIPPED",
+                  "DELIVERED",
+                  "CANCELLED",
+                  "REFUNDED"
+                ],
+                "type": "string"
+              },
+              "userId": {}
+            },
+            "required": [
+              "createdAt",
+              "id",
+              "items",
+              "status",
+              "userId"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Order"
+      }
+    },
+    {
+      "description": "Returns User.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "user",
+      "operation": "Query.user",
+      "output": {
+        "schema": {
+          "description": "User account type",
+          "properties": {
+            "email": {},
+            "id": {},
+            "name": {},
+            "role": {
+              "description": "User role in the system",
+              "enum": [
+                "USER",
+                "ADMIN",
+                "MODERATOR",
+                "GUEST"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "id",
+            "name",
+            "role"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    }
+  ]
+}

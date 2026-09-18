@@ -1,0 +1,61 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "recent-invoices",
+      "operation": "Acme Billing.resources.recent-invoices"
+    },
+    {
+      "description": "Fetch one invoice by id.",
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "pattern": "^INV-[0-9]{8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "name": "get_invoice",
+      "operation": "Acme Billing.tools.get_invoice"
+    },
+    {
+      "description": "Issue a credit note against an invoice.",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "invoiceId": {
+            "pattern": "^INV-[0-9]{8}$",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "goodwill",
+              "billing-error",
+              "return"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "amount",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "issue_credit_note",
+      "operation": "Acme Billing.tools.issue_credit_note"
+    }
+  ]
+}

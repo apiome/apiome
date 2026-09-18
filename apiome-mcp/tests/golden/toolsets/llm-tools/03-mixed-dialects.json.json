@@ -1,0 +1,58 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Add two integers using the Anthropic tool-use shape.",
+      "inputSchema": {
+        "properties": {
+          "a": {
+            "description": "First addend",
+            "type": "integer"
+          },
+          "b": {
+            "description": "Second addend",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ],
+        "type": "object"
+      },
+      "name": "anthropic_sum",
+      "operation": "03-mixed-dialects.anthropic_sum"
+    },
+    {
+      "description": "Simple health ping using the bare name+parameters shape.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "description": "Optional ping token",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "bare_ping",
+      "operation": "03-mixed-dialects.bare_ping"
+    },
+    {
+      "description": "Echo a message back using the OpenAI function shape.",
+      "inputSchema": {
+        "properties": {
+          "text": {
+            "description": "Text to echo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "name": "openai_echo",
+      "operation": "03-mixed-dialects.openai_echo"
+    }
+  ]
+}

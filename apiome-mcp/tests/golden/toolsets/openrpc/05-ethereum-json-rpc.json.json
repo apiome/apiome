@@ -1,0 +1,81 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Height of the most recent block.\n\nReturns Quantity.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "eth_blockNumber",
+      "operation": "Ethereum JSON-RPC (subset).eth_blockNumber",
+      "output": {
+        "schema": {
+          "description": "Hex-encoded unsigned integer quantity.",
+          "pattern": "^0x[0-9a-fA-F]+$"
+        },
+        "shape": "Quantity"
+      }
+    },
+    {
+      "description": "Balance of an address at a given block.\n\nReturns Quantity.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "eth_getBalance",
+      "operation": "Ethereum JSON-RPC (subset).eth_getBalance",
+      "output": {
+        "schema": {
+          "description": "Hex-encoded unsigned integer quantity.",
+          "pattern": "^0x[0-9a-fA-F]+$"
+        },
+        "shape": "Quantity"
+      }
+    },
+    {
+      "description": "Look up a transaction by its hash.\n\nReturns.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "32-byte hash, 0x-prefixed hex.",
+            "pattern": "^0x[0-9a-fA-F]{64}$"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "eth_getTransactionByHash",
+      "operation": "Ethereum JSON-RPC (subset).eth_getTransactionByHash",
+      "output": {
+        "schema": {}
+      }
+    },
+    {
+      "description": "Broadcast a signed, RLP-encoded transaction.\n\nReturns Hash32.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Arbitrary 0x-prefixed byte string.",
+            "pattern": "^0x[0-9a-fA-F]*$"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "eth_sendRawTransaction",
+      "operation": "Ethereum JSON-RPC (subset).eth_sendRawTransaction",
+      "output": {
+        "schema": {
+          "description": "32-byte hash, 0x-prefixed hex.",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "shape": "Hash32"
+      }
+    }
+  ]
+}

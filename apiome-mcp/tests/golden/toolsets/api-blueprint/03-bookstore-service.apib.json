@@ -1,0 +1,160 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Unique book identifier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Remove_a_book",
+      "operation": "DELETE /books/{id}",
+      "output": {}
+    },
+    {
+      "description": "Returns application/json (Book).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_all_books",
+      "operation": "GET /books",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "inStock": {},
+            "price": {},
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "Returns application/json (Book).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Unique book identifier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Get_a_book",
+      "operation": "GET /books/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "inStock": {},
+            "price": {},
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    },
+    {
+      "description": "Returns application/json (Book).",
+      "inputSchema": {
+        "properties": {
+          "author": {
+            "description": "Author name.",
+            "type": "string"
+          },
+          "price": {},
+          "title": {
+            "description": "Book title.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "author",
+          "price",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "Add_a_book",
+      "operation": "POST /books",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "author": {
+              "description": "Author name.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique book identifier.",
+              "type": "string"
+            },
+            "inStock": {},
+            "price": {},
+            "title": {
+              "description": "Book title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Book"
+      }
+    }
+  ]
+}

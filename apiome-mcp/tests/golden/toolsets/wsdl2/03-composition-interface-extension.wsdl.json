@@ -1,0 +1,90 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/catalogue.product.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getProduct",
+      "operation": "http://example.com/catalogue.ReadCatalogue.getProduct",
+      "output": {
+        "schema": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "price": {},
+            "sku": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalogue.product"
+      }
+    },
+    {
+      "description": "Returns http://example.com/catalogue.product.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getProduct_2",
+      "operation": "http://example.com/catalogue.ReadWriteCatalogue.getProduct",
+      "output": {
+        "schema": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "price": {},
+            "sku": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/catalogue.product"
+      }
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {},
+          "sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "upsertProduct",
+      "operation": "http://example.com/catalogue.ReadWriteCatalogue.upsertProduct",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    }
+  ]
+}

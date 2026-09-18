@@ -1,0 +1,55 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List adoptable pets\n\nReturns the adoptable pets, newest first.\n\nReturns HTTP 200 application/json (array of Pet): The adoptable pets.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "description": "Maximum number of pets to return.",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listPets",
+      "operation": "GET /pets",
+      "output": {
+        "description": "The adoptable pets.",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "One adoptable pet.",
+            "properties": {
+              "adopted": {
+                "default": false,
+                "description": "Whether the pet has already been adopted.",
+                "type": "boolean"
+              },
+              "id": {
+                "description": "Stable pet identifier.",
+                "format": "uuid",
+                "type": "string"
+              },
+              "name": {
+                "description": "Display name.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Pet",
+        "status": "200"
+      }
+    }
+  ]
+}

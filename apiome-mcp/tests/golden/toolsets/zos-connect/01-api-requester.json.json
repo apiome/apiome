@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns InventoryRequester.GET-STOCK-RESPONSE.",
+      "inputSchema": {
+        "properties": {
+          "REQ-SKU": {
+            "description": "Path parameter `sku`",
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "getStockLevel",
+      "operation": "GET /items/{sku}/stock",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "InventoryRequester.GET-STOCK-RESPONSE"
+      }
+    },
+    {
+      "description": "Returns InventoryRequester.RESERVE-RESPONSE.",
+      "inputSchema": {
+        "properties": {
+          "RES-SKU": {
+            "description": "Path parameter `sku`",
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "reserveStock",
+      "operation": "POST /items/{sku}/reservations",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "InventoryRequester.RESERVE-RESPONSE"
+      }
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create a new order for a customer.\n\nReturns Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "items": {
+              "description": "One line of an order.",
+              "properties": {
+                "note": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "minimum": 1.0,
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "quantity",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "createOrder",
+      "operation": "Order Desk API.createOrder",
+      "output": {
+        "schema": {
+          "description": "An order composed from the shared Customer and LineItem schemas.",
+          "properties": {
+            "customer": {
+              "description": "A customer of the order desk.",
+              "properties": {
+                "customerId": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customerId",
+                "displayName"
+              ],
+              "type": "object"
+            },
+            "items": {
+              "items": {
+                "description": "One line of an order.",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "description": "Opaque order identifier."
+            }
+          },
+          "required": [
+            "customer",
+            "items",
+            "orderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    },
+    {
+      "description": "Fetch an existing order by id.\n\nReturns Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Opaque order identifier."
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "Order Desk API.getOrder",
+      "output": {
+        "schema": {
+          "description": "An order composed from the shared Customer and LineItem schemas.",
+          "properties": {
+            "customer": {
+              "description": "A customer of the order desk.",
+              "properties": {
+                "customerId": {
+                  "type": "string"
+                },
+                "displayName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "customerId",
+                "displayName"
+              ],
+              "type": "object"
+            },
+            "items": {
+              "items": {
+                "description": "One line of an order.",
+                "properties": {
+                  "note": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "description": "Opaque order identifier."
+            }
+          },
+          "required": [
+            "customer",
+            "items",
+            "orderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    },
+    {
+      "description": "List all orders belonging to a customer.\n\nReturns array of Order.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "Order Desk API.listOrders",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "An order composed from the shared Customer and LineItem schemas.",
+            "properties": {
+              "customer": {
+                "description": "A customer of the order desk.",
+                "properties": {
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "customerId",
+                  "displayName"
+                ],
+                "type": "object"
+              },
+              "items": {
+                "items": {
+                  "description": "One line of an order.",
+                  "properties": {
+                    "note": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "minimum": 1.0,
+                      "type": "integer"
+                    },
+                    "sku": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "quantity",
+                    "sku"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "orderId": {
+                "description": "Opaque order identifier."
+              }
+            },
+            "required": [
+              "customer",
+              "items",
+              "orderId"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Order"
+      }
+    }
+  ]
+}

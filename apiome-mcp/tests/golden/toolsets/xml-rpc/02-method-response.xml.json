@@ -1,0 +1,40 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns ResponseResponse.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "response",
+      "operation": "XML-RPC Response.response",
+      "output": {
+        "schema": {
+          "properties": {
+            "remaining": {
+              "type": "integer"
+            },
+            "reservationId": {
+              "type": "string"
+            },
+            "reserved": {
+              "type": "integer"
+            },
+            "sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "remaining",
+            "reservationId",
+            "reserved",
+            "sku"
+          ],
+          "type": "object"
+        },
+        "shape": "ResponseResponse"
+      }
+    }
+  ]
+}

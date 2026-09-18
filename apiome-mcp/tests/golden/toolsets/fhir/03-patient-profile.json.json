@@ -1,0 +1,165 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (SimplePatient.Patient).",
+      "inputSchema": {
+        "properties": {
+          "_count": {}
+        },
+        "type": "object"
+      },
+      "name": "searchPatient",
+      "operation": "GET /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "active": {},
+            "gender": {
+              "description": "male | female | other | unknown",
+              "type": "string"
+            },
+            "identifier": {
+              "description": "An identifier for this patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "name": {
+              "description": "A name associated with the patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "identifier",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "SimplePatient.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (SimplePatient.Patient).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "readPatient",
+      "operation": "GET /Patient/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "active": {},
+            "gender": {
+              "description": "male | female | other | unknown",
+              "type": "string"
+            },
+            "identifier": {
+              "description": "An identifier for this patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "name": {
+              "description": "A name associated with the patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "identifier",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "SimplePatient.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (SimplePatient.Patient).",
+      "inputSchema": {
+        "properties": {
+          "active": {},
+          "gender": {
+            "description": "male | female | other | unknown",
+            "type": "string"
+          },
+          "identifier": {
+            "description": "An identifier for this patient",
+            "items": {
+              "properties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "A name associated with the patient",
+            "items": {
+              "properties": {},
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "identifier",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createPatient",
+      "operation": "POST /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "active": {},
+            "gender": {
+              "description": "male | female | other | unknown",
+              "type": "string"
+            },
+            "identifier": {
+              "description": "An identifier for this patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "name": {
+              "description": "A name associated with the patient",
+              "items": {
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "identifier",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "SimplePatient.Patient",
+        "status": "201"
+      }
+    }
+  ]
+}

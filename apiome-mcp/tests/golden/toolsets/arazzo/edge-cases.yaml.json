@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "AddTags",
+      "operation": "PublishContent#AddTags"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "CreateArticle",
+      "operation": "PublishContent#CreateArticle"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Publish",
+      "operation": "PublishContent#Publish"
+    }
+  ]
+}

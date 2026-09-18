@@ -1,0 +1,194 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Fire-and-forget cancellation.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cancelOrder",
+      "operation": "com.example.orders.OrderService.cancelOrder"
+    },
+    {
+      "description": "Fetch one order.\n\nReturns com.example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "com.example.orders.OrderService.getOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku",
+                  "unitPrice"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "note": {
+              "type": "string"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "placedAt": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "customerId",
+            "lines",
+            "orderId",
+            "placedAt",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.orders.Order"
+      }
+    },
+    {
+      "description": "Create an order and return the stored form.\n\nReturns com.example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "unitPrice": {}
+              },
+              "required": [
+                "quantity",
+                "sku",
+                "unitPrice"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "placedAt": {},
+          "status": {
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "customerId",
+          "lines",
+          "orderId",
+          "placedAt",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "com.example.orders.OrderService.placeOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku",
+                  "unitPrice"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "note": {
+              "type": "string"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "placedAt": {},
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "customerId",
+            "lines",
+            "orderId",
+            "placedAt",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.orders.Order"
+      }
+    }
+  ]
+}

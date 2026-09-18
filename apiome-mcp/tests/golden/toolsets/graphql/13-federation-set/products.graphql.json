@@ -1,0 +1,231 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Products currently available to ship.\n\nReturns array of Product.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "inStock",
+      "operation": "Query.inStock",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A purchasable item in the storefront catalog.",
+            "properties": {
+              "deliveryEstimateDays": {},
+              "id": {},
+              "name": {},
+              "priceCents": {},
+              "reviews": {
+                "description": "All reviews written for this product.",
+                "items": {
+                  "description": "A customer review of one product.",
+                  "properties": {
+                    "body": {},
+                    "id": {},
+                    "product": {},
+                    "rating": {}
+                  },
+                  "required": [
+                    "body",
+                    "id",
+                    "product",
+                    "rating"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "unitsInStock": {},
+              "valueScore": {},
+              "weightGrams": {}
+            },
+            "required": [
+              "id",
+              "name",
+              "priceCents",
+              "unitsInStock"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product"
+      }
+    },
+    {
+      "description": "The most recent reviews across all products.\n\nReturns array of Review.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 10
+          }
+        },
+        "type": "object"
+      },
+      "name": "latestReviews",
+      "operation": "Query.latestReviews",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A customer review of one product.",
+            "properties": {
+              "body": {},
+              "id": {},
+              "product": {
+                "description": "A purchasable item in the storefront catalog.",
+                "properties": {
+                  "deliveryEstimateDays": {},
+                  "id": {},
+                  "name": {},
+                  "priceCents": {},
+                  "reviews": {
+                    "description": "All reviews written for this product.",
+                    "items": {},
+                    "type": "array"
+                  },
+                  "unitsInStock": {},
+                  "valueScore": {},
+                  "weightGrams": {}
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "priceCents",
+                  "unitsInStock"
+                ],
+                "type": "object"
+              },
+              "rating": {}
+            },
+            "required": [
+              "body",
+              "id",
+              "product",
+              "rating"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Review"
+      }
+    },
+    {
+      "description": "Look up one product by its identifier.\n\nReturns Product.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "product",
+      "operation": "Query.product",
+      "output": {
+        "schema": {
+          "description": "A purchasable item in the storefront catalog.",
+          "properties": {
+            "deliveryEstimateDays": {},
+            "id": {},
+            "name": {},
+            "priceCents": {},
+            "reviews": {
+              "description": "All reviews written for this product.",
+              "items": {
+                "description": "A customer review of one product.",
+                "properties": {
+                  "body": {},
+                  "id": {},
+                  "product": {},
+                  "rating": {}
+                },
+                "required": [
+                  "body",
+                  "id",
+                  "product",
+                  "rating"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "unitsInStock": {},
+            "valueScore": {},
+            "weightGrams": {}
+          },
+          "required": [
+            "id",
+            "name",
+            "priceCents",
+            "unitsInStock"
+          ],
+          "type": "object"
+        },
+        "shape": "Product"
+      }
+    },
+    {
+      "description": "The current best-selling products.\n\nReturns array of Product.",
+      "inputSchema": {
+        "properties": {
+          "first": {
+            "default": 5
+          }
+        },
+        "type": "object"
+      },
+      "name": "topProducts",
+      "operation": "Query.topProducts",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A purchasable item in the storefront catalog.",
+            "properties": {
+              "deliveryEstimateDays": {},
+              "id": {},
+              "name": {},
+              "priceCents": {},
+              "reviews": {
+                "description": "All reviews written for this product.",
+                "items": {
+                  "description": "A customer review of one product.",
+                  "properties": {
+                    "body": {},
+                    "id": {},
+                    "product": {},
+                    "rating": {}
+                  },
+                  "required": [
+                    "body",
+                    "id",
+                    "product",
+                    "rating"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "unitsInStock": {},
+              "valueScore": {},
+              "weightGrams": {}
+            },
+            "required": [
+              "id",
+              "name",
+              "priceCents",
+              "unitsInStock"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product"
+      }
+    }
+  ]
+}

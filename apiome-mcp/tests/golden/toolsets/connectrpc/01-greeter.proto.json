@@ -1,0 +1,41 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns greet.v1.GreetResponse.",
+      "inputSchema": {
+        "properties": {
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "languages"
+        ],
+        "type": "object"
+      },
+      "name": "Greet",
+      "operation": "greet.v1.GreetService.Greet",
+      "output": {
+        "schema": {
+          "properties": {
+            "greeting": {
+              "type": "string"
+            },
+            "language": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "greet.v1.GreetResponse"
+      }
+    }
+  ]
+}

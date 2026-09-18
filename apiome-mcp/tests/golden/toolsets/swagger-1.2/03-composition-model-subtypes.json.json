@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Fetch a vehicle; the concrete type is chosen by the discriminator.\n\nReturns HTTP 200 application/json (Vehicle): Successful response",
+      "inputSchema": {
+        "properties": {
+          "vin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "vin"
+        ],
+        "type": "object"
+      },
+      "name": "getVehicle",
+      "operation": "GET /vehicles/{vin}",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "Base model; 1.2 expresses inheritance with subTypes + discriminator.",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "registered": {
+              "format": "date",
+              "type": "string"
+            },
+            "vin": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "vin"
+          ],
+          "type": "object"
+        },
+        "shape": "Vehicle",
+        "status": "200"
+      }
+    }
+  ]
+}

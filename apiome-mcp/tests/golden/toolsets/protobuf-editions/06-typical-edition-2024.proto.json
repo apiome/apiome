@@ -1,0 +1,65 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.catalogue.v2.ListProductsResponse.",
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "page_size": {},
+          "page_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "page_size"
+        ],
+        "type": "object"
+      },
+      "name": "ListProducts",
+      "operation": "example.catalogue.v2.CatalogueService.ListProducts",
+      "output": {
+        "schema": {
+          "properties": {
+            "next_page_token": {
+              "type": "string"
+            },
+            "products": {
+              "items": {
+                "properties": {
+                  "discontinued": {},
+                  "name": {
+                    "type": "string"
+                  },
+                  "price": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "discontinued",
+                  "tags"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "products"
+          ],
+          "type": "object"
+        },
+        "shape": "example.catalogue.v2.ListProductsResponse"
+      }
+    }
+  ]
+}
