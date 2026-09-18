@@ -2,9 +2,10 @@
 
 The shared middle between every emitter that has to answer "what tools does this API
 expose?": :mod:`app.llm_tools_emitter` renders these definitions as an OpenAI /
-Anthropic / bare function-calling array, and the MCP tool-definition emitter
-(MFX-32.1, #4295) is meant to render exactly the same definitions as MCP
-``{name, description, inputSchema}`` entries. Both halves therefore agree on the one
+Anthropic / bare function-calling array, and :mod:`app.mcp_tool_mapping` (AGX-1.1,
+#4529 — the compiler the MCP tool-definition emitter MFX-32.1 #4295 and the SDK-4.5
+MCP server artifact #4499 share) renders exactly the same definitions as MCP
+``{name, description, inputSchema}`` entries. Every renderer therefore agrees on the one
 thing they must never disagree about — *what a tool is called and what arguments it
 takes* — because the derivation lives here and not in either renderer.
 
@@ -212,6 +213,15 @@ _SCHEMA_DEEPER_LIST_POSITIONS: Tuple[str, ...] = ("prefixItems", "items")
 #: those must pass through untouched rather than be resolved against ``api.types``.
 #: Every ref with *this* prefix is resolved away, so none reaches the output.
 _REF_PREFIX = "#/x-apiome-inline/"
+
+#: Component-section ref prefixes a source document's *inline* payload schema may use to
+#: point at one of its own named types (OpenAPI 3.x, then Swagger 2.0 / draft-04 JSON
+#: Schema). The normalizer keeps an inline body verbatim, so such a ref survives into
+#: :attr:`~app.canonical_model.Message.payload_schema` pointing at a component section a
+#: tool schema does not have. :meth:`ToolSchemaBuilder._adopt_component_refs` rewrites
+#: each one that names a canonical type onto :data:`_REF_PREFIX` so the inliner resolves
+#: it like any other named-type reference (AGX-1.1, #4529).
+_COMPONENT_REF_PREFIXES: Tuple[str, ...] = ("#/components/schemas/", "#/definitions/")
 
 
 # ===========================================================================
@@ -608,6 +618,29 @@ class ToolSchemaBuilder:
         )
         return self._finish(schema, subject=type_.key)
 
+    def for_message(self, message: Message) -> Optional[Dict[str, Any]]:
+        """Build the self-contained schema of one message's payload (AGX-1.1, #4529).
+
+        The counterpart of :meth:`for_operation` for the *other* direction: where an
+        argument object must be an object, a response body is whatever the source says it
+        is — an array of records, a scalar, an object — so the root is **not** coerced.
+        Named types are inlined, cycles become free-form nodes, and the nesting limit is
+        enforced exactly as it is for an argument schema, so a renderer that describes a
+        tool's result gets a schema held to the same rules as its inputs.
+
+        Args:
+            message: A request or response message of an operation.
+
+        Returns:
+            The inlined, depth-limited payload schema, or ``None`` when the message
+            carries no payload (for example a ``204 No Content`` response).
+        """
+        schema = self._body_schema(message)
+        if schema is None:
+            return None
+        self._limit_depth(schema, subject=message.key)
+        return schema
+
     # --- assembly -----------------------------------------------------------
 
     @staticmethod
@@ -691,7 +724,8 @@ class ToolSchemaBuilder:
         if message is None:
             return None
         if isinstance(message.payload_schema, dict):
-            return self._inline(copy.deepcopy(message.payload_schema), subject=message.key)
+            adopted = self._adopt_component_refs(copy.deepcopy(message.payload_schema))
+            return self._inline(adopted, subject=message.key)
         if message.payload is not None:
             return self._inline(self._schema.type_ref(message.payload), subject=message.key)
         return None
@@ -744,6 +778,40 @@ class ToolSchemaBuilder:
         properties[BODY_ARGUMENT_NAME] = body
         if required_body:
             required.append(BODY_ARGUMENT_NAME)
+
+    def _adopt_component_refs(self, node: Any) -> Any:
+        """Point a verbatim payload schema's component refs at the model's named types.
+
+        An inline request/response body keeps the source's own spelling of a reference to
+        a named schema (``#/components/schemas/User``). A tool schema has no component
+        section, so left alone that ref would dangle; rewritten onto the inliner's prefix
+        it is resolved — with the usual cycle detection — like every other named-type
+        reference. Only refs naming a type the model actually defines are rewritten: any
+        other ref is left for the caller's validity pass to report, rather than resolved
+        against a guess.
+
+        Walks every nested value (a component ref may sit under ``properties``, ``items``
+        or a composition), mutating ``node`` in place.
+
+        Args:
+            node: A copy of a verbatim payload schema.
+
+        Returns:
+            ``node``, with every resolvable component ref rewritten.
+        """
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str):
+                for prefix in _COMPONENT_REF_PREFIXES:
+                    if ref.startswith(prefix) and ref[len(prefix) :] in self._types:
+                        node["$ref"] = _REF_PREFIX + ref[len(prefix) :]
+                        break
+            for value in node.values():
+                self._adopt_component_refs(value)
+        elif isinstance(node, list):
+            for item in node:
+                self._adopt_component_refs(item)
+        return node
 
     def _note_redactions(self, count: int, pointer: str) -> None:
         """Record that :func:`scrub_credentials` removed something at ``pointer``."""

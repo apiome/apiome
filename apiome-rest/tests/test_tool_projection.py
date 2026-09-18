@@ -1025,3 +1025,69 @@ def test_a_model_with_operations_never_falls_back_to_types() -> None:
 def test_a_model_with_nothing_callable_projects_nothing() -> None:
     api = _api([_operation("pub", name="pub", kind=OperationKind.PUBLISH)])
     assert project_tools(api, losses=LossTracker()) == []
+
+
+# ===========================================================================
+# Message payloads and component refs (AGX-1.1, #4529)
+# ===========================================================================
+
+
+def _pet_type() -> Type:
+    return Type(
+        key="Pet",
+        name="Pet",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(key="Pet.name", name="name", type=TypeRef(name="string", nullable=False)),
+            CanonicalField(key="Pet.parent", name="parent", type=TypeRef(name="Pet")),
+        ],
+    )
+
+
+def test_for_message_inlines_a_response_without_forcing_an_object_root() -> None:
+    losses = LossTracker()
+    message = Message(
+        key="GET /pets#response.200",
+        role=MessageRole.RESPONSE,
+        status_code="200",
+        payload=TypeRef(item=TypeRef(name="Pet")),
+    )
+    schema = ToolSchemaBuilder(_api(types=[_pet_type()]), losses=losses).for_message(message)
+    assert schema is not None
+    assert schema["type"] == "array"
+    assert schema["items"]["properties"]["name"] == {"type": "string"}
+    assert schema["items"]["properties"]["parent"] == {}
+    assert LOSS_SCHEMA_CYCLE in _subjects(losses)
+
+
+def test_for_message_returns_none_for_a_bodiless_message() -> None:
+    message = Message(key="DELETE /pets#response.204", role=MessageRole.RESPONSE, status_code="204")
+    assert ToolSchemaBuilder(_api(), losses=LossTracker()).for_message(message) is None
+
+
+def test_for_message_enforces_the_nesting_limit() -> None:
+    losses = LossTracker()
+    message = Message(key="op#response.200", role=MessageRole.RESPONSE, payload_schema=_four_level_body())
+    schema = ToolSchemaBuilder(_api(), losses=losses, max_depth=2).for_message(message)
+    assert schema is not None
+    assert _max_depth(schema) <= 2
+    assert LOSS_NESTING_DEPTH in _subjects(losses)
+
+
+@pytest.mark.parametrize("prefix", ["#/components/schemas/", "#/definitions/"])
+def test_a_component_ref_in_an_inline_body_resolves_to_the_named_type(prefix: str) -> None:
+    body = {"type": "object", "properties": {"pet": {"$ref": f"{prefix}Pet"}}}
+    operation = _operation(messages=[_body_message(body)])
+    losses = LossTracker()
+    schema, _ = ToolSchemaBuilder(_api([operation], types=[_pet_type()]), losses=losses).for_operation(operation)
+    pet = schema["properties"]["pet"]
+    assert pet["properties"]["name"] == {"type": "string"}
+    assert "$ref" not in pet
+    assert body["properties"]["pet"] == {"$ref": f"{prefix}Pet"}, "the source message must not be mutated"
+
+
+def test_a_component_ref_to_an_undefined_type_is_left_for_the_renderer() -> None:
+    body = {"type": "object", "properties": {"ghost": {"$ref": "#/components/schemas/Ghost"}}}
+    operation = _operation(messages=[_body_message(body)])
+    schema, _ = ToolSchemaBuilder(_api([operation]), losses=LossTracker()).for_operation(operation)
+    assert schema["properties"]["ghost"] == {"$ref": "#/components/schemas/Ghost"}

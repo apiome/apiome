@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.194.0
+  version: 1.195.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -68294,7 +68294,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         completed_at:
           anyOf:
           - type: string
@@ -68756,13 +68756,14 @@ components:
         policy_fingerprint:
           type: string
           title: Policy Fingerprint
-          description: Policy Fingerprint.
+          description: Digest of the component requirements it was judged under —
+            the part of the suite policy that decides a verdict.
           example: a1b2c3d4e5f6789012345678901234ab
         policy:
           additionalProperties: true
           type: object
           title: Policy
-          description: The suite policy it was judged under.
+          description: The whole suite policy it was judged under.
         thresholds_source:
           type: string
           title: Thresholds Source
@@ -69747,7 +69748,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -69920,7 +69921,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -70294,13 +70295,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -71869,7 +71870,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 484ece9e-c516-4bf3-a612-17bd5f9bbf0d
+          example: 67f8b0a2-bdd4-4d85-808f-5a207f53e156
         method:
           type: string
           title: Method
@@ -74012,7 +74013,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         envelope:
           additionalProperties: true
           type: object
@@ -75392,7 +75393,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         browse_url:
           anyOf:
           - type: string
@@ -106478,7 +106479,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
       additionalProperties: false
       type: object
       required:
@@ -115277,7 +115278,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         detected_by:
           anyOf:
           - type: string
@@ -120439,13 +120440,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T01:21:52Z'
+          example: '2026-09-18T02:23:08Z'
         outcome:
           anyOf:
           - type: string

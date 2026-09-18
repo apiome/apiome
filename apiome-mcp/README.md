@@ -106,6 +106,12 @@ the upstream credential vault skipped entirely and the invocation audit labelled
 ``mock``. Switching a toolset between ``mock`` and ``prod`` needs no recompile. Resolver:
 ``apiome_mcp.mock_target``; see **[docs/MOCK_TARGET.md](docs/MOCK_TARGET.md)** (#4536).
 
+**Operation→tool compiler (AGX-1.1):** a published version's operations compile into a
+deterministic, MCP-valid toolset (tool name from `operationId`, description with the 2xx
+output, merged `inputSchema`) via ``apiome_mcp.tool_compiler`` — a re-export of
+``app.mcp_tool_mapping`` shared with SDK-4.5 and MFX-32.1. It does not change the catalog
+``tools/list``; see **[docs/TOOL_COMPILER.md](docs/TOOL_COMPILER.md)** (#4529).
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

@@ -51,6 +51,15 @@ When implementing AGX-3.1 (#4537) or refactoring auth/middleware shared with
    filtered or if catalog middleware `on_list_tools` stops being a pure
    passthrough (see source AST guard).
 
+## One operation→tool mapping
+
+AGX tools are compiled by AGX-1.1 ([#4529](https://github.com/apiome/apiome/issues/4529)):
+`app.mcp_tool_mapping` in apiome-rest, re-exported as `apiome_mcp.tool_compiler`. The
+generated MCP server artifact (SDK-4.5, #4499) and the MCP tool-definition emitter
+(MFX-32.1, #4295) must compile through the same function rather than re-deriving names or
+schemas. A compiled toolset is served by the AGX runtime and is never merged into the
+catalog registry above. Rules: [TOOL_COMPILER.md](TOOL_COMPILER.md).
+
 ## Operator pointers
 
 - List-always ADR: [LIST_ALWAYS.md](LIST_ALWAYS.md)
