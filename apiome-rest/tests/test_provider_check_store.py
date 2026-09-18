@@ -360,6 +360,34 @@ def test_a_verdict_that_failed_to_publish_is_tried_again(fake, provider):
     assert len(provider.calls) == 2
 
 
+def test_a_retry_that_succeeds_is_ledgered_and_moves_the_same_provider_check(fake, provider):
+    # GNC-3.1 (V267): the failure and the dispatch after it are different outcomes of one verdict.
+    # Before, the dispatch collided with the failure in the ledger, the provider's id was never
+    # written back, and the next publish POSTed a second check run onto the pull request.
+    provider.status = 503
+    _record(fake, provider, state=STATE_PENDING)
+    row = next(iter(fake.check_runs.values()))
+    provider.status = 201
+    retried = provider_check_store.publish_check(
+        fake, fake._check_view(row), repository_id=REPOSITORY, client_factory=provider.factory()
+    )
+    assert retried.ledgered is True
+    assert fake._check_view(row)["last_publish_outcome"] == OUTCOME_DISPATCHED
+    assert row["external_id"] == "4242"
+
+    # The same verdict again costs the provider nothing: the dispatch is found first.
+    again = provider_check_store.publish_check(
+        fake, fake._check_view(row), repository_id=REPOSITORY, client_factory=provider.factory()
+    )
+    assert again.ledgered is False
+    assert len(provider.calls) == 2
+
+    # A new verdict moves the check the provider already has, rather than creating another.
+    _record(fake, provider, state=STATE_PASS)
+    assert provider.calls[-1][0] == "PATCH"
+    assert provider.calls[-1][1].endswith("/check-runs/4242")
+
+
 def test_a_later_state_of_the_same_check_is_a_new_verdict_and_is_published(fake, provider):
     _record(fake, provider, state=STATE_PENDING)
     _record(fake, provider, state=STATE_PASS)

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.193.0
+  version: 1.194.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -15304,6 +15304,835 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for settleoneconflictofamergeresultresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/check-suite:
+    post:
+      tags:
+      - api-check-suite
+      summary: Run the API change check suite for a version
+      description: 'Aggregate the evidence the platform already has about this version
+        into **one** verdict — `pending`, `pass`, `fail` or `skipped` — and, when
+        the version is bound to a repository ref, report it on the pull request as
+        the `apiome/api-change` check.
+
+
+        Five components, each a reading of existing evidence: **lint** (the stored
+        GOV lint report), **breaking** and **consumers** (the CTG classification against
+        the previous published revision, judged by the CTG-4.5 deploy gate''s own
+        rules and thresholds), **contract** (the newest ECA contract run of this revision,
+        if its suite is still this draft''s) and **sdk** (the SDK client-kit manifest).
+        Only the components the suite policy marks `required` decide the verdict.
+
+
+        **Idempotent.** An evaluation is keyed by everything it is a function of —
+        the draft''s content digest, the commit, both policies and every component''s
+        evidence. Re-running over unchanged inputs returns that evaluation (`200`,
+        `replayed: true`) with the same evidence ids, and the provider is not called
+        again for a publish it already has. New inputs are a new evaluation (`201`).
+
+
+        `commit_sha` defaults to the commit the binding is synchronized with. A newer
+        commit on the branch gets `skipped` (`spec-unchanged`) when it does not touch
+        the bound specification, otherwise `pending` (`draft-not-synchronized`) until
+        the draft catches up. A commit the binding has never been observed at is `409
+        check-suite-commit-unknown`.
+
+
+        Requires `versions:edit`.'
+      operationId: run_check_suite_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__check_suite_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Ref
+          description: Version Ref schema.
+        description: Path parameter identifying the version ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runthe Apichangechecksuiteforaversionauthorization schema.
+          - type: 'null'
+            description: Runthe Apichangechecksuiteforaversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runthe Apichangechecksuiteforaversion Xapikey schema.
+          - type: 'null'
+            description: Runthe Apichangechecksuiteforaversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSuiteRunRequest'
+              description: Request body for runthe apichangechecksuiteforaversionrequest.
+        description: Request body for run the api change check suite for a version.
+      responses:
+        '201':
+          description: Successful response for run the api change check suite for
+            a version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuiteRunDetail'
+                description: Response payload for runthe apichangechecksuiteforaversionresponse201.
+        '200':
+          description: These inputs were already evaluated; that evaluation.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for runthe apichangechecksuiteforaversionresponse422.
+    get:
+      tags:
+      - api-check-suite
+      summary: Read the latest API change check suite evaluation of a version
+      description: 'The newest evaluation (at `commit_sha`, when given), with `stale:
+        true` when the draft''s content or either policy has moved since — the evaluation
+        then no longer answers for the version as it is now — and the provider check
+        it became.
+
+
+        Requires `projects:view`; readable by a CI key holding `diff:read` or `lint:read`.'
+      operationId: read_check_suite_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__check_suite_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Ref
+          description: Version Ref schema.
+        description: Path parameter identifying the version ref segment.
+      - name: commit_sha
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatest Apichangechecksuiteevaluaticommitsha schema.
+          - type: 'null'
+            description: Readthelatest Apichangechecksuiteevaluaticommitsha schema.
+          description: Only evaluations at this commit.
+          title: Commit Sha
+        description: Only evaluations at this commit.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatest Apichangechecksuiteevaluatiauthorization schema.
+          - type: 'null'
+            description: Readthelatest Apichangechecksuiteevaluatiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatest Apichangechecksuiteevaluati Xapikey schema.
+          - type: 'null'
+            description: Readthelatest Apichangechecksuiteevaluati Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the latest api change check suite
+            evaluation of a version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuiteRunDetail'
+                description: Response payload for readthelatest apichangechecksuiteevaluatiresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthelatest apichangechecksuiteevaluatiresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/versions/{version_ref}/check-suite/runs:
+    get:
+      tags:
+      - api-check-suite
+      summary: List a version's API change check suite evaluations
+      description: 'Every evaluation of the version, newest first.
+
+
+        Requires `projects:view`.'
+      operationId: list_check_suite_runs_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__check_suite_runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Ref
+          description: Version Ref schema.
+        description: Path parameter identifying the version ref segment.
+      - name: commit_sha
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversions Apichangechecksuiteevaluaticommitsha schema.
+          - type: 'null'
+            description: Listaversions Apichangechecksuiteevaluaticommitsha schema.
+          description: Only evaluations at this commit.
+          title: Commit Sha
+        description: Only evaluations at this commit.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Page size.
+          default: 50
+          title: Limit
+        description: Page size.
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Evaluations to skip.
+          default: 0
+          title: Offset
+        description: Evaluations to skip.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversions Apichangechecksuiteevaluatiauthorization schema.
+          - type: 'null'
+            description: Listaversions Apichangechecksuiteevaluatiauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaversions Apichangechecksuiteevaluati Xapikey schema.
+          - type: 'null'
+            description: Listaversions Apichangechecksuiteevaluati Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a version's api change check suite
+            evaluations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuiteRunList'
+                description: Response payload for listaversions apichangechecksuiteevaluatiresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaversions apichangechecksuiteevaluatiresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/check-suite/runs/{run_id}:
+    get:
+      tags:
+      - api-check-suite
+      summary: Read one API change check suite evaluation — the drill-down
+      description: 'One evaluation: every component with the evidence it read (ids,
+        digests, counts), a link to that evidence, and the policy it was judged under.
+        This is what a provider check''s summary points at.
+
+
+        Requires `projects:view`.'
+      operationId: read_check_suite_run_v1_tenants__tenant_slug__projects__project_ref__check_suite_runs__run_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readone Apichangechecksuiteevaluationthedauthorization schema.
+          - type: 'null'
+            description: Readone Apichangechecksuiteevaluationthedauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readone Apichangechecksuiteevaluationthed Xapikey schema.
+          - type: 'null'
+            description: Readone Apichangechecksuiteevaluationthed Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one api change check suite evaluation
+            — the drill-down.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuiteRunDetail'
+                description: Response payload for readone apichangechecksuiteevaluationthedresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readone apichangechecksuiteevaluationthedresponse422.
+  /v1/tenants/{tenant_slug}/governance/check-suite-policy:
+    get:
+      tags:
+      - api-check-suite
+      - governance
+      summary: Read the tenant's API change check suite policy
+      description: 'Each component — `lint`, `breaking`, `consumers`, `contract`,
+        `sdk` — is `required` (it decides the verdict), `advisory` (evaluated and
+        reported, never deciding) or `off` (not evaluated). Absent components take
+        their documented defaults: lint, breaking and consumers required; contract
+        and sdk advisory.
+
+
+        `requiredForPublish: true` refuses to publish a version whose current content
+        has no passing (or skipped) evaluation under the policy in force; force-publish
+        with a reason stays the escape, and is audited.
+
+
+        Requires `projects:view`.'
+      operationId: get_tenant_check_suite_policy_v1_tenants__tenant_slug__governance_check_suite_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthetenants Apichangechecksuitepolicyauthorization schema.
+          - type: 'null'
+            description: Readthetenants Apichangechecksuitepolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthetenants Apichangechecksuitepolicy Xapikey schema.
+          - type: 'null'
+            description: Readthetenants Apichangechecksuitepolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the tenant's api change check
+            suite policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for readthetenants apichangechecksuitepolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthetenants apichangechecksuitepolicyresponse422.
+    put:
+      tags:
+      - api-check-suite
+      - governance
+      summary: Save the tenant's API change check suite policy
+      description: 'Each component — `lint`, `breaking`, `consumers`, `contract`,
+        `sdk` — is `required` (it decides the verdict), `advisory` (evaluated and
+        reported, never deciding) or `off` (not evaluated). Absent components take
+        their documented defaults: lint, breaking and consumers required; contract
+        and sdk advisory.
+
+
+        `requiredForPublish: true` refuses to publish a version whose current content
+        has no passing (or skipped) evaluation under the policy in force; force-publish
+        with a reason stays the escape, and is audited.
+
+
+        Requires a signed-in tenant administrator. Audited as `governance.check_suite_policy.update`.'
+      operationId: put_tenant_check_suite_policy_v1_tenants__tenant_slug__governance_check_suite_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savethetenants Apichangechecksuitepolicyauthorization schema.
+          - type: 'null'
+            description: Savethetenants Apichangechecksuitepolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savethetenants Apichangechecksuitepolicy Xapikey schema.
+          - type: 'null'
+            description: Savethetenants Apichangechecksuitepolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSuitePolicyPutRequest'
+              description: Request body for savethetenants apichangechecksuitepolicyrequest.
+        description: Request body for save the tenant's api change check suite policy.
+      responses:
+        '200':
+          description: Successful response for save the tenant's api change check
+            suite policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for savethetenants apichangechecksuitepolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for savethetenants apichangechecksuitepolicyresponse422.
+    delete:
+      tags:
+      - api-check-suite
+      - governance
+      summary: Clear the tenant's API change check suite policy
+      description: 'Drop the tenant-wide policy so the documented default governs.
+        Project overrides are left in place. Returns the policy now in force.
+
+
+        Requires a signed-in tenant administrator. Audited as `governance.check_suite_policy.clear`.'
+      operationId: delete_tenant_check_suite_policy_v1_tenants__tenant_slug__governance_check_suite_policy_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Clearthetenants Apichangechecksuitepolicyauthorization schema.
+          - type: 'null'
+            description: Clearthetenants Apichangechecksuitepolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Clearthetenants Apichangechecksuitepolicy Xapikey schema.
+          - type: 'null'
+            description: Clearthetenants Apichangechecksuitepolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for clear the tenant's api change check
+            suite policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for clearthetenants apichangechecksuitepolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for clearthetenants apichangechecksuitepolicyresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/check-suite-policy:
+    get:
+      tags:
+      - api-check-suite
+      summary: Read the API change check suite policy in force for a project
+      description: 'Each component — `lint`, `breaking`, `consumers`, `contract`,
+        `sdk` — is `required` (it decides the verdict), `advisory` (evaluated and
+        reported, never deciding) or `off` (not evaluated). Absent components take
+        their documented defaults: lint, breaking and consumers required; contract
+        and sdk advisory.
+
+
+        `requiredForPublish: true` refuses to publish a version whose current content
+        has no passing (or skipped) evaluation under the policy in force; force-publish
+        with a reason stays the escape, and is audited.
+
+
+        Resolution is project → tenant → documented default, and `source` says which
+        supplied it.
+
+
+        Requires `projects:view`.'
+      operationId: get_project_check_suite_policy_v1_tenants__tenant_slug__projects__project_ref__check_suite_policy_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthe Apichangechecksuitepolicyinforcefauthorization schema.
+          - type: 'null'
+            description: Readthe Apichangechecksuitepolicyinforcefauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthe Apichangechecksuitepolicyinforcef Xapikey schema.
+          - type: 'null'
+            description: Readthe Apichangechecksuitepolicyinforcef Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the api change check suite policy
+            in force for a project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for readthe apichangechecksuitepolicyinforcefresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthe apichangechecksuitepolicyinforcefresponse422.
+    put:
+      tags:
+      - api-check-suite
+      summary: Save a project's API change check suite policy override
+      description: 'Each component — `lint`, `breaking`, `consumers`, `contract`,
+        `sdk` — is `required` (it decides the verdict), `advisory` (evaluated and
+        reported, never deciding) or `off` (not evaluated). Absent components take
+        their documented defaults: lint, breaking and consumers required; contract
+        and sdk advisory.
+
+
+        `requiredForPublish: true` refuses to publish a version whose current content
+        has no passing (or skipped) evaluation under the policy in force; force-publish
+        with a reason stays the escape, and is audited.
+
+
+        Requires a signed-in tenant administrator. Audited as `governance.check_suite_policy.update`.'
+      operationId: put_project_check_suite_policy_v1_tenants__tenant_slug__projects__project_ref__check_suite_policy_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Saveaprojects Apichangechecksuitepolicyovauthorization schema.
+          - type: 'null'
+            description: Saveaprojects Apichangechecksuitepolicyovauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Saveaprojects Apichangechecksuitepolicyov Xapikey schema.
+          - type: 'null'
+            description: Saveaprojects Apichangechecksuitepolicyov Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckSuitePolicyPutRequest'
+              description: Request body for saveaprojects apichangechecksuitepolicyovrequest.
+        description: Request body for save a project's api change check suite policy
+          override.
+      responses:
+        '200':
+          description: Successful response for save a project's api change check suite
+            policy override.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for saveaprojects apichangechecksuitepolicyovresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for saveaprojects apichangechecksuitepolicyovresponse422.
+    delete:
+      tags:
+      - api-check-suite
+      summary: Remove a project's API change check suite policy override
+      description: 'Drop the project override so the tenant-wide policy (or the documented
+        default) governs again. Returns the policy now in force.
+
+
+        Requires a signed-in tenant administrator. Audited as `governance.check_suite_policy.clear`.'
+      operationId: delete_project_check_suite_policy_v1_tenants__tenant_slug__projects__project_ref__check_suite_policy_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeaprojects Apichangechecksuitepolicyauthorization schema.
+          - type: 'null'
+            description: Removeaprojects Apichangechecksuitepolicyauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removeaprojects Apichangechecksuitepolicy Xapikey schema.
+          - type: 'null'
+            description: Removeaprojects Apichangechecksuitepolicy Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for remove a project's api change check
+            suite policy override.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckSuitePolicyOut'
+                description: Response payload for removeaprojects apichangechecksuitepolicyresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removeaprojects apichangechecksuitepolicyresponse422.
   /v1/tenants/{tenant_slug}/notifications:
     get:
       tags:
@@ -67465,7 +68294,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         completed_at:
           anyOf:
           - type: string
@@ -67634,6 +68463,414 @@ components:
         token is
 
         resolved server-side from the binding''s registration.'
+    CheckSuitePolicy:
+      properties:
+        components:
+          additionalProperties:
+            type: string
+          type: object
+          title: Components
+          description: '`required` | `advisory` | `off` for each of lint, breaking,
+            consumers, contract and sdk.'
+        requiredForPublish:
+          type: boolean
+          title: Requiredforpublish
+          description: Refuse to publish a version whose current content has no passing
+            suite evaluation under this policy.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: CheckSuitePolicy
+      description: "The ``gnc.check-suite-policy.v1`` body: what the suite requires.\n\
+        \nAttributes:\n    components: The requirement of every component — always\
+        \ all five after parsing.\n    required_for_publish: Whether publishing a\
+        \ version needs a passing (or skipped) suite\n        evaluation of exactly\
+        \ its current content under exactly this policy."
+    CheckSuitePolicyOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: gnc.check-suite-policy.v1
+          description: Schema Version.
+          example: 1.0.0
+        source:
+          type: string
+          title: Source
+          description: '`default` | `tenant` | `project`.'
+          example: human
+        policyId:
+          anyOf:
+          - type: string
+            description: Response payload for check suite policy.
+          - type: 'null'
+            description: Response payload for check suite policy.
+          title: Policyid
+          description: Policy ID.
+        contentFingerprint:
+          type: string
+          title: Contentfingerprint
+          default: ''
+          description: Content Fingerprint.
+          example: a1b2c3d4e5f6789012345678901234ab
+        policy:
+          $ref: '#/components/schemas/CheckSuitePolicy'
+          description: Policy.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for check suite policy.
+          - type: 'null'
+            description: Response payload for check suite policy.
+          title: Updatedat
+          description: Updated At.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for check suite policy.
+          - type: 'null'
+            description: Response payload for check suite policy.
+          title: Updatedby
+          description: Updated By.
+        degraded:
+          type: boolean
+          title: Degraded
+          default: false
+          description: Degraded.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - source
+      title: CheckSuitePolicyOut
+      description: "The suite policy in force for a scope.\n\nAttributes:\n    schema_version:\
+        \ :data:`POLICY_SCHEMA_VERSION`.\n    source: ``default`` (nothing saved),\
+        \ ``tenant`` or ``project``.\n    policy_id: The stored row; ``None`` for\
+        \ the documented default.\n    content_fingerprint: Digest of the body.\n\
+        \    policy: The body itself.\n    updated_at: When the stored policy last\
+        \ changed.\n    updated_by: Who changed it.\n    degraded: True when a saved\
+        \ policy could not be read and the default stood in, so\n        \"nothing\
+        \ is configured\" and \"I could not read what is\" stay distinguishable."
+    CheckSuitePolicyPutRequest:
+      properties:
+        components:
+          additionalProperties:
+            type: string
+          type: object
+          title: Components
+          description: component → `required` | `advisory` | `off`; absent components
+            take defaults.
+        requiredForPublish:
+          type: boolean
+          title: Requiredforpublish
+          description: Require a passing suite evaluation of the current content to
+            publish.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: CheckSuitePolicyPutRequest
+      description: Body for saving a suite policy — the ``gnc.check-suite-policy.v1``
+        document.
+    CheckSuiteRunDetail:
+      properties:
+        run:
+          $ref: '#/components/schemas/CheckSuiteRunRecord'
+          description: Run.
+        replayed:
+          type: boolean
+          title: Replayed
+          description: True when these inputs had already been evaluated and that
+            row came back.
+          default: false
+          example: false
+        stale:
+          type: boolean
+          title: Stale
+          description: True when the draft's content or either policy has moved since
+            this evaluation — it no longer answers for the version as it is now.
+          default: false
+          example: false
+        provider:
+          anyOf:
+          - $ref: '#/components/schemas/ProviderReport'
+          - type: 'null'
+            description: Check Suite Run schema.
+          description: The provider side, when the version is bound.
+        check:
+          anyOf:
+          - $ref: '#/components/schemas/CheckRunDetail'
+          - type: 'null'
+            description: Check Suite Run schema.
+          description: The GNC-2.2 check run the verdict became, with its publishes.
+      additionalProperties: false
+      type: object
+      required:
+      - run
+      title: CheckSuiteRunDetail
+      description: An evaluation, the provider check it became, and whether it still
+        describes the draft.
+    CheckSuiteRunList:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/CheckSuiteRunRecord'
+          type: array
+          title: Runs
+          description: Newest first.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: Number of count.
+          example: 1
+        limit:
+          type: integer
+          title: Limit
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          title: Offset
+          description: Offset.
+          example: 0
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      - limit
+      - offset
+      title: CheckSuiteRunList
+      description: A page of a version's evaluations.
+    CheckSuiteRunRecord:
+      properties:
+        schema_version:
+          type: string
+          title: Schema Version
+          default: gnc.check-suite.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: The evaluation id; quoted in the provider check's summary.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenant_id:
+          type: string
+          title: Tenant Id
+          description: Tenant that owns the resource.
+          example: ten_01h2xcejqtf3fz5y5j0v8k9m2p
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_id:
+          type: string
+          title: Version Id
+          description: Project version identifier or semantic version label, depending
+            on context.
+          example: 1.0.0
+        version_label:
+          anyOf:
+          - type: string
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Version Label
+          description: The version's label.
+        binding_id:
+          anyOf:
+          - type: string
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Binding Id
+          description: The binding the verdict was reported through, when bound.
+        commit_sha:
+          anyOf:
+          - type: string
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Commit Sha
+          description: The commit the verdict is about, when bound.
+        pr_number:
+          anyOf:
+          - type: integer
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Pr Number
+          description: The pull request, when named.
+        check_name:
+          type: string
+          title: Check Name
+          description: The provider check the verdict became.
+          example: Example
+        evaluated:
+          type: boolean
+          title: Evaluated
+          description: False for a placeholder that could not judge the draft at this
+            commit.
+          example: false
+        state:
+          type: string
+          enum:
+          - pending
+          - pass
+          - fail
+          - skipped
+          title: State
+          description: '`pending`, `pass`, `fail`, or `skipped`.'
+          example: pending
+        reason:
+          type: string
+          title: Reason
+          description: Stable reason code for the state.
+          example: example
+        title:
+          type: string
+          title: Title
+          description: The one-line title published to the provider.
+          default: ''
+          example: example
+        summary:
+          type: string
+          title: Summary
+          description: The markdown published to the provider.
+          default: ''
+          example: List pets
+        draft_digest:
+          type: string
+          title: Draft Digest
+          description: sha256 of the draft document as judged.
+          example: example
+        policy_source:
+          type: string
+          title: Policy Source
+          description: '`default` | `tenant` | `project`.'
+          example: example
+        policy_fingerprint:
+          type: string
+          title: Policy Fingerprint
+          description: Policy Fingerprint.
+          example: a1b2c3d4e5f6789012345678901234ab
+        policy:
+          additionalProperties: true
+          type: object
+          title: Policy
+          description: The suite policy it was judged under.
+        thresholds_source:
+          type: string
+          title: Thresholds Source
+          description: '`default` | `tenant` | `project`.'
+          example: example
+        thresholds_fingerprint:
+          type: string
+          title: Thresholds Fingerprint
+          description: Thresholds Fingerprint.
+          example: a1b2c3d4e5f6789012345678901234ab
+        thresholds:
+          additionalProperties: true
+          type: object
+          title: Thresholds
+          description: The deploy-gate thresholds it was judged against.
+        components:
+          items:
+            $ref: '#/components/schemas/SuiteComponent'
+          type: array
+          title: Components
+          description: Components.
+          maxItems: 1000
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: The required components, by state.
+        input_fingerprint:
+          type: string
+          title: Input Fingerprint
+          description: The re-run idempotency key.
+          example: a1b2c3d4e5f6789012345678901234ab
+        created_by:
+          anyOf:
+          - type: string
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Created By
+          description: Created By.
+        created_by_name:
+          anyOf:
+          - type: string
+            description: Check Suite Run schema.
+          - type: 'null'
+            description: Check Suite Run schema.
+          title: Created By Name
+          description: Created By Name.
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - tenant_id
+      - project_id
+      - version_id
+      - check_name
+      - evaluated
+      - state
+      - reason
+      - draft_digest
+      - policy_source
+      - policy_fingerprint
+      - thresholds_source
+      - thresholds_fingerprint
+      - input_fingerprint
+      - created_at
+      title: CheckSuiteRunRecord
+      description: One evaluation of the suite — the drill-down.
+    CheckSuiteRunRequest:
+      properties:
+        commit_sha:
+          anyOf:
+          - type: string
+            maxLength: 64
+            description: Request body for check suite run.
+          - type: 'null'
+            description: Request body for check suite run.
+          title: Commit Sha
+          description: The commit to report against; defaults to the commit the binding
+            is synchronized with. Only a bound version takes one.
+        pr_number:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+            description: Request body for check suite run.
+          - type: 'null'
+            description: Request body for check suite run.
+          title: Pr Number
+          description: The pull request the commit belongs to, when known.
+        publish:
+          type: boolean
+          title: Publish
+          description: Publish the verdict to the provider as well as recording it.
+            False records the evaluation and the check without sending it.
+          default: true
+          example: false
+      additionalProperties: false
+      type: object
+      title: CheckSuiteRunRequest
+      description: Evaluate the suite for a version, and report the verdict when it
+        is bound.
     ChecklistItemBody:
       properties:
         id:
@@ -68510,7 +69747,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -68683,7 +69920,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -69057,13 +70294,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -70632,7 +71869,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 2e0f0793-83b6-456b-b2c6-9f1fe0843e6f
+          example: 484ece9e-c516-4bf3-a612-17bd5f9bbf0d
         method:
           type: string
           title: Method
@@ -72775,7 +74012,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         envelope:
           additionalProperties: true
           type: object
@@ -74155,7 +75392,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         browse_url:
           anyOf:
           - type: string
@@ -99542,6 +100779,33 @@ components:
 
         Never carries a secret value: ``secret_set`` reports only whether a secret
         is stored.'
+    ProviderReport:
+      properties:
+        recorded:
+          type: boolean
+          title: Recorded
+          description: Whether a GNC-2.2 check run holds the verdict.
+          example: false
+        reason:
+          anyOf:
+          - type: string
+            description: Provider Report schema.
+          - type: 'null'
+            description: Provider Report schema.
+          title: Reason
+          description: Why it was not recorded, as a stable code.
+        message:
+          type: string
+          title: Message
+          description: A human explanation.
+          default: ''
+          example: Example validation message.
+      additionalProperties: false
+      type: object
+      required:
+      - recorded
+      title: ProviderReport
+      description: What happened on the provider side of an evaluation.
     ProviderVerificationOptions:
       properties:
         allow_mutating:
@@ -100390,9 +101654,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Request body for push webhook subscription create.
           - type: 'null'
             description: Request body for push webhook subscription create.
@@ -100433,9 +101697,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Response payload for push webhook subscription.
           - type: 'null'
             description: Response payload for push webhook subscription.
@@ -100499,9 +101763,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Request body for push webhook subscription update.
           - type: 'null'
             description: Request body for push webhook subscription update.
@@ -105214,7 +106478,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
       additionalProperties: false
       type: object
       required:
@@ -112992,6 +114256,94 @@ components:
       title: SuiteApiInfo
       description: Identity of the API the suite was compiled from, as the canonical
         model states it.
+    SuiteComponent:
+      properties:
+        component:
+          type: string
+          title: Component
+          description: Component.
+          example: example
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        requirement:
+          type: string
+          title: Requirement
+          description: Requirement.
+          example: example
+        counted:
+          type: boolean
+          title: Counted
+          description: Counted.
+          example: false
+        state:
+          type: string
+          enum:
+          - pending
+          - pass
+          - fail
+          - skipped
+          title: State
+          description: State.
+          example: pending
+        reason:
+          type: string
+          title: Reason
+          description: Reason.
+          example: example
+        detail:
+          type: string
+          title: Detail
+          description: Detail.
+          example: example
+        warned:
+          type: boolean
+          title: Warned
+          default: false
+          description: Warned.
+          example: false
+        link:
+          anyOf:
+          - type: string
+            description: Suite Component schema.
+          - type: 'null'
+            description: Suite Component schema.
+          title: Link
+          description: Link.
+        evidence:
+          additionalProperties: true
+          type: object
+          title: Evidence
+          description: Evidence.
+        rule:
+          additionalProperties: true
+          type: object
+          title: Rule
+          description: Rule.
+      additionalProperties: false
+      type: object
+      required:
+      - component
+      - label
+      - requirement
+      - counted
+      - state
+      - reason
+      - detail
+      title: SuiteComponent
+      description: "One component of the suite, judged — the unit of the drill-down.\n\
+        \nAttributes:\n    component: One of :data:`COMPONENTS`.\n    label: What\
+        \ a reviewer reads.\n    requirement: ``required`` / ``advisory`` / ``off``\
+        \ under the policy in force.\n    counted: Whether it took part in the verdict\
+        \ (exactly when it is required).\n    state: ``pending`` / ``pass`` / ``fail``\
+        \ / ``skipped``.\n    reason: Stable reason code — the deploy gate's for the\
+        \ three CTG-4.5 components.\n    detail: One human sentence.\n    warned:\
+        \ A pass that crossed a warning rung, or a pass with a caveat worth reading.\n\
+        \    link: API path of the evidence behind it.\n    evidence: The facts the\
+        \ judgment was made from — ids, digests and counts.\n    rule: The policy\
+        \ behind it: the requirement and, where one applies, the thresholds."
     SuiteExportEnvelope:
       properties:
         suite:
@@ -113925,7 +115277,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         detected_by:
           anyOf:
           - type: string
@@ -119087,13 +120439,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-17T01:40:19Z'
+          example: '2026-09-18T01:21:52Z'
         outcome:
           anyOf:
           - type: string

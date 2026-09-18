@@ -514,6 +514,13 @@ apiome diff ./openapi.yaml --against payments-api@1.0.0 --fail-on warn --format 
 apiome diff ./openapi.yaml --against payments-api@latest --format md
 apiome diff ./openapi.yaml --against payments-api@latest --consumers
 
+# API change check suite (GNC-3.1): one verdict for a pull request, reported on it
+# Exit 0 = pass or skipped, 7 = failed, 8 = pending (no verdict yet), 1 = unreachable, 2 = rejected
+apiome checks run --project payments-api --version 2.0.0 --commit $GITHUB_SHA --pr 42
+apiome checks run --project payments-api --version 2.0.0 --format md >> $GITHUB_STEP_SUMMARY
+apiome checks show --project payments-api --version 2.0.0
+apiome checks show --project payments-api --run <evaluation-id> --format json
+
 # Arazzo workflows (after arazzo import)
 apiome workflows list --project checkout-flow --version 1.0.0
 apiome workflows show checkout --project checkout-flow --version 1.0.0
@@ -592,6 +599,43 @@ For GitHub pull requests, prefer the copy-paste Action
 [`apiome/apiome/diff-action`](../diff-action/) — it runs this command, fails the check on
 exit `1`, surfaces exit `2` distinctly, and upserts one sticky PR comment with `--format md`.
 See [CI contract gate](../docs/guide/ci-diff-gate.md).
+
+### API change check suite (`checks`)
+
+One verdict about an API change instead of a wall of separate checks. The server evaluates five
+components from evidence it already has — the stored **lint** report, the **breaking**
+classification against the previous published revision and its **consumers** (both judged by the
+CTG-4.5 deploy gate's own rules and thresholds), the newest **contract** run of this revision, and
+whether the **SDK** kit still generates — and the tenant's suite policy says which of them are
+required. When the version is bound to a repository ref, the verdict is reported on the pull
+request as the `apiome/api-change` check.
+
+```bash
+apiome checks run --project payments-api --version 2.0.0
+apiome checks run --project payments-api --version 2.0.0 --commit $GITHUB_SHA --pr 42
+apiome checks run --project payments-api --version 2.0.0 --no-publish --format json
+apiome checks run --project payments-api --version 2.0.0 --format md >> $GITHUB_STEP_SUMMARY
+apiome checks show --project payments-api --version 2.0.0 --commit $GITHUB_SHA
+apiome checks show --project payments-api --run <evaluation-id>
+```
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `--commit` | the draft's synchronized commit | The commit to report against. A newer commit on the branch reads `pending` until the draft catches up (or `skipped` when it does not touch the specification). Only a bound version takes one. |
+| `--pr` | — | The pull request the commit belongs to. |
+| `--publish/--no-publish` | `--publish` | Report the verdict on the pull request as well as recording it. |
+| `--format` | `text` | `text` summary, `json` API response, `md` the markdown the pull request shows. |
+| `--run` (`show`) | — | Read one evaluation by id — the drill-down a pull request links to. |
+
+**Re-runs are idempotent.** Running the suite again over unchanged inputs returns the same
+evaluation (`replayed`) with the same evidence ids, and does not report to the provider again.
+
+**Exit codes (this command only):** `0` = pass or skipped, `7` = failed, `8` = pending (a required
+component has no verdict yet), `1` = the API could not be reached, `2` = rejected (auth, unknown
+project/version, a commit the binding never saw). `checks show` exits with the evaluation's verdict
+and warns on stderr when it is stale (the draft or the policy moved since). Running needs a
+full-access API key; `checks show --version` also works with a CI key holding `diff:read` or
+`lint:read`.
 
 ### Schema tests in CI (`schema test`)
 

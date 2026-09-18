@@ -96,6 +96,19 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         re.compile(r"^/v1/projects/[^/]+/[^/]+/gate/policy/?$"),
         API_KEY_SCOPE_LINT_READ,
     ),
+    # GNC-3.1 (#4740): the latest API change check suite evaluation of a version. Readable with
+    # either CI read scope for the deploy gate's reason — the aggregate is composed of a lint
+    # grade and a diff classification. Running the suite writes, so it stays full-access only.
+    (
+        "GET",
+        re.compile(r"^/v1/tenants/[^/]+/projects/[^/]+/versions/[^/]+/check-suite/?$"),
+        API_KEY_SCOPE_DIFF_READ,
+    ),
+    (
+        "GET",
+        re.compile(r"^/v1/tenants/[^/]+/projects/[^/]+/versions/[^/]+/check-suite/?$"),
+        API_KEY_SCOPE_LINT_READ,
+    ),
 )
 
 
