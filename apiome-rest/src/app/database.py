@@ -30909,6 +30909,283 @@ class Database:
             (tenant_id, ecosystem),
         )
 
+    # ------------------------------------------------------------------
+    # Upstream auth vault (AGX-2.2, #4534)
+    # ------------------------------------------------------------------
+
+    #: An upstream credential's metadata, aliased ``c``, plus when it was last injected. The
+    #: ciphertext is added only by the accessors that need it (see ``_UPSTREAM_SECRET_COLUMNS``).
+    _UPSTREAM_CREDENTIAL_COLUMNS = """
+        c.id::text AS id,
+        c.tenant_id::text AS tenant_id,
+        c.toolset_id::text AS toolset_id,
+        c.server_url,
+        c.kind,
+        c.api_key_in,
+        c.api_key_name,
+        c.key_version,
+        c.created_by::text AS created_by,
+        c.rotated_by::text AS rotated_by,
+        c.created_at,
+        c.rotated_at,
+        (
+            SELECT u.used_at
+            FROM apiome.upstream_credential_uses u
+            WHERE u.credential_id = c.id
+              AND u.tenant_id = c.tenant_id
+              AND u.outcome = 'injected'
+            ORDER BY u.used_at DESC
+            LIMIT 1
+        ) AS last_used_at
+    """
+
+    #: The sealed secret and the key that sealed it. Never projected into an API response.
+    _UPSTREAM_SECRET_COLUMNS = "c.encrypted_secret, c.key_version"
+
+    @staticmethod
+    def _upstream_scope_ok(*ids: Any) -> bool:
+        """Return ``True`` when every id is a UUID, so a unit-test handle never reaches SQL."""
+        return all(is_uuid_string(str(value or "")) for value in ids)
+
+    def list_upstream_credentials(self, tenant_id: str, toolset_id: str) -> List[Dict[str, Any]]:
+        """Return a toolset's upstream credentials, with their ciphertext (AGX-2.2).
+
+        The ciphertext comes back only so the caller can report whether each secret still opens;
+        it must never be projected into a response.
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The agent toolset.
+
+        Returns:
+            The rows, ordered by server URL. Empty when either id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._UPSTREAM_CREDENTIAL_COLUMNS}, {self._UPSTREAM_SECRET_COLUMNS}
+            FROM apiome.upstream_credentials c
+            WHERE c.tenant_id = %s::uuid AND c.toolset_id = %s::uuid
+            ORDER BY c.server_url
+            """,
+            (tenant_id, toolset_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_upstream_credential(
+        self, tenant_id: str, toolset_id: str, credential_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one upstream credential's metadata, without its ciphertext (AGX-2.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset the credential must belong to.
+            credential_id: The credential.
+
+        Returns:
+            The row, or ``None`` when it does not exist in that tenant and toolset.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, credential_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._UPSTREAM_CREDENTIAL_COLUMNS}
+            FROM apiome.upstream_credentials c
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid AND c.toolset_id = %s::uuid
+            """,
+            (credential_id, tenant_id, toolset_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def get_upstream_credential_bindings(
+        self, tenant_id: str, toolset_id: str
+    ) -> List[Dict[str, Any]]:
+        """Return what the invocation path needs to pick and open a credential (AGX-2.2).
+
+        Lean on purpose (no last-used subquery): this runs once per agent call.
+
+        Args:
+            tenant_id: The invocation's tenant.
+            toolset_id: The invocation's toolset.
+
+        Returns:
+            ``id``, ``server_url``, ``kind``, ``api_key_in``, ``api_key_name``,
+            ``encrypted_secret`` and ``key_version`` per credential. Empty when either id is not
+            a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT c.id::text AS id, c.server_url, c.kind, c.api_key_in, c.api_key_name,
+                   {self._UPSTREAM_SECRET_COLUMNS}
+            FROM apiome.upstream_credentials c
+            WHERE c.tenant_id = %s::uuid AND c.toolset_id = %s::uuid
+            """,
+            (tenant_id, toolset_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def insert_upstream_credential(
+        self,
+        *,
+        tenant_id: str,
+        toolset_id: str,
+        server_url: str,
+        kind: str,
+        api_key_in: Optional[str],
+        api_key_name: Optional[str],
+        encrypted_secret: bytes,
+        key_version: int,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store a new upstream credential (AGX-2.2).
+
+        ``ON CONFLICT DO NOTHING`` on the (tenant, toolset, server URL) index: an existing
+        credential is never overwritten by a create. Replacing a secret is a rotation.
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset it serves.
+            server_url: The normalized server URL it is bound to.
+            kind: ``apiKey``, ``bearer`` or ``basic``.
+            api_key_in: ``header`` / ``query`` for ``apiKey``, else ``None``.
+            api_key_name: The header or parameter name for ``apiKey``, else ``None``.
+            encrypted_secret: The sealed secret. Never plaintext.
+            key_version: The master-key version that sealed it.
+            actor_id: The user storing it.
+
+        Returns:
+            The stored row's metadata, or ``None`` when a credential already exists for that
+            binding (or an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.upstream_credentials AS c (
+                tenant_id, toolset_id, server_url, kind, api_key_in, api_key_name,
+                encrypted_secret, key_version, created_by
+            ) VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s::uuid)
+            ON CONFLICT (tenant_id, toolset_id, server_url) DO NOTHING
+            RETURNING {self._UPSTREAM_CREDENTIAL_COLUMNS}
+            """,
+            (
+                tenant_id,
+                toolset_id,
+                server_url,
+                kind,
+                api_key_in,
+                api_key_name,
+                psycopg2.Binary(encrypted_secret),
+                key_version,
+                actor,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def rotate_upstream_credential(
+        self,
+        *,
+        tenant_id: str,
+        toolset_id: str,
+        credential_id: str,
+        encrypted_secret: bytes,
+        key_version: int,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a credential's secret in one statement (AGX-2.2).
+
+        One ``UPDATE`` of the same row: a concurrent reader sees the old secret or the new one,
+        never a missing row. The binding and placement are untouched.
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset the credential must belong to.
+            credential_id: The credential.
+            encrypted_secret: The new sealed secret.
+            key_version: The master-key version that sealed it.
+            actor_id: The user rotating it.
+
+        Returns:
+            The row's metadata after the swap, or ``None`` when no such credential exists.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, credential_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.upstream_credentials AS c
+            SET encrypted_secret = %s,
+                key_version = %s,
+                rotated_by = %s::uuid,
+                rotated_at = CURRENT_TIMESTAMP
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid AND c.toolset_id = %s::uuid
+            RETURNING {self._UPSTREAM_CREDENTIAL_COLUMNS}
+            """,
+            (
+                psycopg2.Binary(encrypted_secret),
+                key_version,
+                actor,
+                credential_id,
+                tenant_id,
+                toolset_id,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def delete_upstream_credential(
+        self, tenant_id: str, toolset_id: str, credential_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Remove one upstream credential (AGX-2.2). Its use history stays (no FK).
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset the credential must belong to.
+            credential_id: The credential.
+
+        Returns:
+            The removed row's metadata, or ``None`` when nothing matched.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, credential_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            DELETE FROM apiome.upstream_credentials AS c
+            WHERE c.id = %s::uuid AND c.tenant_id = %s::uuid AND c.toolset_id = %s::uuid
+            RETURNING {self._UPSTREAM_CREDENTIAL_COLUMNS}
+            """,
+            (credential_id, tenant_id, toolset_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_upstream_credential_use(
+        self, *, tenant_id: str, credential_id: str, toolset_id: str, outcome: str
+    ) -> int:
+        """Append one metadata-only use record (AGX-2.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            credential_id: The credential opened (or that failed to open).
+            toolset_id: The toolset it was opened for.
+            outcome: ``injected`` or ``unavailable``.
+
+        Returns:
+            Rows written: ``1``, or ``0`` when an id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id, credential_id, toolset_id):
+            return 0
+        return self._execute_write(
+            """
+            INSERT INTO apiome.upstream_credential_uses
+                (tenant_id, credential_id, toolset_id, outcome)
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
+            """,
+            (tenant_id, credential_id, toolset_id, outcome),
+        )
+
     def next_sdk_publish_counter(
         self, tenant_id: str, project_id: str, ecosystem: str, release_series: str
     ) -> int:

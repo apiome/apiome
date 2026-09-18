@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.331.0] - 2026-09-17
+
+### Added
+- **Upstream auth vault (#4534, AGX-2.2)** — agents must never hold real API credentials. A
+  tenant now stores the upstream credential a managed MCP toolset presents to its real API, and
+  the AGX-2.1 invocation proxy injects it server-side; the agent only ever holds its Apiome key.
+
+  ```bash
+  curl -sX POST "$APIOME/v1/tenants/acme/agent-toolsets/$TOOLSET/upstream-credentials" \
+       -H "X-API-Key: $APIOME_KEY" -H 'Content-Type: application/json' \
+       -d '{"serverUrl": "https://api.example.com/v1", "kind": "apiKey",
+            "in": "header", "name": "X-Api-Key", "secret": {"value": "sk_live_…"}}'
+  ```
+
+  - **Encrypted at rest.** `apiome.upstream_credentials` (V268) holds ciphertext only, sealed by
+    the shared envelope cipher under its own key map (`APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS`)
+    and vault magic. No key configured ⇒ storing is a `503` and nothing is written in the clear.
+  - **Write-only.** `GET` lists metadata (binding, kind, placement, key version, whether it still
+    opens, created / rotated / last-used); create, rotate (`POST …/{id}/rotate`) and delete accept
+    a secret and never return one. A test sweeps every `GET` route in the app for any rendering of
+    a stored secret or its ciphertext. The router's `422`s no longer echo a submitted body
+    (`app.redacted_validation_route`).
+  - **Bound to a toolset and a server URL.** `https://` origin plus base path, stored normalized;
+    a secret is only opened for a request with the same scheme, host and port whose path sits
+    under the base path — never for a look-alike host, a downgrade, userinfo or an encoded
+    traversal. Kinds: `apiKey` (header or query, configurable name), `bearer`, `basic`.
+  - **Rotation without downtime.** One in-place `UPDATE`; concurrent resolves see the old secret or
+    the new one, never neither, and in-flight invocations keep the secret they opened.
+  - **Use is audited as metadata only** in the write-once `upstream_credential_uses` ledger (which
+    credential, which toolset, when, `injected` / `unavailable`); create / rotate / delete land in
+    the access audit as `agent.upstream_credential.*`. A bound credential that won't open fails
+    the call closed.
+  - Guarded by the existing `api_keys` permission (view / create / edit / delete); no new RBAC
+    resource. `toolset_id` gains its foreign key in AGX-1.2 (#4530). See
+    `docs/upstream_credential_vault.md`.
+
 ## [1.329.0] - 2026-09-17
 
 ### Added
