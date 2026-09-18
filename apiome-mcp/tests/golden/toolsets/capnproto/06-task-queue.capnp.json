@@ -1,0 +1,107 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Claim.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "claim",
+      "operation": "TaskQueue.claim",
+      "output": {
+        "schema": {
+          "properties": {
+            "leaseSeconds": {},
+            "task": {
+              "properties": {
+                "attempts": {},
+                "id": {},
+                "notBefore": {},
+                "payload": {},
+                "queue": {
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3
+                  ],
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Claim"
+      }
+    },
+    {
+      "description": "Returns TaskState.",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "complete",
+      "operation": "TaskQueue.complete",
+      "output": {
+        "schema": {
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "type": "integer"
+        },
+        "shape": "TaskState"
+      }
+    },
+    {
+      "description": "Returns uint64.",
+      "inputSchema": {
+        "properties": {
+          "attempts": {},
+          "id": {},
+          "notBefore": {},
+          "payload": {},
+          "queue": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "enqueue",
+      "operation": "TaskQueue.enqueue",
+      "output": {
+        "schema": {},
+        "shape": "uint64"
+      }
+    }
+  ]
+}

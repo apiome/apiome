@@ -1,0 +1,56 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Configure runtime mode with enums and required-field discipline examples.",
+      "inputSchema": {
+        "properties": {
+          "mode": {
+            "description": "Runtime mode",
+            "enum": [
+              "dry_run",
+              "live",
+              "shadow"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "description": "Free-text operator note",
+            "type": "string"
+          },
+          "region": {
+            "description": "Must be one of: us-east, us-west, eu-central",
+            "type": "string"
+          },
+          "verbosity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "quiet"
+                ]
+              },
+              {
+                "enum": [
+                  "normal"
+                ]
+              },
+              {
+                "enum": [
+                  "debug"
+                ]
+              }
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "region"
+        ],
+        "type": "object"
+      },
+      "name": "set_mode",
+      "operation": "04-enums-and-required.set_mode"
+    }
+  ]
+}

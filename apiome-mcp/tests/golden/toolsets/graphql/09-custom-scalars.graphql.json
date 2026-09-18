@@ -1,0 +1,247 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Attachment.",
+      "inputSchema": {
+        "properties": {
+          "file": {
+            "description": "File upload"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
+      "name": "uploadFile",
+      "operation": "Mutation.uploadFile",
+      "output": {
+        "schema": {
+          "description": "File attachment",
+          "properties": {
+            "filename": {},
+            "id": {
+              "description": "UUID string"
+            },
+            "mimeType": {},
+            "size": {
+              "description": "64-bit integer"
+            },
+            "uploadedAt": {
+              "description": "ISO 8601 date-time string"
+            },
+            "url": {
+              "description": "URL string"
+            }
+          },
+          "required": [
+            "filename",
+            "id",
+            "mimeType",
+            "size",
+            "uploadedAt",
+            "url"
+          ],
+          "type": "object"
+        },
+        "shape": "Attachment"
+      }
+    },
+    {
+      "description": "Returns array of DataPoint.",
+      "inputSchema": {
+        "properties": {
+          "from": {
+            "description": "ISO 8601 date-time string"
+          },
+          "to": {
+            "description": "ISO 8601 date-time string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "name": "analytics",
+      "operation": "Query.analytics",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "Analytics data point",
+            "properties": {
+              "id": {
+                "description": "64-bit integer"
+              },
+              "metadata": {
+                "description": "JSON object"
+              },
+              "timestamp": {
+                "description": "ISO 8601 date-time string"
+              },
+              "value": {
+                "description": "Decimal number as string"
+              }
+            },
+            "required": [
+              "id",
+              "timestamp",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of DataPoint"
+      }
+    },
+    {
+      "description": "Returns array of Event.",
+      "inputSchema": {
+        "properties": {
+          "date": {
+            "description": "Date string (YYYY-MM-DD)"
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "type": "object"
+      },
+      "name": "events",
+      "operation": "Query.events",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "Scheduled event",
+            "properties": {
+              "createdAt": {
+                "description": "ISO 8601 date-time string"
+              },
+              "date": {
+                "description": "Date string (YYYY-MM-DD)"
+              },
+              "description": {},
+              "endTime": {
+                "description": "Time string (HH:MM:SS)"
+              },
+              "id": {
+                "description": "UUID string"
+              },
+              "startTime": {
+                "description": "Time string (HH:MM:SS)"
+              },
+              "title": {}
+            },
+            "required": [
+              "createdAt",
+              "date",
+              "id",
+              "startTime",
+              "title"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Event"
+      }
+    },
+    {
+      "description": "Returns Transaction.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "UUID string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "transaction",
+      "operation": "Query.transaction",
+      "output": {
+        "schema": {
+          "description": "Financial transaction",
+          "properties": {
+            "amount": {
+              "description": "Decimal number as string"
+            },
+            "currency": {
+              "description": "Currency code (ISO 4217)"
+            },
+            "id": {
+              "description": "UUID string"
+            },
+            "metadata": {
+              "description": "JSON object (alias)"
+            },
+            "timestamp": {
+              "description": "ISO 8601 date-time string"
+            }
+          },
+          "required": [
+            "amount",
+            "currency",
+            "id",
+            "timestamp"
+          ],
+          "type": "object"
+        },
+        "shape": "Transaction"
+      }
+    },
+    {
+      "description": "Returns User.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "UUID string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "user",
+      "operation": "Query.user",
+      "output": {
+        "schema": {
+          "description": "User with various custom scalar fields",
+          "properties": {
+            "createdAt": {
+              "description": "ISO 8601 date-time string"
+            },
+            "email": {
+              "description": "Email address"
+            },
+            "id": {
+              "description": "UUID string"
+            },
+            "lastLoginAt": {
+              "description": "ISO 8601 date-time string"
+            },
+            "metadata": {
+              "description": "JSON object"
+            },
+            "profileUrl": {
+              "description": "URL string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "email",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    }
+  ]
+}

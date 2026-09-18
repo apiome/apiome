@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Build the audit report using a reusable page-size parameter",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "buildAuditReport",
+      "operation": "audit-report#build-report"
+    },
+    {
+      "description": "Fetch current items via an operationRef pointer",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "fetch-items",
+      "operation": "sync-inventory#fetch-items"
+    },
+    {
+      "description": "Push a stock snapshot for the fetched items",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createSnapshot",
+      "operation": "sync-inventory#push-snapshot"
+    }
+  ]
+}

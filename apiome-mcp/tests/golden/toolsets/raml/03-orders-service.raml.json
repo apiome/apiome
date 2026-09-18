@@ -1,0 +1,180 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Cancel an order that has not shipped yet.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "description": "Identifier of the order.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_orders_orderId",
+      "operation": "DELETE /orders/{orderId}"
+    },
+    {
+      "description": "List orders, optionally filtered.\n\nReturns Order.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "description": "Only return orders for this customer.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only return orders in this status.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_orders",
+      "operation": "GET /orders",
+      "output": {
+        "schema": {
+          "description": "A customer order.",
+          "properties": {
+            "customerId": {
+              "description": "Identifier of the ordering customer.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique order identifier.",
+              "type": "string"
+            },
+            "items": {},
+            "placedAt": {
+              "description": "When the order was placed.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Fulfilment status (placed, shipped, delivered, cancelled).",
+              "type": "string"
+            },
+            "total": {}
+          },
+          "required": [
+            "customerId",
+            "id",
+            "items",
+            "placedAt",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    },
+    {
+      "description": "Fetch an order by id.\n\nReturns Order.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "description": "Identifier of the order.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_orders_orderId",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "schema": {
+          "description": "A customer order.",
+          "properties": {
+            "customerId": {
+              "description": "Identifier of the ordering customer.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique order identifier.",
+              "type": "string"
+            },
+            "items": {},
+            "placedAt": {
+              "description": "When the order was placed.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Fulfilment status (placed, shipped, delivered, cancelled).",
+              "type": "string"
+            },
+            "total": {}
+          },
+          "required": [
+            "customerId",
+            "id",
+            "items",
+            "placedAt",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    },
+    {
+      "description": "Place a new order.\n\nReturns Order.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "items": {}
+        },
+        "required": [
+          "customerId",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "POST_orders",
+      "operation": "POST /orders",
+      "output": {
+        "schema": {
+          "description": "A customer order.",
+          "properties": {
+            "customerId": {
+              "description": "Identifier of the ordering customer.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique order identifier.",
+              "type": "string"
+            },
+            "items": {},
+            "placedAt": {
+              "description": "When the order was placed.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Fulfilment status (placed, shipped, delivered, cancelled).",
+              "type": "string"
+            },
+            "total": {}
+          },
+          "required": [
+            "customerId",
+            "id",
+            "items",
+            "placedAt",
+            "status",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "Order"
+      }
+    }
+  ]
+}

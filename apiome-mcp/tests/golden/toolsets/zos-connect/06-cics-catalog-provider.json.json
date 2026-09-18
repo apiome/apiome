@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns CatalogManagerProvider.CA-CAT-ITEM-LIST.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "inquireCatalog",
+      "operation": "GET /items",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "CatalogManagerProvider.CA-CAT-ITEM-LIST"
+      }
+    },
+    {
+      "description": "Returns CatalogManagerProvider.CA-CAT-ITEM.",
+      "inputSchema": {
+        "properties": {
+          "CA-ITEM-REF-NUMBER": {},
+          "itemNumber": {}
+        },
+        "required": [
+          "itemNumber"
+        ],
+        "type": "object"
+      },
+      "name": "inquireSingle",
+      "operation": "GET /items/{itemNumber}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "CatalogManagerProvider.CA-CAT-ITEM"
+      }
+    },
+    {
+      "description": "Returns CatalogManagerProvider.CA-ORDER-RESPONSE.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "POST /orders",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "CatalogManagerProvider.CA-ORDER-RESPONSE"
+      }
+    }
+  ]
+}

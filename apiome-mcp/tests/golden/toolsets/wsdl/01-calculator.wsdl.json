@@ -1,0 +1,26 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/calculator.AddResponse.",
+      "inputSchema": {
+        "properties": {
+          "a": {},
+          "b": {}
+        },
+        "type": "object"
+      },
+      "name": "Add",
+      "operation": "http://example.com/calculator.CalculatorPort.Add",
+      "output": {
+        "schema": {
+          "properties": {
+            "result": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/calculator.AddResponse"
+      }
+    }
+  ]
+}

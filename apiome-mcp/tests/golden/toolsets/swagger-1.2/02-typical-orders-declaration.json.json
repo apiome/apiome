@@ -1,0 +1,297 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Cancel an order\n\nReturns HTTP 204 with no body: Cancelled",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "cancelOrder",
+      "operation": "DELETE /orders/{orderId}",
+      "output": {
+        "description": "Cancelled",
+        "status": "204"
+      }
+    },
+    {
+      "description": "List orders\n\nReturns the caller's orders, newest first.\n\nReturns HTTP 200 application/json (array of Order): Matching orders",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 25,
+            "format": "int32",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "status": {
+            "description": "Filter by lifecycle status.",
+            "enum": [
+              "new",
+              "paid",
+              "shipped",
+              "cancelled"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "GET /orders",
+      "output": {
+        "description": "Matching orders",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "A placed order.",
+            "properties": {
+              "lines": {
+                "items": {
+                  "properties": {
+                    "quantity": {
+                      "format": "int32",
+                      "minimum": 1.0,
+                      "type": "integer"
+                    },
+                    "sku": {
+                      "type": "string"
+                    },
+                    "unitPrice": {
+                      "format": "double",
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "quantity",
+                    "sku"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "orderId": {
+                "type": "string"
+              },
+              "placedAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "new",
+                  "paid",
+                  "shipped",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              "total": {
+                "format": "double",
+                "type": "number"
+              }
+            },
+            "required": [
+              "lines",
+              "orderId",
+              "status"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Fetch one order\n\nReturns HTTP 200 application/json (Order): Successful response",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "GET /orders/{orderId}",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A placed order.",
+          "properties": {
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "format": "int32",
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {
+                    "format": "double",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "placedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "new",
+                "paid",
+                "shipped",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "total": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "lines",
+            "orderId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Place an order\n\nReturns HTTP 201 application/json (Order): Order created",
+      "inputSchema": {
+        "properties": {
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {
+                  "format": "int32",
+                  "minimum": 1.0,
+                  "type": "integer"
+                },
+                "sku": {
+                  "type": "string"
+                },
+                "unitPrice": {
+                  "format": "double",
+                  "type": "number"
+                }
+              },
+              "required": [
+                "quantity",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "POST /orders",
+      "output": {
+        "description": "Order created",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A placed order.",
+          "properties": {
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "format": "int32",
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {
+                    "format": "double",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "placedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "new",
+                "paid",
+                "shipped",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "total": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          "required": [
+            "lines",
+            "orderId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Order",
+        "status": "201"
+      }
+    }
+  ]
+}

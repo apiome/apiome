@@ -1,0 +1,66 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_users_userId",
+      "operation": "DELETE /users/{userId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_users",
+      "operation": "GET /users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_users_userId",
+      "operation": "GET /users/{userId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_users",
+      "operation": "POST /users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_users_userId",
+      "operation": "PUT /users/{userId}"
+    }
+  ]
+}

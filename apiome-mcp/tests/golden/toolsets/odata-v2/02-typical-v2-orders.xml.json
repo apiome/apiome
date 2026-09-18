@@ -1,0 +1,345 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Customer).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listCustomers",
+      "operation": "GET /Customers",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Country": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "CustomerId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Customer",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Customer).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getCustomer",
+      "operation": "GET /Customers({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Country": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "CustomerId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Customer",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Northbound.Orders.Customer).",
+      "inputSchema": {
+        "properties": {
+          "Country": {
+            "type": "string"
+          },
+          "CustomerId": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "CustomerId"
+        ],
+        "type": "object"
+      },
+      "name": "createCustomer",
+      "operation": "POST /Customers",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Country": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "CustomerId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Customer",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Item).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listItems",
+      "operation": "GET /Items",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemNo": {},
+            "OrderId": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemNo",
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Item",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Item).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getItem",
+      "operation": "GET /Items({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemNo": {},
+            "OrderId": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemNo",
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Item",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Northbound.Orders.Item).",
+      "inputSchema": {
+        "properties": {
+          "ItemNo": {},
+          "OrderId": {
+            "type": "string"
+          },
+          "Quantity": {},
+          "Sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ItemNo",
+          "OrderId"
+        ],
+        "type": "object"
+      },
+      "name": "createItem",
+      "operation": "POST /Items",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ItemNo": {},
+            "OrderId": {
+              "type": "string"
+            },
+            "Quantity": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ItemNo",
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Item",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Order).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "GET /Orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Currency": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "OrderId": {
+              "type": "string"
+            },
+            "OrderedOn": {
+              "type": "string"
+            },
+            "Total": {}
+          },
+          "required": [
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Order).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "GET /Orders({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Currency": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "OrderId": {
+              "type": "string"
+            },
+            "OrderedOn": {
+              "type": "string"
+            },
+            "Total": {}
+          },
+          "required": [
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Order",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Northbound.Orders.Order).",
+      "inputSchema": {
+        "properties": {
+          "Currency": {
+            "type": "string"
+          },
+          "CustomerId": {
+            "type": "string"
+          },
+          "OrderId": {
+            "type": "string"
+          },
+          "OrderedOn": {
+            "type": "string"
+          },
+          "Total": {}
+        },
+        "required": [
+          "OrderId"
+        ],
+        "type": "object"
+      },
+      "name": "createOrder",
+      "operation": "POST /Orders",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Currency": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "OrderId": {
+              "type": "string"
+            },
+            "OrderedOn": {
+              "type": "string"
+            },
+            "Total": {}
+          },
+          "required": [
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Order",
+        "status": "201"
+      }
+    }
+  ]
+}

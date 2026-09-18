@@ -1,0 +1,259 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.pubsub.v1.Topic.",
+      "inputSchema": {
+        "properties": {
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "message_storage_policy": {
+            "properties": {
+              "allowed_persistence_regions": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "allowed_persistence_regions"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "labels"
+        ],
+        "type": "object"
+      },
+      "name": "CreateTopic",
+      "operation": "example.pubsub.v1.Publisher.CreateTopic",
+      "output": {
+        "schema": {
+          "properties": {
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "message_storage_policy": {
+              "properties": {
+                "allowed_persistence_regions": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "allowed_persistence_regions"
+              ],
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "example.pubsub.v1.Topic"
+      }
+    },
+    {
+      "description": "Returns google.protobuf.Empty.",
+      "inputSchema": {
+        "properties": {
+          "topic": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "DeleteTopic",
+      "operation": "example.pubsub.v1.Publisher.DeleteTopic",
+      "output": {
+        "schema": {},
+        "shape": "google.protobuf.Empty"
+      }
+    },
+    {
+      "description": "Returns example.pubsub.v1.Topic.",
+      "inputSchema": {
+        "properties": {
+          "topic": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetTopic",
+      "operation": "example.pubsub.v1.Publisher.GetTopic",
+      "output": {
+        "schema": {
+          "properties": {
+            "labels": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "message_storage_policy": {
+              "properties": {
+                "allowed_persistence_regions": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "allowed_persistence_regions"
+              ],
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels"
+          ],
+          "type": "object"
+        },
+        "shape": "example.pubsub.v1.Topic"
+      }
+    },
+    {
+      "description": "Returns example.pubsub.v1.ListTopicsResponse.",
+      "inputSchema": {
+        "properties": {
+          "page_size": {},
+          "page_token": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ListTopics",
+      "operation": "example.pubsub.v1.Publisher.ListTopics",
+      "output": {
+        "schema": {
+          "properties": {
+            "next_page_token": {
+              "type": "string"
+            },
+            "topics": {
+              "items": {
+                "properties": {
+                  "labels": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "message_storage_policy": {
+                    "properties": {
+                      "allowed_persistence_regions": {
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "allowed_persistence_regions"
+                    ],
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "labels"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "topics"
+          ],
+          "type": "object"
+        },
+        "shape": "example.pubsub.v1.ListTopicsResponse"
+      }
+    },
+    {
+      "description": "Returns example.pubsub.v1.PublishResponse.",
+      "inputSchema": {
+        "properties": {
+          "messages": {
+            "items": {
+              "properties": {
+                "attributes": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "data": {},
+                "message_id": {
+                  "type": "string"
+                },
+                "ordering_key": {
+                  "type": "string"
+                },
+                "publish_time": {}
+              },
+              "required": [
+                "attributes"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "topic": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "type": "object"
+      },
+      "name": "Publish",
+      "operation": "example.pubsub.v1.Publisher.Publish",
+      "output": {
+        "schema": {
+          "properties": {
+            "message_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "message_ids"
+          ],
+          "type": "object"
+        },
+        "shape": "example.pubsub.v1.PublishResponse"
+      }
+    }
+  ]
+}

@@ -1,0 +1,480 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns array of PaymentMethod.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "paymentMethods",
+      "operation": "Query.paymentMethods",
+      "output": {
+        "schema": {
+          "items": {
+            "anyOf": [
+              {
+                "description": "Credit card payment method",
+                "properties": {
+                  "brand": {},
+                  "expiryMonth": {},
+                  "expiryYear": {},
+                  "id": {},
+                  "lastFour": {}
+                },
+                "required": [
+                  "brand",
+                  "expiryMonth",
+                  "expiryYear",
+                  "id",
+                  "lastFour"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "Bank account payment method",
+                "properties": {
+                  "accountType": {},
+                  "bankName": {},
+                  "id": {},
+                  "lastFour": {}
+                },
+                "required": [
+                  "accountType",
+                  "bankName",
+                  "id",
+                  "lastFour"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "PayPal payment method",
+                "properties": {
+                  "email": {},
+                  "id": {}
+                },
+                "required": [
+                  "email",
+                  "id"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "Cryptocurrency payment method",
+                "properties": {
+                  "currency": {},
+                  "id": {},
+                  "walletAddress": {}
+                },
+                "required": [
+                  "currency",
+                  "id",
+                  "walletAddress"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Payment method union"
+          },
+          "type": "array"
+        },
+        "shape": "array of PaymentMethod"
+      }
+    },
+    {
+      "description": "Returns array of SearchResult.",
+      "inputSchema": {
+        "properties": {
+          "query": {}
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "Query.search",
+      "output": {
+        "schema": {
+          "items": {
+            "anyOf": [
+              {
+                "properties": {
+                  "email": {},
+                  "id": {},
+                  "name": {},
+                  "posts": {
+                    "items": {
+                      "properties": {
+                        "author": {},
+                        "content": {},
+                        "id": {},
+                        "title": {}
+                      },
+                      "required": [
+                        "author",
+                        "content",
+                        "id",
+                        "title"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "email",
+                  "id",
+                  "name",
+                  "posts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "author": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {},
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  },
+                  "content": {},
+                  "id": {},
+                  "title": {}
+                },
+                "required": [
+                  "author",
+                  "content",
+                  "id",
+                  "title"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "category": {
+                    "properties": {
+                      "id": {},
+                      "name": {},
+                      "products": {
+                        "items": {},
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "products"
+                    ],
+                    "type": "object"
+                  },
+                  "id": {},
+                  "name": {},
+                  "price": {}
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "price"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "id": {},
+                  "name": {},
+                  "products": {
+                    "items": {
+                      "properties": {
+                        "category": {},
+                        "id": {},
+                        "name": {},
+                        "price": {}
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "price"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "products"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Search result that can be any of several types"
+          },
+          "type": "array"
+        },
+        "shape": "array of SearchResult"
+      }
+    },
+    {
+      "description": "Returns array of TimelineItem.",
+      "inputSchema": {
+        "properties": {
+          "userId": {}
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "timeline",
+      "operation": "Query.timeline",
+      "output": {
+        "schema": {
+          "items": {
+            "anyOf": [
+              {
+                "description": "Event when a post is created",
+                "properties": {
+                  "id": {},
+                  "post": {
+                    "properties": {
+                      "author": {
+                        "properties": {
+                          "email": {},
+                          "id": {},
+                          "name": {},
+                          "posts": {
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "email",
+                          "id",
+                          "name",
+                          "posts"
+                        ],
+                        "type": "object"
+                      },
+                      "content": {},
+                      "id": {},
+                      "title": {}
+                    },
+                    "required": [
+                      "author",
+                      "content",
+                      "id",
+                      "title"
+                    ],
+                    "type": "object"
+                  },
+                  "timestamp": {},
+                  "user": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "id",
+                  "post",
+                  "timestamp",
+                  "user"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "Event when a comment is made",
+                "properties": {
+                  "comment": {},
+                  "id": {},
+                  "post": {
+                    "properties": {
+                      "author": {
+                        "properties": {
+                          "email": {},
+                          "id": {},
+                          "name": {},
+                          "posts": {
+                            "type": "array"
+                          }
+                        },
+                        "required": [
+                          "email",
+                          "id",
+                          "name",
+                          "posts"
+                        ],
+                        "type": "object"
+                      },
+                      "content": {},
+                      "id": {},
+                      "title": {}
+                    },
+                    "required": [
+                      "author",
+                      "content",
+                      "id",
+                      "title"
+                    ],
+                    "type": "object"
+                  },
+                  "timestamp": {},
+                  "user": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "comment",
+                  "id",
+                  "post",
+                  "timestamp",
+                  "user"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "Event when something is liked",
+                "properties": {
+                  "id": {},
+                  "targetId": {},
+                  "targetType": {},
+                  "timestamp": {},
+                  "user": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "id",
+                  "targetId",
+                  "targetType",
+                  "timestamp",
+                  "user"
+                ],
+                "type": "object"
+              },
+              {
+                "description": "Event when a user follows another",
+                "properties": {
+                  "followed": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  },
+                  "follower": {
+                    "properties": {
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "items": {
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  },
+                  "id": {},
+                  "timestamp": {}
+                },
+                "required": [
+                  "followed",
+                  "follower",
+                  "id",
+                  "timestamp"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Timeline item that can be different event types"
+          },
+          "type": "array"
+        },
+        "shape": "array of TimelineItem"
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Fire-and-forget sensor reading (notification: no result).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "emitReading",
+      "operation": "Telemetry Ingest API.emitReading"
+    },
+    {
+      "description": "Deprecated synchronous flush.\n\nReturns boolean.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "flushBuffer",
+      "operation": "Telemetry Ingest API.flushBuffer",
+      "output": {
+        "schema": {
+          "type": "boolean"
+        },
+        "shape": "boolean"
+      }
+    },
+    {
+      "description": "Query stored readings for a sensor.\n\nReturns array of number.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "queryReadings",
+      "operation": "Telemetry Ingest API.queryReadings",
+      "output": {
+        "schema": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "shape": "array of number"
+      }
+    }
+  ]
+}

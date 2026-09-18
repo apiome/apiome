@@ -1,0 +1,127 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List products\n\nReturns HTTP 200 application/json (array of Product): Product list",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_products",
+      "operation": "GET /products",
+      "output": {
+        "description": "Product list",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "description": {
+                "description": "Product description",
+                "type": "string"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "name": {
+                "description": "Product name",
+                "type": "string"
+              },
+              "pricing": {
+                "description": "Product can have multiple pricing models"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "pricing"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a contact\n\nMust provide at least one contact method\n\nReturns HTTP 201 with no body: Contact created",
+      "inputSchema": {
+        "properties": {
+          "contactMethods": {
+            "description": "At least one contact method must be provided"
+          },
+          "id": {
+            "description": "Contact ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Contact name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_contacts",
+      "operation": "POST /contacts",
+      "output": {
+        "description": "Contact created",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Upload media content\n\nContent can be provided in multiple formats\n\nReturns HTTP 201 with no body: Media uploaded",
+      "inputSchema": {
+        "properties": {
+          "formats": {
+            "description": "Content can be available in multiple formats"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "description": "Media title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "POST_media",
+      "operation": "POST /media",
+      "output": {
+        "description": "Media uploaded",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Search with flexible criteria\n\nProvide any combination of search parameters\n\nReturns HTTP 200 with no body: Search results",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "description": "Flexible search criteria where user can search by multiple fields.\nAt least one search field must be provided.\n"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "POST_search",
+      "operation": "POST /search",
+      "output": {
+        "description": "Search results",
+        "status": "200"
+      }
+    }
+  ]
+}

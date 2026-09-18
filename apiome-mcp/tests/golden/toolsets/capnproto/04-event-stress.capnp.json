@@ -1,0 +1,75 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "Collector.ping"
+    },
+    {
+      "description": "Returns uint32.",
+      "inputSchema": {
+        "properties": {
+          "events": {
+            "items": {
+              "properties": {
+                "created": {
+                  "properties": {
+                    "actor": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "deleted": {
+                  "properties": {
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "id": {},
+                "latitude": {},
+                "longitude": {},
+                "matrix": {},
+                "note": {
+                  "type": "string"
+                },
+                "payload": {},
+                "severity": {
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3
+                  ],
+                  "type": "integer"
+                },
+                "tags": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next": {}
+        },
+        "type": "object"
+      },
+      "name": "publish",
+      "operation": "Collector.publish",
+      "output": {
+        "schema": {},
+        "shape": "uint32"
+      }
+    }
+  ]
+}

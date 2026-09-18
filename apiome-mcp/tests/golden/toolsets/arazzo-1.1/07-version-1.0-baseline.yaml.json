@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_identity_login",
+      "operation": "loginAndReadProfile#login"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_identity_getProfile",
+      "operation": "loginAndReadProfile#profile"
+    }
+  ]
+}

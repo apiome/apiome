@@ -1,0 +1,136 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns oneway void.",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "heartbeat",
+      "operation": "Trading.MarketData.heartbeat",
+      "output": {
+        "schema": {},
+        "shape": "oneway void"
+      }
+    },
+    {
+      "description": "Returns array of array of double.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "history",
+      "operation": "Trading.MarketData.history",
+      "output": {
+        "schema": {
+          "items": {
+            "items": {},
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "shape": "array of array of double"
+      }
+    },
+    {
+      "description": "Returns Trading.Quote.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "snapshot",
+      "operation": "Trading.MarketData.snapshot",
+      "output": {
+        "schema": {
+          "properties": {
+            "ask": {},
+            "bid": {},
+            "depth": {},
+            "symbol": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ask",
+            "bid",
+            "depth",
+            "symbol"
+          ],
+          "type": "object"
+        },
+        "shape": "Trading.Quote"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "subscribe",
+      "operation": "Trading.MarketData.subscribe"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "cancel",
+      "operation": "Trading.OrderEntry.cancel"
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "place",
+      "operation": "Trading.OrderEntry.place",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "description": "Returns bytes.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "status",
+      "operation": "Trading.OrderEntry.status",
+      "output": {
+        "schema": {},
+        "shape": "bytes"
+      }
+    }
+  ]
+}

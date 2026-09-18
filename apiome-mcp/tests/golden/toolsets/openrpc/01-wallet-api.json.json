@@ -1,0 +1,85 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Return the balance of an account.\n\nReturns Balance.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getBalance",
+      "operation": "Wallet API.getBalance",
+      "output": {
+        "schema": {
+          "description": "The balance of an account.",
+          "properties": {
+            "accountId": {
+              "description": "Account identifier.",
+              "type": "string"
+            },
+            "amount": {
+              "description": "Balance in minor units.",
+              "type": "integer"
+            },
+            "currency": {
+              "description": "ISO 4217 currency code.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "accountId",
+            "amount",
+            "currency"
+          ],
+          "type": "object"
+        },
+        "shape": "Balance"
+      }
+    },
+    {
+      "description": "Move funds between two accounts.\n\nReturns TransferReceipt.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "transfer",
+      "operation": "Wallet API.transfer",
+      "output": {
+        "schema": {
+          "description": "Confirmation of a completed transfer.",
+          "properties": {
+            "settledAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "completed",
+                "pending",
+                "failed"
+              ],
+              "type": "string"
+            },
+            "transferId": {
+              "description": "Unique transfer id.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "transferId"
+          ],
+          "type": "object"
+        },
+        "shape": "TransferReceipt"
+      }
+    }
+  ]
+}

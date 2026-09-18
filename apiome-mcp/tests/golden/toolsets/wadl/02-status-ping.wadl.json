@@ -1,0 +1,15 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getStatus",
+      "operation": "GET /status",
+      "output": {}
+    }
+  ]
+}

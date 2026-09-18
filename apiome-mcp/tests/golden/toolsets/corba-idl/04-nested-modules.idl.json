@@ -1,0 +1,169 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns array of string.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "allSkus",
+      "operation": "Commerce.Finder.allSkus",
+      "output": {
+        "schema": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "shape": "array of string"
+      }
+    },
+    {
+      "description": "Returns array of Commerce.Product.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "byName",
+      "operation": "Commerce.Finder.byName",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "price": {},
+              "sku": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "price",
+              "sku"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Commerce.Product"
+      }
+    },
+    {
+      "description": "Returns Commerce.Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "Commerce.Orders.getOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "Commerce.Order"
+      }
+    },
+    {
+      "description": "Returns Commerce.Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "items": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "quantity",
+                "sku"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "place",
+      "operation": "Commerce.Orders.place",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "Commerce.Order"
+      }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns i64.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "increment",
+      "operation": "wasi:keyvalue.atomics.increment",
+      "output": {
+        "schema": {},
+        "shape": "i64"
+      }
+    },
+    {
+      "description": "Returns array of tuple.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get-many",
+      "operation": "wasi:keyvalue.batch.get-many",
+      "output": {
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of tuple"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "set-many",
+      "operation": "wasi:keyvalue.batch.set-many"
+    },
+    {
+      "description": "Returns wasi:keyvalue.store.bucket.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "open",
+      "operation": "wasi:keyvalue.store.open",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "wasi:keyvalue.store.bucket"
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List widgets\n\nReturns HTTP 200 application/json (array of Widget): A list of widgets",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listWidgets",
+      "operation": "GET /widgets",
+      "output": {
+        "description": "A list of widgets",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "A simple widget.",
+            "properties": {
+              "id": {
+                "description": "Unique widget identifier.",
+                "type": "string"
+              },
+              "name": {
+                "description": "Human-readable widget name.",
+                "type": "string"
+              },
+              "quantity": {
+                "description": "Number of widgets in stock.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Widget",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a widget\n\nReturns HTTP 201 application/json (Widget): The created widget",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Unique widget identifier.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human-readable widget name.",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Number of widgets in stock.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createWidget",
+      "operation": "POST /widgets",
+      "output": {
+        "description": "The created widget",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A simple widget.",
+          "properties": {
+            "id": {
+              "description": "Unique widget identifier.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Human-readable widget name.",
+              "type": "string"
+            },
+            "quantity": {
+              "description": "Number of widgets in stock.",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Widget",
+        "status": "201"
+      }
+    }
+  ]
+}

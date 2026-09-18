@@ -1,0 +1,42 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "warehouse": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "Check_stock",
+      "operation": "GET /stock/{sku}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "quantity",
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "Reserve_stock",
+      "operation": "POST /reservations"
+    }
+  ]
+}

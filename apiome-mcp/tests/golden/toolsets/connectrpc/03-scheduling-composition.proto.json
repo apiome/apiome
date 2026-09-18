@@ -1,0 +1,99 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns scheduling.v1.Booking.",
+      "inputSchema": {
+        "properties": {
+          "attendee": {
+            "type": "string"
+          },
+          "slot_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "BookSlot",
+      "operation": "scheduling.v1.SchedulingService.BookSlot",
+      "output": {
+        "schema": {
+          "properties": {
+            "attendee": {
+              "type": "string"
+            },
+            "booked_at": {},
+            "id": {
+              "type": "string"
+            },
+            "slot": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "length": {},
+                "start_time": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "scheduling.v1.Booking"
+      }
+    },
+    {
+      "description": "Returns google.protobuf.Empty.",
+      "inputSchema": {
+        "properties": {
+          "booking_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CancelBooking",
+      "operation": "scheduling.v1.SchedulingService.CancelBooking",
+      "output": {
+        "schema": {},
+        "shape": "google.protobuf.Empty"
+      }
+    },
+    {
+      "description": "Returns scheduling.v1.ListSlotsResponse.",
+      "inputSchema": {
+        "properties": {
+          "window_end": {},
+          "window_start": {}
+        },
+        "type": "object"
+      },
+      "name": "ListSlots",
+      "operation": "scheduling.v1.SchedulingService.ListSlots",
+      "output": {
+        "schema": {
+          "properties": {
+            "slots": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "length": {},
+                  "start_time": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "slots"
+          ],
+          "type": "object"
+        },
+        "shape": "scheduling.v1.ListSlotsResponse"
+      }
+    }
+  ]
+}

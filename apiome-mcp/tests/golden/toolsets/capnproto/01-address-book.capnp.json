@@ -1,0 +1,109 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns uint32.",
+      "inputSchema": {
+        "properties": {
+          "birthdate": {
+            "properties": {
+              "day": {},
+              "month": {},
+              "year": {}
+            },
+            "type": "object"
+          },
+          "email": {
+            "type": "string"
+          },
+          "id": {},
+          "name": {
+            "type": "string"
+          },
+          "phones": {
+            "items": {
+              "properties": {
+                "number": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "add",
+      "operation": "Directory.add",
+      "output": {
+        "schema": {},
+        "shape": "uint32"
+      }
+    },
+    {
+      "description": "Returns Person.",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "lookup",
+      "operation": "Directory.lookup",
+      "output": {
+        "schema": {
+          "properties": {
+            "birthdate": {
+              "properties": {
+                "day": {},
+                "month": {},
+                "year": {}
+              },
+              "type": "object"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {},
+            "name": {
+              "type": "string"
+            },
+            "phones": {
+              "items": {
+                "properties": {
+                  "number": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "Person"
+      }
+    }
+  ]
+}

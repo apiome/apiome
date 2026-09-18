@@ -1,0 +1,106 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (array of GitHubStyle.Issue).",
+      "inputSchema": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "GET /user/repos/{fullName}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "A",
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of GitHubStyle.Issue",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GitHubStyle.Issue).",
+      "inputSchema": {
+        "properties": {
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullName"
+        ],
+        "type": "object"
+      },
+      "name": "create",
+      "operation": "POST /user/repos/{fullName}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A",
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "GitHubStyle.Issue",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (array of GitHubStyle.Repository).",
+      "inputSchema": {
+        "properties": {
+          "visibility": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list_2",
+      "operation": "GET /user/repos",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of GitHubStyle.Repository",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (GitHubStyle.Repository).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "create_2",
+      "operation": "POST /user/repos",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "GitHubStyle.Repository",
+        "status": "200"
+      }
+    }
+  ]
+}

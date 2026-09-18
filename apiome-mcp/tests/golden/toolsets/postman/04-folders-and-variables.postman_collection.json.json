@@ -1,0 +1,52 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Audit_log",
+      "operation": "GET /admin/audit"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "month": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "Usage_report",
+      "operation": "GET /admin/reports/usage"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_users",
+      "operation": "GET /users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
+      "name": "Invite_user",
+      "operation": "POST /users/invitations"
+    }
+  ]
+}

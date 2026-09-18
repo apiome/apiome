@@ -1,0 +1,23 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Register a new user",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "RegisterUser",
+      "operation": "RegisterAndNotify#RegisterUser"
+    },
+    {
+      "description": "Send a welcome email",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "SendWelcome",
+      "operation": "RegisterAndNotify#SendWelcome"
+    }
+  ]
+}

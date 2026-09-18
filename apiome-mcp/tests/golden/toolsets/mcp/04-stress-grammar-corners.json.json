@@ -1,0 +1,204 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Draft a protocol from a free-text goal.",
+      "inputSchema": {
+        "properties": {
+          "goal": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "goal"
+        ],
+        "type": "object"
+      },
+      "name": "draft_protocol",
+      "operation": "Acme Laboratory.prompts.draft_protocol"
+    },
+    {
+      "description": "Explain an assay result to a non-specialist.",
+      "inputSchema": {
+        "properties": {
+          "includeRawValues": {
+            "type": "string"
+          },
+          "readingLevel": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId"
+        ],
+        "type": "object"
+      },
+      "name": "explain_result",
+      "operation": "Acme Laboratory.prompts.explain_result"
+    },
+    {
+      "description": "Current instrument calibration table.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "calibration",
+      "operation": "Acme Laboratory.resources.calibration"
+    },
+    {
+      "description": "Standard operating procedure, ELISA.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "elisa-sop",
+      "operation": "Acme Laboratory.resources.elisa-sop"
+    },
+    {
+      "description": "Report for one assay run; format defaults to json.",
+      "inputSchema": {
+        "properties": {
+          "format": {
+            "description": "`format` from the resource template.",
+            "type": "string"
+          },
+          "runId": {
+            "description": "`runId` from the resource template.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId"
+        ],
+        "type": "object"
+      },
+      "name": "run-report",
+      "operation": "Acme Laboratory.resources.run-report"
+    },
+    {
+      "description": "Cancel a queued or running assay.",
+      "inputSchema": {
+        "properties": {
+          "runId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId"
+        ],
+        "type": "object"
+      },
+      "name": "cancel_run",
+      "operation": "Acme Laboratory.tools.cancel_run"
+    },
+    {
+      "description": "Queue an assay run against a sample plate.",
+      "inputSchema": {
+        "properties": {
+          "notify": {
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "items": {
+                  "format": "email",
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              }
+            ]
+          },
+          "options": {
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            "type": "object"
+          },
+          "plate": {
+            "anyOf": [
+              {
+                "pattern": "^PLT-[0-9]{5}$",
+                "type": "string"
+              },
+              {
+                "properties": {
+                  "barcode": {
+                    "type": "string"
+                  },
+                  "wells": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "maximum": 24,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        "row": {
+                          "pattern": "^[A-P]$",
+                          "type": "string"
+                        },
+                        "sampleId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "row",
+                        "column"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 384,
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "barcode",
+                  "wells"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "protocol": {
+            "enum": [
+              "elisa",
+              "pcr",
+              "hplc",
+              "mass-spec",
+              "flow-cytometry"
+            ],
+            "type": "string"
+          },
+          "replicates": {
+            "default": 3,
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plate",
+          "protocol"
+        ],
+        "type": "object"
+      },
+      "name": "run_assay",
+      "operation": "Acme Laboratory.tools.run_assay"
+    }
+  ]
+}

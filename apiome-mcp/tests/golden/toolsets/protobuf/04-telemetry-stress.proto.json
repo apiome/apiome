@@ -1,0 +1,68 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.telemetry.v1.Snapshot.",
+      "inputSchema": {
+        "properties": {
+          "sensor_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sensor_ids"
+        ],
+        "type": "object"
+      },
+      "name": "GetSnapshot",
+      "operation": "example.telemetry.v1.TelemetryService.GetSnapshot",
+      "output": {
+        "schema": {
+          "properties": {
+            "sensors": {
+              "additionalProperties": {
+                "properties": {
+                  "last_reading": {
+                    "properties": {
+                      "captured_unix_nanos": {},
+                      "humidity_pct": {},
+                      "quality": {
+                        "enum": [
+                          0,
+                          1,
+                          2,
+                          3
+                        ],
+                        "type": "integer"
+                      },
+                      "raw_frame": {},
+                      "sensor_id": {
+                        "type": "string"
+                      },
+                      "site": {
+                        "type": "string"
+                      },
+                      "temperature_c": {}
+                    },
+                    "type": "object"
+                  },
+                  "sequence": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "sensors"
+          ],
+          "type": "object"
+        },
+        "shape": "example.telemetry.v1.Snapshot"
+      }
+    }
+  ]
+}

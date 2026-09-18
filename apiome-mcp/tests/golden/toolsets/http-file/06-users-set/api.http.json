@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_admin_me",
+      "operation": "GET /admin/me"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_ping",
+      "operation": "GET /ping"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit"
+        ],
+        "type": "object"
+      },
+      "name": "GET_users",
+      "operation": "GET /users"
+    }
+  ]
+}

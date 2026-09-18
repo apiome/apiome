@@ -1,0 +1,70 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Retrieves the list of fonts.\n\nReturns WebfontList.",
+      "inputSchema": {
+        "properties": {
+          "capability": {
+            "description": "Filter by capability.",
+            "type": "string"
+          },
+          "family": {
+            "description": "Family name filter.",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Sort order.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "webfonts_webfonts_list",
+      "operation": "GET /v1/webfonts",
+      "output": {
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "properties": {
+                  "category": {
+                    "type": "string"
+                  },
+                  "family": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "menu": {
+                    "type": "string"
+                  },
+                  "subsets": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "variants": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "WebfontList"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1621 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns array of Company.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "companies",
+      "operation": "Query.companies",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A company with departments and employees",
+            "properties": {
+              "ceo": {
+                "description": "An employee of a company",
+                "properties": {
+                  "company": {},
+                  "contact": {
+                    "description": "Contact information",
+                    "properties": {
+                      "address": {
+                        "description": "Physical address",
+                        "type": "object"
+                      },
+                      "email": {},
+                      "emergencyContact": {
+                        "description": "Emergency contact",
+                        "type": "object"
+                      },
+                      "mobile": {},
+                      "phone": {}
+                    },
+                    "required": [
+                      "email"
+                    ],
+                    "type": "object"
+                  },
+                  "department": {
+                    "description": "A department within a company",
+                    "properties": {
+                      "budget": {
+                        "description": "Department budget",
+                        "type": "object"
+                      },
+                      "code": {},
+                      "company": {},
+                      "employees": {
+                        "type": "array"
+                      },
+                      "id": {},
+                      "manager": {},
+                      "name": {}
+                    },
+                    "required": [
+                      "code",
+                      "company",
+                      "employees",
+                      "id",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "directReports": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "email": {},
+                  "firstName": {},
+                  "hireDate": {},
+                  "id": {},
+                  "lastName": {},
+                  "manager": {},
+                  "phone": {},
+                  "salary": {
+                    "description": "Salary information",
+                    "properties": {
+                      "amount": {},
+                      "currency": {},
+                      "payFrequency": {
+                        "enum": [
+                          "WEEKLY",
+                          "BIWEEKLY",
+                          "MONTHLY",
+                          "ANNUALLY"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "payFrequency"
+                    ],
+                    "type": "object"
+                  },
+                  "title": {}
+                },
+                "required": [
+                  "company",
+                  "contact",
+                  "department",
+                  "directReports",
+                  "email",
+                  "firstName",
+                  "hireDate",
+                  "id",
+                  "lastName",
+                  "title"
+                ],
+                "type": "object"
+              },
+              "departments": {
+                "items": {
+                  "description": "A department within a company",
+                  "properties": {
+                    "budget": {
+                      "description": "Department budget",
+                      "type": "object"
+                    },
+                    "code": {},
+                    "company": {},
+                    "employees": {
+                      "type": "array"
+                    },
+                    "id": {},
+                    "manager": {
+                      "description": "An employee of a company",
+                      "type": "object"
+                    },
+                    "name": {}
+                  },
+                  "required": [
+                    "code",
+                    "company",
+                    "employees",
+                    "id",
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "employees": {
+                "items": {
+                  "description": "An employee of a company",
+                  "properties": {
+                    "company": {},
+                    "contact": {
+                      "description": "Contact information",
+                      "type": "object"
+                    },
+                    "department": {
+                      "description": "A department within a company",
+                      "type": "object"
+                    },
+                    "directReports": {
+                      "type": "array"
+                    },
+                    "email": {},
+                    "firstName": {},
+                    "hireDate": {},
+                    "id": {},
+                    "lastName": {},
+                    "manager": {},
+                    "phone": {},
+                    "salary": {
+                      "description": "Salary information",
+                      "type": "object"
+                    },
+                    "title": {}
+                  },
+                  "required": [
+                    "company",
+                    "contact",
+                    "department",
+                    "directReports",
+                    "email",
+                    "firstName",
+                    "hireDate",
+                    "id",
+                    "lastName",
+                    "title"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "founded": {},
+              "headquarters": {
+                "description": "Physical address",
+                "properties": {
+                  "city": {},
+                  "coordinates": {
+                    "description": "Geographic coordinates",
+                    "properties": {
+                      "latitude": {},
+                      "longitude": {}
+                    },
+                    "required": [
+                      "latitude",
+                      "longitude"
+                    ],
+                    "type": "object"
+                  },
+                  "country": {},
+                  "postalCode": {},
+                  "state": {},
+                  "street": {}
+                },
+                "required": [
+                  "city",
+                  "country",
+                  "postalCode",
+                  "state",
+                  "street"
+                ],
+                "type": "object"
+              },
+              "id": {},
+              "name": {}
+            },
+            "required": [
+              "departments",
+              "employees",
+              "headquarters",
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Company"
+      }
+    },
+    {
+      "description": "Returns Company.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "company",
+      "operation": "Query.company",
+      "output": {
+        "schema": {
+          "description": "A company with departments and employees",
+          "properties": {
+            "ceo": {
+              "description": "An employee of a company",
+              "properties": {
+                "company": {},
+                "contact": {
+                  "description": "Contact information",
+                  "properties": {
+                    "address": {
+                      "description": "Physical address",
+                      "properties": {
+                        "city": {},
+                        "coordinates": {
+                          "description": "Geographic coordinates",
+                          "type": "object"
+                        },
+                        "country": {},
+                        "postalCode": {},
+                        "state": {},
+                        "street": {}
+                      },
+                      "required": [
+                        "city",
+                        "country",
+                        "postalCode",
+                        "state",
+                        "street"
+                      ],
+                      "type": "object"
+                    },
+                    "email": {},
+                    "emergencyContact": {
+                      "description": "Emergency contact",
+                      "properties": {
+                        "name": {},
+                        "phone": {},
+                        "relationship": {}
+                      },
+                      "required": [
+                        "name",
+                        "phone",
+                        "relationship"
+                      ],
+                      "type": "object"
+                    },
+                    "mobile": {},
+                    "phone": {}
+                  },
+                  "required": [
+                    "email"
+                  ],
+                  "type": "object"
+                },
+                "department": {
+                  "description": "A department within a company",
+                  "properties": {
+                    "budget": {
+                      "description": "Department budget",
+                      "properties": {
+                        "amount": {},
+                        "currency": {},
+                        "fiscalYear": {},
+                        "remaining": {},
+                        "spent": {}
+                      },
+                      "required": [
+                        "amount",
+                        "currency",
+                        "fiscalYear",
+                        "remaining",
+                        "spent"
+                      ],
+                      "type": "object"
+                    },
+                    "code": {},
+                    "company": {},
+                    "employees": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "id": {},
+                    "manager": {},
+                    "name": {}
+                  },
+                  "required": [
+                    "code",
+                    "company",
+                    "employees",
+                    "id",
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "directReports": {
+                  "items": {},
+                  "type": "array"
+                },
+                "email": {},
+                "firstName": {},
+                "hireDate": {},
+                "id": {},
+                "lastName": {},
+                "manager": {},
+                "phone": {},
+                "salary": {
+                  "description": "Salary information",
+                  "properties": {
+                    "amount": {},
+                    "currency": {},
+                    "payFrequency": {
+                      "enum": [
+                        "WEEKLY",
+                        "BIWEEKLY",
+                        "MONTHLY",
+                        "ANNUALLY"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency",
+                    "payFrequency"
+                  ],
+                  "type": "object"
+                },
+                "title": {}
+              },
+              "required": [
+                "company",
+                "contact",
+                "department",
+                "directReports",
+                "email",
+                "firstName",
+                "hireDate",
+                "id",
+                "lastName",
+                "title"
+              ],
+              "type": "object"
+            },
+            "departments": {
+              "items": {
+                "description": "A department within a company",
+                "properties": {
+                  "budget": {
+                    "description": "Department budget",
+                    "properties": {
+                      "amount": {},
+                      "currency": {},
+                      "fiscalYear": {},
+                      "remaining": {},
+                      "spent": {}
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "fiscalYear",
+                      "remaining",
+                      "spent"
+                    ],
+                    "type": "object"
+                  },
+                  "code": {},
+                  "company": {},
+                  "employees": {
+                    "items": {
+                      "description": "An employee of a company",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "id": {},
+                  "manager": {
+                    "description": "An employee of a company",
+                    "properties": {
+                      "company": {},
+                      "contact": {
+                        "description": "Contact information",
+                        "type": "object"
+                      },
+                      "department": {},
+                      "directReports": {
+                        "type": "array"
+                      },
+                      "email": {},
+                      "firstName": {},
+                      "hireDate": {},
+                      "id": {},
+                      "lastName": {},
+                      "manager": {},
+                      "phone": {},
+                      "salary": {
+                        "description": "Salary information",
+                        "type": "object"
+                      },
+                      "title": {}
+                    },
+                    "required": [
+                      "company",
+                      "contact",
+                      "department",
+                      "directReports",
+                      "email",
+                      "firstName",
+                      "hireDate",
+                      "id",
+                      "lastName",
+                      "title"
+                    ],
+                    "type": "object"
+                  },
+                  "name": {}
+                },
+                "required": [
+                  "code",
+                  "company",
+                  "employees",
+                  "id",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "employees": {
+              "items": {
+                "description": "An employee of a company",
+                "properties": {
+                  "company": {},
+                  "contact": {
+                    "description": "Contact information",
+                    "properties": {
+                      "address": {
+                        "description": "Physical address",
+                        "type": "object"
+                      },
+                      "email": {},
+                      "emergencyContact": {
+                        "description": "Emergency contact",
+                        "type": "object"
+                      },
+                      "mobile": {},
+                      "phone": {}
+                    },
+                    "required": [
+                      "email"
+                    ],
+                    "type": "object"
+                  },
+                  "department": {
+                    "description": "A department within a company",
+                    "properties": {
+                      "budget": {
+                        "description": "Department budget",
+                        "type": "object"
+                      },
+                      "code": {},
+                      "company": {},
+                      "employees": {
+                        "type": "array"
+                      },
+                      "id": {},
+                      "manager": {},
+                      "name": {}
+                    },
+                    "required": [
+                      "code",
+                      "company",
+                      "employees",
+                      "id",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "directReports": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "email": {},
+                  "firstName": {},
+                  "hireDate": {},
+                  "id": {},
+                  "lastName": {},
+                  "manager": {},
+                  "phone": {},
+                  "salary": {
+                    "description": "Salary information",
+                    "properties": {
+                      "amount": {},
+                      "currency": {},
+                      "payFrequency": {
+                        "enum": [
+                          "WEEKLY",
+                          "BIWEEKLY",
+                          "MONTHLY",
+                          "ANNUALLY"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "payFrequency"
+                    ],
+                    "type": "object"
+                  },
+                  "title": {}
+                },
+                "required": [
+                  "company",
+                  "contact",
+                  "department",
+                  "directReports",
+                  "email",
+                  "firstName",
+                  "hireDate",
+                  "id",
+                  "lastName",
+                  "title"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "founded": {},
+            "headquarters": {
+              "description": "Physical address",
+              "properties": {
+                "city": {},
+                "coordinates": {
+                  "description": "Geographic coordinates",
+                  "properties": {
+                    "latitude": {},
+                    "longitude": {}
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "type": "object"
+                },
+                "country": {},
+                "postalCode": {},
+                "state": {},
+                "street": {}
+              },
+              "required": [
+                "city",
+                "country",
+                "postalCode",
+                "state",
+                "street"
+              ],
+              "type": "object"
+            },
+            "id": {},
+            "name": {}
+          },
+          "required": [
+            "departments",
+            "employees",
+            "headquarters",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Company"
+      }
+    },
+    {
+      "description": "Returns Department.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "department",
+      "operation": "Query.department",
+      "output": {
+        "schema": {
+          "description": "A department within a company",
+          "properties": {
+            "budget": {
+              "description": "Department budget",
+              "properties": {
+                "amount": {},
+                "currency": {},
+                "fiscalYear": {},
+                "remaining": {},
+                "spent": {}
+              },
+              "required": [
+                "amount",
+                "currency",
+                "fiscalYear",
+                "remaining",
+                "spent"
+              ],
+              "type": "object"
+            },
+            "code": {},
+            "company": {
+              "description": "A company with departments and employees",
+              "properties": {
+                "ceo": {
+                  "description": "An employee of a company",
+                  "properties": {
+                    "company": {},
+                    "contact": {
+                      "description": "Contact information",
+                      "properties": {
+                        "address": {
+                          "description": "Physical address",
+                          "type": "object"
+                        },
+                        "email": {},
+                        "emergencyContact": {
+                          "description": "Emergency contact",
+                          "type": "object"
+                        },
+                        "mobile": {},
+                        "phone": {}
+                      },
+                      "required": [
+                        "email"
+                      ],
+                      "type": "object"
+                    },
+                    "department": {},
+                    "directReports": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "email": {},
+                    "firstName": {},
+                    "hireDate": {},
+                    "id": {},
+                    "lastName": {},
+                    "manager": {},
+                    "phone": {},
+                    "salary": {
+                      "description": "Salary information",
+                      "properties": {
+                        "amount": {},
+                        "currency": {},
+                        "payFrequency": {
+                          "enum": [
+                            "WEEKLY",
+                            "BIWEEKLY",
+                            "MONTHLY",
+                            "ANNUALLY"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "amount",
+                        "currency",
+                        "payFrequency"
+                      ],
+                      "type": "object"
+                    },
+                    "title": {}
+                  },
+                  "required": [
+                    "company",
+                    "contact",
+                    "department",
+                    "directReports",
+                    "email",
+                    "firstName",
+                    "hireDate",
+                    "id",
+                    "lastName",
+                    "title"
+                  ],
+                  "type": "object"
+                },
+                "departments": {
+                  "items": {},
+                  "type": "array"
+                },
+                "employees": {
+                  "items": {
+                    "description": "An employee of a company",
+                    "properties": {
+                      "company": {},
+                      "contact": {
+                        "description": "Contact information",
+                        "type": "object"
+                      },
+                      "department": {},
+                      "directReports": {
+                        "type": "array"
+                      },
+                      "email": {},
+                      "firstName": {},
+                      "hireDate": {},
+                      "id": {},
+                      "lastName": {},
+                      "manager": {},
+                      "phone": {},
+                      "salary": {
+                        "description": "Salary information",
+                        "type": "object"
+                      },
+                      "title": {}
+                    },
+                    "required": [
+                      "company",
+                      "contact",
+                      "department",
+                      "directReports",
+                      "email",
+                      "firstName",
+                      "hireDate",
+                      "id",
+                      "lastName",
+                      "title"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "founded": {},
+                "headquarters": {
+                  "description": "Physical address",
+                  "properties": {
+                    "city": {},
+                    "coordinates": {
+                      "description": "Geographic coordinates",
+                      "properties": {
+                        "latitude": {},
+                        "longitude": {}
+                      },
+                      "required": [
+                        "latitude",
+                        "longitude"
+                      ],
+                      "type": "object"
+                    },
+                    "country": {},
+                    "postalCode": {},
+                    "state": {},
+                    "street": {}
+                  },
+                  "required": [
+                    "city",
+                    "country",
+                    "postalCode",
+                    "state",
+                    "street"
+                  ],
+                  "type": "object"
+                },
+                "id": {},
+                "name": {}
+              },
+              "required": [
+                "departments",
+                "employees",
+                "headquarters",
+                "id",
+                "name"
+              ],
+              "type": "object"
+            },
+            "employees": {
+              "items": {
+                "description": "An employee of a company",
+                "properties": {
+                  "company": {
+                    "description": "A company with departments and employees",
+                    "properties": {
+                      "ceo": {},
+                      "departments": {
+                        "type": "array"
+                      },
+                      "employees": {
+                        "type": "array"
+                      },
+                      "founded": {},
+                      "headquarters": {
+                        "description": "Physical address",
+                        "type": "object"
+                      },
+                      "id": {},
+                      "name": {}
+                    },
+                    "required": [
+                      "departments",
+                      "employees",
+                      "headquarters",
+                      "id",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "contact": {
+                    "description": "Contact information",
+                    "properties": {
+                      "address": {
+                        "description": "Physical address",
+                        "type": "object"
+                      },
+                      "email": {},
+                      "emergencyContact": {
+                        "description": "Emergency contact",
+                        "type": "object"
+                      },
+                      "mobile": {},
+                      "phone": {}
+                    },
+                    "required": [
+                      "email"
+                    ],
+                    "type": "object"
+                  },
+                  "department": {},
+                  "directReports": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "email": {},
+                  "firstName": {},
+                  "hireDate": {},
+                  "id": {},
+                  "lastName": {},
+                  "manager": {},
+                  "phone": {},
+                  "salary": {
+                    "description": "Salary information",
+                    "properties": {
+                      "amount": {},
+                      "currency": {},
+                      "payFrequency": {
+                        "enum": [
+                          "WEEKLY",
+                          "BIWEEKLY",
+                          "MONTHLY",
+                          "ANNUALLY"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "payFrequency"
+                    ],
+                    "type": "object"
+                  },
+                  "title": {}
+                },
+                "required": [
+                  "company",
+                  "contact",
+                  "department",
+                  "directReports",
+                  "email",
+                  "firstName",
+                  "hireDate",
+                  "id",
+                  "lastName",
+                  "title"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "id": {},
+            "manager": {
+              "description": "An employee of a company",
+              "properties": {
+                "company": {
+                  "description": "A company with departments and employees",
+                  "properties": {
+                    "ceo": {},
+                    "departments": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "employees": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "founded": {},
+                    "headquarters": {
+                      "description": "Physical address",
+                      "properties": {
+                        "city": {},
+                        "coordinates": {
+                          "description": "Geographic coordinates",
+                          "type": "object"
+                        },
+                        "country": {},
+                        "postalCode": {},
+                        "state": {},
+                        "street": {}
+                      },
+                      "required": [
+                        "city",
+                        "country",
+                        "postalCode",
+                        "state",
+                        "street"
+                      ],
+                      "type": "object"
+                    },
+                    "id": {},
+                    "name": {}
+                  },
+                  "required": [
+                    "departments",
+                    "employees",
+                    "headquarters",
+                    "id",
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "contact": {
+                  "description": "Contact information",
+                  "properties": {
+                    "address": {
+                      "description": "Physical address",
+                      "properties": {
+                        "city": {},
+                        "coordinates": {
+                          "description": "Geographic coordinates",
+                          "type": "object"
+                        },
+                        "country": {},
+                        "postalCode": {},
+                        "state": {},
+                        "street": {}
+                      },
+                      "required": [
+                        "city",
+                        "country",
+                        "postalCode",
+                        "state",
+                        "street"
+                      ],
+                      "type": "object"
+                    },
+                    "email": {},
+                    "emergencyContact": {
+                      "description": "Emergency contact",
+                      "properties": {
+                        "name": {},
+                        "phone": {},
+                        "relationship": {}
+                      },
+                      "required": [
+                        "name",
+                        "phone",
+                        "relationship"
+                      ],
+                      "type": "object"
+                    },
+                    "mobile": {},
+                    "phone": {}
+                  },
+                  "required": [
+                    "email"
+                  ],
+                  "type": "object"
+                },
+                "department": {},
+                "directReports": {
+                  "items": {},
+                  "type": "array"
+                },
+                "email": {},
+                "firstName": {},
+                "hireDate": {},
+                "id": {},
+                "lastName": {},
+                "manager": {},
+                "phone": {},
+                "salary": {
+                  "description": "Salary information",
+                  "properties": {
+                    "amount": {},
+                    "currency": {},
+                    "payFrequency": {
+                      "enum": [
+                        "WEEKLY",
+                        "BIWEEKLY",
+                        "MONTHLY",
+                        "ANNUALLY"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "amount",
+                    "currency",
+                    "payFrequency"
+                  ],
+                  "type": "object"
+                },
+                "title": {}
+              },
+              "required": [
+                "company",
+                "contact",
+                "department",
+                "directReports",
+                "email",
+                "firstName",
+                "hireDate",
+                "id",
+                "lastName",
+                "title"
+              ],
+              "type": "object"
+            },
+            "name": {}
+          },
+          "required": [
+            "code",
+            "company",
+            "employees",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Department"
+      }
+    },
+    {
+      "description": "Returns Employee.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "employee",
+      "operation": "Query.employee",
+      "output": {
+        "schema": {
+          "description": "An employee of a company",
+          "properties": {
+            "company": {
+              "description": "A company with departments and employees",
+              "properties": {
+                "ceo": {},
+                "departments": {
+                  "items": {
+                    "description": "A department within a company",
+                    "properties": {
+                      "budget": {
+                        "description": "Department budget",
+                        "type": "object"
+                      },
+                      "code": {},
+                      "company": {},
+                      "employees": {
+                        "type": "array"
+                      },
+                      "id": {},
+                      "manager": {},
+                      "name": {}
+                    },
+                    "required": [
+                      "code",
+                      "company",
+                      "employees",
+                      "id",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "employees": {
+                  "items": {},
+                  "type": "array"
+                },
+                "founded": {},
+                "headquarters": {
+                  "description": "Physical address",
+                  "properties": {
+                    "city": {},
+                    "coordinates": {
+                      "description": "Geographic coordinates",
+                      "properties": {
+                        "latitude": {},
+                        "longitude": {}
+                      },
+                      "required": [
+                        "latitude",
+                        "longitude"
+                      ],
+                      "type": "object"
+                    },
+                    "country": {},
+                    "postalCode": {},
+                    "state": {},
+                    "street": {}
+                  },
+                  "required": [
+                    "city",
+                    "country",
+                    "postalCode",
+                    "state",
+                    "street"
+                  ],
+                  "type": "object"
+                },
+                "id": {},
+                "name": {}
+              },
+              "required": [
+                "departments",
+                "employees",
+                "headquarters",
+                "id",
+                "name"
+              ],
+              "type": "object"
+            },
+            "contact": {
+              "description": "Contact information",
+              "properties": {
+                "address": {
+                  "description": "Physical address",
+                  "properties": {
+                    "city": {},
+                    "coordinates": {
+                      "description": "Geographic coordinates",
+                      "properties": {
+                        "latitude": {},
+                        "longitude": {}
+                      },
+                      "required": [
+                        "latitude",
+                        "longitude"
+                      ],
+                      "type": "object"
+                    },
+                    "country": {},
+                    "postalCode": {},
+                    "state": {},
+                    "street": {}
+                  },
+                  "required": [
+                    "city",
+                    "country",
+                    "postalCode",
+                    "state",
+                    "street"
+                  ],
+                  "type": "object"
+                },
+                "email": {},
+                "emergencyContact": {
+                  "description": "Emergency contact",
+                  "properties": {
+                    "name": {},
+                    "phone": {},
+                    "relationship": {}
+                  },
+                  "required": [
+                    "name",
+                    "phone",
+                    "relationship"
+                  ],
+                  "type": "object"
+                },
+                "mobile": {},
+                "phone": {}
+              },
+              "required": [
+                "email"
+              ],
+              "type": "object"
+            },
+            "department": {
+              "description": "A department within a company",
+              "properties": {
+                "budget": {
+                  "description": "Department budget",
+                  "properties": {
+                    "amount": {},
+                    "currency": {},
+                    "fiscalYear": {},
+                    "remaining": {},
+                    "spent": {}
+                  },
+                  "required": [
+                    "amount",
+                    "currency",
+                    "fiscalYear",
+                    "remaining",
+                    "spent"
+                  ],
+                  "type": "object"
+                },
+                "code": {},
+                "company": {
+                  "description": "A company with departments and employees",
+                  "properties": {
+                    "ceo": {},
+                    "departments": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "employees": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "founded": {},
+                    "headquarters": {
+                      "description": "Physical address",
+                      "properties": {
+                        "city": {},
+                        "coordinates": {
+                          "description": "Geographic coordinates",
+                          "type": "object"
+                        },
+                        "country": {},
+                        "postalCode": {},
+                        "state": {},
+                        "street": {}
+                      },
+                      "required": [
+                        "city",
+                        "country",
+                        "postalCode",
+                        "state",
+                        "street"
+                      ],
+                      "type": "object"
+                    },
+                    "id": {},
+                    "name": {}
+                  },
+                  "required": [
+                    "departments",
+                    "employees",
+                    "headquarters",
+                    "id",
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "employees": {
+                  "items": {},
+                  "type": "array"
+                },
+                "id": {},
+                "manager": {},
+                "name": {}
+              },
+              "required": [
+                "code",
+                "company",
+                "employees",
+                "id",
+                "name"
+              ],
+              "type": "object"
+            },
+            "directReports": {
+              "items": {},
+              "type": "array"
+            },
+            "email": {},
+            "firstName": {},
+            "hireDate": {},
+            "id": {},
+            "lastName": {},
+            "manager": {},
+            "phone": {},
+            "salary": {
+              "description": "Salary information",
+              "properties": {
+                "amount": {},
+                "currency": {},
+                "payFrequency": {
+                  "enum": [
+                    "WEEKLY",
+                    "BIWEEKLY",
+                    "MONTHLY",
+                    "ANNUALLY"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "amount",
+                "currency",
+                "payFrequency"
+              ],
+              "type": "object"
+            },
+            "title": {}
+          },
+          "required": [
+            "company",
+            "contact",
+            "department",
+            "directReports",
+            "email",
+            "firstName",
+            "hireDate",
+            "id",
+            "lastName",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Employee"
+      }
+    },
+    {
+      "description": "Returns array of Employee.",
+      "inputSchema": {
+        "properties": {
+          "companyId": {},
+          "departmentId": {}
+        },
+        "type": "object"
+      },
+      "name": "employees",
+      "operation": "Query.employees",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "An employee of a company",
+            "properties": {
+              "company": {
+                "description": "A company with departments and employees",
+                "properties": {
+                  "ceo": {},
+                  "departments": {
+                    "items": {
+                      "description": "A department within a company",
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "employees": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "founded": {},
+                  "headquarters": {
+                    "description": "Physical address",
+                    "properties": {
+                      "city": {},
+                      "coordinates": {
+                        "description": "Geographic coordinates",
+                        "type": "object"
+                      },
+                      "country": {},
+                      "postalCode": {},
+                      "state": {},
+                      "street": {}
+                    },
+                    "required": [
+                      "city",
+                      "country",
+                      "postalCode",
+                      "state",
+                      "street"
+                    ],
+                    "type": "object"
+                  },
+                  "id": {},
+                  "name": {}
+                },
+                "required": [
+                  "departments",
+                  "employees",
+                  "headquarters",
+                  "id",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "contact": {
+                "description": "Contact information",
+                "properties": {
+                  "address": {
+                    "description": "Physical address",
+                    "properties": {
+                      "city": {},
+                      "coordinates": {
+                        "description": "Geographic coordinates",
+                        "type": "object"
+                      },
+                      "country": {},
+                      "postalCode": {},
+                      "state": {},
+                      "street": {}
+                    },
+                    "required": [
+                      "city",
+                      "country",
+                      "postalCode",
+                      "state",
+                      "street"
+                    ],
+                    "type": "object"
+                  },
+                  "email": {},
+                  "emergencyContact": {
+                    "description": "Emergency contact",
+                    "properties": {
+                      "name": {},
+                      "phone": {},
+                      "relationship": {}
+                    },
+                    "required": [
+                      "name",
+                      "phone",
+                      "relationship"
+                    ],
+                    "type": "object"
+                  },
+                  "mobile": {},
+                  "phone": {}
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              },
+              "department": {
+                "description": "A department within a company",
+                "properties": {
+                  "budget": {
+                    "description": "Department budget",
+                    "properties": {
+                      "amount": {},
+                      "currency": {},
+                      "fiscalYear": {},
+                      "remaining": {},
+                      "spent": {}
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "fiscalYear",
+                      "remaining",
+                      "spent"
+                    ],
+                    "type": "object"
+                  },
+                  "code": {},
+                  "company": {
+                    "description": "A company with departments and employees",
+                    "properties": {
+                      "ceo": {},
+                      "departments": {
+                        "type": "array"
+                      },
+                      "employees": {
+                        "type": "array"
+                      },
+                      "founded": {},
+                      "headquarters": {
+                        "description": "Physical address",
+                        "type": "object"
+                      },
+                      "id": {},
+                      "name": {}
+                    },
+                    "required": [
+                      "departments",
+                      "employees",
+                      "headquarters",
+                      "id",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "employees": {
+                    "items": {},
+                    "type": "array"
+                  },
+                  "id": {},
+                  "manager": {},
+                  "name": {}
+                },
+                "required": [
+                  "code",
+                  "company",
+                  "employees",
+                  "id",
+                  "name"
+                ],
+                "type": "object"
+              },
+              "directReports": {
+                "items": {},
+                "type": "array"
+              },
+              "email": {},
+              "firstName": {},
+              "hireDate": {},
+              "id": {},
+              "lastName": {},
+              "manager": {},
+              "phone": {},
+              "salary": {
+                "description": "Salary information",
+                "properties": {
+                  "amount": {},
+                  "currency": {},
+                  "payFrequency": {
+                    "enum": [
+                      "WEEKLY",
+                      "BIWEEKLY",
+                      "MONTHLY",
+                      "ANNUALLY"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency",
+                  "payFrequency"
+                ],
+                "type": "object"
+              },
+              "title": {}
+            },
+            "required": [
+              "company",
+              "contact",
+              "department",
+              "directReports",
+              "email",
+              "firstName",
+              "hireDate",
+              "id",
+              "lastName",
+              "title"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Employee"
+      }
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List pets\n\nReturns the pets visible to the caller.\n\nReturns HTTP 200 application/json (array of Pet): A page of pets.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "description": "Maximum number of pets to return.",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "tenant": {
+            "description": "Owning tenant slug.",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_pets",
+      "operation": "GET /pets",
+      "output": {
+        "description": "A page of pets.",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "description": "A pet in the store.",
+            "properties": {
+              "id": {
+                "description": "Server-assigned identifier.",
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              "name": {
+                "description": "The pet's given name.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "status": {
+                "description": "Availability of the pet.",
+                "enum": [
+                  "available",
+                  "pending",
+                  "sold"
+                ],
+                "type": "string"
+              },
+              "tag": {
+                "description": "A label attached to a pet.",
+                "properties": {
+                  "name": {
+                    "description": "The tag's display name.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a pet\n\nRegisters a new pet.\n\nReturns HTTP 201 application/json (Pet): The created pet.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Server-assigned identifier.",
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "name": {
+            "description": "The pet's given name.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "description": "Availability of the pet.",
+            "enum": [
+              "available",
+              "pending",
+              "sold"
+            ],
+            "type": "string"
+          },
+          "tag": {
+            "description": "A label attached to a pet.",
+            "properties": {
+              "name": {
+                "description": "The tag's display name.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "tenant": {
+            "description": "Owning tenant slug.",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_pets",
+      "operation": "POST /pets",
+      "output": {
+        "description": "The created pet.",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A pet in the store.",
+          "properties": {
+            "id": {
+              "description": "Server-assigned identifier.",
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "name": {
+              "description": "The pet's given name.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "status": {
+              "description": "Availability of the pet.",
+              "enum": [
+                "available",
+                "pending",
+                "sold"
+              ],
+              "type": "string"
+            },
+            "tag": {
+              "description": "A label attached to a pet.",
+              "properties": {
+                "name": {
+                  "description": "The tag's display name.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "201"
+      }
+    }
+  ]
+}

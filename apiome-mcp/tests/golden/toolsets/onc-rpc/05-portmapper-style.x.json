@@ -1,0 +1,119 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns PMAP_PROG.call_result.",
+      "inputSchema": {
+        "properties": {
+          "args": {},
+          "proc": {},
+          "prog": {},
+          "vers": {}
+        },
+        "required": [
+          "args",
+          "proc",
+          "prog",
+          "vers"
+        ],
+        "type": "object"
+      },
+      "name": "PMAPPROC_CALLIT",
+      "operation": "PMAP_PROG.PMAP_PROG.PMAPPROC_CALLIT",
+      "output": {
+        "schema": {
+          "properties": {
+            "port": {},
+            "res": {}
+          },
+          "required": [
+            "port",
+            "res"
+          ],
+          "type": "object"
+        },
+        "shape": "PMAP_PROG.call_result"
+      }
+    },
+    {
+      "description": "Returns uint32.",
+      "inputSchema": {
+        "properties": {
+          "port": {},
+          "prog": {},
+          "prot": {},
+          "vers": {}
+        },
+        "required": [
+          "port",
+          "prog",
+          "prot",
+          "vers"
+        ],
+        "type": "object"
+      },
+      "name": "PMAPPROC_GETPORT",
+      "operation": "PMAP_PROG.PMAP_PROG.PMAPPROC_GETPORT",
+      "output": {
+        "schema": {},
+        "shape": "uint32"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "PMAPPROC_NULL",
+      "operation": "PMAP_PROG.PMAP_PROG.PMAPPROC_NULL"
+    },
+    {
+      "description": "Returns bool.",
+      "inputSchema": {
+        "properties": {
+          "port": {},
+          "prog": {},
+          "prot": {},
+          "vers": {}
+        },
+        "required": [
+          "port",
+          "prog",
+          "prot",
+          "vers"
+        ],
+        "type": "object"
+      },
+      "name": "PMAPPROC_SET",
+      "operation": "PMAP_PROG.PMAP_PROG.PMAPPROC_SET",
+      "output": {
+        "schema": {},
+        "shape": "bool"
+      }
+    },
+    {
+      "description": "Returns bool.",
+      "inputSchema": {
+        "properties": {
+          "port": {},
+          "prog": {},
+          "prot": {},
+          "vers": {}
+        },
+        "required": [
+          "port",
+          "prog",
+          "prot",
+          "vers"
+        ],
+        "type": "object"
+      },
+      "name": "PMAPPROC_UNSET",
+      "operation": "PMAP_PROG.PMAP_PROG.PMAPPROC_UNSET",
+      "output": {
+        "schema": {},
+        "shape": "bool"
+      }
+    }
+  ]
+}

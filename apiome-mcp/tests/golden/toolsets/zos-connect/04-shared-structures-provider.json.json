@@ -1,0 +1,82 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns AccountProvider.ACCOUNT-STATUS.",
+      "inputSchema": {
+        "properties": {
+          "ACCT-ID": {
+            "description": "Path parameter `accountId`",
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteAccount",
+      "operation": "DELETE /accounts/{accountId}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "AccountProvider.ACCOUNT-STATUS"
+      }
+    },
+    {
+      "description": "Returns AccountProvider.ACCOUNT-RECORD.",
+      "inputSchema": {
+        "properties": {
+          "ACCT-ID": {
+            "description": "Path parameter `accountId`",
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
+      },
+      "name": "getAccount",
+      "operation": "GET /accounts/{accountId}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "AccountProvider.ACCOUNT-RECORD"
+      }
+    },
+    {
+      "description": "Returns AccountProvider.ACCOUNT-RECORD.",
+      "inputSchema": {
+        "properties": {
+          "accountId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "type": "object"
+      },
+      "name": "replaceAccount",
+      "operation": "PUT /accounts/{accountId}",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "AccountProvider.ACCOUNT-RECORD"
+      }
+    }
+  ]
+}

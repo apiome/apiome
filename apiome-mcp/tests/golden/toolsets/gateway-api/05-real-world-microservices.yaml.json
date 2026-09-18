@@ -1,0 +1,44 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_checkout",
+      "operation": "ANY /checkout"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_inventory",
+      "operation": "GET /inventory"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "GET_inventory_skus_sku",
+      "operation": "GET /inventory/skus/{sku}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET",
+      "operation": "GET /"
+    }
+  ]
+}

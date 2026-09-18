@@ -1,0 +1,23 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create a todo item",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "CreateTodo",
+      "operation": "CreateAndGetTodo#CreateTodo"
+    },
+    {
+      "description": "Get the created todo item by ID",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GetTodo",
+      "operation": "CreateAndGetTodo#GetTodo"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (array of Library.Book).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "GET /books",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Library.Book",
+        "status": "200"
+      }
+    },
+    {
+      "description": "A publi\n\nReturns HTTP 200 application/json (Library.Borrower).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read",
+      "operation": "GET /books/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Library.Borrower",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Library.Borrower).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read_2",
+      "operation": "GET /books/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Library.Borrower",
+        "status": "200"
+      }
+    }
+  ]
+}

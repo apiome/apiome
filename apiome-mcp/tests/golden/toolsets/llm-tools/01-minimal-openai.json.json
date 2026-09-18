@@ -1,0 +1,22 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Look up the current weather for a city by name.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "description": "City name to look up",
+            "type": "string"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "get_weather",
+      "operation": "01-minimal-openai.get_weather"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_users",
+      "operation": "GET /users"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_users_userId",
+      "operation": "GET /users/{userId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_users",
+      "operation": "POST /users"
+    }
+  ]
+}

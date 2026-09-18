@@ -1,0 +1,75 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Basic_auth_override",
+      "operation": "GET /samples/legacy"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "sampleId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sampleId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "Disabled_request_header_and_path_variables",
+      "operation": "PATCH /samples/{sampleId}/status"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GraphQL_body",
+      "operation": "POST /graphql"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "assay": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "assay",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "Raw_JSON_body",
+      "operation": "POST /samples"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "URL-encoded_body",
+      "operation": "POST /samples"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Form-data_with_a_file",
+      "operation": "POST /samples/upload"
+    }
+  ]
+}

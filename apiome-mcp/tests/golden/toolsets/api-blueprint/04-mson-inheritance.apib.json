@@ -1,0 +1,154 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns application/json (AdminUser).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_admins",
+      "operation": "GET /admins",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "mfaEnrolled": {},
+            "scope": {
+              "description": "Administrative scope granted.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "mfaEnrolled",
+            "scope"
+          ],
+          "type": "object"
+        },
+        "shape": "AdminUser"
+      }
+    },
+    {
+      "description": "Returns application/json (User).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_users",
+      "operation": "GET /users",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "displayName": {
+              "description": "Preferred display name.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Login email address.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique user identifier.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    },
+    {
+      "description": "Returns application/json (AdminUser).",
+      "inputSchema": {
+        "properties": {
+          "mfaEnrolled": {},
+          "scope": {
+            "description": "Administrative scope granted.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mfaEnrolled",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "name": "Promote_to_admin",
+      "operation": "POST /admins",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "mfaEnrolled": {},
+            "scope": {
+              "description": "Administrative scope granted.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "mfaEnrolled",
+            "scope"
+          ],
+          "type": "object"
+        },
+        "shape": "AdminUser"
+      }
+    },
+    {
+      "description": "Returns application/json (User).",
+      "inputSchema": {
+        "properties": {
+          "displayName": {
+            "description": "Preferred display name.",
+            "type": "string"
+          },
+          "email": {
+            "description": "Login email address.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique user identifier.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Create_a_user",
+      "operation": "POST /users",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "displayName": {
+              "description": "Preferred display name.",
+              "type": "string"
+            },
+            "email": {
+              "description": "Login email address.",
+              "type": "string"
+            },
+            "id": {
+              "description": "Unique user identifier.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "cancel-order",
+      "operation": "examples:orders.order-api.cancel-order"
+    },
+    {
+      "description": "Returns examples:orders.order-types.order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "get-order",
+      "operation": "examples:orders.order-api.get-order",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit-price-cents": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku",
+                  "unit-price-cents"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "type": "object"
+        },
+        "shape": "examples:orders.order-types.order"
+      }
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                },
+                "unit-price-cents": {}
+              },
+              "required": [
+                "quantity",
+                "sku",
+                "unit-price-cents"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "place-order",
+      "operation": "examples:orders.order-api.place-order",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "log",
+      "operation": "examples:orders.order-service.log"
+    }
+  ]
+}

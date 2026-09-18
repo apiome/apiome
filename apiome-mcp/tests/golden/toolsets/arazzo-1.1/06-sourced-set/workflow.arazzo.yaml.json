@@ -1,0 +1,13 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_inventory_reserveStock",
+      "operation": "reserveStock#reserve"
+    }
+  ]
+}

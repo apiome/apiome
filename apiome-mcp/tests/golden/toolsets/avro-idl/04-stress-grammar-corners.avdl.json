@@ -1,0 +1,246 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "One-way message.",
+      "inputSchema": {
+        "properties": {
+          "amount": {},
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "correlationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "timeOfDay": {
+            "format": "time",
+            "type": "string"
+          },
+          "window": {
+            "description": "A fixed-size type."
+          }
+        },
+        "required": [
+          "amount",
+          "capturedAt",
+          "correlationId",
+          "day",
+          "timeOfDay",
+          "window"
+        ],
+        "type": "object"
+      },
+      "name": "emit",
+      "operation": "com.example.stress.StressProtocol.emit"
+    },
+    {
+      "description": "Message that throws two errors.\n\nReturns com.example.stress.Corners.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "mutate",
+      "operation": "com.example.stress.StressProtocol.mutate",
+      "output": {
+        "schema": {
+          "properties": {
+            "arrayOfMaps": {
+              "default": [],
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "deeplyNested": {
+              "additionalProperties": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "object"
+            },
+            "opaque": {
+              "type": "string"
+            },
+            "payload": {},
+            "polymorphic": {
+              "anyOf": [
+                {},
+                {},
+                {}
+              ]
+            },
+            "primary": {
+              "description": "Doc comment on a field.",
+              "type": "string"
+            },
+            "priority": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "record": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "arrayOfMaps",
+            "deeplyNested",
+            "opaque",
+            "payload",
+            "primary",
+            "priority",
+            "record"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.stress.Corners"
+      }
+    },
+    {
+      "description": "Message with no arguments.\n\nReturns com.example.stress.Corners.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "snapshot",
+      "operation": "com.example.stress.StressProtocol.snapshot",
+      "output": {
+        "schema": {
+          "properties": {
+            "arrayOfMaps": {
+              "default": [],
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "deeplyNested": {
+              "additionalProperties": {
+                "items": {},
+                "type": "array"
+              },
+              "type": "object"
+            },
+            "opaque": {
+              "type": "string"
+            },
+            "payload": {},
+            "polymorphic": {
+              "anyOf": [
+                {},
+                {},
+                {}
+              ]
+            },
+            "primary": {
+              "description": "Doc comment on a field.",
+              "type": "string"
+            },
+            "priority": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "record": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "arrayOfMaps",
+            "deeplyNested",
+            "opaque",
+            "payload",
+            "primary",
+            "priority",
+            "record"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.stress.Corners"
+      }
+    },
+    {
+      "description": "Message returning void, not oneway.",
+      "inputSchema": {
+        "properties": {
+          "arrayOfMaps": {
+            "default": [],
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "deeplyNested": {
+            "additionalProperties": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "opaque": {
+            "type": "string"
+          },
+          "payload": {},
+          "polymorphic": {
+            "anyOf": [
+              {},
+              {},
+              {}
+            ]
+          },
+          "primary": {
+            "description": "Doc comment on a field.",
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
+          },
+          "record": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "arrayOfMaps",
+          "deeplyNested",
+          "opaque",
+          "payload",
+          "primary",
+          "priority",
+          "record"
+        ],
+        "type": "object"
+      },
+      "name": "touch",
+      "operation": "com.example.stress.StressProtocol.touch"
+    }
+  ]
+}

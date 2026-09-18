@@ -1,0 +1,66 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Full-text search; the fuzzy toggle is saved but disabled.\n\nReturns.",
+      "inputSchema": {
+        "properties": {
+          "highlight": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "Search_documents",
+      "operation": "GET /search",
+      "output": {
+        "schema": {}
+      }
+    },
+    {
+      "description": "Existence probe inside an unnamed folder.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Index_health",
+      "operation": "HEAD /indices/documents"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Allowed_methods",
+      "operation": "OPTIONS /indices/documents"
+    },
+    {
+      "description": "Urlencoded body mode with a colon-style path variable.",
+      "inputSchema": {
+        "properties": {
+          "docId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "docId"
+        ],
+        "type": "object"
+      },
+      "name": "Reindex_document",
+      "operation": "POST /documents/{docId}/reindex"
+    },
+    {
+      "description": "GraphQL body mode; the gateway proxies it to the stats sidecar.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GraphQL_sidecar_query",
+      "operation": "POST /graphql"
+    }
+  ]
+}

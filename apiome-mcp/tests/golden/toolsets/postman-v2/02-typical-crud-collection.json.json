@@ -1,0 +1,75 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "Cancel_order",
+      "operation": "DELETE /orders/{orderId}"
+    },
+    {
+      "description": "Returns the caller's orders, newest first.\n\nReturns with no body.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "List_orders",
+      "operation": "GET /orders",
+      "output": {}
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "name": "Get_order",
+      "operation": "GET /orders/{orderId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "customerId",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "Place_order",
+      "operation": "POST /orders"
+    }
+  ]
+}

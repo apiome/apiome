@@ -1,0 +1,75 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "cancelReindex",
+      "operation": "DELETE /reindex",
+      "output": {}
+    },
+    {
+      "description": "Method with no id and a matrix param on the resource.\n\nReturns http://example.com/search.IndexStats.",
+      "inputSchema": {
+        "properties": {
+          "collection": {
+            "type": "string"
+          },
+          "view": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "collection",
+          "view"
+        ],
+        "type": "object"
+      },
+      "name": "GET_corpus_collection_view",
+      "operation": "GET /corpus/{collection};view",
+      "output": {
+        "schema": {
+          "properties": {
+            "documents": {},
+            "sizeBytes": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/search.IndexStats"
+      }
+    },
+    {
+      "description": "Full-text search with paging and optional filters.\n\nReturns http://example.com/search.SearchResult.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "GET /query",
+      "output": {
+        "schema": {
+          "properties": {
+            "firstUrl": {},
+            "tookMillis": {},
+            "totalHits": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/search.SearchResult"
+      }
+    },
+    {
+      "description": "Returns with no body.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "reindex",
+      "operation": "POST /reindex",
+      "output": {}
+    }
+  ]
+}

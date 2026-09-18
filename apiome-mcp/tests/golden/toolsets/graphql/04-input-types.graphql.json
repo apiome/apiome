@@ -1,0 +1,214 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns User.",
+      "inputSchema": {
+        "properties": {
+          "input": {
+            "description": "Input for creating a new user",
+            "properties": {
+              "email": {},
+              "name": {},
+              "password": {},
+              "profile": {
+                "description": "User profile information",
+                "properties": {
+                  "avatar": {},
+                  "bio": {},
+                  "birthday": {},
+                  "location": {},
+                  "website": {}
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "email",
+              "name",
+              "password"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "type": "object"
+      },
+      "name": "createUser",
+      "operation": "Mutation.createUser",
+      "output": {
+        "schema": {
+          "properties": {
+            "email": {},
+            "id": {},
+            "name": {},
+            "profile": {
+              "properties": {
+                "avatar": {},
+                "bio": {},
+                "birthday": {},
+                "location": {},
+                "website": {}
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "email",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    },
+    {
+      "description": "Returns Boolean.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "deleteUser",
+      "operation": "Mutation.deleteUser",
+      "output": {
+        "schema": {},
+        "shape": "Boolean"
+      }
+    },
+    {
+      "description": "Returns User.",
+      "inputSchema": {
+        "properties": {
+          "id": {},
+          "input": {
+            "description": "Input for updating a user",
+            "properties": {
+              "email": {},
+              "name": {},
+              "profile": {
+                "description": "User profile information",
+                "properties": {
+                  "avatar": {},
+                  "bio": {},
+                  "birthday": {},
+                  "location": {},
+                  "website": {}
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "input"
+        ],
+        "type": "object"
+      },
+      "name": "updateUser",
+      "operation": "Mutation.updateUser",
+      "output": {
+        "schema": {
+          "properties": {
+            "email": {},
+            "id": {},
+            "name": {},
+            "profile": {
+              "properties": {
+                "avatar": {},
+                "bio": {},
+                "birthday": {},
+                "location": {},
+                "website": {}
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "email",
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    },
+    {
+      "description": "Returns array of User.",
+      "inputSchema": {
+        "properties": {
+          "filter": {
+            "description": "Filter input for searching",
+            "properties": {
+              "createdAfter": {},
+              "createdBefore": {},
+              "emailContains": {},
+              "isActive": {},
+              "nameContains": {}
+            },
+            "type": "object"
+          },
+          "pagination": {
+            "description": "Pagination input",
+            "properties": {
+              "page": {},
+              "pageSize": {},
+              "sortBy": {},
+              "sortOrder": {
+                "description": "Sort order",
+                "enum": [
+                  "ASC",
+                  "DESC"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "name": "users",
+      "operation": "Query.users",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "email": {},
+              "id": {},
+              "name": {},
+              "profile": {
+                "properties": {
+                  "avatar": {},
+                  "bio": {},
+                  "birthday": {},
+                  "location": {},
+                  "website": {}
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "email",
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of User"
+      }
+    }
+  ]
+}

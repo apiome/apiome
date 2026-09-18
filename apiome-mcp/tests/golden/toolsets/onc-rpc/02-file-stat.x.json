@@ -1,0 +1,42 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns FILE_PROG.file_stat_res.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "maxLength": 256,
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "FILE_STAT",
+      "operation": "FILE_PROG.FILE_PROG.FILE_STAT",
+      "output": {
+        "schema": {
+          "properties": {
+            "kind": {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            },
+            "size": {}
+          },
+          "required": [
+            "kind",
+            "size"
+          ],
+          "type": "object"
+        },
+        "shape": "FILE_PROG.file_stat_res"
+      }
+    }
+  ]
+}

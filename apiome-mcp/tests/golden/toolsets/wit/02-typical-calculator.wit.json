@@ -1,0 +1,63 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "enum": [
+              "add",
+              "sub",
+              "mul",
+              "div"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "describe",
+      "operation": "examples:calculator.calculate.describe",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "description": "Returns double.",
+      "inputSchema": {
+        "properties": {
+          "a": {},
+          "b": {},
+          "operation": {
+            "enum": [
+              "add",
+              "sub",
+              "mul",
+              "div"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "a",
+          "b",
+          "operation"
+        ],
+        "type": "object"
+      },
+      "name": "eval",
+      "operation": "examples:calculator.calculate.eval",
+      "output": {
+        "schema": {},
+        "shape": "double"
+      }
+    }
+  ]
+}

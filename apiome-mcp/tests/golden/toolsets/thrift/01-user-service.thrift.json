@@ -1,0 +1,103 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.user.User.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createUser",
+      "operation": "com.example.user.UserService.createUser",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {},
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "roles": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "email",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.user.User"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "deleteUser",
+      "operation": "com.example.user.UserService.deleteUser"
+    },
+    {
+      "description": "Returns com.example.user.User.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getUser",
+      "operation": "com.example.user.UserService.getUser",
+      "output": {
+        "schema": {
+          "properties": {
+            "createdAt": {},
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "roles": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "email",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.user.User"
+      }
+    }
+  ]
+}

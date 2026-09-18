@@ -1,0 +1,37 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "CreateProfile",
+      "operation": "SignupLoginProfile#CreateProfile"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Login",
+      "operation": "SignupLoginProfile#Login"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Notify",
+      "operation": "SignupLoginProfile#Notify"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Signup",
+      "operation": "SignupLoginProfile#Signup"
+    }
+  ]
+}

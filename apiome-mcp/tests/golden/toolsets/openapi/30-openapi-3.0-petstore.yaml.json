@@ -1,0 +1,407 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Delete a pet\n\nReturns HTTP 204 with no body: No content",
+      "inputSchema": {
+        "properties": {
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "deletePet",
+      "operation": "DELETE /pets/{petId}",
+      "output": {
+        "description": "No content",
+        "status": "204"
+      }
+    },
+    {
+      "description": "List all pets\n\nReturns HTTP 200 application/json (array of Pet): Success",
+      "inputSchema": {
+        "properties": {
+          "X-Request-ID": {
+            "description": "Idempotency or correlation ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "limit": {
+            "default": 20,
+            "description": "Maximum number of pets to return",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "description": "Number of pets to skip for pagination",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "tags": {
+            "description": "Filter by tags (comma-separated)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listPets",
+      "operation": "GET /pets",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "age": {
+                "description": "Age of the pet (must be positive)",
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              "category": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "id": {
+                "description": "Unique identifier for the pet",
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "description": "Name of the pet",
+                "type": "string"
+              },
+              "tag": {
+                "description": "Optional tag for categorization",
+                "type": "string"
+              },
+              "weight": {
+                "description": "Weight in kilograms (must be less than 500)",
+                "exclusiveMaximum": 500.0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get a pet by ID\n\nReturns HTTP 200 application/json (Pet): Success",
+      "inputSchema": {
+        "properties": {
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "petId"
+        ],
+        "type": "object"
+      },
+      "name": "getPetById",
+      "operation": "GET /pets/{petId}",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "age": {
+              "description": "Age of the pet (must be positive)",
+              "exclusiveMinimum": 0.0,
+              "type": "integer"
+            },
+            "category": {
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for categorization",
+              "type": "string"
+            },
+            "weight": {
+              "description": "Weight in kilograms (must be less than 500)",
+              "exclusiveMaximum": 500.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a new pet\n\nReturns HTTP 201 application/json (Pet): Created",
+      "inputSchema": {
+        "properties": {
+          "X-Request-ID": {
+            "description": "Idempotency or correlation ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "age": {
+            "description": "Age of the pet (must be positive)",
+            "exclusiveMinimum": 0.0,
+            "type": "integer"
+          },
+          "category": {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "description": "Unique identifier for the pet",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Name of the pet",
+            "type": "string"
+          },
+          "tag": {
+            "description": "Optional tag for categorization",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Weight in kilograms (must be less than 500)",
+            "exclusiveMaximum": 500.0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createPet",
+      "operation": "POST /pets",
+      "output": {
+        "description": "Created",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "age": {
+              "description": "Age of the pet (must be positive)",
+              "exclusiveMinimum": 0.0,
+              "type": "integer"
+            },
+            "category": {
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for categorization",
+              "type": "string"
+            },
+            "weight": {
+              "description": "Weight in kilograms (must be less than 500)",
+              "exclusiveMaximum": 500.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Update a pet by ID\n\nReturns HTTP 200 application/json (Pet): Success",
+      "inputSchema": {
+        "properties": {
+          "age": {
+            "description": "Age of the pet (must be positive)",
+            "exclusiveMinimum": 0.0,
+            "type": "integer"
+          },
+          "category": {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "description": "Unique identifier for the pet",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Name of the pet",
+            "type": "string"
+          },
+          "petId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "tag": {
+            "description": "Optional tag for categorization",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Weight in kilograms (must be less than 500)",
+            "exclusiveMaximum": 500.0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "petId",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "updatePet",
+      "operation": "PUT /pets/{petId}",
+      "output": {
+        "description": "Success",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "age": {
+              "description": "Age of the pet (must be positive)",
+              "exclusiveMinimum": 0.0,
+              "type": "integer"
+            },
+            "category": {
+              "properties": {
+                "description": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "id": {
+              "description": "Unique identifier for the pet",
+              "format": "int64",
+              "type": "integer"
+            },
+            "name": {
+              "description": "Name of the pet",
+              "type": "string"
+            },
+            "tag": {
+              "description": "Optional tag for categorization",
+              "type": "string"
+            },
+            "weight": {
+              "description": "Weight in kilograms (must be less than 500)",
+              "exclusiveMaximum": 500.0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Pet",
+        "status": "200"
+      }
+    }
+  ]
+}

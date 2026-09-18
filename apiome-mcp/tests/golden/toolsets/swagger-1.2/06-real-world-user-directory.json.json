@@ -1,0 +1,374 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Disable a user\n\nReturns HTTP 204 with no body: Disabled",
+      "inputSchema": {
+        "properties": {
+          "login": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "login"
+        ],
+        "type": "object"
+      },
+      "name": "disableUser",
+      "operation": "DELETE /users/{login}",
+      "output": {
+        "description": "Disabled",
+        "status": "204"
+      }
+    },
+    {
+      "description": "List users in the directory\n\nReturns HTTP 200 application/json (array of User): A page of users",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "includeDisabled": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listUsers",
+      "operation": "GET /users",
+      "output": {
+        "description": "A page of users",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "createdAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "department": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "groups": {
+                "items": {
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "login": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "displayName",
+              "enabled",
+              "login"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of User",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Fetch one user by login\n\nReturns HTTP 200 application/json (User): Successful response",
+      "inputSchema": {
+        "properties": {
+          "login": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "login"
+        ],
+        "type": "object"
+      },
+      "name": "getUser",
+      "operation": "GET /users/{login}",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "groups": {
+              "items": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "login": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "displayName",
+            "enabled",
+            "login"
+          ],
+          "type": "object"
+        },
+        "shape": "User",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Groups the user belongs to\n\nReturns HTTP 200 application/json (array of Group): Successful response",
+      "inputSchema": {
+        "properties": {
+          "login": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "login"
+        ],
+        "type": "object"
+      },
+      "name": "listUserGroups",
+      "operation": "GET /users/{login}/groups",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Group",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a user\n\nReturns HTTP 201 application/json (User): Created",
+      "inputSchema": {
+        "properties": {
+          "department": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "login"
+        ],
+        "type": "object"
+      },
+      "name": "createUser",
+      "operation": "POST /users",
+      "output": {
+        "description": "Created",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "groups": {
+              "items": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "login": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "displayName",
+            "enabled",
+            "login"
+          ],
+          "type": "object"
+        },
+        "shape": "User",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Replace a user record\n\nReturns HTTP 200 application/json (User): Successful response",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "properties": {
+              "department": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "login": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "displayName",
+              "login"
+            ],
+            "type": "object"
+          },
+          "login": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "login"
+        ],
+        "type": "object"
+      },
+      "name": "replaceUser",
+      "operation": "PUT /users/{login}",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "createdAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "groups": {
+              "items": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "login": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "displayName",
+            "enabled",
+            "login"
+          ],
+          "type": "object"
+        },
+        "shape": "User",
+        "status": "200"
+      }
+    }
+  ]
+}

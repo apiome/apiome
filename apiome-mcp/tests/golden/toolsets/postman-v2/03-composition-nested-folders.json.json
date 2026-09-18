@@ -1,0 +1,71 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_categories",
+      "operation": "GET /categories"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "category": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "List_products",
+      "operation": "GET /products"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "Get_product",
+      "operation": "GET /products/{sku}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Create_cart",
+      "operation": "POST /carts"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "cartId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cartId",
+          "quantity",
+          "sku"
+        ],
+        "type": "object"
+      },
+      "name": "Add_item",
+      "operation": "POST /carts/{cartId}/items"
+    }
+  ]
+}

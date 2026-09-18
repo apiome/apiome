@@ -1,0 +1,141 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "manifestId": {}
+        },
+        "required": [
+          "manifestId"
+        ],
+        "type": "object"
+      },
+      "name": "cancelManifest",
+      "operation": "DELETE /manifests/{manifestId}"
+    },
+    {
+      "description": "Returns FreightRequester.MANIFEST_LIST.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listManifests",
+      "operation": "GET /manifests",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "FreightRequester.MANIFEST_LIST"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "manifestId": {}
+        },
+        "required": [
+          "manifestId"
+        ],
+        "type": "object"
+      },
+      "name": "probeManifest",
+      "operation": "HEAD /manifests/{manifestId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "describeManifests",
+      "operation": "OPTIONS /manifests"
+    },
+    {
+      "description": "Returns FreightRequester.MANIFEST_RECORD.",
+      "inputSchema": {
+        "properties": {
+          "MANIFEST_ID": {},
+          "manifestId": {}
+        },
+        "required": [
+          "manifestId"
+        ],
+        "type": "object"
+      },
+      "name": "amendManifest",
+      "operation": "PATCH /manifests/{manifestId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "DEPOT_ID": {
+              "description": "Path parameter `depotId`",
+              "type": "string"
+            },
+            "MANIFEST_ID": {}
+          },
+          "type": "object"
+        },
+        "shape": "FreightRequester.MANIFEST_RECORD"
+      }
+    },
+    {
+      "description": "Returns FreightRequester.MANIFEST_KEY.",
+      "inputSchema": {
+        "properties": {
+          "DEPOT_ID": {
+            "description": "Path parameter `depotId`",
+            "type": "string"
+          },
+          "MANIFEST_ID": {}
+        },
+        "type": "object"
+      },
+      "name": "createManifest",
+      "operation": "POST /manifests",
+      "output": {
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "FreightRequester.MANIFEST_KEY"
+      }
+    },
+    {
+      "description": "Returns FreightRequester.MANIFEST_RECORD.",
+      "inputSchema": {
+        "properties": {
+          "DEPOT_ID": {
+            "description": "Path parameter `depotId`",
+            "type": "string"
+          },
+          "MANIFEST_ID": {},
+          "depotId": {
+            "type": "string"
+          },
+          "manifestId": {}
+        },
+        "required": [
+          "depotId",
+          "manifestId"
+        ],
+        "type": "object"
+      },
+      "name": "replaceManifest",
+      "operation": "PUT /depots/{depotId}/manifests/{manifestId}",
+      "output": {
+        "schema": {
+          "properties": {
+            "DEPOT_ID": {
+              "description": "Path parameter `depotId`",
+              "type": "string"
+            },
+            "MANIFEST_ID": {}
+          },
+          "type": "object"
+        },
+        "shape": "FreightRequester.MANIFEST_RECORD"
+      }
+    }
+  ]
+}

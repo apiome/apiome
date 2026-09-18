@@ -1,0 +1,119 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "remove",
+      "operation": "DELETE /devices/{id}"
+    },
+    {
+      "description": "Sparse update payload; e\n\nReturns HTTP 200 application/json (array of DeviceFleet.Device).",
+      "inputSchema": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "GET /devices",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of DeviceFleet.Device",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (DeviceFleet.Device).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ifNoneMatch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read",
+      "operation": "GET /devices/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "DeviceFleet.Device",
+        "status": "200"
+      }
+    },
+    {
+      "description": "A firmware rollou\n\nReturns HTTP 200 application/json (DeviceFleet.Device).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "update",
+      "operation": "PATCH /devices/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "DeviceFleet.Device",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (DeviceFleet.RolloutSummary).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "create",
+      "operation": "POST /rollouts",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "DeviceFleet.RolloutSummary",
+        "status": "200"
+      }
+    }
+  ]
+}

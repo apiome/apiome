@@ -1,0 +1,20 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "GET_users_id",
+      "operation": "GET /users/{id}"
+    }
+  ]
+}

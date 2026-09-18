@@ -1,0 +1,59 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.payments.SubmitPaymentOutput.",
+      "inputSchema": {
+        "properties": {
+          "amountMinor": {},
+          "currency": {
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "method": {},
+          "paymentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "amountMinor",
+          "currency",
+          "method",
+          "paymentId"
+        ],
+        "type": "object"
+      },
+      "name": "SubmitPayment",
+      "operation": "example.payments.PaymentService.SubmitPayment",
+      "output": {
+        "schema": {
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            },
+            "status": {
+              "description": "Exactly one member of the union is present o",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "paymentId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "example.payments.SubmitPaymentOutput"
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns apiome:graph-ql-schema.types.user.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "user",
+      "operation": "apiome:graph-ql-schema.query.user",
+      "output": {
+        "schema": {
+          "properties": {
+            "age": {},
+            "created-at": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "is-active": {},
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "id",
+            "is-active",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "apiome:graph-ql-schema.types.user"
+      }
+    },
+    {
+      "description": "Returns array of apiome:graph-ql-schema.types.user.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "users",
+      "operation": "apiome:graph-ql-schema.query.users",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "age": {},
+              "created-at": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "is-active": {},
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "email",
+              "id",
+              "is-active",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of apiome:graph-ql-schema.types.user"
+      }
+    }
+  ]
+}

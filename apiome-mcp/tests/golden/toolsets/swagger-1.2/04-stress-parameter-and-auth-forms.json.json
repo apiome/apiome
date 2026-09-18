@@ -1,0 +1,181 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Every parameter kind 1.2 admits, in one operation.\n\nReturns HTTP 200 application/json (array of Sample): Matching samples",
+      "inputSchema": {
+        "properties": {
+          "X-Request-Id": {
+            "type": "string"
+          },
+          "page": {
+            "format": "int64",
+            "minimum": 0.0,
+            "type": "integer"
+          },
+          "q": {
+            "type": "string"
+          },
+          "status": {
+            "default": "complete",
+            "enum": [
+              "queued",
+              "running",
+              "complete",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchSamples",
+      "operation": "GET /samples",
+      "output": {
+        "description": "Matching samples",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "assay": {
+                "enum": [
+                  "elisa",
+                  "pcr",
+                  "hplc"
+                ],
+                "type": "string"
+              },
+              "collectedAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "raw": {
+                "format": "byte",
+                "type": "string"
+              },
+              "readings": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array",
+                "uniqueItems": false
+              },
+              "sampleId": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "queued",
+                  "running",
+                  "complete",
+                  "failed"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "assay",
+              "sampleId",
+              "status"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Sample",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Form parameters and a file upload.\n\nReturns HTTP 201 application/json (Sample): Sample accepted",
+      "inputSchema": {
+        "properties": {
+          "assay": {
+            "enum": [
+              "elisa",
+              "pcr",
+              "hplc"
+            ],
+            "type": "string"
+          },
+          "attachment": {
+            "format": "binary",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "replicates": {
+            "default": 3,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "assay"
+        ],
+        "type": "object"
+      },
+      "name": "uploadSample",
+      "operation": "POST /samples",
+      "output": {
+        "description": "Sample accepted",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "assay": {
+              "enum": [
+                "elisa",
+                "pcr",
+                "hplc"
+              ],
+              "type": "string"
+            },
+            "collectedAt": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "raw": {
+              "format": "byte",
+              "type": "string"
+            },
+            "readings": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array",
+              "uniqueItems": false
+            },
+            "sampleId": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "queued",
+                "running",
+                "complete",
+                "failed"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "assay",
+            "sampleId",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Sample",
+        "status": "201"
+      }
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/orders.CancelOrderResponse.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CancelOrder",
+      "operation": "http://example.com/orders.OrderPort.CancelOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "cancelled": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/orders.CancelOrderResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/orders.CreateOrderResponse.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "lines": {
+            "properties": {
+              "quantity": {},
+              "sku": {
+                "type": "string"
+              },
+              "unitPrice": {}
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CreateOrder",
+      "operation": "http://example.com/orders.OrderPort.CreateOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "order": {
+              "properties": {
+                "customerId": {
+                  "type": "string"
+                },
+                "lines": {
+                  "properties": {
+                    "quantity": {},
+                    "sku": {
+                      "type": "string"
+                    },
+                    "unitPrice": {}
+                  },
+                  "type": "object"
+                },
+                "orderId": {
+                  "type": "string"
+                },
+                "placedAt": {
+                  "type": "string"
+                },
+                "total": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/orders.CreateOrderResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/orders.GetOrderResponse.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetOrder",
+      "operation": "http://example.com/orders.OrderPort.GetOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "order": {
+              "properties": {
+                "customerId": {
+                  "type": "string"
+                },
+                "lines": {
+                  "properties": {
+                    "quantity": {},
+                    "sku": {
+                      "type": "string"
+                    },
+                    "unitPrice": {}
+                  },
+                  "type": "object"
+                },
+                "orderId": {
+                  "type": "string"
+                },
+                "placedAt": {
+                  "type": "string"
+                },
+                "total": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/orders.GetOrderResponse"
+      }
+    }
+  ]
+}

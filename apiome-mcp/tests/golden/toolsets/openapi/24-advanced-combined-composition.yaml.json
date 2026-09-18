@@ -1,0 +1,79 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List all products\n\nReturns HTTP 200 application/json (array of Product): Product list",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_products",
+      "operation": "GET /products",
+      "output": {
+        "description": "Product list",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List electronics products\n\nReturns HTTP 200 application/json (array of ElectronicsProduct): Electronics list",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_products_electronics",
+      "operation": "GET /products/electronics",
+      "output": {
+        "description": "Electronics list",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of ElectronicsProduct",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a customer\n\nReturns HTTP 201 with no body: Customer created",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "POST_customers",
+      "operation": "POST /customers",
+      "output": {
+        "description": "Customer created",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Create an order\n\nReturns HTTP 201 with no body: Order created",
+      "inputSchema": {
+        "properties": {
+          "body": {}
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "POST_orders",
+      "operation": "POST /orders",
+      "output": {
+        "description": "Order created",
+        "status": "201"
+      }
+    }
+  ]
+}

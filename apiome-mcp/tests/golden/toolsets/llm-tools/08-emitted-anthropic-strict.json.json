@@ -1,0 +1,219 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Create item",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "description": "Unique identifier",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "Item name",
+            "type": "string"
+          },
+          "value": {
+            "description": "Numeric value",
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "X-Tenant-ID",
+          "createdAt",
+          "id",
+          "name",
+          "value"
+        ],
+        "type": "object"
+      },
+      "name": "createItem",
+      "operation": "08-emitted-anthropic-strict.createItem"
+    },
+    {
+      "description": "Create session (cookie param example)",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "X-Client-Version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "password": {
+            "format": "password",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "format": "uri",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "redirect_uri",
+          "X-Client-Version",
+          "username",
+          "password"
+        ],
+        "type": "object"
+      },
+      "name": "createSession",
+      "operation": "08-emitted-anthropic-strict.createSession"
+    },
+    {
+      "description": "Delete item",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteItem",
+      "operation": "08-emitted-anthropic-strict.deleteItem"
+    },
+    {
+      "description": "Get item by ID",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "description": "Sparse fields",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "name": "getItem",
+      "operation": "08-emitted-anthropic-strict.getItem"
+    },
+    {
+      "description": "List items",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "X-Tenant-ID": {
+            "description": "Tenant identifier",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "per_page": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "q": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "enum": [
+              "name",
+              "createdAt",
+              "-name",
+              "-createdAt"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "page",
+          "per_page",
+          "q",
+          "sort",
+          "X-Tenant-ID"
+        ],
+        "type": "object"
+      },
+      "name": "listItems",
+      "operation": "08-emitted-anthropic-strict.listItems"
+    },
+    {
+      "description": "Search with multiple param locations",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "X-Request-ID": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "q": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "q",
+          "X-Request-ID"
+        ],
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "08-emitted-anthropic-strict.search"
+    }
+  ]
+}

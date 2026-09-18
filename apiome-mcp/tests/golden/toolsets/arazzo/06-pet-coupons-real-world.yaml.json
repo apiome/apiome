@@ -1,0 +1,32 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Look up a coupon applicable to the selected pet",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getPetCoupons",
+      "operation": "place-discounted-order#find-coupon"
+    },
+    {
+      "description": "Search the store for pets matching the requested status",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "findPetsByStatus",
+      "operation": "place-discounted-order#find-pet"
+    },
+    {
+      "description": "Place the order with the coupon applied",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "place-discounted-order#place-order"
+    }
+  ]
+}

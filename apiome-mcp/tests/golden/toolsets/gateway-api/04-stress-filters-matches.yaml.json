@@ -1,0 +1,47 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "window": {
+            "type": "string"
+          },
+          "x-tenant": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "window",
+          "x-tenant"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_reports",
+      "operation": "GET /v1/reports"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "tenantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenantId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_tenants_tenantId_usage",
+      "operation": "GET /v1/tenants/{tenantId}/usage"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_v1_export",
+      "operation": "POST /v1/export"
+    }
+  ]
+}

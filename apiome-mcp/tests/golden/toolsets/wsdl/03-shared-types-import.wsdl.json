@@ -1,0 +1,97 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns http://example.com/quotes.AcceptQuoteResponse.",
+      "inputSchema": {
+        "properties": {
+          "audit": {
+            "properties": {
+              "requestedAt": {
+                "type": "string"
+              },
+              "requestedBy": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "quoteId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "AcceptQuote",
+      "operation": "http://example.com/quotes.QuotePort.AcceptQuote",
+      "output": {
+        "schema": {
+          "properties": {
+            "charged": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "orderId": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/quotes.AcceptQuoteResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/quotes.QuoteResponse.",
+      "inputSchema": {
+        "properties": {
+          "audit": {
+            "properties": {
+              "requestedAt": {
+                "type": "string"
+              },
+              "requestedBy": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "quantity": {}
+        },
+        "type": "object"
+      },
+      "name": "RequestQuote",
+      "operation": "http://example.com/quotes.QuotePort.RequestQuote",
+      "output": {
+        "schema": {
+          "properties": {
+            "price": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "quoteId": {
+              "type": "string"
+            },
+            "validUntil": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/quotes.QuoteResponse"
+      }
+    }
+  ]
+}

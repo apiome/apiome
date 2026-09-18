@@ -1,0 +1,28 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "notificationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "notificationId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_notifications_notificationId_status",
+      "operation": "GET /notifications/{notificationId}/status"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_notifications",
+      "operation": "POST /notifications"
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CancelOrder",
+      "operation": "example.orders.v1.OrderService.CancelOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customer_id": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit_price_cents": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.v1.Order"
+      }
+    },
+    {
+      "description": "Returns example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "customer_id": {
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                },
+                "unit_price_cents": {}
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "name": "CreateOrder",
+      "operation": "example.orders.v1.OrderService.CreateOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customer_id": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit_price_cents": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.v1.Order"
+      }
+    },
+    {
+      "description": "Returns example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetOrder",
+      "operation": "example.orders.v1.OrderService.GetOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customer_id": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unit_price_cents": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "example.orders.v1.Order"
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_billing_cancelSubscription",
+      "operation": "cancelSubscription#cancel"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "sourceDescriptions_billing_createSubscription",
+      "operation": "createSubscription#create"
+    }
+  ]
+}

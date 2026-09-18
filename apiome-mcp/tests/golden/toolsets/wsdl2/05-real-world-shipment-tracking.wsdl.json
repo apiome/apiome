@@ -1,0 +1,160 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "occurredAt": {
+            "type": "string"
+          },
+          "status": {},
+          "trackingNumber": {}
+        },
+        "type": "object"
+      },
+      "name": "notifyStatus",
+      "operation": "http://example.com/shipping/tracking/v2.TrackingInterface.notifyStatus"
+    },
+    {
+      "description": "Returns http://example.com/shipping/tracking/v2.rateResponse.",
+      "inputSchema": {
+        "properties": {
+          "destination": {
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "line1": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "origin": {
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "line1": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "serviceLevel": {
+            "type": "string"
+          },
+          "weightKg": {}
+        },
+        "type": "object"
+      },
+      "name": "rate",
+      "operation": "http://example.com/shipping/tracking/v2.TrackingInterface.rate",
+      "output": {
+        "schema": {
+          "properties": {
+            "quote": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "type": "string"
+                },
+                "serviceLevel": {
+                  "type": "string"
+                },
+                "transitDays": {}
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/shipping/tracking/v2.rateResponse"
+      }
+    },
+    {
+      "description": "Returns http://example.com/shipping/tracking/v2.trackResponse.",
+      "inputSchema": {
+        "properties": {
+          "includeHistory": {},
+          "trackingNumber": {}
+        },
+        "type": "object"
+      },
+      "name": "track",
+      "operation": "http://example.com/shipping/tracking/v2.TrackingInterface.track",
+      "output": {
+        "schema": {
+          "properties": {
+            "destination": {
+              "properties": {
+                "city": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "line1": {
+                  "type": "string"
+                },
+                "line2": {
+                  "type": "string"
+                },
+                "postalCode": {
+                  "type": "string"
+                },
+                "region": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "estimatedDelivery": {
+              "type": "string"
+            },
+            "event": {
+              "properties": {
+                "location": {
+                  "type": "string"
+                },
+                "occurredAt": {
+                  "type": "string"
+                },
+                "status": {}
+              },
+              "type": "object"
+            },
+            "status": {},
+            "trackingNumber": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/shipping/tracking/v2.trackResponse"
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "List_tasks",
+      "operation": "GET /tasks"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Get_task",
+      "operation": "GET /tasks/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "dueDate": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "done",
+          "dueDate",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "Create_task",
+      "operation": "POST /tasks"
+    }
+  ]
+}

@@ -1,0 +1,332 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Search for posts\n\nReturns PostConnection.",
+      "inputSchema": {
+        "properties": {
+          "after": {},
+          "authorId": {},
+          "first": {
+            "default": 10
+          },
+          "publishedAfter": {},
+          "publishedBefore": {},
+          "query": {},
+          "tags": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "searchPosts",
+      "operation": "Query.searchPosts",
+      "output": {
+        "schema": {
+          "properties": {
+            "edges": {
+              "items": {
+                "properties": {
+                  "cursor": {},
+                  "node": {
+                    "properties": {
+                      "author": {
+                        "type": "object"
+                      },
+                      "comments": {
+                        "type": "object"
+                      },
+                      "content": {},
+                      "id": {},
+                      "title": {}
+                    },
+                    "required": [
+                      "author",
+                      "comments",
+                      "content",
+                      "id",
+                      "title"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "cursor",
+                  "node"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "pageInfo": {
+              "description": "Pagination connection pattern (Relay-style)",
+              "properties": {
+                "endCursor": {},
+                "hasNextPage": {},
+                "hasPreviousPage": {},
+                "startCursor": {},
+                "totalCount": {}
+              },
+              "required": [
+                "hasNextPage",
+                "hasPreviousPage",
+                "totalCount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "edges",
+            "pageInfo"
+          ],
+          "type": "object"
+        },
+        "shape": "PostConnection"
+      }
+    },
+    {
+      "description": "Get a single user by ID\n\nReturns User.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "The unique ID of the user"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "user",
+      "operation": "Query.user",
+      "output": {
+        "schema": {
+          "properties": {
+            "email": {},
+            "followers": {
+              "properties": {
+                "edges": {
+                  "items": {
+                    "properties": {
+                      "cursor": {},
+                      "node": {}
+                    },
+                    "required": [
+                      "cursor",
+                      "node"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pageInfo": {
+                  "description": "Pagination connection pattern (Relay-style)",
+                  "properties": {
+                    "endCursor": {},
+                    "hasNextPage": {},
+                    "hasPreviousPage": {},
+                    "startCursor": {},
+                    "totalCount": {}
+                  },
+                  "required": [
+                    "hasNextPage",
+                    "hasPreviousPage",
+                    "totalCount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "edges",
+                "pageInfo"
+              ],
+              "type": "object"
+            },
+            "following": {
+              "properties": {
+                "edges": {
+                  "items": {
+                    "properties": {
+                      "cursor": {},
+                      "node": {}
+                    },
+                    "required": [
+                      "cursor",
+                      "node"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pageInfo": {
+                  "description": "Pagination connection pattern (Relay-style)",
+                  "properties": {
+                    "endCursor": {},
+                    "hasNextPage": {},
+                    "hasPreviousPage": {},
+                    "startCursor": {},
+                    "totalCount": {}
+                  },
+                  "required": [
+                    "hasNextPage",
+                    "hasPreviousPage",
+                    "totalCount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "edges",
+                "pageInfo"
+              ],
+              "type": "object"
+            },
+            "id": {},
+            "name": {},
+            "posts": {
+              "properties": {
+                "edges": {
+                  "items": {
+                    "properties": {
+                      "cursor": {},
+                      "node": {
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cursor",
+                      "node"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "pageInfo": {
+                  "description": "Pagination connection pattern (Relay-style)",
+                  "properties": {
+                    "endCursor": {},
+                    "hasNextPage": {},
+                    "hasPreviousPage": {},
+                    "startCursor": {},
+                    "totalCount": {}
+                  },
+                  "required": [
+                    "hasNextPage",
+                    "hasPreviousPage",
+                    "totalCount"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "edges",
+                "pageInfo"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "email",
+            "followers",
+            "following",
+            "id",
+            "name",
+            "posts"
+          ],
+          "type": "object"
+        },
+        "shape": "User"
+      }
+    },
+    {
+      "description": "List users with pagination\n\nReturns UserConnection.",
+      "inputSchema": {
+        "properties": {
+          "after": {
+            "description": "Cursor for pagination"
+          },
+          "first": {
+            "default": 20,
+            "description": "Number of users to return (max 100)"
+          },
+          "isActive": {
+            "default": true,
+            "description": "Filter by active status"
+          },
+          "nameContains": {
+            "description": "Filter by name"
+          }
+        },
+        "type": "object"
+      },
+      "name": "users",
+      "operation": "Query.users",
+      "output": {
+        "schema": {
+          "properties": {
+            "edges": {
+              "items": {
+                "properties": {
+                  "cursor": {},
+                  "node": {
+                    "properties": {
+                      "email": {},
+                      "followers": {},
+                      "following": {},
+                      "id": {},
+                      "name": {},
+                      "posts": {
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "followers",
+                      "following",
+                      "id",
+                      "name",
+                      "posts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "cursor",
+                  "node"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "pageInfo": {
+              "description": "Pagination connection pattern (Relay-style)",
+              "properties": {
+                "endCursor": {},
+                "hasNextPage": {},
+                "hasPreviousPage": {},
+                "startCursor": {},
+                "totalCount": {}
+              },
+              "required": [
+                "hasNextPage",
+                "hasPreviousPage",
+                "totalCount"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "edges",
+            "pageInfo"
+          ],
+          "type": "object"
+        },
+        "shape": "UserConnection"
+      }
+    }
+  ]
+}

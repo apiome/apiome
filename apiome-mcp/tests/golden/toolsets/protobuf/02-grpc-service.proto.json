@@ -1,0 +1,193 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.catalog.v1.Product.",
+      "inputSchema": {
+        "properties": {
+          "product": {
+            "properties": {
+              "attributes": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "dimensions": {
+                "properties": {
+                  "depth_mm": {},
+                  "height_mm": {},
+                  "width_mm": {}
+                },
+                "type": "object"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "price_cents": {}
+            },
+            "required": [
+              "attributes"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CreateProduct",
+      "operation": "example.catalog.v1.ProductService.CreateProduct",
+      "output": {
+        "schema": {
+          "properties": {
+            "attributes": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "dimensions": {
+              "properties": {
+                "depth_mm": {},
+                "height_mm": {},
+                "width_mm": {}
+              },
+              "type": "object"
+            },
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price_cents": {}
+          },
+          "required": [
+            "attributes"
+          ],
+          "type": "object"
+        },
+        "shape": "example.catalog.v1.Product"
+      }
+    },
+    {
+      "description": "Returns example.catalog.v1.Product.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetProduct",
+      "operation": "example.catalog.v1.ProductService.GetProduct",
+      "output": {
+        "schema": {
+          "properties": {
+            "attributes": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "dimensions": {
+              "properties": {
+                "depth_mm": {},
+                "height_mm": {},
+                "width_mm": {}
+              },
+              "type": "object"
+            },
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price_cents": {}
+          },
+          "required": [
+            "attributes"
+          ],
+          "type": "object"
+        },
+        "shape": "example.catalog.v1.Product"
+      }
+    },
+    {
+      "description": "Returns example.catalog.v1.ListProductsResponse.",
+      "inputSchema": {
+        "properties": {
+          "page_size": {},
+          "page_token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ListProducts",
+      "operation": "example.catalog.v1.ProductService.ListProducts",
+      "output": {
+        "schema": {
+          "properties": {
+            "next_page_token": {
+              "type": "string"
+            },
+            "products": {
+              "items": {
+                "properties": {
+                  "attributes": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "dimensions": {
+                    "properties": {
+                      "depth_mm": {},
+                      "height_mm": {},
+                      "width_mm": {}
+                    },
+                    "type": "object"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "price_cents": {}
+                },
+                "required": [
+                  "attributes"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "products"
+          ],
+          "type": "object"
+        },
+        "shape": "example.catalog.v1.ListProductsResponse"
+      }
+    }
+  ]
+}

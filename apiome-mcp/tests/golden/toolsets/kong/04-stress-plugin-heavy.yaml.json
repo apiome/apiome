@@ -1,0 +1,83 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_admin",
+      "operation": "ANY /admin"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_billing_invoices",
+      "operation": "GET /billing/invoices"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_billing_invoices_invoiceId",
+      "operation": "GET /billing/invoices/{invoiceId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_billing_invoices",
+      "operation": "POST /billing/invoices"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "name": "POST_billing_invoices_invoiceId",
+      "operation": "POST /billing/invoices/{invoiceId}"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_userinfo",
+      "operation": "GET /userinfo"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_oauth_token",
+      "operation": "POST /oauth/token"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ANY_feed",
+      "operation": "ANY /feed"
+    }
+  ]
+}

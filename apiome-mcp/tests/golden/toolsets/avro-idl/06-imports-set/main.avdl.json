@@ -1,0 +1,111 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.shipping.ShipmentResponse.",
+      "inputSchema": {
+        "properties": {
+          "destination": {
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "line1": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "postalCode": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "city",
+              "countryCode",
+              "line1",
+              "postalCode"
+            ],
+            "type": "object"
+          },
+          "parcel": {
+            "description": "Imported through `import schema` — the generated artifact beside the IDL source.",
+            "properties": {
+              "fragile": {},
+              "heightCm": {},
+              "lengthCm": {},
+              "widthCm": {}
+            },
+            "required": [
+              "fragile",
+              "heightCm",
+              "lengthCm",
+              "widthCm"
+            ],
+            "type": "object"
+          },
+          "shipmentId": {
+            "type": "string"
+          },
+          "weight": {
+            "properties": {
+              "unit": {
+                "type": "string"
+              },
+              "value": {}
+            },
+            "required": [
+              "unit",
+              "value"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "destination",
+          "parcel",
+          "shipmentId",
+          "weight"
+        ],
+        "type": "object"
+      },
+      "name": "ship",
+      "operation": "com.example.shipping.ShippingService.ship",
+      "output": {
+        "schema": {
+          "properties": {
+            "price": {
+              "properties": {
+                "amount": {},
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ],
+              "type": "object"
+            },
+            "shipmentId": {
+              "type": "string"
+            },
+            "trackingNumber": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "price",
+            "shipmentId",
+            "trackingNumber"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.shipping.ShipmentResponse"
+      }
+    }
+  ]
+}

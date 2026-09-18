@@ -1,0 +1,105 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Patient.Patient).",
+      "inputSchema": {
+        "properties": {
+          "_count": {}
+        },
+        "type": "object"
+      },
+      "name": "searchPatient",
+      "operation": "GET /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "Patient.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Patient.Patient).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "readPatient",
+      "operation": "GET /Patient/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "Patient.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (Patient.Patient).",
+      "inputSchema": {
+        "properties": {
+          "_comment": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_comment",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "createPatient",
+      "operation": "POST /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {
+            "_comment": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "_comment",
+            "id"
+          ],
+          "type": "object"
+        },
+        "shape": "Patient.Patient",
+        "status": "201"
+      }
+    }
+  ]
+}

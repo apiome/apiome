@@ -1,0 +1,261 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Feeds.Article).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listArticles",
+      "operation": "GET /Articles",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ArticleId": {
+              "type": "string"
+            },
+            "AuthorName": {
+              "type": "string"
+            },
+            "Binary": {},
+            "Draft": {},
+            "Duration": {
+              "type": "string"
+            },
+            "Guid": {
+              "type": "string"
+            },
+            "PublishedOn": {
+              "type": "string"
+            },
+            "Rating": {},
+            "Summary": {
+              "type": "string"
+            },
+            "Ticks": {},
+            "Title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ArticleId"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Article",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Feeds.Article).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getArticle",
+      "operation": "GET /Articles({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ArticleId": {
+              "type": "string"
+            },
+            "AuthorName": {
+              "type": "string"
+            },
+            "Binary": {},
+            "Draft": {},
+            "Duration": {
+              "type": "string"
+            },
+            "Guid": {
+              "type": "string"
+            },
+            "PublishedOn": {
+              "type": "string"
+            },
+            "Rating": {},
+            "Summary": {
+              "type": "string"
+            },
+            "Ticks": {},
+            "Title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ArticleId"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Article",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Feeds.Article).",
+      "inputSchema": {
+        "properties": {
+          "ArticleId": {
+            "type": "string"
+          },
+          "AuthorName": {
+            "type": "string"
+          },
+          "Binary": {},
+          "Draft": {},
+          "Duration": {
+            "type": "string"
+          },
+          "Guid": {
+            "type": "string"
+          },
+          "PublishedOn": {
+            "type": "string"
+          },
+          "Rating": {},
+          "Summary": {
+            "type": "string"
+          },
+          "Ticks": {},
+          "Title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ArticleId"
+        ],
+        "type": "object"
+      },
+      "name": "createArticle",
+      "operation": "POST /Articles",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "ArticleId": {
+              "type": "string"
+            },
+            "AuthorName": {
+              "type": "string"
+            },
+            "Binary": {},
+            "Draft": {},
+            "Duration": {
+              "type": "string"
+            },
+            "Guid": {
+              "type": "string"
+            },
+            "PublishedOn": {
+              "type": "string"
+            },
+            "Rating": {},
+            "Summary": {
+              "type": "string"
+            },
+            "Ticks": {},
+            "Title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "ArticleId"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Article",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Feeds.Tag).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listTags",
+      "operation": "GET /Tags",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Tag",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Feeds.Tag).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getTag",
+      "operation": "GET /Tags({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Tag",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Feeds.Tag).",
+      "inputSchema": {
+        "properties": {
+          "Name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Name"
+        ],
+        "type": "object"
+      },
+      "name": "createTag",
+      "operation": "POST /Tags",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Name"
+          ],
+          "type": "object"
+        },
+        "shape": "Feeds.Tag",
+        "status": "201"
+      }
+    }
+  ]
+}

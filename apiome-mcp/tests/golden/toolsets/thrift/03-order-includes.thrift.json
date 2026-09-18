@@ -1,0 +1,96 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns com.example.orders.map_string_shared.Money_.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "currentPrices",
+      "operation": "com.example.orders.OrderService.currentPrices",
+      "output": {
+        "schema": {},
+        "shape": "com.example.orders.map_string_shared.Money_"
+      }
+    },
+    {
+      "description": "Returns com.example.orders.Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "com.example.orders.OrderService.getOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {}
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "relatedOrders": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "total": {}
+          },
+          "required": [
+            "id",
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.orders.Order"
+      }
+    },
+    {
+      "description": "Returns array of string.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listOrders",
+      "operation": "com.example.orders.OrderService.listOrders",
+      "output": {
+        "schema": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "shape": "array of string"
+      }
+    }
+  ]
+}

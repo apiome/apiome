@@ -1,0 +1,205 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/json (Catalog.Category).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listCategories",
+      "operation": "GET /Categories",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Code"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Category",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Catalog.Category).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getCategorie",
+      "operation": "GET /Categories({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Code"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Category",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Catalog.Category).",
+      "inputSchema": {
+        "properties": {
+          "Code": {
+            "type": "string"
+          },
+          "Label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Code"
+        ],
+        "type": "object"
+      },
+      "name": "createCategorie",
+      "operation": "POST /Categories",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Label": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Code"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Category",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Catalog.Product).",
+      "inputSchema": {
+        "properties": {
+          "$top": {}
+        },
+        "type": "object"
+      },
+      "name": "listProducts",
+      "operation": "GET /Products",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Discontinued": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Sku"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Catalog.Product).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getProduct",
+      "operation": "GET /Products({key})",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Discontinued": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Sku"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Product",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Catalog.Product).",
+      "inputSchema": {
+        "properties": {
+          "Discontinued": {},
+          "Name": {
+            "type": "string"
+          },
+          "Price": {},
+          "Sku": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "Sku"
+        ],
+        "type": "object"
+      },
+      "name": "createProduct",
+      "operation": "POST /Products",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Discontinued": {},
+            "Name": {
+              "type": "string"
+            },
+            "Price": {},
+            "Sku": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Sku"
+          ],
+          "type": "object"
+        },
+        "shape": "Catalog.Product",
+        "status": "201"
+      }
+    }
+  ]
+}

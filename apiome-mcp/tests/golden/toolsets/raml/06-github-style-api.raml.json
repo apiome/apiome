@@ -1,0 +1,206 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Fetch a repository.\n\nReturns Repository.",
+      "inputSchema": {
+        "properties": {
+          "repo": {
+            "description": "Short name of the repository.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "GET_repos_owner_repo",
+      "operation": "GET /repos/{owner}/{repo}",
+      "output": {
+        "schema": {
+          "description": "A source code repository.",
+          "properties": {
+            "default_branch": {
+              "description": "Name of the default branch.",
+              "type": "string"
+            },
+            "description": {
+              "description": "Optional repository description.",
+              "type": "string"
+            },
+            "full_name": {
+              "description": "owner/name form.",
+              "type": "string"
+            },
+            "id": {},
+            "name": {
+              "description": "Repository short name.",
+              "type": "string"
+            },
+            "private": {},
+            "stargazers_count": {}
+          },
+          "required": [
+            "default_branch",
+            "full_name",
+            "id",
+            "name",
+            "private",
+            "stargazers_count"
+          ],
+          "type": "object"
+        },
+        "shape": "Repository"
+      }
+    },
+    {
+      "description": "List issues of the repository.\n\nReturns Issue.",
+      "inputSchema": {
+        "properties": {
+          "per_page": {
+            "description": "Page size, max 100."
+          },
+          "state": {
+            "description": "Filter by issue state (open, closed, all).",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GET_repos_owner_repo_issues",
+      "operation": "GET /repos/{owner}/{repo}/issues",
+      "output": {
+        "schema": {
+          "description": "An issue on a repository.",
+          "properties": {
+            "body": {
+              "description": "Markdown body of the issue.",
+              "type": "string"
+            },
+            "created_at": {
+              "description": "Creation timestamp.",
+              "type": "string"
+            },
+            "number": {},
+            "state": {
+              "description": "open or closed.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Issue title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "number",
+            "state",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Issue"
+      }
+    },
+    {
+      "description": "Fetch a single issue.\n\nReturns Issue.",
+      "inputSchema": {
+        "properties": {
+          "issue_number": {
+            "description": "Number of the issue."
+          }
+        },
+        "required": [
+          "issue_number"
+        ],
+        "type": "object"
+      },
+      "name": "GET_repos_owner_repo_issues_issue_number",
+      "operation": "GET /repos/{owner}/{repo}/issues/{issue_number}",
+      "output": {
+        "schema": {
+          "description": "An issue on a repository.",
+          "properties": {
+            "body": {
+              "description": "Markdown body of the issue.",
+              "type": "string"
+            },
+            "created_at": {
+              "description": "Creation timestamp.",
+              "type": "string"
+            },
+            "number": {},
+            "state": {
+              "description": "open or closed.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Issue title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "number",
+            "state",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Issue"
+      }
+    },
+    {
+      "description": "Open a new issue.\n\nReturns Issue.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "POST_repos_owner_repo_issues",
+      "operation": "POST /repos/{owner}/{repo}/issues",
+      "output": {
+        "schema": {
+          "description": "An issue on a repository.",
+          "properties": {
+            "body": {
+              "description": "Markdown body of the issue.",
+              "type": "string"
+            },
+            "created_at": {
+              "description": "Creation timestamp.",
+              "type": "string"
+            },
+            "number": {},
+            "state": {
+              "description": "open or closed.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Issue title.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "number",
+            "state",
+            "title"
+          ],
+          "type": "object"
+        },
+        "shape": "Issue"
+      }
+    }
+  ]
+}

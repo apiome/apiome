@@ -1,0 +1,85 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cancelOrder",
+      "operation": "http://example.com/orders.OrderInterface.cancelOrder"
+    },
+    {
+      "description": "Returns http://example.com/orders.order.",
+      "inputSchema": {
+        "properties": {
+          "orderId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "http://example.com/orders.OrderInterface.getOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "line": {
+              "properties": {
+                "quantity": {},
+                "sku": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "orderId": {
+              "type": "string"
+            },
+            "total": {}
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/orders.order"
+      }
+    },
+    {
+      "description": "Returns http://example.com/orders.orderAck.",
+      "inputSchema": {
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "quantity": {},
+          "sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "http://example.com/orders.OrderInterface.placeOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "orderId": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "http://example.com/orders.orderAck"
+      }
+    }
+  ]
+}

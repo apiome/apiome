@@ -1,0 +1,71 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Retrieve a charge by identifier.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Retrieve_charge",
+      "operation": "GET /v1/charges/{id}"
+    },
+    {
+      "description": "List customers, newest first.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "List_customers",
+      "operation": "GET /v1/customers"
+    },
+    {
+      "description": "Retrieve a customer by identifier.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "Retrieve_customer",
+      "operation": "GET /v1/customers/{id}"
+    },
+    {
+      "description": "Charge a customer's default payment method.\n\nReturns.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Create_charge",
+      "operation": "POST /v1/charges",
+      "output": {
+        "schema": {}
+      }
+    },
+    {
+      "description": "Create a customer object.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Create_customer",
+      "operation": "POST /v1/customers"
+    }
+  ]
+}

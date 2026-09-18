@@ -1,0 +1,69 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Lifecycle status of\n\nReturns HTTP 200 application/json (array of PetStore.Pet).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list",
+      "operation": "GET /pets",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of PetStore.Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PetStore.Pet).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "read",
+      "operation": "GET /pets/{id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "PetStore.Pet",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (PetStore.Pet).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "create",
+      "operation": "POST /pets",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "PetStore.Pet",
+        "status": "200"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns chat.v1.Room.",
+      "inputSchema": {
+        "properties": {
+          "room_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "GetRoom",
+      "operation": "chat.v1.ChatService.GetRoom",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "members": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "topic": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "members"
+          ],
+          "type": "object"
+        },
+        "shape": "chat.v1.Room"
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns ResponseResponse.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "response",
+      "operation": "XML-RPC Response.response",
+      "output": {
+        "schema": {
+          "properties": {
+            "bigI8": {
+              "type": "integer"
+            },
+            "deprecatedField": {
+              "type": "null"
+            },
+            "enabled": {},
+            "generatedAt": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "legacyI4": {
+              "type": "integer"
+            },
+            "lineItems": {
+              "items": {
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  },
+                  "sku": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "matrix": {
+              "items": {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "plainInt": {
+              "type": "integer"
+            },
+            "ratio": {},
+            "thumbnail": {}
+          },
+          "required": [
+            "bigI8",
+            "deprecatedField",
+            "enabled",
+            "generatedAt",
+            "label",
+            "legacyI4",
+            "lineItems",
+            "matrix",
+            "plainInt",
+            "ratio",
+            "thumbnail"
+          ],
+          "type": "object"
+        },
+        "shape": "ResponseResponse"
+      }
+    }
+  ]
+}

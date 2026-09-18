@@ -1,0 +1,93 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Send a notification\n\nReturns HTTP 201 with no body: Notification sent",
+      "inputSchema": {
+        "properties": {
+          "channel": {},
+          "id": {
+            "description": "Notification ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Notification priority",
+            "enum": [
+              "low",
+              "normal",
+              "high",
+              "urgent"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "description": "Notification subject/title",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "When notification was created",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "id",
+          "priority",
+          "subject",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "name": "POST_notifications",
+      "operation": "POST /notifications",
+      "output": {
+        "description": "Notification sent",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Create a payment\n\nReturns HTTP 201 with no body: Payment created",
+      "inputSchema": {
+        "properties": {
+          "amount": {
+            "description": "Payment amount",
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "currency": {
+            "description": "ISO 4217 currency code",
+            "pattern": "^[A-Z]{3}$",
+            "type": "string"
+          },
+          "id": {
+            "description": "Payment transaction ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {},
+          "timestamp": {
+            "description": "Payment timestamp",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "id",
+          "method",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "name": "POST_payments",
+      "operation": "POST /payments",
+      "output": {
+        "description": "Payment created",
+        "status": "201"
+      }
+    }
+  ]
+}

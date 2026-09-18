@@ -1,0 +1,187 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns application/json (Question).",
+      "inputSchema": {
+        "properties": {
+          "page": {
+            "description": "Page of results to return."
+          }
+        },
+        "required": [
+          "page"
+        ],
+        "type": "object"
+      },
+      "name": "List_questions",
+      "operation": "GET /questions",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "choices": {},
+            "published_at": {
+              "description": "Publication timestamp.",
+              "type": "string"
+            },
+            "question": {
+              "description": "The question text.",
+              "type": "string"
+            },
+            "url": {
+              "description": "Canonical URL of the question.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "choices",
+            "published_at",
+            "question",
+            "url"
+          ],
+          "type": "object"
+        },
+        "shape": "Question"
+      }
+    },
+    {
+      "description": "Returns application/json (Question).",
+      "inputSchema": {
+        "properties": {
+          "question_id": {
+            "description": "Identifier of the question."
+          }
+        },
+        "required": [
+          "question_id"
+        ],
+        "type": "object"
+      },
+      "name": "View_a_question_detail",
+      "operation": "GET /questions/{question_id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "choices": {},
+            "published_at": {
+              "description": "Publication timestamp.",
+              "type": "string"
+            },
+            "question": {
+              "description": "The question text.",
+              "type": "string"
+            },
+            "url": {
+              "description": "Canonical URL of the question.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "choices",
+            "published_at",
+            "question",
+            "url"
+          ],
+          "type": "object"
+        },
+        "shape": "Question"
+      }
+    },
+    {
+      "description": "Returns application/json (Question).",
+      "inputSchema": {
+        "properties": {
+          "choices": {},
+          "page": {
+            "description": "Page of results to return."
+          },
+          "question": {
+            "description": "The question text.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "choices",
+          "question"
+        ],
+        "type": "object"
+      },
+      "name": "Create_a_question",
+      "operation": "POST /questions",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "choices": {},
+            "published_at": {
+              "description": "Publication timestamp.",
+              "type": "string"
+            },
+            "question": {
+              "description": "The question text.",
+              "type": "string"
+            },
+            "url": {
+              "description": "Canonical URL of the question.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "choices",
+            "published_at",
+            "question",
+            "url"
+          ],
+          "type": "object"
+        },
+        "shape": "Question"
+      }
+    },
+    {
+      "description": "Returns application/json (Choice).",
+      "inputSchema": {
+        "properties": {
+          "choice_id": {
+            "description": "Identifier of the choice."
+          },
+          "question_id": {
+            "description": "Identifier of the question."
+          }
+        },
+        "required": [
+          "choice_id",
+          "question_id"
+        ],
+        "type": "object"
+      },
+      "name": "Vote_on_a_choice",
+      "operation": "POST /questions/{question_id}/choices/{choice_id}",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "choice": {
+              "description": "Choice text.",
+              "type": "string"
+            },
+            "url": {
+              "description": "Canonical URL of the choice.",
+              "type": "string"
+            },
+            "votes": {}
+          },
+          "required": [
+            "choice",
+            "url",
+            "votes"
+          ],
+          "type": "object"
+        },
+        "shape": "Choice"
+      }
+    }
+  ]
+}

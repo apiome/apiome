@@ -1,0 +1,234 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns Node.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "node",
+      "operation": "Query.node",
+      "output": {
+        "schema": {
+          "description": "Base interface for all nodes in the system",
+          "properties": {
+            "createdAt": {},
+            "id": {},
+            "updatedAt": {}
+          },
+          "required": [
+            "createdAt",
+            "id",
+            "updatedAt"
+          ],
+          "type": "object"
+        },
+        "shape": "Node"
+      }
+    },
+    {
+      "description": "Returns Post.",
+      "inputSchema": {
+        "properties": {
+          "id": {}
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "post",
+      "operation": "Query.post",
+      "output": {
+        "schema": {
+          "description": "A blog post",
+          "properties": {
+            "comments": {
+              "items": {
+                "description": "A comment on a post",
+                "properties": {
+                  "content": {},
+                  "createdAt": {},
+                  "id": {},
+                  "likes": {},
+                  "owner": {
+                    "description": "A user in the system",
+                    "properties": {
+                      "createdAt": {},
+                      "email": {},
+                      "id": {},
+                      "name": {},
+                      "updatedAt": {}
+                    },
+                    "required": [
+                      "createdAt",
+                      "email",
+                      "id",
+                      "name",
+                      "updatedAt"
+                    ],
+                    "type": "object"
+                  },
+                  "post": {},
+                  "updatedAt": {}
+                },
+                "required": [
+                  "content",
+                  "createdAt",
+                  "id",
+                  "likes",
+                  "owner",
+                  "post",
+                  "updatedAt"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "content": {},
+            "createdAt": {},
+            "excerpt": {},
+            "id": {},
+            "isPublished": {},
+            "owner": {
+              "description": "A user in the system",
+              "properties": {
+                "createdAt": {},
+                "email": {},
+                "id": {},
+                "name": {},
+                "updatedAt": {}
+              },
+              "required": [
+                "createdAt",
+                "email",
+                "id",
+                "name",
+                "updatedAt"
+              ],
+              "type": "object"
+            },
+            "publishedAt": {},
+            "tags": {
+              "items": {},
+              "type": "array"
+            },
+            "title": {},
+            "updatedAt": {}
+          },
+          "required": [
+            "comments",
+            "content",
+            "createdAt",
+            "id",
+            "isPublished",
+            "owner",
+            "tags",
+            "title",
+            "updatedAt"
+          ],
+          "type": "object"
+        },
+        "shape": "Post"
+      }
+    },
+    {
+      "description": "Returns array of Post.",
+      "inputSchema": {
+        "properties": {
+          "published": {}
+        },
+        "type": "object"
+      },
+      "name": "posts",
+      "operation": "Query.posts",
+      "output": {
+        "schema": {
+          "items": {
+            "description": "A blog post",
+            "properties": {
+              "comments": {
+                "items": {
+                  "description": "A comment on a post",
+                  "properties": {
+                    "content": {},
+                    "createdAt": {},
+                    "id": {},
+                    "likes": {},
+                    "owner": {
+                      "description": "A user in the system",
+                      "type": "object"
+                    },
+                    "post": {},
+                    "updatedAt": {}
+                  },
+                  "required": [
+                    "content",
+                    "createdAt",
+                    "id",
+                    "likes",
+                    "owner",
+                    "post",
+                    "updatedAt"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "content": {},
+              "createdAt": {},
+              "excerpt": {},
+              "id": {},
+              "isPublished": {},
+              "owner": {
+                "description": "A user in the system",
+                "properties": {
+                  "createdAt": {},
+                  "email": {},
+                  "id": {},
+                  "name": {},
+                  "updatedAt": {}
+                },
+                "required": [
+                  "createdAt",
+                  "email",
+                  "id",
+                  "name",
+                  "updatedAt"
+                ],
+                "type": "object"
+              },
+              "publishedAt": {},
+              "tags": {
+                "items": {},
+                "type": "array"
+              },
+              "title": {},
+              "updatedAt": {}
+            },
+            "required": [
+              "comments",
+              "content",
+              "createdAt",
+              "id",
+              "isPublished",
+              "owner",
+              "tags",
+              "title",
+              "updatedAt"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Post"
+      }
+    }
+  ]
+}

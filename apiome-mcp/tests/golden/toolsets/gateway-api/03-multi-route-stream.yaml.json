@@ -1,0 +1,29 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_catalog",
+      "operation": "GET /catalog"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_orders",
+      "operation": "GET /orders"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "POST_orders",
+      "operation": "POST /orders"
+    }
+  ]
+}

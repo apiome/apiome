@@ -1,0 +1,201 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "The single allowed root of this server.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "data-root",
+      "operation": "Filesystem.resources.data-root"
+    },
+    {
+      "description": "Create a new directory, creating parents as needed.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "create_directory",
+      "operation": "Filesystem.tools.create_directory"
+    },
+    {
+      "description": "Apply line-based edits to a text file.",
+      "inputSchema": {
+        "properties": {
+          "dryRun": {
+            "default": false,
+            "type": "boolean"
+          },
+          "edits": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "newText": {
+                  "type": "string"
+                },
+                "oldText": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "oldText",
+                "newText"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "edits"
+        ],
+        "type": "object"
+      },
+      "name": "edit_file",
+      "operation": "Filesystem.tools.edit_file"
+    },
+    {
+      "description": "Retrieve detailed metadata about a file or directory.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "get_file_info",
+      "operation": "Filesystem.tools.get_file_info"
+    },
+    {
+      "description": "Return the list of directories this server may access.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list_allowed_directories",
+      "operation": "Filesystem.tools.list_allowed_directories"
+    },
+    {
+      "description": "Get a detailed listing of all files and directories in a path.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "list_directory",
+      "operation": "Filesystem.tools.list_directory"
+    },
+    {
+      "description": "Read the complete contents of a file from the file system.",
+      "inputSchema": {
+        "properties": {
+          "head": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          },
+          "tail": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "read_file",
+      "operation": "Filesystem.tools.read_file"
+    },
+    {
+      "description": "Read the contents of multiple files simultaneously.",
+      "inputSchema": {
+        "properties": {
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "paths"
+        ],
+        "type": "object"
+      },
+      "name": "read_multiple_files",
+      "operation": "Filesystem.tools.read_multiple_files"
+    },
+    {
+      "description": "Recursively search for files and directories matching a pattern.",
+      "inputSchema": {
+        "properties": {
+          "excludePatterns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "path": {
+            "type": "string"
+          },
+          "pattern": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "pattern"
+        ],
+        "type": "object"
+      },
+      "name": "search_files",
+      "operation": "Filesystem.tools.search_files"
+    },
+    {
+      "description": "Create a new file or completely overwrite an existing file.",
+      "inputSchema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "type": "object"
+      },
+      "name": "write_file",
+      "operation": "Filesystem.tools.write_file"
+    }
+  ]
+}

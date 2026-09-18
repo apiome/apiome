@@ -1,0 +1,132 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Read the on-hand quantity for a SKU in one warehouse.",
+      "inputSchema": {
+        "properties": {
+          "sku": {
+            "description": "Stock keeping unit.",
+            "pattern": "^[A-Z]{3}-[0-9]{4}$",
+            "type": "string"
+          },
+          "warehouse": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "maxLength": 3,
+                "minLength": 3,
+                "type": "string"
+              },
+              "region": {
+                "enum": [
+                  "emea",
+                  "amer",
+                  "apac"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "sku",
+          "warehouse"
+        ],
+        "type": "object"
+      },
+      "name": "check_stock",
+      "operation": "Acme Inventory.tools.check_stock"
+    },
+    {
+      "description": "Move stock between two warehouses.",
+      "inputSchema": {
+        "properties": {
+          "from": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "maxLength": 3,
+                "minLength": 3,
+                "type": "string"
+              },
+              "region": {
+                "enum": [
+                  "emea",
+                  "amer",
+                  "apac"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "type": "object"
+          },
+          "quantity": {
+            "properties": {
+              "amount": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "unit": {
+                "default": "each",
+                "enum": [
+                  "each",
+                  "case",
+                  "pallet"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "amount"
+            ],
+            "type": "object"
+          },
+          "sku": {
+            "description": "Stock keeping unit.",
+            "pattern": "^[A-Z]{3}-[0-9]{4}$",
+            "type": "string"
+          },
+          "to": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "maxLength": 3,
+                "minLength": 3,
+                "type": "string"
+              },
+              "region": {
+                "enum": [
+                  "emea",
+                  "amer",
+                  "apac"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "sku",
+          "from",
+          "to",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "name": "transfer_stock",
+      "operation": "Acme Inventory.tools.transfer_stock"
+    }
+  ]
+}

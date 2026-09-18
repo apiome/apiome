@@ -1,0 +1,128 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "DELETE_v1_items_id",
+      "operation": "DELETE /v1/items/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "accept": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "limit",
+          "page",
+          "accept"
+        ],
+        "type": "object"
+      },
+      "name": "GET_v1_items",
+      "operation": "GET /v1/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "HEAD_v1_items",
+      "operation": "HEAD /v1/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "OPTIONS_v1_items",
+      "operation": "OPTIONS /v1/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "content-type",
+          "qty"
+        ],
+        "type": "object"
+      },
+      "name": "PATCH_v1_items_id",
+      "operation": "PATCH /v1/items/{id}"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content-type",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "POST_v1_items",
+      "operation": "POST /v1/items"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "content-type": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "content-type",
+          "name",
+          "qty"
+        ],
+        "type": "object"
+      },
+      "name": "PUT_v1_items_id",
+      "operation": "PUT /v1/items/{id}"
+    }
+  ]
+}

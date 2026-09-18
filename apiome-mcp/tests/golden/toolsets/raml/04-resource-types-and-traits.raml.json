@@ -1,0 +1,140 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List registered devices page by page.\n\nReturns DevicePage.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_devices",
+      "operation": "GET /devices",
+      "output": {
+        "schema": {
+          "description": "One page of devices.",
+          "properties": {
+            "items": {},
+            "total": {}
+          },
+          "required": [
+            "items",
+            "total"
+          ],
+          "type": "object"
+        },
+        "shape": "DevicePage"
+      }
+    },
+    {
+      "description": "Fetch one device.\n\nReturns Device.",
+      "inputSchema": {
+        "properties": {
+          "deviceId": {
+            "description": "Identifier of the device.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "name": "GET_devices_deviceId",
+      "operation": "GET /devices/{deviceId}",
+      "output": {
+        "schema": {
+          "description": "A registered device; inherits audit fields from Auditable.",
+          "properties": {
+            "id": {
+              "description": "Unique device identifier.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Human-readable device name.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Lifecycle state of a device.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Device"
+      }
+    },
+    {
+      "description": "Register a device.\n\nReturns Device.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "description": "Unique device identifier.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human-readable device name.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Lifecycle state of a device.",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "POST_devices",
+      "operation": "POST /devices",
+      "output": {
+        "schema": {
+          "description": "A registered device; inherits audit fields from Auditable.",
+          "properties": {
+            "id": {
+              "description": "Unique device identifier.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Human-readable device name.",
+              "type": "string"
+            },
+            "status": {
+              "description": "Lifecycle state of a device.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "type": "object"
+        },
+        "shape": "Device"
+      }
+    }
+  ]
+}

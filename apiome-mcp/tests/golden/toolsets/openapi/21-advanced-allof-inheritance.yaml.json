@@ -1,0 +1,62 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List all cats\n\nReturns HTTP 200 application/json (array of Cat): Successful response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_cats",
+      "operation": "GET /cats",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of Cat",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List all dogs\n\nReturns HTTP 200 application/json (array of Dog): Successful response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_dogs",
+      "operation": "GET /dogs",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of Dog",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List all pets\n\nReturns HTTP 200 application/json (array of Pet): Successful response",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GET_pets",
+      "operation": "GET /pets",
+      "output": {
+        "description": "Successful response",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {},
+          "type": "array"
+        },
+        "shape": "array of Pet",
+        "status": "200"
+      }
+    }
+  ]
+}
