@@ -286,6 +286,29 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for agent upstream credentials (AGX-2.2, #4534). The apiKey /
+    # bearer / basic secrets a managed MCP toolset presents to a tenant's real API, stored in
+    # apiome.upstream_credentials (V268). Same shape and rotation story as the key maps above,
+    # but a separate map on purpose: a production API credential is a different blast radius
+    # from a publish token, and this vault seals under its own magic. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    upstream_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS",
+            "upstream_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new upstream credentials are sealed under. Defaults to the highest version
+    # present in upstream_credential_encryption_keys when unset.
+    upstream_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_UPSTREAM_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "upstream_credential_active_key_version",
+        ),
+    )
+
     # Envelope encryption-at-rest for server-global OAuth provider secrets (OLO-8.3, #4969). The
     # key-encryption-key (KEK) that seals the client secret stored in
     # apiome.auth_provider_config.client_secret_encrypted (V196, OLO-8.2). The KEK lives in the

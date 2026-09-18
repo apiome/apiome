@@ -133,6 +133,8 @@ from .tenant_repositories_routes import router as tenant_repositories_router
 from .tenants_session_routes import router as tenants_session_router
 from .toolchain_selfcheck import enforce_toolchain_selfcheck
 from .type_namespaces_routes import router as type_namespaces_router
+from .upstream_credential_routes import router as upstream_credential_router
+from .upstream_credentials import validate_upstream_credential_keys
 from .version_change_report_routes import router as version_change_report_router
 from .version_changelog_routes import router as version_changelog_router
 from .version_merge_routes import router as version_merge_router
@@ -154,7 +156,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.195.0",
+    version="1.196.0",
 )
 
 
@@ -332,6 +334,9 @@ app.include_router(verification_schedule_router)
 app.include_router(deploy_gate_tenant_router)
 app.include_router(sdk_generation_settings_tenant_router)
 app.include_router(sdk_publish_tenant_router)
+# upstream_credential_router: the AGX-2.2 upstream auth vault under
+# /v1/tenants/{t}/agent-toolsets/{toolset}/upstream-credentials (#4534).
+app.include_router(upstream_credential_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
@@ -522,6 +527,7 @@ async def startup_event():
     validate_webhook_signing_key()
     validate_credential_encryption_keys()
     validate_registry_credential_keys()
+    validate_upstream_credential_keys()
     validate_auth_config_encryption_keys()
 
     # Bundled-toolchain self-check (FMT-1.3, #5414). Resolves and actually invokes every

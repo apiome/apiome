@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.195.0
+  version: 1.196.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -10851,6 +10851,347 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for removetheworkspacescredentialforoneregisresponse422.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/upstream-credentials:
+    get:
+      tags:
+      - agent-access
+      summary: List a toolset's upstream credentials (metadata only)
+      description: 'The credentials the AGX-2.1 invocation proxy injects when this
+        toolset calls its upstream APIs.
+
+
+        A credential is **write-only**: the secret is stored envelope-encrypted and
+        no route ever returns it. Responses carry metadata only: the server URL it
+        is bound to, its kind and placement, the master-key version that sealed it,
+        whether it currently opens (`readable`), and when it was created, rotated
+        and last used.
+
+
+        Requires `api_keys:view`.'
+      operationId: list_upstream_credentials_v1_tenants__tenant_slug__agent_toolsets__toolset_id__upstream_credentials_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listatoolsetsupstreamcredentialsmetadataauthorization schema.
+          - type: 'null'
+            description: Listatoolsetsupstreamcredentialsmetadataauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listatoolsetsupstreamcredentialsmetadata Xapikey schema.
+          - type: 'null'
+            description: Listatoolsetsupstreamcredentialsmetadata Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a toolset's upstream credentials
+            (metadata only).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpstreamCredentialListResponse'
+                description: Response payload for listatoolsetsupstreamcredentialsmetadataresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listatoolsetsupstreamcredentialsmetadataresponse422.
+    post:
+      tags:
+      - agent-access
+      summary: Store an upstream credential for a toolset
+      description: 'Bind a new credential to this toolset and one upstream server.
+        The credential is only ever injected into requests under `serverUrl`: an `https://`
+        origin plus an optional base path. `https://api.example.com/v1` covers `/v1`
+        and `/v1/…` on that exact host and port, and nothing else.
+
+
+        Kinds: `apiKey` (sent as the header or query parameter named by `in` / `name`,
+        secret `{value}`), `bearer` (`Authorization: Bearer`, secret `{token}`) and
+        `basic` (`Authorization: Basic`, secret `{username, password}`).
+
+
+        A credential is **write-only**: the secret is stored envelope-encrypted and
+        no route ever returns it. Responses carry metadata only: the server URL it
+        is bound to, its kind and placement, the master-key version that sealed it,
+        whether it currently opens (`readable`), and when it was created, rotated
+        and last used.
+
+
+        One credential per toolset and server: storing a second is a `409`; rotate
+        the existing one instead.
+
+
+        Requires `api_keys:create`. Audited as `agent.upstream_credential.create`,
+        with metadata only.'
+      operationId: create_upstream_credential_v1_tenants__tenant_slug__agent_toolsets__toolset_id__upstream_credentials_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storeanupstreamcredentialforatoolsetauthorization schema.
+          - type: 'null'
+            description: Storeanupstreamcredentialforatoolsetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storeanupstreamcredentialforatoolset Xapikey schema.
+          - type: 'null'
+            description: Storeanupstreamcredentialforatoolset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpstreamCredentialCreate'
+              description: Request body for storeanupstreamcredentialforatoolsetrequest.
+        description: Request body for store an upstream credential for a toolset.
+      responses:
+        '201':
+          description: Successful response for store an upstream credential for a
+            toolset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpstreamCredentialOut'
+                description: Response payload for storeanupstreamcredentialforatoolsetresponse201.
+        '409':
+          description: This toolset already has a credential for that server.
+        '422':
+          description: The server URL, placement or secret is not acceptable.
+        '503':
+          description: No upstream-credential encryption key is configured.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/upstream-credentials/{credential_id}/rotate:
+    post:
+      tags:
+      - agent-access
+      summary: Rotate an upstream credential's secret
+      description: 'Replace the secret in place, atomically. The credential keeps
+        its id, binding and placement. Invocations already in flight finish with the
+        secret they opened, and the next invocation uses the new one: no window without
+        a credential.
+
+
+        The body is `{secret}`, in the same shape as at creation. A credential is
+        **write-only**: the secret is stored envelope-encrypted and no route ever
+        returns it. Responses carry metadata only: the server URL it is bound to,
+        its kind and placement, the master-key version that sealed it, whether it
+        currently opens (`readable`), and when it was created, rotated and last used.
+
+
+        Requires `api_keys:edit`. Audited as `agent.upstream_credential.rotate`.'
+      operationId: rotate_upstream_credential_v1_tenants__tenant_slug__agent_toolsets__toolset_id__upstream_credentials__credential_id__rotate_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Credential Id
+          description: Credential Id schema.
+        description: Path parameter identifying the credential id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Rotateanupstreamcredentialssecretauthorization schema.
+          - type: 'null'
+            description: Rotateanupstreamcredentialssecretauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Rotateanupstreamcredentialssecret Xapikey schema.
+          - type: 'null'
+            description: Rotateanupstreamcredentialssecret Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpstreamCredentialRotate'
+              description: Request body for rotateanupstreamcredentialssecretrequest.
+        description: Request body for rotate an upstream credential's secret.
+      responses:
+        '200':
+          description: Successful response for rotate an upstream credential's secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpstreamCredentialOut'
+                description: Response payload for rotateanupstreamcredentialssecretresponse200.
+        '404':
+          description: No such credential for this toolset.
+        '422':
+          description: The secret does not fit the credential's kind.
+        '503':
+          description: No upstream-credential encryption key is configured.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/upstream-credentials/{credential_id}:
+    delete:
+      tags:
+      - agent-access
+      summary: Delete an upstream credential
+      description: 'Remove the credential. The toolset''s next call to that server
+        goes out without it. Its use history is kept.
+
+
+        Requires `api_keys:delete`. Audited as `agent.upstream_credential.delete`.'
+      operationId: delete_upstream_credential_v1_tenants__tenant_slug__agent_toolsets__toolset_id__upstream_credentials__credential_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: credential_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Credential Id
+          description: Credential Id schema.
+        description: Path parameter identifying the credential id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanupstreamcredentialauthorization schema.
+          - type: 'null'
+            description: Deleteanupstreamcredentialauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanupstreamcredential Xapikey schema.
+          - type: 'null'
+            description: Deleteanupstreamcredential Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete an upstream credential.
+        '404':
+          description: No such credential for this toolset.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteanupstreamcredentialresponse422.
   /v1/tenants/{tenant_slug}/verification-runs:
     post:
       tags:
@@ -68294,7 +68635,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         completed_at:
           anyOf:
           - type: string
@@ -69748,7 +70089,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -69921,7 +70262,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -70295,13 +70636,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -71870,7 +72211,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 67f8b0a2-bdd4-4d85-808f-5a207f53e156
+          example: a4852864-022e-44a8-b6e6-307bf6003993
         method:
           type: string
           title: Method
@@ -74013,7 +74354,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         envelope:
           additionalProperties: true
           type: object
@@ -75393,7 +75734,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         browse_url:
           anyOf:
           - type: string
@@ -106479,7 +106820,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
       additionalProperties: false
       type: object
       required:
@@ -115278,7 +115619,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         detected_by:
           anyOf:
           - type: string
@@ -119199,6 +119540,301 @@ components:
         the
 
         resolver UI lists (#3470).'
+    UpstreamCredentialCreate:
+      properties:
+        serverUrl:
+          type: string
+          title: Serverurl
+          description: 'The upstream server this credential is bound to: an `https://`
+            origin plus an optional base path, e.g. `https://api.example.com/v1`.
+            The credential is only injected into requests under this URL.'
+          example: example
+        kind:
+          type: string
+          enum:
+          - apiKey
+          - bearer
+          - basic
+          title: Kind
+          description: How the secret is presented, in OpenAPI security-scheme terms.
+          example: apiKey
+        in:
+          anyOf:
+          - type: string
+            enum:
+            - header
+            - query
+            description: Upstream Credential Create schema.
+          - type: 'null'
+            description: Upstream Credential Create schema.
+          title: In
+          description: '`apiKey` only: send the key as a header or a query parameter.'
+        name:
+          anyOf:
+          - type: string
+            description: Upstream Credential Create schema.
+          - type: 'null'
+            description: Upstream Credential Create schema.
+          title: Name
+          description: '`apiKey` only: the header or query-parameter name, e.g. `X-Api-Key`.'
+        secret:
+          $ref: '#/components/schemas/UpstreamSecretInput'
+          description: 'Write-only secret material: `{value}` for apiKey, `{token}`
+            for bearer, `{username, password}` for basic. Stored encrypted; never
+            returned by any route.'
+      additionalProperties: false
+      type: object
+      required:
+      - serverUrl
+      - kind
+      - secret
+      title: UpstreamCredentialCreate
+      description: "Body for storing a new upstream credential.\n\nAttributes:\n \
+        \   server_url: The only upstream the credential will be sent to.\n    kind:\
+        \ ``apiKey``, ``bearer`` or ``basic``.\n    api_key_in: ``apiKey`` only: ``header``\
+        \ or ``query``.\n    api_key_name: ``apiKey`` only: the header or query-parameter\
+        \ name.\n    secret: The secret material. Sealed on arrival and never returned."
+    UpstreamCredentialListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.upstream-credential.v1
+          description: Schema Version.
+          example: 1.0.0
+        toolsetId:
+          type: string
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        encryptionConfigured:
+          type: boolean
+          title: Encryptionconfigured
+          description: Encryption Configured.
+          example: false
+        kinds:
+          items:
+            type: string
+          type: array
+          title: Kinds
+          description: Kinds.
+          maxItems: 1000
+        apiKeyLocations:
+          items:
+            type: string
+          type: array
+          title: Apikeylocations
+          description: API Key Locations.
+          maxItems: 1000
+        credentials:
+          items:
+            $ref: '#/components/schemas/UpstreamCredentialOut'
+          type: array
+          title: Credentials
+          description: Credentials.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - toolsetId
+      - encryptionConfigured
+      - kinds
+      - apiKeyLocations
+      - credentials
+      title: UpstreamCredentialListResponse
+      description: "A toolset's upstream credentials, described.\n\nAttributes:\n\
+        \    schema_version: The projection's shape.\n    toolset_id: The toolset\
+        \ addressed.\n    encryption_configured: Whether this deployment can store\
+        \ credentials at all.\n    kinds: The credential kinds the vault accepts.\n\
+        \    api_key_locations: Where an ``apiKey`` credential may be sent.\n    credentials:\
+        \ One entry per stored credential, by server URL."
+    UpstreamCredentialOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.upstream-credential.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        toolsetId:
+          type: string
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        serverUrl:
+          type: string
+          title: Serverurl
+          description: Server URL.
+          example: example
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        in:
+          anyOf:
+          - type: string
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: In
+          description: In.
+        name:
+          anyOf:
+          - type: string
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Name
+          description: Human-readable name.
+        keyVersion:
+          anyOf:
+          - type: integer
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Keyversion
+          description: Key Version.
+        readable:
+          type: boolean
+          title: Readable
+          default: true
+          description: Readable.
+          example: false
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Createdat
+          description: Created At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Createdby
+          description: Created By.
+        rotatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Rotatedat
+          description: Rotated At.
+        rotatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Rotatedby
+          description: Rotated By.
+        lastUsedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for upstream credential.
+          - type: 'null'
+            description: Response payload for upstream credential.
+          title: Lastusedat
+          description: Last Used At.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - toolsetId
+      - serverUrl
+      - kind
+      title: UpstreamCredentialOut
+      description: "A stored credential, described without being revealed.\n\nAttributes:\n\
+        \    schema_version: The projection's shape.\n    id: The credential id.\n\
+        \    toolset_id: The agent toolset it serves.\n    server_url: The only upstream\
+        \ it is sent to.\n    kind: ``apiKey``, ``bearer`` or ``basic``.\n    api_key_in:\
+        \ ``apiKey`` only: ``header`` or ``query``.\n    api_key_name: ``apiKey``\
+        \ only: the header or parameter name.\n    key_version: Which master key sealed\
+        \ the secret.\n    readable: Whether the secret can be opened with the keys\
+        \ configured now. ``False`` means\n        the credential is present but unusable:\
+        \ every call through it would fail closed.\n    created_at: When it was stored.\n\
+        \    created_by: Who stored it.\n    rotated_at: When its secret was last\
+        \ replaced, or ``None``.\n    rotated_by: Who last replaced it.\n    last_used_at:\
+        \ When it was last injected into a request, or ``None``."
+    UpstreamCredentialRotate:
+      properties:
+        secret:
+          $ref: '#/components/schemas/UpstreamSecretInput'
+          description: The replacement secret, in the same shape as at creation.
+      additionalProperties: false
+      type: object
+      required:
+      - secret
+      title: UpstreamCredentialRotate
+      description: "Body for rotating a credential's secret in place.\n\nAttributes:\n\
+        \    secret: The replacement secret. Must have the fields the credential's\
+        \ kind needs."
+    UpstreamSecretInput:
+      properties:
+        value:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Upstream Secret Input schema.
+          - type: 'null'
+            description: Upstream Secret Input schema.
+          title: Value
+          description: '`apiKey` only: the key.'
+        token:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Upstream Secret Input schema.
+          - type: 'null'
+            description: Upstream Secret Input schema.
+          title: Token
+          description: '`bearer` only: the token.'
+        username:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Upstream Secret Input schema.
+          - type: 'null'
+            description: Upstream Secret Input schema.
+          title: Username
+          description: '`basic` only: the user-id. May not contain `:`.'
+        password:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Upstream Secret Input schema.
+          - type: 'null'
+            description: Upstream Secret Input schema.
+          title: Password
+          description: '`basic` only: the password. May be empty.'
+      additionalProperties: false
+      type: object
+      title: UpstreamSecretInput
+      description: "The write-only secret material. Which fields apply depends on\
+        \ the credential's kind.\n\nEvery field is a :class:`~pydantic.SecretStr`,\
+        \ so a model that ends up in a log line or a\ntraceback prints ``**********``\
+        \ instead of the value.\n\nAttributes:\n    value: ``apiKey``: the key.\n\
+        \    token: ``bearer``: the token sent as ``Authorization: Bearer <token>``.\n\
+        \    username: ``basic``: the user-id (may not contain ``:``, per RFC 7617).\n\
+        \    password: ``basic``: the password (may be empty, for APIs that use the\
+        \ key as username)."
     UsageRecordBody:
       properties:
         id:
@@ -120440,13 +121076,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T02:23:08Z'
+          example: '2026-09-18T03:30:16Z'
         outcome:
           anyOf:
           - type: string

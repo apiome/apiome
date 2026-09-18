@@ -126,6 +126,14 @@ services:
       AUTH_CONFIG_ENC_KEY: ${AUTH_CONFIG_ENC_KEY:-}
       AUTH_CONFIG_ENC_ACTIVE_KEY_ID: ${AUTH_CONFIG_ENC_ACTIVE_KEY_ID:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      # ── Agent upstream auth vault (AGX-2.2, #4534) ──────────────────────────────────────────
+      # Master-key map that seals the upstream API credentials managed MCP toolsets present to
+      # tenants' real APIs. Optional pass-through (empty ⇒ unset): without it the vault fails
+      # closed — storing a credential is a 503 naming this variable. Production inherits it.
+      # New credentials are sealed under the highest key version in the map, so rotating the
+      # master key is "add a higher version". The ACTIVE_KEY_VERSION override is deliberately not
+      # passed through: an empty value would fail integer parsing at startup.
+      APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
     depends_on:
       postgres:
         condition: service_healthy
