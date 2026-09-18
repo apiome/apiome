@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .branch_push_policy import effective_require_merge_path
+from .api_check_suite_gate import assess_check_suite_gate
 from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
@@ -2178,6 +2179,17 @@ async def publish_version(
         actor_id=user_id,
     )
 
+    _audit_check_suite_gate(
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version_record_id=version_record_id,
+        existing=existing,
+        check_suite_gate=precheck.check_suite_gate,
+        forced=bool(request.skip_publish_checks),
+        force_reason=request.force_publish_reason,
+        actor_id=user_id,
+    )
+
     background_tasks.add_task(
         generate_change_report_on_publish,
         tenant_slug=tenant_slug,
@@ -2283,6 +2295,71 @@ def _audit_approval_gate(
     except Exception:  # noqa: BLE001 - auditing must never fail a completed publish
         logger.warning(
             "Approval-gate audit failed for revision %s; the publish itself stands",
+            version_record_id,
+            exc_info=True,
+        )
+
+
+#: Workflow-audit action for every publish an armed GNC-3.1 check-suite policy judged.
+CHECK_SUITE_GATE_AUDIT_ACTION = "version.api_check_suite_gate"
+
+
+def _audit_check_suite_gate(
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_record_id: str,
+    existing: Dict[str, Any],
+    check_suite_gate: Optional[Dict[str, Any]],
+    forced: bool,
+    force_reason: Optional[str],
+    actor_id: Optional[str],
+) -> None:
+    """Record what an armed check-suite policy made of a publish (GNC-3.1, #4740).
+
+    The COL-2.3 rule: every publish an armed policy judged is recorded — ``satisfied`` (with the
+    evaluation that satisfied it, so the trail answers "which check let this through?"),
+    ``forced`` and ``unavailable`` — and only a policy that does not require the suite records
+    nothing. The forced case is assessed here, because ``skip_publish_checks`` skips the prechecks
+    wholesale.
+
+    Args:
+        tenant_id: Tenant context.
+        project_id: Project of the published revision.
+        version_record_id: The published revision.
+        existing: The revision row as it was read before publish.
+        check_suite_gate: The precheck's verdict payload, when the prechecks ran.
+        forced: Whether this publish set ``skipPublishChecks``.
+        force_reason: The recorded force-publish reason, when forced.
+        actor_id: The publishing user.
+
+    Returns:
+        None. Best-effort: an assessment or audit fault never fails a successful publish.
+    """
+    try:
+        payload = check_suite_gate
+        if forced:
+            payload = assess_check_suite_gate(
+                tenant_id=tenant_id, project_id=project_id, version=existing
+            ).as_payload()
+        if not payload or payload.get("status") == "disabled":
+            return
+        db.insert_workflow_audit(
+            tenant_id,
+            project_id,
+            version_record_id,
+            CHECK_SUITE_GATE_AUDIT_ACTION,
+            "success",
+            actor_id,
+            {
+                "action": "forced" if forced else str(payload.get("status") or "unknown"),
+                "reason": force_reason if forced else None,
+                "apiCheckSuiteGate": payload,
+            },
+        )
+    except Exception:  # noqa: BLE001 - auditing must never fail a completed publish
+        logger.warning(
+            "Check-suite gate audit failed for revision %s; the publish itself stands",
             version_record_id,
             exc_info=True,
         )

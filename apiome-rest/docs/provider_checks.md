@@ -16,8 +16,8 @@ to any provider, and one **status adapter** interface with three implementations
 - The three adapters: `app/provider_status_adapter.py`
 - Provider deliveries: `app/repository_webhook_dispatch.py` (REPO-4.3's endpoint, extended)
 
-This is the base for the API change check suite (GNC-3.1), which produces the verdicts this
-machinery carries.
+This is the base for the [API change check suite](api_check_suite.md) (GNC-3.1), which produces
+the verdicts this machinery carries.
 
 ## Four words
 
@@ -54,8 +54,15 @@ never rolls back a record — it appends a `failed` row to the publish ledger, a
 
 **Publishing is idempotent twice over.** A check is identified by `(binding, commit, name)`, so
 recording the same verdict again moves one row rather than fanning out a second. And each publish
-attempt carries a fingerprint of the *verdict*, unique per check, which is consulted **before** the
-adapter runs — so a redelivered webhook costs the provider nothing, not just us.
+attempt carries a fingerprint of the *verdict*, which is consulted **before** the adapter runs — so
+a redelivered webhook costs the provider nothing, not just us.
+
+The ledger is unique per verdict **per outcome** (V267, GNC-3.1): a verdict is dispatched at most
+once, and ledgered as suppressed or failed at most once. That is what lets a retry that succeeds
+after a failure be recorded — and write the provider's check-run id back, so the next publish moves
+that check instead of POSTing a second one onto the pull request. (V265's
+`UNIQUE (check_run_id, request_fingerprint)` swallowed exactly that retry.) The lookup reads a
+verdict's dispatch first.
 
 ```mermaid
 stateDiagram-v2
@@ -177,7 +184,8 @@ Every verdict is a `check.recorded` row and every publish attempt a `check.publi
 ## What this ticket deliberately does not do
 
 - **It produces no verdicts.** Everything here carries a verdict somebody else decided; the suite
-  that decides one is GNC-3.1. What this ticket seeds on its own is a `pending` check, which claims
+  that decides one is [GNC-3.1](api_check_suite.md), and it reports under the same
+  `apiome/api-change` name the webhook seeds, so its verdict replaces the pending check. What this ticket seeds on its own is a `pending` check, which claims
   only that the platform has seen the commit.
 - **It does not make a check required.** Whether a merge is blocked on it is a provider-side branch
   protection setting, which is the repository owner's to make and not ours to set.

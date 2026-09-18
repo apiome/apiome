@@ -5,6 +5,66 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.329.0] - 2026-09-17
+
+### Added
+- **API change check suite (#4740, GNC-3.1)** — a pull request that changed an API used to collect
+  a wall of checks (lint, diff, breaking-change gate, contract test, SDK build), each with its own
+  log, and a reviewer who read none of them. The platform already knew every answer; the suite
+  turns them into **one** verdict — `pending`, `pass`, `fail` or `skipped` — recorded as an
+  evaluation, reported on the pull request as the `apiome/api-change` check (replacing the pending
+  check GNC-2.2's webhook seeded), and optionally required before publish.
+
+  ```bash
+  curl -sX POST "$APIOME/v1/tenants/acme/projects/pets/versions/2.0.0/check-suite" \
+       -H "X-API-Key: $APIOME_KEY" -H 'Content-Type: application/json' \
+       -d "{\"commit_sha\": \"$GITHUB_SHA\", \"pr_number\": 42}"
+  ```
+
+  - **Five components, all existing evidence.** `lint` (the stored-first lint report;
+    error-severity violations fail it, as they fail publish), `breaking` and `consumers` (the CTG
+    classification against the previous published revision and CTG-4.2's per-consumer verdicts for
+    that same diff), `contract` (the newest ECA contract run of this revision, counted only while
+    recompiling its own reference still yields the digest it executed) and `sdk` (the SDK kit
+    manifest built from the draft). The three CTG-4.5 components are judged by the deploy gate's
+    own evaluators and thresholds, so the pull request and the deploy gate cannot disagree.
+  - **Deterministic.** A tenant (or project) policy marks each component `required`, `advisory`
+    or `off`; the required ones reduce with GNC-2.2's precedence (a failure fails, an unfinished
+    component holds, a set of skips is a skip). Missing evidence holds a required component
+    `pending` and skips an advisory one; unreadable evidence is `pending`, never green; a version
+    with no captured source skips contract and sdk rather than waiting forever.
+  - **The suite judges the draft.** Its verdict is reported against the commit the binding is
+    synchronized with. A newer commit gets a placeholder: `skipped` (`spec-unchanged`) when it does
+    not touch the bound specification, otherwise `pending` (`draft-not-synchronized`).
+  - **Idempotent re-runs.** An evaluation is keyed by the draft digest, commit, requirements,
+    thresholds, and every component's verdict and evidence; unchanged inputs are a `200` replay of
+    the same evaluation with the same evidence ids, and the provider is not called again.
+  - **Drill-down.** `GET …/check-suite/runs/{id}` names every component's evidence (ids,
+    digests, counts), a link to it, and the rule behind it, plus snapshots of both policies. The
+    pull-request summary is the same thing as markdown. Consumer names are redacted for readers
+    without `consumer_contracts:view`.
+  - **Required before publish.** `requiredForPublish` on the suite policy refuses (`422`,
+    `apiCheckSuiteGate`) a version whose current content has no passing evaluation under the
+    component requirements and thresholds in force; force-publish stays the escape, and every
+    judged publish is audited as `version.api_check_suite_gate`.
+  - Endpoints: `POST`/`GET …/projects/{project}/versions/{version}/check-suite`, `GET …/runs`,
+    `GET …/projects/{project}/check-suite/runs/{run_id}`, and `GET`/`PUT`/`DELETE` of
+    `…/governance/check-suite-policy` and `…/projects/{project}/check-suite-policy` (tenant
+    administrators only for changes). The latest-evaluation read is allowlisted for `diff:read` /
+    `lint:read` CI keys. CLI: `apiome checks run|show`.
+  - apiome-db **V267**: `apiome.api_check_suite_policy` (one row per scope, mutable — every
+    evaluation snapshots the policy it was judged under) and `apiome.api_check_suite_runs`
+    (append-only except the `ON DELETE SET NULL` of its author; a placeholder can never pass or
+    fail), plus an index on ECA-1.3 runs by `source->>'revision_id'`.
+
+### Fixed
+- **A retried provider check publish that succeeded was never recorded (GNC-2.2).** The publish
+  ledger was unique on `(check_run_id, request_fingerprint)`, so a verdict's failed attempt took
+  the slot its successful retry needed: the retry reached the provider, collided in the ledger,
+  and never wrote the provider's check-run id back — so every later publish POSTed a *new* check
+  run onto the pull request. V267 re-keys the ledger per outcome and the lookup reads a verdict's
+  dispatch first; a verdict is still dispatched at most once.
+
 ## [1.328.0] - 2026-09-16
 
 ### Added

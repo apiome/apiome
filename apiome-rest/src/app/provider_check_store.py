@@ -79,6 +79,7 @@ __all__ = [
     "record_check",
     "resolve_authorized_bindings",
     "seed_checks_for_ref_update",
+    "version_details_url",
 ]
 
 #: How many publish attempts a check detail carries. A check accumulates one per state change and
@@ -798,11 +799,15 @@ def seed_checks_for_ref_update(
     return seeded
 
 
-def _details_url(binding: Mapping[str, Any]) -> str:
-    """Build the link a seeded check points a reviewer at.
+def version_details_url(project_id: str, version_id: str) -> str:
+    """Build the link a check about a version points a reviewer at.
+
+    Shared with the GNC-3.1 check suite, so a seeded check and the verdict that replaces it point
+    at the same page.
 
     Args:
-        binding: The authorized binding row.
+        project_id: The project.
+        version_id: The version.
 
     Returns:
         The version's page in the app, or ``""`` when no base URL is configured — an empty link is
@@ -813,4 +818,16 @@ def _details_url(binding: Mapping[str, Any]) -> str:
     base = (settings.provider_checks_details_base_url or "").strip().rstrip("/")
     if not base:
         return ""
-    return f"{base}/ade/projects/{binding['project_id']}/versions/{binding['version_id']}"
+    return f"{base}/ade/projects/{project_id}/versions/{version_id}"
+
+
+def _details_url(binding: Mapping[str, Any]) -> str:
+    """Build the link a seeded check points a reviewer at.
+
+    Args:
+        binding: The authorized binding row.
+
+    Returns:
+        The version's page in the app, or ``""`` when no base URL is configured.
+    """
+    return version_details_url(str(binding["project_id"]), str(binding["version_id"]))

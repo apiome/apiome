@@ -43,3 +43,15 @@ EXIT_PREFLIGHT_UNUSABLE = 5
 #: (transport/5xx) and :data:`EXIT_USAGE` (auth or an unresolvable schema reference — any
 #: 4xx) so CI can tell "the tests failed" apart from "the tests could not run".
 EXIT_SCHEMA_TEST_FAILED = 6
+
+#: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
+#: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
+#: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can
+#: gate on the verdict itself.
+EXIT_CHECK_FAILED = 7
+
+#: ``apiome checks run`` / ``checks show`` (GNC-3.1): the suite has **no verdict yet** — a
+#: required component is waiting on evidence (a contract run of this draft), or the commit is ahead
+#: of the draft the suite judges. Neither a pass nor a failure, so neither ``0`` nor ``7``: a
+#: pipeline decides whether "not yet" blocks it.
+EXIT_CHECK_PENDING = 8

@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
 
+from .api_check_suite_gate import assess_check_suite_gate
 from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
@@ -40,6 +41,7 @@ class PublishPrecheckOutcome:
         verification_decision: ECA-3.1 evidence-backed policy decision when evaluated.
         breaking_publish_guardrail: CTG-3.4 semver guardrail payload when assessed.
         approval_gate: COL-2.3 approval-policy verdict when assessed.
+        check_suite_gate: GNC-3.1 API change check suite verdict when assessed.
     """
 
     lint_error_count: Optional[int] = None
@@ -50,6 +52,7 @@ class PublishPrecheckOutcome:
     verification_decision: Optional[Dict[str, Any]] = None
     breaking_publish_guardrail: Optional[Dict[str, Any]] = None
     approval_gate: Optional[Dict[str, Any]] = None
+    check_suite_gate: Optional[Dict[str, Any]] = None
 
 
 def enforce_publish_prechecks(
@@ -73,6 +76,8 @@ def enforce_publish_prechecks(
     Since CTG-3.4 (#4478) the semver guardrail is assessed against the previous *published*
     revision; under the ``block`` policy level a breaking change without a major-version bump
     is refused, and under ``warn`` it is only reported on the outcome.
+    Since GNC-3.1 (#4740) a suite policy with ``requiredForPublish`` refuses a draft whose
+    current content has no passing API change check suite evaluation.
     Since COL-2.3 (#4519) the tenant's approval policy is applied last: a draft that has not
     collected the required review approvals is refused with the same 422 contract.
 
@@ -81,7 +86,8 @@ def enforce_publish_prechecks(
 
     Raises:
         HTTPException: 422 for documentation gaps, style-guide errors, a blocking
-            verification-policy decision, a blocked breaking publish, or unmet approvals.
+            verification-policy decision, a blocked breaking publish, a required API change
+            check suite that has not passed, or unmet approvals.
         HTTPException: 409 when compatibility is breaking and ``allow_breaking`` is false.
     """
     if bool(request.skip_publish_checks):
@@ -219,6 +225,13 @@ def enforce_publish_prechecks(
         version_record_id=version_record_id,
     )
 
+    outcome = _with_check_suite_gate(
+        outcome,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version=existing,
+    )
+
     return _with_approval_gate(
         outcome,
         tenant_id=tenant_id,
@@ -270,6 +283,52 @@ def _with_approval_gate(
             },
         )
     return replace(outcome, approval_gate=payload)
+
+
+def _with_check_suite_gate(
+    outcome: PublishPrecheckOutcome,
+    *,
+    tenant_id: str,
+    project_id: str,
+    version: Dict[str, Any],
+) -> PublishPrecheckOutcome:
+    """Attach the GNC-3.1 verdict and refuse publish when a required suite has not passed.
+
+    Runs after the automated gates and before the approval gate: its answer changes by fixing the
+    specification (or producing the evidence) and re-running the suite, which a publisher should
+    do before collecting approvals for a revision they are about to edit.
+
+    Args:
+        outcome: The precheck outcome so far.
+        tenant_id: Tenant context.
+        project_id: Project of the revision being published.
+        version: The candidate revision row.
+
+    Returns:
+        ``outcome`` with ``check_suite_gate`` set — always a payload, including the ``disabled``
+        and ``unavailable`` cases, so a caller can tell "checked and clean" from "not checked".
+
+    Raises:
+        HTTPException: 422 when the suite policy requires a passing evaluation of this content
+            and there is none.
+    """
+    assessment = assess_check_suite_gate(
+        tenant_id=tenant_id, project_id=project_id, version=version
+    )
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"{assessment.message()} Run the API change check suite for this content "
+                    "(POST …/check-suite or `apiome checks run`), relax the check-suite policy, "
+                    "or force-publish with a reason."
+                ),
+                "apiCheckSuiteGate": payload,
+            },
+        )
+    return replace(outcome, check_suite_gate=payload)
 
 
 def _with_breaking_publish_guardrail(

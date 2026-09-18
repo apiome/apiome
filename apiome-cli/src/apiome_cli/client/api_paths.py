@@ -469,6 +469,19 @@ def contract_run(tenant_slug: str, version_ref: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/contracts/{version_ref}/run"
 
 
+def check_suite(tenant_slug: str, project: str, version: str) -> str:
+    """POST (run) or GET (latest evaluation of) the API change check suite (GNC-3.1).
+
+    ``project`` is a slug or id and ``version`` a label or revision id; both are path segments.
+    """
+    return f"{V1}/tenants/{tenant_slug}/projects/{project}/versions/{version}/check-suite"
+
+
+def check_suite_run(tenant_slug: str, project: str, run_id: str) -> str:
+    """GET one API change check suite evaluation by id — the drill-down (GNC-3.1)."""
+    return f"{V1}/tenants/{tenant_slug}/projects/{project}/check-suite/runs/{run_id}"
+
+
 def schema_validate(tenant_slug: str, schema_ref: str) -> str:
     """POST one payload for validation against a cataloged schema (IXH-5.1).
 

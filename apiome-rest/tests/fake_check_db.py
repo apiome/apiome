@@ -11,8 +11,8 @@ The fake keeps the semantics apiome-db V265 and the SQL accessors promise:
 * ``completed_at`` is derived from the state, never passed in, so the two can never disagree;
 * a released binding, or one whose repository registration has been removed, records nothing;
 * ``attempt`` advances only on an explicit re-run, and never decreases;
-* a publish attempt with a fingerprint already on a check's ledger is refused, which is the
-  publish-once guarantee;
+* a publish attempt whose (fingerprint, outcome) is already on a check's ledger is refused, which
+  is the publish-once guarantee — a dispatch after a failure of the same verdict lands (V267);
 * a dispatched attempt writes the provider's id back onto the check run;
 * every write appends its ``check.*`` rows to :attr:`FakeBindingDb.workflow_audits` only when it
   succeeds, as the real accessors do inside their transaction.
@@ -137,14 +137,15 @@ class FakeCheckDb(FakeBindingDb):
     def find_provider_check_delivery(
         self, *, check_run_id: str, request_fingerprint: str
     ) -> Optional[Dict[str, Any]]:
-        """A publish attempt already on a check's ledger, if this verdict has gone out before."""
-        for row in self.check_deliveries.values():
-            if (
-                row["check_run_id"] == check_run_id
-                and row["request_fingerprint"] == request_fingerprint
-            ):
-                return dict(row)
-        return None
+        """A publish attempt already on a check's ledger — its dispatch first, when it has one."""
+        rows = [
+            row
+            for row in self.check_deliveries.values()
+            if row["check_run_id"] == check_run_id
+            and row["request_fingerprint"] == request_fingerprint
+        ]
+        rows.sort(key=lambda row: (row["outcome"] == "dispatched", row["created_at"]), reverse=True)
+        return dict(rows[0]) if rows else None
 
     def find_authorized_bindings_for_check(
         self, *, repository_id: str, ref: str
@@ -293,7 +294,7 @@ class FakeCheckDb(FakeBindingDb):
         error_message: str = "",
         actor_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Append one publish attempt, refusing a fingerprint already on this check's ledger."""
+        """Append one publish attempt, refusing a (fingerprint, outcome) already on the ledger."""
         check = self.check_runs.get(check_run_id)
         if not check or check["tenant_id"] != tenant_id:
             return None
@@ -301,6 +302,7 @@ class FakeCheckDb(FakeBindingDb):
             if (
                 row["check_run_id"] == check_run_id
                 and row["request_fingerprint"] == request_fingerprint
+                and row["outcome"] == outcome
             ):
                 return None
 

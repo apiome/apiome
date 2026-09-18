@@ -11,6 +11,7 @@ import psycopg2
 from psycopg2 import errors as pg_errors
 from psycopg2.extras import Json, RealDictCursor
 
+from .api_check_suite import AUDIT_SUITE_EVALUATED
 from .axis_score import (
     ALGORITHM_ID,
     catalog_axis_evaluation,
@@ -35115,8 +35116,12 @@ class Database:
             check_run_id: The check run.
             request_fingerprint: Fingerprint of the verdict about to be published.
 
+        Since GNC-3.1 (V267) a verdict may hold one attempt per outcome — a failure and the retry
+        that succeeded after it — so the dispatched attempt, when there is one, is the one returned.
+
         Returns:
-            The matching attempt, or ``None`` when this verdict has not been published before.
+            The matching attempt (its dispatch first), or ``None`` when this verdict has not been
+            attempted before.
         """
         if not is_uuid_string(str(check_run_id or "")) or not str(request_fingerprint or ""):
             return None
@@ -35125,6 +35130,8 @@ class Database:
             SELECT {self._CHECK_DELIVERY_COLUMNS}
             FROM apiome.provider_check_deliveries d
             WHERE d.check_run_id = %s::uuid AND d.request_fingerprint = %s
+            ORDER BY (d.outcome = 'dispatched') DESC, d.created_at DESC, d.id DESC
+            LIMIT 1
             """,
             (check_run_id, str(request_fingerprint)),
         )
@@ -35347,10 +35354,11 @@ class Database:
     ) -> Optional[Dict[str, Any]]:
         """Append one publish attempt to the ledger, and carry the provider's id onto the check.
 
-        The insert is ``ON CONFLICT DO NOTHING`` against V265's
-        ``UNIQUE (check_run_id, request_fingerprint)``: an attempt that would have sent bytes
-        already sent is not a second attempt. ``None`` therefore means "this publish already
-        happened", which is exactly what a caller needs in order not to call the provider again.
+        The insert is ``ON CONFLICT DO NOTHING`` against V267's
+        ``UNIQUE (check_run_id, request_fingerprint, outcome)``: the same verdict is dispatched at
+        most once, and ledgered as suppressed or failed at most once. ``None`` therefore means
+        "this attempt already happened"; a dispatch that follows a failure is a different outcome
+        and lands — which is what writes the provider's id back after a successful retry.
 
         A dispatched attempt also writes ``external_id`` back onto the check run, so the next
         publish of that check *moves* the provider's record rather than stacking a second one
@@ -35399,7 +35407,7 @@ class Database:
                     outcome, status_code, external_id, error_code, error_message
                 )
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (check_run_id, request_fingerprint) DO NOTHING
+                ON CONFLICT (check_run_id, request_fingerprint, outcome) DO NOTHING
                 RETURNING id::text AS id
                 """,
                 (
@@ -35905,6 +35913,478 @@ class Database:
             }
 
         return self._guarded_tx(work)
+
+    # -----------------------------------------------------------------------------------------
+    # API change check suite (GNC-3.1, #4740)
+    # -----------------------------------------------------------------------------------------
+
+    #: Suite policy columns. The body is one JSONB document, exactly as V254's deploy-gate policy.
+    _CHECK_SUITE_POLICY_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        project_id::text AS project_id,
+        policy,
+        content_fingerprint,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by,
+        created_at,
+        updated_at
+    """
+
+    def get_check_suite_policy(
+        self, tenant_id: str, project_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Return the check-suite policy in force for a scope (GNC-3.1, #4740).
+
+        One query, the project override sorting first — the same shape as
+        :meth:`get_deploy_gate_policy`, because the suite resolves both on every evaluation.
+
+        Args:
+            tenant_id: The caller's tenant.
+            project_id: The project to resolve for; ``None`` reads only the tenant-wide row.
+
+        Returns:
+            The winning row, or ``None`` when neither scope has a saved policy (or the tenant id is
+            not a UUID, so a unit-test tenant handle never reaches the database).
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        if project_id is not None and is_uuid_string(str(project_id)):
+            rows = self.execute_query(
+                f"""
+                SELECT {self._CHECK_SUITE_POLICY_COLUMNS}
+                FROM apiome.api_check_suite_policy
+                WHERE tenant_id = %s::uuid
+                  AND (project_id = %s::uuid OR project_id IS NULL)
+                ORDER BY project_id NULLS LAST
+                LIMIT 1
+                """,
+                (tenant_id, project_id),
+            )
+        else:
+            rows = self.execute_query(
+                f"""
+                SELECT {self._CHECK_SUITE_POLICY_COLUMNS}
+                FROM apiome.api_check_suite_policy
+                WHERE tenant_id = %s::uuid AND project_id IS NULL
+                LIMIT 1
+                """,
+                (tenant_id,),
+            )
+        return dict(rows[0]) if rows else None
+
+    def upsert_check_suite_policy(
+        self,
+        *,
+        tenant_id: str,
+        project_id: Optional[str],
+        policy: Dict[str, Any],
+        content_fingerprint: str,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Save the check-suite policy for one scope, replacing whatever it held (GNC-3.1).
+
+        Two statements for the two scopes, because each is unique through its own *partial* index
+        and ``ON CONFLICT`` names one index at a time.
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project this policy governs, or ``None`` for the tenant-wide policy.
+            policy: The canonical ``gnc.check-suite-policy.v1`` body.
+            content_fingerprint: Digest of that body.
+            actor_id: The administrator making the change.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        body = Json(policy or {})
+        if project_id is not None and is_uuid_string(str(project_id)):
+            query = f"""
+                INSERT INTO apiome.api_check_suite_policy (
+                    tenant_id, project_id, policy, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id, project_id) WHERE project_id IS NOT NULL DO UPDATE SET
+                    policy = EXCLUDED.policy,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._CHECK_SUITE_POLICY_COLUMNS}
+            """
+            params: tuple = (tenant_id, project_id, body, content_fingerprint, actor, actor)
+        else:
+            query = f"""
+                INSERT INTO apiome.api_check_suite_policy (
+                    tenant_id, project_id, policy, content_fingerprint, created_by, updated_by
+                ) VALUES (%s::uuid, NULL, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (tenant_id) WHERE project_id IS NULL DO UPDATE SET
+                    policy = EXCLUDED.policy,
+                    content_fingerprint = EXCLUDED.content_fingerprint,
+                    updated_by = EXCLUDED.updated_by,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING {self._CHECK_SUITE_POLICY_COLUMNS}
+            """
+            params = (tenant_id, body, content_fingerprint, actor, actor)
+        rows = self.execute_query(query, params)
+        return dict(rows[0]) if rows else None
+
+    def delete_check_suite_policy(self, tenant_id: str, project_id: Optional[str] = None) -> int:
+        """Remove the saved check-suite policy for one scope (GNC-3.1, #4740).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: The project override to drop, or ``None`` for the tenant-wide policy.
+
+        Returns:
+            Rows removed: ``1`` when a policy was saved for that exact scope, ``0`` otherwise.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return 0
+        if project_id is not None and is_uuid_string(str(project_id)):
+            return self._execute_write(
+                """
+                DELETE FROM apiome.api_check_suite_policy
+                WHERE tenant_id = %s::uuid AND project_id = %s::uuid
+                """,
+                (tenant_id, project_id),
+            )
+        return self._execute_write(
+            """
+            DELETE FROM apiome.api_check_suite_policy
+            WHERE tenant_id = %s::uuid AND project_id IS NULL
+            """,
+            (tenant_id,),
+        )
+
+    #: Evaluation columns, with the version's label and the evaluator's name read fresh.
+    _CHECK_SUITE_RUN_COLUMNS = """
+        s.id::text AS id, s.tenant_id::text AS tenant_id, s.project_id::text AS project_id,
+        s.version_id::text AS version_id, v.version_id AS version_label,
+        s.binding_id::text AS binding_id, s.commit_sha, s.pr_number, s.check_name,
+        s.evaluated, s.state, s.reason, s.draft_digest,
+        s.policy_source, s.policy_fingerprint, s.policy,
+        s.thresholds_source, s.thresholds_fingerprint, s.thresholds,
+        s.components, s.input_fingerprint,
+        s.created_by::text AS created_by,
+        (SELECT cu.name FROM apiome.users cu WHERE cu.id = s.created_by) AS created_by_name,
+        s.created_at
+    """
+
+    #: The joins ``_CHECK_SUITE_RUN_COLUMNS`` reads from.
+    _CHECK_SUITE_RUN_FROM = """
+        apiome.api_check_suite_runs s
+        JOIN apiome.versions v ON v.id = s.version_id
+    """
+
+    def insert_check_suite_run(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        version_id: str,
+        binding_id: Optional[str],
+        commit_sha: Optional[str],
+        pr_number: Optional[int],
+        check_name: str,
+        evaluated: bool,
+        state: str,
+        reason: str,
+        draft_digest: str,
+        policy_source: str,
+        policy_fingerprint: str,
+        policy: Dict[str, Any],
+        thresholds_source: str,
+        thresholds_fingerprint: str,
+        thresholds: Dict[str, Any],
+        components: List[Dict[str, Any]],
+        input_fingerprint: str,
+        created_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Record one check-suite evaluation, or collide with the identical one (GNC-3.1, #4740).
+
+        ``ON CONFLICT (version_id, input_fingerprint) DO NOTHING`` is the re-run idempotency: an
+        evaluation of inputs already evaluated writes nothing, and ``None`` tells the caller to read
+        the row that already says so. A new evaluation appends its ``check_suite.evaluated`` audit
+        row in the same transaction.
+
+        Args:
+            tenant_id: The tenant.
+            project_id: The project.
+            version_id: The version judged.
+            binding_id: The binding reported through, when bound.
+            commit_sha: The commit reported against, when bound.
+            pr_number: The pull request, when named.
+            check_name: The provider check name.
+            evaluated: Whether the components were judged (``False`` for a placeholder).
+            state: ``pending`` / ``pass`` / ``fail`` / ``skipped``.
+            reason: The state's reason code.
+            draft_digest: The draft's content digest.
+            policy_source: Where the suite policy came from.
+            policy_fingerprint: Its fingerprint.
+            policy: Its canonical body.
+            thresholds_source: Where the deploy-gate thresholds came from.
+            thresholds_fingerprint: Their fingerprint.
+            thresholds: Their canonical body.
+            components: Every component, as JSON.
+            input_fingerprint: The idempotency key.
+            created_by: The acting user.
+
+        Returns:
+            ``{"id"}`` for a new evaluation, or ``None`` when these inputs were already evaluated
+            (or an id is not a UUID).
+        """
+        ids = [tenant_id, project_id, version_id, *([binding_id] if binding_id else [])]
+        if not all(is_uuid_string(str(value or "")) for value in ids):
+            return None
+        actor = created_by if is_uuid_string(str(created_by or "")) else None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                INSERT INTO apiome.api_check_suite_runs (
+                    tenant_id, project_id, version_id, binding_id, commit_sha, pr_number,
+                    check_name, evaluated, state, reason, draft_digest,
+                    policy_source, policy_fingerprint, policy,
+                    thresholds_source, thresholds_fingerprint, thresholds,
+                    components, input_fingerprint, created_by
+                )
+                VALUES (
+                    %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s,
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s::uuid
+                )
+                ON CONFLICT (version_id, input_fingerprint) DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (
+                    tenant_id,
+                    project_id,
+                    version_id,
+                    binding_id,
+                    commit_sha,
+                    pr_number,
+                    check_name,
+                    bool(evaluated),
+                    state,
+                    reason,
+                    draft_digest,
+                    policy_source,
+                    policy_fingerprint,
+                    Json(policy or {}),
+                    thresholds_source,
+                    thresholds_fingerprint,
+                    Json(thresholds or {}),
+                    Json(list(components or [])),
+                    input_fingerprint,
+                    actor,
+                ),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            run_id = str(row["id"])
+            self._insert_workflow_audit_tx(
+                cursor,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version_id=version_id,
+                action=AUDIT_SUITE_EVALUATED,
+                actor_id=actor,
+                detail={
+                    "run_id": run_id,
+                    "binding_id": binding_id,
+                    "commit_sha": commit_sha,
+                    "state": state,
+                    "reason": reason,
+                    "evaluated": bool(evaluated),
+                    "draft_digest": draft_digest,
+                    "policy_fingerprint": policy_fingerprint,
+                    "thresholds_fingerprint": thresholds_fingerprint,
+                    "input_fingerprint": input_fingerprint,
+                },
+            )
+            return {"id": run_id}
+
+        return self._guarded_tx(work)
+
+    def get_check_suite_run(self, *, tenant_id: str, run_id: str) -> Optional[Dict[str, Any]]:
+        """Read one check-suite evaluation inside a tenant (GNC-3.1, #4740).
+
+        Args:
+            tenant_id: The tenant.
+            run_id: The evaluation.
+
+        Returns:
+            The row, or ``None`` when it is not there (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, run_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_SUITE_RUN_COLUMNS}
+            FROM {self._CHECK_SUITE_RUN_FROM}
+            WHERE s.id = %s::uuid AND s.tenant_id = %s::uuid
+            """,
+            (run_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def find_check_suite_run(
+        self, *, tenant_id: str, version_id: str, input_fingerprint: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find the evaluation of exactly these inputs, if there is one (GNC-3.1, #4740).
+
+        Args:
+            tenant_id: The tenant.
+            version_id: The version.
+            input_fingerprint: The idempotency key.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, version_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_SUITE_RUN_COLUMNS}
+            FROM {self._CHECK_SUITE_RUN_FROM}
+            WHERE s.version_id = %s::uuid AND s.tenant_id = %s::uuid
+              AND s.input_fingerprint = %s
+            """,
+            (version_id, tenant_id, str(input_fingerprint or "")),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_check_suite_runs(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        commit_sha: Optional[str] = None,
+        evaluated: Optional[bool] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """A version's check-suite evaluations, newest first (GNC-3.1, #4740).
+
+        Args:
+            tenant_id: The tenant.
+            version_id: The version.
+            commit_sha: Only evaluations reported against this commit.
+            evaluated: ``True`` for judged evaluations only, ``False`` for placeholders only.
+            limit: Page size.
+            offset: Evaluations to skip.
+
+        Returns:
+            The page of rows.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, version_id)):
+            return []
+        clauses = ["s.version_id = %s::uuid", "s.tenant_id = %s::uuid"]
+        params: List[Any] = [version_id, tenant_id]
+        if commit_sha:
+            clauses.append("s.commit_sha = %s")
+            params.append(str(commit_sha).strip())
+        if evaluated is not None:
+            clauses.append("s.evaluated = %s")
+            params.append(bool(evaluated))
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_SUITE_RUN_COLUMNS}
+            FROM {self._CHECK_SUITE_RUN_FROM}
+            WHERE {" AND ".join(clauses)}
+            ORDER BY s.created_at DESC, s.id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params + [max(1, int(limit)), max(0, int(offset))]),
+        )
+        return [dict(row) for row in rows]
+
+    def find_current_check_suite_run(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        draft_digest: str,
+        policy_fingerprint: str,
+        thresholds_fingerprint: str,
+    ) -> Optional[Dict[str, Any]]:
+        """The newest judged evaluation of exactly this content under exactly these policies.
+
+        The publish gate's read (GNC-3.1, #4740): an evaluation of an earlier edit, or one judged
+        under a policy that has since moved, answers for something else. Placeholders judged
+        nothing and never match.
+
+        Args:
+            tenant_id: The tenant.
+            version_id: The version.
+            draft_digest: The draft's content digest now.
+            policy_fingerprint: The suite policy's fingerprint now.
+            thresholds_fingerprint: The deploy-gate thresholds' fingerprint now.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, version_id)):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._CHECK_SUITE_RUN_COLUMNS}
+            FROM {self._CHECK_SUITE_RUN_FROM}
+            WHERE s.version_id = %s::uuid AND s.tenant_id = %s::uuid
+              AND s.evaluated
+              AND s.draft_digest = %s
+              AND s.policy_fingerprint = %s
+              AND s.thresholds_fingerprint = %s
+            ORDER BY s.created_at DESC, s.id DESC
+            LIMIT 1
+            """,
+            (
+                version_id,
+                tenant_id,
+                str(draft_digest or ""),
+                str(policy_fingerprint or ""),
+                str(thresholds_fingerprint or ""),
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_verification_runs_for_revision(
+        self, tenant_id: str, revision_id: str, *, limit: int = 1
+    ) -> List[Dict[str, Any]]:
+        """A revision's ECA-1.3 contract runs, newest first (GNC-3.1, #4740).
+
+        A run is keyed by the suite digest it executed, and that digest covers the reference string
+        it was compiled from — so "this revision's runs" is read by the resolved revision id V212
+        records in ``source``, through V267's expression index. The expression and the predicate
+        here must match the index exactly for the planner to use it.
+
+        Args:
+            tenant_id: Tenant whose evidence to read.
+            revision_id: The revision (``versions.id``).
+            limit: Maximum rows (clamped to 1..50).
+
+        Returns:
+            The run rows; empty when none names this revision (or an id is not a UUID).
+        """
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, revision_id)):
+            return []
+        return self.execute_query(
+            f"""
+            SELECT {self._VERIFICATION_RUN_COLUMNS}
+            FROM apiome.verification_run
+            WHERE tenant_id = %s::uuid
+              AND source ? 'revision_id'
+              AND (source ->> 'revision_id') = %s
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (tenant_id, str(revision_id), max(1, min(int(limit), 50))),
+        )
 
 
 # Global database instance
