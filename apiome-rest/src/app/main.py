@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .access_routes import platform_router as access_platform_router
 from .access_routes import router as access_router
+from .agent_key_routes import router as agent_key_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
@@ -156,7 +157,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.196.0",
+    version="1.197.0",
 )
 
 
@@ -337,6 +338,9 @@ app.include_router(sdk_publish_tenant_router)
 # upstream_credential_router: the AGX-2.2 upstream auth vault under
 # /v1/tenants/{t}/agent-toolsets/{toolset}/upstream-credentials (#4534).
 app.include_router(upstream_credential_router)
+# agent_key_router: AGX-3.1 agent keys (kind=agent api_keys bound to a toolset + tool allowlist)
+# under /v1/tenants/{t}/agent-keys (#4537).
+app.include_router(agent_key_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)

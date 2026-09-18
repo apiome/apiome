@@ -38,6 +38,10 @@ if _ExpiredSignatureError is None or _InvalidTokenError is None:
 API_KEY_SCOPE_FULL = "*"
 API_KEY_SCOPE_DIFF_READ = "diff:read"
 API_KEY_SCOPE_LINT_READ = "lint:read"
+#: The only scope an AGX-3.1 agent key carries (V269). It is deliberately absent from the
+#: allowlist below, so an agent key is refused on every REST route even if it ever reached
+#: :func:`enforce_api_key_scopes` (``db.validate_api_key`` already only accepts workspace keys).
+API_KEY_SCOPE_AGENT_INVOKE = "agent:invoke"
 
 #: (HTTP method, path regex) → an acceptable scope for restricted machine keys. A route may have
 #: several entries; holding **any** of the matched scopes admits the call.

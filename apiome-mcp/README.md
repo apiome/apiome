@@ -118,6 +118,15 @@ golden or a stored tool is not MCP-valid. Regenerate with
 ``uv run pytest tests/test_toolset_goldens.py --update-golden``; see
 **[docs/TOOLSET_GOLDENS.md](docs/TOOLSET_GOLDENS.md)** (#4532).
 
+**Agent access (AGX-3.1):** ``apiome_mcp.agent_access.AgentAccessMiddleware`` authenticates
+**agent keys** (``api_keys`` rows with ``kind = 'agent'``, minted by apiome-rest's
+``/v1/tenants/{t}/agent-keys``) on every request of the *agent* surface. It then narrows
+``tools/list`` and ``tools/call`` to the toolset's enabled tools ∩ the key's allowlist. A
+non-permitted call is indistinguishable from an unknown tool, and a revoked or expired key is
+refused on its next request with a coded MCP error. It is for the AGX runtime only; the catalog
+server never mounts it. Until AGX-1.2 (#4530) provides toolset curation, it fails closed. See
+**[docs/AGENT_ACCESS.md](docs/AGENT_ACCESS.md)** (#4537).
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

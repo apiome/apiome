@@ -1,4 +1,9 @@
-"""Validate tenant REST API keys for private draft mocks (#4446, SIM-2.5)."""
+"""Validate tenant REST API keys for private draft mocks (#4446, SIM-2.5).
+
+Only **workspace** keys qualify. An AGX-3.1 agent key (``api_keys.kind = 'agent'``, V269, #4537) is
+an MCP credential bound to one toolset and a tool allowlist; it must not open a tenant's private
+draft mocks, so the lookup never selects one.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +22,7 @@ _API_KEY_LOOKUP = """
     FROM apiome.api_keys ak
     JOIN apiome.tenants t ON ak.tenant_id = t.id
     WHERE ak.key_prefix = %(key_prefix)s
+      AND ak.kind = 'workspace'
       AND ak.deleted_at IS NULL
       AND ak.enabled IS TRUE
       AND t.deleted_at IS NULL

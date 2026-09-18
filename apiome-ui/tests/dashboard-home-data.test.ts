@@ -330,6 +330,12 @@ describe('the needs-attention sections', () => {
     expect(entry?.sql).toContain('ak.expires_at IS NOT NULL');
   });
 
+  it('asks about workspace keys only, since AGX-3.1 agent keys are not on the API keys page', async () => {
+    await getDashboardHomeForSession();
+    const entry = queries.find((candidate) => candidate.sql.includes(SECTION.keys));
+    expect(entry?.sql).toContain("ak.kind = 'workspace'");
+  });
+
   it('drops a row whose own identifying columns are missing', async () => {
     answer(SECTION.sunset, [
       { version_row_id: 'v-1', version_id: null, project_name: 'X', sunset_at: '2026-08-20' },

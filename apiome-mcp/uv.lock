@@ -51,7 +51,7 @@ wheels = [
 
 [[package]]
 name = "apiome-mcp"
-version = "0.4.1"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "apiome-rest" },
@@ -98,7 +98,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.331.0"
+version = "1.332.0"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "asn1tools" },

@@ -2563,11 +2563,21 @@ export async function importProjectFromOpenAPI(
   }
 }
 
+/**
+ * The tenant's live workspace API keys, newest first.
+ *
+ * Agent keys (`kind = 'agent'`, AGX-3.1 / #4537) are left out: they are MCP credentials bound to
+ * one toolset and a tool allowlist, managed through apiome-rest's `/agent-keys` API, and this
+ * table would otherwise present one as a full-access workspace key.
+ *
+ * @param tenantId The tenant.
+ * @returns A JSON array of `api_keys` rows (`[]` on any error).
+ */
 export async function getApiKeysForTenant(tenantId: string) {
   try {
     const result = await connectionPool.query(
       `SELECT * FROM apiome.api_keys 
-       WHERE tenant_id = $1 AND deleted_at IS NULL
+       WHERE tenant_id = $1 AND deleted_at IS NULL AND kind = 'workspace'
        ORDER BY created_at DESC`,
       [tenantId]
     );

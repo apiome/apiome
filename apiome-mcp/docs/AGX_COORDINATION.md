@@ -51,6 +51,15 @@ When implementing AGX-3.1 (#4537) or refactoring auth/middleware shared with
    filtered or if catalog middleware `on_list_tools` stops being a pure
    passthrough (see source AST guard).
 
+## Agent keys (AGX-3.1)
+
+The AGX column above is implemented by
+[`apiome_mcp.agent_access`](../src/apiome_mcp/agent_access.py). `AgentAccessMiddleware` filters
+`tools/list` and gates `tools/call` to the toolset's enabled tools ∩ the agent key's allowlist,
+and is mounted only on the AGX runtime's own FastMCP app. `tests/test_agent_access.py` fails the
+build if the catalog server (`apiome_mcp.server.mcp`) ever carries it. Rules and error codes:
+[AGENT_ACCESS.md](AGENT_ACCESS.md).
+
 ## One operation→tool mapping
 
 AGX tools are compiled by AGX-1.1 ([#4529](https://github.com/apiome/apiome/issues/4529)):

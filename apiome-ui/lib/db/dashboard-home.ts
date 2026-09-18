@@ -360,7 +360,8 @@ async function loadLintRows(userId: string): Promise<LintRow[]> {
  *
  * Disabled keys are excluded: a key nobody can use cannot break a pipeline, so asking the
  * reader to rotate it is noise. Revoked keys are deleted outright by `deleteApiKey`, so there
- * is no third state to filter.
+ * is no third state to filter. Agent keys (`kind = 'agent'`, AGX-3.1 / #4537) are excluded
+ * too: they are not listed on the API keys page this item links to.
  *
  * @param userId The reader, from the session.
  * @returns Candidate rows, nearest expiry first.
@@ -376,6 +377,7 @@ async function loadKeyRows(userId: string): Promise<KeyRow[]> {
      JOIN apiome.tenants t ON t.id = ak.tenant_id
      WHERE ak.tenant_id IN ${MEMBER_TENANTS}
        AND ak.enabled = true
+       AND ak.kind = 'workspace'
        AND ak.expires_at IS NOT NULL
        AND ak.expires_at <= NOW() + ($2 || ' days')::interval
      ORDER BY ak.expires_at ASC
