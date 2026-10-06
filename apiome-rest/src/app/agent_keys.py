@@ -23,10 +23,10 @@ the usual 12-character lookup prefix.
 an agent key carries exactly the ``agent:invoke`` scope, which no REST route allowlists
 (:data:`app.auth.API_KEY_SCOPE_AGENT_INVOKE`).
 
-**The toolset is not checked yet.** ``agent_toolsets`` is AGX-1.2 (#4530), still open when agent
-keys shipped, so ``toolset_id`` is a well-formed UUID with no foreign key. AGX-1.2 adds the key
-and a route-level existence check; until then the MCP middleware fails closed on a toolset it
-cannot resolve.
+**The toolset must exist.** AGX-1.2 (#4530, V270) added a ``(tenant_id, toolset_id)`` foreign key
+to ``agent_toolsets`` with ``ON DELETE CASCADE``, and the create route checks the toolset first
+(:func:`app.agent_toolset_routes.require_agent_toolset`), so a key can only bind to a toolset of
+its own tenant and is deleted with it.
 """
 
 from __future__ import annotations

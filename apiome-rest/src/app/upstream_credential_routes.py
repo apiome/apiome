@@ -17,8 +17,9 @@ doesn't echo the secret it carried either.
 
 **Scoped by the authenticated tenant.** As on every ``/v1/tenants/{t}`` surface, the tenant in the
 URL is informational; the caller's authenticated tenant scopes every read and write, so one
-tenant can never address another's credential by id. The toolset id is not yet checked against
-``agent_toolsets``: that table is AGX-1.2 (#4530), which adds the foreign key and the check.
+tenant can never address another's credential by id. List and create first check that the toolset
+exists in the caller's tenant (``404`` otherwise; AGX-1.2, #4530), and V270's foreign key binds every
+credential to a toolset of its own tenant, so deleting the toolset deletes its credentials.
 
 **Permissions reuse** ``api_keys``, **and no new RBAC resource is added.** Listing is
 ``api_keys:view``; create, rotate and delete are ``api_keys:create`` / ``edit`` / ``delete``. An
@@ -40,6 +41,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from .agent_toolset_routes import require_agent_toolset
 from .auth import validate_authentication
 from .database import db
 from .envelope_crypto import EnvelopeEncryptionError
@@ -219,10 +221,11 @@ async def list_upstream_credentials(
         The toolset's credentials, as metadata.
 
     Raises:
-        HTTPException: 403 without ``api_keys:view``.
+        HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist.
     """
     enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
     _ = tenant_slug
+    require_agent_toolset(_tenant_id(auth_data), str(toolset_id))
     return UpstreamCredentialListResponse(
         toolset_id=str(toolset_id),
         encryption_configured=credential_encryption_configured(),
@@ -250,6 +253,7 @@ async def list_upstream_credentials(
         "`agent.upstream_credential.create`, with metadata only."
     ),
     responses={
+        404: {"description": "No such agent toolset in this tenant."},
         409: {"description": "This toolset already has a credential for that server."},
         422: {"description": "The server URL, placement or secret is not acceptable."},
         503: {"description": "No upstream-credential encryption key is configured."},
@@ -273,12 +277,14 @@ async def create_upstream_credential(
         The stored credential's metadata.
 
     Raises:
-        HTTPException: 403 without ``api_keys:create``; 409 when the binding is taken; 422 on an
-            invalid request; 503 when encryption is unconfigured.
+        HTTPException: 403 without ``api_keys:create``; 404 when the toolset does not exist; 409
+            when the binding is taken; 422 on an invalid request; 503 when encryption is
+            unconfigured.
     """
     actor_id = enforce_permission(db, auth_data, Resource.API_KEYS, Action.CREATE)
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
+    require_agent_toolset(tenant_id, str(toolset_id))
     try:
         stored = create_credential(tenant_id, str(toolset_id), body, actor_id=actor_id)
     except UpstreamCredentialError as exc:

@@ -81,19 +81,19 @@ No message contains the key, its hash or its prefix.
 from apiome_mcp.agent_access import AgentAccessMiddleware
 
 agent_mcp = FastMCP("Apiome agent runtime", lifespan=database_lifespan)
-agent_mcp.add_middleware(AgentAccessMiddleware(enabled_tools=load_enabled_tools))  # AGX-1.2 source
+agent_mcp.add_middleware(AgentAccessMiddleware())  # enabled tools read from AGX-1.2 curation
 ```
 
 - **Never mount it on the catalog server** (`apiome_mcp.server`). The catalog's `tools/list`
   always returns the full registry (MTG-2.1, [LIST_ALWAYS.md](LIST_ALWAYS.md); rules in
   [AGX_COORDINATION.md](AGX_COORDINATION.md)). A test fails the build if the catalog app ever
   carries `AgentAccessMiddleware`.
-- **The default `enabled_tools` fails closed.** `toolset_curation_pending` knows no toolset,
-  because `agent_toolsets` / `agent_toolset_tools` are AGX-1.2 (#4530), which was still open when
-  this shipped. Until a real source is passed, every request is refused with
-  `agent_toolset_unavailable`. AGX-1.2's source should map the toolset's enabled operation refs to
-  compiled tool names with `compile_mcp_tools` (the same names the allowlist holds), and return
-  `None` for a missing or disabled toolset.
+- **The default `enabled_tools` is the AGX-1.2 curation (#4530).** `toolset_enabled_tools` reads
+  the enabled `tool_name`s of the key's toolset from `agent_toolset_tools` (V270). apiome-rest
+  recorded those names with `compile_mcp_tools` when it seeded the toolset, so they are the names
+  an allowlist holds. It returns `None`, and the request fails closed with
+  `agent_toolset_unavailable`, when the toolset is not in the key's tenant, is switched off, or its
+  version is no longer published. An enabled toolset with no enabled tools lists nothing.
 - `key_resolver` can be replaced too (tests pass a fake). The default resolves against `api_keys`
   through the lifespan pool.
 

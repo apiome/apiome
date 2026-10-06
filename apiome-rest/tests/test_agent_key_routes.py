@@ -232,6 +232,16 @@ def test_create_requires_a_toolset_and_an_allowlist(store):
     assert store.rows == {}
 
 
+def test_create_for_a_toolset_the_tenant_does_not_have_is_404(store, audits):
+    """AGX-1.2 route check: a key can only bind to an existing toolset of the caller's tenant."""
+    store.missing_toolsets.add(_TOOLSET)
+    response = client.post(_BASE, json=_body())
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "agent-toolset-not-found"
+    assert store.rows == {}
+    assert audits == []
+
+
 def test_create_on_a_taken_name_is_409(store, audits):
     _create()
     response = client.post(_BASE, json=_body())

@@ -137,13 +137,14 @@ if injection is not None:
   it in a thread, or issue the same SELECT through its own pool and call `binds()` and
   `build_injection()` directly. The use ledger row is then the caller's to write.
 
-## For AGX-1.2: the toolset foreign key
+## The toolset foreign key (AGX-1.2)
 
-`toolset_id` has no foreign key, because `agent_toolsets` did not exist yet. AGX-1.2's migration
-must delete `upstream_credentials` (and optionally `upstream_credential_uses`) rows whose toolset
-does not exist, then add `REFERENCES agent_toolsets(id) ON DELETE CASCADE`. It should also make the
-routes answer `404` for a toolset that isn't in the tenant. Until then any UUID is accepted and
-every read and write is scoped by tenant.
+V268 shipped before `agent_toolsets` existed, so `toolset_id` had no foreign key. AGX-1.2's V270
+deleted credentials whose toolset did not exist, then added a `(tenant_id, toolset_id)` foreign key
+to `agent_toolsets` with `ON DELETE CASCADE`: a credential can only bind to a toolset of its own
+tenant, and deleting the toolset deletes it. `upstream_credential_uses` keeps its history (no
+foreign key). List and create answer `404 agent-toolset-not-found` for a toolset that is not in the
+caller's tenant. See [agent_toolsets.md](agent_toolsets.md).
 
 ## Tests
 

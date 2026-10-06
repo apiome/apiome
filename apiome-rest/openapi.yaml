@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.197.0
+  version: 1.198.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11017,6 +11017,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/UpstreamCredentialOut'
                 description: Response payload for storeanupstreamcredentialforatoolsetresponse201.
+        '404':
+          description: No such agent toolset in this tenant.
         '409':
           description: This toolset already has a credential for that server.
         '422':
@@ -11355,6 +11357,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/AgentKeyCreated'
                 description: Response payload for createanagentkeyresponse201.
+        '404':
+          description: No such agent toolset in this tenant.
         '409':
           description: The tenant already has an API key with that name.
         '422':
@@ -11575,6 +11579,528 @@ paths:
           description: The key is revoked; its allowlist can no longer change.
         '422':
           description: An entry is not an MCP tool name.
+  /v1/tenants/{tenant_slug}/agent-toolsets:
+    get:
+      tags:
+      - agent-access
+      summary: List agent toolsets
+      description: 'An agent toolset is Agent Access for one published version: which
+        of its operations AI agents may call as MCP tools. Reads (`GET`/`HEAD`, GraphQL
+        queries) are exposed by default; write operations are opt-in, one at a time,
+        with an explicit confirmation.
+
+
+        Newest first, with tool counts. `versionId` narrows the list to one version''s
+        toolset.
+
+
+        Requires `api_keys:view`.'
+      operationId: list_agent_toolsets_route_v1_tenants__tenant_slug__agent_toolsets_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: versionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+            description: Listagenttoolsetsversion ID schema.
+          - type: 'null'
+            description: Listagenttoolsetsversion ID schema.
+          title: Versionid
+          description: Versionid schema.
+        description: 'Query parameter: version id.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listagenttoolsetsauthorization schema.
+          - type: 'null'
+            description: Listagenttoolsetsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listagenttoolsets Xapikey schema.
+          - type: 'null'
+            description: Listagenttoolsets Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list agent toolsets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolsetListResponse'
+                description: Response payload for listagenttoolsetsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listagenttoolsetsresponse422.
+    post:
+      tags:
+      - agent-access
+      summary: Create an agent toolset for a published version
+      description: 'An agent toolset is Agent Access for one published version: which
+        of its operations AI agents may call as MCP tools. Reads (`GET`/`HEAD`, GraphQL
+        queries) are exposed by default; write operations are opt-in, one at a time,
+        with an explicit confirmation.
+
+
+        Creates the toolset for `versionId`, which must be a published, undeleted
+        version in this tenant, and seeds one tool per callable operation: reads enabled
+        (deprecated ones excepted), write operations disabled. `target` is `prod`
+        (default) or `mock`; `enabled` defaults to `true`.
+
+
+        Requires `api_keys:create`. Audited as `agent.toolset.create`.'
+      operationId: create_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanagenttoolsetforapublishedversionauthorization schema.
+          - type: 'null'
+            description: Createanagenttoolsetforapublishedversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanagenttoolsetforapublishedversion Xapikey schema.
+          - type: 'null'
+            description: Createanagenttoolsetforapublishedversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentToolsetCreate'
+              description: Request body for createanagenttoolsetforapublishedversionrequest.
+        description: Request body for create an agent toolset for a published version.
+      responses:
+        '201':
+          description: Successful response for create an agent toolset for a published
+            version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolsetDetail'
+                description: Response payload for createanagenttoolsetforapublishedversionresponse201.
+        '404':
+          description: No such version in this tenant.
+        '409':
+          description: The version is unpublished or deleted, or already has a toolset.
+        '422':
+          description: The version's operations could not be read.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}:
+    get:
+      tags:
+      - agent-access
+      summary: Describe an agent toolset
+      description: 'The toolset''s settings and every tool row.
+
+
+        Requires `api_keys:view`.'
+      operationId: get_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Describeanagenttoolsetauthorization schema.
+          - type: 'null'
+            description: Describeanagenttoolsetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Describeanagenttoolset Xapikey schema.
+          - type: 'null'
+            description: Describeanagenttoolset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for describe an agent toolset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolsetDetail'
+                description: Response payload for describeanagenttoolsetresponse200.
+        '404':
+          description: No such agent toolset in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for describeanagenttoolsetresponse422.
+    patch:
+      tags:
+      - agent-access
+      summary: Change an agent toolset's settings
+      description: 'Switch the whole toolset on or off (`enabled`; a disabled toolset
+        exposes no tools) and/or change its `target` (`prod` | `mock`). Tool selections
+        are untouched.
+
+
+        Requires `api_keys:edit`. Audited as `agent.toolset.update`, before and after.'
+      operationId: update_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changeanagenttoolsetssettingsauthorization schema.
+          - type: 'null'
+            description: Changeanagenttoolsetssettingsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changeanagenttoolsetssettings Xapikey schema.
+          - type: 'null'
+            description: Changeanagenttoolsetssettings Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentToolsetUpdate'
+              description: Request body for changeanagenttoolsetssettingsrequest.
+        description: Request body for change an agent toolset's settings.
+      responses:
+        '200':
+          description: Successful response for change an agent toolset's settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolsetOut'
+                description: Response payload for changeanagenttoolsetssettingsresponse200.
+        '404':
+          description: No such agent toolset in this tenant.
+        '422':
+          description: The body changes nothing.
+    delete:
+      tags:
+      - agent-access
+      summary: Delete an agent toolset
+      description: 'Delete the toolset and its tool selections. **Its upstream credentials
+        and agent keys are deleted with it**: an agent holding one of its keys is
+        refused on its next request.
+
+
+        Requires `api_keys:delete`. Audited as `agent.toolset.delete`.'
+      operationId: delete_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanagenttoolsetauthorization schema.
+          - type: 'null'
+            description: Deleteanagenttoolsetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanagenttoolset Xapikey schema.
+          - type: 'null'
+            description: Deleteanagenttoolset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete an agent toolset.
+        '404':
+          description: No such agent toolset in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteanagenttoolsetresponse422.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/tools:
+    get:
+      tags:
+      - agent-access
+      summary: List an agent toolset's tools
+      description: 'One row per callable operation of the toolset''s version, ordered
+        by operation key: the MCP tool name, whether it is a write op, and whether
+        it is exposed.
+
+
+        Requires `api_keys:view`.'
+      operationId: list_agent_toolset_tools_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__tools_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listanagenttoolsetstoolsauthorization schema.
+          - type: 'null'
+            description: Listanagenttoolsetstoolsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listanagenttoolsetstools Xapikey schema.
+          - type: 'null'
+            description: Listanagenttoolsetstools Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list an agent toolset's tools.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolListResponse'
+                description: Response payload for listanagenttoolsetstoolsresponse200.
+        '404':
+          description: No such agent toolset in this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listanagenttoolsetstoolsresponse422.
+  /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/tools/{tool_id}:
+    patch:
+      tags:
+      - agent-access
+      summary: Enable or disable one tool
+      description: 'Set `enabled` on one tool. **Enabling a write operation requires
+        `confirmWriteOp: true`**; without it the request is refused with `agent-toolset-write-op-unconfirmed`
+        and nothing changes. The confirmation is recorded on the tool (`writeConfirmedBy`,
+        `writeConfirmedAt`) and cleared when the tool is disabled, so re-enabling
+        needs a fresh one.
+
+
+        Requires `api_keys:edit`. Audited as `agent.toolset.tool.update`.'
+      operationId: update_agent_toolset_tool_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__tools__tool_id__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: toolset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Toolset Id
+          description: Toolset Id schema.
+        description: Path parameter identifying the toolset id segment.
+      - name: tool_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tool Id
+          description: Tool Id schema.
+        description: Path parameter identifying the tool id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Enableordisableonetoolauthorization schema.
+          - type: 'null'
+            description: Enableordisableonetoolauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Enableordisableonetool Xapikey schema.
+          - type: 'null'
+            description: Enableordisableonetool Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentToolUpdate'
+              description: Request body for enableordisableonetoolrequest.
+        description: Request body for enable or disable one tool.
+      responses:
+        '200':
+          description: Successful response for enable or disable one tool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentToolOut'
+                description: Response payload for enableordisableonetoolresponse200.
+        '404':
+          description: No such tool in this tenant's agent toolset.
+        '422':
+          description: 'A write operation was enabled without `confirmWriteOp: true`.'
   /v1/tenants/{tenant_slug}/verification-runs:
     post:
       tags:
@@ -63857,6 +64383,441 @@ components:
         \ When it last authenticated, if ever.\n    created_at: When it was created.\n\
         \    updated_at: When its row last changed.\n    created_by: The user who\
         \ created it, if known."
+    AgentToolListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-toolset.v1
+          description: Schema Version.
+          example: 1.0.0
+        toolsetId:
+          type: string
+          title: Toolsetid
+          description: Toolset ID.
+          example: example
+        tools:
+          items:
+            $ref: '#/components/schemas/AgentToolOut'
+          type: array
+          title: Tools
+          description: Tools.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - toolsetId
+      - tools
+      title: AgentToolListResponse
+      description: "A toolset's tool rows.\n\nAttributes:\n    schema_version: The\
+        \ projection's shape.\n    toolset_id: The toolset addressed.\n    tools:\
+        \ One entry per callable operation, ordered by operation key."
+    AgentToolOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        operation:
+          type: string
+          title: Operation
+          description: HTTP method name (GET, POST, PUT, PATCH, DELETE, …).
+          example: GET
+        toolName:
+          type: string
+          title: Toolname
+          description: Tool Name.
+          example: Example
+        writeOp:
+          type: boolean
+          title: Writeop
+          description: Write Op.
+          example: false
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        writeConfirmedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent tool.
+          - type: 'null'
+            description: Response payload for agent tool.
+          title: Writeconfirmedat
+          description: Write Confirmed At.
+        writeConfirmedBy:
+          anyOf:
+          - type: string
+            description: Response payload for agent tool.
+          - type: 'null'
+            description: Response payload for agent tool.
+          title: Writeconfirmedby
+          description: Write Confirmed By.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent tool.
+          - type: 'null'
+            description: Response payload for agent tool.
+          title: Updatedat
+          description: Updated At.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for agent tool.
+          - type: 'null'
+            description: Response payload for agent tool.
+          title: Updatedby
+          description: Updated By.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - operation
+      - toolName
+      - writeOp
+      - enabled
+      title: AgentToolOut
+      description: "One operation's exposure decision.\n\nAttributes:\n    id: The\
+        \ tool row id (what the update route addresses).\n    operation: The canonical\
+        \ operation key (``GET /pets/{id}``).\n    tool_name: The MCP tool name agents\
+        \ see.\n    write_op: Whether the operation mutates. A write op is opt-in.\n\
+        \    enabled: Whether agents may list and call it.\n    write_confirmed_at:\
+        \ When enabling this write op was confirmed (only while enabled).\n    write_confirmed_by:\
+        \ Who confirmed it.\n    updated_at: When the row last changed.\n    updated_by:\
+        \ Who last changed it."
+    AgentToolUpdate:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        confirmWriteOp:
+          type: boolean
+          title: Confirmwriteop
+          default: false
+          description: Confirm Write Op.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - enabled
+      title: AgentToolUpdate
+      description: "Body of ``PATCH /v1/tenants/{t}/agent-toolsets/{id}/tools/{toolId}``.\n\
+        \nAttributes:\n    enabled: Expose the operation to agents, or stop exposing\
+        \ it.\n    confirm_write_op: Must be ``true`` to enable a write op. It is\
+        \ ignored when disabling,\n        and when enabling a read."
+    AgentToolsetCreate:
+      properties:
+        versionId:
+          type: string
+          format: uuid
+          title: Versionid
+          description: Version ID.
+          example: 1.0.0
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+          description: Whether the resource is active.
+          example: true
+        target:
+          type: string
+          enum:
+          - prod
+          - mock
+          title: Target
+          default: prod
+          description: Target.
+          example: prod
+      additionalProperties: false
+      type: object
+      required:
+      - versionId
+      title: AgentToolsetCreate
+      description: "Body of ``POST /v1/tenants/{t}/agent-toolsets``.\n\nAttributes:\n\
+        \    version_id: The published version (``versions.id``) to give Agent Access.\n\
+        \    enabled: Whether the toolset serves agents straight away (default ``True``).\n\
+        \    target: ``prod`` (default) or ``mock``."
+    AgentToolsetDetail:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-toolset.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        versionId:
+          type: string
+          title: Versionid
+          description: Version ID.
+          example: 1.0.0
+        projectId:
+          type: string
+          title: Projectid
+          description: Project ID.
+          example: example
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Agent Toolset schema.
+          - type: 'null'
+            description: Agent Toolset schema.
+          title: Versionlabel
+          description: Version Label.
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        target:
+          type: string
+          enum:
+          - prod
+          - mock
+          title: Target
+          description: Target.
+          example: prod
+        toolCount:
+          type: integer
+          title: Toolcount
+          description: Number of tool.
+          example: 1
+        enabledToolCount:
+          type: integer
+          title: Enabledtoolcount
+          description: Number of enabled tool.
+          example: 1
+        enabledWriteOpCount:
+          type: integer
+          title: Enabledwriteopcount
+          description: Number of enabled write op.
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: Created At.
+          example: example
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Agent Toolset schema.
+          - type: 'null'
+            description: Agent Toolset schema.
+          title: Updatedat
+          description: Updated At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Agent Toolset schema.
+          - type: 'null'
+            description: Agent Toolset schema.
+          title: Createdby
+          description: Created By.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Agent Toolset schema.
+          - type: 'null'
+            description: Agent Toolset schema.
+          title: Updatedby
+          description: Updated By.
+        tools:
+          items:
+            $ref: '#/components/schemas/AgentToolOut'
+          type: array
+          title: Tools
+          description: Tools.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - versionId
+      - projectId
+      - enabled
+      - target
+      - toolCount
+      - enabledToolCount
+      - enabledWriteOpCount
+      - createdAt
+      - tools
+      title: AgentToolsetDetail
+      description: A toolset with every tool row, ordered by operation key.
+    AgentToolsetListResponse:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-toolset.v1
+          description: Schema Version.
+          example: 1.0.0
+        toolsets:
+          items:
+            $ref: '#/components/schemas/AgentToolsetOut'
+          type: array
+          title: Toolsets
+          description: Toolsets.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - toolsets
+      title: AgentToolsetListResponse
+      description: "A tenant's toolsets, described.\n\nAttributes:\n    schema_version:\
+        \ The projection's shape.\n    toolsets: One entry per toolset, newest first."
+    AgentToolsetOut:
+      properties:
+        schemaVersion:
+          type: string
+          title: Schemaversion
+          default: agx.agent-toolset.v1
+          description: Schema Version.
+          example: 1.0.0
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        versionId:
+          type: string
+          title: Versionid
+          description: Version ID.
+          example: 1.0.0
+        projectId:
+          type: string
+          title: Projectid
+          description: Project ID.
+          example: example
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for agent toolset.
+          - type: 'null'
+            description: Response payload for agent toolset.
+          title: Versionlabel
+          description: Version Label.
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether the resource is active.
+          example: true
+        target:
+          type: string
+          enum:
+          - prod
+          - mock
+          title: Target
+          description: Target.
+          example: prod
+        toolCount:
+          type: integer
+          title: Toolcount
+          description: Number of tool.
+          example: 1
+        enabledToolCount:
+          type: integer
+          title: Enabledtoolcount
+          description: Number of enabled tool.
+          example: 1
+        enabledWriteOpCount:
+          type: integer
+          title: Enabledwriteopcount
+          description: Number of enabled write op.
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: Created At.
+          example: example
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for agent toolset.
+          - type: 'null'
+            description: Response payload for agent toolset.
+          title: Updatedat
+          description: Updated At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Response payload for agent toolset.
+          - type: 'null'
+            description: Response payload for agent toolset.
+          title: Createdby
+          description: Created By.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Response payload for agent toolset.
+          - type: 'null'
+            description: Response payload for agent toolset.
+          title: Updatedby
+          description: Updated By.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - versionId
+      - projectId
+      - enabled
+      - target
+      - toolCount
+      - enabledToolCount
+      - enabledWriteOpCount
+      - createdAt
+      title: AgentToolsetOut
+      description: "A toolset, described with its tool counts.\n\nAttributes:\n  \
+        \  schema_version: The projection's shape.\n    id: The toolset id (what agent\
+        \ keys and upstream credentials bind to).\n    version_id: The published version\
+        \ it exposes.\n    project_id: That version's project.\n    version_label:\
+        \ The version's label (``1.0.0``).\n    enabled: Whether it serves agents\
+        \ at all.\n    target: ``prod`` or ``mock``.\n    tool_count: Callable operations\
+        \ in the version.\n    enabled_tool_count: How many of them are exposed.\n\
+        \    enabled_write_op_count: How many exposed ones are write ops.\n    created_at:\
+        \ When it was created.\n    updated_at: When its settings last changed.\n\
+        \    created_by: Who created it.\n    updated_by: Who last changed its settings."
+    AgentToolsetUpdate:
+      properties:
+        enabled:
+          anyOf:
+          - type: boolean
+            description: Agent Toolset Update schema.
+          - type: 'null'
+            description: Agent Toolset Update schema.
+          title: Enabled
+          description: Whether the resource is active.
+        target:
+          anyOf:
+          - type: string
+            enum:
+            - prod
+            - mock
+            description: Agent Toolset Update schema.
+          - type: 'null'
+            description: Agent Toolset Update schema.
+          title: Target
+          description: Target.
+      additionalProperties: false
+      type: object
+      title: AgentToolsetUpdate
+      description: "Body of ``PATCH /v1/tenants/{t}/agent-toolsets/{id}``. At least\
+        \ one field is required.\n\nAttributes:\n    enabled: Switch the whole toolset\
+        \ on or off.\n    target: ``prod`` or ``mock``."
     AnalysisMetrics:
       properties:
         nodeCount:
@@ -69383,7 +70344,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         completed_at:
           anyOf:
           - type: string
@@ -70837,7 +71798,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -71010,7 +71971,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -71384,13 +72345,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -72959,7 +73920,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: d1a13598-0831-4086-9eb3-2c9cbb1512ae
+          example: b7bbbc8c-eee3-4885-8995-6b33d0bb54ee
         method:
           type: string
           title: Method
@@ -75102,7 +76063,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         envelope:
           additionalProperties: true
           type: object
@@ -76482,7 +77443,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         browse_url:
           anyOf:
           - type: string
@@ -107568,7 +108529,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
       additionalProperties: false
       type: object
       required:
@@ -116367,7 +117328,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         detected_by:
           anyOf:
           - type: string
@@ -121824,13 +122785,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-09-18T04:12:45Z'
+          example: '2026-10-06T04:24:16Z'
         outcome:
           anyOf:
           - type: string

@@ -5,6 +5,48 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.333.0] - 2026-10-05
+
+### Added
+- **Agent toolsets: tool selection & curation (#4530, AGX-1.2)**: a tenant decides which
+  operations of a published version its AI agents may call as MCP tools. **Safe by default:**
+  reads on, write operations opt-in, each with an explicit confirmation.
+
+  ```bash
+  curl -sX POST "$APIOME/v1/tenants/acme/agent-toolsets" \
+       -H "Authorization: Bearer $JWT" -H 'Content-Type: application/json' \
+       -d '{"versionId": "'"$VERSION"'"}'
+  curl -sX PATCH "$APIOME/v1/tenants/acme/agent-toolsets/$TOOLSET/tools/$TOOL" \
+       -H "Authorization: Bearer $JWT" -H 'Content-Type: application/json' \
+       -d '{"enabled": true, "confirmWriteOp": true}'
+  ```
+
+  - **Two tables (V270).** `agent_toolsets`: one per published version, with `enabled` and
+    `target` (`prod` | `mock`, consumed by AGX-2.4). `agent_toolset_tools`: one row per callable
+    operation, holding the canonical operation key, the AGX-1.1 compiled tool name, `write_op`,
+    `enabled`, and who confirmed an enabled write op and when.
+  - **Seeding.** Creating a toolset enables `GET`/`HEAD` operations and GraphQL queries
+    (deprecated ones excepted). Every other operation is a write op and starts disabled. Enabling
+    one without `confirmWriteOp: true` is a `422 agent-toolset-write-op-unconfirmed`, and a
+    database CHECK makes an enabled but unconfirmed write op unrepresentable.
+  - **Seven routes** under `/v1/tenants/{t}/agent-toolsets`: list (`?versionId`), create, get
+    (with tools), `PATCH` (`enabled` / `target`), `DELETE`, `GET …/{id}/tools`, and
+    `PATCH …/{id}/tools/{toolId}`. Guarded by the existing `api_keys` permissions; no new RBAC
+    resource.
+  - **Audited.** `agent.toolset.create`, `agent.toolset.update` (before/after),
+    `agent.toolset.delete` and `agent.toolset.tool.update` (operation, write-op flag, enabled
+    before/after, confirmation time), with metadata only.
+  - Docs: `docs/agent_toolsets.md`.
+
+### Changed
+- **AGX-2.2 / AGX-3.1 handoffs closed.** V270 deletes upstream credentials and agent keys whose
+  toolset does not exist, then gives both `toolset_id` columns a `(tenant_id, toolset_id)` foreign
+  key to `agent_toolsets` with `ON DELETE CASCADE`. Deleting a toolset now deletes its upstream
+  credentials and agent keys. `POST /agent-keys` and the upstream-credential list/create routes
+  answer `404 agent-toolset-not-found` for a toolset that is not in the caller's tenant.
+- apiome-mcp's agent-access middleware now reads a key's enabled tools from the toolset by
+  default (`toolset_enabled_tools`), instead of failing closed on every request.
+
 ## [1.332.0] - 2026-09-17
 
 ### Added
