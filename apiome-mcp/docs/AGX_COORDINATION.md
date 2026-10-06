@@ -60,6 +60,14 @@ and is mounted only on the AGX runtime's own FastMCP app. `tests/test_agent_acce
 build if the catalog server (`apiome_mcp.server.mcp`) ever carries it. Rules and error codes:
 [AGENT_ACCESS.md](AGENT_ACCESS.md).
 
+## Invocation audit (AGX-3.3)
+
+Every agent `tools/call` writes exactly one metadata-only `agent_invocations` row through
+[`apiome_mcp.agent_invocations.audit_invocation`](../src/apiome_mcp/agent_invocations.py); daily
+rollups and per-tier retention run in [`apiome_mcp.agent_usage_sweep`](../src/apiome_mcp/agent_usage_sweep.py).
+The catalog server only hosts the sweep's background task; catalog `tools/call`s are never
+agent invocations. Rules: [AGENT_INVOCATIONS.md](AGENT_INVOCATIONS.md).
+
 ## One operation→tool mapping
 
 AGX tools are compiled by AGX-1.1 ([#4529](https://github.com/apiome/apiome/issues/4529)):

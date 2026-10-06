@@ -40,6 +40,36 @@ async def _run_keys_revoke(prefix: str) -> int:
     return 0 if revoked else 1
 
 
+async def _run_agent_usage_sweep() -> int:
+    """Run one AGX-3.3 agent usage sweep tick (rollups + per-tier retention) and print what it did."""
+    import structlog
+
+    from apiome_mcp.agent_usage_sweep import run_agent_usage_sweep_with_settings
+    from apiome_mcp.database_pool import create_async_pool
+    from apiome_mcp.logging_config import configure_logging
+    from apiome_mcp.settings import get_settings
+
+    settings = get_settings()
+    configure_logging(settings)
+    log = structlog.get_logger(__name__)
+    pool = create_async_pool(settings, open=False)
+    await pool.open()
+    try:
+        result = await run_agent_usage_sweep_with_settings(pool, settings)
+    finally:
+        await pool.close()
+    if result is None:
+        log.info("agent_usage_sweep_skipped_locked")
+        print("Skipped: another instance is running the agent usage sweep.")
+        return 0
+    print(
+        f"Rolled up {result.days_rolled_up} day(s); purged {result.invocations_purged} invocation(s), "
+        f"{result.samples_purged} sample(s), {result.rollups_purged} rollup row(s), "
+        f"{result.credential_uses_purged} credential use(s)."
+    )
+    return 0
+
+
 async def _run_http_transport(host: str, port: int, *, log_level: str) -> None:
     """Streamable HTTP via FastMCP (``http_app`` → ``create_streamable_http_app``); serves MCP at ``/mcp``."""
     from starlette.middleware import Middleware as StarletteMiddleware
@@ -110,6 +140,16 @@ def main() -> None:
         help="Key prefix: first 12 characters, with or without a trailing '...'.",
     )
 
+    usage_parser = subparsers.add_parser(
+        "agent-usage",
+        help="AGX-3.3 agent usage administration (rollups and retention).",
+    )
+    usage_sub = usage_parser.add_subparsers(dest="usage_command", required=True)
+    usage_sub.add_parser(
+        "sweep",
+        help="Run one sweep now: roll up agent invocations by day and apply per-tier retention.",
+    )
+
     args = parser.parse_args()
 
     if args.command == "serve":
@@ -171,6 +211,22 @@ def main() -> None:
                 print(str(exc), file=sys.stderr)
                 raise SystemExit(2)
             code = asyncio.run(_run_keys_revoke(args.prefix))
+            get_settings.cache_clear()
+            raise SystemExit(code)
+
+    if args.command == "agent-usage":
+        from pydantic import ValidationError
+
+        from apiome_mcp.settings import get_settings
+
+        get_settings.cache_clear()
+        try:
+            get_settings()
+        except ValidationError as exc:
+            print(f"Configuration error:\n{exc}", file=sys.stderr)
+            raise SystemExit(2)
+        if args.usage_command == "sweep":
+            code = asyncio.run(_run_agent_usage_sweep())
             get_settings.cache_clear()
             raise SystemExit(code)
 
