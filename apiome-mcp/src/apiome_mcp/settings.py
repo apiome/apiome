@@ -124,6 +124,25 @@ class Settings(BaseSettings):
         le=3650,
         description="AGX-2.2 upstream credential-use ledger retention, applied by the AGX-3.3 sweep.",
     )
+    agent_quota_limits_cache_seconds: float = Field(
+        default=60.0,
+        ge=0,
+        le=3600,
+        description=(
+            "AGX-3.2: seconds a tenant's agent key caps (license tier) are cached; a tier change "
+            "applies within this time."
+        ),
+    )
+    agent_quota_usage_cache_seconds: float = Field(
+        default=5.0,
+        ge=0,
+        le=300,
+        description=(
+            "AGX-3.2: seconds between re-reads of an agent key's daily call count from "
+            "agent_invocations. Longer is cheaper; across instances a key can overshoot its daily "
+            "cap by about (instances - 1) x rps x this."
+        ),
+    )
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:

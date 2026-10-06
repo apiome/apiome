@@ -27,12 +27,18 @@ an agent key carries exactly the ``agent:invoke`` scope, which no REST route all
 to ``agent_toolsets`` with ``ON DELETE CASCADE``, and the create route checks the toolset first
 (:func:`app.agent_toolset_routes.require_agent_toolset`), so a key can only bind to a toolset of
 its own tenant and is deleted with it.
+
+**Usage vs caps (AGX-3.2, #4538).** :func:`get_agent_key_usage` reports a key's RPS limit and daily
+call cap, which come from the tenant's license tier, together with the calls it has made today
+(UTC). Both values come from the V272 SQL functions that the apiome-mcp quota middleware
+(``apiome_mcp.agent_quotas``) enforces from. The count is the AGX-3.3 ``agent_invocations`` rows
+without ``quota_rejected`` refusals, so it equals the day's usage rollup for the key.
 """
 
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Iterable, List, Literal, Mapping, Optional, Tuple
 from uuid import UUID
 
@@ -46,6 +52,7 @@ from .tool_projection import TOOL_NAME_PATTERN
 __all__ = [
     "AGENT_KEY_KIND",
     "AGENT_KEY_SCHEMA_VERSION",
+    "AGENT_KEY_USAGE_SCHEMA_VERSION",
     "AGENT_KEY_SCOPE",
     "AGENT_KEY_SECRET_PREFIX",
     "CODE_AGENT_KEY_EXISTS",
@@ -58,9 +65,13 @@ __all__ = [
     "AgentKeyCreated",
     "AgentKeyError",
     "AgentKeyOut",
+    "AgentKeyDailyCalls",
+    "AgentKeyRateLimit",
     "AgentKeyStatus",
+    "AgentKeyUsageOut",
     "create_agent_key",
     "get_agent_key",
+    "get_agent_key_usage",
     "key_status",
     "list_agent_keys",
     "mint_agent_key_secret",
@@ -71,6 +82,9 @@ __all__ = [
 
 #: The addressable shape of an agent key's metadata projection.
 AGENT_KEY_SCHEMA_VERSION = "agx.agent-key.v1"
+
+#: The addressable shape of an agent key's usage-vs-caps projection (AGX-3.2).
+AGENT_KEY_USAGE_SCHEMA_VERSION = "agx.agent-key-usage.v1"
 
 #: ``api_keys.kind`` for agent keys (V269).
 AGENT_KEY_KIND = "agent"
@@ -200,6 +214,64 @@ class AgentKeyCreated(AgentKeyOut):
     secret: str = Field(
         description="The agent key. Shown only in this response; store it now.",
     )
+
+
+class AgentKeyRateLimit(BaseModel):
+    """An agent key's sustained call rate limit.
+
+    Attributes:
+        cap: Calls per second (token bucket, burst of one second's worth, at least one call);
+            ``None`` when the tier is unlimited.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    cap: Optional[float] = Field(default=None, description="Calls per second; null = unlimited.")
+
+
+class AgentKeyDailyCalls(BaseModel):
+    """An agent key's daily call cap and today's usage.
+
+    Attributes:
+        day: The UTC day being counted.
+        cap: Calls allowed per UTC day; ``None`` when the tier is unlimited.
+        used: Calls the key made today (refused calls are not counted).
+        remaining: ``cap - used`` (never negative); ``None`` when unlimited.
+        resets_at: When the count starts over (the next UTC midnight).
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    day: date
+    cap: Optional[int] = Field(default=None, description="Calls per UTC day; null = unlimited.")
+    used: int
+    remaining: Optional[int] = None
+    resets_at: datetime = Field(serialization_alias="resetsAt")
+
+
+class AgentKeyUsageOut(BaseModel):
+    """An agent key's current usage against its license-tier caps.
+
+    Attributes:
+        schema_version: The projection's shape.
+        key_id: The key.
+        license_type: The tenant's license tier (``free`` / ``paid`` / ``sponsor``), or ``None``
+            without a license (Free caps apply).
+        rps: The rate limit.
+        daily_calls: The daily cap and today's usage.
+        as_of: When this was computed.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    schema_version: str = Field(
+        default=AGENT_KEY_USAGE_SCHEMA_VERSION, serialization_alias="schemaVersion"
+    )
+    key_id: str = Field(serialization_alias="keyId")
+    license_type: Optional[str] = Field(default=None, serialization_alias="licenseType")
+    rps: AgentKeyRateLimit
+    daily_calls: AgentKeyDailyCalls = Field(serialization_alias="dailyCalls")
+    as_of: datetime = Field(serialization_alias="asOf")
 
 
 def _utc(value: datetime) -> datetime:
@@ -472,3 +544,58 @@ def revoke_agent_key(tenant_id: str, key_id: str) -> Tuple[AgentKeyOut, bool]:
     if existing is None:
         raise AgentKeyError(CODE_AGENT_KEY_NOT_FOUND, "no such agent key")
     return _out(existing), False
+
+
+def _positive(raw: Any) -> Optional[float]:
+    """A stored cap as a positive number, or ``None`` (unlimited) when missing or not positive."""
+    if isinstance(raw, bool):
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
+def get_agent_key_usage(
+    tenant_id: str, key_id: str, *, now: Optional[datetime] = None
+) -> AgentKeyUsageOut:
+    """Report an agent key's usage today against its license-tier caps.
+
+    Revoked, disabled and expired keys are reported too; their count simply stops growing.
+
+    Args:
+        tenant_id: The caller's tenant.
+        key_id: The key.
+        now: The reference instant (which UTC day is counted); defaults to now.
+
+    Returns:
+        The caps (``None`` = unlimited) and today's count.
+
+    Raises:
+        AgentKeyError: ``agent-key-not-found`` when the tenant has no agent key with that id.
+    """
+    if db.get_agent_key(tenant_id, key_id) is None:
+        raise AgentKeyError(CODE_AGENT_KEY_NOT_FOUND, "no such agent key")
+    reference = _utc(now) if now is not None else datetime.now(timezone.utc)
+    today = reference.date()
+    quota = db.get_agent_key_quota(tenant_id) or {}
+    rps = _positive(quota.get("rps"))
+    daily = _positive(quota.get("daily_calls"))
+    daily_cap = int(daily) if daily is not None else None
+    used = db.count_agent_key_calls(key_id, today)
+    license_type = quota.get("license_type")
+    return AgentKeyUsageOut(
+        key_id=key_id,
+        license_type=str(license_type) if license_type is not None else None,
+        rps=AgentKeyRateLimit(cap=rps),
+        daily_calls=AgentKeyDailyCalls(
+            day=today,
+            cap=daily_cap,
+            used=used,
+            remaining=max(0, daily_cap - used) if daily_cap is not None else None,
+            resets_at=datetime(today.year, today.month, today.day, tzinfo=timezone.utc)
+            + timedelta(days=1),
+        ),
+        as_of=reference,
+    )

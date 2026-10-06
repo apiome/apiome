@@ -86,6 +86,7 @@ def _create(**overrides: Any) -> Dict[str, Any]:
         ("get", "", None, Action.VIEW),
         ("post", "", "create", Action.CREATE),
         ("get", "/{id}", None, Action.VIEW),
+        ("get", "/{id}/usage", None, Action.VIEW),
         ("put", "/{id}/allowlist", {"toolAllowlist": ["listPets"]}, Action.EDIT),
         ("delete", "/{id}", None, Action.DELETE),
     ],
@@ -107,6 +108,7 @@ def test_each_route_enforces_its_api_keys_permission(store, audits, method, suff
         ("get", "", None),
         ("post", "", "create"),
         ("get", f"/{_MISSING}", None),
+        ("get", f"/{_MISSING}/usage", None),
         ("put", f"/{_MISSING}/allowlist", {"toolAllowlist": ["x"]}),
         ("delete", f"/{_MISSING}", None),
     ],
@@ -392,17 +394,77 @@ def test_revoke_never_touches_a_workspace_key(store, audits):
 
 
 # ============================================================================
+# Usage vs caps (AGX-3.2)
+# ============================================================================
+def test_usage_reports_todays_count_against_the_tier_caps(store, audits):
+    key = _create()
+    today = datetime.now(timezone.utc).date()
+    store.call_counts[(key["id"], today)] = 240
+    store.call_counts[(key["id"], today - timedelta(days=1))] = 999  # yesterday does not count
+    store.quota = {"license_type": "paid", "rps": 20, "daily_calls": 1000}
+    response = client.get(f"{_BASE}/{key['id']}/usage")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["schemaVersion"] == "agx.agent-key-usage.v1"
+    assert body["keyId"] == key["id"]
+    assert body["licenseType"] == "paid"
+    assert body["rps"] == {"cap": 20.0}
+    daily = body["dailyCalls"]
+    assert (daily["day"], daily["cap"], daily["used"], daily["remaining"]) == (today.isoformat(), 1000, 240, 760)
+    assert daily["resetsAt"].startswith((today + timedelta(days=1)).isoformat() + "T00:00:00")
+    assert "asOf" in body
+    assert "secret" not in body and "keyHash" not in json.dumps(body)
+
+
+def test_usage_reports_unlimited_caps_as_null(store, audits):
+    key = _create()
+    store.quota = {"license_type": "sponsor", "rps": None, "daily_calls": None}
+    body = client.get(f"{_BASE}/{key['id']}/usage").json()
+    assert body["rps"] == {"cap": None}
+    assert (body["dailyCalls"]["cap"], body["dailyCalls"]["remaining"]) == (None, None)
+
+
+def test_usage_of_an_unknown_or_foreign_key_is_404(store, audits):
+    assert client.get(f"{_BASE}/{_MISSING}/usage").status_code == 404
+    foreign = store.insert_agent_key(
+        tenant_id=_OTHER_TENANT,
+        name="theirs",
+        description=None,
+        key_hash="h",
+        key_prefix="ak_000000000...",
+        toolset_id=_TOOLSET,
+        tool_allowlist=[],
+        expires_at=None,
+    )
+    assert client.get(f"{_BASE}/{foreign['id']}/usage").status_code == 404
+    assert "count_agent_key_calls" not in store.calls
+
+
+def test_usage_of_a_revoked_key_is_still_reported(store, audits):
+    key = _create()
+    assert client.delete(f"{_BASE}/{key['id']}").status_code == 204
+    assert client.get(f"{_BASE}/{key['id']}/usage").status_code == 200
+
+
+def test_usage_rejects_a_malformed_key_id(store):
+    assert client.get(f"{_BASE}/not-a-uuid/usage").status_code == 422
+
+
+# ============================================================================
 # Contract
 # ============================================================================
-def test_openapi_documents_the_five_routes_under_agent_access():
+def test_openapi_documents_the_six_routes_under_agent_access():
     paths = app.openapi()["paths"]
     collection = paths["/v1/tenants/{tenant_slug}/agent-keys"]
     item = paths["/v1/tenants/{tenant_slug}/agent-keys/{key_id}"]
     allowlist = paths["/v1/tenants/{tenant_slug}/agent-keys/{key_id}/allowlist"]
+    usage = paths["/v1/tenants/{tenant_slug}/agent-keys/{key_id}/usage"]
     assert set(collection) >= {"get", "post"}
     assert set(item) >= {"get", "delete"}
     assert set(allowlist) >= {"put"}
-    for operation in (collection["get"], collection["post"], item["get"], item["delete"], allowlist["put"]):
+    assert set(usage) >= {"get"}
+    operations = (collection["get"], collection["post"], item["get"], item["delete"], allowlist["put"], usage["get"])
+    for operation in operations:
         assert operation["tags"] == ["agent-access"]
 
 

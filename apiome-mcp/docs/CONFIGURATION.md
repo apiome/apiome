@@ -27,6 +27,8 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 | **`APIOME_MCP_AGENT_USAGE_SWEEP_BATCH_SIZE`** | No | `10000` | AGX-3.3: most rows each retention purge deletes per tick (**1–1000000**). |
 | **`APIOME_MCP_AGENT_USAGE_FINALIZE_GRACE_HOURS`** | No | `6` | AGX-3.3: hours after a UTC day ends before its rollup is final and its raw rows may be pruned (**1–72**). Must exceed the longest agent call. |
 | **`APIOME_MCP_AGENT_UPSTREAM_USE_RETENTION_DAYS`** | No | `90` | AGX-2.2 upstream credential-use ledger retention applied by the AGX-3.3 sweep (**1–3650**). |
+| **`APIOME_MCP_AGENT_QUOTA_LIMITS_CACHE_SECONDS`** | No | `60` | AGX-3.2: seconds a tenant's agent key caps (license tier) are cached (**0–3600**). A tier change applies within this time. See [`AGENT_QUOTAS.md`](AGENT_QUOTAS.md). |
+| **`APIOME_MCP_AGENT_QUOTA_USAGE_CACHE_SECONDS`** | No | `5` | AGX-3.2: seconds between re-reads of an agent key's daily call count from `agent_invocations` (**0–300**). Across instances a key can overshoot its daily cap by about (instances − 1) × rps × this. |
 
 ## Related files
 

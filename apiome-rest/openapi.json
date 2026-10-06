@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.198.0",
+    "version": "1.199.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15004,6 +15004,108 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for revokeanagentkeyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-keys/{key_id}/usage": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Agent key usage vs caps",
+        "description": "An agent key's limits and how much of them it has used today (AGX-3.2). Both limits come from the tenant's license tier and change when the tier changes: `rps.cap` is the sustained calls per second (burst of one second's worth), `dailyCalls.cap` the calls per UTC day. `null` means unlimited.\n\n`dailyCalls.used` counts today's (UTC) `tools/call` invocations recorded for the key, without calls refused by a limit. It is the same number the agent usage rollups report for the key and day. Over either limit, the MCP agent runtime refuses calls with an `agent_rate_limited` / `agent_daily_cap_reached` error that says when to retry.\n\nRevoked keys are reported too. Requires `api_keys:view`.",
+        "operationId": "get_agent_key_usage_route_v1_tenants__tenant_slug__agent_keys__key_id__usage_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id",
+              "description": "Key Id schema."
+            },
+            "description": "Path parameter identifying the key id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Agentkeyusagevscapsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Agentkeyusagevscapsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Agentkeyusagevscaps Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Agentkeyusagevscaps Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for agent key usage vs caps.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentKeyUsageOut",
+                  "description": "Response payload for agentkeyusagevscapsresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such agent key in this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for agentkeyusagevscapsresponse422."
                 }
               }
             }
@@ -86726,6 +86828,67 @@
         "title": "AgentKeyCreated",
         "description": "The create response: the key's metadata plus its plaintext secret, shown this once."
       },
+      "AgentKeyDailyCalls": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day",
+            "description": "Day.",
+            "example": "example"
+          },
+          "cap": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Key Daily Calls schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Daily Calls schema."
+              }
+            ],
+            "title": "Cap",
+            "description": "Calls per UTC day; null = unlimited."
+          },
+          "used": {
+            "type": "integer",
+            "title": "Used",
+            "description": "Used.",
+            "example": 1
+          },
+          "remaining": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Key Daily Calls schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Daily Calls schema."
+              }
+            ],
+            "title": "Remaining",
+            "description": "Remaining."
+          },
+          "resetsAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Resetsat",
+            "description": "Resets At.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "day",
+          "used",
+          "resetsAt"
+        ],
+        "title": "AgentKeyDailyCalls",
+        "description": "An agent key's daily call cap and today's usage.\n\nAttributes:\n    day: The UTC day being counted.\n    cap: Calls allowed per UTC day; ``None`` when the tier is unlimited.\n    used: Calls the key made today (refused calls are not counted).\n    remaining: ``cap - used`` (never negative); ``None`` when unlimited.\n    resets_at: When the count starts over (the next UTC midnight)."
+      },
       "AgentKeyListResponse": {
         "properties": {
           "schemaVersion": {
@@ -86931,6 +87094,84 @@
         ],
         "title": "AgentKeyOut",
         "description": "An agent key, described. Never carries the secret or its hash.\n\nAttributes:\n    schema_version: The projection's shape.\n    id: The key id.\n    kind: Always ``agent``.\n    name: Human name.\n    description: Purpose note, if any.\n    key_prefix: The first 12 characters of the secret plus ``...``, for recognising it.\n    toolset_id: The toolset the key is bound to.\n    tool_allowlist: The tool names it may use, sorted.\n    status: ``active``, ``disabled``, ``expired`` or ``revoked`` (see :func:`key_status`).\n    enabled: The key's enabled flag.\n    expires_at: When it stops working, if ever.\n    revoked_at: When it was revoked, if it was.\n    last_used_at: When it last authenticated, if ever.\n    created_at: When it was created.\n    updated_at: When its row last changed.\n    created_by: The user who created it, if known."
+      },
+      "AgentKeyRateLimit": {
+        "properties": {
+          "cap": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Agent Key Rate Limit schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Key Rate Limit schema."
+              }
+            ],
+            "title": "Cap",
+            "description": "Calls per second; null = unlimited."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AgentKeyRateLimit",
+        "description": "An agent key's sustained call rate limit.\n\nAttributes:\n    cap: Calls per second (token bucket, burst of one second's worth, at least one call);\n        ``None`` when the tier is unlimited."
+      },
+      "AgentKeyUsageOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "agx.agent-key-usage.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "Key ID.",
+            "example": "example"
+          },
+          "licenseType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for agent key usage."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for agent key usage."
+              }
+            ],
+            "title": "Licensetype",
+            "description": "License Type."
+          },
+          "rps": {
+            "$ref": "#/components/schemas/AgentKeyRateLimit",
+            "description": "Rps."
+          },
+          "dailyCalls": {
+            "$ref": "#/components/schemas/AgentKeyDailyCalls",
+            "description": "Daily Calls."
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Asof",
+            "description": "As Of.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "keyId",
+          "rps",
+          "dailyCalls",
+          "asOf"
+        ],
+        "title": "AgentKeyUsageOut",
+        "description": "An agent key's current usage against its license-tier caps.\n\nAttributes:\n    schema_version: The projection's shape.\n    key_id: The key.\n    license_type: The tenant's license tier (``free`` / ``paid`` / ``sponsor``), or ``None``\n        without a license (Free caps apply).\n    rps: The rate limit.\n    daily_calls: The daily cap and today's usage.\n    as_of: When this was computed."
       },
       "AgentToolListResponse": {
         "properties": {
@@ -94438,7 +94679,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "completed_at": {
             "anyOf": [
@@ -96348,7 +96589,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "comment_count": {
             "type": "integer",
@@ -96576,7 +96817,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97034,14 +97275,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -99066,7 +99307,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "b7bbbc8c-eee3-4885-8995-6b33d0bb54ee"
+            "example": "91817ed7-66a1-401b-82d6-aa52d0ef377f"
           },
           "method": {
             "type": "string",
@@ -101593,7 +101834,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -103329,7 +103570,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "browse_url": {
             "anyOf": [
@@ -142715,7 +142956,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           }
         },
         "additionalProperties": false,
@@ -153936,7 +154177,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "detected_by": {
             "anyOf": [
@@ -160991,14 +161232,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T04:24:16Z"
+            "example": "2026-10-06T18:00:43Z"
           },
           "outcome": {
             "anyOf": [

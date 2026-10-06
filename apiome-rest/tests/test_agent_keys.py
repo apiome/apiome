@@ -9,7 +9,9 @@ what it should.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
+from unittest.mock import MagicMock
 from uuid import UUID
 
 import bcrypt
@@ -21,6 +23,7 @@ from app.agent_keys import (
     AGENT_KEY_SCHEMA_VERSION,
     AGENT_KEY_SCOPE,
     AGENT_KEY_SECRET_PREFIX,
+    AGENT_KEY_USAGE_SCHEMA_VERSION,
     CODE_AGENT_KEY_EXISTS,
     CODE_AGENT_KEY_INVALID,
     CODE_AGENT_KEY_NOT_FOUND,
@@ -31,6 +34,7 @@ from app.agent_keys import (
     AgentKeyError,
     create_agent_key,
     get_agent_key,
+    get_agent_key_usage,
     key_status,
     list_agent_keys,
     mint_agent_key_secret,
@@ -349,3 +353,104 @@ def test_revoke_of_an_unknown_or_foreign_key_is_not_found(store):
             revoke_agent_key(_TENANT, key_id)
         assert exc.value.code == CODE_AGENT_KEY_NOT_FOUND
     assert store.rows[created.id]["revoked_at"] is None
+
+
+# ============================================================================
+# Usage vs caps (AGX-3.2)
+# ============================================================================
+_LATE = datetime(2026, 10, 6, 23, 30, tzinfo=timezone.utc)
+
+
+def test_usage_reports_the_tier_caps_and_todays_count(store):
+    created = create_agent_key(_TENANT, _body())
+    store.quota = {"license_type": "paid", "rps": Decimal("20"), "daily_calls": 100000}
+    store.call_counts[(created.id, date(2026, 10, 6))] = 1234
+    usage = get_agent_key_usage(_TENANT, created.id, now=_LATE)
+    assert usage.schema_version == AGENT_KEY_USAGE_SCHEMA_VERSION
+    assert (usage.key_id, usage.license_type, usage.rps.cap) == (created.id, "paid", 20.0)
+    daily = usage.daily_calls
+    assert (daily.day, daily.cap, daily.used, daily.remaining) == (date(2026, 10, 6), 100000, 1234, 98766)
+    assert daily.resets_at == datetime(2026, 10, 7, tzinfo=timezone.utc)
+    assert usage.as_of == _LATE
+
+
+def test_usage_counts_the_utc_day_of_a_non_utc_clock(store):
+    created = create_agent_key(_TENANT, _body())
+    store.call_counts[(created.id, date(2026, 10, 7))] = 3
+    tokyo = timezone(timedelta(hours=9))
+    usage = get_agent_key_usage(_TENANT, created.id, now=datetime(2026, 10, 7, 8, 0, tzinfo=tokyo))
+    assert usage.daily_calls.day == date(2026, 10, 6)
+    assert usage.daily_calls.used == 0
+
+
+def test_usage_never_reports_negative_remaining(store):
+    # Across MCP instances a key can briefly overshoot its cap (see apiome_mcp.agent_quotas).
+    created = create_agent_key(_TENANT, _body())
+    store.quota = {"license_type": "free", "rps": 2, "daily_calls": 1000}
+    store.call_counts[(created.id, date(2026, 10, 6))] = 1003
+    daily = get_agent_key_usage(_TENANT, created.id, now=_LATE).daily_calls
+    assert (daily.used, daily.remaining) == (1003, 0)
+
+
+@pytest.mark.parametrize(
+    ("quota", "rps", "daily"),
+    [
+        ({"license_type": "sponsor", "rps": None, "daily_calls": None}, None, None),
+        ({"license_type": None, "rps": 0, "daily_calls": -1}, None, None),
+        ({"license_type": None, "rps": True, "daily_calls": "lots"}, None, None),
+        ({"license_type": "free", "rps": Decimal("0.5"), "daily_calls": Decimal("10")}, 0.5, 10),
+        (None, None, None),
+    ],
+)
+def test_usage_reads_caps_defensively(store, quota, rps, daily):
+    created = create_agent_key(_TENANT, _body())
+    store.quota = quota
+    usage = get_agent_key_usage(_TENANT, created.id, now=_LATE)
+    assert (usage.rps.cap, usage.daily_calls.cap) == (rps, daily)
+    if daily is None:
+        assert usage.daily_calls.remaining is None
+
+
+def test_usage_of_an_unknown_or_foreign_key_is_not_found(store):
+    created = create_agent_key(_OTHER_TENANT, _body())
+    for key_id in (_MISSING, created.id):
+        with pytest.raises(AgentKeyError) as exc:
+            get_agent_key_usage(_TENANT, key_id)
+        assert exc.value.code == CODE_AGENT_KEY_NOT_FOUND
+    assert "count_agent_key_calls" not in store.calls
+
+
+def test_usage_serializes_camel_case(store):
+    created = create_agent_key(_TENANT, _body())
+    dumped = get_agent_key_usage(_TENANT, created.id, now=_LATE).model_dump(by_alias=True, mode="json")
+    assert set(dumped) == {"schemaVersion", "keyId", "licenseType", "rps", "dailyCalls", "asOf"}
+    assert set(dumped["dailyCalls"]) == {"day", "cap", "used", "remaining", "resetsAt"}
+
+
+# ============================================================================
+# SQL accessors (AGX-3.2): they call the V272 functions the MCP middleware enforces from
+# ============================================================================
+def test_the_quota_accessor_reads_agent_key_quota(monkeypatch):
+    query = MagicMock(return_value=[{"license_type": "free", "rps": 2, "daily_calls": 1000}])
+    monkeypatch.setattr(db, "execute_query", query)
+    assert db.get_agent_key_quota(_TENANT) == {"license_type": "free", "rps": 2, "daily_calls": 1000}
+    sql, params = query.call_args.args
+    assert "apiome.agent_key_quota(%s::uuid)" in sql
+    assert params == (_TENANT,)
+
+
+def test_the_count_accessor_reads_agent_key_call_count(monkeypatch):
+    query = MagicMock(return_value=[{"calls": 17}])
+    monkeypatch.setattr(db, "execute_query", query)
+    assert db.count_agent_key_calls(_MISSING, date(2026, 10, 6)) == 17
+    sql, params = query.call_args.args
+    assert "apiome.agent_key_call_count(%s::uuid, %s::date)" in sql
+    assert params == (_MISSING, "2026-10-06")
+
+
+def test_the_accessors_never_send_a_non_uuid_to_sql(monkeypatch):
+    query = MagicMock()
+    monkeypatch.setattr(db, "execute_query", query)
+    assert db.get_agent_key_quota("t1") is None
+    assert db.count_agent_key_calls("k1", date(2026, 10, 6)) == 0
+    query.assert_not_called()
