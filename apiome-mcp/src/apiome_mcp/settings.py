@@ -94,6 +94,37 @@ class Settings(BaseSettings):
         ),
     )
 
+    agent_usage_sweep_interval_seconds: int = Field(
+        default=3600,
+        ge=0,
+        le=86_400,
+        description=(
+            "AGX-3.3: seconds between agent usage sweeps (daily rollups + per-tier retention) run by "
+            "the server. 0 disables the in-process sweep (run `apiome-mcp agent-usage sweep` from cron)."
+        ),
+    )
+    agent_usage_sweep_batch_size: int = Field(
+        default=10_000,
+        ge=1,
+        le=1_000_000,
+        description="AGX-3.3: most rows each retention purge deletes per sweep tick.",
+    )
+    agent_usage_finalize_grace_hours: int = Field(
+        default=6,
+        ge=1,
+        le=72,
+        description=(
+            "AGX-3.3: hours after a UTC day ends before its rollup is final and its raw rows may be "
+            "pruned. Must exceed the longest agent call."
+        ),
+    )
+    agent_upstream_use_retention_days: int = Field(
+        default=90,
+        ge=1,
+        le=3650,
+        description="AGX-2.2 upstream credential-use ledger retention, applied by the AGX-3.3 sweep.",
+    )
+
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:
         if self.database_pool_max_size < self.database_pool_min_size:
