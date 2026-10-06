@@ -128,6 +128,14 @@ server never mounts it. The enabled tools come from AGX-1.2 (#4530) toolset cura
 unavailable toolset fails closed. See
 **[docs/AGENT_ACCESS.md](docs/AGENT_ACCESS.md)** (#4537).
 
+**Agent quotas (AGX-3.2):** ``apiome_mcp.agent_quotas.AgentQuotaMiddleware``, added after the access
+middleware, limits each agent key to its license tier's calls per second and calls per UTC day
+(Free 2 / 1,000, Paid 20 / 100,000, Sponsor 100 / 1,000,000). A call over either limit gets an
+``isError`` result with a 429-style retry hint and is recorded as a ``quota_rejected``
+invocation. apiome-rest reports usage against the caps at
+``GET /v1/tenants/{t}/agent-keys/{id}/usage``. See **[docs/AGENT_QUOTAS.md](docs/AGENT_QUOTAS.md)**
+(#4538).
+
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 
 ---

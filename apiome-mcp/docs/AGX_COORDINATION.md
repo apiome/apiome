@@ -68,6 +68,13 @@ rollups and per-tier retention run in [`apiome_mcp.agent_usage_sweep`](../src/ap
 The catalog server only hosts the sweep's background task; catalog `tools/call`s are never
 agent invocations. Rules: [AGENT_INVOCATIONS.md](AGENT_INVOCATIONS.md).
 
+## Quotas & rate limits (AGX-3.2)
+
+[`apiome_mcp.agent_quotas.AgentQuotaMiddleware`](../src/apiome_mcp/agent_quotas.py) refuses agent
+`tools/call`s over the key's license-tier RPS limit or daily cap. It is added after
+`AgentAccessMiddleware` on the AGX runtime's app only, and `tests/test_agent_quotas.py` fails the
+build if the catalog server carries it. Rules: [AGENT_QUOTAS.md](AGENT_QUOTAS.md).
+
 ## One operation→tool mapping
 
 AGX tools are compiled by AGX-1.1 ([#4529](https://github.com/apiome/apiome/issues/4529)):

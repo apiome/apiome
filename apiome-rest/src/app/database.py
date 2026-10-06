@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 import bcrypt
@@ -31417,6 +31417,49 @@ class Database:
             (key_id, tenant_id),
         )
         return dict(rows[0]) if rows else None
+
+    def get_agent_key_quota(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return a tenant's agent key caps from its license tier (AGX-3.2, V272).
+
+        Reads ``apiome.agent_key_quota``, the function the apiome-mcp quota middleware enforces
+        from, so the API reports exactly the caps that are enforced.
+
+        Args:
+            tenant_id: The caller's tenant.
+
+        Returns:
+            ``{"license_type", "rps", "daily_calls"}`` (``rps`` / ``daily_calls`` are ``None`` when
+            unlimited; ``license_type`` is ``None`` without a license), or ``None`` when the id is
+            not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id):
+            return None
+        rows = self.execute_query(
+            "SELECT license_type, rps, daily_calls FROM apiome.agent_key_quota(%s::uuid)",
+            (tenant_id,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def count_agent_key_calls(self, key_id: str, day: date) -> int:
+        """Count the calls an agent key made on a UTC day (AGX-3.2, V272).
+
+        Reads ``apiome.agent_key_call_count``: the key's AGX-3.3 ``agent_invocations`` that day
+        without ``quota_rejected`` refusals, the same number the day's rollup reports.
+
+        Args:
+            key_id: The agent key.
+            day: The UTC day.
+
+        Returns:
+            The count; 0 when the id is not a UUID.
+        """
+        if not self._upstream_scope_ok(key_id):
+            return 0
+        rows = self.execute_query(
+            "SELECT apiome.agent_key_call_count(%s::uuid, %s::date) AS calls",
+            (key_id, day.isoformat()),
+        )
+        return int(rows[0].get("calls") or 0) if rows else 0
 
     # ------------------------------------------------------------------------------------------
     # Agent toolsets — AGX-1.2 (#4530). `agent_toolsets` / `agent_toolset_tools` (V270).

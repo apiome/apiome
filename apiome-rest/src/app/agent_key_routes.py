@@ -1,11 +1,12 @@
 """Agent key endpoints — AGX-3.1 (#4537).
 
-Five routes over agent keys (:mod:`app.agent_keys`), the MCP credential an agent holds:
+Six routes over agent keys (:mod:`app.agent_keys`), the MCP credential an agent holds:
 
 ```
 GET    /v1/tenants/{t}/agent-keys                 list (?toolsetId=…, ?includeRevoked=true)
 POST   /v1/tenants/{t}/agent-keys                 create; returns the secret once
 GET    /v1/tenants/{t}/agent-keys/{id}            describe one
+GET    /v1/tenants/{t}/agent-keys/{id}/usage      usage today vs the tier's caps (AGX-3.2)
 PUT    /v1/tenants/{t}/agent-keys/{id}/allowlist  replace the tool allowlist
 DELETE /v1/tenants/{t}/agent-keys/{id}            revoke (idempotent)
 ```
@@ -20,7 +21,7 @@ caller's tenant (``404`` otherwise; AGX-1.2, #4530), and V270's foreign key bind
 toolset of its own tenant, so deleting the toolset deletes its keys.
 
 **Permissions reuse** ``api_keys``, **and no new RBAC resource is added**, as for the AGX-2.2
-upstream credentials: listing and reading are ``api_keys:view``; create, allowlist edit and revoke
+upstream credentials: listing, reading and usage are ``api_keys:view``; create, allowlist edit and revoke
 are ``api_keys:create`` / ``edit`` / ``delete``.
 
 **Every lifecycle action is audited** in the tenant's access audit, with metadata only:
@@ -47,8 +48,10 @@ from .agent_keys import (
     AgentKeyCreated,
     AgentKeyError,
     AgentKeyOut,
+    AgentKeyUsageOut,
     create_agent_key,
     get_agent_key,
+    get_agent_key_usage,
     list_agent_keys,
     revoke_agent_key,
     update_agent_key_allowlist,
@@ -304,6 +307,49 @@ async def get_agent_key_route(
     _ = tenant_slug
     try:
         return get_agent_key(_tenant_id(auth_data), str(key_id))
+    except AgentKeyError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.get(
+    _BASE + "/{key_id}/usage",
+    response_model=AgentKeyUsageOut,
+    summary="Agent key usage vs caps",
+    description=(
+        "An agent key's limits and how much of them it has used today (AGX-3.2). Both limits "
+        "come from the tenant's license tier and change when the tier changes: `rps.cap` is the "
+        "sustained calls per second (burst of one second's worth), `dailyCalls.cap` the calls "
+        "per UTC day. `null` means unlimited.\n\n`dailyCalls.used` counts today's (UTC) "
+        "`tools/call` invocations recorded for the key, without calls refused by a limit. It is "
+        "the same number the agent usage rollups report for the key and day. Over either limit, "
+        "the MCP agent runtime refuses calls with an `agent_rate_limited` / "
+        "`agent_daily_cap_reached` error that says when to retry.\n\nRevoked keys are reported "
+        "too. Requires `api_keys:view`."
+    ),
+    responses={404: {"description": "No such agent key in this tenant."}},
+)
+async def get_agent_key_usage_route(
+    tenant_slug: str,
+    key_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> AgentKeyUsageOut:
+    """Report one agent key's usage today against its caps.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        key_id: The key.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The key's caps and today's count.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 404 when it does not exist.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        return get_agent_key_usage(_tenant_id(auth_data), str(key_id))
     except AgentKeyError as exc:
         raise _refusal(exc) from exc
 

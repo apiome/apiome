@@ -32,8 +32,7 @@ Wrap each `tools/call` in `audit_invocation`. It writes **exactly one** row when
 access = current_agent_access()
 policy = await load_body_capture_policy(pool, access.key.tenant_id, access.key.toolset_id)
 async with audit_invocation(pool, access.key, tool_name=name, target=target,
-                            request_bytes=len(raw_args.encode()), capture=policy,
-                            classify=classify_quota_error) as audit:
+                            request_bytes=len(raw_args.encode()), capture=policy) as audit:
     ...
     audit.attach_bodies(request_body=raw_args, response_body=text)   # kept only if sampled
     audit.succeeded(http_status=200, response_bytes=len(text.encode()))
@@ -110,9 +109,10 @@ rows forever. Raw retention is at least 1 day. A missing or non-numeric key fall
 ## For later tickets
 
 - **AGX-2.1 (#4533)** wraps every `tools/call` in `audit_invocation`, as shown above.
-- **AGX-3.2 (#4538)** counts today's calls per key from `agent_invocations`
-  (`idx_agent_invocations_key_time`). It records its refusals as `quota_rejected`, either by
-  passing a `classify` hook or by calling `failed(...)`.
+- **AGX-3.2 (#4538)** counts today's calls per key from `agent_invocations` with V272's
+  `agent_key_call_count` (served by `idx_agent_invocations_key_time`). `AgentQuotaMiddleware` refuses calls over
+  a limit before the tool runs and writes their `quota_rejected` rows itself, so the AGX-2.1 call
+  path audits only the calls it was given. See [`AGENT_QUOTAS.md`](AGENT_QUOTAS.md).
 - **AGX-3.4 (#4540)** charts read `agent_invocation_daily`. For today's partial day, the current
   day's rollup is refreshed every tick.
 - **AGX-3.5 (#4541)** anomaly detection reads rollups for baselines and raw rows for the recent

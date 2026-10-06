@@ -18,8 +18,8 @@ that a lifecycle bug shows up here too:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
+from datetime import date, datetime, timezone
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 #: The accessors the agent-key module calls; :meth:`FakeAgentKeyStore.install` patches these.
 ACCESSORS = (
@@ -29,6 +29,8 @@ ACCESSORS = (
     "update_agent_key_allowlist",
     "revoke_agent_key",
     "agent_toolset_exists",
+    "get_agent_key_quota",
+    "count_agent_key_calls",
 )
 
 #: Metadata columns every accessor returns (``Database._AGENT_KEY_COLUMNS``).
@@ -63,6 +65,10 @@ class FakeAgentKeyStore:
         self.calls: List[str] = []
         #: Toolset ids :meth:`agent_toolset_exists` reports as missing (AGX-1.2 route check).
         self.missing_toolsets: Set[str] = set()
+        #: What ``db.get_agent_key_quota`` returns (AGX-3.2): the Free caps by default.
+        self.quota: Optional[Dict[str, Any]] = {"license_type": "free", "rps": 2, "daily_calls": 1000}
+        #: Calls per ``(key id, UTC day)`` for ``db.count_agent_key_calls`` (AGX-3.2).
+        self.call_counts: Dict[Tuple[str, date], int] = {}
 
     def install(self, monkeypatch: Any, db: Any) -> "FakeAgentKeyStore":
         """Patch the agent-key accessors on ``db`` with this store's methods.
@@ -83,6 +89,17 @@ class FakeAgentKeyStore:
         self.calls.append("agent_toolset_exists")
         _ = tenant_id
         return str(toolset_id) not in self.missing_toolsets
+
+    def get_agent_key_quota(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Stand-in for ``db.get_agent_key_quota``: :attr:`quota`, whatever the tenant."""
+        self.calls.append("get_agent_key_quota")
+        _ = tenant_id
+        return dict(self.quota) if self.quota is not None else None
+
+    def count_agent_key_calls(self, key_id: str, day: date) -> int:
+        """Stand-in for ``db.count_agent_key_calls``: :attr:`call_counts`, 0 when absent."""
+        self.calls.append("count_agent_key_calls")
+        return self.call_counts.get((str(key_id), day), 0)
 
     def seed_workspace_key(self, tenant_id: str, name: str) -> str:
         """Store a workspace key (to prove the agent accessors never see one).
