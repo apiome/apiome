@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.199.0",
+    "version": "1.200.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15939,6 +15939,107 @@
           },
           "422": {
             "description": "A write operation was enabled without `confirmWriteOp: true`."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-usage": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Agent usage rollups",
+        "description": "The tenant's agent `tools/call` usage over the last `days` UTC days, today included, from the daily rollups: `daily` (zero-filled, oldest first), `tools` and `agents` (most calls first) and `totals` with errors broken down by outcome.\n\n`errors` counts every call that did not succeed, quota rejections included. Latency is the calls-weighted mean (`latencyAvgMs`) and the worst p95 among the rollup groups covered (`latencyP95MaxMs`); percentiles cannot be merged exactly.\n\n`days` is 1\u2013366 (default 30). Requires `api_keys:view`.",
+        "operationId": "get_agent_usage_route_v1_tenants__tenant_slug__agent_usage_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 366,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days",
+              "description": "Days schema."
+            },
+            "description": "Query parameter: days."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Agentusagerollupsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Agentusagerollupsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Agentusagerollups Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Agentusagerollups Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for agent usage rollups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentUsageOut",
+                  "description": "Response payload for agentusagerollupsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for agentusagerollupsresponse422."
+                }
+              }
+            }
           }
         }
       }
@@ -87731,6 +87832,417 @@
         "title": "AgentToolsetUpdate",
         "description": "Body of ``PATCH /v1/tenants/{t}/agent-toolsets/{id}``. At least one field is required.\n\nAttributes:\n    enabled: Switch the whole toolset on or off.\n    target: ``prod`` or ``mock``."
       },
+      "AgentUsageAgent": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls.",
+            "example": 1
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Errors.",
+            "example": 1
+          },
+          "errorRate": {
+            "type": "number",
+            "title": "Errorrate",
+            "description": "Error Rate.",
+            "example": 1.0
+          },
+          "latencyAvgMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Agent Usage Agent schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Agent schema."
+              }
+            ],
+            "title": "Latencyavgms",
+            "description": "Latency Avg Ms."
+          },
+          "latencyP95MaxMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Usage Agent schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Agent schema."
+              }
+            ],
+            "title": "Latencyp95Maxms",
+            "description": "Latency P95 Max Ms."
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "Key ID.",
+            "example": "example"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Usage Agent schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Agent schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "keyPrefix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Agent Usage Agent schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Agent schema."
+              }
+            ],
+            "title": "Keyprefix",
+            "description": "Key Prefix."
+          },
+          "revoked": {
+            "type": "boolean",
+            "title": "Revoked",
+            "default": false,
+            "description": "Revoked.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "calls",
+          "errors",
+          "errorRate",
+          "keyId"
+        ],
+        "title": "AgentUsageAgent",
+        "description": "One agent key's usage over the window.\n\nAttributes:\n    key_id: The agent key.\n    name: Its name, or ``None`` when the key row no longer exists.\n    key_prefix: Its lookup prefix, or ``None`` when the key row no longer exists.\n    revoked: Whether the key has been revoked since."
+      },
+      "AgentUsageDay": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls.",
+            "example": 1
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Errors.",
+            "example": 1
+          },
+          "errorRate": {
+            "type": "number",
+            "title": "Errorrate",
+            "description": "Error Rate.",
+            "example": 1.0
+          },
+          "latencyAvgMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Agent Usage Day schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Day schema."
+              }
+            ],
+            "title": "Latencyavgms",
+            "description": "Latency Avg Ms."
+          },
+          "latencyP95MaxMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Usage Day schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Day schema."
+              }
+            ],
+            "title": "Latencyp95Maxms",
+            "description": "Latency P95 Max Ms."
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day",
+            "description": "Day.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "calls",
+          "errors",
+          "errorRate",
+          "day"
+        ],
+        "title": "AgentUsageDay",
+        "description": "One UTC day of the window. Days without calls are present, with zero calls.\n\nAttributes:\n    day: The UTC day."
+      },
+      "AgentUsageOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "agx.agent-usage.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "startDay": {
+            "type": "string",
+            "format": "date",
+            "title": "Startday",
+            "description": "Start Day.",
+            "example": "example"
+          },
+          "endDay": {
+            "type": "string",
+            "format": "date",
+            "title": "Endday",
+            "description": "End Day.",
+            "example": "example"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days",
+            "description": "Days.",
+            "example": 1
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AgentUsageTotals",
+            "description": "Totals."
+          },
+          "daily": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageDay"
+            },
+            "type": "array",
+            "title": "Daily",
+            "description": "Daily.",
+            "maxItems": 1000
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageTool"
+            },
+            "type": "array",
+            "title": "Tools",
+            "description": "Tools.",
+            "maxItems": 1000
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentUsageAgent"
+            },
+            "type": "array",
+            "title": "Agents",
+            "description": "Agents.",
+            "maxItems": 1000
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Asof",
+            "description": "As Of.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "startDay",
+          "endDay",
+          "days",
+          "totals",
+          "daily",
+          "tools",
+          "agents",
+          "asOf"
+        ],
+        "title": "AgentUsageOut",
+        "description": "A tenant's agent usage over a window of UTC days.\n\nAttributes:\n    schema_version: The projection's shape.\n    start_day: First UTC day of the window (inclusive).\n    end_day: Last UTC day of the window (inclusive; today).\n    days: Window length in days.\n    totals: The whole window.\n    daily: One entry per day, oldest first, zero-filled.\n    tools: One entry per tool that was called, most calls first.\n    agents: One entry per agent key that called, most calls first.\n    as_of: When this was computed."
+      },
+      "AgentUsageTool": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls.",
+            "example": 1
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Errors.",
+            "example": 1
+          },
+          "errorRate": {
+            "type": "number",
+            "title": "Errorrate",
+            "description": "Error Rate.",
+            "example": 1.0
+          },
+          "latencyAvgMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Agent Usage Tool schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Tool schema."
+              }
+            ],
+            "title": "Latencyavgms",
+            "description": "Latency Avg Ms."
+          },
+          "latencyP95MaxMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Usage Tool schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Tool schema."
+              }
+            ],
+            "title": "Latencyp95Maxms",
+            "description": "Latency P95 Max Ms."
+          },
+          "toolName": {
+            "type": "string",
+            "title": "Toolname",
+            "description": "Tool Name.",
+            "example": "Example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "calls",
+          "errors",
+          "errorRate",
+          "toolName"
+        ],
+        "title": "AgentUsageTool",
+        "description": "One MCP tool's usage over the window.\n\nAttributes:\n    tool_name: The MCP tool name."
+      },
+      "AgentUsageTotals": {
+        "properties": {
+          "calls": {
+            "type": "integer",
+            "title": "Calls",
+            "description": "Calls.",
+            "example": 1
+          },
+          "errors": {
+            "type": "integer",
+            "title": "Errors",
+            "description": "Errors.",
+            "example": 1
+          },
+          "errorRate": {
+            "type": "number",
+            "title": "Errorrate",
+            "description": "Error Rate.",
+            "example": 1.0
+          },
+          "latencyAvgMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Agent Usage Totals schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Totals schema."
+              }
+            ],
+            "title": "Latencyavgms",
+            "description": "Latency Avg Ms."
+          },
+          "latencyP95MaxMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Agent Usage Totals schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Usage Totals schema."
+              }
+            ],
+            "title": "Latencyp95Maxms",
+            "description": "Latency P95 Max Ms."
+          },
+          "successCalls": {
+            "type": "integer",
+            "title": "Successcalls",
+            "description": "Success Calls.",
+            "example": 1
+          },
+          "upstreamErrors": {
+            "type": "integer",
+            "title": "Upstreamerrors",
+            "description": "Upstream Errors.",
+            "example": 1
+          },
+          "validationFailures": {
+            "type": "integer",
+            "title": "Validationfailures",
+            "description": "Validation Failures.",
+            "example": 1
+          },
+          "quotaRejections": {
+            "type": "integer",
+            "title": "Quotarejections",
+            "description": "Quota Rejections.",
+            "example": 1
+          },
+          "internalErrors": {
+            "type": "integer",
+            "title": "Internalerrors",
+            "description": "Internal Errors.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "calls",
+          "errors",
+          "errorRate",
+          "successCalls",
+          "upstreamErrors",
+          "validationFailures",
+          "quotaRejections",
+          "internalErrors"
+        ],
+        "title": "AgentUsageTotals",
+        "description": "The whole window, with the errors broken down by outcome.\n\nAttributes:\n    success_calls: Calls that succeeded.\n    upstream_errors: The upstream API answered with an error.\n    validation_failures: Arguments failed the tool's input schema.\n    quota_rejections: Refused by a rate limit or daily cap (AGX-3.2).\n    internal_errors: Failed inside the MCP runtime."
+      },
       "AnalysisMetrics": {
         "properties": {
           "nodeCount": {
@@ -94679,7 +95191,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "completed_at": {
             "anyOf": [
@@ -96589,7 +97101,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "comment_count": {
             "type": "integer",
@@ -96817,7 +97329,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97275,14 +97787,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -99307,7 +99819,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "91817ed7-66a1-401b-82d6-aa52d0ef377f"
+            "example": "9747cc57-72ac-4d57-8297-d607a0ec74c2"
           },
           "method": {
             "type": "string",
@@ -101834,7 +102346,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -103570,7 +104082,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "browse_url": {
             "anyOf": [
@@ -142956,7 +143468,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           }
         },
         "additionalProperties": false,
@@ -154177,7 +154689,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "detected_by": {
             "anyOf": [
@@ -161232,14 +161744,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T18:00:43Z"
+            "example": "2026-10-06T23:21:14Z"
           },
           "outcome": {
             "anyOf": [

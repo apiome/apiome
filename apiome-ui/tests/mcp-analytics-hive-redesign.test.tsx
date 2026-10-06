@@ -299,7 +299,7 @@ describe('charts render from the shared kit', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('the four states', () => {
-  test('an empty catalog is a first-run state, and it hides the section tabs', async () => {
+  test('an empty catalog is a first-run state, and it hides the catalog views', async () => {
     route = { body: EMPTY_CATALOG };
     render(<McpCatalogAnalyticsClient />);
 
@@ -307,7 +307,9 @@ describe('the four states', () => {
       MCP_ANALYTICS_EMPTY_TITLE,
     );
     // "Nothing to browse yet" is not the moment to offer three more views of nothing.
-    expect(screen.queryByTestId('mcp-section-tabs')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mcp-section-tab-analytics')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mcp-section-tab-capabilities')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mcp-section-tab-compare')).not.toBeInTheDocument();
     // And it is not an error: the export has nothing to export, so it is off.
     expect(screen.getByTestId('mcp-analytics-export')).toBeDisabled();
   });

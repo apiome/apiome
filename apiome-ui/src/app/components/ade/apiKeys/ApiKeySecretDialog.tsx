@@ -59,6 +59,11 @@ export interface ApiKeySecretDialogProps {
   summary: string;
   /** The prefix the list will show from now on, so the reader can connect the two. */
   prefix: string;
+  /**
+   * The dialog's title. Defaults to "API key created"; the Agent access screen (AGX-3.4) reuses
+   * this dialog for agent keys, whose secret has exactly the same reveal-once life.
+   */
+  title?: string;
 }
 
 /**
@@ -73,6 +78,7 @@ export default function ApiKeySecretDialog({
   secret,
   summary,
   prefix,
+  title = 'API key created',
 }: ApiKeySecretDialogProps) {
   const { copied, error, copy } = useClipboardCopy();
 
@@ -91,7 +97,7 @@ export default function ApiKeySecretDialog({
             <span className="tnt-icon-tile" data-tone="ok">
               <ShieldCheck aria-hidden />
             </span>
-            API key created
+            {title}
           </DialogTitle>
           <DialogDescription data-testid="api-key-secret-summary">{summary}</DialogDescription>
         </DialogHeader>

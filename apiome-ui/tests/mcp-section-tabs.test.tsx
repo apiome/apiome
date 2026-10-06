@@ -1,5 +1,7 @@
 /**
- * Render tests for MCP section tabs — hidden until at least one server is in the catalog.
+ * Render tests for MCP section tabs — the catalog's views (Analytics, Capabilities, Compare) are
+ * hidden until at least one server is in the catalog; Servers and Agent access (AGX-3.4, #4540)
+ * are always offered.
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -40,10 +42,34 @@ describe('McpSectionTabs', () => {
     jest.restoreAllMocks();
   });
 
-  it('hides the tabs when hasServers is false', () => {
-    const { container } = render(<McpSectionTabs hasServers={false} />);
+  it('offers only Servers and Agent access when hasServers is false', () => {
+    render(<McpSectionTabs hasServers={false} />);
+    expect(screen.getByRole('link', { name: 'Servers' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Agent access' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/mcp/agents',
+    );
+    expect(screen.queryByRole('link', { name: /Analytics/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Capabilities' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Compare' })).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing without a workspace', () => {
+    mockUseSession.mockReturnValue({ data: { user: {} } });
+    const { container } = render(<McpSectionTabs />);
     expect(container).toBeEmptyDOMElement();
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('marks Agent access, not Servers, as current on the agents route', () => {
+    mockUsePathname.mockReturnValue('/ade/dashboard/mcp/agents');
+    render(<McpSectionTabs hasServers />);
+    expect(screen.getByRole('link', { name: 'Agent access' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByRole('link', { name: 'Servers' })).not.toHaveAttribute('aria-current');
   });
 
   it('renders the section tabs when hasServers is true', () => {
@@ -70,17 +96,18 @@ describe('McpSectionTabs', () => {
     expect(screen.getByText('Preview')).toHaveAttribute('data-status', 'preview');
   });
 
-  it('probes the browse catalog and stays hidden when empty', async () => {
+  it('probes the browse catalog and hides the catalog views when empty', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({ groups: [] }),
     });
 
-    const { container } = render(<McpSectionTabs />);
+    render(<McpSectionTabs />);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/mcp/browse', { credentials: 'include' });
     });
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('link', { name: 'Agent access' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Compare' })).toBeNull();
   });
 
   it('probes the browse catalog and shows tabs when a server exists', async () => {

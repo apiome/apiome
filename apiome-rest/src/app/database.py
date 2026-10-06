@@ -31461,6 +31461,52 @@ class Database:
         )
         return int(rows[0].get("calls") or 0) if rows else 0
 
+    def list_agent_usage_rollups(
+        self, tenant_id: str, start_day: date, end_day: date
+    ) -> List[Dict[str, Any]]:
+        """Return a tenant's AGX-3.3 daily usage rollups for a window of UTC days (AGX-3.4).
+
+        Rows of ``agent_invocation_daily`` are summed per (day, key, tool), across toolsets and
+        targets; ``latency_p95_ms`` is the worst p95 among the summed groups. Each row carries the
+        key's name, prefix and whether it is revoked (``NULL`` name when the key row is gone).
+
+        Args:
+            tenant_id: The caller's tenant.
+            start_day: First UTC day (inclusive).
+            end_day: Last UTC day (inclusive).
+
+        Returns:
+            The rows, ordered by day; empty when the tenant id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT d.day,
+                   d.key_id::text AS key_id,
+                   d.tool_name,
+                   SUM(d.calls)::bigint AS calls,
+                   SUM(d.success_calls)::bigint AS success_calls,
+                   SUM(d.upstream_errors)::bigint AS upstream_errors,
+                   SUM(d.validation_failures)::bigint AS validation_failures,
+                   SUM(d.quota_rejections)::bigint AS quota_rejections,
+                   SUM(d.internal_errors)::bigint AS internal_errors,
+                   SUM(d.latency_sum_ms)::bigint AS latency_sum_ms,
+                   MAX(d.latency_p95_ms) AS latency_p95_ms,
+                   MAX(ak.name) AS key_name,
+                   MAX(ak.key_prefix) AS key_prefix,
+                   BOOL_OR(ak.deleted_at IS NOT NULL) AS key_revoked
+            FROM apiome.agent_invocation_daily AS d
+            LEFT JOIN apiome.api_keys AS ak
+              ON ak.id = d.key_id AND ak.tenant_id = d.tenant_id AND ak.kind = 'agent'
+            WHERE d.tenant_id = %s::uuid AND d.day BETWEEN %s::date AND %s::date
+            GROUP BY d.day, d.key_id, d.tool_name
+            ORDER BY d.day
+            """,
+            (tenant_id, start_day.isoformat(), end_day.isoformat()),
+        )
+        return [dict(row) for row in rows or []]
+
     # ------------------------------------------------------------------------------------------
     # Agent toolsets — AGX-1.2 (#4530). `agent_toolsets` / `agent_toolset_tools` (V270).
     # ------------------------------------------------------------------------------------------

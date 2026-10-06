@@ -15,6 +15,7 @@ from .access_routes import platform_router as access_platform_router
 from .access_routes import router as access_router
 from .agent_key_routes import router as agent_key_router
 from .agent_toolset_routes import router as agent_toolset_router
+from .agent_usage_routes import router as agent_usage_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
@@ -158,7 +159,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.199.0",
+    version="1.200.0",
 )
 
 
@@ -345,6 +346,9 @@ app.include_router(agent_key_router)
 # agent_toolset_router: AGX-1.2 tool selection & curation (safe-by-default toolsets per published
 # version) under /v1/tenants/{t}/agent-toolsets (#4530).
 app.include_router(agent_toolset_router)
+# agent_usage_router: AGX-3.4 usage rollups for the Control Panel charts under
+# /v1/tenants/{t}/agent-usage (#4540).
+app.include_router(agent_usage_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)

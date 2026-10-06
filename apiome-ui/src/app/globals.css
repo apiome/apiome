@@ -33410,3 +33410,376 @@ tr:focus-within .pub-url__glyph {
   font-size: var(--fs-xs);
   color: var(--fg-muted);
 }
+
+/* ==========================================================================
+   AGENT ACCESS  (AGX-3.4, #4540) — `components/ade/agentAccess`
+   --------------------------------------------------------------------------
+   MCP → Agent access: the toolset editor, agent key management and the usage
+   charts. Every colour is a token, so the surface follows all nine themes;
+   every length is a spacing token or `rem`, so it follows the density and
+   font-scale preferences. Quiet text is `--fg-muted`, never `--fg-subtle`
+   (3.1:1 against the canvas at these sizes).
+
+   Nothing here scrolls the document sideways: the two tables sit in a
+   `.agx-table-wrap` that scrolls on its own, long tool names and operation
+   keys wrap, and every grid collapses to one column on a narrow screen.
+
+   One class is borrowed rather than restated: `.tnt-icon-tile` from the
+   tenants block — the tinted square at the head of each dialog.
+   ========================================================================== */
+
+/* ---- Tabs and panels ------------------------------------------------------ */
+.agx-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.agx-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.agx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.agx-section-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.agx-hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.agx-legend {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--fg);
+}
+
+.agx-inline-field {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---- Toolsets ------------------------------------------------------------- */
+/* List beside detail, wrapping to list above detail when the detail's minimum no
+   longer fits — a flex wrap rather than a breakpoint, so it follows the font
+   scale and the rail's width without a media query. */
+.agx-toolsets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.agx-toolsets > * {
+  flex: 999 1 28rem;
+  min-inline-size: 0;
+}
+
+.agx-toolsets > .agx-toolset-list {
+  flex: 1 1 14rem;
+  max-inline-size: 22rem;
+}
+
+.agx-toolset-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One toolset. A hairline inset shadow, thickened when selected, so selection
+   never moves the card's contents. */
+.agx-toolset-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg);
+  text-align: start;
+  cursor: pointer;
+}
+
+.agx-toolset-card:hover {
+  background: var(--bg-subtle);
+}
+
+.agx-toolset-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.agx-toolset-card[data-selected] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.agx-toolset-card__name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.agx-toolset-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.agx-toolset-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--card-pad);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.agx-toolset-detail__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.agx-toolset-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.agx-toolset-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+}
+
+/* ---- Tables --------------------------------------------------------------- */
+.agx-table-wrap {
+  min-inline-size: 0;
+  overflow-x: auto;
+}
+
+.agx-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.agx-table th,
+.agx-table td {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.agx-table thead th {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--fg-muted);
+}
+
+.agx-table tbody th {
+  font-weight: 500;
+}
+
+.agx-cell-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.agx-num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.agx-table .agx-num {
+  text-align: end;
+}
+
+.agx-key-identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.agx-key-identity__name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.agx-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.agx-usage-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 9rem;
+}
+
+/* ---- Dialogs -------------------------------------------------------------- */
+.agx-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agx-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.agx-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+
+.agx-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.agx-expiry-field {
+  max-inline-size: 16rem;
+}
+
+.agx-select {
+  inline-size: 100%;
+}
+
+.agx-consequences {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+/* The allowlist picker: a bounded, scrolling list so a toolset with hundreds of
+   tools never pushes the dialog's footer off screen. */
+.agx-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agx-checklist__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.agx-checklist__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-block-size: 16rem;
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  list-style: none;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.agx-checklist__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.agx-checklist__name {
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+/* ---- Usage ---------------------------------------------------------------- */
+.agx-usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.agx-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-4);
+}
+
+.agx-chart-grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+}
+
+.agx-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--card-pad);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.agx-chart {
+  inline-size: 100%;
+  block-size: 6rem;
+}
+
+.agx-chart--bars {
+  block-size: 8rem;
+}

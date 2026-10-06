@@ -777,7 +777,7 @@ describe('the states', () => {
     expect(await screen.findByRole('link', { name: /Open Payments tools/i })).toBeInTheDocument();
   });
 
-  test('an empty catalog teaches, and hides the toolbar, the strips and the tabs', async () => {
+  test('an empty catalog teaches, and hides the toolbar, the strips and the catalog views', async () => {
     routes['/api/mcp/browse'] = { body: { success: true, groups: [] } };
     render(<McpCatalogClient />);
 
@@ -787,7 +787,12 @@ describe('the states', () => {
 
     expect(screen.queryByTestId('mcp-catalog-toolbar')).toBeNull();
     expect(screen.queryByTestId('mcp-saved-searches')).toBeNull();
-    expect(screen.queryByTestId('mcp-section-tabs')).toBeNull();
+    // Only the catalog's own views are hidden; Agent access (AGX-3.4) does not need servers.
+    const tabs = screen.getByTestId('mcp-section-tabs');
+    expect(within(tabs).queryByTestId('mcp-section-tab-analytics')).toBeNull();
+    expect(within(tabs).queryByTestId('mcp-section-tab-capabilities')).toBeNull();
+    expect(within(tabs).queryByTestId('mcp-section-tab-compare')).toBeNull();
+    expect(within(tabs).getByTestId('mcp-section-tab-agents')).toBeInTheDocument();
   });
 
   test('a reader with no workspace is gated rather than told to register a server', async () => {
