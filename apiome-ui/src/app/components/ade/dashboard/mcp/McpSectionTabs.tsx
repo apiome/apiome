@@ -6,8 +6,10 @@
  * each "tab" here is a distinct route rather than a pane of one page, so selection is driven by
  * `usePathname()` and activation is a real navigation via `next/link`.
  *
- * Tabs stay hidden until the catalog has at least one MCP server — an empty workspace should not
- * surface Analytics / Capabilities / Compare before there is anything to browse.
+ * The catalog's views (Analytics / Capabilities / Compare) stay hidden until the catalog has at
+ * least one MCP server — an empty workspace should not surface them before there is anything to
+ * browse. **Servers** and **Agent access** (AGX-3.4, #4540) are always offered: Agent access is
+ * about the tenant's own published APIs, not the imported catalog.
  *
  * ### What HIVE-7.7 (#5324) changed
  *
@@ -31,7 +33,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { BarChart3, GitCompareArrows, Layers, Server } from 'lucide-react';
+import { BarChart3, Bot, GitCompareArrows, Layers, Server } from 'lucide-react';
 import { useAuthSession } from '@lib/auth/session-client';
 import { cn } from '@lib/utils';
 import { Badge } from '@/app/components/ui/Badge';
@@ -44,7 +46,7 @@ import {
 import { mcpBrowseGroupsFromPayload } from './mcpBrowseUi';
 
 /** Which figure a tab prints beside its label, when the screen knows it. */
-export type McpSectionTabId = 'servers' | 'analytics' | 'capabilities' | 'compare';
+export type McpSectionTabId = 'servers' | 'analytics' | 'capabilities' | 'compare' | 'agents';
 
 interface McpSectionTab {
   id: McpSectionTabId;
@@ -55,6 +57,8 @@ interface McpSectionTab {
   status?: string;
   /** Route match beyond exact equality, e.g. the catalog owns its endpoint detail subpaths. */
   matchPrefix?: string;
+  /** A view of the server catalog, so hidden while the catalog is empty. */
+  requiresServers?: boolean;
 }
 
 const MCP_SECTION_TABS: readonly McpSectionTab[] = [
@@ -65,12 +69,34 @@ const MCP_SECTION_TABS: readonly McpSectionTab[] = [
     icon: Server,
     matchPrefix: '/ade/dashboard/mcp/',
   },
-  { id: 'analytics', href: '/ade/dashboard/mcp/analytics', label: 'Analytics', icon: BarChart3, status: 'preview' },
-  { id: 'capabilities', href: '/ade/dashboard/mcp/capabilities', label: 'Capabilities', icon: Layers },
-  { id: 'compare', href: '/ade/dashboard/mcp/compare', label: 'Compare', icon: GitCompareArrows },
+  {
+    id: 'analytics',
+    href: '/ade/dashboard/mcp/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+    status: 'preview',
+    requiresServers: true,
+  },
+  {
+    id: 'capabilities',
+    href: '/ade/dashboard/mcp/capabilities',
+    label: 'Capabilities',
+    icon: Layers,
+    requiresServers: true,
+  },
+  {
+    id: 'compare',
+    href: '/ade/dashboard/mcp/compare',
+    label: 'Compare',
+    icon: GitCompareArrows,
+    requiresServers: true,
+  },
+  // AGX-3.4 (#4540): the tenant's *own* APIs exposed to agents. Not a view of the imported
+  // server catalog, so it is offered whether or not the catalog has servers.
+  { id: 'agents', href: '/ade/dashboard/mcp/agents', label: 'Agent access', icon: Bot },
 ];
 
-/** The other three tabs' paths, so the catalog tab's prefix match can exclude their subpaths. */
+/** The other tabs' paths, so the catalog tab's prefix match can exclude their subpaths. */
 const OTHER_TAB_PATHS = new Set(
   MCP_SECTION_TABS.filter((tab) => tab.href !== '/ade/dashboard/mcp').map((tab) => tab.href),
 );
@@ -139,7 +165,9 @@ export function McpSectionTabs({
     hasServersProp !== undefined
       ? hasServersProp
       : Boolean(currentTenantId) && probedHasServers;
-  if (!hasServers) return null;
+  // Without a workspace there is nothing to navigate between.
+  if (hasServersProp === undefined && !currentTenantId) return null;
+  const tabs = MCP_SECTION_TABS.filter((tab) => hasServers || !tab.requiresServers);
 
   return (
     <nav
@@ -147,7 +175,7 @@ export function McpSectionTabs({
       className={cn(TAB_LIST_CLASS, className)}
       data-testid="mcp-section-tabs"
     >
-      {MCP_SECTION_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const Icon = tab.icon;
         const active = isTabActive(tab, pathname);
         const count = counts?.[tab.id];
