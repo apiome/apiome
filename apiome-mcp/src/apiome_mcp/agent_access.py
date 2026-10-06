@@ -21,13 +21,13 @@ middleware: its ``tools/list`` always returns the full registry (MTG-2.1, ``docs
 rules in ``docs/AGX_COORDINATION.md``). The agent runtime (AGX-2.1, #4533) builds its own FastMCP
 app over a compiled toolset and adds :class:`AgentAccessMiddleware` to it.
 
-**The toolset's enabled tools come from AGX-1.2 (#4530)**, which was still open when this shipped:
-``agent_toolsets`` / ``agent_toolset_tools`` do not exist yet. The middleware therefore takes the
-source as a parameter (:data:`EnabledToolsSource`) and defaults to :func:`toolset_curation_pending`,
-which knows no toolset and so **fails closed** — every request is refused with
-``agent_toolset_unavailable``. AGX-1.2 supplies the real source: the toolset's enabled operation
-refs mapped to compiled tool names (``compile_mcp_tools``), or ``None`` for a missing or disabled
-toolset.
+**The toolset's enabled tools come from AGX-1.2 (#4530)** curation: ``agent_toolsets`` /
+``agent_toolset_tools`` (V270). The middleware takes the source as a parameter
+(:data:`EnabledToolsSource`) and defaults to :func:`toolset_enabled_tools`, which reads the
+toolset's enabled tool names (recorded when apiome-rest seeded the toolset with
+``compile_mcp_tools``, so they are the names an allowlist holds). A toolset that is missing,
+switched off, or whose version is no longer published resolves to ``None`` and **fails closed**:
+the request is refused with ``agent_toolset_unavailable``.
 
 **Errors are MCP errors.** A refusal is an :class:`AgentAccessDeniedError` (an :class:`mcp.McpError`):
 on ``tools/list`` it is a JSON-RPC error with :data:`AGENT_KEY_REJECTED_CODE` (credential problems)
@@ -81,7 +81,8 @@ __all__ = [
     "permitted_tools",
     "resolve_agent_key",
     "resolve_agent_key_in_context",
-    "toolset_curation_pending",
+    "load_toolset_enabled_tools",
+    "toolset_enabled_tools",
 ]
 
 #: ``api_keys.kind`` of an agent key (V269). Workspace keys and catalog MCP keys never match.
@@ -93,8 +94,8 @@ AGENT_KEY_KIND = "agent"
 #: elicitation).
 AGENT_KEY_REJECTED_CODE = -32010
 
-#: JSON-RPC error code for a valid key whose toolset cannot be resolved (missing, disabled, or —
-#: until AGX-1.2 — not curated at all).
+#: JSON-RPC error code for a valid key whose toolset cannot be resolved (missing, disabled, or its
+#: version no longer published).
 AGENT_TOOLSET_UNAVAILABLE_CODE = -32011
 
 #: JSON-RPC error code when access could not be decided (e.g. the database is unreachable).
@@ -201,7 +202,7 @@ class AgentAccess:
 AgentKeyResolver = Callable[[Context, str], Awaitable[AgentKey]]
 
 #: Returns a key's toolset's enabled tool names, or ``None`` when the toolset is missing or
-#: disabled. AGX-1.2 (#4530) provides the real one.
+#: disabled. The default is :func:`toolset_enabled_tools` (AGX-1.2, #4530).
 EnabledToolsSource = Callable[[Context, AgentKey], Awaitable[Iterable[str] | None]]
 
 
@@ -219,21 +220,54 @@ def permitted_tools(enabled: Iterable[str], allowlist: Iterable[str]) -> frozens
     return frozenset(enabled) & frozenset(allowlist)
 
 
-async def toolset_curation_pending(ctx: Context, key: AgentKey) -> Iterable[str] | None:
-    """The default :data:`EnabledToolsSource` until AGX-1.2 (#4530) ships toolset curation.
+#: A toolset's enabled tool names, plus whether it may serve agents at all: switched on, and its
+#: version still published and undeleted (AGX-1.2, V270). No row means no such toolset in the tenant.
+_TOOLSET_ENABLED_TOOLS = """
+    SELECT (ts.enabled AND v.published AND v.deleted_at IS NULL) AS available,
+           COALESCE(
+               array_agg(tt.tool_name ORDER BY tt.tool_name) FILTER (WHERE tt.enabled),
+               ARRAY[]::varchar[]
+           ) AS tools
+    FROM apiome.agent_toolsets ts
+    JOIN apiome.versions v ON v.id = ts.version_id
+    LEFT JOIN apiome.agent_toolset_tools tt ON tt.toolset_id = ts.id
+    WHERE ts.id = %s::uuid AND ts.tenant_id = %s::uuid
+    GROUP BY ts.enabled, v.published, v.deleted_at
+"""
 
-    There is no ``agent_toolsets`` table to read yet, so no toolset is known and every agent
-    request fails closed with ``agent_toolset_unavailable``.
+
+async def load_toolset_enabled_tools(pool: AsyncConnectionPool, tenant_id: str, toolset_id: str) -> list[str] | None:
+    """Read a toolset's enabled tool names from the AGX-1.2 curation tables.
 
     Args:
-        ctx: The request's FastMCP context (unused).
-        key: The verified key (unused).
+        pool: The shared Postgres pool.
+        tenant_id: The key's tenant; a toolset of another tenant is treated as missing.
+        toolset_id: The key's toolset.
 
     Returns:
-        Always ``None``.
+        The enabled tool names, sorted (possibly empty), or ``None`` when the toolset does not
+        exist in the tenant, is switched off, or its version is no longer published.
     """
-    _ = (ctx, key)
-    return None
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(_TOOLSET_ENABLED_TOOLS, (toolset_id, tenant_id))
+            row = await cur.fetchone()
+    if row is None or not row.get("available"):
+        return None
+    return [str(name) for name in row.get("tools") or []]
+
+
+async def toolset_enabled_tools(ctx: Context, key: AgentKey) -> Iterable[str] | None:
+    """The default :data:`EnabledToolsSource`: the key's toolset, read through the lifespan pool.
+
+    Args:
+        ctx: The request's FastMCP context.
+        key: The verified key.
+
+    Returns:
+        :func:`load_toolset_enabled_tools` for the key's tenant and toolset.
+    """
+    return await load_toolset_enabled_tools(get_db_pool(ctx), key.tenant_id, key.toolset_id)
 
 
 _AGENT_KEY_LOOKUP = """
@@ -392,15 +426,16 @@ class AgentAccessMiddleware(Middleware):
         self,
         *,
         key_resolver: AgentKeyResolver = resolve_agent_key_in_context,
-        enabled_tools: EnabledToolsSource = toolset_curation_pending,
+        enabled_tools: EnabledToolsSource = toolset_enabled_tools,
     ) -> None:
         """Configure where keys and toolsets are read from.
 
         Args:
             key_resolver: Verifies a presented secret (default: ``api_keys`` via the lifespan
                 pool).
-            enabled_tools: A key's toolset's enabled tools (default: :func:`toolset_curation_pending`,
-                which fails closed until AGX-1.2 provides a source).
+            enabled_tools: A key's toolset's enabled tools (default: :func:`toolset_enabled_tools`,
+                which reads the AGX-1.2 curation tables and fails closed on an unavailable
+                toolset).
         """
         self._key_resolver = key_resolver
         self._enabled_tools = enabled_tools

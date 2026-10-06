@@ -15,8 +15,9 @@ prefix, toolset, allowlist, status and timestamps, never the secret or its hash.
 
 **Scoped by the authenticated tenant.** As on every ``/v1/tenants/{t}`` surface, the tenant in the
 URL is informational; the caller's authenticated tenant scopes every read and write, so one
-tenant can never address another's key by id. The toolset id is not yet checked against
-``agent_toolsets``: that table is AGX-1.2 (#4530), which adds the foreign key and the check.
+tenant can never address another's key by id. Create first checks that the toolset exists in the
+caller's tenant (``404`` otherwise; AGX-1.2, #4530), and V270's foreign key binds every agent key to a
+toolset of its own tenant, so deleting the toolset deletes its keys.
 
 **Permissions reuse** ``api_keys``, **and no new RBAC resource is added**, as for the AGX-2.2
 upstream credentials: listing and reading are ``api_keys:view``; create, allowlist edit and revoke
@@ -52,6 +53,7 @@ from .agent_keys import (
     revoke_agent_key,
     update_agent_key_allowlist,
 )
+from .agent_toolset_routes import require_agent_toolset
 from .auth import validate_authentication
 from .database import db
 from .permissions import Action, Resource, enforce_permission
@@ -224,6 +226,7 @@ async def list_agent_keys_route(
         "`agent.key.create`."
     ),
     responses={
+        404: {"description": "No such agent toolset in this tenant."},
         409: {"description": "The tenant already has an API key with that name."},
         422: {"description": "A tool name, the name or the expiry is not acceptable."},
     },
@@ -244,12 +247,13 @@ async def create_agent_key_route(
         The key's metadata and its one-time secret.
 
     Raises:
-        HTTPException: 403 without ``api_keys:create``; 409 when the name is taken; 422 on an
-            invalid request.
+        HTTPException: 403 without ``api_keys:create``; 404 when the toolset does not exist; 409
+            when the name is taken; 422 on an invalid request.
     """
     actor_id = enforce_permission(db, auth_data, Resource.API_KEYS, Action.CREATE)
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
+    require_agent_toolset(tenant_id, str(body.toolset_id))
     try:
         created = create_agent_key(tenant_id, body, actor_id=actor_id)
     except AgentKeyError as exc:

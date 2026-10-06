@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -34,9 +35,10 @@ from apiome_mcp.agent_access import (
     AgentAccessReason,
     AgentKey,
     current_agent_access,
+    load_toolset_enabled_tools,
     permitted_tools,
     resolve_agent_key,
-    toolset_curation_pending,
+    toolset_enabled_tools,
 )
 
 _KEY = AgentKey(
@@ -72,8 +74,58 @@ def test_access_permits_only_its_set() -> None:
     assert not access.permits("")
 
 
-def test_toolset_curation_is_pending_until_agx_1_2() -> None:
-    assert asyncio.run(toolset_curation_pending(MagicMock(), _KEY)) is None
+class _ToolsetPool:
+    """A pool whose one query returns ``row`` (the AGX-1.2 enabled-tools aggregate), or nothing."""
+
+    def __init__(self, row: dict | None) -> None:
+        self.row = row
+        self.params: list[tuple] = []
+        self.sql: list[str] = []
+
+    @asynccontextmanager
+    async def connection(self):
+        pool = self
+
+        class _Cursor:
+            async def execute(self, sql: str, params: tuple) -> None:
+                pool.sql.append(sql)
+                pool.params.append(params)
+
+            async def fetchone(self) -> dict | None:
+                return pool.row
+
+        class _Connection:
+            @asynccontextmanager
+            async def cursor(self, row_factory=None):
+                yield _Cursor()
+
+        yield _Connection()
+
+
+@pytest.mark.parametrize(
+    ("row", "expected"),
+    [
+        (None, None),  # no such toolset in the key's tenant
+        ({"available": False, "tools": ["listPets"]}, None),  # switched off or unpublished
+        ({"available": True, "tools": []}, []),  # nothing enabled: lists nothing, not refused
+        ({"available": True, "tools": ["getPet", "listPets"]}, ["getPet", "listPets"]),
+        ({"available": True, "tools": None}, []),
+    ],
+)
+def test_enabled_tools_come_from_the_curation_tables(row, expected) -> None:
+    pool = _ToolsetPool(row)
+    assert asyncio.run(load_toolset_enabled_tools(pool, "tenant-1", "toolset-1")) == expected
+    assert pool.params == [("toolset-1", "tenant-1")]
+    sql = pool.sql[0]
+    assert "apiome.agent_toolset_tools" in sql and "ts.tenant_id = %s::uuid" in sql
+    assert "v.published AND v.deleted_at IS NULL" in sql
+
+
+def test_the_default_source_reads_the_keys_toolset_through_the_lifespan_pool() -> None:
+    pool = _ToolsetPool({"available": True, "tools": ["listPets"]})
+    with patch.object(agent_access, "get_db_pool", return_value=pool):
+        assert asyncio.run(toolset_enabled_tools(MagicMock(), _KEY)) == ["listPets"]
+    assert pool.params == [(_KEY.toolset_id, _KEY.tenant_id)]
 
 
 # ============================================================================
@@ -394,10 +446,11 @@ def test_an_unavailable_toolset_stops_the_request() -> None:
     assert exc.value.error.code == AGENT_TOOLSET_UNAVAILABLE_CODE
 
 
-def test_the_default_source_fails_closed_until_agx_1_2() -> None:
+def test_the_default_source_fails_closed_on_an_unavailable_toolset() -> None:
     mw = AgentAccessMiddleware(key_resolver=AsyncMock(return_value=_KEY))
-    with pytest.raises(AgentAccessDeniedError) as exc:
-        _dispatch(mw, "tools/list", SimpleNamespace(), AsyncMock())
+    with patch.object(agent_access, "get_db_pool", return_value=_ToolsetPool(None)):
+        with pytest.raises(AgentAccessDeniedError) as exc:
+            _dispatch(mw, "tools/list", SimpleNamespace(), AsyncMock())
     assert exc.value.reason == AgentAccessReason.TOOLSET_UNAVAILABLE
 
 

@@ -248,6 +248,17 @@ def test_list_describes_the_toolset_without_secrets(store, audits):
         assert needle not in response.text
 
 
+def test_a_toolset_the_tenant_does_not_have_is_404_on_list_and_create(store, audits):
+    """AGX-1.2 route check: credentials only bind to an existing toolset of the caller's tenant."""
+    store.missing_toolsets.add(_TOOLSET)
+    for response in (client.get(_BASE), client.post(_BASE, json=_body())):
+        assert response.status_code == 404
+        assert response.json()["detail"]["code"] == "agent-toolset-not-found"
+        assert _SECRET not in response.text
+    assert store.rows == {}
+    assert audits == []
+
+
 def test_list_of_an_empty_toolset(store):
     body = client.get(_BASE).json()
     assert body["credentials"] == []

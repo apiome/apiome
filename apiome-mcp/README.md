@@ -124,7 +124,8 @@ golden or a stored tool is not MCP-valid. Regenerate with
 ``tools/list`` and ``tools/call`` to the toolset's enabled tools ∩ the key's allowlist. A
 non-permitted call is indistinguishable from an unknown tool, and a revoked or expired key is
 refused on its next request with a coded MCP error. It is for the AGX runtime only; the catalog
-server never mounts it. Until AGX-1.2 (#4530) provides toolset curation, it fails closed. See
+server never mounts it. The enabled tools come from AGX-1.2 (#4530) toolset curation, and an
+unavailable toolset fails closed. See
 **[docs/AGENT_ACCESS.md](docs/AGENT_ACCESS.md)** (#4537).
 
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.

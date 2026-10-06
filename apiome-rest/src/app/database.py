@@ -31418,6 +31418,411 @@ class Database:
         )
         return dict(rows[0]) if rows else None
 
+    # ------------------------------------------------------------------------------------------
+    # Agent toolsets — AGX-1.2 (#4530). `agent_toolsets` / `agent_toolset_tools` (V270).
+    # ------------------------------------------------------------------------------------------
+
+    #: A toolset's metadata plus its version coordinates and tool counts. ``ts`` is the toolset and
+    #: ``v`` its version.
+    _AGENT_TOOLSET_COLUMNS = """
+        ts.id::text AS id,
+        ts.tenant_id::text AS tenant_id,
+        ts.version_id::text AS version_id,
+        v.project_id::text AS project_id,
+        v.version_id AS version_label,
+        ts.enabled,
+        ts.target,
+        ts.created_at,
+        ts.updated_at,
+        ts.created_by::text AS created_by,
+        ts.updated_by::text AS updated_by,
+        (SELECT count(*) FROM apiome.agent_toolset_tools tt
+          WHERE tt.toolset_id = ts.id) AS tool_count,
+        (SELECT count(*) FROM apiome.agent_toolset_tools tt
+          WHERE tt.toolset_id = ts.id AND tt.enabled) AS enabled_tool_count,
+        (SELECT count(*) FROM apiome.agent_toolset_tools tt
+          WHERE tt.toolset_id = ts.id AND tt.enabled AND tt.write_op) AS enabled_write_op_count
+    """
+
+    #: One tool row of a toolset.
+    _AGENT_TOOLSET_TOOL_COLUMNS = """
+        tt.id::text AS id,
+        tt.toolset_id::text AS toolset_id,
+        tt.operation_key,
+        tt.tool_name,
+        tt.write_op,
+        tt.enabled,
+        tt.write_confirmed_by::text AS write_confirmed_by,
+        tt.write_confirmed_at,
+        tt.updated_by::text AS updated_by,
+        tt.created_at,
+        tt.updated_at
+    """
+
+    def get_agent_toolset_version(
+        self, tenant_id: str, version_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the version a toolset would be created for, scoped to the tenant (AGX-1.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_id: The version (``versions.id``).
+
+        Returns:
+            ``id``, ``project_id``, ``version_label``, ``published`` and ``deleted`` (the version
+            or its project is soft-deleted), or ``None`` when no version with that id belongs to a
+            project of the tenant (or an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT v.id::text AS id,
+                   v.project_id::text AS project_id,
+                   v.version_id AS version_label,
+                   v.published,
+                   (v.deleted_at IS NOT NULL OR p.deleted_at IS NOT NULL) AS deleted
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE v.id = %s::uuid AND p.tenant_id = %s::uuid
+            """,
+            (version_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def agent_toolset_exists(self, tenant_id: str, toolset_id: str) -> bool:
+        """Return whether the tenant has an agent toolset with this id (AGX-1.2).
+
+        The route-level check the AGX-2.2 credential and AGX-3.1 agent-key routes run before
+        binding anything to a toolset, so a bad id is a clean ``404`` rather than a foreign-key
+        violation, and another tenant's toolset is indistinguishable from a missing one.
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset.
+
+        Returns:
+            ``True`` when it exists in that tenant; ``False`` otherwise (or for a non-UUID id).
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return False
+        rows = self.execute_query(
+            """
+            SELECT 1 AS found FROM apiome.agent_toolsets
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            """,
+            (toolset_id, tenant_id),
+        )
+        return bool(rows)
+
+    def list_agent_toolsets(
+        self, tenant_id: str, *, version_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return a tenant's agent toolsets, newest first (AGX-1.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            version_id: When set, only the toolset of this version.
+
+        Returns:
+            Metadata rows with tool counts. Empty when an id is not a UUID.
+        """
+        if not self._upstream_scope_ok(tenant_id) or (
+            version_id is not None and not self._upstream_scope_ok(version_id)
+        ):
+            return []
+        clauses = ["ts.tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        if version_id is not None:
+            clauses.append("ts.version_id = %s::uuid")
+            params.append(version_id)
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_COLUMNS}
+            FROM apiome.agent_toolsets ts
+            JOIN apiome.versions v ON v.id = ts.version_id
+            WHERE {' AND '.join(clauses)}
+            ORDER BY ts.created_at DESC, ts.id
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_agent_toolset(self, tenant_id: str, toolset_id: str) -> Optional[Dict[str, Any]]:
+        """Return one toolset's metadata and tool counts (AGX-1.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset.
+
+        Returns:
+            The row, or ``None`` when the tenant has no toolset with that id.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_COLUMNS}
+            FROM apiome.agent_toolsets ts
+            JOIN apiome.versions v ON v.id = ts.version_id
+            WHERE ts.id = %s::uuid AND ts.tenant_id = %s::uuid
+            """,
+            (toolset_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_agent_toolset(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        enabled: bool,
+        target: str,
+        tools: Sequence[Mapping[str, Any]],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store a new toolset and its seeded tool rows in one transaction (AGX-1.2).
+
+        ``ON CONFLICT DO NOTHING`` on the version: a version has at most one toolset, so a second
+        create returns ``None`` and writes nothing.
+
+        Args:
+            tenant_id: Owning tenant (already checked to own the version).
+            version_id: The published version.
+            enabled: Whether the toolset serves agents.
+            target: ``prod`` or ``mock``.
+            tools: One mapping per callable operation: ``operation_key``, ``tool_name``,
+                ``write_op`` and ``enabled``. Seeding never enables a write op (it would need a
+                confirmation, which V270's CHECK enforces).
+            actor_id: The user creating it.
+
+        Returns:
+            The stored toolset's metadata, or ``None`` when the version already has a toolset (or
+            an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, version_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                INSERT INTO apiome.agent_toolsets
+                    (tenant_id, version_id, enabled, target, created_by, updated_by)
+                VALUES (%s::uuid, %s::uuid, %s, %s, %s::uuid, %s::uuid)
+                ON CONFLICT (version_id) DO NOTHING
+                RETURNING id::text AS id
+                """,
+                (tenant_id, version_id, enabled, target, actor, actor),
+            )
+            created = cursor.fetchone()
+            if created is None:
+                return None
+            toolset_id = created["id"]
+            for tool in tools:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.agent_toolset_tools
+                        (toolset_id, operation_key, tool_name, write_op, enabled, updated_by)
+                    VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
+                    """,
+                    (
+                        toolset_id,
+                        tool["operation_key"],
+                        tool["tool_name"],
+                        bool(tool["write_op"]),
+                        bool(tool["enabled"]),
+                        actor,
+                    ),
+                )
+            cursor.execute(
+                f"""
+                SELECT {self._AGENT_TOOLSET_COLUMNS}
+                FROM apiome.agent_toolsets ts
+                JOIN apiome.versions v ON v.id = ts.version_id
+                WHERE ts.id = %s::uuid
+                """,
+                (toolset_id,),
+            )
+            return dict(cursor.fetchone())
+
+        return self._guarded_tx(work)
+
+    def update_agent_toolset(
+        self,
+        tenant_id: str,
+        toolset_id: str,
+        *,
+        enabled: Optional[bool] = None,
+        target: Optional[str] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Change a toolset's ``enabled`` flag and/or ``target`` (AGX-1.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset.
+            enabled: The new flag, or ``None`` to keep it.
+            target: ``prod`` / ``mock``, or ``None`` to keep it.
+            actor_id: The user changing it.
+
+        Returns:
+            The toolset after the change, or ``None`` when the tenant has no such toolset.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            """
+            UPDATE apiome.agent_toolsets
+            SET enabled = COALESCE(%s, enabled),
+                target = COALESCE(%s, target),
+                updated_by = %s::uuid,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING id::text AS id
+            """,
+            (enabled, target, actor, toolset_id, tenant_id),
+        )
+        if not rows:
+            return None
+        return self.get_agent_toolset(tenant_id, toolset_id)
+
+    def delete_agent_toolset(self, tenant_id: str, toolset_id: str) -> Optional[Dict[str, Any]]:
+        """Delete a toolset (AGX-1.2).
+
+        Its tool rows, upstream credentials (AGX-2.2) and agent keys (AGX-3.1) go with it through
+        V270's ``ON DELETE CASCADE`` foreign keys.
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset.
+
+        Returns:
+            The toolset as it was before deletion, or ``None`` when nothing matched.
+        """
+        existing = self.get_agent_toolset(tenant_id, toolset_id)
+        if existing is None:
+            return None
+        affected = self._execute_write(
+            "DELETE FROM apiome.agent_toolsets WHERE id = %s::uuid AND tenant_id = %s::uuid",
+            (toolset_id, tenant_id),
+        )
+        return existing if affected else None
+
+    def list_agent_toolset_tools(self, tenant_id: str, toolset_id: str) -> List[Dict[str, Any]]:
+        """Return a toolset's tool rows, ordered by operation key (AGX-1.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset.
+
+        Returns:
+            The rows. Empty when the tenant has no such toolset (or an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_TOOL_COLUMNS}
+            FROM apiome.agent_toolset_tools tt
+            JOIN apiome.agent_toolsets ts ON ts.id = tt.toolset_id
+            WHERE tt.toolset_id = %s::uuid AND ts.tenant_id = %s::uuid
+            ORDER BY tt.operation_key
+            """,
+            (toolset_id, tenant_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_agent_toolset_tool(
+        self, tenant_id: str, toolset_id: str, tool_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one tool row of a toolset (AGX-1.2).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset the tool must belong to.
+            tool_id: The tool row.
+
+        Returns:
+            The row, or ``None`` when it does not exist in that tenant's toolset.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, tool_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_TOOL_COLUMNS}
+            FROM apiome.agent_toolset_tools tt
+            JOIN apiome.agent_toolsets ts ON ts.id = tt.toolset_id
+            WHERE tt.id = %s::uuid AND tt.toolset_id = %s::uuid AND ts.tenant_id = %s::uuid
+            """,
+            (tool_id, toolset_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def set_agent_toolset_tool_enabled(
+        self,
+        tenant_id: str,
+        toolset_id: str,
+        tool_id: str,
+        *,
+        enabled: bool,
+        confirm_write_op: bool,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Enable or disable one tool (AGX-1.2).
+
+        Enabling a write op stamps the confirmation (``write_confirmed_by`` / ``_at``); disabling
+        any tool clears it. The statement itself refuses to enable an unconfirmed write op (the
+        ``WHERE`` excludes it), so this accessor cannot be used to skip the confirmation, and V270's
+        CHECK backs that up for any other writer.
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset the tool must belong to.
+            tool_id: The tool row.
+            enabled: The new state.
+            confirm_write_op: Whether the caller confirmed enabling a write op.
+            actor_id: The user changing it.
+
+        Returns:
+            The row after the change, or ``None`` when no such tool exists in the tenant's toolset,
+            or when it is a write op being enabled without confirmation.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, tool_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        rows = self.execute_query(
+            """
+            UPDATE apiome.agent_toolset_tools AS tt
+            SET enabled = %s,
+                write_confirmed_by = CASE WHEN %s AND tt.write_op THEN %s::uuid END,
+                write_confirmed_at = CASE WHEN %s AND tt.write_op THEN CURRENT_TIMESTAMP END,
+                updated_by = %s::uuid,
+                updated_at = CURRENT_TIMESTAMP
+            FROM apiome.agent_toolsets ts
+            WHERE tt.id = %s::uuid AND tt.toolset_id = %s::uuid
+              AND ts.id = tt.toolset_id AND ts.tenant_id = %s::uuid
+              AND (NOT %s OR NOT tt.write_op OR %s)
+            RETURNING tt.id::text AS id
+            """,
+            (
+                enabled,
+                enabled,
+                actor,
+                enabled,
+                actor,
+                tool_id,
+                toolset_id,
+                tenant_id,
+                enabled,
+                confirm_write_op,
+            ),
+        )
+        if not rows:
+            return None
+        return self.get_agent_toolset_tool(tenant_id, toolset_id, tool_id)
+
     def next_sdk_publish_counter(
         self, tenant_id: str, project_id: str, ecosystem: str, release_series: str
     ) -> int:

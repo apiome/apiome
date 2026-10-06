@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 #: The accessors the agent-key module calls; :meth:`FakeAgentKeyStore.install` patches these.
 ACCESSORS = (
@@ -28,6 +28,7 @@ ACCESSORS = (
     "insert_agent_key",
     "update_agent_key_allowlist",
     "revoke_agent_key",
+    "agent_toolset_exists",
 )
 
 #: Metadata columns every accessor returns (``Database._AGENT_KEY_COLUMNS``).
@@ -60,6 +61,8 @@ class FakeAgentKeyStore:
     def __init__(self) -> None:
         self.rows: Dict[str, Dict[str, Any]] = {}
         self.calls: List[str] = []
+        #: Toolset ids :meth:`agent_toolset_exists` reports as missing (AGX-1.2 route check).
+        self.missing_toolsets: Set[str] = set()
 
     def install(self, monkeypatch: Any, db: Any) -> "FakeAgentKeyStore":
         """Patch the agent-key accessors on ``db`` with this store's methods.
@@ -74,6 +77,12 @@ class FakeAgentKeyStore:
         for name in ACCESSORS:
             monkeypatch.setattr(db, name, getattr(self, name))
         return self
+
+    def agent_toolset_exists(self, tenant_id: str, toolset_id: str) -> bool:
+        """Stand-in for ``db.agent_toolset_exists``: every toolset exists unless marked missing."""
+        self.calls.append("agent_toolset_exists")
+        _ = tenant_id
+        return str(toolset_id) not in self.missing_toolsets
 
     def seed_workspace_key(self, tenant_id: str, name: str) -> str:
         """Store a workspace key (to prove the agent accessors never see one).

@@ -19,7 +19,7 @@ from __future__ import annotations
 import threading
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 #: The accessors the vault calls; :meth:`FakeUpstreamStore.install` patches exactly these.
 ACCESSORS = (
@@ -30,6 +30,7 @@ ACCESSORS = (
     "rotate_upstream_credential",
     "delete_upstream_credential",
     "insert_upstream_credential_use",
+    "agent_toolset_exists",
 )
 
 #: Metadata columns every metadata accessor returns (``_UPSTREAM_CREDENTIAL_COLUMNS``).
@@ -63,6 +64,8 @@ class FakeUpstreamStore:
         self.rows: Dict[str, Dict[str, Any]] = {}
         self.uses: List[Dict[str, Any]] = []
         self.calls: List[str] = []
+        #: Toolset ids :meth:`agent_toolset_exists` reports as missing (AGX-1.2 route check).
+        self.missing_toolsets: Set[str] = set()
         self.fail_uses = False
         self._lock = threading.Lock()
 
@@ -79,6 +82,12 @@ class FakeUpstreamStore:
         for name in ACCESSORS:
             monkeypatch.setattr(db, name, getattr(self, name))
         return self
+
+    def agent_toolset_exists(self, tenant_id: str, toolset_id: str) -> bool:
+        """Stand-in for ``db.agent_toolset_exists``: every toolset exists unless marked missing."""
+        self.calls.append("agent_toolset_exists")
+        _ = tenant_id
+        return str(toolset_id) not in self.missing_toolsets
 
     # -- helpers ---------------------------------------------------------------------------
 

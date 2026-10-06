@@ -102,12 +102,12 @@ be told apart. Two independent defences stop an agent key from becoming a tenant
 
 ## Handoffs
 
-- **AGX-1.2 (#4530)** — `toolset_id` has no foreign key: `agent_toolsets` did not exist when this
-  shipped, the same situation as V268's upstream credentials. AGX-1.2 must revoke or delete
-  agent keys whose toolset does not exist, add `REFERENCES agent_toolsets(id)`, and add a
-  route-level toolset check to `POST /agent-keys`. It must also give the MCP middleware its
-  enabled-tools source ([AGENT_ACCESS.md](../../apiome-mcp/docs/AGENT_ACCESS.md)). Until then the
-  middleware fails closed and every agent request gets `agent_toolset_unavailable`.
+- **AGX-1.2 (#4530), done.** V270 deleted agent keys whose toolset did not exist and added a
+  `(tenant_id, toolset_id)` foreign key to `agent_toolsets` with `ON DELETE CASCADE`: deleting a
+  toolset deletes its agent keys. `POST /agent-keys` answers `404 agent-toolset-not-found` for a
+  toolset that is not in the caller's tenant, and the MCP middleware reads the toolset's enabled
+  tools by default ([agent_toolsets.md](agent_toolsets.md),
+  [AGENT_ACCESS.md](../../apiome-mcp/docs/AGENT_ACCESS.md)).
 - **AGX-2.1 (#4533)** — mount `AgentAccessMiddleware` on the agent runtime's FastMCP app (never on
   the catalog server), and read the verified key with `current_agent_access()`.
 - **Latency** — the middleware verifies a bcrypt hash (cost 10, as for workspace keys) on every
