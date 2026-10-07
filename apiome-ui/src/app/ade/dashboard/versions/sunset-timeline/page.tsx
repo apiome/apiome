@@ -220,7 +220,7 @@ export default function SunsetTimelinePage() {
     return (
       <Page>
         <PageBody>
-          <LoadingState minHeightClassName="min-h-[220px]" message="Loading…" />
+          <LoadingState minHeightClassName="min-h-[220px]" message="Loading the sunset timeline…" />
         </PageBody>
       </Page>
     );

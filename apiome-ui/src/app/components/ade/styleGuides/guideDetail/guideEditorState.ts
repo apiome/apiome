@@ -150,7 +150,7 @@ export function useRuleCatalog(guideId: string): RuleCatalogState {
       setDraft(state);
     } catch (e) {
       setView(null);
-      setError(describeFailure(e, 'Failed to load the style guide'));
+      setError(describeFailure(e, 'Failed to load the style guide. Refresh the page to try again.'));
     } finally {
       setLoading(false);
     }
@@ -201,7 +201,7 @@ export function useRuleCatalog(guideId: string): RuleCatalogState {
       }
       return true;
     } catch (e) {
-      setError(describeFailure(e, 'Failed to save rule changes'));
+      setError(describeFailure(e, 'Failed to save rule changes. Try again.'));
       return false;
     } finally {
       setSaving(false);
@@ -337,7 +337,7 @@ export function useCustomRules(guideId: string, active: boolean): CustomRulesSta
       .catch((e: unknown) => {
         if (cancelled) return;
         setView(null);
-        setError(describeFailure(e, 'Failed to load custom rules'));
+        setError(describeFailure(e, 'Failed to load custom rules. Refresh the page to try again.'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -396,7 +396,7 @@ export function useCustomRules(guideId: string, active: boolean): CustomRulesSta
       // belongs in the error banner instead.
       const detail = parseValidationDetail((e as Error & { detail?: unknown }).detail ?? e);
       if (detail?.message) setValidation(detail);
-      else setError(describeFailure(e, 'Failed to save custom rules'));
+      else setError(describeFailure(e, 'Failed to save custom rules. Try again.'));
       return false;
     } finally {
       setSaving(false);
@@ -612,7 +612,7 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setError(describeFailure(e, 'Failed to load policy settings'));
+        setError(describeFailure(e, 'Failed to load policy settings. Refresh the page to try again.'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -724,7 +724,7 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
       setVersions(versionList?.versions ?? []);
       return true;
     } catch (e) {
-      setError(describeFailure(e, 'Failed to save policy settings'));
+      setError(describeFailure(e, 'Failed to save policy settings. Try again.'));
       return false;
     } finally {
       setSaving(false);

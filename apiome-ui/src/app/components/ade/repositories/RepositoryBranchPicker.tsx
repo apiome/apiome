@@ -27,6 +27,7 @@
 import * as React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronDown, GitBranch, GitCompare, RefreshCw, Search } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -114,7 +115,13 @@ export function RepositoryBranchPicker({
 
           <div className="repo-files-branch-menu__list">
             {filtered.length === 0 ? (
-              <p className="repo-det-note px-2 py-2">No branches match.</p>
+              <EmptyState
+                variant="inline"
+                tone="neutral"
+                icon={<GitBranch aria-hidden />}
+                title="No branches match"
+                description="Try a different branch name."
+              />
             ) : (
               filtered.map((b) => (
                 <DropdownMenu.Item

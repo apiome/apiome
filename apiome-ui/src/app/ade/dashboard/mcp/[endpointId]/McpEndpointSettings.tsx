@@ -196,7 +196,7 @@ export default function McpEndpointSettings({
       onSaved(updated);
       toast.success("Endpoint settings saved.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save settings.");
+      toast.error(e instanceof Error ? e.message : "Could not save settings. Try again.");
     } finally {
       setBusy(null);
     }
@@ -211,7 +211,7 @@ export default function McpEndpointSettings({
       onSaved(updated);
       toast.success(next ? "Endpoint enabled." : "Endpoint disabled.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not update the endpoint.");
+      toast.error(e instanceof Error ? e.message : "Could not update the endpoint. Try again.");
     } finally {
       setBusy(null);
     }
@@ -231,7 +231,7 @@ export default function McpEndpointSettings({
       setDeleteOpen(false);
       onDeleted(mcpTeardownSummaryFromPayload(data));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not delete the endpoint.");
+      toast.error(e instanceof Error ? e.message : "Could not delete the endpoint. Try again.");
     } finally {
       setBusy(null);
     }

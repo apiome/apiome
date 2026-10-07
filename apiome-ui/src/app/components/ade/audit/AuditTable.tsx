@@ -339,8 +339,8 @@ export default function AuditTable({
         ) : (
           <EmptyState
             icon={<ScrollText aria-hidden />}
-            title="No audit events for this filter."
-            description="Role, permission and membership changes land here the moment they happen. Try a wider date range."
+            title="No audit events for this filter"
+            description="Role, permission and membership changes land here the moment they happen."
             action={
               <Button
                 variant="outline"

@@ -656,7 +656,7 @@ export default function McpEndpointInsight({
         setSelectedVersionId(preferred);
       } catch (e) {
         if (!active) return;
-        setVersionsError(e instanceof Error ? e.message : "Could not load snapshots.");
+        setVersionsError(e instanceof Error ? e.message : "Could not load snapshots. Refresh the page to try again.");
         setVersions([]);
         setSelectedVersionId(null);
       } finally {
@@ -691,7 +691,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!mountedRef.current) return;
         setSurface(null);
-        setSurfaceError(e instanceof Error ? e.message : "Could not load insight.");
+        setSurfaceError(e instanceof Error ? e.message : "Could not load insight. Refresh the page to try again.");
       } finally {
         if (mountedRef.current) setSurfaceLoading(false);
       }
@@ -730,7 +730,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!mountedRef.current) return;
         setGraph(null);
-        setGraphError(e instanceof Error ? e.message : "Could not load graph.");
+        setGraphError(e instanceof Error ? e.message : "Could not load graph. Refresh the page to try again.");
       } finally {
         if (mountedRef.current) setGraphLoading(false);
       }
@@ -769,7 +769,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!mountedRef.current) return;
         setItems(null);
-        setItemsError(e instanceof Error ? e.message : "Could not load capabilities.");
+        setItemsError(e instanceof Error ? e.message : "Could not load capabilities. Refresh the page to try again.");
       } finally {
         if (mountedRef.current) setItemsLoading(false);
       }
@@ -809,7 +809,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!mountedRef.current) return;
         setReport(null);
-        setReportError(e instanceof Error ? e.message : "Could not load the score breakdown.");
+        setReportError(e instanceof Error ? e.message : "Could not load the score breakdown. Refresh the page to try again.");
       } finally {
         if (mountedRef.current) setReportLoading(false);
       }
@@ -876,7 +876,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!active) return;
         setEvolution(null);
-        setEvolutionError(e instanceof Error ? e.message : "Could not load evolution history.");
+        setEvolutionError(e instanceof Error ? e.message : "Could not load evolution history. Refresh the page to try again.");
       } finally {
         if (active) setEvolutionLoading(false);
       }
@@ -922,7 +922,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!active) return;
         setDigest(null);
-        setDigestError(e instanceof Error ? e.message : "Could not load the digest.");
+        setDigestError(e instanceof Error ? e.message : "Could not load the digest. Refresh the page to try again.");
       } finally {
         if (active) setDigestLoading(false);
       }
@@ -958,7 +958,7 @@ export default function McpEndpointInsight({
         if (!active) return;
         setHealth(null);
         setTools(null);
-        setHealthError(e instanceof Error ? e.message : "Could not load reliability.");
+        setHealthError(e instanceof Error ? e.message : "Could not load reliability. Refresh the page to try again.");
       } finally {
         if (active) setHealthLoading(false);
       }
@@ -991,7 +991,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!active) return;
         setTrust(null);
-        setTrustError(e instanceof Error ? e.message : "Could not load the trust profile.");
+        setTrustError(e instanceof Error ? e.message : "Could not load the trust profile. Refresh the page to try again.");
       } finally {
         if (active) setTrustLoading(false);
       }
@@ -1024,7 +1024,7 @@ export default function McpEndpointInsight({
       } catch (e) {
         if (!active) return;
         setPeerPercentile(null);
-        setPeerError(e instanceof Error ? e.message : "Could not load the peer ranking.");
+        setPeerError(e instanceof Error ? e.message : "Could not load the peer ranking. Refresh the page to try again.");
       } finally {
         if (active) setPeerLoading(false);
       }
@@ -1070,14 +1070,14 @@ export default function McpEndpointInsight({
         const details = results.filter((d): d is McpVersionDetail => d !== null);
         if (details.length === 0) {
           setMatrixVersions(null);
-          setMatrixError("Could not load any version snapshots for the presence matrix.");
+          setMatrixError("Could not load any version snapshots for the presence matrix. Refresh the page to try again.");
         } else {
           setMatrixVersions(details);
         }
       } catch (e) {
         if (!active) return;
         setMatrixVersions(null);
-        setMatrixError(e instanceof Error ? e.message : "Could not load presence matrix.");
+        setMatrixError(e instanceof Error ? e.message : "Could not load presence matrix. Refresh the page to try again.");
       } finally {
         if (active) setMatrixLoading(false);
       }
@@ -1120,7 +1120,7 @@ export default function McpEndpointInsight({
         title="No insight yet"
         description={
           versionsError ??
-          "This endpoint has never been discovered, so there is no capability surface to visualize. Run discovery to populate its insight."
+          "This endpoint was never discovered. Run discovery to populate its insight."
         }
         data-testid="mcp-insight-empty"
       />

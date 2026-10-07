@@ -15,7 +15,8 @@
  */
 
 import * as React from 'react';
-import { Ban, Copy, Download, LayoutGrid, List, Pencil, Trash2 } from 'lucide-react';
+import { Ban, Copy, Download, LayoutGrid, List, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import {
   Badge,
@@ -305,15 +306,18 @@ export function TablesShowcase() {
         error={state === 'error' ? 'Could not load projects — the API did not answer.' : undefined}
         empty={
           state === 'empty' ? (
-            <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <p className="text-sm font-medium text-fg">No projects yet</p>
-              <p className="text-xs text-fg-muted">
-                A project holds the versions of one API. HIVE-2.5 brings the hex art.
-              </p>
-              <Button size="sm" variant="primary">
-                New project
-              </Button>
-            </div>
+            <EmptyState
+              variant="compact"
+              surface={false}
+              icon={<FolderOpen aria-hidden />}
+              title="No projects yet"
+              description="A project holds the versions of one API."
+              action={
+                <Button size="sm" variant="primary">
+                  New project
+                </Button>
+              }
+            />
           ) : undefined
         }
         bulkActions={

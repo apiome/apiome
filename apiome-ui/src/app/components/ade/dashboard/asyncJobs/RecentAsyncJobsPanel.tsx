@@ -98,7 +98,7 @@ export function RecentAsyncJobsPanel({
         setTotal(typeof body.total === 'number' ? body.total : 0);
         setOffset(typeof body.offset === 'number' ? body.offset : nextOffset);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load jobs');
+        setError(err instanceof Error ? err.message : 'Failed to load jobs. Refresh the page to try again.');
         setJobs([]);
         setTotal(0);
       } finally {
@@ -159,7 +159,7 @@ export function RecentAsyncJobsPanel({
         loadingLabel={`Loading ${kind} jobs…`}
         error={error ? <span data-testid={`${id}-error`}>{error}</span> : undefined}
         onRetry={() => void load(offset)}
-        empty={<EmptyState variant="compact" tone="neutral" title="No jobs yet." />}
+        empty={<EmptyState variant="compact" tone="neutral" title="No jobs yet" />}
         footer={
           <DataTableFoot>
             <span data-testid={`${id}-pagination-summary`}>

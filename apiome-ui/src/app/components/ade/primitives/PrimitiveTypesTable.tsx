@@ -270,7 +270,7 @@ export default function PrimitiveTypesTable({
     <DataTableToolbar className="prm-types__toolbar">
       <DataTableSearch
         aria-label="Search primitives"
-        placeholder="Search primitives..."
+        placeholder="Search primitives…"
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         data-testid="primitives-search"
@@ -348,7 +348,7 @@ export default function PrimitiveTypesTable({
       empty={
         <EmptyState
           icon={<FileCode aria-hidden />}
-          title="No Primitives Found"
+          title="No primitives match"
           description="Try adjusting your filters or create a new primitive."
           variant="compact"
         />

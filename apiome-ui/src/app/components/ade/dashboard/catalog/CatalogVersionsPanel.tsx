@@ -104,7 +104,7 @@ async function fetchCatalogVersions(
   if (!response.ok || !data || data.success === false) {
     const message =
       (data && (data.error || data.detail)) || `Failed to load versions (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load versions');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load versions. Refresh the page to try again.');
   }
   return Array.isArray(data.versions) ? (data.versions as CatalogVersionRevision[]) : [];
 }
@@ -222,7 +222,7 @@ export function CatalogVersionsPanel({
     try {
       loaded = await fetchCatalogVersions(itemId, { signal: controller.signal });
     } catch (e) {
-      failureMessage = e instanceof Error ? e.message : 'Failed to load versions.';
+      failureMessage = e instanceof Error ? e.message : 'Failed to load versions. Refresh the page to try again.';
     } finally {
       if (controller.signal.aborted) {
         /* superseded by a newer fetch/unmount — leave state to the newer run. */
@@ -280,7 +280,7 @@ export function CatalogVersionsPanel({
           status: 'error',
           original: '',
           modified: '',
-          error: e instanceof Error ? e.message : 'Failed to build the diff.',
+          error: e instanceof Error ? e.message : 'Failed to build the diff. Try again.',
         });
       }
     })();
@@ -330,7 +330,7 @@ export function CatalogVersionsPanel({
         >
           <span className="flex items-center gap-2 text-danger-fg">
             <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-            {errorMessage || 'Failed to load versions.'}
+            {errorMessage || 'Failed to load versions. Refresh the page to try again.'}
           </span>
           <button
             type="button"
@@ -462,7 +462,7 @@ export function CatalogVersionsPanel({
                   className="flex items-center gap-2 rounded-xl border border-danger bg-danger-soft p-4 text-sm text-danger-fg"
                 >
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-                  {compare.error || 'Failed to build the diff.'}
+                  {compare.error || 'Failed to build the diff. Try again.'}
                 </div>
               ) : compare.status === 'loaded' ? (
                 <JsonDiffViewer

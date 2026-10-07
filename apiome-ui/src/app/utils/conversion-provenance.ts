@@ -258,7 +258,7 @@ export async function fetchConversionEvidenceSnapshotPage(
       (data && (data.error || data.detail)) ||
       `Failed to load the stored evidence snapshot (HTTP ${response.status})`;
     throw new Error(
-      typeof message === 'string' ? message : 'Failed to load the stored evidence snapshot',
+      typeof message === 'string' ? message : 'Failed to load the stored evidence snapshot. Refresh the page to try again.',
     );
   }
   if (data.snapshot?.status !== 'available' || !data.summary || !data.page) {

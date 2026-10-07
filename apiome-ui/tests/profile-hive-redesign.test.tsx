@@ -264,7 +264,7 @@ describe('the page frame', () => {
     sessionState.current = null;
     render(<Profile />);
 
-    expect(screen.getByText('Loading profile...')).toBeInTheDocument();
+    expect(screen.getByText('Loading profile…')).toBeInTheDocument();
     expect(mockLinkedAccounts).not.toHaveBeenCalled();
     expect(mockMembershipContext).not.toHaveBeenCalled();
   });

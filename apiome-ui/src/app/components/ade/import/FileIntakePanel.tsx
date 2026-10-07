@@ -151,7 +151,7 @@ export function FileIntakePanel({
               {!metadata.syntaxValid ? (
                 <Alert variant="danger">
                   <span className="font-semibold">File parse error</span> —{' '}
-                  {metadata.parseError || 'Unable to parse file content'}
+                  {metadata.parseError || 'Unable to parse file content. Check the file, then try again.'}
                 </Alert>
               ) : null}
 

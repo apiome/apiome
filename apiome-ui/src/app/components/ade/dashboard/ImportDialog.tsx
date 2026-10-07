@@ -511,7 +511,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       setFileMetadata(extractFileMetadata(content));
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Could not read or preview this file. Try another file or format.'
+        error instanceof Error ? error.message : 'Could not read or preview this file. Try another file or format. Refresh the page to try again.'
       );
     } finally {
       setIsLoadingMetadata(false);
@@ -600,7 +600,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       });
       const createData = await createRes.json().catch(() => ({}));
       if (!createRes.ok) {
-        throw new Error(typeof createData.error === 'string' ? createData.error : 'Could not register the MCP server.');
+        throw new Error(typeof createData.error === 'string' ? createData.error : 'Could not register the MCP server. Try again.');
       }
       const endpoint = createData.endpoint as { id?: string; name?: string } | undefined;
       const endpointId = endpoint?.id;
@@ -623,7 +623,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         });
         if (!credRes.ok) {
           const credData = await credRes.json().catch(() => ({}));
-          throw new Error(typeof credData.error === 'string' ? credData.error : 'Could not store the credential.');
+          throw new Error(typeof credData.error === 'string' ? credData.error : 'Could not store the credential. Try again.');
         }
       }
 
@@ -634,7 +634,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       });
       const discoverData = await discoverRes.json().catch(() => ({}));
       if (!discoverRes.ok) {
-        throw new Error(typeof discoverData.error === 'string' ? discoverData.error : 'Could not start discovery.');
+        throw new Error(typeof discoverData.error === 'string' ? discoverData.error : 'Could not start discovery. Try again.');
       }
       const startedJob = discoverData.job as { id?: string } | undefined;
       if (!startedJob?.id) {
@@ -653,7 +653,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         setMcpEndpointId(null);
         setMcpEndpointName('');
       }
-      setErrorMessage(error instanceof Error ? error.message : 'Could not import the MCP server.');
+      setErrorMessage(error instanceof Error ? error.message : 'Could not import the MCP server. Check the file, then try again.');
     } finally {
       setMcpSubmitting(false);
     }

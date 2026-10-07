@@ -160,7 +160,7 @@ export default function TenantMcpPolicyHistory({
       setChanges(body.changes ?? []);
       setLoadedOnce(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load policy history');
+      setError(err instanceof Error ? err.message : 'Failed to load policy history. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }

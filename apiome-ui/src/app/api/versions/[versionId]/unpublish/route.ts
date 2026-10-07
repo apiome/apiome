@@ -131,7 +131,7 @@ export async function POST(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to unpublish version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to unpublish version. Try again.');
 
     if (error) {
       const errorMessage =
@@ -139,7 +139,7 @@ export async function POST(
           ? error
           : error && typeof error === 'object' && 'message' in error
             ? (error as { message: string }).message
-            : String(error ?? 'Failed to unpublish version');
+            : String(error ?? 'Failed to unpublish version. Try again.');
       return NextResponse.json({ success: false, error: errorMessage }, { status });
     }
 

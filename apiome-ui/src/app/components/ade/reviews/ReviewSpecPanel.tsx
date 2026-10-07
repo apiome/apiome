@@ -55,13 +55,13 @@ export function ReviewSpecPanel({ reviewId, projectSlug, versionLabel }: ReviewS
         const json = (await response.json()) as { success?: boolean; error?: string; spec?: unknown };
         if (cancelled) return;
         if (!json.success || typeof json.spec !== 'string') {
-          setLoaded({ status: 'error', message: json.error || 'Could not build the document.' });
+          setLoaded({ status: 'error', message: json.error || 'Could not build the document. Try again.' });
           return;
         }
         setLoaded({ status: 'ready', spec: json.spec });
       } catch (error) {
         if (!cancelled) {
-          setLoaded({ status: 'error', message: error instanceof Error ? error.message : 'Could not build the document.' });
+          setLoaded({ status: 'error', message: error instanceof Error ? error.message : 'Could not build the document. Try again.' });
         }
       }
     })();
@@ -86,7 +86,7 @@ export function ReviewSpecPanel({ reviewId, projectSlug, versionLabel }: ReviewS
       await navigator.clipboard.writeText(rendered);
       toast.success('Copied the document.');
     } catch {
-      toast.error('Could not copy the document.');
+      toast.error('Could not copy the document. Copy it by hand instead.');
     }
   };
 

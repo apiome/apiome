@@ -98,7 +98,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
     } catch (error) {
       setFetchResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch specification'
+        error: error instanceof Error ? error.message : 'Failed to fetch specification. Refresh the page to try again.'
       });
     } finally {
       setIsFetching(false);
@@ -329,7 +329,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
           {isFetching ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Fetching...
+              Fetching…
             </>
           ) : (
             <>
@@ -359,7 +359,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
                   ? 'text-ok-fg'
                   : 'text-danger'
               }`}>
-                {fetchResult.success ? 'Successfully fetched specification' : 'Failed to fetch specification'}
+                {fetchResult.success ? 'Successfully fetched specification' : 'Failed to fetch specification. Refresh the page to try again.'}
               </h4>
               <p className={`text-xs ${
                 fetchResult.success

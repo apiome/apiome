@@ -45,7 +45,7 @@ export function Radar({ axes, max, tone = 'indigo', title, className }: RadarPro
   const verts = radarPoints(values, domainMax, CENTER, CENTER, R);
   const polygon = polygonPoints(verts);
 
-  const summary = axes.map((a) => `${a.label}: ${a.value}`).join(', ') || 'No data';
+  const summary = axes.map((a) => `${a.label}: ${a.value}`).join(', ') || 'Nothing recorded in this range';
   const label = title ?? `Radar chart — ${summary}`;
 
   return (

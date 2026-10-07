@@ -145,6 +145,7 @@ export default function RolesList({
 
       {loading ? (
         <div className="flex flex-col gap-2" data-testid="roles-list-loading">
+          <span className="sr-only" role="status">Loading roles…</span>
           {[0, 1, 2, 3].map((row) => (
             <Skeleton key={row} className="h-11 w-full rounded-md" />
           ))}

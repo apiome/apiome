@@ -250,7 +250,7 @@ export async function fetchPublishedVersions(tenantId: string): Promise<Publishe
     error?: string;
   };
   if (!payload.success) {
-    throw new AgentAccessError(payload.error || 'Failed to load published versions', 500);
+    throw new AgentAccessError(payload.error || 'Failed to load published versions. Refresh the page to try again.', 500);
   }
   return parsePublishedVersionOptions(payload);
 }

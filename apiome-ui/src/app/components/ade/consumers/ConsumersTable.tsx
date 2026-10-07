@@ -259,7 +259,7 @@ export default function ConsumersTable({
       loading={loading}
       loadingLabel="Loading consumers…"
       error={error}
-      errorTitle="Couldn't load this project's consumers"
+      errorTitle="Couldn’t load this project’s consumers"
       onRetry={onRetry}
       empty={empty}
       toolbar={toolbar}

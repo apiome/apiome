@@ -93,7 +93,7 @@ export function McpEndpointNotesPanel({
       setNotes(await fetchNotes(endpointId));
     } catch (e) {
       setNotes([]);
-      setError(e instanceof Error ? e.message : 'Could not load cataloger notes');
+      setError(e instanceof Error ? e.message : 'Could not load cataloger notes. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -124,7 +124,7 @@ export function McpEndpointNotesPanel({
       toast.success('Cataloger note added');
       await reload();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not save note';
+      const message = e instanceof Error ? e.message : 'Could not save note. Try again.';
       setError(message);
       toast.error(message);
     } finally {
@@ -168,7 +168,7 @@ export function McpEndpointNotesPanel({
       toast.success('Cataloger note updated');
       await reload();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not update note';
+      const message = e instanceof Error ? e.message : 'Could not update note. Try again.';
       setError(message);
       toast.error(message);
     } finally {
@@ -191,7 +191,7 @@ export function McpEndpointNotesPanel({
       toast.success('Cataloger note deleted');
       await reload();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not delete note';
+      const message = e instanceof Error ? e.message : 'Could not delete note. Try again.';
       setError(message);
       toast.error(message);
     } finally {

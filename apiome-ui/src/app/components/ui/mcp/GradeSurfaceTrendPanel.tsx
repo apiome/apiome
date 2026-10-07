@@ -41,12 +41,15 @@ import {
   type McpEvolutionPoint,
   type McpTrendColumn,
 } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The endpoint's evolution series (oldest-first), or `null` while it has not loaded. */
   series: readonly McpEvolutionPoint[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
   /** Called with a snapshot's `version_id` when a breaking-change marker chip is activated. */
   onSelectVersion: (versionId: string) => void;
 }
@@ -100,17 +103,17 @@ function TrendBlock({
  * (the score/count trends match the seeded scores, an unscored snapshot is gapped rather than zeroed,
  * and breaking-change markers align to the right versions).
  */
-export function GradeSurfaceTrendPanel({ series, loading, error, onSelectVersion }: Props) {
+export function GradeSurfaceTrendPanel({ series, loading, error, onSelectVersion, onRetry }: Props) {
   if (loading && !series) {
     return <LoadingState minHeightClassName="min-h-[200px]" message="Loading trend…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<LineChart className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Trend unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -121,7 +124,7 @@ export function GradeSurfaceTrendPanel({ series, loading, error, onSelectVersion
         variant="compact"
         icon={<LineChart className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No history yet"
-        description="This endpoint has no recorded snapshots to chart. Run discovery to start building its evolution history."
+        description="No snapshots recorded yet. Run discovery to start building its evolution history."
       />
     );
   }

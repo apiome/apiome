@@ -232,14 +232,14 @@ const Profile = () => {
       // but the id is what the write is scoped by, so it is checked rather than asserted.
       if (!userId) return 'You are not signed in.';
       try {
-        const failure = readActionError(await updateUserName(userId, name), 'Failed to update name');
+        const failure = readActionError(await updateUserName(userId, name), 'Failed to update name. Try again.');
         if (failure) return failure;
         // The session carries the name the rail's user menu and every activity row print, so it
         // is refreshed here rather than left to the next navigation.
         await update({ ...session, user: { ...session?.user, name } });
         return null;
       } catch (error) {
-        return error instanceof Error ? error.message : 'An error occurred';
+        return error instanceof Error ? error.message : "That didn’t go through. Try again.";
       }
     },
     [session, update, userId]
@@ -251,13 +251,13 @@ const Profile = () => {
       try {
         const failure = readActionError(
           await updateUserPassword(userId, current, next),
-          'Failed to update password'
+          'Failed to update password. Try again.'
         );
         if (failure) return failure;
         setSuccessMessage('Password changed successfully.');
         return null;
       } catch (error) {
-        return error instanceof Error ? error.message : 'An error occurred';
+        return error instanceof Error ? error.message : "That didn’t go through. Try again.";
       }
     },
     [userId]
@@ -267,7 +267,7 @@ const Profile = () => {
     return (
       <Page>
         <PageBody>
-          <LoadingState minHeightClassName="min-h-[20rem]" message="Loading profile..." />
+          <LoadingState minHeightClassName="min-h-[20rem]" message="Loading profile…" />
         </PageBody>
       </Page>
     );

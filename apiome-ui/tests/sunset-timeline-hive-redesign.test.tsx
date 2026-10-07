@@ -688,7 +688,7 @@ describe('the states', () => {
         <SunsetTimelinePage />
       </TooltipProvider>
     );
-    expect(await screen.findByText('No tenant selected')).toBeInTheDocument();
+    expect(await screen.findByText('Pick a workspace first')).toBeInTheDocument();
     expect(calls).toEqual([]);
   });
 
@@ -710,7 +710,7 @@ describe('the states', () => {
         <SunsetTimelinePage />
       </TooltipProvider>
     );
-    expect(await screen.findByText('Loading…')).toBeInTheDocument();
+    expect(await screen.findByText('Loading the sunset timeline…')).toBeInTheDocument();
   });
 });
 

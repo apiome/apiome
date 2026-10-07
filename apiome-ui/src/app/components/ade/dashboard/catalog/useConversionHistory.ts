@@ -98,7 +98,7 @@ export function useConversionHistory(
       .catch((e: unknown) => {
         if (token !== tokenRef.current) return;
         if (e instanceof DOMException && e.name === 'AbortError') return;
-        setError(e instanceof Error ? e.message : 'Could not load the conversion history.');
+        setError(e instanceof Error ? e.message : 'Could not load the conversion history. Refresh the page to try again.');
         // Allow the effect to re-run after retry() for this same scope.
         loadedKeyRef.current = null;
       })

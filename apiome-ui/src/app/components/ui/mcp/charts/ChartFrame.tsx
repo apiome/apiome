@@ -64,7 +64,7 @@ export function ChartFrame({
   viewBox,
   preserveAspectRatio = 'xMidYMid meet',
   isEmpty = false,
-  emptyLabel = 'No data',
+  emptyLabel = 'Nothing recorded yet',
   tableFallback,
   className,
   svgClassName,

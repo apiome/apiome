@@ -524,7 +524,7 @@ describe('the states', () => {
     guidesResponse = { ok: true, rows: [] };
     await renderPage();
 
-    expect(await screen.findByText('No style guides yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No style guides yet')).toBeInTheDocument();
     // Both CTAs, as the mockup's empty state has them.
     expect(screen.getAllByText('New guide').length).toBeGreaterThan(0);
   });
@@ -534,7 +534,7 @@ describe('the states', () => {
     await renderPage();
 
     expect(await screen.findByText('No tenant selected')).toBeInTheDocument();
-    expect(screen.queryByText('No style guides yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No style guides yet')).not.toBeInTheDocument();
   });
 
   it('gives a member the read-only treatment, with the reason on it', async () => {

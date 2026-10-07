@@ -106,7 +106,7 @@ export function ExternalCompatEvidencePanel({
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load evidence');
+          setError(e instanceof Error ? e.message : 'Failed to load evidence. Refresh the page to try again.');
           setFindings([]);
         }
       } finally {

@@ -104,7 +104,7 @@ export async function POST(
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
       return NextResponse.json(
-        { success: false, error: text || 'Failed to restore project' },
+        { success: false, error: text || 'Failed to restore project. Try again.' },
         { status: response.status || 500 }
       );
     }
@@ -113,7 +113,7 @@ export async function POST(
 
     if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: data.detail || 'Failed to restore project' },
+        { success: false, error: data.detail || 'Failed to restore project. Try again.' },
         { status: response.status }
       );
     }

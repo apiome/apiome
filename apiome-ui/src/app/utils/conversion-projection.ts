@@ -304,7 +304,7 @@ export async function fetchConversionProjection(
     const message =
       (data && (data.error || data.detail)) ||
       `Failed to load the projection graph (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load the projection graph');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load the projection graph. Refresh the page to try again.');
   }
   return data;
 }

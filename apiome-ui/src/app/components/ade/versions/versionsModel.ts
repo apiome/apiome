@@ -1113,7 +1113,7 @@ export function versionRowMenuItems(
   if (!schemaFrozen && isOwnerOrAdmin) {
     gitlikeItem({
       id: 'freezeSchema',
-      label: freezing ? 'Freezing...' : 'Freeze schema',
+      label: freezing ? 'Freezing…' : 'Freeze schema',
       disabled: freezing,
       title:
         'Capture class schemas for this version so it can be used in the Database section (only when no schema is frozen yet)',

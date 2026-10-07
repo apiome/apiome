@@ -97,12 +97,12 @@ export default function InsertStubModal({
                   setFormData(initial);
                   setJsonText(JSON.stringify(initial, null, 2));
                 } else {
-                  setSchemaError(snap.error ?? 'Failed to load record');
+                  setSchemaError(snap.error ?? 'Failed to load record. Refresh the page to try again.');
                 }
                 setSchemaLoading(false);
               })
               .catch((err) => {
-                setSchemaError(err?.message ?? 'Failed to load record');
+                setSchemaError(err?.message ?? 'Failed to load record. Refresh the page to try again.');
                 setSchemaLoading(false);
               });
             return;
@@ -111,10 +111,10 @@ export default function InsertStubModal({
           setFormData(initial);
           setJsonText(JSON.stringify(initial, null, 2));
         } else {
-          setSchemaError(data.error ?? 'Failed to load schema');
+          setSchemaError(data.error ?? 'Failed to load schema. Refresh the page to try again.');
         }
       })
-      .catch((err) => setSchemaError(err?.message ?? 'Failed to load schema'))
+      .catch((err) => setSchemaError(err?.message ?? 'Failed to load schema. Refresh the page to try again.'))
       .finally(() => {
         if (!isEdit || !recordId) setSchemaLoading(false);
       });

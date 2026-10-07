@@ -233,7 +233,7 @@ describe('Primitives table — column sorting', () => {
     expect(renderedNameOrder()).toEqual(['address', 'charge', 'balance']);
 
     // Filtering re-runs the sort; it must not fall back to name-ascending.
-    fireEvent.change(screen.getByPlaceholderText('Search primitives...'), {
+    fireEvent.change(screen.getByPlaceholderText('Search primitives…'), {
       target: { value: 'a' },
     });
 

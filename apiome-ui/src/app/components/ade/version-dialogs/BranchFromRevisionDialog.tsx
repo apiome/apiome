@@ -80,10 +80,10 @@ export function BranchFromRevisionDialog({
           },
         });
       } else {
-        toast.error(typeof d.error === 'string' ? d.error : 'Could not create branch');
+        toast.error(typeof d.error === 'string' ? d.error : 'Could not create branch. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not create branch');
+      toast.error(e instanceof Error ? e.message : 'Could not create branch. Try again.');
     } finally {
       setSaving(false);
     }

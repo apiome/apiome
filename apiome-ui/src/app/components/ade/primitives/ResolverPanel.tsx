@@ -134,11 +134,11 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
             onMessage?.('success', reresolveSummary(payload.reresolved_primitive_count));
           }
         } else {
-          onMessage?.('error', data.error || 'Failed to resolve references');
+          onMessage?.('error', data.error || 'Failed to resolve references. Refresh the page to try again.');
         }
       } catch (error) {
         console.error('Error resolving references:', error);
-        onMessage?.('error', 'Failed to resolve references');
+        onMessage?.('error', 'Failed to resolve references. Refresh the page to try again.');
       } finally {
         setLoading(false);
         setHasLoaded(true);
@@ -267,7 +267,7 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
           <EmptyState
             icon={<GitFork aria-hidden />}
             title="No references to resolve"
-            description="None of this tenant’s primitives carry a relative $ref yet. References appear here once types reference one another."
+            description="References appear here once a primitive points at another with a relative $ref."
             variant="compact"
           />
         </Card>
@@ -318,7 +318,7 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
             empty={
               <EmptyState
                 icon={<Waypoints aria-hidden />}
-                title="No references match this filter."
+                title="No references match this filter"
                 description="Choose another status, or clear the namespace filter."
                 variant="compact"
               />

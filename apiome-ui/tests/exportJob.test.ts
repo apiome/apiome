@@ -211,7 +211,7 @@ describe('exportJob — exportJobStatusLine', () => {
     expect(exportJobStatusLine(status({ state: 'completed' }), 'OpenAPI 3.1')).toMatch(/ready to download/i);
     expect(
       exportJobStatusLine(status({ state: 'failed', error: { code: 'X', message: 'boom' } }), 'OpenAPI 3.1'),
-    ).toMatch(/failed: boom/i);
+    ).toMatch(/failed \(boom\)\. Start the export again/i);
     expect(exportJobStatusLine(status({ state: 'canceled' }), 'OpenAPI 3.1')).toMatch(/canceled/i);
     expect(exportJobStatusLine(status({ state: 'running', percent: 55 }), 'OpenAPI 3.1')).toMatch(/55%/);
   });

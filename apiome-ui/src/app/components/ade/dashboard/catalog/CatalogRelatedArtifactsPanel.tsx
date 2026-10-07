@@ -57,12 +57,12 @@ export function CatalogRelatedArtifactsPanel({
       const res = await fetch(`/api/identity/projects/${encodeURIComponent(projectId)}/suggestions`);
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to load suggestions');
+        throw new Error(data.error || 'Failed to load suggestions. Refresh the page to try again.');
       }
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
     } catch (error) {
       console.error(error);
-      toast.error('Could not load link suggestions');
+      toast.error('Could not load link suggestions. Refresh the page to try again.');
     } finally {
       setLoadingSuggestions(false);
     }

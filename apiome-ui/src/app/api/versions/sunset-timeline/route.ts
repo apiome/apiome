@@ -20,11 +20,11 @@ interface SessionUser {
 
 function createAuthHeaders(user: SessionUser): Record<string, string> {
   if (!user.user_id) {
-    throw new Error('Unable to create authorization token: session user_id is missing');
+    throw new Error('Unable to create authorization token: session user_id is missing. Try again.');
   }
   const secret = getJwtSigningSecret();
   if (!secret) {
-    throw new Error('Unable to create authorization token: BETTER_AUTH_SECRET is not configured');
+    throw new Error('Unable to create authorization token: BETTER_AUTH_SECRET is not configured. Try again.');
   }
   const encodedToken = jwt.sign(
     {

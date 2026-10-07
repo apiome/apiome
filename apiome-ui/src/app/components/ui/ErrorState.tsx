@@ -65,6 +65,23 @@ export interface ErrorStateProps
 }
 
 /**
+ * The title a failure shows when the caller names none: what happened, as a noun-led
+ * statement (DESIGN.md §10) — never "Something went wrong".
+ */
+export const ERROR_STATE_DEFAULT_TITLE = "This didn’t load";
+
+/** The description a failure shows when the caller gives none: what to do next. */
+export const ERROR_STATE_DEFAULT_DESCRIPTION = 'Try again, or reload the page if it keeps happening.';
+
+/**
+ * The fallback next step for a failure whose owner cannot re-run its own load: reload the page.
+ * Pass it as `onRetry` so the button still says "Try again" (HIVE-10.4, DESIGN.md §10).
+ */
+export function reloadPage(): void {
+  window.location.reload();
+}
+
+/**
  * The failure that replaces the content.
  *
  * @param props See {@link ErrorStateProps}; everything {@link EmptyState} takes passes through.
@@ -73,8 +90,8 @@ export interface ErrorStateProps
 export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
   (
     {
-      title = 'Something went wrong',
-      description,
+      title = ERROR_STATE_DEFAULT_TITLE,
+      description = ERROR_STATE_DEFAULT_DESCRIPTION,
       icon,
       onRetry,
       retryLabel = RETRY_LABEL,

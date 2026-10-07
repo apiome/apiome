@@ -163,7 +163,7 @@ export function CatalogBulkImportPanel({
           callbacksRef.current.onStalePlan?.(stale);
           return;
         }
-        throw new Error(startData?.error || 'Failed to start the bulk import.');
+        throw new Error(startData?.error || 'Failed to start the bulk import. Try again.');
       }
       const started: BulkStartItem[] = Array.isArray(startData?.items) ? startData.items : [];
       let merged = mergeBulkRows(started, []);
@@ -201,7 +201,7 @@ export function CatalogBulkImportPanel({
       }
       throw new Error('The bulk import is taking longer than expected. Check the catalog shortly.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to run the bulk import.');
+      setError(e instanceof Error ? e.message : 'Failed to run the bulk import. Try again.');
     } finally {
       setRunning(false);
       callbacksRef.current.onSettled?.();

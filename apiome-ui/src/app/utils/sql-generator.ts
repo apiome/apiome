@@ -510,7 +510,7 @@ export function generateSQL(
 
   } catch (error) {
     console.error('Error generating SQL:', error);
-    return `-- Error generating SQL: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    return `-- Error generating SQL: ${error instanceof Error ? error.message : 'no reason given'}`;
   }
 }
 

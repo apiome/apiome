@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ repositories: formattedRepos });
   } catch (error: unknown) {
     console.error('Error fetching GitHub repositories:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch repositories';
+    const message = error instanceof Error ? error.message : 'Failed to fetch repositories. Refresh the page to try again.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

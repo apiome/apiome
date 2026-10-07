@@ -104,13 +104,13 @@ export async function GET(
       if (contentType.includes('application/json')) {
         const data = await response.json();
         return NextResponse.json(
-          { success: false, error: (data && (data.detail || data.error)) || 'Failed to fetch source' },
+          { success: false, error: (data && (data.detail || data.error)) || 'Failed to fetch source. Refresh the page to try again.' },
           { status: response.status },
         );
       }
       const text = await response.text();
       return NextResponse.json(
-        { success: false, error: text || 'Failed to fetch source' },
+        { success: false, error: text || 'Failed to fetch source. Refresh the page to try again.' },
         { status: response.status },
       );
     }

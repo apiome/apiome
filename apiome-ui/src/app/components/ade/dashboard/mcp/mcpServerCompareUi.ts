@@ -532,7 +532,7 @@ export const MCP_COMPARE_PICKER_EMPTY_TITLE = 'No discovered MCP servers to comp
 
 /** Its body copy. */
 export const MCP_COMPARE_PICKER_EMPTY_DESC =
-  'Register and discover servers in the catalog first — a server with no current version has no surface to align.';
+  'Register and discover servers first; one without a current version has nothing to align.';
 
 /** Shown while the catalog behind the picker is in flight. */
 export const MCP_COMPARE_CATALOG_LOADING = 'Loading the MCP catalog…';
@@ -541,7 +541,7 @@ export const MCP_COMPARE_CATALOG_LOADING = 'Loading the MCP catalog…';
 export const MCP_COMPARE_CATALOG_ERROR_TITLE = 'Could not load the MCP catalog';
 
 /** Used when that read carries no message of its own. */
-export const MCP_COMPARE_CATALOG_ERROR_FALLBACK = 'Could not load the MCP catalog.';
+export const MCP_COMPARE_CATALOG_ERROR_FALLBACK = 'Could not load the MCP catalog. Refresh the page to try again.';
 
 /** Shown while the three per-endpoint reads behind a comparison are in flight. */
 export const MCP_COMPARE_RUNNING = 'Comparing servers…';
@@ -550,14 +550,14 @@ export const MCP_COMPARE_RUNNING = 'Comparing servers…';
 export const MCP_COMPARE_ERROR_TITLE = 'Comparison unavailable';
 
 /** Used when a failed comparison carries no message of its own. */
-export const MCP_COMPARE_ERROR_FALLBACK = 'Could not compare the selected servers.';
+export const MCP_COMPARE_ERROR_FALLBACK = 'Could not compare the selected servers. Try again.';
 
 /** The state before a comparison has been run with enough servers selected. */
 export const MCP_COMPARE_PROMPT_TITLE = 'Select two or three servers to compare';
 
 /** Its body copy. */
 export const MCP_COMPARE_PROMPT_DESC =
-  'Tick servers in the picker, then run Compare to see surface counts, grade, safety, documentation, latency and trust side by side.';
+  'Tick servers in the picker, then run Compare to see them side by side.';
 
 /** Shown in place of the screen when the session has no workspace to read a catalog for. */
 export const MCP_COMPARE_NO_TENANT = 'Switch to a workspace to compare the MCP servers in it.';

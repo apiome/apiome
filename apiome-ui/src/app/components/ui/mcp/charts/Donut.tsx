@@ -49,7 +49,7 @@ export function Donut({ segments, title, centerLabel, className }: DonutProps) {
   const summary =
     usable
       .map((s) => `${s.label}: ${s.value} (${Math.round((s.value / (total || 1)) * 100)}%)`)
-      .join(', ') || 'No data';
+      .join(', ') || 'Nothing recorded in this range';
   const label = title ?? `Donut chart — ${summary}`;
 
   // Precompute each segment's arc angles walking clockwise from 12 o'clock. The running offset is

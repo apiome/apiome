@@ -42,7 +42,7 @@ export async function GET(
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      return restErrorResponse(data, response.status, 'Failed to load response correlation');
+      return restErrorResponse(data, response.status, 'Failed to load response correlation. Refresh the page to try again.');
     }
 
     return NextResponse.json({ success: true, correlation: data?.correlation ?? null });
@@ -97,7 +97,7 @@ export async function PUT(
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      return restErrorResponse(data, response.status, 'Failed to save response correlation');
+      return restErrorResponse(data, response.status, 'Failed to save response correlation. Try again.');
     }
 
     return NextResponse.json({ success: true, correlation: data?.correlation ?? null });

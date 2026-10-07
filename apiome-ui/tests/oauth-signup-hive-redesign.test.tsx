@@ -478,7 +478,7 @@ describe('OAuth sign-up — creating the account', () => {
     await user.click(screen.getByTestId('oauth-signup-submit'));
 
     expect(await screen.findByTestId('oauth-signup-error')).toHaveTextContent(
-      'Something went wrong. Please try again.'
+      "Your account wasn’t created. Try again."
     );
     consoleError.mockRestore();
   });

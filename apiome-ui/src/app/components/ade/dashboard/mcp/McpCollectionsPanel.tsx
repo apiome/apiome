@@ -127,7 +127,7 @@ export function McpCollectionsPanel({
       setTenantSlug(result.tenantSlug);
     } catch (e) {
       setCollections([]);
-      setError(e instanceof Error ? e.message : 'Could not load collections');
+      setError(e instanceof Error ? e.message : 'Could not load collections. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -165,7 +165,7 @@ export function McpCollectionsPanel({
       toast.success('Collection created');
       await reload();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not create collection';
+      const message = e instanceof Error ? e.message : 'Could not create collection. Try again.';
       setError(message);
       toast.error(message);
     } finally {
@@ -222,7 +222,7 @@ export function McpCollectionsPanel({
       toast.success(collection.isPublished ? 'Collection unpublished' : 'Collection published');
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update collection');
+      setError(e instanceof Error ? e.message : 'Could not update collection. Try again.');
     }
   };
 
@@ -250,7 +250,7 @@ export function McpCollectionsPanel({
       toast.success('Collection deleted');
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not delete collection');
+      setError(e instanceof Error ? e.message : 'Could not delete collection. Try again.');
     }
   };
 

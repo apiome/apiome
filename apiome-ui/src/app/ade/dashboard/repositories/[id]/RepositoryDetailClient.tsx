@@ -210,7 +210,7 @@ export function RepositoryDetailClient() {
         console.error(e);
         if (!silent) {
           setRepo(null);
-          const msg = e instanceof Error ? e.message : 'Could not load repository';
+          const msg = e instanceof Error ? e.message : 'Could not load repository. Refresh the page to try again.';
           setError(msg);
           toast.error(msg);
         }
@@ -253,7 +253,7 @@ export function RepositoryDetailClient() {
       setRepoImports(Array.isArray(data.imports) ? data.imports : []);
       setStats30d(data.stats30d ?? { totalImports: 0, distinctProjects: 0 });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not load import history';
+      const msg = e instanceof Error ? e.message : 'Could not load import history. Refresh the page to try again.';
       setImportsError(msg);
       setRepoImports([]);
       setStats30d(null);
@@ -307,7 +307,7 @@ export function RepositoryDetailClient() {
       toast.success('Repository removed.');
       router.replace(REPOSITORIES_LIST_HREF);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not remove repository.');
+      toast.error(e instanceof Error ? e.message : 'Could not remove repository. Try again.');
     } finally {
       setRemoving(false);
     }

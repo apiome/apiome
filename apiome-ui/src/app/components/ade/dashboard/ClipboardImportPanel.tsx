@@ -14,7 +14,7 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
   loading: () => (
     <div className="h-[300px] flex items-center justify-center bg-inset rounded-lg">
-      <div className="text-fg-faint">Loading editor...</div>
+      <div className="text-fg-faint">Loading editor…</div>
     </div>
   ),
 });
@@ -89,7 +89,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
       setFileMetadata(metadata);
 
       if (!metadata.syntaxValid) {
-        setParseError(metadata.parseError || 'Unable to parse content');
+        setParseError(metadata.parseError || 'Unable to parse content. Check the file, then try again.');
         // Clear parent state on parse error
         onSpecificationReady('', '');
       } else {
@@ -99,7 +99,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
         onSpecificationReady(text, filename);
       }
     } catch (error) {
-      setParseError(error instanceof Error ? error.message : 'Failed to analyze content');
+      setParseError(error instanceof Error ? error.message : 'Failed to analyze content. Try again.');
       // Clear parent state on error
       onSpecificationReady('', '');
     } finally {
@@ -299,7 +299,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
                 top: 8,
                 bottom: 8,
               },
-              placeholder: 'Paste your OpenAPI, Swagger, or JSON Schema content here...',
+              placeholder: 'Paste your OpenAPI, Swagger, or JSON Schema content here…',
             }}
           />
         </div>
@@ -337,7 +337,7 @@ export const ClipboardImportPanel: React.FC<ClipboardImportPanelProps> = ({
           {isAnalyzing ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-              <span className="ml-3 text-fg-muted">Analyzing content...</span>
+              <span className="ml-3 text-fg-muted">Analyzing content…</span>
             </div>
           ) : (
             <div className="space-y-4">

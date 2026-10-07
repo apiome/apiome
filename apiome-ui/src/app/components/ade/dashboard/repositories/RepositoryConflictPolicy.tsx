@@ -135,7 +135,7 @@ export function RepositoryConflictPolicy({
       setData(parseConflictPolicyResponse(body));
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load the conflict policy.');
+      setError(e instanceof Error ? e.message : 'Could not load the conflict policy. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -175,7 +175,7 @@ export function RepositoryConflictPolicy({
       toast.success(success);
       return true;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not save the conflict policy.');
+      toast.error(e instanceof Error ? e.message : 'Could not save the conflict policy. Try again.');
       return false;
     } finally {
       setSaving(false);
@@ -221,7 +221,7 @@ export function RepositoryConflictPolicy({
     return (
       <ErrorState
         data-testid="conflict-policy-error"
-        title="Refresh conflicts"
+        title="Conflicts didn’t load"
         description={error}
         onRetry={() => void load()}
       />

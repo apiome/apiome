@@ -124,7 +124,7 @@ export async function GET(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch catalog item');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch catalog item. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

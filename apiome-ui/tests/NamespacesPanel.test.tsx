@@ -119,7 +119,7 @@ describe('NamespacesPanel', () => {
 
   it('shows an empty state when there are no namespaces', () => {
     renderView([]);
-    expect(screen.getByText('No Namespaces Yet')).toBeInTheDocument();
+    expect(screen.getByText('No namespaces yet')).toBeInTheDocument();
   });
 
   it('creates a namespace via POST when the dialog form is submitted', async () => {
@@ -350,7 +350,7 @@ describe('NamespacesPanel — removing a namespace registration', () => {
     await removeNamespace('tenant/acme/v1/types');
 
     await waitFor(() =>
-      expect(onMessage).toHaveBeenCalledWith('error', 'Failed to remove namespace')
+      expect(onMessage).toHaveBeenCalledWith('error', 'Failed to remove namespace. Try again.')
     );
     // The button is re-enabled, so a retry is possible.
     expect(screen.getByTestId('remove-namespace-tenant/acme/v1/types')).not.toBeDisabled();

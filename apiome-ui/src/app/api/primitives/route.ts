@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch primitives');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch primitives. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create primitive');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to create primitive. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

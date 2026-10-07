@@ -383,9 +383,9 @@ describe('AlertDialog', () => {
 
   it('prefers the caller’s title', () => {
     render(
-      <AlertDialog open title="Could not publish" message="It broke" onClose={jest.fn()} />
+      <AlertDialog open title="Could not publish. Try again." message="It broke" onClose={jest.fn()} />
     );
-    expect(screen.getByText('Could not publish')).toBeInTheDocument();
+    expect(screen.getByText('Could not publish. Try again.')).toBeInTheDocument();
   });
 
   it('resolves once on the button and once on Esc, never twice for one dismissal', async () => {
@@ -550,7 +550,7 @@ describe('useDialog', () => {
         );
         await user.click(await screen.findByRole('button', { name: 'Delete' }));
         expect(
-          await screen.findByText('Something went wrong. Please try again.')
+          await screen.findByText("That didn’t go through. Try again.")
         ).toBeInTheDocument();
       });
     });

@@ -77,7 +77,7 @@ export function CreateTenantDialog({ open, onOpenChange, onCreated }: CreateTena
       }
     } catch (creationError) {
       console.error('[CreateTenantDialog] provisioning failed:', creationError);
-      setError('Something went wrong while creating the tenant. Please try again.');
+      setError('The tenant wasn’t created. Try again.');
     } finally {
       setCreating(false);
     }

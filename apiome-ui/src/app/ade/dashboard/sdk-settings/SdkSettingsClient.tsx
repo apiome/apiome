@@ -184,7 +184,7 @@ export default function SdkSettingsClient() {
         setBaseline(nextDraft);
       } catch (cause) {
         setSettings(null);
-        setError(cause instanceof Error ? cause.message : 'Could not load these settings');
+        setError(cause instanceof Error ? cause.message : 'Could not load these settings. Refresh the page to try again.');
       } finally {
         setLoading(false);
       }
@@ -225,7 +225,7 @@ export default function SdkSettingsClient() {
       // A 422 lists every problem at once; showing one and hiding the rest would make fixing
       // them a sequence of round trips.
       setProblems(cause instanceof SdkSettingsError ? cause.errors : []);
-      setError(cause instanceof Error ? cause.message : 'Could not save these settings');
+      setError(cause instanceof Error ? cause.message : 'Could not save these settings. Try again.');
     } finally {
       setSaving(false);
     }
@@ -242,7 +242,7 @@ export default function SdkSettingsClient() {
       setDraft(nextDraft);
       setBaseline(nextDraft);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not clear these settings');
+      setError(cause instanceof Error ? cause.message : 'Could not clear these settings. Try again.');
     } finally {
       setSaving(false);
     }

@@ -867,7 +867,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-faint" />
               <input
                 type="text"
-                placeholder="Search by name..."
+                placeholder="Search by name…"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm border border-border-strong rounded-lg bg-surface text-fg placeholder:text-fg-faint focus:ring-2 focus:ring-accent focus:border-transparent"

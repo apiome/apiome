@@ -56,7 +56,7 @@ async function tryHeadOrGet(url: string): Promise<{ ok: boolean; message: string
   }
 
   if (!res) {
-    return { ok: false, message: 'Could not reach this URL (network error or timeout).' };
+    return { ok: false, message: 'Could not reach this URL (network error or timeout). Try again.' };
   }
   if (res.ok || res.status === 206) {
     return { ok: true, message: 'URL responded successfully (reachability check only).' };

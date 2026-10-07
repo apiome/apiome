@@ -361,7 +361,7 @@ export function CatalogImportQualityStep({
           runId,
           report: null,
           error:
-            e instanceof Error ? e.message : 'Could not score this source before importing.',
+            e instanceof Error ? e.message : 'Could not score this source before importing. Refresh the page to try again.',
         });
       });
     return () => {

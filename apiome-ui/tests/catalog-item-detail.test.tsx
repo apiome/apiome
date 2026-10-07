@@ -102,7 +102,7 @@ const PARSED_ITEM = { ...RICH_ITEM, parsed: PARSED_GROUPS };
 function mockFetchItem(item: unknown, ok = true) {
   global.fetch = jest.fn().mockResolvedValue({
     ok,
-    json: async () => (ok ? { success: true, item } : { success: false, error: 'Catalog item not found.' }),
+    json: async () => (ok ? { success: true, item } : { success: false, error: 'Catalog item not found' }),
   }) as unknown as typeof fetch;
 }
 

@@ -28,7 +28,7 @@ import { Spinner } from '../../components/ui/Spinner';
 const SLUG_TAKEN_ERROR = 'This slug is already taken — please choose another';
 
 /** Shown when `completeOAuthSignup` throws rather than answering. */
-const GENERIC_ERROR = 'Something went wrong. Please try again.';
+const GENERIC_ERROR = 'Your account wasn’t created. Try again.';
 
 /**
  * The host the organization's APIs will be browsable at, without its scheme — the

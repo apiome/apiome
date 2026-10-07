@@ -120,7 +120,7 @@ export async function fetchBreakingPublishGuardrail(
       (data && (data.error || data.detail)) ||
       `Failed to load breaking-change guardrail (HTTP ${response.status})`;
     throw new Error(
-      typeof message === 'string' ? message : 'Failed to load breaking-change guardrail'
+      typeof message === 'string' ? message : 'Failed to load breaking-change guardrail. Refresh the page to try again.'
     );
   }
   return data as BreakingPublishGuardrail;

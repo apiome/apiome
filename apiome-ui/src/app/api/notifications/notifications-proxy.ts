@@ -157,7 +157,7 @@ export async function callRestNotifications(
 
   if (!response.ok) {
     throw new RestNotificationsError(
-      restErrorMessage(payload, raw || 'Failed to read notifications'),
+      restErrorMessage(payload, raw || 'Failed to read notifications. Refresh the page to try again.'),
       response.status || 502
     );
   }

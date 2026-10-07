@@ -55,7 +55,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, models: generativeModels });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch models';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch models. Refresh the page to try again.';
     console.error('Error fetching Ollama models:', error);
     return NextResponse.json(
       { success: false, error: errorMessage },

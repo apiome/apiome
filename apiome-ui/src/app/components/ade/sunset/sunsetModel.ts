@@ -121,7 +121,10 @@ export const SUNSET_WARNINGS_BANNER = {
 export const SUNSET_LOADING_LABEL = 'Loading schedule…';
 
 /** What the table says when the read failed. */
-export const SUNSET_LOAD_ERROR = 'Could not load the sunset schedule';
+export const SUNSET_LOAD_ERROR = 'Could not load the sunset schedule. Refresh the page to try again.';
+
+/** The table's error title: what happened (its retry button is the next step). */
+export const SUNSET_LOAD_ERROR_TITLE = 'Couldn’t load the sunset schedule';
 
 /** The empty state, kept word for word from the screen this replaces. */
 export const SUNSET_EMPTY = {
@@ -133,7 +136,7 @@ export const SUNSET_EMPTY = {
 
 /** The state a reader in no workspace gets. */
 export const SUNSET_NO_TENANT = {
-  title: 'No tenant selected',
+  title: 'Pick a workspace first',
   description: 'Deprecation and sunset dates belong to one workspace.',
 } as const;
 

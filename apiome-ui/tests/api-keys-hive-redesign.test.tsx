@@ -403,7 +403,7 @@ describe('the keys table', () => {
     keysResponse = 'not json at all';
     render(<ApiKeysClient />);
 
-    expect(await screen.findByText('Failed to load API keys')).toBeInTheDocument();
+    expect(await screen.findByText('Failed to load API keys. Refresh the page to try again.')).toBeInTheDocument();
     expect(screen.queryByText('No API keys yet')).not.toBeInTheDocument();
   });
 
@@ -758,8 +758,8 @@ describe('without a workspace', () => {
     render(<ApiKeysClient />);
 
     expect(await screen.findByTestId('api-keys-no-tenant')).toBeInTheDocument();
-    expect(screen.getByText('No workspace selected')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Go to Workspaces/ })).toHaveAttribute(
+    expect(screen.getByText('Pick a workspace first')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Go to Tenants/ })).toHaveAttribute(
       'href',
       '/ade/dashboard/tenants'
     );

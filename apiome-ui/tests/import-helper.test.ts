@@ -731,7 +731,7 @@ describe('Import Helper - Error Scenarios', () => {
     const result = { success: false, error: 'Project already exists' };
 
     if (!result.success) {
-      const error = new Error(result.error || 'Failed to create project');
+      const error = new Error(result.error || 'Failed to create project. Try again.');
       expect(error.message).toBe('Project already exists');
     }
   });
@@ -740,7 +740,7 @@ describe('Import Helper - Error Scenarios', () => {
     const result = { success: false, error: 'Version conflict' };
 
     if (!result.success) {
-      const error = new Error(result.error || 'Failed to create version');
+      const error = new Error(result.error || 'Failed to create version. Try again.');
       expect(error.message).toBe('Version conflict');
     }
   });
@@ -749,7 +749,7 @@ describe('Import Helper - Error Scenarios', () => {
     const result = { success: false, error: 'Invalid schema' };
 
     if (!result.success) {
-      const error = new Error(result.error || 'Failed to create class');
+      const error = new Error(result.error || 'Failed to create class. Try again.');
       expect(error.message).toBe('Invalid schema');
     }
   });

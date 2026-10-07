@@ -3,8 +3,10 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { useMigration } from '../MigrationContext';
-import { Database, Search, List, FileJson, Play } from 'lucide-react';
+import { Database, Search, List, FileJson, Play, Rows3 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
+import { LoadingState } from '@/app/components/ui/LoadingState';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -187,7 +189,7 @@ export default function DataInspectionView() {
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Search records..."
+                placeholder="Search records…"
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -217,9 +219,13 @@ export default function DataInspectionView() {
                 Click &quot;View all records&quot; or search to load data.
               </div>
             ) : loading ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">Loading…</div>
+              <LoadingState message="Loading rows…" />
             ) : rows.length === 0 ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">No records found.</div>
+              <EmptyState
+                variant="inline"
+                icon={<Rows3 aria-hidden />}
+                title="No rows in this table yet"
+              />
             ) : (
               <ul className="p-1 space-y-0.5">
                 {rows.map((row) => {

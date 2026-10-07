@@ -125,7 +125,7 @@ function mockReads(item: unknown, ok = true) {
       return {
         ok,
         json: async () =>
-          ok ? { success: true, item } : { success: false, error: 'Catalog item not found.' },
+          ok ? { success: true, item } : { success: false, error: 'Catalog item not found' },
       } as Response;
     }
     if (url.includes('/lint')) {

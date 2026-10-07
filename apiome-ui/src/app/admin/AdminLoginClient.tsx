@@ -34,7 +34,7 @@ export default function AdminLoginClient() {
         setPassword('');
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError('Sign-in didn’t go through. Try again.');
       console.error('Admin login error:', err);
     } finally {
       setIsLoading(false);
@@ -104,7 +104,7 @@ export default function AdminLoginClient() {
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Authenticating...
+                  Authenticating…
                 </>
               ) : (
                 <>

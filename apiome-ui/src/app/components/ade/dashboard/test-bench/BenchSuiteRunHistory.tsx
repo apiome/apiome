@@ -42,13 +42,13 @@ export function BenchSuiteRunHistory({ suiteId, refreshToken }: BenchSuiteRunHis
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok || !data.success) {
-          setError(typeof data.error === 'string' ? data.error : 'Could not load run history.');
+          setError(typeof data.error === 'string' ? data.error : 'Could not load run history. Refresh the page to try again.');
           return;
         }
         setError(null);
         setRuns(Array.isArray(data.items) ? data.items : []);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load run history.');
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load run history. Refresh the page to try again.');
       }
     })();
     return () => {

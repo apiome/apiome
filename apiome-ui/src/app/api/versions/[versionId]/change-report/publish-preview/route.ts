@@ -106,7 +106,7 @@ export async function POST(
     }
     const url = `${REST_API_BASE_URL}/versions/${encodeURIComponent(tenant.slug)}/${encodeURIComponent(projectId)}/${encodeURIComponent(versionId)}/change-report/publish-preview`;
     const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to preview change report');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to preview change report. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

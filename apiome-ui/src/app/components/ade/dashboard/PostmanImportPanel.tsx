@@ -62,7 +62,7 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
       } catch (e) {
         setConvertResult({
           success: false,
-          error: 'Failed to read file',
+          error: 'Failed to read file. Refresh the page to try again.',
           warnings: []
         });
         return;
@@ -268,7 +268,7 @@ export const PostmanImportPanel: React.FC<PostmanImportPanelProps> = ({
           {isConverting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Converting...
+              Converting…
             </>
           ) : (
             <>

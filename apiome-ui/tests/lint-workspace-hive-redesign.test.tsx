@@ -404,13 +404,13 @@ describe('LintQueueTable', () => {
 
   it('tells a narrowed reader to widen and an empty workspace what would fill it', () => {
     const narrowed = renderQueue({ findings: [], total: 0, filters: filters({ severity: ['error'] }) });
-    expect(screen.getByText('No findings match the current filters.')).toBeInTheDocument();
+    expect(screen.getByText('No findings match the current filters')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('workspace-empty-clear'));
     expect(narrowed.onFiltersChange).toHaveBeenCalledWith(EMPTY_WORKSPACE_FILTERS);
     narrowed.view.unmount();
 
     renderQueue({ findings: [], total: 0 });
-    expect(screen.getByText('No lint findings in this workspace.')).toBeInTheDocument();
+    expect(screen.getByText('No lint findings in this workspace')).toBeInTheDocument();
   });
 
   it('names what it is waiting for while the queue loads', () => {
@@ -421,7 +421,7 @@ describe('LintQueueTable', () => {
   it('reports a failed read as an error with a retry, not as an empty workspace', () => {
     const { onRetry } = renderQueue({ findings: [], total: 0, error: 'The service timed out (504).' });
     expect(screen.getByText('The service timed out (504).')).toBeInTheDocument();
-    expect(screen.queryByText('No lint findings in this workspace.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No lint findings in this workspace')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalled();
   });

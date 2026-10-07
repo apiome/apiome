@@ -37,6 +37,7 @@ import {
   type McpSafetyHintColumn,
   type McpToolSafetyRow,
 } from '@/app/components/ade/dashboard/mcp/mcpSafetyPostureUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The selected snapshot's capability items (all kinds), or `null` while the surface has not loaded. */
@@ -45,6 +46,8 @@ interface Props {
   authType: string | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** Solid fill classes for an *asserted* matrix cell, keyed by the hint's tone token. */
@@ -176,7 +179,7 @@ function HintMatrix({ rows }: { rows: readonly McpToolSafetyRow[] }) {
  * or missing surface never blanks the Insight tab; a fully-unannotated server and a destructive
  * no-auth server both render an explicit, prominent caution rather than a silent gap.
  */
-export function SafetyPosturePanel({ items, authType, loading, error }: Props) {
+export function SafetyPosturePanel({ items, authType, loading, error, onRetry }: Props) {
   const posture = React.useMemo(() => mcpSafetyPosture(items ?? [], authType), [items, authType]);
   const headlineChips = React.useMemo(() => mcpSafetyHeadlineChips(posture), [posture]);
   const rows = React.useMemo(() => mcpToolSafetyRows(items ?? []), [items]);
@@ -186,11 +189,11 @@ export function SafetyPosturePanel({ items, authType, loading, error }: Props) {
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<ShieldAlert className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Safety posture unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }

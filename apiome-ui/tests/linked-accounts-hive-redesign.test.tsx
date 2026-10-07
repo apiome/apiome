@@ -239,7 +239,7 @@ describe('one chrome (HIVE-3.5)', () => {
     sessionState.current = null;
     render(<LinkedAccountsClient providers={PROVIDERS} />);
 
-    expect(screen.getByText('Loading linked accounts...')).toBeInTheDocument();
+    expect(screen.getByText('Loading linked accounts…')).toBeInTheDocument();
     expect(screen.queryByTestId('linked-accounts-table')).not.toBeInTheDocument();
     expect(mockLinkedAccounts).not.toHaveBeenCalled();
   });
@@ -346,7 +346,7 @@ describe('the linked-accounts table (HIVE-2.3)', () => {
     render(<LinkedAccountsClient providers={PROVIDERS} />);
 
     expect(await screen.findByTestId('linked-error')).toHaveTextContent(
-      'Failed to load linked accounts'
+      'Failed to load linked accounts. Refresh the page to try again.'
     );
   });
 });
@@ -535,7 +535,7 @@ describe('the provider cards', () => {
     fireEvent.click(screen.getByTestId('provider-link-github'));
 
     expect(await screen.findByTestId('linked-error')).toHaveTextContent(
-      'Failed to initiate account linking: provider-already-linked'
+      'Couldn’t start linking (provider-already-linked). Try again.'
     );
     expect(mockSignIn).not.toHaveBeenCalled();
   });
@@ -548,7 +548,7 @@ describe('the provider cards', () => {
     fireEvent.click(screen.getByTestId('provider-link-github'));
 
     expect(await screen.findByTestId('linked-error')).toHaveTextContent(
-      'An error occurred while linking the account'
+      'Couldn’t link the account. Try again.'
     );
   });
 
@@ -767,7 +767,7 @@ describe('removing a Personal Access Token', () => {
 
     fireEvent.click(screen.getByTestId('provider-pat-remove-github'));
     expect(await screen.findByTestId('linked-error')).toHaveTextContent(
-      'Failed to remove Personal Access Token'
+      'Failed to remove Personal Access Token. Try again.'
     );
   });
 });

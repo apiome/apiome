@@ -207,7 +207,7 @@ export function CatalogImportPreviewPanel({
           response: null,
           manifest: null,
           error:
-            e instanceof Error ? e.message : 'Could not build the import preview for this source.',
+            e instanceof Error ? e.message : 'Could not build the import preview for this source. Try again.',
         });
       });
     return () => {

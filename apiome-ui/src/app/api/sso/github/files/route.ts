@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ files: formattedFiles });
   } catch (error: unknown) {
     console.error('Error fetching GitHub files:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch files';
+    const message = error instanceof Error ? error.message : 'Failed to fetch files. Refresh the page to try again.';
     return NextResponse.json(
       { error: message },
       { status: 500 }

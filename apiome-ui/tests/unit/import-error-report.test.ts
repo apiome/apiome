@@ -157,7 +157,7 @@ describe('buildImportErrorReport', () => {
       events: [
         { id: 'e1', ts: 1000, level: 'info', code: 'INIT', message: 'Starting' },
         { id: 'e2', ts: 2000, level: 'warn', code: 'SKIP', message: 'Skipped item' },
-        { id: 'e3', ts: 3000, level: 'error', code: 'CLASS_FAILED', message: 'Failed to create class' },
+        { id: 'e3', ts: 3000, level: 'error', code: 'CLASS_FAILED', message: 'Failed to create class. Try again.' },
         { id: 'e4', ts: 4000, level: 'info', code: 'DONE', message: 'Done' }
       ]
     };
@@ -174,7 +174,7 @@ describe('buildImportErrorReport', () => {
       timestamp: '1970-01-01T00:00:03.000Z',
       level: 'error',
       code: 'CLASS_FAILED',
-      message: 'Failed to create class'
+      message: 'Failed to create class. Try again.'
     });
   });
 

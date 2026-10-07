@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ tags: names });
   } catch (error: unknown) {
     console.error('Error fetching GitHub tags:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch tags';
+    const message = error instanceof Error ? error.message : 'Failed to fetch tags. Refresh the page to try again.';
     return NextResponse.json(
       { error: message },
       { status: 500 }

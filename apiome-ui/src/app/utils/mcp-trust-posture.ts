@@ -306,7 +306,7 @@ export async function fetchPostureReport(
     const message =
       (data && (data.error || data.detail)) ||
       `Failed to load trust posture (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load trust posture');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load trust posture. Refresh the page to try again.');
   }
   const report = parsePostureReport(data);
   if (!report) throw new Error('Malformed trust-posture report');

@@ -66,7 +66,7 @@ export const HELP_PAGE_TITLE = 'Help & docs';
 
 /** The line under it — DESIGN.md §5.3 asks for fourteen words or fewer. */
 const HELP_PAGE_DESCRIPTION =
-  'Guides, shortcuts, what’s new and where to ask. Reachable from the rail on every page.';
+  'Guides, shortcuts, what’s new and where to ask. Reachable from the rail anywhere.';
 
 /**
  * The Help & docs page.

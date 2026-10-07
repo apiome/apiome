@@ -164,14 +164,14 @@ export default function ProjectsClient() {
       const response = await fetch(`/api/projects${showDeleted ? '?include_deleted=true' : ''}`);
       if (!response.ok) throw new Error(`Failed to load projects: ${response.statusText}`);
       const data = await response.json();
-      if (!data.success || !data.projects) throw new Error(data.error || 'Failed to load projects');
+      if (!data.success || !data.projects) throw new Error(data.error || 'Failed to load projects. Refresh the page to try again.');
       // Catalog items (non-OpenAPI imports, `publishable=false`) never list here (#4587):
       // they live in Dashboard → Catalog until converted to OpenAPI, which mints a project.
       setProjects((data.projects as Project[]).filter(isProjectPublishable));
       setLoadError(null);
     } catch (error) {
       setProjects([]);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load projects');
+      setLoadError(error instanceof Error ? error.message : 'Failed to load projects. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -433,7 +433,7 @@ export default function ProjectsClient() {
           form.projectSlug,
           metadataFromForm(form)
         ),
-      'Failed to create the project.'
+      'Failed to create the project. Try again.'
     );
     setBusy(false);
     if (failure) return setFormError(failure);
@@ -458,7 +458,7 @@ export default function ProjectsClient() {
           editing.enabled,
           metadataFromForm(form)
         ),
-      'Failed to save the project.'
+      'Failed to save the project. Try again.'
     );
     setBusy(false);
     if (failure) return setFormError(failure);
@@ -473,7 +473,7 @@ export default function ProjectsClient() {
       setBusy(true);
       const failure = await runWrite(
         () => deleteProject(project.id),
-        'Failed to delete the project.'
+        'Failed to delete the project. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -489,7 +489,7 @@ export default function ProjectsClient() {
       setBusy(true);
       const failure = await runWrite(
         () => restoreProject(project.id),
-        'Failed to undelete the project.'
+        'Failed to undelete the project. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -505,7 +505,7 @@ export default function ProjectsClient() {
       setBusy(true);
       const failure = await runWrite(
         () => permanentDeleteProject(project.id),
-        'Failed to permanently delete the project.'
+        'Failed to permanently delete the project. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -710,7 +710,7 @@ export default function ProjectsClient() {
               bulk.deletable,
               (project) => deleteProject(project.id),
               'Deleted',
-              'Failed to delete the project.'
+              'Failed to delete the project. Try again.'
             )
           }
         >
@@ -727,7 +727,7 @@ export default function ProjectsClient() {
               bulk.restorable,
               (project) => restoreProject(project.id),
               'Undeleted',
-              'Failed to undelete the project.'
+              'Failed to undelete the project. Try again.'
             )
           }
         >

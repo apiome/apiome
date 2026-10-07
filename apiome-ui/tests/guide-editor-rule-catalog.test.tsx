@@ -200,7 +200,7 @@ describe('GuideEditorClient — rule catalog rendering', () => {
       target: { value: 'nothing-matches-this' },
     });
 
-    expect(screen.getByText('No rules match your search.')).toBeInTheDocument();
+    expect(screen.getByText('No rules match your search')).toBeInTheDocument();
   });
 
   it('filters rules by category', async () => {

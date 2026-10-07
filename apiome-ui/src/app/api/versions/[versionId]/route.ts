@@ -180,7 +180,7 @@ export async function GET(
       }
     }
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch version. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -268,7 +268,7 @@ export async function PUT(
       body: JSON.stringify(updateData),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update version. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -347,7 +347,7 @@ export async function DELETE(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete version. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

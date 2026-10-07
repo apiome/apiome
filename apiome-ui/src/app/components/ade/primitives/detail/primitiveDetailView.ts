@@ -569,7 +569,7 @@ export function verdict(
   if (result.status === 'unavailable') {
     return {
       tone: 'warn',
-      message: `Schema could not be compiled — ${result.schemaError ?? 'unknown error'}`,
+      message: `Schema could not be compiled — ${result.schemaError ?? 'no reason given'}. Check the schema.`,
       status: 'unavailable',
     };
   }

@@ -238,7 +238,7 @@ export function CatalogImportBundlePanel({
           response: null,
           inventory: null,
           error:
-            e instanceof Error ? e.message : 'Could not inventory the files in this bundle.',
+            e instanceof Error ? e.message : 'Could not inventory the files in this bundle. Refresh the page to try again.',
         });
       });
     return () => {

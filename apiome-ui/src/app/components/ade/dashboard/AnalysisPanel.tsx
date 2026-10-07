@@ -477,7 +477,7 @@ export function AnalysisPanel({ fileName, analysis }: AnalysisPanelProps) {
                       variant="compact"
                       tone="honey"
                       icon={<CheckCircle2 />}
-                      title="No issues found!"
+                      title="No issues found"
                       description="Your specification meets all requirements for this category."
                     />
                   ) : (

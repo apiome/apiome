@@ -88,7 +88,7 @@ export function TrendLine({
   const gaps = data.length - present.length;
   const summary =
     last === null
-      ? 'No data'
+      ? 'Nothing recorded in this range'
       : `${present.length} of ${data.length} point${data.length === 1 ? '' : 's'} measured` +
         `, latest ${last}, max ${maxValue(present)}` +
         (gaps ? `, ${gaps} gap${gaps === 1 ? '' : 's'}` : '') +
@@ -110,7 +110,7 @@ export function TrendLine({
             {data.map((v, i) => (
               <tr key={i}>
                 <th scope="row">{i + 1}</th>
-                <td>{pointLabel ? pointLabel(i, v) : v === null ? 'no data' : v}</td>
+                <td>{pointLabel ? pointLabel(i, v) : v === null ? 'no reading' : v}</td>
                 <td>{markerIndices.includes(i) ? 'marker' : ''}</td>
               </tr>
             ))}

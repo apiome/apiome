@@ -167,7 +167,7 @@ export function SchemaTestBench({
         if (!res.ok || !data.success) {
           setTargets(null);
           setTargetsError(
-            data.detail?.message || data.error || 'Could not list this revision’s schemas.',
+            data.detail?.message || data.error || 'Could not list this revision’s schemas. Refresh the page to try again.',
           );
         } else {
           setTargets(data);
@@ -175,7 +175,7 @@ export function SchemaTestBench({
       } catch (e) {
         if (!cancelled) {
           setTargets(null);
-          setTargetsError(e instanceof Error ? e.message : 'Could not list this revision’s schemas.');
+          setTargetsError(e instanceof Error ? e.message : 'Could not list this revision’s schemas. Refresh the page to try again.');
         }
       } finally {
         if (!cancelled) setTargetsLoading(false);
@@ -417,7 +417,7 @@ export function SchemaTestBench({
       await navigator.clipboard.writeText(text);
       setStatus(done);
     } catch {
-      setStatus('Could not access the clipboard.');
+      setStatus('Could not access the clipboard. Try again.');
     }
   }, []);
 

@@ -374,7 +374,7 @@ export const SPEC_CATALOG_LOADING = 'Loading discovered specs…';
 export const SPEC_CATALOG_ERROR_TITLE = 'Could not load the spec catalog';
 
 /** The fallback message when a failed read carried no explanation of its own. */
-export const SPEC_CATALOG_ERROR_FALLBACK = 'Could not load the spec catalog.';
+export const SPEC_CATALOG_ERROR_FALLBACK = 'Could not load the spec catalog. Refresh the page to try again.';
 
 /** Nothing has been discovered anywhere in the workspace. */
 export const SPEC_CATALOG_EMPTY_TITLE = 'No specs discovered yet';
@@ -390,9 +390,9 @@ export const SPEC_CATALOG_FILTERED_TITLE = 'No specs match these filters';
 export const SPEC_CATALOG_FILTERED_DESC =
   'Widen the search, or clear the filters to see the whole catalog.';
 
-/** The workspace gate: the catalog spans the repositories of exactly one tenant. */
+/** The workspace gate: the catalog spans the repositories of exactly one workspace. */
 export const SPEC_CATALOG_NO_TENANT =
-  'The spec catalog spans the repositories of one tenant, so pick one to see what has been discovered.';
+  'The spec catalog spans one workspace’s repositories. Pick one to see what was discovered.';
 
 /**
  * The note under the filter row.

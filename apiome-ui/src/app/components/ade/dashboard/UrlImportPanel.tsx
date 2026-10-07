@@ -103,7 +103,7 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
     } catch (error) {
       setFetchResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch specification'
+        error: error instanceof Error ? error.message : 'Failed to fetch specification. Refresh the page to try again.'
       });
     } finally {
       setIsFetching(false);
@@ -386,11 +386,14 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
             <AlertTriangle className="h-5 w-5 text-danger shrink-0 mt-0.5" />
             <div>
               <div className="font-medium text-danger">
-                Failed to Fetch Specification
+                The specification couldn’t be fetched
               </div>
               <div className="text-sm text-danger mt-1">
                 {fetchResult.error}
                 {fetchResult.statusCode && ` (HTTP ${fetchResult.statusCode})`}
+              </div>
+              <div className="text-sm text-danger-fg mt-1">
+                Check the URL is public and reachable, then fetch it again.
               </div>
             </div>
           </div>

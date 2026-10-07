@@ -21,7 +21,7 @@ export async function GET(
     );
     const { data, error, status } = await handleIdentityRestResponse(
       response,
-      'Failed to fetch related artifacts',
+      'Failed to fetch related artifacts. Refresh the page to try again.',
     );
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

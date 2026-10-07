@@ -187,7 +187,7 @@ export async function POST(
       body: JSON.stringify(payload),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to publish version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to publish version. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

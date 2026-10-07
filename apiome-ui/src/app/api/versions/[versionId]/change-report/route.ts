@@ -97,7 +97,7 @@ export async function GET(
     });
     const url = `${REST_API_BASE_URL}/versions/${encodeURIComponent(tenant.slug)}/${encodeURIComponent(projectId)}/${encodeURIComponent(versionId)}/change-report`;
     const response = await fetch(url, { method: 'GET', headers });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to load change report');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to load change report. Refresh the page to try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }
@@ -142,7 +142,7 @@ export async function PATCH(
     });
     const url = `${REST_API_BASE_URL}/versions/${encodeURIComponent(tenant.slug)}/${encodeURIComponent(projectId)}/${encodeURIComponent(versionId)}/change-report`;
     const response = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify(body) });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update change report');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update change report. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

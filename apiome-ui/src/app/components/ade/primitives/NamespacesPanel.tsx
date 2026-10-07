@@ -135,7 +135,7 @@ export default function NamespacesPanel({
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        onMessage('error', data.error || 'Failed to remove namespace');
+        onMessage('error', data.error || 'Failed to remove namespace. Try again.');
         return;
       }
 
@@ -151,7 +151,7 @@ export default function NamespacesPanel({
       await onRefresh();
     } catch (error) {
       console.error('Error removing namespace:', error);
-      onMessage('error', 'Failed to remove namespace');
+      onMessage('error', 'Failed to remove namespace. Try again.');
     } finally {
       setRemovingId(null);
     }
@@ -305,7 +305,7 @@ export default function NamespacesPanel({
         empty={
           <EmptyState
             icon={<FolderTree aria-hidden />}
-            title="No Namespaces Yet"
+            title="No namespaces yet"
             description="Create a tenant namespace to group your types under a scoped base URI."
             variant="compact"
           />

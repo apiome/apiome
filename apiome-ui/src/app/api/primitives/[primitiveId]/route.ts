@@ -122,7 +122,7 @@ export async function GET(
       { method: 'GET', headers }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch primitive');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch primitive. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -194,7 +194,7 @@ export async function PUT(
       }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update primitive');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update primitive. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -261,7 +261,7 @@ export async function DELETE(
       { method: 'DELETE', headers }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete primitive');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete primitive. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

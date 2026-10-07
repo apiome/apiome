@@ -122,7 +122,7 @@ export function useProjectionEvidence(
             throw new Error(
               typeof data?.error === 'string'
                 ? data.error
-                : 'Could not load the projection evidence.',
+                : 'Could not load the projection evidence. Refresh the page to try again.',
             );
           }
           if (token !== walkToken.current) return;
@@ -164,7 +164,7 @@ export function useProjectionEvidence(
         }
       } catch (e) {
         if (token !== walkToken.current) return;
-        setError(e instanceof Error ? e.message : 'Could not load the projection evidence.');
+        setError(e instanceof Error ? e.message : 'Could not load the projection evidence. Refresh the page to try again.');
       } finally {
         if (token === walkToken.current) setLoading(false);
       }

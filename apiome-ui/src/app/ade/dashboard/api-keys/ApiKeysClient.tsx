@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { BookOpen, KeyRound, Lock, Plus } from 'lucide-react';
+import { BookOpen, KeyRound, Plus } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import { loadTenantMembershipContext } from '@lib/auth/tenant-membership-context';
@@ -10,7 +10,7 @@ import { useShortcuts } from '@/app/hooks/useShortcuts';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
-import { EmptyState } from '@/app/components/ui/EmptyState';
+import { GatedState } from '@/app/components/ui/EmptyState';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { OPEN_ACTIONS, useOpenAction } from '@/app/components/shell/openActions';
@@ -69,7 +69,6 @@ import {
 const HOME_ROUTE = '/ade/dashboard';
 
 /** Where the reader picks a workspace, for the no-tenant state. */
-const TENANTS_ROUTE = '/ade/dashboard/tenants';
 
 /** The REST reference, which the header's secondary action opens. */
 const API_DOCS_ROUTE = '/ade/dashboard/help';
@@ -180,7 +179,7 @@ export default function ApiKeysClient() {
       setNow(new Date());
     } catch (error) {
       setKeys([]);
-      setLoadError(describeFailure(error, 'Failed to load API keys'));
+      setLoadError(describeFailure(error, 'Failed to load API keys. Refresh the page to try again.'));
     } finally {
       setLoading(false);
     }
@@ -257,7 +256,7 @@ export default function ApiKeysClient() {
         await loadKeys();
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to create API key');
+        return describeFailure(error, 'Failed to create API key. Try again.');
       }
     },
     [currentTenantId, loadKeys]
@@ -308,7 +307,7 @@ export default function ApiKeysClient() {
         return;
       }
       setWriteError('');
-      void runWrite(key, 'Failed to enable API key', () =>
+      void runWrite(key, 'Failed to enable API key. Try again.', () =>
         setApiKeyEnabled(key.id, true)
       ).then((failure) => {
         // The switch has no dialog of its own on the way *on*, so this one write reports to
@@ -321,12 +320,12 @@ export default function ApiKeysClient() {
 
   const handleDisable = React.useCallback(
     (key: ApiKeyRecord) =>
-      runWrite(key, 'Failed to disable API key', () => setApiKeyEnabled(key.id, false)),
+      runWrite(key, 'Failed to disable API key. Try again.', () => setApiKeyEnabled(key.id, false)),
     [runWrite]
   );
 
   const handleDelete = React.useCallback(
-    (key: ApiKeyRecord) => runWrite(key, 'Failed to delete API key', () => removeApiKey(key.id)),
+    (key: ApiKeyRecord) => runWrite(key, 'Failed to delete API key. Try again.', () => removeApiKey(key.id)),
     [runWrite]
   );
 
@@ -344,16 +343,7 @@ export default function ApiKeysClient() {
         />
         <PageBody>
           <div className="akey-gate" data-testid="api-keys-no-tenant">
-            <EmptyState
-              icon={<Lock aria-hidden />}
-              title="No workspace selected"
-              description="Please select a workspace before managing API keys."
-              action={
-                <Button asChild>
-                  <a href={TENANTS_ROUTE}>Go to Workspaces</a>
-                </Button>
-              }
-            />
+            <GatedState description="API keys belong to a workspace. Pick one to see its keys." />
           </div>
         </PageBody>
       </Page>

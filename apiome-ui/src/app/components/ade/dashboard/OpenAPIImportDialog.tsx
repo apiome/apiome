@@ -175,7 +175,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
       const parseResult = parseOpenAPISpec(content);
 
       if (!parseResult.success) {
-        setErrorMessage(parseResult.error || 'Failed to parse OpenAPI specification');
+        setErrorMessage(parseResult.error || 'Failed to parse OpenAPI specification. Check the file, then try again.');
         return;
       }
 
@@ -481,10 +481,10 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
         onClose();
         onSuccess();
       } else {
-        setErrorMessage(response.error || 'Failed to import project');
+        setErrorMessage(response.error || 'Failed to import project. Check the file, then try again.');
       }
     } catch (error: any) {
-      setErrorMessage(error.message || 'An error occurred during import');
+      setErrorMessage(error.message || 'The import stopped part-way. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -611,7 +611,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                   disabled={!urlInput.trim() || isLoading}
                 >
                   {isLoading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Link2 size={ICON_SIZE.button} />}
-                  {isLoading ? 'Fetching...' : 'Import from URL'}
+                  {isLoading ? 'Fetching…' : 'Import from URL'}
                 </button>
               </div>
               </Tabs.Content>
@@ -730,7 +730,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                         }}>
                           <TextField
                             size="small"
-                            placeholder="Search repositories..."
+                            placeholder="Search repositories…"
                             value={repoSearchQuery}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRepoSearchQuery(e.target.value)}
                             fullWidth
@@ -1329,7 +1329,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                 variant="contained"
                 disabled={(importMethod === 'file' && !file) || (importMethod === 'url' && !urlInput.trim()) || (importMethod === 'sso') || isLoading}
               >
-                {isLoading ? 'Loading...' : importMethod === 'file' ? 'Next' : 'Import'}
+                {isLoading ? 'Importing…' : importMethod === 'file' ? 'Next' : 'Import'}
               </Button>
             )}
             {step === 'review' && (
@@ -1347,7 +1347,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
             {step === 'details' && (
               <>
                 <Button onClick={() => setStep('summary')} disabled={isLoading}>Back</Button>
-                <Button onClick={handleImport} variant="contained" disabled={isLoading}>{isLoading ? 'Importing...' : 'Import Project'}</Button>
+                <Button onClick={handleImport} variant="contained" disabled={isLoading}>{isLoading ? 'Importing…' : 'Import Project'}</Button>
               </>
             )}
           </div>

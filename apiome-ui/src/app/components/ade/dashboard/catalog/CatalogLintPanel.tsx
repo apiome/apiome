@@ -608,7 +608,7 @@ export function CatalogLintPanel({
     try {
       loadedReport = await fetchCatalogLintReport(itemId, { signal: controller.signal });
     } catch (e) {
-      failureMessage = e instanceof Error ? e.message : 'Failed to load lint report.';
+      failureMessage = e instanceof Error ? e.message : 'Failed to load lint report. Refresh the page to try again.';
     } finally {
       if (controller.signal.aborted) {
         /* superseded by a newer fetch/unmount — leave state to the newer run. */
@@ -664,7 +664,7 @@ export function CatalogLintPanel({
         const detail =
           typeof json.detail === 'string'
             ? json.detail
-            : json.error || 'Failed to save waiver';
+            : json.error || 'Failed to save waiver. Try again.';
         throw new Error(detail);
       }
       setDecisionsById((prev) => ({
@@ -675,7 +675,7 @@ export function CatalogLintPanel({
       setWaiveRationale('');
       setWaiveExpiry('');
     } catch (e) {
-      setWaiveError(e instanceof Error ? e.message : 'Failed to save waiver');
+      setWaiveError(e instanceof Error ? e.message : 'Failed to save waiver. Try again.');
     } finally {
       setWaiveSaving(false);
     }
@@ -897,7 +897,7 @@ export function CatalogLintPanel({
         >
           <span className="flex items-center gap-2 text-danger-fg">
             <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-            {errorMessage || 'Failed to load lint report.'}
+            {errorMessage || 'Failed to load lint report. Refresh the page to try again.'}
           </span>
           <button
             type="button"

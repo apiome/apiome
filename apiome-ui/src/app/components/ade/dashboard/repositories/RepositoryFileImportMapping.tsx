@@ -370,7 +370,7 @@ export function RepositoryFileImportMapping({
       }
       setPayload(json);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not load file';
+      const msg = e instanceof Error ? e.message : 'Could not load file. Refresh the page to try again.';
       setError(msg);
       setPayload(null);
       toast.error(msg);
@@ -397,11 +397,11 @@ export function RepositoryFileImportMapping({
         throw new Error(typeof json.error === 'string' ? json.error : res.statusText);
       }
       if (!json.success || json.projects == null) {
-        throw new Error(typeof json.error === 'string' ? json.error : 'Failed to load projects');
+        throw new Error(typeof json.error === 'string' ? json.error : 'Failed to load projects. Refresh the page to try again.');
       }
       setProjectsList(parseProjectsList(json.projects));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not load projects';
+      const msg = e instanceof Error ? e.message : 'Could not load projects. Refresh the page to try again.';
       setProjectsError(msg);
       setProjectsList([]);
       toast.error(msg);
@@ -514,10 +514,10 @@ export function RepositoryFileImportMapping({
         await loadProjects();
         return response.project.id;
       }
-      toast.error(response.error ?? 'Failed to create project');
+      toast.error(response.error ?? 'Failed to create project. Try again.');
       return null;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to create project');
+      toast.error(e instanceof Error ? e.message : 'Failed to create project. Try again.');
       return null;
     }
   };

@@ -139,7 +139,7 @@ describe('QualityPolicyPanel', () => {
     expect(screen.getByTestId('quality-policy-import-mode')).toHaveTextContent('Advisory');
     expect(screen.getByTestId('quality-policy-export-mode')).toHaveTextContent('Advisory');
     expect(screen.getByLabelText('import minimum grade')).toHaveValue('');
-    expect(screen.getByText('No policy has been saved yet.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'No saved policy yet' })).toBeInTheDocument();
     expect(screen.getByText('No active waivers.')).toBeInTheDocument();
   });
 

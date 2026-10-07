@@ -161,7 +161,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
       );
       setHasPassword(Boolean(password));
     } catch {
-      setErrorMessage('Failed to load linked accounts');
+      setErrorMessage('Failed to load linked accounts. Refresh the page to try again.');
     } finally {
       setIsLoading(false);
     }
@@ -211,13 +211,13 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
           credentials: 'include',
         });
         if (!response.ok) {
-          const failure = await response.json().catch(() => ({ error: 'Unknown error' }));
-          setErrorMessage(`Failed to initiate account linking: ${failure.error || 'Unknown error'}`);
+          const failure = await response.json().catch(() => ({ error: 'the provider gave no reason' }));
+          setErrorMessage(`Couldn’t start linking (${failure.error || 'the provider gave no reason'}). Try again.`);
           return;
         }
         signIn(providerId, { callbackUrl: LINKED_ACCOUNTS_PATH });
       } catch {
-        setErrorMessage('An error occurred while linking the account');
+        setErrorMessage("Couldn’t link the account. Try again.");
       }
     },
     []
@@ -243,7 +243,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
       try {
         const failure = readActionError(
           await unlinkExternalAccount(userId as string, row.id),
-          'Failed to unlink account'
+          'Failed to unlink account. Try again.'
         );
         if (failure) {
           setErrorMessage(failure);
@@ -253,7 +253,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
         await loadLinkedAccounts();
       } catch (error) {
         setErrorMessage(
-          error instanceof Error ? error.message : 'An error occurred while unlinking the account'
+          error instanceof Error ? error.message : "Couldn’t unlink the account. Try again."
         );
       } finally {
         setIsBusy(false);
@@ -290,7 +290,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
       try {
         const failure = readActionError(
           await updatePersonalAccessToken(userId as string, patTarget.accountId, token),
-          'Failed to save Personal Access Token'
+          'Failed to save Personal Access Token. Try again.'
         );
         if (failure) return failure;
         setSuccessMessage(
@@ -301,7 +301,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
       } catch (error) {
         return error instanceof Error
           ? error.message
-          : 'An error occurred while saving the Personal Access Token';
+          : "Couldn’t save the personal access token. Check it and try again.";
       } finally {
         setIsBusy(false);
       }
@@ -328,7 +328,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
       try {
         const failure = readActionError(
           await removePersonalAccessToken(userId as string, account.id),
-          'Failed to remove Personal Access Token'
+          'Failed to remove Personal Access Token. Try again.'
         );
         if (failure) {
           setErrorMessage(failure);
@@ -340,7 +340,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : 'An error occurred while removing the Personal Access Token'
+            : "Couldn’t remove the personal access token. Try again."
         );
       } finally {
         setIsBusy(false);
@@ -353,7 +353,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
     return (
       <Page>
         <PageBody>
-          <LoadingState minHeightClassName="min-h-64" message="Loading linked accounts..." />
+          <LoadingState minHeightClassName="min-h-64" message="Loading linked accounts…" />
         </PageBody>
       </Page>
     );

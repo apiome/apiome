@@ -383,7 +383,7 @@ function DataTable<Row>({
   skeletonRows = DEFAULT_SKELETON_ROWS,
   loadingLabel = 'Loading…',
   error,
-  errorTitle = "Couldn't load this list",
+  errorTitle = 'Couldn’t load this list',
   onRetry,
   empty,
   toolbar,
@@ -634,7 +634,7 @@ function DataTable<Row>({
                         surface={false}
                         tone="neutral"
                         icon={<SearchX />}
-                        title="Nothing to show yet."
+                        title="Nothing here yet"
                         description="Add the first one, or clear a filter above."
                       />
                     )}

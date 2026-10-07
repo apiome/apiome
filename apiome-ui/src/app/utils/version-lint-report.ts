@@ -127,7 +127,7 @@ export async function fetchVersionLintReport(
   if (!response.ok || !data || data.success === false) {
     const message =
       (data && (data.error || data.detail)) || `Failed to load lint report (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load lint report');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load lint report. Refresh the page to try again.');
   }
   return data as VersionLintReport;
 }
@@ -153,7 +153,7 @@ export async function fetchCatalogLintReport(
   if (!response.ok || !data || data.success === false) {
     const message =
       (data && (data.error || data.detail)) || `Failed to load lint report (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load lint report');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load lint report. Refresh the page to try again.');
   }
   return data as VersionLintReport;
 }

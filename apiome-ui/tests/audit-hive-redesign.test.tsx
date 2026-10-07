@@ -595,7 +595,7 @@ describe('the states', () => {
     response = { ok: true, rows: [] };
     await renderPage();
 
-    expect(await screen.findByText('No audit events for this filter.')).toBeInTheDocument();
+    expect(await screen.findByText('No audit events for this filter')).toBeInTheDocument();
     expect(screen.getByTestId('audit-widen-range')).toBeInTheDocument();
   });
 
@@ -604,11 +604,11 @@ describe('the states', () => {
     await renderPage();
 
     const banner = await screen.findByTestId('audit-error');
-    expect(banner).toHaveTextContent('Failed to load audit log.');
+    expect(banner).toHaveTextContent('The audit log didn’t load.');
     expect(banner).toHaveTextContent('Nothing was lost — the ledger is append-only.');
     expect(banner).toHaveTextContent('Ledger unavailable');
     // The claim the old screen made instead.
-    expect(screen.queryByText('No audit events for this filter.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No audit events for this filter')).not.toBeInTheDocument();
   });
 
   it('retries the read from the banner', async () => {

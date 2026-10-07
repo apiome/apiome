@@ -103,7 +103,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
         if (cancelled) return;
         if (!json.success || !Array.isArray(json.changelogs)) {
           setSummaries(null);
-          setSummariesError(typeof json.error === 'string' ? json.error : 'Failed to load changelogs');
+          setSummariesError(typeof json.error === 'string' ? json.error : 'Failed to load changelogs. Refresh the page to try again.');
           return;
         }
         setSummaries(json.changelogs);
@@ -111,7 +111,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
       } catch (e) {
         if (!cancelled) {
           setSummaries(null);
-          setSummariesError(e instanceof Error ? e.message : 'Failed to load changelogs');
+          setSummariesError(e instanceof Error ? e.message : 'Failed to load changelogs. Refresh the page to try again.');
         }
       }
     })();
@@ -152,14 +152,14 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
         if (res.status === 404) {
           setDetailError(null);
         } else {
-          setDetailError(typeof json.error === 'string' ? json.error : 'Failed to load changelog');
+          setDetailError(typeof json.error === 'string' ? json.error : 'Failed to load changelog. Refresh the page to try again.');
         }
         return;
       }
       setDetail(json.changelog);
     } catch (e) {
       setDetail(null);
-      setDetailError(e instanceof Error ? e.message : 'Failed to load changelog');
+      setDetailError(e instanceof Error ? e.message : 'Failed to load changelog. Refresh the page to try again.');
     } finally {
       setDetailLoading(false);
     }
@@ -174,7 +174,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
     return (
       <EmptyState
         icon={<ScrollText />}
-        title="No Published Versions"
+        title="No published versions"
         description="Publish a version to see its classified changelog here."
       />
     );

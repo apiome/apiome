@@ -323,7 +323,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       }
       setTrusted(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not forget this device.');
+      setError(err instanceof Error ? err.message : 'Could not forget this device. Try again.');
     } finally {
       setBusy(false);
     }

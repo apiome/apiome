@@ -198,7 +198,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
       }
       setOtpSent(true);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Could not send the email code.');
+      setLocalError(err instanceof Error ? err.message : 'Could not send the email code. Try again.');
     } finally {
       setIsSendingOtp(false);
     }

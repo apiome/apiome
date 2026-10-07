@@ -41,7 +41,7 @@ export async function GET(
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      return restErrorResponse(data, response.status, 'Failed to load this version’s operations');
+      return restErrorResponse(data, response.status, 'Failed to load this version’s operations. Refresh the page to try again.');
     }
 
     return NextResponse.json({

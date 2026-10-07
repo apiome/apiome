@@ -106,7 +106,7 @@ export async function POST(
     });
     const url = `${REST_API_BASE_URL}/versions/${encodeURIComponent(tenant.slug)}/${encodeURIComponent(projectId)}/${encodeURIComponent(versionId)}/change-report/regenerate`;
     const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to regenerate change report');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to regenerate change report. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

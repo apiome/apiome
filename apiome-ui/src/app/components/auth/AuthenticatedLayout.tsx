@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { useAuthSession } from '@lib/auth/session-client';
 import { usePathname, useRouter } from 'next/navigation';
 import { buildLoginRedirect } from '@lib/auth/login-return-to';
+import { LoadingState } from '@/app/components/ui/LoadingState';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -44,7 +45,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+        <LoadingState message="Checking your session…" />
       </div>
     );
   }

@@ -86,7 +86,7 @@ export function BreakingPublishGuardrailPanel({
       onGuardrailChangeRef.current?.(assessment, null);
     } catch (e: unknown) {
       if (controller.signal.aborted) return;
-      const message = e instanceof Error ? e.message : 'Failed to load breaking-change guardrail';
+      const message = e instanceof Error ? e.message : 'Failed to load breaking-change guardrail. Refresh the page to try again.';
       setGuardrail(null);
       setError(message);
       setLoading(false);

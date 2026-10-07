@@ -132,7 +132,7 @@ async function getEnvelope<T>(url: string): Promise<Envelope<T>> {
   const response = await fetch(url, { cache: 'no-store' });
   const body = (await response.json().catch(() => ({}))) as Envelope<T>;
   if (!response.ok || body.success === false) {
-    throw new Error(body.error || 'Failed to read notifications');
+    throw new Error(body.error || 'Failed to read notifications. Refresh the page to try again.');
   }
   return body;
 }
@@ -218,7 +218,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
         setError(null);
       } catch (failure) {
         if (cancelled || keyRef.current !== requested) return;
-        setError(failure instanceof Error ? failure.message : 'Failed to read notifications');
+        setError(failure instanceof Error ? failure.message : 'Failed to read notifications. Refresh the page to try again.');
       }
     })();
 
@@ -281,7 +281,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
         setError(null);
       } catch (failure) {
         if (keyRef.current !== current.key) return;
-        setError(failure instanceof Error ? failure.message : 'Failed to read notifications');
+        setError(failure instanceof Error ? failure.message : 'Failed to read notifications. Refresh the page to try again.');
       } finally {
         setLoadingMore(false);
       }
@@ -312,7 +312,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
           unread: NotificationUnreadCounts;
         }>;
         if (!response.ok || payload.success === false) {
-          throw new Error(payload.error || 'Failed to mark notifications read');
+          throw new Error(payload.error || 'Failed to mark notifications read. Try again.');
         }
         setCounts(parseUnreadCounts(payload.unread));
         setError(null);
@@ -330,7 +330,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
         );
       } catch (failure) {
         setError(
-          failure instanceof Error ? failure.message : 'Failed to mark notifications read'
+          failure instanceof Error ? failure.message : 'Failed to mark notifications read. Try again.'
         );
       }
     },

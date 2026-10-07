@@ -202,7 +202,7 @@ function LintWorkspacePageInner() {
       );
     } catch (caught) {
       setPage(null);
-      setError(describeFailure(caught, 'Could not load the findings queue.'));
+      setError(describeFailure(caught, 'Could not load the findings queue. Refresh the page to try again.'));
     } finally {
       setLoading(false);
     }
@@ -387,7 +387,7 @@ function LintWorkspacePageInner() {
         toast.success(`Saved view “${name}”`);
         void loadViews();
       } catch (caught) {
-        toast.error(describeFailure(caught, 'Could not save the view'));
+        toast.error(describeFailure(caught, 'Could not save the view. Try again.'));
       }
     },
     [filters, sort, loadViews]
@@ -436,7 +436,7 @@ function LintWorkspacePageInner() {
           description="Catalog-wide lint findings with ownership, waiver review and remediation trends."
         />
         <PageBody>
-          <GatedState description="Select a tenant to review its catalog-wide lint posture." />
+          <GatedState description="Lint posture belongs to one workspace. Pick one to review it." />
         </PageBody>
       </Page>
     );

@@ -47,13 +47,22 @@ describe('ScoreBreakdownPanel', () => {
 
   it('shows an error state', () => {
     render(<ScoreBreakdownPanel report={null} loading={false} error="Upstream 502" />);
-    expect(screen.getByText('Score breakdown unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Score breakdown unavailable');
     expect(screen.getByText('Upstream 502')).toBeInTheDocument();
+    // HIVE-10.4: an error names a next step — a retry, falling back to a page reload.
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
-  it('shows the unavailable state for an unscored snapshot (null report)', () => {
+  it('re-runs the load through onRetry when the owner provides one', () => {
+    const onRetry = jest.fn();
+    render(<ScoreBreakdownPanel report={null} loading={false} error="Upstream 502" onRetry={onRetry} />);
+    screen.getByRole('button', { name: /try again/i }).click();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the not-scored state for an unscored snapshot (null report)', () => {
     render(<ScoreBreakdownPanel report={null} loading={false} error={null} />);
-    expect(screen.getByText('Score breakdown unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Not scored yet')).toBeInTheDocument();
     expect(screen.getByText(/has not been scored yet/i)).toBeInTheDocument();
   });
 
@@ -105,7 +114,7 @@ describe('ScoreBreakdownPanel', () => {
     const clean = report({ score: 100, grade: 'A', findings: [], ruleHits: {}, severityCounts: { error: 0, warning: 0, info: 0 } });
     render(<ScoreBreakdownPanel report={clean} loading={false} error={null} />);
     expect(screen.getByText('No findings')).toBeInTheDocument();
-    expect(screen.getByText(/clean bill of health/i)).toBeInTheDocument();
+    expect(screen.getByText(/passes every lint rule/i)).toBeInTheDocument();
     // No point-cost breakdown is rendered for a clean report.
     expect(screen.queryByText('Points lost by rule group')).not.toBeInTheDocument();
   });

@@ -335,7 +335,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, 
         const content = await selectedFile.text();
         const parsed = parseSchemaContent(content);
         if (!parsed) {
-          setParseError('Failed to parse file. Please ensure it contains valid JSON or YAML.');
+          setParseError('Failed to parse file. Please ensure it contains valid JSON or YAML. Check the file, then try again.');
           setFile(null);
           return;
         }
@@ -409,7 +409,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, 
       const content = await response.text();
       const parsed = parseSchemaContent(content);
       if (!parsed) {
-        setParseError('Failed to parse response. Please ensure the URL returns valid JSON or YAML.');
+        setParseError('Failed to parse response. Please ensure the URL returns valid JSON or YAML. Check the file, then try again.');
         return;
       }
       setSchemaText(JSON.stringify(parsed, null, 2));
@@ -474,7 +474,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setReviewError(data.error || 'Failed to review import');
+        setReviewError(data.error || 'Failed to review import. Refresh the page to try again.');
         return;
       }
 
@@ -543,7 +543,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setReviewError(data.error || 'Failed to import primitives');
+        setReviewError(data.error || 'Failed to import primitives. Check the file, then try again.');
         return;
       }
 

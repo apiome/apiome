@@ -418,7 +418,7 @@ describe('ordering and searching the remote list', () => {
 
   it('keeps the mockup’s state sentences verbatim', () => {
     expect(REPOS_LOADING).toBe('Loading repositories…');
-    expect(REPOS_EMPTY).toBe('No repositories returned for this account.');
+    expect(REPOS_EMPTY).toBe('No repositories on this account');
     expect(repoSearchPlaceholder('ada-lovelace')).toBe('Search repositories for ada-lovelace…');
     expect(reposSearchMiss(' orders ')).toBe('No repositories match “orders”.');
     expect(REPO_CARD_HINT).toContain('group / repository');

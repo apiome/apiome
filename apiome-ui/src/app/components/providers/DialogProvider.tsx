@@ -95,7 +95,7 @@ interface DialogState<TOptions, TResult> {
 }
 
 /** The message to show when a `perform` throws something that is not an `Error`. */
-const UNKNOWN_FAILURE = 'Something went wrong. Please try again.';
+const UNKNOWN_FAILURE = 'That didn’t go through. Try again.';
 
 /**
  * Read a thrown value as a sentence for the dialog.

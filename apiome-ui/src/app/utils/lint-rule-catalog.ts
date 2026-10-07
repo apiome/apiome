@@ -76,7 +76,7 @@ export async function fetchLintRuleCatalog(options?: { signal?: AbortSignal }): 
   if (!response.ok || !data) {
     const message =
       (data && (data.error || data.detail)) || `Failed to load lint rule catalog (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load lint rule catalog');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load lint rule catalog. Refresh the page to try again.');
   }
   const catalog = lintRuleCatalogFromPayload(data);
   if (!catalog) throw new Error('Malformed lint rule catalog response');

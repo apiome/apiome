@@ -68,7 +68,7 @@ export async function POST(
     );
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      return restErrorResponse(data, response.status, 'Failed to render the mock preview');
+      return restErrorResponse(data, response.status, 'Failed to render the mock preview. Check the file, then try again.');
     }
 
     return NextResponse.json({ success: true, preview: data });

@@ -355,7 +355,7 @@ describe('Import Actions - getImportStatus Integration', () => {
           ts: Date.now(),
           level: 'error',
           code: 'IMPORT_ERROR',
-          message: 'Failed to create project'
+          message: 'Failed to create project. Try again.'
         }
       ]
     };

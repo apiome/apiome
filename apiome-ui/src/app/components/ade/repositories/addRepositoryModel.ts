@@ -649,7 +649,7 @@ export const REPO_CARD_TITLE = 'Choose a repository';
 export const REPO_CARD_HINT =
   'Each row lists group / repository (organization or user, then repo name). Private repositories show a lock, and the provider’s description follows the name.';
 export const REPOS_LOADING = 'Loading repositories…';
-export const REPOS_EMPTY = 'No repositories returned for this account.';
+export const REPOS_EMPTY = 'No repositories on this account';
 export const REPOS_LOAD_ERROR = 'Could not load repositories. Check your connection and try again.';
 
 /**

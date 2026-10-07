@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Package,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   getAllLicenses,
   createLicense,
@@ -44,6 +45,7 @@ import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { LoadingState } from '@/app/components/ui/LoadingState';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -466,7 +468,12 @@ function LicenseForm({ existing, allFlags, onSave, onCancel }: LicenseFormProps)
           Toggle which applications appear on the home page and top navigation for users assigned this license.
         </p>
         {allFlags.length === 0 ? (
-          <p className="text-xs text-gray-500 italic">No feature flags defined yet.</p>
+          <EmptyState
+            variant="inline"
+            icon={<Flag aria-hidden />}
+            title="No feature flags yet"
+            description="Create feature flags first, then assign them to this license."
+          />
         ) : (
           <div className="space-y-4">
             {(['products', 'features'] as const).map((section) => {
@@ -929,7 +936,7 @@ export default function LicenseManagementClient({
       const gd = JSON.parse(gr);
       setFlagGroups(gd.success ? (gd.groups ?? []) : []);
     } catch {
-      showMessage('error', 'Failed to load data');
+      showMessage('error', 'Failed to load data. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -1042,9 +1049,13 @@ export default function LicenseManagementClient({
       <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">License Management</h2>
+            {/* A noun for the route it is mounted on (DESIGN.md §10): this one component serves
+                /licenses and /feature-flags. */}
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {initialTab === 'featureFlags' ? 'Feature flags' : 'Licenses'}
+            </h2>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              Define license plans, feature flags, flag packages for bulk grants, and assign licenses to users
+              License plans, feature flags and flag packages, and who holds which.
             </p>
           </div>
           <button onClick={loadAll} disabled={loading} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 transition-colors disabled:opacity-50">
@@ -1105,7 +1116,7 @@ export default function LicenseManagementClient({
             </div>
 
             {loading ? (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-12">Loading…</div>
+              <LoadingState message="Loading licenses…" />
             ) : licenses.length === 0 ? (
               <div className="py-12 text-center text-gray-500 dark:text-slate-400">No license plans defined.</div>
             ) : (
@@ -1217,18 +1228,23 @@ export default function LicenseManagementClient({
             </div>
 
             {loading ? (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-12">Loading…</div>
+              <LoadingState message="Loading feature flags…" />
             ) : featureFlags.length === 0 ? (
-              <div className="py-12 text-center text-gray-500 dark:text-slate-400 space-y-4">
-                <p>No feature flags defined yet.</p>
-                <button
-                  type="button"
-                  onClick={() => { setEditingFlag(null); setFlagModal('create'); }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Create your first feature flag
-                </button>
-              </div>
+              <EmptyState
+                variant="compact"
+                icon={<Flag aria-hidden />}
+                title="No feature flags yet"
+                description="Flags gate products and features per license."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => { setEditingFlag(null); setFlagModal('create'); }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Create your first feature flag
+                  </button>
+                }
+              />
             ) : (
               <div className="space-y-2">
                 {featureFlags.map(ff => (
@@ -1308,7 +1324,7 @@ export default function LicenseManagementClient({
             </div>
 
             {loading ? (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-12">Loading…</div>
+              <LoadingState message="Loading flag packages…" />
             ) : flagGroups.length === 0 ? (
               <div className="py-12 text-center text-gray-500 dark:text-slate-400">
                 No flag packages yet. Create one to group several feature flags for faster grants on users.
@@ -1334,7 +1350,13 @@ export default function LicenseManagementClient({
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{g.description}</p>
                       )}
                       {g.feature_flags.length === 0 ? (
-                        <p className="text-xs text-gray-600 italic mt-2">No flags in this package yet.</p>
+                        <EmptyState
+                          variant="inline"
+                          className="mt-2"
+                          icon={<Package aria-hidden />}
+                          title="No flags in this package"
+                          description="Edit the package to add feature flags."
+                        />
                       ) : (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {g.feature_flags.map(ff => (
@@ -1391,7 +1413,7 @@ export default function LicenseManagementClient({
             </div>
 
             {loading ? (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-12">Loading…</div>
+              <LoadingState message="Loading license assignments…" />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                 <table className="w-full text-sm">

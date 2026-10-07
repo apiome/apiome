@@ -304,7 +304,7 @@ export function VersionBindingPanel({
         <EmptyState
           className="bnd-state"
           title="This project has no versions yet"
-          description="Create a version first; a binding makes one draft the review unit of a branch."
+          description="Create a version first; bindings make one draft the review unit of a branch."
         />
       </section>
     );
@@ -395,7 +395,7 @@ export function VersionBindingPanel({
         <EmptyState
           className="bnd-state"
           title="This version is not bound to a branch"
-          description="Bind it to make one repository ref and source path the review unit of this draft."
+          description="Bind it so one repository ref and source path become this draft’s review unit."
         />
       ) : null}
 

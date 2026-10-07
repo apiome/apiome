@@ -122,7 +122,7 @@ export async function GET(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch properties');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch properties. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -192,7 +192,7 @@ export async function POST(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create property');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to create property. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

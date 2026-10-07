@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to fetch migration plan rules';
+      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to fetch migration plan rules. Refresh the page to try again.';
       return NextResponse.json({ success: false, error: message }, { status: response.status });
     }
     return NextResponse.json({ success: true, rules: data.rules ?? {} });
@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to save migration plan rules';
+      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to save migration plan rules. Try again.';
       return NextResponse.json({ success: false, error: message }, { status: response.status });
     }
     return NextResponse.json({ success: true });

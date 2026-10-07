@@ -84,7 +84,7 @@ export function StackedTimeline({
   const summary =
     periods
       .map((p) => `${p.label}: ${columnTotal(p)}`)
-      .join(', ') || 'No data';
+      .join(', ') || 'Nothing recorded in this range';
   const label = title ?? `Stacked timeline — ${summary}`;
   const hitLabel = (p: StackPeriod, i: number) =>
     periodActionLabel ? periodActionLabel(p, i) : p.label;

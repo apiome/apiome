@@ -44,6 +44,7 @@ import {
   type McpLintScoreCategory,
   type McpLintTier,
 } from '@/app/components/ade/dashboard/mcp/mcpLintUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 /** Invoked when a finding links to its offending capability item (deep-link to the Capabilities tab). */
 export type McpScoreNavigateToItem = (itemType: string, name: string) => void;
@@ -53,6 +54,8 @@ interface Props {
   report: McpLintReport | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
   /** Deep-link a finding to its offending capability item on the Capabilities tab (optional). */
   onNavigateToItem?: McpScoreNavigateToItem;
 }
@@ -141,20 +144,27 @@ function FindingLinkRow({
  * the breakdown reconstructs the report faithfully, the severity counts match, and legacy / empty
  * reports degrade gracefully.
  */
-export function ScoreBreakdownPanel({ report, loading, error, onNavigateToItem }: Props) {
+export function ScoreBreakdownPanel({ report, loading, error, onNavigateToItem, onRetry }: Props) {
   if (loading && !report) {
     return <LoadingState minHeightClassName="min-h-[200px]" message="Loading score breakdown…" />;
   }
-  if (error || !report) {
+  if (error) {
+    return (
+      <ErrorState
+        variant="compact"
+        title="Score breakdown unavailable"
+        description={error}
+        onRetry={onRetry ?? reloadPage}
+      />
+    );
+  }
+  if (!report) {
     return (
       <EmptyState
         variant="compact"
         icon={<ShieldCheck className="h-8 w-8 text-fg-on-accent" aria-hidden />}
-        title="Score breakdown unavailable"
-        description={
-          error ??
-          "This snapshot has not been scored yet, so there is no grade to break down. Run discovery to capture a quality report."
-        }
+        title="Not scored yet"
+        description="This snapshot has not been scored yet. Run discovery to capture a quality report."
       />
     );
   }
@@ -214,7 +224,7 @@ export function ScoreBreakdownPanel({ report, loading, error, onNavigateToItem }
           variant="compact"
           icon={<CheckCircle2 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
           title="No findings"
-          description="This snapshot's surface passes every lint rule — a clean bill of health, nothing deducted the grade."
+          description="This snapshot passes every lint rule, so nothing deducted from its grade."
         />
       ) : (
         <>

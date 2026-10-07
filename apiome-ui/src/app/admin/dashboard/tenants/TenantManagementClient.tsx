@@ -19,6 +19,7 @@ import {
   Edit,
   Power,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   getTenantStats,
   getTenantUsers,
@@ -35,6 +36,7 @@ import {
 } from '../../../../../lib/db/admin-helper';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { LoadingState } from '@/app/components/ui/LoadingState';
 
 interface Tenant {
   id: string;
@@ -114,7 +116,7 @@ export default function TenantManagementClient() {
       }
     } catch (error) {
       console.error('Error loading tenants:', error);
-      showMessage('error', 'Failed to load tenants');
+      showMessage('error', 'Failed to load tenants. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -204,11 +206,11 @@ export default function TenantManagementClient() {
         setNewTenant({ name: '', description: '', slug: '', initialUserId: '', makeAdmin: false });
         await loadTenants();
       } else {
-        showMessage('error', data.error || 'Failed to create tenant');
+        showMessage('error', data.error || 'Failed to create tenant. Try again.');
       }
     } catch (error) {
       console.error('Error creating tenant:', error);
-      showMessage('error', 'Failed to create tenant');
+      showMessage('error', 'Failed to create tenant. Try again.');
     }
   };
 
@@ -224,11 +226,11 @@ export default function TenantManagementClient() {
           setSelectedTenant({ ...selectedTenant, enabled: !tenant.enabled });
         }
       } else {
-        showMessage('error', data.error || 'Failed to update tenant');
+        showMessage('error', data.error || 'Failed to update tenant. Try again.');
       }
     } catch (error) {
       console.error('Error updating tenant:', error);
-      showMessage('error', 'Failed to update tenant');
+      showMessage('error', 'Failed to update tenant. Try again.');
     }
   };
 
@@ -269,11 +271,11 @@ export default function TenantManagementClient() {
           });
         }
       } else {
-        showMessage('error', data.error || 'Failed to rename tenant');
+        showMessage('error', data.error || 'Failed to rename tenant. Try again.');
       }
     } catch (error) {
       console.error('Error renaming tenant:', error);
-      showMessage('error', 'Failed to rename tenant');
+      showMessage('error', 'Failed to rename tenant. Try again.');
     }
   };
 
@@ -305,11 +307,11 @@ export default function TenantManagementClient() {
           setTenantUsers([]);
         }
       } else {
-        showMessage('error', data.error || 'Failed to delete tenant');
+        showMessage('error', data.error || 'Failed to delete tenant. Try again.');
       }
     } catch (error) {
       console.error('Error deleting tenant:', error);
-      showMessage('error', 'Failed to delete tenant');
+      showMessage('error', 'Failed to delete tenant. Try again.');
     }
   };
 
@@ -326,11 +328,11 @@ export default function TenantManagementClient() {
         await loadTenantUsers(selectedTenant.id);
         await loadTenants();
       } else {
-        showMessage('error', data.error || 'Failed to add user');
+        showMessage('error', data.error || 'Failed to add user. Try again.');
       }
     } catch (error) {
       console.error('Error adding user:', error);
-      showMessage('error', 'Failed to add user');
+      showMessage('error', 'Failed to add user. Try again.');
     }
   };
 
@@ -356,11 +358,11 @@ export default function TenantManagementClient() {
         await loadTenantUsers(selectedTenant.id);
         await loadTenants();
       } else {
-        showMessage('error', data.error || 'Failed to remove user');
+        showMessage('error', data.error || 'Failed to remove user. Try again.');
       }
     } catch (error) {
       console.error('Error removing user:', error);
-      showMessage('error', 'Failed to remove user');
+      showMessage('error', 'Failed to remove user. Try again.');
     }
   };
 
@@ -378,11 +380,11 @@ export default function TenantManagementClient() {
         await loadTenantUsers(selectedTenant.id);
         await loadTenants();
       } else {
-        showMessage('error', data.error || 'Failed to update admin status');
+        showMessage('error', data.error || 'Failed to update admin status. Try again.');
       }
     } catch (error) {
       console.error('Error updating admin status:', error);
-      showMessage('error', 'Failed to update admin status');
+      showMessage('error', 'Failed to update admin status. Try again.');
     }
   };
 
@@ -400,8 +402,8 @@ export default function TenantManagementClient() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tenant Management</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage tenants and assign users</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tenants</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Every tenant on the platform, and who belongs to each.</p>
             </div>
             <button
               onClick={() => setShowCreateDialog(true)}
@@ -513,14 +515,15 @@ export default function TenantManagementClient() {
               </div>
               <div className="max-h-[600px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
                 {loading ? (
-                  <div className="p-12 text-center">
-                    <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto" />
-                  </div>
+                  <LoadingState message="Loading tenants…" />
                 ) : tenants.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400 text-sm">No tenants found</p>
-                  </div>
+                  <EmptyState
+                    variant="compact"
+                    surface={false}
+                    icon={<Building2 aria-hidden />}
+                    title="No tenants"
+                    description="Create a tenant, or clear the search."
+                  />
                 ) : (
                   tenants.map((tenant) => (
                     <div
@@ -810,7 +813,7 @@ export default function TenantManagementClient() {
                   value={newTenant.description}
                   onChange={(e) => setNewTenant({ ...newTenant, description: e.target.value })}
                   className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
-                  placeholder="Description of the tenant..."
+                  placeholder="Description of the tenant…"
                 />
               </div>
 
@@ -932,7 +935,7 @@ export default function TenantManagementClient() {
                   value={renameData.description}
                   onChange={(e) => setRenameData({ ...renameData, description: e.target.value })}
                   className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
-                  placeholder="Description of the tenant..."
+                  placeholder="Description of the tenant…"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">

@@ -114,7 +114,7 @@ export default function CreateAgentKeyDialog({
       .catch((err: unknown) => {
         if (cancelled) return;
         setChoices([]);
-        setError(err instanceof Error ? err.message : 'Failed to load the toolset’s tools');
+        setError(err instanceof Error ? err.message : 'Failed to load the toolset’s tools. Refresh the page to try again.');
       })
       .finally(() => {
         if (!cancelled) setToolsLoading(false);

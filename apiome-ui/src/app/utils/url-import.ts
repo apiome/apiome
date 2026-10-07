@@ -455,7 +455,7 @@ export async function fetchSpecificationFromUrl(options: UrlImportOptions): Prom
     }
     return {
       success: false,
-      error: 'An unexpected error occurred'
+      error: "The URL couldn’t be imported. Check it and try again."
     };
   }
 }
@@ -558,7 +558,7 @@ export async function testUrlAccessibility(options: UrlImportOptions): Promise<{
     }
     return {
       accessible: false,
-      error: 'An unexpected error occurred'
+      error: "The URL couldn’t be imported. Check it and try again."
     };
   }
 }

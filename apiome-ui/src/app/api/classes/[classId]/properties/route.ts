@@ -124,7 +124,7 @@ export async function POST(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to add property to class');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to add property to class. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

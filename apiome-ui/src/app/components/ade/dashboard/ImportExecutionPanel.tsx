@@ -329,11 +329,11 @@ export default function ImportExecutionPanel({
             <>
               <Button variant="success" onClick={onAccept} disabled={isCommitting || isRollingBack}>
                 <CheckCircle2 aria-hidden />
-                {isCommitting ? 'Committing...' : 'Accept & commit'}
+                {isCommitting ? 'Committing…' : 'Accept & commit'}
               </Button>
               <Button variant="danger-soft" onClick={onReject} disabled={isCommitting || isRollingBack}>
                 <XCircle aria-hidden />
-                {isRollingBack ? 'Rolling back...' : 'Reject & rollback'}
+                {isRollingBack ? 'Rolling back…' : 'Reject & rollback'}
               </Button>
             </>
           ) : state === 'failed' || state === 'canceled' ? (
@@ -341,7 +341,7 @@ export default function ImportExecutionPanel({
               {onRetry && (
                 <Button variant="primary" onClick={onRetryClick} disabled={isRetrying}>
                   <RotateCw className={isRetrying ? 'animate-spin' : undefined} aria-hidden />
-                  {isRetrying ? 'Starting retry...' : 'Retry import'}
+                  {isRetrying ? 'Starting retry…' : 'Retry import'}
                 </Button>
               )}
               <Button variant="outline" onClick={onCancel} disabled={isRetrying}>

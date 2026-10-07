@@ -269,7 +269,7 @@ describe('FirstTenantOnboardingWizard: summary step', () => {
     fillOrganizationStep('Acme Corp');
     fireEvent.click(await screen.findByRole('button', { name: /create organization/i }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/organization wasn’t created/i);
     consoleError.mockRestore();
   });
 });

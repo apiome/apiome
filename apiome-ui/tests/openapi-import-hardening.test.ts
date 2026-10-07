@@ -2,7 +2,7 @@
  * Hardening tests for OpenAPI 3.0 / 3.1 import (parseOpenAPISpec).
  *
  * These cases previously caused the entire import to fail with a generic
- * "Failed to parse OpenAPI specification" error or to silently corrupt data.
+ * "Failed to parse OpenAPI specification. Check the file, then try again." error or to silently corrupt data.
  * The expectation now is that a single bad schema yields an unsupported
  * class with a per-schema warning while the remainder of the document is
  * still importable.

@@ -28,12 +28,15 @@ import {
   type McpEvolutionPoint,
 } from '@/app/components/ade/dashboard/mcp/mcpEvolutionUi';
 import { mcpVersionSeqLabel } from '@/app/components/ade/dashboard/mcp/mcpVersionsUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The endpoint's evolution series (oldest-first), or `null` while it has not loaded. */
   series: readonly McpEvolutionPoint[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
   /** Called with a snapshot's `version_id` when its column is activated, to open its diff. */
   onSelectVersion: (versionId: string) => void;
 }
@@ -60,17 +63,17 @@ function LegendSwatch({ toneKey, label }: { toneKey: string; label: string }) {
  * seeded change history, a zero-churn version still positions on the axis, and a click deep-links to
  * the diff).
  */
-export function CapabilityChurnPanel({ series, loading, error, onSelectVersion }: Props) {
+export function CapabilityChurnPanel({ series, loading, error, onSelectVersion, onRetry }: Props) {
   if (loading && !series) {
     return <LoadingState minHeightClassName="min-h-[180px]" message="Loading churn timeline…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Churn timeline unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -81,7 +84,7 @@ export function CapabilityChurnPanel({ series, loading, error, onSelectVersion }
         variant="compact"
         icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No history yet"
-        description="This endpoint has no recorded snapshots to chart. Run discovery to start building its evolution history."
+        description="No snapshots recorded yet. Run discovery to start building its evolution history."
       />
     );
   }

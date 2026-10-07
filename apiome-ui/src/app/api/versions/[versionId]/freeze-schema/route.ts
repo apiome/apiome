@@ -100,7 +100,7 @@ export async function POST(
       { method: 'POST', headers }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to freeze schema');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to freeze schema. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

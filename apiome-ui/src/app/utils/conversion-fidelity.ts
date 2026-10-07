@@ -329,7 +329,7 @@ export async function fetchConversionDryRun(
     }),
     signal: options?.signal,
   });
-  return readConversionResponse<ConversionDryRunResult>(response, 'Failed to preview conversion');
+  return readConversionResponse<ConversionDryRunResult>(response, 'Failed to preview conversion. Try again.');
 }
 
 /**
@@ -351,5 +351,5 @@ export async function commitConversion(
     }),
     signal: options?.signal,
   });
-  return readConversionResponse<ConversionCommitResult>(response, 'Failed to convert');
+  return readConversionResponse<ConversionCommitResult>(response, 'Failed to convert. Check the file, then try again.');
 }

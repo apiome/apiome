@@ -375,7 +375,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
       } catch (e) {
         if (!mountedRef.current) return;
         setLintReport(null);
-        setLintError(e instanceof Error ? e.message : 'Could not load lint report.');
+        setLintError(e instanceof Error ? e.message : 'Could not load lint report. Refresh the page to try again.');
       } finally {
         if (mountedRef.current) setLintLoading(false);
       }
@@ -413,7 +413,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
     } catch (e) {
       console.error(e);
       if (!mountedRef.current) return;
-      setError(e instanceof Error ? e.message : 'Could not load endpoint.');
+      setError(e instanceof Error ? e.message : 'Could not load endpoint. Refresh the page to try again.');
       setEndpoint(null);
       setVersion(null);
       setLintReport(null);
@@ -798,7 +798,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 <EmptyState
                   icon={<Radar aria-hidden />}
                   title="Not yet discovered"
-                  description="This endpoint has no current version snapshot. Run discovery to populate its tools, resources, and prompts."
+                  description="No version snapshot yet. Run discovery to load its tools, resources, and prompts."
                   action={
                     <Button type="button" onClick={() => void rediscover()} disabled={busy !== null}>
                       <Radar aria-hidden />

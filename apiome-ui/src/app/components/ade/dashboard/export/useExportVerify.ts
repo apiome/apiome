@@ -164,7 +164,7 @@ export function useExportVerify(
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not verify this export.',
+            typeof data?.error === 'string' ? data.error : 'Could not verify this export. Try again.',
           );
         }
         // Cache the measurement even when it has been superseded: it is a valid verdict for the
@@ -177,7 +177,7 @@ export function useExportVerify(
         setSettled({
           key,
           result: null,
-          error: e instanceof Error ? e.message : 'Could not verify this export.',
+          error: e instanceof Error ? e.message : 'Could not verify this export. Try again.',
           fromCache: false,
         });
       } finally {

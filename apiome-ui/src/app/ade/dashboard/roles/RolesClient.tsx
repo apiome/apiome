@@ -205,7 +205,7 @@ export default function RolesClient() {
       return rolesData;
     } catch (e) {
       setRoles([]);
-      setError(e instanceof Error ? e.message : 'Failed to load roles');
+      setError(e instanceof Error ? e.message : 'Failed to load roles. Refresh the page to try again.');
       return [];
     } finally {
       setLoading(false);
@@ -346,7 +346,7 @@ export default function RolesClient() {
   const handleSave = React.useCallback(async (): Promise<string | null> => {
     if (!selectedRole) return null;
     const role = selectedRole;
-    return runWrite('Failed to save changes', async () => {
+    return runWrite('Failed to save changes. Try again.', async () => {
       await updateRole(role.id, {
         name: draft.name.trim() || role.name,
         description: draft.description,
@@ -365,7 +365,7 @@ export default function RolesClient() {
   const handleCreate = React.useCallback(
     async (input: { name: string; copyFromId: string }): Promise<string | null> => {
       const source = roles.find((role) => role.id === input.copyFromId) ?? null;
-      return runWrite('Failed to create the role', async () => {
+      return runWrite('Failed to create the role. Try again.', async () => {
         const created = await createRole({
           name: input.name,
           description: '',
@@ -381,7 +381,7 @@ export default function RolesClient() {
     async (name: string): Promise<string | null> => {
       if (!selectedRole) return null;
       const source = selectedRole;
-      return runWrite('Failed to duplicate the role', async () => {
+      return runWrite('Failed to duplicate the role. Try again.', async () => {
         const clone = await duplicateRole(source.id, name);
         return clone?.id ?? null;
       });
@@ -394,7 +394,7 @@ export default function RolesClient() {
     // there" rule finds the deleted id gone and falls to the first role, which is the state
     // the pane should be in.
     (roleId: string): Promise<string | null> =>
-      runWrite('Failed to delete the role', () => deleteRole(roleId)),
+      runWrite('Failed to delete the role. Try again.', () => deleteRole(roleId)),
     [runWrite]
   );
 

@@ -268,7 +268,7 @@ export default function RepositoriesClient() {
         toast.success('Repository removed.');
         await loadRepositories();
       } catch (caught) {
-        toast.error(caught instanceof Error ? caught.message : 'Could not remove repository.');
+        toast.error(caught instanceof Error ? caught.message : 'Could not remove repository. Try again.');
       } finally {
         setBusy(false);
       }
@@ -391,7 +391,7 @@ export default function RepositoriesClient() {
       variant="compact"
       surface={false}
       title="No repositories yet"
-      description="Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and file indexing appear here."
+      description="Connect one via a linked account or public clone URL to scan it."
       action={
         <Button asChild data-testid="repositories-empty-add">
           <Link href={ADD_REPOSITORY_HREF}>

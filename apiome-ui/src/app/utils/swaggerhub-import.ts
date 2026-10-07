@@ -84,7 +84,7 @@ export async function fetchFromSwaggerHub(options: SwaggerHubImportOptions): Pro
       if (!versionResult.success || !versionResult.version) {
         return {
           success: false,
-          error: versionResult.error || 'Failed to determine latest version'
+          error: versionResult.error || 'Failed to determine latest version. Try again.'
         };
       }
       targetVersion = versionResult.version;
@@ -158,7 +158,7 @@ export async function fetchFromSwaggerHub(options: SwaggerHubImportOptions): Pro
     console.error('SwaggerHub import error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch from SwaggerHub'
+      error: error instanceof Error ? error.message : 'Failed to fetch from SwaggerHub. Refresh the page to try again.'
     };
   }
 }
@@ -217,12 +217,12 @@ async function getLatestVersion(owner: string, api: string, apiKey?: string): Pr
 
     return {
       success: false,
-      error: 'Could not determine latest version'
+      error: 'Could not determine latest version. Try again.'
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch API version info'
+      error: error instanceof Error ? error.message : 'Failed to fetch API version info. Refresh the page to try again.'
     };
   }
 }

@@ -157,7 +157,7 @@ export async function fetchCommentThreadPage(
   }
   if (!response.ok) {
     throw new RestCommentThreadsError(
-      restErrorMessage(payload, raw || 'Failed to load comment threads'),
+      restErrorMessage(payload, raw || 'Failed to load comment threads. Refresh the page to try again.'),
       response.status || 502
     );
   }

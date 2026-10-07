@@ -388,11 +388,11 @@ export function visibilityChangedToast(next: PublishedVisibility): string {
  */
 export function visibilityErrorMessage(reason: string | null | undefined): string {
   const detail = reason?.trim();
-  return detail ? `Failed to update visibility: ${detail}` : 'Failed to update visibility.';
+  return detail ? `Failed to update visibility: ${detail}` : 'Failed to update visibility. Try again.';
 }
 
 /** What the screen says when the round-trip itself threw rather than returning a failure. */
-export const VISIBILITY_UNKNOWN_ERROR = 'An error occurred while updating visibility';
+export const VISIBILITY_UNKNOWN_ERROR = "Visibility didn’t change. Try again.";
 
 // ---------------------------------------------------------------------------------------
 // The row menu
@@ -516,7 +516,7 @@ export const COPIED_URL_RESET_MS = 2000;
 export const COPY_URL_SUCCESS = 'Published API URL copied to clipboard.';
 
 /** The toast a failed Copy URL raises. */
-export const COPY_URL_FAILURE = 'Failed to copy URL to clipboard.';
+export const COPY_URL_FAILURE = 'Failed to copy URL to clipboard. Copy it by hand instead.';
 
 /** The toast clearing the remembered preview key raises. */
 export const PREVIEW_KEY_CLEARED = 'Saved API key removed from this browser.';
@@ -526,10 +526,13 @@ export const PREVIEW_KEY_CLEARED = 'Saved API key removed from this browser.';
 // ---------------------------------------------------------------------------------------
 
 /** What the screen says while the first read is in flight. */
-export const PUBLISHED_LOADING_LABEL = 'Loading published versions...';
+export const PUBLISHED_LOADING_LABEL = 'Loading published versions…';
 
 /** What it says when the read failed. */
-export const PUBLISHED_LOAD_ERROR = 'Could not load published versions';
+export const PUBLISHED_LOAD_ERROR = 'Could not load published versions. Refresh the page to try again.';
+
+/** The table's error title: what happened (its retry button is the next step). */
+export const PUBLISHED_LOAD_ERROR_TITLE = 'Couldn’t load published versions';
 
 /** What it says to a workspace that has published nothing. */
 export const PUBLISHED_EMPTY = {
@@ -547,8 +550,8 @@ export const PUBLISHED_NO_MATCHES = {
 
 /** What it says with no workspace chosen. */
 export const PUBLISHED_NO_TENANT = {
-  title: 'No tenant selected',
-  description: 'Please select a tenant before managing publications.',
+  title: 'Pick a workspace first',
+  description: 'Published versions belong to one workspace. Pick one to see them.',
 } as const;
 
 /** The one line under the page title, describing what the workspace has published. */

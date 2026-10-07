@@ -716,7 +716,7 @@ const Versions = () => {
         console.error('Canvas compare load failed:', e);
         if (!cancelled) {
           setCanvasCompareDiff(null);
-          toast.error('Could not load canvas layouts for comparison');
+          toast.error('Could not load canvas layouts for comparison. Refresh the page to try again.');
         }
       } finally {
         if (!cancelled) setCanvasCompareLoading(false);
@@ -867,10 +867,10 @@ const Versions = () => {
       if (d.success && Array.isArray(d.branches)) {
         setVersionBranches(d.branches);
       } else {
-        setBranchListError(typeof d.error === 'string' ? d.error : 'Could not load branches');
+        setBranchListError(typeof d.error === 'string' ? d.error : 'Could not load branches. Refresh the page to try again.');
       }
     } catch {
-      setBranchListError('Could not load branches');
+      setBranchListError('Could not load branches. Refresh the page to try again.');
     } finally {
       setBranchListLoading(false);
     }
@@ -944,7 +944,7 @@ const Versions = () => {
         setProjects(data.projects);
         return data.projects as Project[];
       } else {
-        throw new Error(data.error || 'Failed to load projects');
+        throw new Error(data.error || 'Failed to load projects. Refresh the page to try again.');
       }
     } catch (error) {
       console.error('Failed to load projects:', error);
@@ -989,7 +989,7 @@ const Versions = () => {
         await loadVersionTags();
         return true;
       } else {
-        throw new Error(data.error || 'Failed to load versions');
+        throw new Error(data.error || 'Failed to load versions. Refresh the page to try again.');
       }
     } catch (error) {
       console.error('Failed to load versions:', error);
@@ -1101,7 +1101,7 @@ const Versions = () => {
       const bid = copySourceBranchKey.slice('branch:'.length);
       const br = versionBranches.find((b) => b.id === bid);
       if (!br?.tip_version_id) {
-        const msg = 'Could not resolve branch tip for push.';
+        const msg = 'Could not resolve branch tip for push. Refresh the page to try again.';
         setErrorMessage(msg);
         toast.error(msg);
         return;
@@ -1126,7 +1126,7 @@ const Versions = () => {
           const msg =
             typeof headJson.error === 'string'
               ? headJson.error
-              : 'Could not resolve latest revision for push.';
+              : 'Could not resolve latest revision for push. Refresh the page to try again.';
           setErrorMessage(msg);
           toast.error(msg);
           return;
@@ -1196,7 +1196,7 @@ const Versions = () => {
             });
           }
         }
-        const err = typeof json.error === 'string' ? json.error : 'Failed to create version';
+        const err = typeof json.error === 'string' ? json.error : 'Failed to create version. Try again.';
         setErrorMessage(err);
         toast.error(err);
         return;
@@ -1214,7 +1214,7 @@ const Versions = () => {
         toast.success(`${successNoun}.`);
       }
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'An error occurred';
+      const msg = error instanceof Error ? error.message : "That didn’t go through. Try again.";
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -1349,10 +1349,10 @@ const Versions = () => {
         await loadVersions();
         return true;
       }
-      setErrorMessage(typeof data.error === 'string' ? data.error : 'Failed to update version');
+      setErrorMessage(typeof data.error === 'string' ? data.error : 'Failed to update version. Try again.');
       return false;
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : 'An error occurred');
+      setErrorMessage(error instanceof Error ? error.message : "That didn’t go through. Try again.");
       return false;
     }
   };
@@ -1630,10 +1630,10 @@ const Versions = () => {
         // the revision, so the pills are re-read rather than left on the state they had.
         refreshOpenReviews();
       } else {
-        await alertDialog({ message: response.error || 'Failed to publish', variant: 'error' });
+        await alertDialog({ message: response.error || 'Failed to publish. Try again.', variant: 'error' });
       }
     } catch (error: unknown) {
-      await alertDialog({ message: error instanceof Error ? error.message : 'An error occurred', variant: 'error' });
+      await alertDialog({ message: error instanceof Error ? error.message : "That didn’t go through. Try again.", variant: 'error' });
     }
   };
 
@@ -1651,8 +1651,8 @@ const Versions = () => {
       });
       const response = await res.json();
       if (response.success) await loadVersions();
-      else await alertDialog({ message: response.error || 'Failed to unpublish', variant: 'error' });
-    } catch (error: unknown) { await alertDialog({ message: error instanceof Error ? error.message : 'An error occurred', variant: 'error' }); }
+      else await alertDialog({ message: response.error || 'Failed to unpublish. Try again.', variant: 'error' });
+    } catch (error: unknown) { await alertDialog({ message: error instanceof Error ? error.message : "That didn’t go through. Try again.", variant: 'error' }); }
   };
 
   const handleFreezeSchema = async (version: Version) => {
@@ -1678,10 +1678,10 @@ const Versions = () => {
         await loadVersions();
         toast.success('Schema frozen successfully. This version can now be used in the Database section.');
       } else {
-        await alertDialog({ message: response.error || 'Failed to freeze schema', variant: 'error' });
+        await alertDialog({ message: response.error || 'Failed to freeze schema. Try again.', variant: 'error' });
       }
     } catch (error: unknown) {
-      await alertDialog({ message: error instanceof Error ? error.message : 'An error occurred', variant: 'error' });
+      await alertDialog({ message: error instanceof Error ? error.message : "That didn’t go through. Try again.", variant: 'error' });
     } finally {
       setFreezingSchemaVersionId(null);
     }
@@ -1701,11 +1701,11 @@ const Versions = () => {
         const msg =
           response.code === 'REVISION_LOCKED'
             ? 'This revision is locked by policy and cannot be deleted (tenant admins may override).'
-            : response.error || 'Failed to delete';
+            : response.error || 'Failed to delete. Try again.';
         await alertDialog({ message: msg, variant: 'error' });
       }
     } catch (error: unknown) {
-      await alertDialog({ message: error instanceof Error && error.message ? error.message : 'An error occurred', variant: 'error' });
+      await alertDialog({ message: error instanceof Error && error.message ? error.message : "That didn’t go through. Try again.", variant: 'error' });
     }
   };
 
@@ -1807,7 +1807,7 @@ const Versions = () => {
       setDiffResult(diffLines(content1, content2));
     } catch (error) {
       console.error('Comparison error:', error);
-      await alertDialog({ message: 'Failed to load specs for comparison', variant: 'error' });
+      await alertDialog({ message: 'Failed to load specs for comparison. Refresh the page to try again.', variant: 'error' });
     } finally {
       setIsLoadingComparison(false);
     }
@@ -2497,10 +2497,10 @@ const Versions = () => {
           });
         });
       } else {
-        toast.error(typeof d.error === 'string' ? d.error : 'Could not create branch');
+        toast.error(typeof d.error === 'string' ? d.error : 'Could not create branch. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not create branch');
+      toast.error(e instanceof Error ? e.message : 'Could not create branch. Try again.');
     } finally {
       setBranchSaving(false);
     }
@@ -2544,10 +2544,10 @@ const Versions = () => {
         setShowForkDialog(false);
         handleSelectedProjectChange(forkTargetProjectId);
       } else {
-        toast.error(typeof d.error === 'string' ? d.error : 'Could not create fork');
+        toast.error(typeof d.error === 'string' ? d.error : 'Could not create fork. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not create fork');
+      toast.error(e instanceof Error ? e.message : 'Could not create fork. Try again.');
     } finally {
       setForkSaving(false);
     }
@@ -2579,10 +2579,10 @@ const Versions = () => {
         setShowTagDialog(false);
         await loadVersionTags();
       } else {
-        toast.error(d.error || 'Could not create tag');
+        toast.error(d.error || 'Could not create tag. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not create tag');
+      toast.error(e instanceof Error ? e.message : 'Could not create tag. Try again.');
     } finally {
       setTagSaving(false);
     }
@@ -2608,10 +2608,10 @@ const Versions = () => {
         if (historyTagFilter === tagId) setHistoryTagFilter('');
         await loadVersionTags();
       } else {
-        toast.error(d.error || 'Could not delete tag');
+        toast.error(d.error || 'Could not delete tag. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not delete tag');
+      toast.error(e instanceof Error ? e.message : 'Could not delete tag. Try again.');
     }
   };
 
@@ -2634,10 +2634,10 @@ const Versions = () => {
         toast.success('Branch removed');
         await loadBranches();
       } else {
-        toast.error(d.error || 'Could not delete branch');
+        toast.error(d.error || 'Could not delete branch. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not delete branch');
+      toast.error(e instanceof Error ? e.message : 'Could not delete branch. Try again.');
     }
   };
 
@@ -2654,10 +2654,10 @@ const Versions = () => {
         toast.success(nextProtected ? 'Branch is now protected' : 'Branch protection removed');
         await loadBranches();
       } else {
-        toast.error(d.error || 'Could not update branch protection');
+        toast.error(d.error || 'Could not update branch protection. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update branch');
+      toast.error(e instanceof Error ? e.message : 'Could not update branch. Try again.');
     }
   };
 
@@ -2674,10 +2674,10 @@ const Versions = () => {
         toast.success(nextProtected ? 'Tag is now protected' : 'Tag protection removed');
         await loadVersionTags();
       } else {
-        toast.error(d.error || 'Could not update tag protection');
+        toast.error(d.error || 'Could not update tag protection. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update tag');
+      toast.error(e instanceof Error ? e.message : 'Could not update tag. Try again.');
     }
   };
 
@@ -2697,10 +2697,10 @@ const Versions = () => {
         toast.success(nextLocked ? 'Revision locked against deletion' : 'Revision lock removed');
         await loadVersions();
       } else {
-        toast.error(d.error || 'Could not update revision lock');
+        toast.error(d.error || 'Could not update revision lock. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update lock');
+      toast.error(e instanceof Error ? e.message : 'Could not update lock. Try again.');
     }
   };
 
@@ -3069,7 +3069,7 @@ const Versions = () => {
       <Page>
         <PageHeader breadcrumb={breadcrumb} title="Versions" description={pageDescription} />
         <PageBody>
-          <LoadingState minHeightClassName="min-h-[13.75rem]" message="Loading versions..." />
+          <LoadingState minHeightClassName="min-h-[13.75rem]" message="Loading versions…" />
         </PageBody>
       </Page>
     );
@@ -3080,7 +3080,7 @@ const Versions = () => {
       <Page>
         <PageHeader breadcrumb={breadcrumb} title="Versions" description={pageDescription} />
         <PageBody>
-          <GatedState description="Versions are scoped to one workspace. Please select a tenant before managing versions." />
+          <GatedState description="Versions belong to one workspace. Pick one to see its versions." />
         </PageBody>
       </Page>
     );
@@ -3640,7 +3640,7 @@ const Versions = () => {
               <EmptyState
                 icon={<Package />}
                 title="No versions yet"
-                description="Get started by creating your first version — or import a spec into this project."
+                description="Create your first version, or import a spec into this project."
                 data-testid="versions-empty"
                 action={
                   <Button onClick={handleNewVersionClick} disabled={!selectedProjectId}>
@@ -4007,7 +4007,7 @@ const Versions = () => {
                         setCompareBaseTagId('');
                       }}
                     >
-                      <SelectTrigger><SelectValue placeholder="Select version..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Select version…" /></SelectTrigger>
                       <SelectContent>{versions.map((v) => <SelectItem key={v.id} value={v.id}>{v.published ? '🔒 ' : ''}v{v.version_id}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
@@ -4020,7 +4020,7 @@ const Versions = () => {
                         setCompareToTagId('');
                       }}
                     >
-                      <SelectTrigger><SelectValue placeholder="Select version..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Select version…" /></SelectTrigger>
                       <SelectContent>{versions.map((v) => <SelectItem key={v.id} value={v.id}>{v.published ? '🔒 ' : ''}v{v.version_id}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
@@ -4323,7 +4323,7 @@ const Versions = () => {
                                   await navigator.clipboard.writeText(formatClassDiffStatLines(classDiffRows));
                                   toast.success('Class diff copied to clipboard');
                                 } catch {
-                                  toast.error('Failed to copy class diff to clipboard');
+                                  toast.error('Failed to copy class diff to clipboard. Copy it by hand instead.');
                                 }
                               }}
                             >

@@ -144,7 +144,7 @@ function describeSeries(data: readonly (number | null)[]): string {
   const finite = data.filter(
     (value): value is number => typeof value === 'number' && Number.isFinite(value)
   );
-  if (finite.length === 0) return 'no data';
+  if (finite.length === 0) return 'nothing recorded';
   const latest = finite[finite.length - 1];
   const high = Math.max(...finite);
   const low = Math.min(...finite);

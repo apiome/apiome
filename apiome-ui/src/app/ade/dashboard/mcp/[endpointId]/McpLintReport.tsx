@@ -34,6 +34,7 @@ import { ClipboardList, Fingerprint, Gauge, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Card, CardBody, CardHeader, CardTitle } from '@/app/components/ui/Card';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { Meter, Stat, StatGrid } from '@/app/components/ui/metrics';
 import { GradeGlyph } from '@/app/components/ui/mcp/GradeGlyph';
@@ -285,6 +286,8 @@ interface Props {
   error: string | null;
   /** Deep-link a finding to its offending capability item on the Capabilities tab. */
   onNavigateToItem?: NavigateToItem;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /**
@@ -293,20 +296,27 @@ interface Props {
  * @param props See {@link Props}.
  * @returns The report, or the loading / unavailable state.
  */
-export default function McpLintReport({ report, loading, error, onNavigateToItem }: Props) {
+export default function McpLintReport({ report, loading, error, onNavigateToItem, onRetry }: Props) {
   if (loading) {
     return <LoadingState minHeightClassName="min-h-[14rem]" message="Loading lint report…" />;
   }
-  if (error || !report) {
+  if (error) {
+    return (
+      <ErrorState
+        title="Lint report unavailable"
+        description={error}
+        onRetry={onRetry ?? reloadPage}
+        data-testid="mcp-lint-unavailable"
+      />
+    );
+  }
+  if (!report) {
     return (
       <EmptyState
         icon={<ShieldCheck aria-hidden />}
-        tone={error ? 'danger' : 'neutral'}
-        title="Lint report unavailable"
-        description={
-          error ??
-          'This endpoint has no scored version yet. Run discovery to capture a quality report.'
-        }
+        tone="neutral"
+        title="No scored version yet"
+        description="Run discovery to capture this endpoint’s first quality report."
         data-testid="mcp-lint-unavailable"
       />
     );

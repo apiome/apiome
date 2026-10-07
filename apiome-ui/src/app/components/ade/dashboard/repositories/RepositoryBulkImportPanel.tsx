@@ -222,7 +222,7 @@ export function RepositoryBulkImportPanel({
       if (!body || !Array.isArray(body.items)) throw new Error('Invalid plan from server');
       setPlan(body);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not plan the batch');
+      setError(e instanceof Error ? e.message : 'Could not plan the batch. Try again.');
       setPlan(null);
     } finally {
       setLoading(false);

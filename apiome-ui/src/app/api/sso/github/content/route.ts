@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching GitHub file content:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch file content' },
+      { error: error.message || 'Failed to fetch file content. Refresh the page to try again.' },
       { status: 500 }
     );
   }

@@ -95,35 +95,35 @@ export default function AdminDashboardClient() {
     {
       id: 'users',
       icon: <Users className="w-5 h-5" />,
-      title: 'User Management',
+      title: 'Users',
       description: 'View, edit, and manage user accounts, permissions, and access levels',
       features: ['View all users', 'Edit user details', 'Manage permissions', 'Deactivate accounts', 'View user activity']
     },
     {
       id: 'payments',
       icon: <CreditCard className="w-5 h-5" />,
-      title: 'Payment Management',
+      title: 'Payments',
       description: 'Monitor subscriptions, process refunds, and manage billing information',
       features: ['View all transactions', 'Process refunds', 'Manage subscriptions', 'Export payment reports', 'Update pricing']
     },
     {
       id: 'database',
       icon: <Database className="w-5 h-5" />,
-      title: 'Database Administration',
+      title: 'Database',
       description: 'Run queries, view analytics, and manage database operations',
       features: ['Run SQL queries', 'View table statistics', 'Manage backups', 'Monitor performance', 'Data export/import']
     },
     {
       id: 'monitoring',
       icon: <Activity className="w-5 h-5" />,
-      title: 'System Monitoring',
+      title: 'Monitoring',
       description: 'View system health, logs, and performance metrics',
       features: ['View system logs', 'Monitor API usage', 'Track errors', 'Performance metrics', 'Uptime monitoring']
     },
     {
       id: 'settings',
       icon: <Settings className="w-5 h-5" />,
-      title: 'System Configuration',
+      title: 'Settings',
       description: 'Manage application settings, feature flags, and configurations',
       features: ['Toggle feature flags', 'Update system settings', 'Configure integrations', 'Manage API keys', 'Email templates']
     }
@@ -157,7 +157,7 @@ export default function AdminDashboardClient() {
 
           <div className="pt-4 pb-2">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4">
-              Management
+              Administration
             </p>
           </div>
 
@@ -180,7 +180,7 @@ export default function AdminDashboardClient() {
             className="w-full flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-slate-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
           >
             <LogOut className="w-4 h-4" />
-            {isLoggingOut ? 'Logging out...' : 'Logout'}
+            {isLoggingOut ? 'Logging out…' : 'Logout'}
           </button>
         </div>
       </aside>

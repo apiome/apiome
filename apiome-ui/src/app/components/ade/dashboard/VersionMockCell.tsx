@@ -134,7 +134,7 @@ export function VersionMockCell({
       toast.success('Mock URL copied to clipboard.');
     } catch (error) {
       console.error('Failed to copy mock URL:', error);
-      toast.error('Failed to copy mock URL to clipboard.');
+      toast.error('Failed to copy mock URL to clipboard. Copy it by hand instead.');
     }
   };
 

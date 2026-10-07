@@ -12,6 +12,7 @@
 
 import { useId, useState } from 'react';
 import { Save, Trash2 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
@@ -114,7 +115,12 @@ export function BenchSavedPayloads({
           ))}
         </ul>
       ) : (
-        <p className="vdlg-quiet">No saved payloads for this schema yet.</p>
+        <EmptyState
+          variant="inline"
+          icon={<Save aria-hidden />}
+          title="No saved payloads yet"
+          description="Save the current payload to reuse it against this schema."
+        />
       )}
     </section>
   );

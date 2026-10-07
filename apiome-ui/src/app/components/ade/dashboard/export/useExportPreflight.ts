@@ -61,14 +61,14 @@ export function useExportPreflight(
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not rank export targets.',
+            typeof data?.error === 'string' ? data.error : 'Could not rank export targets. Try again.',
           );
         }
         if (cancelled) return;
         setReport(data as ExportPreflightReport);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Could not rank export targets.');
+        setError(e instanceof Error ? e.message : 'Could not rank export targets. Try again.');
         setReport(null);
       } finally {
         if (!cancelled) setLoading(false);

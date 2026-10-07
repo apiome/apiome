@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { History, ShieldCheck } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -355,7 +356,12 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
 
         {state.versions.length === 0 ? (
           <CardContent>
-            <p className="sg-quiet">No policy versions yet.</p>
+            <EmptyState
+              variant="inline"
+              icon={<History aria-hidden />}
+              title="No policy versions yet"
+              description="Save the policy to record its first version."
+            />
           </CardContent>
         ) : (
           <ul className="gd-version-list">

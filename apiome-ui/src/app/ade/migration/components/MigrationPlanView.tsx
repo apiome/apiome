@@ -354,7 +354,7 @@ export default function MigrationPlanView() {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <input
             type="text"
-            placeholder="Search records..."
+            placeholder="Search records…"
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}

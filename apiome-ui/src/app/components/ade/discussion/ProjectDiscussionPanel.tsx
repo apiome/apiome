@@ -262,7 +262,7 @@ export function ProjectDiscussionPanel({
         const json = await getEnvelope<DiscussionThreadPageShape>(`${routeBase}${listKey}`);
         if (cancelled) return;
         if (!json.success || !Array.isArray(json.threads)) {
-          setListError({ key: listKey, message: json.error || 'Failed to load comment threads' });
+          setListError({ key: listKey, message: json.error || 'Failed to load comment threads. Refresh the page to try again.' });
           return;
         }
         setListError(null);
@@ -275,7 +275,7 @@ export function ProjectDiscussionPanel({
         if (!cancelled) {
           setListError({
             key: listKey,
-            message: error instanceof Error ? error.message : 'Failed to load comment threads',
+            message: error instanceof Error ? error.message : 'Failed to load comment threads. Refresh the page to try again.',
           });
         }
       }
@@ -366,7 +366,7 @@ export function ProjectDiscussionPanel({
         )}`
       );
       if (!json.success || !Array.isArray(json.threads)) {
-        setMoreError(json.error || 'Failed to load more comment threads');
+        setMoreError(json.error || 'Failed to load more comment threads. Refresh the page to try again.');
         return;
       }
       const next = json.threads;
@@ -380,7 +380,7 @@ export function ProjectDiscussionPanel({
         };
       });
     } catch (error) {
-      setMoreError(error instanceof Error ? error.message : 'Failed to load more comment threads');
+      setMoreError(error instanceof Error ? error.message : 'Failed to load more comment threads. Refresh the page to try again.');
     } finally {
       setLoadingMore(false);
     }

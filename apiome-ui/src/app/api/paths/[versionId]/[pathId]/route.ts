@@ -104,7 +104,7 @@ export async function GET(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to get path');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to get path. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -160,7 +160,7 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update path');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update path. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -214,7 +214,7 @@ export async function DELETE(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete path');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete path. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

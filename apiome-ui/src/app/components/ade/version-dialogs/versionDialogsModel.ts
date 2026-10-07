@@ -512,7 +512,7 @@ export const VERSION_DIALOG_COPY = {
   /** Test bench, for a suite that has never run. */
   benchNoRuns: 'No runs recorded yet — run the suite against a revision to start its history.',
   /** Test bench, when the revision's schema list could not be fetched. */
-  benchTargetsError: 'Could not list this revision’s schemas.',
+  benchTargetsError: 'Could not list this revision’s schemas. Refresh the page to try again.',
   /** Export panel, while the registry measures this source. */
   exportMeasuring: 'Measuring export fidelity for this version…',
   /** Export panel, with nothing in a bucket. */

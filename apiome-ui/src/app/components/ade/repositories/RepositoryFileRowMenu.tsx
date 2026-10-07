@@ -77,7 +77,7 @@ export function RepositoryFileRowMenu({
       await navigator.clipboard.writeText(path);
       toast.success('Path copied to clipboard.');
     } catch {
-      toast.error('Could not copy path.');
+      toast.error('Could not copy path. Copy it by hand instead.');
     }
   }, [path]);
 

@@ -143,7 +143,7 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
         if (!json.success || !json.review || !json.project) {
           setLoad({
             status: 'error',
-            message: reviewErrorMessage(json.code, json.error || 'Could not load this review.'),
+            message: reviewErrorMessage(json.code, json.error || 'Could not load this review. Refresh the page to try again.'),
           });
           return;
         }
@@ -155,7 +155,7 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
         if (!cancelled) {
           setLoad({
             status: 'error',
-            message: error instanceof Error ? error.message : 'Could not load this review.',
+            message: error instanceof Error ? error.message : 'Could not load this review. Refresh the page to try again.',
           });
         }
       }
@@ -211,7 +211,7 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
       });
       const json = await readEnvelope<{ review: ReviewDetail }>(response);
       if (!json.success || !json.review) {
-        setDecisionError(reviewErrorMessage(json.code, json.error || 'Could not record your decision.'));
+        setDecisionError(reviewErrorMessage(json.code, json.error || 'Could not record your decision. Try again.'));
         if (json.code && RELOAD_ON_CODES.has(json.code)) setReloadToken((token) => token + 1);
         return false;
       }
@@ -222,7 +222,7 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
       toast.success(decision === 'approve' ? 'You approved this version.' : 'You requested changes.');
       return true;
     } catch (error) {
-      setDecisionError(error instanceof Error ? error.message : 'Could not record your decision.');
+      setDecisionError(error instanceof Error ? error.message : 'Could not record your decision. Try again.');
       return false;
     } finally {
       setSubmitting(false);
@@ -245,6 +245,7 @@ export default function ReviewPageClient({ reviewId, initialTab = 'changes' }: R
         <PageHeader title="Review" breadcrumb={[PROJECTS_CRUMB]} />
         <PageBody>
           <ErrorState
+            title="This review didn’t load"
             description={load.message}
             onRetry={() => {
               setLoad({ status: 'loading' });

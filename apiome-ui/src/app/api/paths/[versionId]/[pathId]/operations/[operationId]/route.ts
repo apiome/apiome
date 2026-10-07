@@ -109,7 +109,7 @@ export async function PUT(
       }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update operation');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update operation. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -166,7 +166,7 @@ export async function DELETE(
       }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete operation');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete operation. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

@@ -172,7 +172,7 @@ export default function RegistrySettingsPanel({ onMessage }: RegistrySettingsPan
         setUsingDefaults(Boolean(payload.is_default));
         applyLoaded(coerceSettings(payload));
       } else {
-        onMessage?.('error', settingsData.error || 'Failed to load settings');
+        onMessage?.('error', settingsData.error || 'Failed to load settings. Refresh the page to try again.');
       }
 
       if (healthData.success && healthData.health) {
@@ -182,7 +182,7 @@ export default function RegistrySettingsPanel({ onMessage }: RegistrySettingsPan
       }
     } catch (error) {
       console.error('Error loading registry settings:', error);
-      onMessage?.('error', 'Failed to load settings');
+      onMessage?.('error', 'Failed to load settings. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -233,11 +233,11 @@ export default function RegistrySettingsPanel({ onMessage }: RegistrySettingsPan
         applyLoaded(coerceSettings(saved));
         onMessage?.('success', 'Registry settings saved');
       } else {
-        onMessage?.('error', data.error || 'Failed to save settings');
+        onMessage?.('error', data.error || 'Failed to save settings. Try again.');
       }
     } catch (error) {
       console.error('Error saving registry settings:', error);
-      onMessage?.('error', 'Failed to save settings');
+      onMessage?.('error', 'Failed to save settings. Try again.');
     } finally {
       setSaving(false);
     }

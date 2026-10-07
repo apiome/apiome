@@ -187,10 +187,10 @@ function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
     };
   }
   if (source === 'url') {
-    return { label: analyzing ? 'Analyzing...' : 'Next →', disabled: !intakeReady || analyzing };
+    return { label: analyzing ? 'Analyzing…' : 'Next →', disabled: !intakeReady || analyzing };
   }
   if (source === null) return null;
-  return { label: analyzing ? 'Analyzing...' : 'Analyze →', disabled: !intakeReady || analyzing };
+  return { label: analyzing ? 'Analyzing…' : 'Analyze →', disabled: !intakeReady || analyzing };
 }
 
 /**
@@ -291,7 +291,7 @@ export function urlTestAction(footer: {
   urlTestedSuccessfully: boolean;
 }): ImportFooterAction & { tested: boolean } {
   return {
-    label: footer.isTesting ? 'Testing...' : footer.urlTestedSuccessfully ? 'URL tested ✓' : 'Test URL',
+    label: footer.isTesting ? 'Testing…' : footer.urlTestedSuccessfully ? 'URL tested ✓' : 'Test URL',
     disabled: !footer.canTestUrl || footer.isTesting,
     tested: footer.urlTestedSuccessfully,
   };
@@ -550,7 +550,7 @@ export const IMPORT_WIZARD_COPY = {
   dropExtensionsPrefix: 'Supports:',
   zipNote: 'ZIP files will be analyzed after clicking Analyze',
   filePreview: 'File preview',
-  analyzingFile: 'Analyzing file...',
+  analyzingFile: 'Analyzing file…',
   jobsDrawerTitle: 'Recent import jobs',
   jobsDrawerNote: 'Shared async job store — survives round-robin REST replicas.',
   closeWarning: 'Close (rolls back a running job)',

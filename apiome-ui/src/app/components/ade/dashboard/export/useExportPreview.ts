@@ -71,14 +71,14 @@ export function useExportPreview(
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not load the fidelity report.',
+            typeof data?.error === 'string' ? data.error : 'Could not load the fidelity report. Refresh the page to try again.',
           );
         }
         if (cancelled) return;
         setPreview(data as ExportPreviewResponse);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Could not load the fidelity report.');
+        setError(e instanceof Error ? e.message : 'Could not load the fidelity report. Refresh the page to try again.');
         setPreview(null);
       } finally {
         if (!cancelled) setLoading(false);

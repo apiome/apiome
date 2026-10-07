@@ -93,13 +93,13 @@ export function BenchSuitesPanel({
       const res = await fetch(`/api/schemas/suites?ref=${encodeURIComponent(stableRef)}`);
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setError(typeof data.error === 'string' ? data.error : 'Could not load test suites.');
+        setError(typeof data.error === 'string' ? data.error : 'Could not load test suites. Refresh the page to try again.');
         return;
       }
       setError(null);
       setSuites(Array.isArray(data.items) ? data.items : []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load test suites.');
+      setError(e instanceof Error ? e.message : 'Could not load test suites. Refresh the page to try again.');
     }
   }, [stableRef]);
 
@@ -142,14 +142,14 @@ export function BenchSuitesPanel({
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        fail(data, 'Could not create the suite.');
+        fail(data, 'Could not create the suite. Try again.');
         return;
       }
       setNewSuiteName('');
       setStatus(`Created suite "${name}"${payloads.length ? ' with the current payload' : ''}.`);
       await loadSuites();
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : 'Could not create the suite.');
+      setStatus(e instanceof Error ? e.message : 'Could not create the suite. Try again.');
     }
   }, [newSuiteName, payloadText, syntheticContent, stableRef, fail, loadSuites]);
 
@@ -161,7 +161,7 @@ export function BenchSuitesPanel({
         const detailRes = await fetch(`/api/schemas/suites/${encodeURIComponent(suite.id)}`);
         const detail = await detailRes.json();
         if (!detailRes.ok || !detail.success) {
-          fail(detail, 'Could not load the suite.');
+          fail(detail, 'Could not load the suite. Refresh the page to try again.');
           return;
         }
         const existing: SuitePayload[] = Array.isArray(detail.payloads) ? detail.payloads : [];
@@ -180,13 +180,13 @@ export function BenchSuitesPanel({
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          fail(data, 'Could not add the payload.');
+          fail(data, 'Could not add the payload. Try again.');
           return;
         }
         setStatus(`Added the current payload to "${suite.name}".`);
         await loadSuites();
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : 'Could not add the payload.');
+        setStatus(e instanceof Error ? e.message : 'Could not add the payload. Try again.');
       } finally {
         setBusySuiteId(null);
       }
@@ -236,14 +236,14 @@ export function BenchSuitesPanel({
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.success) {
-          fail(data, 'Could not delete the suite.');
+          fail(data, 'Could not delete the suite. Try again.');
           return;
         }
         if (historySuiteId === suite.id) setHistorySuiteId(null);
         setStatus(`Deleted suite "${suite.name}".`);
         await loadSuites();
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : 'Could not delete the suite.');
+        setStatus(e instanceof Error ? e.message : 'Could not delete the suite. Try again.');
       } finally {
         setBusySuiteId(null);
       }
@@ -257,7 +257,7 @@ export function BenchSuitesPanel({
         const res = await fetch(`/api/schemas/suites/${encodeURIComponent(suite.id)}/export`);
         const data = await res.json();
         if (!res.ok || !data.success) {
-          fail(data, 'Could not export the suite.');
+          fail(data, 'Could not export the suite. Try again.');
           return;
         }
         const envelope: SuiteExportEnvelope = { manifest: data.manifest, files: data.files };
@@ -273,7 +273,7 @@ export function BenchSuitesPanel({
             'manifest.json to run it with `apiome schema test --suite`.'
         );
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : 'Could not export the suite.');
+        setStatus(e instanceof Error ? e.message : 'Could not export the suite. Try again.');
       }
     },
     [fail]
@@ -301,13 +301,13 @@ export function BenchSuitesPanel({
         });
         const data = await res.json();
         if (!res.ok || !data.success) {
-          fail(data, 'Could not import the suite.');
+          fail(data, 'Could not import the suite. Check the file, then try again.');
           return;
         }
         setStatus(`Imported suite "${stem}" (${data.payload_count} payloads).`);
         await loadSuites();
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : 'Could not import the suite.');
+        setStatus(e instanceof Error ? e.message : 'Could not import the suite. Check the file, then try again.');
       }
     },
     [stableRef, fail, loadSuites]

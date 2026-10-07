@@ -165,7 +165,7 @@ export async function fetchImportBundleInventory(
     throw new Error(
       typeof data?.error === 'string' && data.error
         ? data.error
-        : 'Could not inventory the files in this bundle.',
+        : 'Could not inventory the files in this bundle. Refresh the page to try again.',
     );
   }
   if (typeof data?.ok !== 'boolean' || typeof data?.kind !== 'string') {

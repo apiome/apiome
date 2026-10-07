@@ -851,7 +851,7 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
                   onInputChange: setEnumInput,
                   onAdd: addEnumValue,
                   onRemove: removeEnumValue,
-                  placeholder: 'Add a value...',
+                  placeholder: 'Add a value…',
                 })}
               </section>
 
@@ -886,7 +886,7 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
                     onInputChange: setExampleInput,
                     onAdd: addExample,
                     onRemove: removeExample,
-                    placeholder: 'Add an example value...',
+                    placeholder: 'Add an example value…',
                     mono: true,
                   })}
                 </div>

@@ -52,7 +52,7 @@ export function Sparkline({
   const last = data.length ? data[data.length - 1] : null;
   const summary =
     last === null
-      ? 'No data'
+      ? 'Nothing recorded in this range'
       : `${data.length} point${data.length === 1 ? '' : 's'}, latest ${last}, max ${maxValue(data)}`;
   const label = title ?? `Trend — ${summary}`;
 

@@ -168,7 +168,7 @@ export default function TenantsPage() {
       setTenants([]);
       setAdmins([]);
       setTenantUsers({});
-      setLoadError(err instanceof Error ? err.message : 'Could not load your tenants.');
+      setLoadError(err instanceof Error ? err.message : 'Could not load your tenants. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -229,7 +229,7 @@ export default function TenantsPage() {
       const before = tenants.find((tenant) => tenant.id === id);
       const failure = readEnvelope(
         await updateTenant(id, draft.name, draft.description, draft.slug),
-        'Failed to update tenant'
+        'Failed to update tenant. Try again.'
       );
       if (failure) return failure;
       await loadTenantsData();
@@ -246,14 +246,14 @@ export default function TenantsPage() {
       if (!overlayTenantId) return 'No tenant selected';
       const userFailure = readEnvelope(
         await addTenantUser(overlayTenantId, email),
-        'Failed to add member'
+        'Failed to add member. Try again.'
       );
       if (userFailure) return userFailure;
 
       if (isAdmin) {
         const adminFailure = readEnvelope(
           await addTenantAdministrator(overlayTenantId, email),
-          'Failed to add administrator role'
+          'Failed to add administrator role. Try again.'
         );
         // The membership landed even though the role did not, so the list is reloaded
         // before reporting: the reader should see the half that worked.
@@ -276,13 +276,13 @@ export default function TenantsPage() {
       if (isAdmin && !member.isAdmin) {
         const failure = readEnvelope(
           await addTenantAdministrator(overlayTenantId, member.email),
-          'Failed to add administrator role'
+          'Failed to add administrator role. Try again.'
         );
         if (failure) return failure;
       } else if (!isAdmin && member.isAdmin && member.adminRecordId) {
         const failure = readEnvelope(
           await removeTenantAdministrator(member.adminRecordId),
-          'Failed to remove administrator role'
+          'Failed to remove administrator role. Try again.'
         );
         if (failure) return failure;
       }
@@ -300,14 +300,14 @@ export default function TenantsPage() {
       if (member.adminRecordId) {
         const failure = readEnvelope(
           await removeTenantAdministrator(member.adminRecordId),
-          'Failed to remove administrator role'
+          'Failed to remove administrator role. Try again.'
         );
         if (failure) return failure;
       }
       if (member.userRecordId) {
         const failure = readEnvelope(
           await removeTenantUser(member.userRecordId),
-          'Failed to remove member'
+          'Failed to remove member. Try again.'
         );
         if (failure) {
           await loadTenantsData();

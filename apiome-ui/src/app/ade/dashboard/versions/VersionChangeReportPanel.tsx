@@ -121,7 +121,7 @@ export function VersionChangeReportPanel({
       const res = await fetch(`/api/versions/${encodeURIComponent(revisionId)}/change-report?${qs.toString()}`);
       const json = (await res.json()) as { success?: boolean; error?: string; report?: VersionChangeReportOut };
       if (!json.success || !json.report) {
-        const msg = typeof json.error === 'string' ? json.error : 'Failed to load change report';
+        const msg = typeof json.error === 'string' ? json.error : 'Failed to load change report. Refresh the page to try again.';
         setReport(null);
         setError(msg);
         return;
@@ -130,7 +130,7 @@ export function VersionChangeReportPanel({
       setError(null);
     } catch (e) {
       setReport(null);
-      setError(e instanceof Error ? e.message : 'Failed to load change report');
+      setError(e instanceof Error ? e.message : 'Failed to load change report. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }

@@ -316,7 +316,7 @@ export const QUOTA_TELEMETRY_LOADING = 'Loading quota telemetry…';
 export const QUOTA_TELEMETRY_ERROR_TITLE = 'Quota telemetry unavailable';
 
 /** The fallback message when a failed read carried no explanation of its own. */
-export const QUOTA_TELEMETRY_ERROR_FALLBACK = 'Could not load quota telemetry.';
+export const QUOTA_TELEMETRY_ERROR_FALLBACK = 'Could not load quota telemetry. Refresh the page to try again.';
 
 /**
  * What `available: false` means, said out loud.

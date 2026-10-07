@@ -152,7 +152,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
       const data = await fetchConsumers(projectRef);
       setRows(data.consumers);
     } catch (error) {
-      setLoadError(describeFailure(error, "Couldn't load this project's consumers"));
+      setLoadError(describeFailure(error, "Couldn't load this project's consumers. Refresh the page to try again."));
     } finally {
       setLoading(false);
     }
@@ -178,7 +178,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
       setCatalogue(await fetchAvailableSurface(projectRef));
     } catch (error) {
       setCatalogueError(
-        describeFailure(error, "Couldn't read this project's specification"),
+        describeFailure(error, "Couldn't read this project's specification. Refresh the page to try again."),
       );
     } finally {
       setCatalogueLoading(false);
@@ -314,7 +314,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
       description={
         query || facet !== 'all'
           ? 'Clear the search or pick another view.'
-          : 'Register the services that call this API, then declare what each of them uses — by importing its Pact file or by picking operations. Until one exists, a change here can only be graded against the whole specification.'
+          : 'Register services that call this API, then import their Pact file or pick operations.'
       }
     />
   );

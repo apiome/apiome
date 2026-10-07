@@ -690,7 +690,7 @@ describe('the states with no matrix in them', () => {
     mockApi({ roles: [] });
     render(<RolesClient />);
 
-    expect(await screen.findByTestId('roles-empty')).toHaveTextContent('No roles defined yet.');
+    expect(await screen.findByTestId('roles-empty')).toHaveTextContent('No roles defined yet');
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });

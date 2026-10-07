@@ -82,9 +82,9 @@ export async function fetchApiKeys(tenantId: string): Promise<ApiKeyRecord[]> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error('Failed to load API keys');
+    throw new Error('Failed to load API keys. Refresh the page to try again.');
   }
-  if (!Array.isArray(parsed)) throw new Error('Failed to load API keys');
+  if (!Array.isArray(parsed)) throw new Error('Failed to load API keys. Refresh the page to try again.');
   return parsed as ApiKeyRecord[];
 }
 
@@ -120,7 +120,7 @@ export async function createApiKeyForTenant(input: {
     id?: string;
     keyPrefix?: string;
     scopes?: string[];
-  }>(raw, 'Failed to create API key');
+  }>(raw, 'Failed to create API key. Try again.');
 
   if (!body.apiKey) throw new Error('The server created the key but returned no secret');
 
@@ -139,7 +139,7 @@ export async function createApiKeyForTenant(input: {
  * @throws Error carrying the server's message.
  */
 export async function removeApiKey(apiKeyId: string): Promise<void> {
-  unwrap(await deleteApiKey(apiKeyId), 'Failed to delete API key');
+  unwrap(await deleteApiKey(apiKeyId), 'Failed to delete API key. Try again.');
 }
 
 /**
@@ -150,5 +150,5 @@ export async function removeApiKey(apiKeyId: string): Promise<void> {
  * @throws Error carrying the server's message.
  */
 export async function setApiKeyEnabled(apiKeyId: string, enabled: boolean): Promise<void> {
-  unwrap(await toggleApiKeyStatus(apiKeyId, enabled), 'Failed to update API key');
+  unwrap(await toggleApiKeyStatus(apiKeyId, enabled), 'Failed to update API key. Try again.');
 }

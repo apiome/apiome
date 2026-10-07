@@ -23,12 +23,15 @@ import {
   mcpGraphToMermaid,
   type McpCapabilityGraph,
 } from '@/app/components/ade/dashboard/mcp/mcpCapabilityGraphUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed graph for the selected snapshot, or `null` while it has not loaded. */
   graph: McpCapabilityGraph | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** A stable, module-level counter so each render gets a unique Mermaid element id (no `Date.now`). */
@@ -63,7 +66,7 @@ function GraphLegend({ graph }: { graph: McpCapabilityGraph }) {
  * The capability relationship graph panel. Handles its own loading / error / empty states so a slow or
  * missing graph never blanks the Insight tab.
  */
-export function CapabilityGraphPanel({ graph, loading, error }: Props) {
+export function CapabilityGraphPanel({ graph, loading, error, onRetry }: Props) {
   const [isDark, setIsDark] = React.useState(false);
   const [svg, setSvg] = React.useState<string>('');
   const [renderError, setRenderError] = React.useState<string | null>(null);
@@ -119,7 +122,7 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
       } catch (e) {
         if (!active) return;
         setSvg('');
-        setRenderError(e instanceof Error ? e.message : 'Could not render the graph.');
+        setRenderError(e instanceof Error ? e.message : 'Could not render the graph. Check the file, then try again.');
       }
     })();
     return () => {
@@ -132,11 +135,11 @@ export function CapabilityGraphPanel({ graph, loading, error }: Props) {
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<Share2 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Graph unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }

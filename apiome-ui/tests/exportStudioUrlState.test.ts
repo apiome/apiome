@@ -223,11 +223,11 @@ describe('describeStudioSourceFailure', () => {
   });
 
   it('passes any other failure through unchanged', () => {
-    expect(describeStudioSourceFailure(500, 'Could not load export targets.')).toBe(
-      'Could not load export targets.',
+    expect(describeStudioSourceFailure(500, 'Could not load export targets. Refresh the page to try again.')).toBe(
+      'Could not load export targets. Refresh the page to try again.',
     );
-    expect(describeStudioSourceFailure(null, 'Could not load export targets.')).toBe(
-      'Could not load export targets.',
+    expect(describeStudioSourceFailure(null, 'Could not load export targets. Refresh the page to try again.')).toBe(
+      'Could not load export targets. Refresh the page to try again.',
     );
   });
 });

@@ -33,7 +33,7 @@ export default function DashboardOverview() {
       {/* Header */}
       <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="px-6 py-4">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Overview</h2>
         </div>
       </header>
 

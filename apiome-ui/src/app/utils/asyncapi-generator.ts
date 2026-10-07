@@ -491,7 +491,7 @@ export function generateAsyncAPISpec(
       info: {
         title: projectName,
         version: version,
-        description: `Error generating specification: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: `Error generating specification: ${error instanceof Error ? error.message : 'no reason given'}`,
       },
       channels: {},
       components: { schemas: {} },

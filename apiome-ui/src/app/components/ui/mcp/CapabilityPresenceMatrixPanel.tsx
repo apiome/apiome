@@ -38,12 +38,15 @@ import {
   type McpMatrixLifespan,
   type McpMatrixRow,
 } from '@/app/components/ade/dashboard/mcp/mcpPresenceMatrixUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The endpoint's per-version snapshots (any order), or `null` while they have not loaded. */
   versions: readonly McpVersionDetail[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
   /** Called with a snapshot's `version_id` when its column header is activated, to open its diff. */
   onSelectVersion: (versionId: string) => void;
 }
@@ -178,7 +181,7 @@ function SummaryChip({ tone, count, label }: { tone: McpBadgeTone; count: number
  * reconstructed exactly from the per-version snapshots, renamed-vs-removed is handled per the diff
  * record via name-keyed rows, and the matrix scrolls for many items).
  */
-export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSelectVersion }: Props) {
+export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSelectVersion, onRetry }: Props) {
   const matrix = React.useMemo(() => mcpPresenceMatrix(versions ?? []), [versions]);
 
   if (loading && !versions) {
@@ -186,11 +189,11 @@ export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSele
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Presence matrix unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -201,7 +204,7 @@ export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSele
         variant="compact"
         icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No capabilities to chart"
-        description="This endpoint has no discovered capabilities across its snapshots yet. Run discovery to start building its lifespan history."
+        description="No capabilities discovered across its snapshots yet. Run discovery to build its lifespan history."
       />
     );
   }

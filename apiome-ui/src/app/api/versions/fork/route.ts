@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fork version');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fork version. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

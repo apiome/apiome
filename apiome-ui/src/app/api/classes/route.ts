@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create class');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to create class. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

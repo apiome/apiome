@@ -174,7 +174,7 @@ const OUTCOME_LABELS: Record<string, string> = {
   partial_page: 'Partial surface',
   ssrf_blocked: 'Blocked (SSRF)',
   budget_exceeded: 'Budget exceeded',
-  unknown: 'Unknown error',
+  unknown: 'Unclassified failure',
 };
 
 /** Collapse a wire outcome into its timeline band: `ok`, `pending` (in flight), or `failed`. */

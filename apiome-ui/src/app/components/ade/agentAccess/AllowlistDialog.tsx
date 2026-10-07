@@ -85,7 +85,7 @@ export default function AllowlistDialog({
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load the toolset’s tools');
+          setError(err instanceof Error ? err.message : 'Failed to load the toolset’s tools. Refresh the page to try again.');
         }
       })
       .finally(() => {

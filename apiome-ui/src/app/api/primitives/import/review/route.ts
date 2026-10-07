@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to review import');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to review import. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

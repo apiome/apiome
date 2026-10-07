@@ -21,6 +21,7 @@
 
 import * as React from 'react';
 import { Activity, Waypoints } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Button } from '@/app/components/ui/Button';
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/Card';
@@ -101,7 +102,12 @@ export default function RegistryRail({ imports, loading, onOpenResolver }: Regis
             Loading activity…
           </p>
         ) : imports.length === 0 ? (
-          <p className="prm-rail__state">No import activity yet.</p>
+          <EmptyState
+            variant="inline"
+            icon={<Activity aria-hidden />}
+            title="No import activity yet"
+            description="Imported primitives appear here as they land."
+          />
         ) : (
           <ul className="prm-activity">
             {imports.map((item) => (

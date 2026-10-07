@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to import primitives');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to import primitives. Check the file, then try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

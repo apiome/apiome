@@ -227,7 +227,7 @@ export default function GuideEditorClient({ guideId }: { guideId: string }) {
         {notFound ? (
           <EmptyState
             icon={<BookX aria-hidden />}
-            title="Style guide not found."
+            title="Style guide not found"
             description="It may have been deleted, or the link belongs to another workspace."
             action={
               <Button onClick={() => router.push(LIST_ROUTE)} data-testid="guide-not-found-back">

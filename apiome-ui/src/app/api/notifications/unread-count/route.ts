@@ -31,6 +31,6 @@ export async function GET(): Promise<NextResponse> {
     const unread = await callRestNotifications(auth, '/unread-count');
     return NextResponse.json({ success: true, unread });
   } catch (error) {
-    return notificationsErrorResponse(error, 'Failed to read the unread count');
+    return notificationsErrorResponse(error, 'Failed to read the unread count. Refresh the page to try again.');
   }
 }

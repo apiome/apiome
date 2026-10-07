@@ -78,7 +78,7 @@ export function ShadowedNamesPanel() {
         setLoading(false);
       } catch {
         if (!cancelled) {
-          setError('Could not load shadowing report.');
+          setError('Could not load shadowing report. Refresh the page to try again.');
           setLoading(false);
         }
       }

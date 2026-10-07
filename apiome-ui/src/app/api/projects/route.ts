@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch projects');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch projects. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create project');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to create project. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

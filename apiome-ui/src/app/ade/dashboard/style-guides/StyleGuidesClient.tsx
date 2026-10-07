@@ -171,7 +171,7 @@ export default function StyleGuidesClient() {
       setProjects(projectOptions);
     } catch (error) {
       setGuides([]);
-      setLoadError(describeFailure(error, 'Failed to load style guides'));
+      setLoadError(describeFailure(error, 'Failed to load style guides. Refresh the page to try again.'));
     } finally {
       setLoading(false);
     }
@@ -231,7 +231,7 @@ export default function StyleGuidesClient() {
 
   const handleCreate = React.useCallback(
     (draft: GuideDraft) =>
-      runWrite('Failed to create the style guide', () =>
+      runWrite('Failed to create the style guide. Try again.', () =>
         styleGuidesApi<StyleGuide>('', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -249,7 +249,7 @@ export default function StyleGuidesClient() {
     (name: string, description: string) => {
       const guideId = overlayGuideId;
       if (!guideId) return Promise.resolve('No guide selected.');
-      return runWrite('Failed to save the style guide', () =>
+      return runWrite('Failed to save the style guide. Try again.', () =>
         styleGuidesApi<StyleGuide>(guideId, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -262,7 +262,7 @@ export default function StyleGuidesClient() {
 
   const handleDelete = React.useCallback(
     (guide: StyleGuide) =>
-      runWrite('Failed to delete the style guide', () =>
+      runWrite('Failed to delete the style guide. Try again.', () =>
         styleGuidesApi(guide.id, { method: 'DELETE' })
       ),
     [runWrite]
@@ -281,7 +281,7 @@ export default function StyleGuidesClient() {
 
   const handleMakeDefault = React.useCallback(
     (guide: StyleGuide) =>
-      runAssignWrite('Failed to make this guide the tenant default', () =>
+      runAssignWrite('Failed to make this guide the tenant default. Try again.', () =>
         styleGuidesApi(`${guide.id}/default`, { method: 'PUT' })
       ),
     [runAssignWrite]
@@ -289,7 +289,7 @@ export default function StyleGuidesClient() {
 
   const handleAssignProject = React.useCallback(
     (guide: StyleGuide, projectId: string) =>
-      runAssignWrite('Failed to assign the project', () =>
+      runAssignWrite('Failed to assign the project. Try again.', () =>
         styleGuidesApi(`${guide.id}/assignments/projects/${projectId}`, { method: 'PUT' })
       ),
     [runAssignWrite]
@@ -297,7 +297,7 @@ export default function StyleGuidesClient() {
 
   const handleUnassignProject = React.useCallback(
     (projectId: string) =>
-      runAssignWrite('Failed to unassign the project', () =>
+      runAssignWrite('Failed to unassign the project. Try again.', () =>
         styleGuidesApi(`assignments/projects/${projectId}`, { method: 'DELETE' })
       ),
     [runAssignWrite]

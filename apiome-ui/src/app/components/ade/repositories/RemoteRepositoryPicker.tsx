@@ -112,7 +112,7 @@ export function RemoteRepositoryPicker({
       <ErrorState
         variant="compact"
         surface={false}
-        title="Could not load repositories"
+        title="Couldn’t load repositories"
         description={error}
         onRetry={onRetry}
         data-testid="repo-remote-error"

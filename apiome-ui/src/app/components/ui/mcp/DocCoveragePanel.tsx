@@ -31,12 +31,15 @@ import {
   type McpDocCoverageMeter,
   type McpDocOffender,
 } from '@/app/components/ade/dashboard/mcp/mcpDocCoverageUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The selected snapshot's capability items (all kinds), or `null` while the surface has not loaded. */
   items: readonly McpCapabilityItem[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** Human, singular labels for a capability `item_type`, shown as the kind chip on a drill-down row. */
@@ -141,7 +144,7 @@ function CoverageGauge({ meter }: { meter: McpDocCoverageMeter }) {
  * / output-schema adoption), each drill-down-able to the specific items it counts against. Handles its
  * own loading / error / no-capability states.
  */
-export function DocCoveragePanel({ items, loading, error }: Props) {
+export function DocCoveragePanel({ items, loading, error, onRetry }: Props) {
   const meters = React.useMemo(() => mcpDocCoverageMeters(items ?? []), [items]);
 
   if (loading && !items) {
@@ -149,11 +152,11 @@ export function DocCoveragePanel({ items, loading, error }: Props) {
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<BookOpen className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Coverage unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }

@@ -274,7 +274,7 @@ export const ALLOWLIST_LOADING = 'Loading the allowlist…';
 export const ALLOWLIST_ERROR_TITLE = 'Allowlist unavailable';
 
 /** The fallback message when a failed read carried no explanation of its own. */
-export const ALLOWLIST_ERROR_FALLBACK = 'Could not load the allowlist.';
+export const ALLOWLIST_ERROR_FALLBACK = 'Could not load the allowlist. Refresh the page to try again.';
 
 /** The fallback message when a failed *write* carried no explanation of its own. */
 export const ALLOWLIST_SAVE_ERROR = 'That change could not be saved.';

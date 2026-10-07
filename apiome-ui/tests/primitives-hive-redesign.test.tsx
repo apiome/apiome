@@ -273,7 +273,7 @@ describe('the page chrome', () => {
     global.fetch = mockFetch() as unknown as typeof fetch;
     render(<PrimitivesManagementClient />);
 
-    expect(screen.getByText(/select a tenant to manage primitives/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pick a workspace first/i)).toBeInTheDocument();
     expect(screen.queryByRole('table', { name: 'Primitives' })).not.toBeInTheDocument();
     // The two header verbs are offered but inert, rather than missing.
     expect(screen.getByTestId('primitives-create')).toBeDisabled();

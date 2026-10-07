@@ -88,7 +88,7 @@ export async function GET() {
     });
     const url = `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenant.slug)}/change-report-template-versions`;
     const response = await fetch(url, { method: 'GET', headers });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to list templates');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to list templates. Refresh the page to try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     });
     const url = `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenant.slug)}/change-report-template-versions`;
     const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to create template');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to create template. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

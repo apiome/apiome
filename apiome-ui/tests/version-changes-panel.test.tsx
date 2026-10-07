@@ -234,6 +234,6 @@ describe('VersionChangesPanel', () => {
         onOpenDiff={jest.fn()}
       />,
     );
-    expect(screen.getByText('No Published Versions')).toBeInTheDocument();
+    expect(screen.getByText('No published versions')).toBeInTheDocument();
   });
 });

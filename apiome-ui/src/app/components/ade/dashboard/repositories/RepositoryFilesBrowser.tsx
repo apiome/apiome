@@ -332,7 +332,7 @@ export function RepositoryFilesBrowser({
           onDeepLinkConsumedRef.current?.();
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : 'Could not load files';
+        const msg = e instanceof Error ? e.message : 'Could not load files. Refresh the page to try again.';
         setError(msg);
         setData(null);
         toast.error(msg);

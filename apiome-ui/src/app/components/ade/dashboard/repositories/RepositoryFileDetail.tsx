@@ -920,7 +920,7 @@ export function RepositoryFileDetail({
       }
       setPayload(json);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not load file';
+      const msg = e instanceof Error ? e.message : 'Could not load file. Refresh the page to try again.';
       setError(msg);
       setPayload(null);
       toast.error(msg);
@@ -1391,7 +1391,7 @@ export function RepositoryFileDetail({
               {tab === 'diff' ? (
                 <EmptyState
                   icon={<Diff aria-hidden />}
-                  title="Diff not wired yet"
+                  title="Diff not available yet"
                   description={FILE_DIFF_STUB_COPY}
                 />
               ) : null}

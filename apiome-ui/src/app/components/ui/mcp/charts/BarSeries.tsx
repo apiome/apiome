@@ -41,7 +41,7 @@ export function BarSeries({ data, tone = 'indigo', domainMax, title, className }
   const n = Math.max(1, data.length);
   const bandW = (100 - GAP * (n + 1)) / n;
 
-  const summary = data.map((d) => `${d.label}: ${d.value}`).join(', ') || 'No data';
+  const summary = data.map((d) => `${d.label}: ${d.value}`).join(', ') || 'Nothing recorded in this range';
   const label = title ?? `Bar chart — ${summary}`;
 
   return (

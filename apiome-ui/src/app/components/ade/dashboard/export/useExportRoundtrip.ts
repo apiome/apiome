@@ -165,7 +165,7 @@ export function useExportRoundtrip(
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not run the round-trip comparison.',
+            typeof data?.error === 'string' ? data.error : 'Could not run the round-trip comparison. Try again.',
           );
         }
         // Cache the measurement even when superseded: it is valid for its configuration.
@@ -177,7 +177,7 @@ export function useExportRoundtrip(
         setSettled({
           key,
           result: null,
-          error: e instanceof Error ? e.message : 'Could not run the round-trip comparison.',
+          error: e instanceof Error ? e.message : 'Could not run the round-trip comparison. Try again.',
           fromCache: false,
         });
       } finally {

@@ -72,7 +72,7 @@ export function useImportSources(
         const res = await fetch('/api/import/sources', { credentials: 'include' });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error(typeof data?.error === 'string' ? data.error : 'Could not load import sources.');
+          throw new Error(typeof data?.error === 'string' ? data.error : 'Could not load import sources. Refresh the page to try again.');
         }
         if (cancelled) return;
         const sources = (data as { sources?: ImportSourceDescriptor[] }).sources;
@@ -80,7 +80,7 @@ export function useImportSources(
         setFileExtensions(mergeImportFileExtensions(sources));
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Could not load import sources.');
+        setError(e instanceof Error ? e.message : 'Could not load import sources. Refresh the page to try again.');
         setCards(filterCardsForVariant(baseImportSourceCards(), variant));
         // The picker keeps the offline fallback rather than emptying out: an unreachable registry
         // must not make every file unbrowsable.

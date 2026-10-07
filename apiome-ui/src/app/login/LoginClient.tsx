@@ -143,11 +143,11 @@ const LoginClient: React.FC<LoginClientProps> = ({ error, callbackUrl = '/ade', 
         } else if (response.duplicate) {
           setSignupMessage({type: 'info', text: response.message});
         } else {
-          setSignupMessage({type: 'error', text: response.error || 'An error occurred during signup.'});
+          setSignupMessage({type: 'error', text: response.error || 'Sign-up didn’t go through. Try again.'});
         }
       } catch (error) {
         console.error('Signup error:', error);
-        setSignupMessage({type: 'error', text: 'An unexpected error occurred. Please try again.'});
+        setSignupMessage({type: 'error', text: 'Sign-up didn’t go through. Try again.'});
       } finally {
         setSignInEnabled(true);
       }

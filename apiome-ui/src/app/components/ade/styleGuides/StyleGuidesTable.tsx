@@ -46,7 +46,7 @@ import {
  *
  * The old table was five hand-built columns over `border-slate-200` with three inline badge
  * palettes (`bg-slate-100`, `bg-emerald-100`, `bg-indigo-100`), a centred spinner for the
- * wait, and a bare "No style guides yet." paragraph for the empty case. It is now
+ * wait, and a bare "No style guides yet" paragraph for the empty case. It is now
  * {@link DataTable}, which brings the sticky caps header, sortable columns, the skeleton and
  * the in-card empty state; the toolbar, the facet chips and the foot are the mockup's
  * additions.
@@ -350,8 +350,8 @@ export default function StyleGuidesTable({
         ) : (
           <EmptyState
             icon={<BookOpenCheck aria-hidden />}
-            title="No style guides yet."
-            description="Start from Apiome Recommended and tailor it, or create an empty guide and add rules as you go."
+            title="No style guides yet"
+            description="Start from Apiome Recommended, or begin an empty guide and add rules later."
             action={
               canMutate ? (
                 <>

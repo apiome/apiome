@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Check, FileSignature, Lightbulb, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Check, FileSignature, Lightbulb, ShieldCheck, History as HistoryIcon } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -130,15 +131,19 @@ function History({
 
   if (!decisionId) {
     return (
-      <p className="lw-quiet" data-testid="detail-history-empty">
-        No decisions recorded for this finding yet.
-      </p>
+      <EmptyState
+        data-testid="detail-history-empty"
+        variant="inline"
+        icon={<HistoryIcon aria-hidden />}
+        title="No decisions yet"
+        description="Acknowledge it or request a waiver to start its history."
+      />
     );
   }
   if (current?.error) {
     return (
       <Alert variant="error" data-testid="detail-history-error">
-        Could not load the remediation history. {current.error}
+        Couldn’t load the remediation history. Close and reopen the finding to try again. {current.error}
       </Alert>
     );
   }
@@ -152,9 +157,13 @@ function History({
   }
   if (current.events.length === 0) {
     return (
-      <p className="lw-quiet" data-testid="detail-history-empty">
-        No decisions recorded for this finding yet.
-      </p>
+      <EmptyState
+        data-testid="detail-history-empty"
+        variant="inline"
+        icon={<HistoryIcon aria-hidden />}
+        title="No decisions yet"
+        description="Acknowledge it or request a waiver to start its history."
+      />
     );
   }
 
@@ -223,7 +232,7 @@ export default function LintFindingDrawer({
         setHistory({
           forId: decisionId,
           events: null,
-          error: caught instanceof Error ? caught.message : 'Failed to load history',
+          error: caught instanceof Error ? caught.message : 'Failed to load history. Refresh the page to try again.',
         });
       });
     return () => controller.abort();
@@ -244,7 +253,7 @@ export default function LintFindingDrawer({
     fetchVersionLintReport(projectId, versionRecordId)
       .then((next) => setReport(next))
       .catch((caught: unknown) =>
-        setReportError(caught instanceof Error ? caught.message : 'Failed to load lint report')
+        setReportError(caught instanceof Error ? caught.message : 'Failed to load lint report. Refresh the page to try again.')
       )
       .finally(() => setReportLoading(false));
   }, [projectId, versionRecordId]);

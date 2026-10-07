@@ -31,7 +31,7 @@ describe('Sparkline', () => {
 
   it('renders an empty state (not a crash) for no data', () => {
     render(<Sparkline data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -48,10 +48,10 @@ describe('TrendLine', () => {
     expect(within(table).getByRole('cell', { name: '91' })).toBeInTheDocument();
   });
 
-  it('gaps a null value ("no data") rather than plotting it, and breaks the line into segments', () => {
+  it('gaps a null value ("no reading") rather than plotting it, and breaks the line into segments', () => {
     const { container } = render(<TrendLine data={[10, null, 20]} title="Gapped" area={false} />);
-    // The gap surfaces as a "no data" cell in the table…
-    expect(screen.getByRole('cell', { name: 'no data' })).toBeInTheDocument();
+    // The gap surfaces as a "no reading" cell in the table…
+    expect(screen.getByRole('cell', { name: 'no reading' })).toBeInTheDocument();
     // …and the line is drawn as two separate <path> segments (one per side of the gap), each a
     // single point → so there are 2 dots and the two flanking values are not joined by a line.
     expect(container.querySelectorAll('circle')).toHaveLength(2);
@@ -68,12 +68,12 @@ describe('TrendLine', () => {
 
   it('renders an empty state when every entry is a gap (no crash, not a flat zero line)', () => {
     render(<TrendLine data={[null, null]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('renders an empty state for no data', () => {
     render(<TrendLine data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -98,7 +98,7 @@ describe('BarSeries', () => {
 
   it('renders an empty state for no bars', () => {
     render(<BarSeries data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -122,7 +122,7 @@ describe('Donut', () => {
 
   it('renders an empty state when every value is zero', () => {
     render(<Donut segments={[{ label: 'a', value: 0 }]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -150,7 +150,7 @@ describe('StackedTimeline', () => {
 
   it('renders an empty state when there are no periods', () => {
     render(<StackedTimeline series={series} periods={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -234,7 +234,7 @@ describe('Radar', () => {
 
   it('renders an empty state for fewer than three axes', () => {
     render(<Radar axes={[{ label: 'a', value: 1 }, { label: 'b', value: 2 }]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -259,7 +259,7 @@ describe('Heatmap', () => {
 
   it('renders an empty state for an empty matrix', () => {
     render(<Heatmap matrix={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -285,7 +285,7 @@ describe('Gauge', () => {
 
   it('renders an empty state for a non-finite value', () => {
     render(<Gauge value={Number.NaN} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing recorded/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {

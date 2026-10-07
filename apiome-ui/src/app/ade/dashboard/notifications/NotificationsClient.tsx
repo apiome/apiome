@@ -194,7 +194,7 @@ export default function NotificationsClient({ now }: { now?: number }) {
         ) : null}
 
         {loading ? (
-          <p className="ntf-note" data-testid="notifications-loading">
+          <p className="ntf-note" role="status" aria-live="polite" data-testid="notifications-loading">
             Reading your inbox…
           </p>
         ) : null}

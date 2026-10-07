@@ -256,7 +256,7 @@ test.describe('DataTable', () => {
       // Scoped to the table: the gallery's §Overlays section renders six `Alert` banners of
       // its own, and a page-wide `getByRole('alert')` would resolve to all of them.
       const table = page.getByRole('table', { name: 'Projects' });
-      await expect(table.getByRole('alert')).toContainText('Could not load projects');
+      await expect(table.getByRole('alert')).toContainText('Could not load projects. Refresh the page to try again.');
     });
   });
 

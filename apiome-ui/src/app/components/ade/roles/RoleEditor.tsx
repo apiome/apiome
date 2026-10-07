@@ -127,6 +127,7 @@ export default function RoleEditor({
   if (loading) {
     return (
       <div className="flex flex-col gap-4" data-testid="roles-editor-loading">
+        <span className="sr-only" role="status">Loading the role…</span>
         <Skeleton className="h-24 w-full rounded-lg" />
         <Skeleton className="h-96 w-full rounded-lg" />
       </div>
@@ -144,16 +145,16 @@ export default function RoleEditor({
       <EmptyState
         data-testid="roles-empty"
         icon={<Shield aria-hidden />}
-        title="No roles defined yet."
-        description="Built-in roles are seeded when the first member joins. Create a custom role to hand out narrower access."
+        title="No roles defined yet"
+        description="Built-in roles arrive with the first member. Create a custom role for narrower access."
         action={action}
       />
     ) : (
       <EmptyState
         data-testid="roles-none-selected"
         icon={<MousePointerClick aria-hidden />}
-        title="Select a role to edit its permissions."
-        description="Pick a role on the left, or create a new one to start from an empty matrix."
+        title="No role selected"
+        description="Pick a role on the left, or create one from an empty matrix."
         action={action}
       />
     );

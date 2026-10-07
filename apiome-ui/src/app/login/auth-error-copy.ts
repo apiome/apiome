@@ -65,7 +65,7 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
   },
   'sign-in-failed': {
     type: 'error',
-    text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',
+    text: 'Sign-in didn’t finish. Please try again, or contact support if the issue persists.',
     retry: true,
   },
 
@@ -112,7 +112,7 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
  */
 export const GENERIC_AUTH_ERROR: Readonly<AuthErrorCopy> = {
   type: 'error',
-  text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',
+  text: 'Sign-in didn’t finish. Please try again, or contact support if the issue persists.',
   retry: true,
 };
 

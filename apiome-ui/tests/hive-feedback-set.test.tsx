@@ -280,7 +280,7 @@ describe('ErrorState — what happened, and what to do', () => {
   it('keeps the pre-Hive contract: default title, description, and a wired retry', () => {
     const onRetry = jest.fn();
     render(<ErrorState description="Boom." onRetry={onRetry} />);
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText("This didn’t load")).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -320,14 +320,14 @@ describe('ErrorBanner — the failure above content that still works', () => {
     const onRetry = jest.fn();
     render(
       <ErrorBanner
-        title="Couldn’t load projects."
+        title="Couldn’t load projects"
         description="The API returned 502."
         onRetry={onRetry}
       />
     );
 
     const banner = screen.getByRole('alert');
-    expect(banner).toHaveTextContent('Couldn’t load projects.');
+    expect(banner).toHaveTextContent('Couldn’t load projects');
     expect(banner).toHaveTextContent('The API returned 502.');
     fireEvent.click(within(banner).getByRole('button', { name: /Try again/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -340,7 +340,7 @@ describe('ErrorBanner — the failure above content that still works', () => {
 
   it('has no axe violations', async () => {
     const { container } = render(
-      <ErrorBanner title="Couldn’t load projects." description="502." onRetry={jest.fn()} />
+      <ErrorBanner title="Couldn’t load projects" description="502." onRetry={jest.fn()} />
     );
     expect(await axe(container)).toHaveNoViolations();
   });
@@ -454,8 +454,8 @@ describe('the skeleton presets are shaped, and silent', () => {
  * a change to this list — which is the point of a voice check.
  */
 const DEFAULT_COPY = {
-  titles: ['Pick a workspace first', 'Something went wrong'],
-  descriptions: ['This page is scoped to one workspace.'],
+  titles: ['Pick a workspace first', "This didn’t load"],
+  descriptions: ['This page is scoped to one workspace.', 'Try again, or reload the page if it keeps happening.'],
   buttons: ['Go to Tenants', 'Try again'],
 } as const;
 

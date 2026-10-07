@@ -71,7 +71,7 @@ export function McpTrustPosturePanel({ endpointId, versionId, profile }: McpTrus
         if (!cancelled) setReport(result);
       } catch (e) {
         if (cancelled || controller.signal.aborted) return;
-        setError(e instanceof Error ? e.message : 'Failed to load trust posture.');
+        setError(e instanceof Error ? e.message : 'Failed to load trust posture. Refresh the page to try again.');
         setReport(null);
       } finally {
         if (!cancelled) setLoading(false);

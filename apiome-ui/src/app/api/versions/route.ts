@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch versions');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch versions. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
       };
       if (!branchPayload.success || !Array.isArray(branchPayload.branches)) {
         return NextResponse.json(
-          { success: false, error: branchPayload.error || 'Failed to resolve branches' },
+          { success: false, error: branchPayload.error || 'Failed to resolve branches. Refresh the page to try again.' },
           { status: 500 }
         );
       }
@@ -331,7 +331,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(versionData),
     });
 
-    const { data, error, status, errorDetail } = await handleRestResponse(response, 'Failed to create version');
+    const { data, error, status, errorDetail } = await handleRestResponse(response, 'Failed to create version. Try again.');
 
     if (error) {
       return NextResponse.json(nextJsonFromVersionCreateError(error, errorDetail), { status });

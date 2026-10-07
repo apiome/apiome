@@ -86,10 +86,10 @@ export function VersionTagDialog({
         onOpenChange(false);
         onCreated?.();
       } else {
-        toast.error(d.error || 'Could not create tag');
+        toast.error(d.error || 'Could not create tag. Try again.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not create tag');
+      toast.error(e instanceof Error ? e.message : 'Could not create tag. Try again.');
     } finally {
       setSaving(false);
     }

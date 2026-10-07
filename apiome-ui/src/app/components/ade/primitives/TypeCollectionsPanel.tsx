@@ -498,7 +498,7 @@ export default function TypeCollectionsPanel({
       empty={
         <EmptyState
           icon={<FolderTree aria-hidden />}
-          title="No namespace collections match this filter."
+          title="No namespace collections match this filter"
           description="Clear the scope filter to see every namespace in the registry."
           variant="compact"
         />

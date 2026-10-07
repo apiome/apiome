@@ -143,10 +143,10 @@ export function CommitRevisionDialog({
             }
           }
         } else {
-          setBranchError(typeof d.error === 'string' ? d.error : 'Could not load branches');
+          setBranchError(typeof d.error === 'string' ? d.error : 'Could not load branches. Refresh the page to try again.');
         }
       } catch {
-        if (!cancelled) setBranchError('Could not load branches');
+        if (!cancelled) setBranchError('Could not load branches. Refresh the page to try again.');
       } finally {
         if (!cancelled) setBranchesLoading(false);
       }
@@ -236,7 +236,7 @@ export function CommitRevisionDialog({
     try {
       const base = await resolveBase();
       if (!base) {
-        setErrorMessage('Could not resolve a base revision for this commit.');
+        setErrorMessage('Could not resolve a base revision for this commit. Refresh the page to try again.');
         setSubmitting(false);
         return;
       }

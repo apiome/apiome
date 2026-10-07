@@ -198,7 +198,7 @@ export async function fetchImportPreflight(
     throw new Error(
       typeof data?.error === 'string' && data.error
         ? data.error
-        : 'Could not score this source before importing.',
+        : 'Could not score this source before importing. Refresh the page to try again.',
     );
   }
   if (typeof data?.ok !== 'boolean' || !data?.policy) {

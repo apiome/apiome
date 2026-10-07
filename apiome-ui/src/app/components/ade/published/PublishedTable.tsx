@@ -56,7 +56,7 @@ import { cn } from '@lib/utils';
 import { PublishedRowMenu } from './PublishedRowMenu';
 import {
   PUBLISHED_LOADING_LABEL,
-  PUBLISHED_LOAD_ERROR,
+  PUBLISHED_LOAD_ERROR_TITLE,
   SUNSET_TIMELINE_HREF,
   publishedAccessLabel,
   publishedLifecyclePill,
@@ -265,7 +265,7 @@ export function PublishedTable({
       loading={loading}
       loadingLabel={PUBLISHED_LOADING_LABEL}
       error={error}
-      errorTitle={PUBLISHED_LOAD_ERROR}
+      errorTitle={PUBLISHED_LOAD_ERROR_TITLE}
       onRetry={onRetry}
       empty={empty}
       toolbar={toolbar}

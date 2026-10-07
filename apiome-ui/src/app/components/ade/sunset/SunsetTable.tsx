@@ -40,7 +40,7 @@ import { MIGRATION_GUIDE_ISSUE_URL } from '@/app/utils/revision-deprecation';
 
 import {
   SUNSET_LOADING_LABEL,
-  SUNSET_LOAD_ERROR,
+  SUNSET_LOAD_ERROR_TITLE,
   sunsetInstant,
   sunsetLifecycleLabel,
   sunsetNote,
@@ -227,7 +227,7 @@ export function SunsetTable({
         loadingLabel={SUNSET_LOADING_LABEL}
         skeletonRows={4}
         error={error}
-        errorTitle={SUNSET_LOAD_ERROR}
+        errorTitle={SUNSET_LOAD_ERROR_TITLE}
         onRetry={onRetry}
         empty={empty}
         toolbar={toolbar}

@@ -67,7 +67,7 @@ export async function GET(
       { method: 'GET', headers }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to load canvas');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to load canvas. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -125,7 +125,7 @@ export async function PUT(
       }
     );
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to save canvas');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to save canvas. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

@@ -580,7 +580,7 @@ describe('versionRowMenuItems', () => {
 
   it('says Freezing... while a freeze is in flight', () => {
     const items = versionRowMenuItems(HEAD_DRAFT, { ...CONTEXT, freezing: true });
-    expect(items.find((item) => item.id === 'freezeSchema')).toMatchObject({ label: 'Freezing...', disabled: true });
+    expect(items.find((item) => item.id === 'freezeSchema')).toMatchObject({ label: 'Freezing…', disabled: true });
   });
 
   it('production + flag off: the git-like items — Delete included — are gone, as before', () => {

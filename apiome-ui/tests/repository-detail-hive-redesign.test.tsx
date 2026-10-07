@@ -883,7 +883,7 @@ describe('the file detail pane', () => {
     await renderScreen();
     await openFile();
     await userEvent.click(await screen.findByRole('radio', { name: 'Diff vs latest import' }));
-    expect(await screen.findByText('Diff not wired yet')).toBeInTheDocument();
+    expect(await screen.findByText('Diff not available yet')).toBeInTheDocument();
   });
 
   test('the Details tables name their sort direction, not only their column', async () => {

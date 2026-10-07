@@ -397,13 +397,13 @@ export function CatalogImportDialog({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.success === false) {
-        throw new Error(data?.error || 'Could not detect that source.');
+        throw new Error(data?.error || 'Could not detect that source. Refresh the page to try again.');
       }
       setDetection(data as DetectionResult);
       setFormatOverride(null);
     } catch (e) {
       setDetection(null);
-      setError(e instanceof Error ? e.message : 'Could not detect that source.');
+      setError(e instanceof Error ? e.message : 'Could not detect that source. Refresh the page to try again.');
     } finally {
       setState('idle');
       setStep('detect');
@@ -429,7 +429,7 @@ export function CatalogImportDialog({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.success === false) {
-        throw new Error(data?.error || 'Could not detect that archive.');
+        throw new Error(data?.error || 'Could not detect that archive. Refresh the page to try again.');
       }
       const result = data as DetectionResult;
       setDetection(result);
@@ -437,7 +437,7 @@ export function CatalogImportDialog({
       setArchiveRoot(result.archive_root ?? null);
     } catch (e) {
       setDetection(null);
-      failure = e instanceof Error ? e.message : 'Could not detect that archive.';
+      failure = e instanceof Error ? e.message : 'Could not detect that archive. Refresh the page to try again.';
     }
     // An archive is the one upload that can hold several independent specs (MFI-29.5) — and
     // that is also why whole-archive detection may have just failed with an ambiguous root.
@@ -462,7 +462,7 @@ export function CatalogImportDialog({
         const text = await file.text();
         await detectContent(text, file.name, 'file');
       } catch {
-        setError('Could not read that file. Try another file.');
+        setError('Could not read that file. Try another file. Refresh the page to try again.');
       }
     },
     [detectArchive, detectContent],
@@ -488,7 +488,7 @@ export function CatalogImportDialog({
       const text = await res.text();
       await detectContent(text, url, 'url');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not fetch that URL.');
+      setError(e instanceof Error ? e.message : 'Could not fetch that URL. Refresh the page to try again.');
     } finally {
       setState('idle');
     }
@@ -524,7 +524,7 @@ export function CatalogImportDialog({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.success === false) {
-        throw new Error(data?.error || 'Could not read that repository.');
+        throw new Error(data?.error || 'Could not read that repository. Refresh the page to try again.');
       }
       setContent('');
       setMetadata(null);
@@ -540,7 +540,7 @@ export function CatalogImportDialog({
     } catch (e) {
       setDetection(null);
       setGitSource(null);
-      failure = e instanceof Error ? e.message : 'Could not read that repository.';
+      failure = e instanceof Error ? e.message : 'Could not read that repository. Refresh the page to try again.';
     }
     // A repository path is the most likely place to find several independent specs — and a
     // selection that holds them has no single root, which is exactly why the fetch above may
@@ -605,7 +605,7 @@ export function CatalogImportDialog({
       });
       const startData = await startRes.json().catch(() => ({}));
       if (!startRes.ok || startData?.success === false) {
-        throw new Error(startData?.error || 'Failed to start the import.');
+        throw new Error(startData?.error || 'Failed to start the import. Try again.');
       }
       const jobId: string | undefined = startData?.job_id;
       if (!jobId) throw new Error('The import did not start (no job id returned).');
@@ -657,7 +657,7 @@ export function CatalogImportDialog({
       }
       throw new Error('The import is taking longer than expected. Check the catalog shortly.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to store the source.');
+      setError(e instanceof Error ? e.message : 'Failed to store the source. Try again.');
       setState('idle');
       setStep('options');
     }
@@ -848,7 +848,7 @@ export function CatalogImportDialog({
                         id="catalog-import-paste"
                         value={pasteText}
                         onChange={(e) => setPasteText(e.target.value)}
-                        placeholder="Paste GraphQL SDL, .proto, AsyncAPI, or JSON Schema content..."
+                        placeholder="Paste GraphQL SDL, .proto, AsyncAPI, or JSON Schema content…"
                         rows={9}
                         className="mono"
                       />
@@ -1168,7 +1168,7 @@ export function CatalogImportDialog({
                   tone="neutral"
                   icon={<SlidersHorizontal />}
                   title="No additional options"
-                  description="Nothing to configure for this data type. Continue to the quality pre-flight — nothing is written to the catalog until you confirm it there."
+                  description="Nothing to configure. Continue to the quality pre-flight; nothing is written until you confirm."
                   data-testid="catalog-import-no-options"
                 />
               )}

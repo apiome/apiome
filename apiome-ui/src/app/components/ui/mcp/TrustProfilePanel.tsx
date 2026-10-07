@@ -36,12 +36,15 @@ import {
   type McpTrustBand,
   type McpTrustProfile,
 } from '@/app/components/ade/dashboard/mcp/mcpTrustUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed trust profile, or `null` while it has not loaded. */
   profile: McpTrustProfile | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /**
@@ -110,17 +113,17 @@ function AxisRow({ axis }: { axis: McpTrustAxis }) {
  * the axes are computed from documented inputs, missing inputs render as explicit gaps (never zeros),
  * and each axis's methodology is shown on hover.
  */
-export function TrustProfilePanel({ profile, loading, error }: Props) {
+export function TrustProfilePanel({ profile, loading, error, onRetry }: Props) {
   if (loading && !profile) {
     return <LoadingState minHeightClassName="min-h-[220px]" message="Loading trust profile…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<ShieldQuestion className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Trust profile unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -134,7 +137,7 @@ export function TrustProfilePanel({ profile, loading, error }: Props) {
         variant="compact"
         icon={<ShieldQuestion className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Not enough signal to profile yet"
-        description="This server has not been scored, documented, changed, or tested enough to build a trust profile. Run discovery and test its tools to populate its axes."
+        description="Not scored, documented, changed or tested enough yet. Run discovery and test its tools."
       />
     );
   }

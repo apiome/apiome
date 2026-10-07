@@ -243,11 +243,11 @@ export default function PrimitivesManagementClient() {
       if (data.success) {
         setPrimitives(sortByName(data.primitives || []));
       } else {
-        showMessage('error', data.error || 'Failed to load primitives');
+        showMessage('error', data.error || 'Failed to load primitives. Refresh the page to try again.');
       }
     } catch (error) {
       console.error('Error loading primitives:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load primitives';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load primitives. Refresh the page to try again.';
       showMessage('error', errorMessage);
     } finally {
       setLoading(false);
@@ -371,11 +371,11 @@ export default function PrimitivesManagementClient() {
         showMessage('success', 'Primitive deleted successfully');
         await refreshAll();
       } else {
-        showMessage('error', data.error || 'Failed to delete primitive');
+        showMessage('error', data.error || 'Failed to delete primitive. Try again.');
       }
     } catch (error) {
       console.error('Error deleting primitive:', error);
-      showMessage('error', 'Failed to delete primitive');
+      showMessage('error', 'Failed to delete primitive. Try again.');
     }
   };
 
@@ -485,10 +485,7 @@ export default function PrimitivesManagementClient() {
 
       <PageBody>
         {!currentTenantId ? (
-          <GatedState
-            title="Please select a tenant to manage primitives"
-            description="The type registry is scoped to one workspace."
-          />
+          <GatedState description="The type registry belongs to one workspace. Pick one to see it." />
         ) : activeView === 'settings' ? (
           <RegistrySettingsPanel onMessage={showMessage} />
         ) : activeView === 'resolver' ? (

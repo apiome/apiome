@@ -137,7 +137,7 @@ export async function fetchLintEvidence(
     const message =
       (data && (data.error || data.detail)) ||
       `Failed to load lint evidence (HTTP ${response.status})`;
-    throw new Error(typeof message === 'string' ? message : 'Failed to load lint evidence');
+    throw new Error(typeof message === 'string' ? message : 'Failed to load lint evidence. Refresh the page to try again.');
   }
   return parseLintEvidenceCoverage(data);
 }

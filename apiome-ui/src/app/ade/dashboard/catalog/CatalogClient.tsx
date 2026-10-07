@@ -208,7 +208,7 @@ export default function CatalogClient() {
       if (!response.ok) throw new Error(`Failed to load the catalog: ${response.statusText}`);
       const data = await response.json();
       if (!data.success || !Array.isArray(data.catalog)) {
-        throw new Error(data.error || 'Failed to load the catalog');
+        throw new Error(data.error || 'Failed to load the catalog. Refresh the page to try again.');
       }
       setItems(
         (data.catalog as Record<string, unknown>[]).map(normalizeCatalogListItem) as CatalogItem[]
@@ -218,7 +218,7 @@ export default function CatalogClient() {
       // A read that failed and a catalog that is empty used to look identical here — the
       // screen logged to the console and rendered "Your catalog is empty".
       setItems([]);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load the catalog');
+      setLoadError(error instanceof Error ? error.message : 'Failed to load the catalog. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -455,7 +455,7 @@ export default function CatalogClient() {
       setBusy(true);
       const failure = await runWrite(
         () => deleteProject(item.id),
-        'Failed to delete the catalog item.'
+        'Failed to delete the catalog item. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -471,7 +471,7 @@ export default function CatalogClient() {
       setBusy(true);
       const failure = await runWrite(
         () => restoreProject(item.id),
-        'Failed to undelete the catalog item.'
+        'Failed to undelete the catalog item. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -487,7 +487,7 @@ export default function CatalogClient() {
       setBusy(true);
       const failure = await runWrite(
         () => permanentDeleteProject(item.id),
-        'Failed to permanently delete the catalog item.'
+        'Failed to permanently delete the catalog item. Try again.'
       );
       setBusy(false);
       if (failure) return void alert({ message: failure, variant: 'error' });
@@ -769,7 +769,7 @@ export default function CatalogClient() {
               bulk.deletable,
               (item) => deleteProject(item.id),
               'Deleted',
-              'Failed to delete the catalog item.'
+              'Failed to delete the catalog item. Try again.'
             )
           }
         >
@@ -786,7 +786,7 @@ export default function CatalogClient() {
               bulk.restorable,
               (item) => restoreProject(item.id),
               'Undeleted',
-              'Failed to undelete the catalog item.'
+              'Failed to undelete the catalog item. Try again.'
             )
           }
         >

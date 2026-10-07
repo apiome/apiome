@@ -453,7 +453,7 @@ export default function LintQueueTable({
             surface={false}
             tone="neutral"
             icon={<SearchX aria-hidden />}
-            title="No findings match the current filters."
+            title="No findings match the current filters"
             description="Clear a chip or widen the subject scope."
             action={
               <Button
@@ -473,8 +473,8 @@ export default function LintQueueTable({
             variant="compact"
             surface={false}
             icon={<ShieldCheck aria-hidden />}
-            title="No lint findings in this workspace."
-            description="Findings appear here once a scan records evidence against a revision or an MCP server."
+            title="No lint findings in this workspace"
+            description="Findings appear once a scan records evidence against a revision or MCP server."
           />
         )
       }

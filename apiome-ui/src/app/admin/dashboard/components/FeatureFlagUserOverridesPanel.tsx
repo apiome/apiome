@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Flag, Search, Plus, Minus, Package, Loader2 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   getAllFeatureFlags,
   getAllFeatureFlagGroups,
@@ -107,7 +108,7 @@ export function FeatureFlagUserOverridesPanel({
       try {
         await reload();
       } catch {
-        if (!cancelled) notifyRef.current?.('error', 'Failed to load feature flags');
+        if (!cancelled) notifyRef.current?.('error', 'Failed to load feature flags. Refresh the page to try again.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -137,7 +138,7 @@ export function FeatureFlagUserOverridesPanel({
         setOverrides(prev => ({ ...prev, [flagId]: true }));
         notifyRef.current?.('success', 'Flag added for this user');
       } else {
-        notifyRef.current?.('error', res.error || 'Could not add flag');
+        notifyRef.current?.('error', res.error || 'Could not add flag. Try again.');
       }
     });
   };
@@ -153,7 +154,7 @@ export function FeatureFlagUserOverridesPanel({
         });
         notifyRef.current?.('success', 'Flag removed from this user');
       } else {
-        notifyRef.current?.('error', res.error || 'Could not remove flag');
+        notifyRef.current?.('error', res.error || 'Could not remove flag. Try again.');
       }
     });
   };
@@ -181,7 +182,7 @@ export function FeatureFlagUserOverridesPanel({
       });
       notifyRef.current?.('success', `Package "${g.label}" added`);
     } catch {
-      notifyRef.current?.('error', 'Failed to add package');
+      notifyRef.current?.('error', 'Failed to add package. Try again.');
       await reload();
     } finally {
       setSavingGroupId(null);
@@ -196,7 +197,7 @@ export function FeatureFlagUserOverridesPanel({
       for (const flagId of ids) {
         const res = JSON.parse(await removeUserFeatureFlag(userId, flagId));
         if (!res.success) {
-          notifyRef.current?.('error', res.error || 'Failed to remove part of package');
+          notifyRef.current?.('error', res.error || 'Failed to remove part of package. Try again.');
           await reload();
           return;
         }
@@ -208,7 +209,7 @@ export function FeatureFlagUserOverridesPanel({
       });
       notifyRef.current?.('success', `Package "${g.label}" removed`);
     } catch {
-      notifyRef.current?.('error', 'Failed to remove package');
+      notifyRef.current?.('error', 'Failed to remove package. Try again.');
       await reload();
     } finally {
       setSavingGroupId(null);
@@ -311,12 +312,15 @@ export function FeatureFlagUserOverridesPanel({
           Feature packages
         </h4>
         <p className="mb-2 text-xs text-gray-500 dark:text-slate-400">
-          Bulk add or remove the same flags together (defined under License Management → Flag packages).
+          Bulk add or remove the same flags together (defined under Licenses → Flag packages).
         </p>
         {groups.length === 0 ? (
-          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs italic text-gray-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-            No packages defined yet.
-          </p>
+          <EmptyState
+            variant="inline"
+            icon={<Package aria-hidden />}
+            title="No feature packages yet"
+            description="Create packages under Licenses → Flag packages."
+          />
         ) : (
           <ul className="max-h-28 overflow-y-auto space-y-1.5 pr-1">
             {groups.map(g => {

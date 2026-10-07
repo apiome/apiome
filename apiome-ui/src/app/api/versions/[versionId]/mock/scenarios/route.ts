@@ -126,7 +126,7 @@ export async function GET(
     const data = await response.json().catch(() => null);
     if (!response.ok) {
       const error =
-        (data && typeof data.detail === 'string' && data.detail) || 'Failed to load mock scenarios';
+        (data && typeof data.detail === 'string' && data.detail) || 'Failed to load mock scenarios. Refresh the page to try again.';
       return NextResponse.json({ success: false, error }, { status: response.status });
     }
 
@@ -204,7 +204,7 @@ export async function PUT(
         );
       }
       const error =
-        (typeof detail === 'string' && detail) || 'Failed to save mock scenarios';
+        (typeof detail === 'string' && detail) || 'Failed to save mock scenarios. Try again.';
       return NextResponse.json({ success: false, error }, { status: response.status });
     }
 

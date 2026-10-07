@@ -401,7 +401,7 @@ export const IMPORTS_30D_PLACEHOLDER = '—';
 
 /** …and why, as the stat's hover. Verbatim from the screen this replaces. */
 export const IMPORTS_30D_TOOLTIP =
-  'Needs import-event aggregation per tenant + repo (API not wired yet).';
+  'Import counts per repository are coming soon.';
 
 /**
  * The four KPI figures.
@@ -602,7 +602,7 @@ export const RESCAN_ALL_TOAST =
 export const RESCAN_TOAST = 'Rescan will run when scan jobs are wired to the API.';
 
 /** What a failed list read says. */
-export const REPOSITORIES_LOAD_ERROR = 'Could not load repositories.';
+export const REPOSITORIES_LOAD_ERROR = 'Could not load repositories. Refresh the page to try again.';
 
 /**
  * The remove confirm.

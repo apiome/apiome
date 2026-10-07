@@ -112,7 +112,7 @@ export default function QueryUsingAIPanel({
               disabled={loading || !query.trim()}
               className="self-end px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
             >
-              {loading ? 'Thinking...' : 'Submit'}
+              {loading ? 'Thinking…' : 'Submit'}
             </button>
             {response && (
               <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-gray-200 dark:border-gray-600 p-3 bg-gray-50 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">

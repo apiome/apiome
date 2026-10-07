@@ -131,7 +131,7 @@ export default function SpecViewerDialog({
 
           <div className="ver-spec__editor" data-testid="spec-viewer-editor">
             {loading ? (
-              <LoadingState className="ver-spec__loading" minHeightClassName="min-h-0" spinnerSize="md" message="Loading specification..." />
+              <LoadingState className="ver-spec__loading" minHeightClassName="min-h-0" spinnerSize="md" message="Loading specification…" />
             ) : (
               <Editor
                 height="100%"

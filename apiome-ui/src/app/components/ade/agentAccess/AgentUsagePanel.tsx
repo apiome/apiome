@@ -165,7 +165,7 @@ export default function AgentUsagePanel({
       <EmptyState
         icon={<Activity aria-hidden />}
         title="No agent calls in this period"
-        description="Charts appear once an agent calls a tool with one of your agent keys. Usage is rolled up by UTC day."
+        description="Charts appear when an agent uses one of your keys, by UTC day."
         data-testid="agx-usage-empty"
       />
     );

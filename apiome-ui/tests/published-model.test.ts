@@ -406,8 +406,8 @@ describe('visibility', () => {
   });
 
   it('still says something when the server said nothing', () => {
-    expect(visibilityErrorMessage(null)).toBe('Failed to update visibility.');
-    expect(visibilityErrorMessage('   ')).toBe('Failed to update visibility.');
+    expect(visibilityErrorMessage(null)).toBe('Failed to update visibility. Try again.');
+    expect(visibilityErrorMessage('   ')).toBe('Failed to update visibility. Try again.');
   });
 });
 

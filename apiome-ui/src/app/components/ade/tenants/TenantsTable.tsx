@@ -353,7 +353,7 @@ export default function TenantsTable({
           <EmptyState
             icon={<Building2 aria-hidden />}
             title="No tenants yet"
-            description="You are not a member of any tenants yet. Create your own workspace, or ask an administrator to invite you."
+            description="Create your own workspace, or ask an administrator to invite you."
             action={
               <Button onClick={onCreateTenant}>
                 <Building2 aria-hidden />

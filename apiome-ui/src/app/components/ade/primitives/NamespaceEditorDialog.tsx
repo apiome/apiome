@@ -117,11 +117,11 @@ export default function NamespaceEditorDialog({
         onMessage('success', isEdit ? 'Namespace updated' : 'Namespace created');
         onSaved();
       } else {
-        onMessage('error', data.error || 'Failed to save namespace');
+        onMessage('error', data.error || 'Failed to save namespace. Try again.');
       }
     } catch (error) {
       console.error('Error saving namespace:', error);
-      onMessage('error', 'Failed to save namespace');
+      onMessage('error', 'Failed to save namespace. Try again.');
     } finally {
       setSubmitting(false);
     }

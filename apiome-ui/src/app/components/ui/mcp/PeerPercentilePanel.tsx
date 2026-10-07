@@ -31,12 +31,15 @@ import {
   type McpPeerAxis,
   type McpPeerPercentileProfile,
 } from '@/app/components/ade/dashboard/mcp/mcpPeerPercentileUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed peer-ranking profile, or `null` while it has not loaded. */
   profile: McpPeerPercentileProfile | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** One row of the per-axis ranking: label, the "top N%" badge (or a gap), the value, and the basis. */
@@ -73,17 +76,17 @@ function AxisRow({ axis }: { axis: McpPeerAxis }) {
  * satisfies — the ranking is a peer baseline within the category, single-member categories are handled
  * explicitly, and unmeasured axes render as labelled gaps rather than zeros.
  */
-export function PeerPercentilePanel({ profile, loading, error }: Props) {
+export function PeerPercentilePanel({ profile, loading, error, onRetry }: Props) {
   if (loading && !profile) {
     return <LoadingState minHeightClassName="min-h-[200px]" message="Loading peer ranking…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<Trophy className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Peer ranking unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -96,7 +99,7 @@ export function PeerPercentilePanel({ profile, loading, error }: Props) {
         variant="compact"
         icon={<Trophy className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Not enough peers to rank yet"
-        description="This server has no measured axis to rank, or no peers in its category to rank against. Register and discover more servers in this category — then grade, documentation, safety, and latency rankings appear here."
+        description="No measured axes or category peers yet. Discover more servers in this category."
       />
     );
   }

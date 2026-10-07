@@ -32,12 +32,15 @@ import {
   mcpDiscoveryOutcomeLabel,
   type McpDiscoveryHealth,
 } from '@/app/components/ade/dashboard/mcp/mcpReliabilityUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed discovery health, or `null` while it has not loaded. */
   health: McpDiscoveryHealth | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** The availability figure's colour by health band — token classes only, no literals in consumers. */
@@ -69,17 +72,17 @@ function LegendSwatch({ tone, label }: { tone: 'green' | 'red' | 'neutral'; labe
  * timeline matches the seeded job history, the availability % matches a hand count, a quarantined
  * endpoint is clearly flagged, and an empty history shows an empty state).
  */
-export function DiscoveryHealthPanel({ health, loading, error }: Props) {
+export function DiscoveryHealthPanel({ health, loading, error, onRetry }: Props) {
   if (loading && !health) {
     return <LoadingState minHeightClassName="min-h-[200px]" message="Loading discovery health…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<Activity className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Discovery health unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -92,7 +95,7 @@ export function DiscoveryHealthPanel({ health, loading, error }: Props) {
         variant="compact"
         icon={<Activity className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No discovery history yet"
-        description="This endpoint has not been discovered yet, so there is no reliability timeline to show. Run discovery to start recording its health."
+        description="This endpoint has never been discovered. Run discovery to start recording its health."
       />
     );
   }
@@ -182,9 +185,16 @@ export function DiscoveryHealthPanel({ health, loading, error }: Props) {
           />
         </div>
       ) : (
-        <p className="rounded-md border border-dashed border-border bg-inset px-3 py-4 text-center text-xs text-fg-muted">
-          No discovery jobs recorded in the recent window yet.
-        </p>
+        <EmptyState
+          variant="inline"
+          tone="neutral"
+          dashed
+          surface={false}
+          titleAs="p"
+          icon={<Clock aria-hidden />}
+          title="No recent discovery jobs"
+          description="Each discovery run adds a column to this timeline."
+        />
       )}
 
       {/* Per-code failure breakdown — what the failures actually were. */}

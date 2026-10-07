@@ -163,7 +163,7 @@ export function useConversionProjection(
         }
       } catch (e) {
         if (token !== walkToken.current) return;
-        setError(e instanceof Error ? e.message : 'Could not load the projection graph.');
+        setError(e instanceof Error ? e.message : 'Could not load the projection graph. Refresh the page to try again.');
       } finally {
         if (token === walkToken.current) {
           setLoading(false);

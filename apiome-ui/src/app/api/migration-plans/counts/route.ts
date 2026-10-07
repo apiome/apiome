@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to fetch rule counts';
+      const message = typeof data.detail === 'string' ? data.detail : data.error ?? 'Failed to fetch rule counts. Refresh the page to try again.';
       return NextResponse.json({ success: false, error: message }, { status: response.status });
     }
     return NextResponse.json({ success: true, counts: data.counts ?? {} });

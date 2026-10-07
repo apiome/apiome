@@ -160,7 +160,7 @@ export default function TenantMcpSettingsPanel({
       setPresets(presetBody.presets ?? []);
       setLoadedOnce(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load MCP settings';
+      const message = err instanceof Error ? err.message : 'Failed to load MCP settings. Refresh the page to try again.';
       setError(message);
     } finally {
       setLoading(false);
@@ -275,7 +275,7 @@ export default function TenantMcpSettingsPanel({
       onPolicySaved?.();
       toast.success('MCP settings saved');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save MCP settings';
+      const message = err instanceof Error ? err.message : 'Failed to save MCP settings. Try again.';
       setError(message);
       toast.error(message);
     } finally {

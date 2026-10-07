@@ -65,7 +65,7 @@ export function PublishGuideViolationsPanel({
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
-        const message = e instanceof Error ? e.message : 'Failed to load style-guide report';
+        const message = e instanceof Error ? e.message : 'Failed to load style-guide report. Refresh the page to try again.';
         setReport(null);
         setError(message);
         setLoading(false);

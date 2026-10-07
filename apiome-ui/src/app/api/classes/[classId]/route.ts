@@ -122,7 +122,7 @@ export async function DELETE(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete class');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete class. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -192,7 +192,7 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update class');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update class. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

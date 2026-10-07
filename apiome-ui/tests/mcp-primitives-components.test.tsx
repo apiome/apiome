@@ -203,7 +203,7 @@ describe('ErrorState', () => {
   it('renders the title/description and fires the retry handler', () => {
     const onRetry = jest.fn();
     render(<ErrorState description="Boom." onRetry={onRetry} />);
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText("This didn’t load")).toBeInTheDocument();
     expect(screen.getByText('Boom.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);

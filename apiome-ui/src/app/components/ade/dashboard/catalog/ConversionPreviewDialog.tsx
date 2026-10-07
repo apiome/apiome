@@ -192,7 +192,7 @@ export function ConversionPreviewDialog({
         })
         .catch((e: unknown) => {
           if (controller.signal.aborted) return;
-          setError(e instanceof Error ? e.message : 'Failed to preview conversion');
+          setError(e instanceof Error ? e.message : 'Failed to preview conversion. Try again.');
           setLoading(false);
         }),
     [itemId]
@@ -250,7 +250,7 @@ export function ConversionPreviewDialog({
         setAcknowledged(false);
       } catch (e: unknown) {
         if (controller.signal.aborted) return;
-        setRecomputeError(e instanceof Error ? e.message : 'Failed to recompute the preview');
+        setRecomputeError(e instanceof Error ? e.message : 'Failed to recompute the preview. Try again.');
       } finally {
         if (!controller.signal.aborted) setRecomputing(false);
       }
@@ -305,7 +305,7 @@ export function ConversionPreviewDialog({
       onConverted?.();
       onOpenChange(false);
     } catch (e: unknown) {
-      setCommitError(e instanceof Error ? e.message : 'Failed to convert');
+      setCommitError(e instanceof Error ? e.message : 'Failed to convert. Check the file, then try again.');
     } finally {
       setCommitting(false);
     }

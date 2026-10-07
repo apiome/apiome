@@ -107,7 +107,7 @@ export function McpSavedSearchesPanel({
       setSearches(await fetchSavedSearches());
     } catch (e) {
       setSearches([]);
-      setError(e instanceof Error ? e.message : 'Could not load saved searches');
+      setError(e instanceof Error ? e.message : 'Could not load saved searches. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export function McpSavedSearchesPanel({
       setSavePinned(false);
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save search');
+      setError(e instanceof Error ? e.message : 'Could not save search. Try again.');
     } finally {
       setSaving(false);
     }
@@ -167,7 +167,7 @@ export function McpSavedSearchesPanel({
       }
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not delete saved search');
+      setError(e instanceof Error ? e.message : 'Could not delete saved search. Try again.');
     }
   };
 
@@ -186,7 +186,7 @@ export function McpSavedSearchesPanel({
       }
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update saved search');
+      setError(e instanceof Error ? e.message : 'Could not update saved search. Try again.');
     }
   };
 

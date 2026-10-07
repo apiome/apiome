@@ -23,7 +23,6 @@ import * as React from 'react';
 import {
   ArrowRight,
   CheckCircle2,
-  History,
   Minus,
   MousePointerClick,
   PencilLine,
@@ -31,7 +30,6 @@ import {
   ShieldAlert,
   Sparkles,
 } from 'lucide-react';
-import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { STATUS_TONE_SOFT_CLASS } from '@/app/components/ui/statusVocabulary';
 import { mcpVersionSeqLabel } from '@/app/components/ade/dashboard/mcp/mcpVersionsUi';
@@ -41,12 +39,15 @@ import {
   type McpDigestChange,
   type McpEndpointDigest,
 } from '@/app/components/ade/dashboard/mcp/mcpDigestUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed digest, or `null` while it has not loaded. */
   digest: McpEndpointDigest | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
   /** Called with the current `version_id` when "Review changes" is activated (deep-links its diff). */
   onReviewChanges: (versionId: string) => void;
 }
@@ -251,17 +252,17 @@ function CurrentBody({ digest }: { digest: McpEndpointDigest }) {
  * the acceptance criteria it satisfies (the delta reflects last-seen → current, a first visit reads
  * as "new to you", and breaking changes are called out prominently).
  */
-export function ChangedSinceDigestPanel({ digest, loading, error, onReviewChanges }: Props) {
+export function ChangedSinceDigestPanel({ digest, loading, error, onReviewChanges, onRetry }: Props) {
   if (loading && !digest) {
     return <LoadingState minHeightClassName="min-h-[80px]" message="Checking what changed…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<History className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Digest unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }

@@ -174,7 +174,7 @@ describe('VersionMockCell — mock URL', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy mock URL for version 1.0.0' }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to copy mock URL to clipboard.'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to copy mock URL to clipboard. Copy it by hand instead.'));
   });
 
   it('hides the URL block while the mock is disabled', () => {

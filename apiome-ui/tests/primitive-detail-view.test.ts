@@ -351,14 +351,14 @@ describe('the test form’s verdict', () => {
 
     expect(bar).toEqual({
       tone: 'warn',
-      message: 'Schema could not be compiled — unknown keyword',
+      message: 'Schema could not be compiled — unknown keyword. Check the schema.',
       status: 'unavailable',
     });
   });
 
   it('names the compile failure even when the error did not', () => {
     expect(verdict({ status: 'unavailable', findingCount: 0 }, false).message).toBe(
-      'Schema could not be compiled — unknown error'
+      'Schema could not be compiled — no reason given. Check the schema.'
     );
   });
 

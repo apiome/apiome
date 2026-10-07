@@ -399,7 +399,7 @@ describe('the KPI strip', () => {
     expect(imports).toHaveTextContent('—');
     expect(imports).toHaveAttribute(
       'title',
-      'Needs import-event aggregation per tenant + repo (API not wired yet).'
+      'Import counts per repository are coming soon.'
     );
   });
 
@@ -602,7 +602,7 @@ describe('narrowing', () => {
     await screen.findByText('No repositories yet');
     expect(
       screen.getByText(
-        'Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and file indexing appear here.'
+        'Connect one via a linked account or public clone URL to scan it.'
       )
     ).toBeInTheDocument();
     expect(screen.getByTestId('repositories-empty-add')).toHaveAttribute(
@@ -702,14 +702,14 @@ describe('the row menu', () => {
 describe('reads that fail', () => {
   it('shows the failure with a retry rather than an empty workspace', async () => {
     await renderRepositories({ repositories: null });
-    await screen.findByText('Could not load repositories.');
+    await screen.findByText('Could not load repositories. Refresh the page to try again.');
     expect(screen.queryByText('No repositories yet')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('surfaces the failure in the table view too', async () => {
     await renderRepositories({ repositories: null });
-    await screen.findByText('Could not load repositories.');
+    await screen.findByText('Could not load repositories. Refresh the page to try again.');
     await showTable();
     expect(screen.getByRole('alert')).toHaveTextContent('Repositories unavailable');
   });

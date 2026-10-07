@@ -105,7 +105,7 @@ export async function GET(
     });
     const url = `${REST_API_BASE_URL}/versions/${encodeURIComponent(tenant.slug)}/${encodeURIComponent(projectId)}/${encodeURIComponent(versionId)}/changelog`;
     const response = await fetch(url, { method: 'GET', headers });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to load changelog');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to load changelog. Refresh the page to try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

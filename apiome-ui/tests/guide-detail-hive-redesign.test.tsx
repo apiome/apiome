@@ -386,7 +386,7 @@ describe('the page header', () => {
     render(<GuideEditorClient guideId={GUIDE_ID} />);
 
     expect(await screen.findByTestId('guide-not-found')).toBeInTheDocument();
-    expect(screen.getByText('Style guide not found.')).toBeInTheDocument();
+    expect(screen.getByText('Style guide not found')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('guide-not-found-back'));
     expect(mockPush).toHaveBeenCalledWith('/ade/dashboard/style-guides');
@@ -441,7 +441,7 @@ describe('the rule catalog', () => {
   it('says so rather than claiming an empty search when nothing is modified', async () => {
     await renderPage();
     fireEvent.click(screen.getByTestId('rule-catalog-modified-chip'));
-    expect(screen.getByText('No rules have been modified.')).toBeInTheDocument();
+    expect(screen.getByText('No rules have been modified')).toBeInTheDocument();
   });
 
   it('raises the save bar with a live count, and saves the whole set', async () => {

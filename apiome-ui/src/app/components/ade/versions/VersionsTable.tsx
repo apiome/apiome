@@ -372,7 +372,7 @@ export default function VersionsTable({
       caption={caption}
       scrollX
       loading={loading}
-      loadingLabel="Loading versions..."
+      loadingLabel="Loading versions…"
       sort={sort}
       onSortChange={onSortChange}
       toolbar={toolbar}

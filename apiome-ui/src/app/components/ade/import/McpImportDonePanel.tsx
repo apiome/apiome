@@ -54,8 +54,8 @@ export function McpImportDonePanel({
       title={succeeded ? `${endpointName} cataloged` : `${endpointName} added`}
       description={
         succeeded
-          ? 'Discovery committed catalog version 1. Its tools, resources, and prompts are now available under MCP Servers.'
-          : 'Discovery did not complete, so this server has no cataloged capabilities yet. Fix its connection or credentials, then re-run discovery from its page.'
+          ? 'Discovery committed catalog version 1. Find its tools, resources, and prompts under MCP Servers.'
+          : 'Discovery did not complete. Fix its connection or credentials, then re-run discovery.'
       }
       action={
         endpointId ? (

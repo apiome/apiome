@@ -121,7 +121,7 @@ export async function GET(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch classes');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch classes. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

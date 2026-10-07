@@ -285,13 +285,13 @@ export function useExportMockTestDrive(
           options: optionsRef.current ?? null,
         }),
       });
-      const data = await readEnvelope(res, 'Could not start the mock.');
+      const data = await readEnvelope(res, 'Could not start the mock. Try again.');
       setInstance(data as unknown as ExportMockInstance);
       setReattached(false);
       setLog(null);
       setLastResult(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not start the mock.');
+      setError(e instanceof Error ? e.message : 'Could not start the mock. Try again.');
     } finally {
       setBusy(false);
     }
@@ -307,13 +307,13 @@ export function useExportMockTestDrive(
         method: 'DELETE',
         credentials: 'include',
       });
-      await readEnvelope(res, 'Could not stop the mock.');
+      await readEnvelope(res, 'Could not stop the mock. Try again.');
       setInstance(null);
       setReattached(false);
       setLog(null);
       setLastResult(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not stop the mock.');
+      setError(e instanceof Error ? e.message : 'Could not stop the mock. Try again.');
     } finally {
       setBusy(false);
     }

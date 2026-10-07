@@ -93,7 +93,7 @@ export async function PUT(
     });
     const url = `${REST_API_BASE_URL}/tenants/${encodeURIComponent(tenant.slug)}/projects/${encodeURIComponent(projectId)}/change-report-template-default`;
     const response = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update project template default');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update project template default. Try again.');
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
     }

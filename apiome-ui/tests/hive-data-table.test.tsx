@@ -685,7 +685,7 @@ describe('the states a list is in when it has no rows', () => {
         getRowId={(project: Project) => project.id}
       />
     );
-    expect(screen.getByText('Nothing to show yet.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing here yet')).toBeInTheDocument();
 
     rerender(
       <DataTable
@@ -726,7 +726,7 @@ describe('the states a list is in when it has no rows', () => {
       />
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.queryByText('Nothing to show yet.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nothing here yet')).not.toBeInTheDocument();
   });
 
   it('spans the empty and error rows across every column, checkbox column included', () => {
@@ -740,7 +740,7 @@ describe('the states a list is in when it has no rows', () => {
         onSelectionChange={jest.fn()}
       />
     );
-    expect(screen.getByText('Nothing to show yet.').closest('td')).toHaveAttribute(
+    expect(screen.getByText('Nothing here yet').closest('td')).toHaveAttribute(
       'colspan',
       String(PROJECT_COLUMNS.length + 1)
     );

@@ -83,7 +83,7 @@ export default function ConsumerSurfaceDrawer({
 
               {groups.length > 0 && (
                 <section className="cns-drawer__section" data-testid="drawer-unresolved">
-                  <h3 className="cns-drawer__heading">Could not be resolved</h3>
+                  <h3 className="cns-drawer__heading">Unresolved</h3>
                   {groups.map((group) => (
                     <div className="cns-drawer__group" key={group.reason}>
                       <h4 className="cns-drawer__grouphead">

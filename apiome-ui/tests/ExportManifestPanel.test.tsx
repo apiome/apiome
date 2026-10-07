@@ -198,9 +198,9 @@ describe('ExportManifestPanel — loading, error, truncation', () => {
   });
 
   it('states a transport error', () => {
-    renderPanel({ page: null, entities: [], error: 'Could not load the artifact manifest.' });
+    renderPanel({ page: null, entities: [], error: 'Could not load the artifact manifest. Refresh the page to try again.' });
     expect(screen.getByTestId('export-manifest-error')).toHaveTextContent(
-      'Could not load the artifact manifest.',
+      'Could not load the artifact manifest. Refresh the page to try again.',
     );
   });
 

@@ -577,7 +577,7 @@ describe('McpEndpointInsight — scaffold', () => {
     render(<McpEndpointInsight endpointId={ENDPOINT_ID} currentVersionId={null} />);
 
     await waitFor(() => expect(screen.getByText('No insight yet')).toBeInTheDocument());
-    expect(screen.getByText(/never been discovered/i)).toBeInTheDocument();
+    expect(screen.getByText(/was never discovered/i)).toBeInTheDocument();
     // No surface request when there is no snapshot to summarize.
     expect(global.fetch).not.toHaveBeenCalledWith(
       expect.stringContaining('/insight/surface'),
@@ -1005,7 +1005,8 @@ describe('McpEndpointInsight — scaffold', () => {
     await waitFor(() =>
       expect(screen.getByText('Changed since your last view')).toBeInTheDocument(),
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(/breaking change/i);
+    // Other panels in this scaffold may show their own (role=alert) error states; find the digest's.
+    expect(screen.getAllByRole('alert').some((node) => /breaking change/i.test(node.textContent ?? ''))).toBe(true);
     expect(screen.getByText('summarize')).toBeInTheDocument();
     expect(screen.getByText('legacy_search')).toBeInTheDocument();
 

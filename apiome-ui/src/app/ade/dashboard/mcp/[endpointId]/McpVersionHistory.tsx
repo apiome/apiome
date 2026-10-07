@@ -81,6 +81,7 @@ import {
   type McpVersionCompare,
   type McpVersionSummary,
 } from "@/app/components/ade/dashboard/mcp/mcpVersionsUi";
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   endpointId: string;
@@ -381,7 +382,7 @@ function DiffPanel({
         tone="neutral"
         icon={<GitCompareArrows aria-hidden />}
         title="Pick two versions"
-        description="Choose a base and a target — from the selectors or by ticking two versions in the timeline — to see exactly what changed."
+        description="Pick a base and target in the selectors, or tick two timeline versions."
         data-testid="mcp-diff-unselected"
       />
     );
@@ -525,7 +526,7 @@ export default function McpVersionHistory({
         }
       } catch (e) {
         if (!active) return;
-        setError(e instanceof Error ? e.message : "Could not load version history.");
+        setError(e instanceof Error ? e.message : "Could not load version history. Refresh the page to try again.");
         setVersions([]);
         setSelection([]);
       } finally {
@@ -564,7 +565,7 @@ export default function McpVersionHistory({
       } catch (e) {
         if (!mountedRef.current) return;
         setCompare(null);
-        setCompareError(e instanceof Error ? e.message : "Could not compare versions.");
+        setCompareError(e instanceof Error ? e.message : "Could not compare versions. Try again.");
       } finally {
         if (mountedRef.current) setComparing(false);
       }
@@ -597,15 +598,23 @@ export default function McpVersionHistory({
   if (loading) {
     return <LoadingState minHeightClassName="min-h-[14rem]" message="Loading version history…" />;
   }
-  if (error || versions.length === 0) {
+  if (error) {
+    return (
+      <ErrorState
+        title="Version history unavailable"
+        description={error}
+        onRetry={reloadPage}
+        data-testid="mcp-versions-empty"
+      />
+    );
+  }
+  if (versions.length === 0) {
     return (
       <EmptyState
         icon={<History aria-hidden />}
-        tone={error ? 'danger' : 'neutral'}
+        tone="neutral"
         title="No version history"
-        description={
-          error ?? "This endpoint has no recorded version snapshots yet. Run discovery to create one."
-        }
+        description="No version snapshots recorded yet. Run discovery to create one."
         data-testid="mcp-versions-empty"
       />
     );

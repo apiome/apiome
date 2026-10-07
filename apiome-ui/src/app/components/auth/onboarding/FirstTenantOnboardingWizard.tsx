@@ -190,7 +190,7 @@ export function FirstTenantOnboardingWizard() {
       }
     } catch (error) {
       console.error('[FirstTenantOnboardingWizard] provisioning failed:', error);
-      setSubmitError('Something went wrong while creating your organization. Please try again.');
+      setSubmitError('Your organization wasn’t created. Try again.');
     } finally {
       setSubmitting(false);
     }

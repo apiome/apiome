@@ -35,6 +35,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = await callRestNotifications(auth, '', { params });
     return NextResponse.json({ success: true, ...(page as Record<string, unknown>) });
   } catch (error) {
-    return notificationsErrorResponse(error, 'Failed to read notifications');
+    return notificationsErrorResponse(error, 'Failed to read notifications. Refresh the page to try again.');
   }
 }

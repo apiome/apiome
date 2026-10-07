@@ -401,7 +401,7 @@ describe('the access URL', () => {
       fireEvent.click(screen.getByTestId(`published-access-url-${PAYMENTS_231.id}`));
     });
 
-    expect(mockToastError).toHaveBeenCalledWith('Failed to copy URL to clipboard.');
+    expect(mockToastError).toHaveBeenCalledWith('Failed to copy URL to clipboard. Copy it by hand instead.');
     consoleError.mockRestore();
   });
 });
@@ -792,9 +792,9 @@ describe('the states with no rows', () => {
       </TooltipProvider>
     );
 
-    expect(await screen.findByText('No tenant selected')).toBeInTheDocument();
+    expect(await screen.findByText('Pick a workspace first')).toBeInTheDocument();
     expect(
-      screen.getByText('Please select a tenant before managing publications.')
+      screen.getByText('Published versions belong to one workspace. Pick one to see them.')
     ).toBeInTheDocument();
     expect(mockReadVersions).not.toHaveBeenCalled();
   });
@@ -814,7 +814,7 @@ describe('the states with no rows', () => {
   it('draws a failed read as an error with a retry, not as an empty workspace', async () => {
     await renderPublished({ readPayload: { success: false, error: 'connection refused' } });
 
-    expect(await screen.findByText('Could not load published versions')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t load published versions')).toBeInTheDocument();
     expect(screen.getByText('connection refused')).toBeInTheDocument();
     expect(screen.queryByText('No published versions')).not.toBeInTheDocument();
 
@@ -835,7 +835,7 @@ describe('the states with no rows', () => {
       </TooltipProvider>
     );
 
-    expect(await screen.findByText('Loading published versions...')).toBeInTheDocument();
+    expect(await screen.findByText('Loading published versions…')).toBeInTheDocument();
   });
 });
 

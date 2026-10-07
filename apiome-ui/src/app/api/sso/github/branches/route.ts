@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ branches: names });
   } catch (error: unknown) {
     console.error('Error fetching GitHub branches:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch branches';
+    const message = error instanceof Error ? error.message : 'Failed to fetch branches. Refresh the page to try again.';
     return NextResponse.json(
       { error: message },
       { status: 500 }

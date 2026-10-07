@@ -142,8 +142,8 @@ export default function AgentKeysPanel({
         title="No agent keys yet"
         description={
           toolsets.length === 0
-            ? 'Enable Agent Access on a published version first; every key is bound to one toolset.'
-            : 'Create a key for an agent such as Claude Desktop, bound to a toolset and limited to the tools you allow.'
+            ? 'Enable Agent Access on a published version first; each key binds to one toolset.'
+            : 'Give an agent like Claude Desktop a key scoped to the tools you allow.'
         }
         action={
           toolsets.length > 0 ? (

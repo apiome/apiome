@@ -342,7 +342,7 @@ describe('<Sparkline>', () => {
 
   it('renders an empty series as "no data" rather than crashing or drawing a line', () => {
     const { container } = render(<Sparkline data={[]} label="Mock requests" />);
-    expect(screen.getByRole('img', { name: /no data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /nothing recorded/ })).toBeInTheDocument();
     expect(container.querySelector('.hive-sparkline__line')).toBeNull();
     expect(container.querySelector('.hive-sparkline__area')).toBeNull();
   });

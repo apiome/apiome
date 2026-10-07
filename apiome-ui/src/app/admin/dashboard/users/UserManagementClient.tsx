@@ -19,6 +19,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   getAllSignups,
   createUser,
@@ -37,6 +38,7 @@ import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOver
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { LoadingState } from '@/app/components/ui/LoadingState';
 
 interface User {
   id: string;
@@ -141,7 +143,7 @@ export default function UserManagementClient() {
       if (licensesData.success) setLicenses(licensesData.licenses.filter((l: License) => l.enabled));
     } catch (error) {
       console.error('Error loading data:', error);
-      showMessage('error', 'Failed to load data');
+      showMessage('error', 'Failed to load data. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -155,10 +157,10 @@ export default function UserManagementClient() {
         showMessage('success', 'License assigned successfully');
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to assign license');
+        showMessage('error', data.error || 'Failed to assign license. Try again.');
       }
     } catch {
-      showMessage('error', 'Failed to assign license');
+      showMessage('error', 'Failed to assign license. Try again.');
     } finally {
       setLicenseSubMenu(null);
       setOpenUserDropdown(null);
@@ -173,10 +175,10 @@ export default function UserManagementClient() {
         showMessage('success', 'License removed');
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to remove license');
+        showMessage('error', data.error || 'Failed to remove license. Try again.');
       }
     } catch {
-      showMessage('error', 'Failed to remove license');
+      showMessage('error', 'Failed to remove license. Try again.');
     } finally {
       setOpenUserDropdown(null);
     }
@@ -231,11 +233,11 @@ export default function UserManagementClient() {
         setActiveTab('users');
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to create user');
+        showMessage('error', data.error || 'Failed to create user. Try again.');
       }
     } catch (error) {
       console.error('Error creating user:', error);
-      showMessage('error', 'Failed to create user');
+      showMessage('error', 'Failed to create user. Try again.');
     } finally {
       setCreatingUser(false);
     }
@@ -258,11 +260,11 @@ export default function UserManagementClient() {
         showMessage('success', `User created successfully for ${signup.name}`);
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to create user');
+        showMessage('error', data.error || 'Failed to create user. Try again.');
       }
     } catch (error) {
       console.error('Error creating user from signup:', error);
-      showMessage('error', 'Failed to create user');
+      showMessage('error', 'Failed to create user. Try again.');
     }
   };
 
@@ -287,11 +289,11 @@ export default function UserManagementClient() {
         showMessage('success', 'Signup deleted successfully');
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to delete signup');
+        showMessage('error', data.error || 'Failed to delete signup. Try again.');
       }
     } catch (error) {
       console.error('Error deleting signup:', error);
-      showMessage('error', 'Failed to delete signup');
+      showMessage('error', 'Failed to delete signup. Try again.');
     }
   };
 
@@ -304,11 +306,11 @@ export default function UserManagementClient() {
         showMessage('success', `User ${user.enabled ? 'disabled' : 'enabled'} successfully`);
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to update user');
+        showMessage('error', data.error || 'Failed to update user. Try again.');
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      showMessage('error', 'Failed to update user');
+      showMessage('error', 'Failed to update user. Try again.');
     }
   };
 
@@ -321,11 +323,11 @@ export default function UserManagementClient() {
         showMessage('success', `User ${user.verified ? 'unverified' : 'verified'} successfully`);
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to update user');
+        showMessage('error', data.error || 'Failed to update user. Try again.');
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      showMessage('error', 'Failed to update user');
+      showMessage('error', 'Failed to update user. Try again.');
     }
   };
 
@@ -353,11 +355,11 @@ export default function UserManagementClient() {
         showMessage('success', 'User deleted successfully');
         await loadData();
       } else {
-        showMessage('error', data.error || 'Failed to delete user');
+        showMessage('error', data.error || 'Failed to delete user. Try again.');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      showMessage('error', 'Failed to delete user');
+      showMessage('error', 'Failed to delete user. Try again.');
     }
   };
 
@@ -378,8 +380,8 @@ export default function UserManagementClient() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts and approve signups</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Every account on the platform, and signups waiting for approval.</p>
             </div>
             <button
               type="button"
@@ -516,9 +518,7 @@ export default function UserManagementClient() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
-        </div>
+        <LoadingState message="Loading users…" />
       ) : activeTab === 'signups' ? (
         // Signups Table
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
@@ -638,10 +638,13 @@ export default function UserManagementClient() {
         // Users Table
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
           {users.length === 0 ? (
-            <div className="p-12 text-center">
-              <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">No users found</p>
-            </div>
+            <EmptyState
+              variant="compact"
+              surface={false}
+              icon={<Users aria-hidden />}
+              title="No users"
+              description="Invite a user, or clear the search and filters."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

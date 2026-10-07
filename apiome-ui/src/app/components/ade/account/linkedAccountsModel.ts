@@ -319,7 +319,7 @@ export const LINKED_ACCOUNTS_PATH = '/ade/dashboard/linked-accounts';
 export const LINK_SUCCESS_MESSAGE = 'Account linked successfully!';
 
 /** What a link that came back with an empty `?error=` says. */
-export const LINK_FAILURE_MESSAGE = 'Failed to link account';
+export const LINK_FAILURE_MESSAGE = 'Failed to link account. Try again.';
 
 /** The banner a return from the provider asks for, if it asks for one. */
 export interface LinkOutcome {

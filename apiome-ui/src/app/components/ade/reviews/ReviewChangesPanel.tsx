@@ -78,13 +78,13 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
         const json = await getEnvelope<ReviewChangesPayload>(`${routeBase}/changes`);
         if (cancelled) return;
         if (!json.success || !json.head) {
-          setChanges({ status: 'error', message: json.error || 'Could not compare this version.' });
+          setChanges({ status: 'error', message: json.error || 'Could not compare this version. Try again.' });
           return;
         }
         setChanges({ status: 'ready', data: json as ReviewChangesPayload });
       } catch (error) {
         if (!cancelled) {
-          setChanges({ status: 'error', message: error instanceof Error ? error.message : 'Could not compare this version.' });
+          setChanges({ status: 'error', message: error instanceof Error ? error.message : 'Could not compare this version. Try again.' });
         }
       }
     })();
@@ -112,7 +112,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
         if (!base.success || typeof base.spec !== 'string' || !head.success || typeof head.spec !== 'string') {
           setDocuments({
             status: 'error',
-            message: base.error || head.error || 'Could not build the documents to compare.',
+            message: base.error || head.error || 'Could not build the documents to compare. Try again.',
           });
           return;
         }
@@ -121,7 +121,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
         if (!cancelled) {
           setDocuments({
             status: 'error',
-            message: error instanceof Error ? error.message : 'Could not build the documents to compare.',
+            message: error instanceof Error ? error.message : 'Could not build the documents to compare. Try again.',
           });
         }
       }
@@ -159,7 +159,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
       <EmptyState
         icon={<GitCompareArrows />}
         title="First publication"
-        description="Nothing in this project is published yet, so there is nothing to compare this version with. Its whole document is on the Spec tab."
+        description="No published baseline to compare against. The whole document is on the Spec tab."
         data-testid="review-changes-initial"
       />
     );

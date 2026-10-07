@@ -73,7 +73,7 @@ export function RepositoryKpiStrip({ repositories }: RepositoryKpiStripProps) {
         label="Imports (30d)"
         icon={<Upload aria-hidden />}
         value={<span className="repo-kpi__unwired">{IMPORTS_30D_PLACEHOLDER}</span>}
-        footnote="aggregation not wired yet"
+        footnote="coming soon"
         title={IMPORTS_30D_TOOLTIP}
         data-testid="repositories-kpi-imports"
       />

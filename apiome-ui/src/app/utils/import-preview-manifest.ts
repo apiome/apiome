@@ -223,7 +223,7 @@ export async function fetchImportPreviewManifest(
     throw new Error(
       typeof data?.error === 'string' && data.error
         ? data.error
-        : 'Could not build the import preview for this source.',
+        : 'Could not build the import preview for this source. Try again.',
     );
   }
   if (typeof data?.ok !== 'boolean' || !data?.preflight) {

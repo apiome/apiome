@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, FileSignature, History, ShieldCheck, Upload } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -246,7 +247,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
       setVersions(versionList?.versions ?? []);
       setWaivers(waiverList?.waivers ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load the quality policy');
+      setError(e instanceof Error ? e.message : 'Failed to load the quality policy. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -287,7 +288,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
       const versionList = await qualityPolicyApi<QualityPolicyVersionList>('versions');
       setVersions(versionList?.versions ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save the quality policy');
+      setError(e instanceof Error ? e.message : 'Failed to save the quality policy. Try again.');
     } finally {
       setSaving(false);
     }
@@ -491,7 +492,12 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
           </CardHeader>
           {versions.length === 0 ? (
             <CardContent>
-              <p className="sg-quiet">No policy has been saved yet.</p>
+              <EmptyState
+                variant="inline"
+                icon={<History aria-hidden />}
+                title="No saved policy yet"
+                description="Save the policy to start its version history."
+              />
             </CardContent>
           ) : (
             <ul className="qp-rows" data-testid="quality-policy-versions">

@@ -120,7 +120,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
         return firstActive?.id ?? null;
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load MCP keys';
+      const message = err instanceof Error ? err.message : 'Failed to load MCP keys. Refresh the page to try again.';
       setKeysError(message);
     } finally {
       setKeysLoading(false);
@@ -220,7 +220,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
       setSelectedKeyId(created.id);
       toast.success('MCP API key created');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create MCP key';
+      const message = err instanceof Error ? err.message : 'Failed to create MCP key. Try again.';
       setCreateError(message);
       toast.error(message);
     } finally {
@@ -233,7 +233,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
       await navigator.clipboard.writeText(generatedSecret);
       setCopiedSecret(true);
     } catch {
-      toast.error('Could not copy to clipboard');
+      toast.error('Could not copy to clipboard. Copy it by hand instead.');
     }
   };
 
@@ -270,7 +270,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
       );
       toast.success('MCP key capabilities saved');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save capabilities';
+      const message = err instanceof Error ? err.message : 'Failed to save capabilities. Try again.';
       setError(message);
       toast.error(message);
     } finally {

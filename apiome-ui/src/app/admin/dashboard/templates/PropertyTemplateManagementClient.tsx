@@ -17,7 +17,9 @@ import {
   Tag,
   Copy,
   MoreVertical,
+  FileText,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import { SkeletonTableRows } from '@/app/components/ui/Skeleton';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
@@ -173,7 +175,7 @@ export default function PropertyTemplateManagementClient() {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      showMessage('error', 'Failed to load data');
+      showMessage('error', 'Failed to load data. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -266,10 +268,10 @@ export default function PropertyTemplateManagementClient() {
         resetForm();
         loadData();
       } else {
-        showMessage('error', result.error || 'Failed to create template');
+        showMessage('error', result.error || 'Failed to create template. Try again.');
       }
     } catch (error: any) {
-      showMessage('error', error.message || 'Failed to create template');
+      showMessage('error', error.message || 'Failed to create template. Try again.');
     }
   };
 
@@ -319,10 +321,10 @@ export default function PropertyTemplateManagementClient() {
         resetForm();
         loadData();
       } else {
-        showMessage('error', result.error || 'Failed to update template');
+        showMessage('error', result.error || 'Failed to update template. Try again.');
       }
     } catch (error: any) {
-      showMessage('error', error.message || 'Failed to update template');
+      showMessage('error', error.message || 'Failed to update template. Try again.');
     }
   };
 
@@ -345,10 +347,10 @@ export default function PropertyTemplateManagementClient() {
         showMessage('success', 'Template deleted successfully');
         loadData();
       } else {
-        showMessage('error', result.error || 'Failed to delete template');
+        showMessage('error', result.error || 'Failed to delete template. Try again.');
       }
     } catch (error: any) {
-      showMessage('error', error.message || 'Failed to delete template');
+      showMessage('error', error.message || 'Failed to delete template. Try again.');
     }
   };
 
@@ -360,10 +362,10 @@ export default function PropertyTemplateManagementClient() {
         showMessage('success', `Template ${template.enabled ? 'disabled' : 'enabled'} successfully`);
         loadData();
       } else {
-        showMessage('error', result.error || 'Failed to toggle template status');
+        showMessage('error', result.error || 'Failed to toggle template status. Try again.');
       }
     } catch (error: any) {
-      showMessage('error', error.message || 'Failed to toggle template status');
+      showMessage('error', error.message || 'Failed to toggle template status. Try again.');
     }
   };
 
@@ -404,8 +406,8 @@ export default function PropertyTemplateManagementClient() {
             <Package className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Property Templates</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Manage system and tenant property templates</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Property templates</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Reusable property definitions, shared system-wide or owned by a tenant.</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -486,7 +488,7 @@ export default function PropertyTemplateManagementClient() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name, description, or tags..."
+                placeholder="Search by name, description, or tags…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -570,8 +572,13 @@ export default function PropertyTemplateManagementClient() {
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
             {loading ? null : filteredTemplates.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                  No templates found
+                <td colSpan={7} className="px-4 py-4">
+                  <EmptyState
+                    variant="inline"
+                    icon={<FileText aria-hidden />}
+                    title="No property templates"
+                    description="Create a template, or clear the search and filters."
+                  />
                 </td>
               </tr>
             ) : (

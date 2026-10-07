@@ -209,7 +209,7 @@ export default function MembersClient() {
       setPlan(licenseData?.plan ?? null);
     } catch (e) {
       setMembers([]);
-      setLoadError(e instanceof Error ? e.message : 'Failed to load members');
+      setLoadError(e instanceof Error ? e.message : 'Failed to load members. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -299,7 +299,7 @@ export default function MembersClient() {
         await loadData();
         return null;
       } catch (e) {
-        return describeWriteFailure(e, 'Failed to invite member');
+        return describeWriteFailure(e, 'Failed to invite member. Try again.');
       }
     },
     [loadData]
@@ -311,7 +311,7 @@ export default function MembersClient() {
       setError('');
       // The inline select has nowhere to put an error of its own, so this one write reports
       // to the page banner.
-      const failure = await runWrite(member, 'Failed to change role', () =>
+      const failure = await runWrite(member, 'Failed to change role. Try again.', () =>
         assignMemberRole(member.user_id, roleId)
       );
       if (failure) setError(failure);
@@ -322,7 +322,7 @@ export default function MembersClient() {
   const handleResendInvite = React.useCallback(
     async (member: MemberRecord) => {
       setError('');
-      const failure = await runWrite(member, 'Failed to re-issue the invitation', () =>
+      const failure = await runWrite(member, 'Failed to re-issue the invitation. Try again.', () =>
         resendMemberInvite(member.user_id)
       );
       if (failure) setError(failure);
@@ -332,7 +332,7 @@ export default function MembersClient() {
 
   const handleToggleStatus = React.useCallback(
     (member: MemberRecord) =>
-      runWrite(member, 'Failed to update status', () =>
+      runWrite(member, 'Failed to update status. Try again.', () =>
         setMemberStatus(member.user_id, nextMemberStatus(member))
       ),
     [runWrite]
@@ -340,7 +340,7 @@ export default function MembersClient() {
 
   const handleOffboard = React.useCallback(
     async (member: MemberRecord) => {
-      const failure = await runWrite(member, 'Failed to offboard member', () =>
+      const failure = await runWrite(member, 'Failed to offboard member. Try again.', () =>
         offboardMember(member.user_id)
       );
       // The drawer, if it was open on this person, is now about somebody who is not there.

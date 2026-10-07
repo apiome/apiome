@@ -73,7 +73,7 @@ export function useCatalogSourceContext(
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false || !data?.item) {
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not load the catalog item.',
+            typeof data?.error === 'string' ? data.error : 'Could not load the catalog item. Refresh the page to try again.',
           );
         }
         if (cancelled) return;
@@ -91,7 +91,7 @@ export function useCatalogSourceContext(
         });
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Could not load the catalog item.');
+        setError(e instanceof Error ? e.message : 'Could not load the catalog item. Refresh the page to try again.');
         setContext(null);
       } finally {
         if (!cancelled) setLoading(false);

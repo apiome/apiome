@@ -60,7 +60,7 @@ export async function GET(
   } catch (e) {
     console.error('[repositories/imports]', e);
     return NextResponse.json(
-      { success: false, error: e instanceof Error ? e.message : 'Failed to load import metrics' },
+      { success: false, error: e instanceof Error ? e.message : 'Failed to load import metrics. Refresh the page to try again.' },
       { status: 500 }
     );
   }

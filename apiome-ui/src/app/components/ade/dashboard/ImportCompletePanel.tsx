@@ -567,7 +567,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
                 disabled={isRollingBack}
               >
                 <Undo2 className={`h-4 w-4 ${isRollingBack ? 'animate-pulse' : ''}`} />
-                {isRollingBack ? 'Rolling back...' : 'Undo import'}
+                {isRollingBack ? 'Rolling back…' : 'Undo import'}
               </Button>
             )}
             <Button variant="outline" disabled className="flex items-center gap-2 opacity-50">

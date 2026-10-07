@@ -1,13 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { Ban, Lock, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Ban, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
-import { EmptyState } from '@/app/components/ui/EmptyState';
+import { GatedState } from '@/app/components/ui/EmptyState';
 import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -86,7 +86,6 @@ const HOME_ROUTE = '/ade/dashboard';
 const MCP_ROUTE = '/ade/dashboard/mcp';
 
 /** Where the reader picks a workspace, for the no-tenant state. */
-const TENANTS_ROUTE = '/ade/dashboard/tenants';
 
 /** The three tabs. */
 type AgentTab = 'toolsets' | 'keys' | 'usage';
@@ -183,7 +182,7 @@ export default function AgentAccessClient() {
       );
     } catch (error) {
       setToolsets([]);
-      setToolsetsError(describeFailure(error, 'Failed to load toolsets'));
+      setToolsetsError(describeFailure(error, 'Failed to load toolsets. Refresh the page to try again.'));
     } finally {
       setToolsetsLoading(false);
     }
@@ -196,7 +195,7 @@ export default function AgentAccessClient() {
       setDetail(await fetchToolset(toolsetId));
     } catch (error) {
       setDetail(null);
-      setDetailError(describeFailure(error, 'Failed to load the toolset'));
+      setDetailError(describeFailure(error, 'Failed to load the toolset. Refresh the page to try again.'));
     } finally {
       setDetailLoading(false);
     }
@@ -219,7 +218,7 @@ export default function AgentAccessClient() {
       });
     } catch (error) {
       setKeys([]);
-      setKeysError(describeFailure(error, 'Failed to load agent keys'));
+      setKeysError(describeFailure(error, 'Failed to load agent keys. Refresh the page to try again.'));
     } finally {
       setKeysLoading(false);
     }
@@ -232,7 +231,7 @@ export default function AgentAccessClient() {
     try {
       setUsage(await fetchAgentUsage(days));
     } catch (error) {
-      setUsageError(describeFailure(error, 'Failed to load usage'));
+      setUsageError(describeFailure(error, 'Failed to load usage. Refresh the page to try again.'));
     } finally {
       setUsageLoading(false);
     }
@@ -276,7 +275,7 @@ export default function AgentAccessClient() {
         setSelectedId(created.id);
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to enable Agent Access');
+        return describeFailure(error, 'Failed to enable Agent Access. Try again.');
       }
     },
     [loadToolsets]
@@ -294,7 +293,7 @@ export default function AgentAccessClient() {
             : current
         );
       } catch (error) {
-        setPageError(describeFailure(error, 'Failed to update the toolset'));
+        setPageError(describeFailure(error, 'Failed to update the toolset. Try again.'));
       } finally {
         setSettingsBusy(false);
       }
@@ -332,7 +331,7 @@ export default function AgentAccessClient() {
           setOverlay({ kind: 'confirm-write', toolset, tool: { ...tool, writeOp: true } });
           return null;
         }
-        return describeFailure(error, 'Failed to update the tool');
+        return describeFailure(error, 'Failed to update the tool. Try again.');
       } finally {
         setBusyToolId(null);
       }
@@ -361,7 +360,7 @@ export default function AgentAccessClient() {
         await Promise.all([loadToolsets(), loadKeys()]);
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to delete the toolset');
+        return describeFailure(error, 'Failed to delete the toolset. Try again.');
       }
     },
     [loadKeys, loadToolsets]
@@ -387,7 +386,7 @@ export default function AgentAccessClient() {
         await loadKeys();
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to create the agent key');
+        return describeFailure(error, 'Failed to create the agent key. Try again.');
       }
     },
     [loadKeys, toolsets, versions]
@@ -400,7 +399,7 @@ export default function AgentAccessClient() {
         setKeys((list) => list.map((k) => (k.id === updated.id ? updated : k)));
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to save the allowlist');
+        return describeFailure(error, 'Failed to save the allowlist. Try again.');
       }
     },
     []
@@ -413,7 +412,7 @@ export default function AgentAccessClient() {
         await loadKeys();
         return null;
       } catch (error) {
-        return describeFailure(error, 'Failed to revoke the agent key');
+        return describeFailure(error, 'Failed to revoke the agent key. Try again.');
       }
     },
     [loadKeys]
@@ -446,15 +445,8 @@ export default function AgentAccessClient() {
       <Page>
         <PageHeader breadcrumb={breadcrumb} title="Agent access" description={description} />
         <PageBody>
-          <EmptyState
-            icon={<Lock aria-hidden />}
-            title="No workspace selected"
-            description="Please select a workspace before managing agent access."
-            action={
-              <Button asChild>
-                <a href={TENANTS_ROUTE}>Go to Workspaces</a>
-              </Button>
-            }
+          <GatedState
+            description="Agent access belongs to a workspace. Pick one to curate it."
             data-testid="agx-no-tenant"
           />
         </PageBody>

@@ -67,7 +67,7 @@ export function useLintViolationContext(
         }
       } catch (e) {
         if (controller.signal.aborted) return;
-        setError(e instanceof Error ? e.message : 'Failed to load lint rule catalog');
+        setError(e instanceof Error ? e.message : 'Failed to load lint rule catalog. Refresh the page to try again.');
         setLoading(false);
       }
     })();

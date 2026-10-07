@@ -14,7 +14,7 @@
  */
 
 import * as React from 'react';
-import { ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import { ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import {
@@ -24,6 +24,7 @@ import {
   parseDriftReport,
   type DriftReport,
 } from '@/app/utils/mcp-trust-drift';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The endpoint whose drift to show. */
@@ -48,6 +49,8 @@ export function TrustDriftAlertsPanel({ endpointId }: Props) {
     noBaseline: false,
     error: null,
   });
+  // Bumped by "Try again" to re-run the fetch below (HIVE-10.4: every error names a next step).
+  const [attempt, setAttempt] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -71,14 +74,14 @@ export function TrustDriftAlertsPanel({ endpointId }: Props) {
         setState({ report: parseDriftReport(payload), loading: false, noBaseline: false, error: null });
       } catch {
         if (!cancelled) {
-          setState({ report: null, loading: false, noBaseline: false, error: 'Could not load drift.' });
+          setState({ report: null, loading: false, noBaseline: false, error: 'Could not load drift. Refresh the page to try again.' });
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [endpointId]);
+  }, [endpointId, attempt]);
 
   if (state.loading) {
     return <LoadingState message="Diffing against the approved baseline…" />;
@@ -88,16 +91,16 @@ export function TrustDriftAlertsPanel({ endpointId }: Props) {
       <EmptyState
         icon={<ShieldQuestion className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No approved baseline yet"
-        description="Approve a trust baseline for this endpoint to start catching drift, shadowing, and trust regressions against what you blessed."
+        description="Approve a trust baseline for this endpoint to start catching drift, shadowing and regressions."
       />
     );
   }
   if (state.error || !state.report) {
     return (
-      <EmptyState
-        icon={<ShieldAlert className="h-8 w-8 text-fg-on-accent" aria-hidden />}
+      <ErrorState
         title="Drift unavailable"
-        description={state.error ?? 'The drift report could not be loaded.'}
+        description={state.error ?? 'The drift report didn’t load.'}
+        onRetry={() => setAttempt((count) => count + 1)}
       />
     );
   }

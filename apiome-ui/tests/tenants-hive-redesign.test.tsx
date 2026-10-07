@@ -855,7 +855,7 @@ describe('the tenants list', () => {
 
     expect(await screen.findByText('No tenants yet')).toBeInTheDocument();
     expect(
-      screen.getByText(/You are not a member of any tenants yet/i),
+      screen.getByText(/Create your own workspace, or ask an administrator to invite you/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create a tenant/i })).toBeInTheDocument();
   });

@@ -15,7 +15,10 @@ import {
   BookmarkPlus,
   Trash2,
   History,
+  FolderGit2,
+  FileSearch,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import { SiGithub, SiGitlab, SiGoogle, SiAmazon } from 'react-icons/si';
 import { getLinkedAccountsForUser } from '../../../../../lib/db/helper';
 import { extractFileMetadata, FileMetadataPreview } from '../../../utils/openapi-analyzer';
@@ -330,7 +333,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
       await fetchBranchesAndTags(selectedAccount, repo.full_name);
       await loadRepoRootAtRef(selectedAccount, repo, defaultBr, false);
     } catch (error: unknown) {
-      setErrorMessage(formatError(error) || 'Failed to load repository from URL');
+      setErrorMessage(formatError(error) || 'Failed to load repository from URL. Refresh the page to try again.');
     } finally {
       setIsLoading(false);
     }
@@ -523,7 +526,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     });
     setSavedRepos(items);
     if (!persisted) {
-      setErrorMessage('Failed to save bookmark. Storage may be full or unavailable.');
+      setErrorMessage('Failed to save bookmark. Storage may be full or unavailable. Try again.');
     } else {
       setErrorMessage('');
     }
@@ -667,7 +670,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        <span className="ml-3 text-fg-muted">Loading linked accounts...</span>
+        <span className="ml-3 text-fg-muted">Loading linked accounts…</span>
       </div>
     );
   }
@@ -1020,7 +1023,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-faint" />
                 <input
                   type="text"
-                  placeholder="Search repositories..."
+                  placeholder="Search repositories…"
                   value={repoSearchQuery}
                   onChange={(e) => setRepoSearchQuery(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded bg-surface text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
@@ -1079,11 +1082,13 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                 <Loader2 className="h-6 w-6 animate-spin text-accent" />
               </div>
             ) : repositories.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-4">
-                <span className="text-sm text-fg-muted text-center">
-                  No repositories found
-                </span>
-              </div>
+              <EmptyState
+                variant="compact"
+                surface={false}
+                icon={<FolderGit2 aria-hidden />}
+                title="No repositories"
+                description="Check the connection has access to the repositories you expect."
+              />
             ) : filteredRepos.length === 0 ? (
               <div className="flex items-center justify-center h-full p-4">
                 <span className="text-sm text-fg-muted text-center">
@@ -1160,15 +1165,17 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
               </div>
             ) : isLoading ? (
               <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                <span className="text-sm text-fg-muted">Loading...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-accent" aria-hidden />
+                <span className="text-sm text-fg-muted">Loading the repository…</span>
               </div>
             ) : repoFiles.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-4">
-                <span className="text-sm text-fg-muted text-center">
-                  No files found
-                </span>
-              </div>
+              <EmptyState
+                variant="compact"
+                surface={false}
+                icon={<FileSearch aria-hidden />}
+                title="No files"
+                description="This repository has no files on the selected branch."
+              />
             ) : (
               <>
                 {/* Parent directory (..) entry when in a subdirectory */}
@@ -1262,7 +1269,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                       File Parse Error
                     </div>
                     <div className="text-sm text-danger mt-1">
-                      {fileMetadata.parseError || 'Unable to parse file content'}
+                      {fileMetadata.parseError || 'Unable to parse file content. Check the file, then try again.'}
                     </div>
                   </div>
                 </div>

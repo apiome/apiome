@@ -998,9 +998,9 @@ Do not repeat the full JSON spec outside the code block. Do not add other sectio
       return new Response(null, { status: 499 });
     }
     console.error('Error in Ollama chat:', error);
-    const message = error instanceof Error ? error.message : 'Failed to process chat request';
+    const message = error instanceof Error ? error.message : 'Failed to process chat request. Check the file, then try again.';
     return new Response(
-      JSON.stringify({ error: message || 'Failed to process chat request' }),
+      JSON.stringify({ error: message || 'Failed to process chat request. Check the file, then try again.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

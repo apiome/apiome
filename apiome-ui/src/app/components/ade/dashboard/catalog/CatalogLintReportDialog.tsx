@@ -57,7 +57,7 @@ export function CatalogLintReportDialog({
         })
         .catch((e: unknown) => {
           if (controller.signal.aborted) return;
-          setError(e instanceof Error ? e.message : 'Failed to load lint report');
+          setError(e instanceof Error ? e.message : 'Failed to load lint report. Refresh the page to try again.');
           setLoading(false);
         }),
     [itemId]

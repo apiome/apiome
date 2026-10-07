@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
       return NextResponse.json(
-        { success: false, error: text || 'Failed to fetch mock usage' },
+        { success: false, error: text || 'Failed to fetch mock usage. Refresh the page to try again.' },
         { status: response.status || 500 }
       );
     }
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     if (!response.ok) {
       return NextResponse.json(
-        { success: false, error: data.detail || 'Failed to fetch mock usage' },
+        { success: false, error: data.detail || 'Failed to fetch mock usage. Refresh the page to try again.' },
         { status: response.status }
       );
     }

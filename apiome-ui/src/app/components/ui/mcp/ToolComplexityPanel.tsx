@@ -36,12 +36,15 @@ import {
   type McpToolFilterKey,
   type McpToolSortKey,
 } from '@/app/components/ade/dashboard/mcp/mcpToolComplexityUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The selected snapshot's per-tool complexity metrics, or `null` while the surface has not loaded. */
   tools: readonly McpToolComplexity[] | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** Map a complexity tier's categorical tone token to the {@link McpBadge} tone that paints its chip. */
@@ -234,7 +237,7 @@ function ComplexityHistogram({ views }: { views: readonly McpToolComplexityView[
  * or missing surface never blanks the Insight tab, and its no-tools and filtered-to-empty states read
  * clearly rather than as a broken grid.
  */
-export function ToolComplexityPanel({ tools, loading, error }: Props) {
+export function ToolComplexityPanel({ tools, loading, error, onRetry }: Props) {
   const [sort, setSort] = React.useState<McpToolSortKey>(DEFAULT_TOOL_SORT);
   const [filter, setFilter] = React.useState<McpToolFilterKey>(DEFAULT_TOOL_FILTER);
 
@@ -250,11 +253,11 @@ export function ToolComplexityPanel({ tools, loading, error }: Props) {
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<Layers3 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Tool complexity unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -304,7 +307,7 @@ export function ToolComplexityPanel({ tools, loading, error }: Props) {
           variant="compact"
           icon={<Layers3 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
           title="No tools match this filter"
-          description="No tool on this snapshot matches the selected filter. Choose “All tools” to see them all."
+          description="Choose “All tools” to see every tool on this snapshot."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

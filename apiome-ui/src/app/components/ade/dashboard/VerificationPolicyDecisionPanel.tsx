@@ -64,7 +64,7 @@ export default function VerificationPolicyDecisionPanel({
     } catch (err) {
       setDecision(null);
       onDecisionChange?.(null);
-      setError(err instanceof Error ? err.message : 'Failed to evaluate verification policy');
+      setError(err instanceof Error ? err.message : 'Failed to evaluate verification policy. Try again.');
     } finally {
       setLoading(false);
     }

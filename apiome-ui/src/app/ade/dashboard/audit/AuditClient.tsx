@@ -111,7 +111,7 @@ export default function AuditClient() {
       setNow(at);
     } catch (caught) {
       setEvents([]);
-      setError(describeFailure(caught, 'Failed to load audit log'));
+      setError(describeFailure(caught, 'Failed to load audit log. Refresh the page to try again.'));
     } finally {
       setLoading(false);
     }
@@ -180,8 +180,8 @@ export default function AuditClient() {
             }
           >
             <span>
-              <strong>Failed to load audit log.</strong> Nothing was lost — the ledger is
-              append-only. {error}
+              <strong>The audit log didn’t load.</strong> Nothing was lost — the ledger is
+              append-only. Refresh the page to try again. {error}
             </span>
           </Alert>
         ) : (

@@ -124,7 +124,7 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update class property');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update class property. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -192,7 +192,7 @@ export async function DELETE(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete class property');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete class property. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });

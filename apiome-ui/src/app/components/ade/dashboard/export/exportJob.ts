@@ -706,7 +706,7 @@ export function exportJobStatusLine(status: ExportJobStatus, targetLabel: string
     case 'completed':
       return `Export to ${targetLabel} is ready to download.`;
     case 'failed':
-      return `Export to ${targetLabel} failed: ${status.error?.message ?? 'unknown error'}.`;
+      return `Export to ${targetLabel} failed (${status.error?.message ?? 'no reason given'}). Start the export again.`;
     case 'canceled':
       return `Export to ${targetLabel} was canceled.`;
     case 'running':

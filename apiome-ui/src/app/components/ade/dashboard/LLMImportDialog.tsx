@@ -130,7 +130,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from LLM');
+        throw new Error('Failed to get response from LLM. Refresh the page to try again.');
       }
 
       // Process SSE stream: update UI on every chunk for real-time streaming (Cursor-like).
@@ -382,7 +382,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
             </label>
             <Select.Root value={selectedModel} onValueChange={setSelectedModel} disabled={isLoadingModels || isLoading}>
               <Select.Trigger className="flex items-center gap-2 px-3 py-1.5 text-sm bg-surface border border-border-strong rounded-lg hover:bg-subtle transition-colors">
-                <Select.Value placeholder={isLoadingModels ? 'Loading models...' : 'Select a model'} />
+                <Select.Value placeholder={isLoadingModels ? 'Loading models…' : 'Select a model'} />
                 <Select.Icon>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -513,7 +513,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
                       <div className="w-2 h-2 bg-fg-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                       <div className="w-2 h-2 bg-fg-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
-                    <span className="text-sm text-fg-muted">Thinking...</span>
+                    <span className="text-sm text-fg-muted">Thinking…</span>
                   </div>
                 </div>
               </div>
@@ -552,7 +552,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              placeholder="Describe your API or ask for changes..."
+              placeholder="Describe your API or ask for changes…"
               disabled={isLoading || !selectedModel}
               className="flex-1 min-w-0 px-4 py-2 text-sm border border-border-strong rounded-lg bg-surface text-fg placeholder:text-fg-faint focus:ring-2 focus:ring-accent focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
             />

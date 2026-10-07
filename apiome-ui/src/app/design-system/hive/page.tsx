@@ -955,7 +955,7 @@ export default function HiveDesignSystemPage() {
           </Demo>
 
           <ErrorBanner
-            title="Couldn’t load projects."
+            title="Couldn’t load projects"
             description="The API returned 502."
             onRetry={() => undefined}
           />

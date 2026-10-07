@@ -60,14 +60,14 @@ export function useExportTargets(
         if (!res.ok || data?.success === false) {
           if (!cancelled) setStatus(typeof res.status === 'number' ? res.status : null);
           throw new Error(
-            typeof data?.error === 'string' ? data.error : 'Could not load export targets.',
+            typeof data?.error === 'string' ? data.error : 'Could not load export targets. Refresh the page to try again.',
           );
         }
         if (cancelled) return;
         setResponse(data as ExportTargetsResponse);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Could not load export targets.');
+        setError(e instanceof Error ? e.message : 'Could not load export targets. Refresh the page to try again.');
         setResponse(null);
       } finally {
         if (!cancelled) setLoading(false);

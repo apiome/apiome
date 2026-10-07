@@ -255,6 +255,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [item, setItem] = useState<CatalogItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [qualityOpen, setQualityOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
@@ -343,13 +344,16 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
       const res = await fetch(`/api/catalog/${encodeURIComponent(itemId)}`);
       const data = await res.json();
       if (!res.ok || !data?.success || !data.item) {
-        setError(data?.error || 'Catalog item not found.');
+        // "Not found" only when the server says so; any other failure is a load failure.
+        setNotFound(res.status === 404 || (res.ok && !data?.item));
+        setError(data?.error || 'It may have been deleted, or the link is from another workspace.');
         setItem(null);
       } else {
         setItem(data.item as CatalogItemDetail);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load catalog item.');
+      setNotFound(false);
+      setError(e instanceof Error ? e.message : 'Failed to load catalog item. Refresh the page to try again.');
       setItem(null);
     } finally {
       setLoading(false);
@@ -443,8 +447,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         <PageBody>
           <ErrorState
             data-testid="catalog-detail-error"
-            title="Catalog item not found."
-            description={error || 'Catalog item not found.'}
+            title={notFound ? 'Catalog item not found' : 'Catalog item didn’t load'}
+            description={error || 'It may have been deleted, or the link is from another workspace.'}
             onRetry={() => void load()}
             action={
               <Button variant="outline" onClick={() => router.push(CATALOG_LIST_HREF)}>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { History, RefreshCw, Shield } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -105,7 +106,7 @@ export default function VerificationPolicyPanel({ readOnly = false }: { readOnly
       }
       setVersions(history?.versions ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load verification policy');
+      setError(err instanceof Error ? err.message : 'Failed to load verification policy. Refresh the page to try again.');
     } finally {
       setLoading(false);
     }
@@ -152,7 +153,7 @@ export default function VerificationPolicyPanel({ readOnly = false }: { readOnly
       const history = await verificationPolicyApi<VerificationPolicyVersionList>('versions');
       setVersions(history?.versions ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save verification policy');
+      setError(err instanceof Error ? err.message : 'Failed to save verification policy. Try again.');
     } finally {
       setSaving(false);
     }
@@ -366,7 +367,12 @@ export default function VerificationPolicyPanel({ readOnly = false }: { readOnly
             </CardHeader>
             {versions.length === 0 ? (
               <CardContent>
-                <p className="sg-quiet">No version has been saved yet.</p>
+                <EmptyState
+                  variant="inline"
+                  icon={<History aria-hidden />}
+                  title="No saved versions yet"
+                  description="Save the policy to record its first version."
+                />
               </CardContent>
             ) : (
               <ul className="qp-rows" data-testid="verification-policy-versions">

@@ -1620,7 +1620,7 @@ export default function McpPrimitivesShowcase() {
         <LoadingState message="Loading catalog…" minHeightClassName="min-h-[160px]" />
         <ErrorState
           variant="compact"
-          description="Could not reach the catalog service."
+          description="Could not reach the catalog service. Try again."
           onRetry={() => undefined}
         />
       </section>

@@ -81,7 +81,7 @@ export default function TenantMcpKeysSection({
         });
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load MCP policy');
+        setError(err instanceof Error ? err.message : 'Failed to load MCP policy. Refresh the page to try again.');
       } finally {
         if (!cancelled) setLoading(false);
       }

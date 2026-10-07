@@ -63,7 +63,7 @@ describe('AuthenticatedLayout', () => {
       </AuthenticatedLayout>
     );
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText('Checking your session…')).toBeInTheDocument();
     expect(screen.queryByTestId('protected')).not.toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
   });

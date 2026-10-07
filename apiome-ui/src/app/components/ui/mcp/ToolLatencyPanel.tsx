@@ -33,12 +33,15 @@ import {
   type McpToolLatency,
   type McpToolReliability,
 } from '@/app/components/ade/dashboard/mcp/mcpReliabilityUi';
+import { ErrorState, reloadPage } from '@/app/components/ui/ErrorState';
 
 interface Props {
   /** The parsed per-tool reliability, or `null` while it has not loaded. */
   reliability: McpToolReliability | null;
   loading: boolean;
   error: string | null;
+  /** Re-runs the failed load; without it the error offers a page reload. */
+  onRetry?: () => void;
 }
 
 /** The endpoint-wide error-rate figure's colour by band — token classes only, no literals in JSX. */
@@ -107,17 +110,17 @@ function FlakiestRow({ tool }: { tool: McpToolLatency }) {
  * (percentiles/error rates match the fixture, a never-tested endpoint shows "no data", and a
  * single-call tool renders without dividing by zero).
  */
-export function ToolLatencyPanel({ reliability, loading, error }: Props) {
+export function ToolLatencyPanel({ reliability, loading, error, onRetry }: Props) {
   if (loading && !reliability) {
     return <LoadingState minHeightClassName="min-h-[200px]" message="Loading tool latency…" />;
   }
   if (error) {
     return (
-      <EmptyState
+      <ErrorState
         variant="compact"
-        icon={<Timer className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Tool latency unavailable"
         description={error}
+        onRetry={onRetry ?? reloadPage}
       />
     );
   }
@@ -130,7 +133,7 @@ export function ToolLatencyPanel({ reliability, loading, error }: Props) {
         variant="compact"
         icon={<Timer className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No tool calls yet"
-        description="No tools on this server have been exercised in the test console recently, so there is no latency or error-rate data to show. Run a tool from the Test tab to start recording it."
+        description="No latency or error data yet. Run a tool from the Test tab."
       />
     );
   }
@@ -216,9 +219,16 @@ export function ToolLatencyPanel({ reliability, loading, error }: Props) {
               ))}
             </ul>
           ) : (
-            <p className="rounded-md border border-dashed border-border bg-inset px-3 py-3 text-center text-xs text-fg-muted">
-              No completed tool calls recorded a latency yet.
-            </p>
+            <EmptyState
+              variant="inline"
+              tone="neutral"
+              dashed
+              surface={false}
+              titleAs="p"
+              icon={<Gauge aria-hidden />}
+              title="No latencies recorded"
+              description="Completed tool calls rank here by p95 latency."
+            />
           )}
         </div>
         <div className="space-y-1.5">

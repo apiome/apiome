@@ -35,15 +35,15 @@ const OVERVIEW: AdminMenuItem = {
 };
 
 const MANAGEMENT_ITEMS: AdminMenuItem[] = [
-  { id: 'users', path: '/admin/dashboard/users', icon: <Users className="w-4 h-4" />, title: 'User Management' },
-  { id: 'tenants', path: '/admin/dashboard/tenants', icon: <Building2 className="w-4 h-4" />, title: 'Tenant Management' },
-  { id: 'licenses', path: '/admin/dashboard/licenses', icon: <Award className="w-4 h-4" />, title: 'License Management' },
-  { id: 'featureFlags', path: '/admin/dashboard/feature-flags', icon: <Flag className="w-4 h-4" />, title: 'Feature Flags' },
-  { id: 'templates', path: '/admin/dashboard/templates', icon: <Package className="w-4 h-4" />, title: 'Property Templates' },
-  { id: 'payments', path: '/admin/dashboard/payments', icon: <CreditCard className="w-4 h-4" />, title: 'Payment Management' },
-  { id: 'database', path: '/admin/dashboard/database', icon: <Database className="w-4 h-4" />, title: 'Database Administration' },
-  { id: 'monitoring', path: '/admin/dashboard/monitoring', icon: <Activity className="w-4 h-4" />, title: 'System Monitoring' },
-  { id: 'settings', path: '/admin/dashboard/settings', icon: <Settings className="w-4 h-4" />, title: 'System Configuration' },
+  { id: 'users', path: '/admin/dashboard/users', icon: <Users className="w-4 h-4" />, title: 'Users' },
+  { id: 'tenants', path: '/admin/dashboard/tenants', icon: <Building2 className="w-4 h-4" />, title: 'Tenants' },
+  { id: 'licenses', path: '/admin/dashboard/licenses', icon: <Award className="w-4 h-4" />, title: 'Licenses' },
+  { id: 'featureFlags', path: '/admin/dashboard/feature-flags', icon: <Flag className="w-4 h-4" />, title: 'Feature flags' },
+  { id: 'templates', path: '/admin/dashboard/templates', icon: <Package className="w-4 h-4" />, title: 'Property templates' },
+  { id: 'payments', path: '/admin/dashboard/payments', icon: <CreditCard className="w-4 h-4" />, title: 'Payments' },
+  { id: 'database', path: '/admin/dashboard/database', icon: <Database className="w-4 h-4" />, title: 'Database' },
+  { id: 'monitoring', path: '/admin/dashboard/monitoring', icon: <Activity className="w-4 h-4" />, title: 'Monitoring' },
+  { id: 'settings', path: '/admin/dashboard/settings', icon: <Settings className="w-4 h-4" />, title: 'Settings' },
 ];
 
 function NavItem({
@@ -145,7 +145,7 @@ export default function AdminSidebar() {
         />
 
         <div className="pt-3 pb-1">
-          <SidebarSectionLabel>Management</SidebarSectionLabel>
+          <SidebarSectionLabel>Administration</SidebarSectionLabel>
         </div>
 
         <div className={['flex flex-col', tokens.rowGap].join(' ')}>

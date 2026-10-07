@@ -29,7 +29,9 @@ import {
   Radio,
   Server,
   Zap,
+  Gauge,
 } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -248,7 +250,12 @@ export function CatalogItemOverview({
                 <p className="cid-note">{catalogQualityBand(qualityScore)?.detail}</p>
               </>
             ) : (
-              <p className="cid-note">No quality score has been captured for this item yet.</p>
+              <EmptyState
+                variant="inline"
+                icon={<Gauge aria-hidden />}
+                title="No quality score yet"
+                description="This item has not been scored for quality."
+              />
             )}
           </Card>
 

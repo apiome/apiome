@@ -206,7 +206,7 @@ export default function TenantLicensePanel({
       // Prefer friendly OLO-5.3 guidance when the payload carries a stable code.
       const friendly = describeLicenseError(err);
       const message =
-        friendly ?? (err instanceof Error ? err.message : 'Failed to load license details');
+        friendly ?? (err instanceof Error ? err.message : 'Failed to load license details. Refresh the page to try again.');
       setError(message);
     } finally {
       setLoading(false);

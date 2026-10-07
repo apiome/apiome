@@ -9,6 +9,8 @@
  */
 
 import * as React from 'react';
+import { ScanSearch } from 'lucide-react';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import { Alert } from '@/app/components/ui/Alert';
 import { cn } from '@lib/utils';
 import {
@@ -56,7 +58,7 @@ export function SourceFormatChecksPanel({
         setCapability(capabilityForSourceFormat(caps, sourceFormat));
       } catch (e) {
         if (cancelled || controller.signal.aborted) return;
-        setError(e instanceof Error ? e.message : 'Failed to load source-format checks.');
+        setError(e instanceof Error ? e.message : 'Failed to load source-format checks. Refresh the page to try again.');
         setCoverage([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -169,12 +171,13 @@ export function SourceFormatChecksPanel({
       ) : null}
 
       {!loading && !error && coverage && coverage.length === 0 && !unsupported ? (
-        <p
+        <EmptyState
           data-testid="source-format-checks-empty"
-          className="text-sm text-fg-muted"
-        >
-          No scanner evidence recorded for this revision yet.
-        </p>
+          variant="inline"
+          icon={<ScanSearch aria-hidden />}
+          title="No scanner evidence yet"
+          description="Evidence appears once a format scanner runs on this revision."
+        />
       ) : null}
     </section>
   );

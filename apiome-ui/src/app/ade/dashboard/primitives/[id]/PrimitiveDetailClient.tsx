@@ -96,13 +96,13 @@ export default function PrimitiveDetailClient() {
       const response = await fetch(`/api/primitives/${params.id}`);
       const data = await response.json();
       if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to load primitive');
+        setError(data.error || 'Failed to load primitive. Refresh the page to try again.');
         setPrimitive(null);
         return;
       }
       setPrimitive(data.primitive as PrimitiveDetail);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load primitive');
+      setError(err instanceof Error ? err.message : 'Failed to load primitive. Refresh the page to try again.');
       setPrimitive(null);
     } finally {
       setLoading(false);
@@ -181,7 +181,8 @@ export default function PrimitiveDetailClient() {
         title={
           <>
             <Library aria-hidden className="pd-title-glyph" />
-            {loading ? 'Loading type…' : primitive?.name ?? 'Type detail'}
+            {/* A noun while loading too (DESIGN.md §10); the body shows the loading state. */}
+            {primitive?.name ?? 'Type detail'}
           </>
         }
         badge={

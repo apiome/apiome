@@ -182,7 +182,7 @@ describe('the footer', () => {
   it('says what it is doing while it does it', () => {
     expect(
       importFooterFor(footerState({ source: 'file', intakeReady: true, analyzing: true })).primary
-    ).toEqual({ label: 'Analyzing...', disabled: true });
+    ).toEqual({ label: 'Analyzing…', disabled: true });
     expect(
       importFooterFor(footerState({ source: 'mcp', mcpReady: true, mcpSubmitting: true })).primary
     ).toEqual({ label: 'Starting…', disabled: true });
@@ -299,7 +299,7 @@ describe('the URL intake’s extra Test button', () => {
     ).toBe(true);
     expect(
       urlTestAction({ canTestUrl: true, isTesting: true, urlTestedSuccessfully: false })
-    ).toEqual({ label: 'Testing...', disabled: true, tested: false });
+    ).toEqual({ label: 'Testing…', disabled: true, tested: false });
   });
 
   it('reports a successful test in its own label', () => {

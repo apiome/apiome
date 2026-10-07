@@ -1284,7 +1284,7 @@ export default function AuthProviderSettingsClient() {
       }
       setProviders((body as AdminProviderListResponse).providers ?? []);
     } catch {
-      setLoadError('Could not load provider configuration: the server could not be reached.');
+      setLoadError('Could not load provider configuration: the server could not be reached. Refresh the page to try again.');
       setProviders(null);
     } finally {
       setLoading(false);
@@ -1324,7 +1324,7 @@ export default function AuthProviderSettingsClient() {
         <div className="flex items-start justify-between gap-4 px-6 py-4">
           <div className="min-w-0">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              System Configuration
+              Settings
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Sign-in providers — database values override .env; blank fields fall back to .env.

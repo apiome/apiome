@@ -50,6 +50,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const result = await callRestNotifications(auth, '/read', { method: 'POST', body });
     return NextResponse.json({ success: true, ...(result as Record<string, unknown>) });
   } catch (error) {
-    return notificationsErrorResponse(error, 'Failed to mark notifications read');
+    return notificationsErrorResponse(error, 'Failed to mark notifications read. Try again.');
   }
 }

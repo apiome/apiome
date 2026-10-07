@@ -93,7 +93,7 @@ export async function POST(
   } catch (error) {
     console.error('compatibility evidence POST proxy failed', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to run compatibility evidence' },
+      { success: false, error: 'Failed to run compatibility evidence. Try again.' },
       { status: 500 }
     );
   }
@@ -139,7 +139,7 @@ export async function GET(
   } catch (error) {
     console.error('compatibility evidence GET proxy failed', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to load compatibility evidence' },
+      { success: false, error: 'Failed to load compatibility evidence. Refresh the page to try again.' },
       { status: 500 }
     );
   }

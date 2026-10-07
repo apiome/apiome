@@ -372,7 +372,7 @@ describe('repositoryKpis', () => {
 
   it('keeps the Imports (30d) figure honest about being unwired', () => {
     expect(IMPORTS_30D_PLACEHOLDER).toBe('—');
-    expect(IMPORTS_30D_TOOLTIP).toContain('not wired yet');
+    expect(IMPORTS_30D_TOOLTIP).toContain('coming soon');
     expect(FILES_INDEXED_TOOLTIP).toContain('total_files');
   });
 });

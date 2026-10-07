@@ -204,7 +204,7 @@ export const MCP_CAPABILITY_DIRECTORY_TITLE = 'Capability directory';
 
 /** The one line under it — DESIGN.md §5.3 asks for fourteen words or fewer. */
 export const MCP_CAPABILITY_DIRECTORY_DESCRIPTION =
-  'Every tool, resource, and prompt across your catalog — a “what can be done” index.';
+  'Every tool, resource, and prompt across your catalog, a “what can be done” index.';
 
 /** Shown while a page of the directory is in flight. */
 export const MCP_CAPABILITY_DIRECTORY_LOADING = 'Loading capabilities…';
@@ -213,14 +213,14 @@ export const MCP_CAPABILITY_DIRECTORY_LOADING = 'Loading capabilities…';
 export const MCP_CAPABILITY_DIRECTORY_ERROR_TITLE = 'Could not load the capability directory';
 
 /** Used when a failed read carries no message of its own. */
-export const MCP_CAPABILITY_DIRECTORY_ERROR_FALLBACK = 'Could not load the capability directory.';
+export const MCP_CAPABILITY_DIRECTORY_ERROR_FALLBACK = 'Could not load the capability directory. Refresh the page to try again.';
 
 /** The empty state's heading — no rows matched, which filters can cause. */
 export const MCP_CAPABILITY_DIRECTORY_EMPTY_TITLE = 'No capabilities found';
 
 /** Its body copy. */
 export const MCP_CAPABILITY_DIRECTORY_EMPTY_DESC =
-  'Try clearing a filter or discover MCP servers so their tools, resources, and prompts appear here.';
+  'Clear a filter, or discover MCP servers so their capabilities appear here.';
 
 /** Shown in place of the screen when the session has no workspace to read a catalog for. */
 export const MCP_CAPABILITY_DIRECTORY_NO_TENANT =

@@ -266,7 +266,7 @@ export default function LintQualityRanksPanel({
         <EmptyState
           variant="compact"
           icon={<Medal aria-hidden />}
-          title="No grades were recorded in this window."
+          title="No grades were recorded in this window"
           description="Import a specification or run an export pre-flight and its grade appears here."
           data-testid="quality-rank-window-empty"
         />

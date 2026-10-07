@@ -584,7 +584,7 @@ export const MCP_CATALOG_FACET_NOTE =
 export const MCP_CATALOG_LOADING = 'Loading the MCP catalog…';
 
 /** When it fails. */
-export const MCP_CATALOG_ERROR_TITLE = 'Could not load the MCP catalog';
+export const MCP_CATALOG_ERROR_TITLE = "Couldn’t load the MCP catalog";
 export const MCP_CATALOG_ERROR_FALLBACK = 'The catalog service did not respond.';
 
 /** When the workspace has never registered a server. */
@@ -595,7 +595,7 @@ export const MCP_CATALOG_EMPTY_DESC =
 /** When search and facets exclude everything the catalog holds. */
 export const MCP_CATALOG_NO_MATCH_TITLE = 'No matches';
 export const MCP_CATALOG_NO_MATCH_DESC =
-  'No endpoints match your search and filters. Try clearing a filter or broadening the search.';
+  'Try clearing a filter or broadening the search.';
 
 /** When there is no workspace to scope the catalog to. */
 export const MCP_CATALOG_NO_TENANT = 'The MCP catalog is scoped to one workspace.';

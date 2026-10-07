@@ -231,7 +231,7 @@ export const MCP_ANALYTICS_TITLE = 'Catalog analytics';
 
 /** The one line under it — DESIGN.md §5.3 asks for fourteen words or fewer. */
 export const MCP_ANALYTICS_DESCRIPTION =
-  'How the workspace’s MCP servers break down — category, transport, protocol, grade, health, churn and reach.';
+  'How MCP servers break down by category, transport, protocol, grade, health, churn and reach.';
 
 /** Shown while the roll-up is in flight. */
 export const MCP_ANALYTICS_LOADING = 'Loading catalog analytics…';
@@ -240,21 +240,21 @@ export const MCP_ANALYTICS_LOADING = 'Loading catalog analytics…';
 export const MCP_ANALYTICS_ERROR_TITLE = 'Catalog analytics unavailable';
 
 /** Used when a failed read carries no message of its own. */
-export const MCP_ANALYTICS_ERROR_FALLBACK = 'Could not load catalog analytics.';
+export const MCP_ANALYTICS_ERROR_FALLBACK = 'Could not load catalog analytics. Refresh the page to try again.';
 
 /** The first-run state: the catalog itself is empty, which is not an error. */
 export const MCP_ANALYTICS_EMPTY_TITLE = 'No servers in the catalog yet';
 
 /** Its body copy. */
 export const MCP_ANALYTICS_EMPTY_DESC =
-  'Register and discover MCP servers to populate catalog-wide analytics — category, transport, grade and health mixes appear once the first snapshot lands.';
+  'Register and discover MCP servers; analytics appear once the first snapshot lands.';
 
 /** Shown in place of the screen when the session has no workspace to read a catalog for. */
 export const MCP_ANALYTICS_NO_TENANT =
   'Switch to a workspace to see how its MCP catalog breaks down.';
 
 /** A donut whose breakdown came back empty prints this in place of its legend. */
-export const MCP_ANALYTICS_NO_DATA = 'No data yet.';
+export const MCP_ANALYTICS_NO_DATA = 'Nothing recorded yet.';
 
 /** The change-frequency leaderboard's empty copy. */
 export const MCP_ANALYTICS_NO_CHANGES = 'No surface changes recorded yet.';

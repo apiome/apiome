@@ -730,7 +730,7 @@ export const SCAN_HISTORY_STUB_TOAST =
 
 /** Files → branch popover → Compare branches. */
 export const COMPARE_BRANCHES_STUB_TOAST =
-  'Branch compare uses git metadata not wired to the API yet.';
+  'Branch compare is coming soon. Switch branches to view each one for now.';
 
 /** Files → branch popover → Refresh from remote. */
 export const REFRESH_FROM_REMOTE_STUB_TOAST =
@@ -745,7 +745,7 @@ export const DIFF_VS_DEFAULT_STUB_TOAST = 'Diff vs default branch is not impleme
 
 /** File detail → Diff vs latest import. */
 export const FILE_DIFF_STUB_COPY =
-  'Unified diff vs the last version imported from this path requires import history joined to blob SHAs. Not wired yet.';
+  'A diff against the last import is coming. Open the Source tab for now.';
 
 /** Settings → Subpath glob. */
 export const SUBPATH_GLOB_STUB_NOTE =

@@ -122,7 +122,7 @@ export async function GET(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch project');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to fetch project. Refresh the page to try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -192,7 +192,7 @@ export async function PUT(
       body: JSON.stringify(body),
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to update project');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to update project. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
@@ -260,7 +260,7 @@ export async function DELETE(
       headers,
     });
 
-    const { data, error, status } = await handleRestResponse(response, 'Failed to delete project');
+    const { data, error, status } = await handleRestResponse(response, 'Failed to delete project. Try again.');
 
     if (error) {
       return NextResponse.json({ success: false, error }, { status });
