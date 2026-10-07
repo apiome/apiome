@@ -615,6 +615,168 @@
       "route": "/ade/dashboard/sdk-settings",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-a11y/sdk-settings.html"
+    },
+    {
+      "id": "style-guides",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides.html"
+    },
+    {
+      "id": "style-guides-readonly",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-readonly.html"
+    },
+    {
+      "id": "style-guides-create-dialog",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-create-dialog.html"
+    },
+    {
+      "id": "style-guides-assign-dialog",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-assign-dialog.html"
+    },
+    {
+      "id": "style-guide-builtin",
+      "route": "/ade/dashboard/style-guides/[guideId]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guide-builtin.html"
+    },
+    {
+      "id": "style-guide-rules",
+      "route": "/ade/dashboard/style-guides/[guideId]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guide-rules.html"
+    },
+    {
+      "id": "style-guide-custom-rule",
+      "route": "/ade/dashboard/style-guides/[guideId]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guide-custom-rule.html"
+    },
+    {
+      "id": "style-guide-policy",
+      "route": "/ade/dashboard/style-guides/[guideId]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guide-policy.html"
+    },
+    {
+      "id": "style-guides-policies",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-policies.html"
+    },
+    {
+      "id": "style-guides-verification-policy",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-verification-policy.html"
+    },
+    {
+      "id": "lint-posture",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture.html"
+    },
+    {
+      "id": "lint-posture-filtered",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-filtered.html"
+    },
+    {
+      "id": "lint-posture-save-view",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-save-view.html"
+    },
+    {
+      "id": "lint-posture-finding",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-finding.html"
+    },
+    {
+      "id": "lint-posture-bulk",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-bulk.html"
+    },
+    {
+      "id": "lint-posture-waive",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-waive.html"
+    },
+    {
+      "id": "lint-posture-waive-approve",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-waive-approve.html"
+    },
+    {
+      "id": "lint-posture-assign",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-assign.html"
+    },
+    {
+      "id": "lint-posture-trends",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-trends.html"
+    },
+    {
+      "id": "lint-posture-ranks",
+      "route": "/ade/dashboard/lint-workspace",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/lint-posture-ranks.html"
+    },
+    {
+      "id": "audit",
+      "route": "/ade/dashboard/audit",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/audit.html"
+    },
+    {
+      "id": "audit-filtered",
+      "route": "/ade/dashboard/audit",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/audit-filtered.html"
+    },
+    {
+      "id": "audit-drawer",
+      "route": "/ade/dashboard/audit",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/audit-drawer.html"
+    },
+    {
+      "id": "audit-chain",
+      "route": "/ade/dashboard/audit",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/audit-chain.html"
+    },
+    {
+      "id": "review",
+      "route": "/ade/reviews/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/review.html"
+    },
+    {
+      "id": "review-decision",
+      "route": "/ade/reviews/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/review-decision.html"
+    },
+    {
+      "id": "review-publish-gate",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/review-publish-gate.html"
     }
   ]
 }

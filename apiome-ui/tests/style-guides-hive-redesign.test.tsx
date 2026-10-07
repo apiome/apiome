@@ -27,6 +27,7 @@ import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
 import StyleGuidesClient from '../src/app/ade/dashboard/style-guides/StyleGuidesClient';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -560,5 +561,230 @@ describe('the states', () => {
     await renderPage();
     await screen.findByText('Acme REST');
     expect(screen.queryByTestId('style-guides-readonly')).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Style guides page (`apiome-docs/screens.json`, DOCS-1.8) is captured
+ * from these dumps when the golden-path stack is not running. Written into
+ * `e2e/fixtures/hive-a11y/` with
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/style-guides-hive-redesign.test.tsx -t "docs fixtures"`.
+ *
+ * The list is a believable workspace — the built-in guide, a tenant default pinned to one
+ * project, a second guide pinned to two more, and one not yet assigned — and the two policy
+ * tabs answer with saved, versioned policies (one blocking import floor, one active waiver), so
+ * every section of the docs page has something real to point at.
+ */
+describe('the docs fixtures', () => {
+  const DOCS_GUIDES: Row[] = [
+    BUILTIN,
+    row({
+      id: 'g-acme',
+      name: 'Acme REST',
+      description: 'House rules for Acme’s public REST APIs.',
+      isDefault: true,
+      enabledRuleCount: 36,
+      projectAssignments: [{ projectId: 'p-payments', projectName: 'Payments API' }],
+      updatedAt: '2026-09-22T14:05:00Z',
+    }),
+    row({
+      id: 'g-partner',
+      name: 'Partner API strict',
+      description: 'Acme REST with every naming and security rule raised to error.',
+      enabledRuleCount: 41,
+      projectAssignments: [
+        { projectId: 'p-partners', projectName: 'Partner Gateway' },
+        { projectId: 'p-billing', projectName: 'Billing API' },
+      ],
+      updatedAt: '2026-09-30T09:48:00Z',
+    }),
+    row({
+      id: 'g-events',
+      name: 'Event streams',
+      description: 'AsyncAPI channel and message conventions for Kafka topics.',
+      ruleCount: 18,
+      enabledRuleCount: 15,
+      updatedAt: '2026-08-11T17:30:00Z',
+    }),
+  ];
+
+  const QUALITY_POLICY = {
+    policyVersionId: 'qp-4',
+    versionNumber: 4,
+    contentFingerprint: '9f2c4e7a1b3d5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8',
+    isDefault: false,
+    import: { minGrade: 'C', minScore: 70, blockOnSeverity: 'error', enforcement: 'block' },
+    export: { minGrade: 'B', minScore: null, blockOnSeverity: null, enforcement: 'advisory' },
+    formatOverrides: { graphql: { import: { minGrade: 'D' } } },
+    allowOverride: true,
+    overrideRoles: ['owner', 'admin'],
+    waiverTtlHours: 168,
+    actorLabel: 'maria.chen@acme.dev',
+    createdAt: '2026-09-29T15:12:00Z',
+  };
+
+  const QUALITY_VERSIONS = [
+    QUALITY_POLICY,
+    {
+      ...QUALITY_POLICY,
+      policyVersionId: 'qp-3',
+      versionNumber: 3,
+      contentFingerprint: '41d8e2b7c0a9f3e6d5c4b3a2918070f6e5d4c3b2a1908f7e6d5c4b3a29180706',
+      actorLabel: 'maria.chen@acme.dev',
+      createdAt: '2026-09-02T10:40:00Z',
+    },
+    {
+      ...QUALITY_POLICY,
+      policyVersionId: 'qp-2',
+      versionNumber: 2,
+      contentFingerprint: 'c7a1e93b5d2f8064a7b9c1d3e5f7092b4d6f8a0c2e4f6a8b0c2d4e6f8a0b2c4d',
+      actorLabel: 'devon.ruiz@acme.dev',
+      createdAt: '2026-07-18T08:25:00Z',
+    },
+  ];
+
+  const WAIVERS = [
+    {
+      id: 'w-1',
+      scope: 'import',
+      subjectKey: '3b9f0c2d7e8a1b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4',
+      subjectLabel: 'legacy-orders.yaml',
+      formatKey: 'openapi',
+      reportFingerprint: null,
+      score: 64,
+      grade: 'D',
+      reason: 'Legacy orders contract imported as-is for the Q4 migration; cleanup tracked in PAY-412.',
+      expiresAt: '2026-10-09T15:00:00Z',
+      policyVersionId: 'qp-4',
+      actorLabel: 'devon.ruiz@acme.dev',
+      actorRole: 'admin',
+      createdAt: '2026-10-02T15:00:00Z',
+    },
+  ];
+
+  const VERIFICATION_POLICY = {
+    policyVersionId: 'vp-2',
+    versionNumber: 2,
+    contentFingerprint: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    isDefault: false,
+    requiredSuiteDigests: [
+      'sha256:7d865e959b2466918c9863afca942d0fb89d7c9ac0c99bafc3749504ded97730',
+      'sha256:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+    ],
+    maxEvidenceAgeSeconds: 86400,
+    requiredTargetNetworkClass: 'private',
+    purpose: 'both',
+    breakingChangeAction: 'warn',
+    enforcement: 'block',
+    actorLabel: 'maria.chen@acme.dev',
+    createdAt: '2026-09-24T11:03:00Z',
+  };
+
+  const VERIFICATION_VERSIONS = [
+    VERIFICATION_POLICY,
+    {
+      ...VERIFICATION_POLICY,
+      policyVersionId: 'vp-1',
+      versionNumber: 1,
+      enforcement: 'advisory',
+      createdAt: '2026-08-30T16:45:00Z',
+    },
+  ];
+
+  beforeEach(() => {
+    guidesResponse = { ok: true, rows: DOCS_GUIDES };
+    const base = global.fetch;
+    const fn = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/projects')) {
+        return jsonResponse({
+          success: true,
+          projects: [
+            { id: 'p-payments', name: 'Payments API' },
+            { id: 'p-partners', name: 'Partner Gateway' },
+            { id: 'p-billing', name: 'Billing API' },
+            { id: 'p-inventory', name: 'Inventory Events' },
+            { id: 'p-identity', name: 'Identity Service' },
+          ],
+        });
+      }
+      if (url.startsWith('/api/quality-policy/versions')) {
+        return jsonResponse({
+          success: true,
+          data: { versions: QUALITY_VERSIONS, count: QUALITY_VERSIONS.length },
+        });
+      }
+      if (url.startsWith('/api/quality-policy/waivers')) {
+        return jsonResponse({ success: true, data: { waivers: WAIVERS, count: WAIVERS.length } });
+      }
+      if (url.startsWith('/api/quality-policy')) {
+        return jsonResponse({ success: true, data: QUALITY_POLICY });
+      }
+      if (url.startsWith('/api/verification-policy/versions')) {
+        return jsonResponse({
+          success: true,
+          data: { versions: VERIFICATION_VERSIONS, count: VERIFICATION_VERSIONS.length },
+        });
+      }
+      if (url.startsWith('/api/verification-policy')) {
+        return jsonResponse({ success: true, data: VERIFICATION_POLICY });
+      }
+      return (base as typeof fetch)(input, init);
+    });
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = fn;
+  });
+
+  /** The page root, which is what the docs screenshot mounts. */
+  const page = () =>
+    (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders the list, the create and assign dialogs, and both policy tabs', async () => {
+    const user = userEvent.setup();
+    await renderPage();
+    await screen.findByText('Event streams');
+    writeA11yFixture('style-guides', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('style-guides-start-recommended'));
+    const create = await screen.findByTestId('style-guide-create-dialog');
+    expect(create).toHaveTextContent('Copy rules from');
+    writeA11yFixture('style-guides-create-dialog', liveMarkup(create));
+    await user.click(within(create).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('style-guide-create-dialog')).not.toBeInTheDocument()
+    );
+
+    await user.click(screen.getByTestId('style-guide-assign-g-partner'));
+    const assign = await screen.findByTestId('style-guide-assign-dialog');
+    expect(within(assign).getByText('Partner Gateway')).toBeInTheDocument();
+    writeA11yFixture('style-guides-assign-dialog', liveMarkup(assign));
+    await user.click(within(assign).getByRole('button', { name: 'Done' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('style-guide-assign-dialog')).not.toBeInTheDocument()
+    );
+
+    await user.click(screen.getByTestId('style-guides-tab-quality'));
+    expect(await screen.findByTestId('quality-policy-waivers')).toHaveTextContent(
+      'legacy-orders.yaml'
+    );
+    writeA11yFixture('style-guides-policies', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('style-guides-tab-verification'));
+    expect(await screen.findByTestId('verification-policy-versions')).toHaveTextContent(
+      'v2 · block · warn'
+    );
+    writeA11yFixture('style-guides-verification-policy', liveMarkup(page()));
+  });
+
+  it('renders the read-only treatment a member sees', async () => {
+    isAdmin = false;
+    await renderPage();
+    await screen.findByText('Event streams');
+    expect(screen.getByTestId('style-guides-readonly')).toBeInTheDocument();
+    writeA11yFixture('style-guides-readonly', liveMarkup(page()));
   });
 });

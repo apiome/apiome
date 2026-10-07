@@ -1,0 +1,155 @@
+---
+title: Lint posture
+description: Triage lint findings across the workspace — filter, acknowledge, waive, assign and track.
+sidebar_position: 1.2
+tags: [governance, lint, waivers]
+---
+
+<Route path="/ade/dashboard/lint-workspace" />
+
+**Lint posture** is the workspace-wide queue of lint findings — from every catalog revision and MCP
+server — with ownership, waivers and remediation trends. **Go to Govern → Lint posture** (or press
+<Kbd keys="G"/> then <Kbd keys="L"/>). It is marked **Preview**. Three tabs: **Queue**, **Trends** and
+**Quality ranks**.
+
+<Screenshot id="lint-posture" alt="Lint posture: summary tiles, grade and axis averages, saved views, filter chips and the findings queue" />
+
+What a finding *means* — the rule, its severity, how grades and axes are scored — is in
+[Lint and check quality](../build/lint-and-quality.md), [Built-in lint rules](../build/lint-rules.md),
+[Custom lint rules](../build/custom-rules.md) and [Axis score algorithm](../build/axis-score.md). This
+page is about working through them.
+
+## The summary
+
+Four tiles sum up the workspace. **Click a tile** to replace the filters with the ones it describes:
+
+| Tile | Shows | Click to filter |
+| --- | --- | --- |
+| **Unwaived security errors** | Open errors on the security axis | severity error · axis security · state open |
+| **Missing required coverage** | Subjects missing a required axis | coverage missing |
+| **New findings** | Findings since the last scan | new only |
+| **Waivers** | Active waivers, how many are requested, how many expire within 14 days | state waiver requested |
+
+Below them, **Grades** counts subjects by grade (A–F, Ungraded) and **Axes · average score** gives each
+axis's average — `—` when nothing assessed it.
+
+## Filter the queue
+
+- **Chips** toggle **Severity** (Error, Warning, Info), **State** (Open, Acknowledged, Waiver
+  requested, Waived, Fixed, False positive), **Axis** and **Grade**. Each shows its count.
+- **Search rule, message, subject…** searches the text; **New only** keeps findings from the last scan.
+- **Sort** by Severity, Newest, Rule or Subject; narrow by **Source** (scanner), **Coverage** and
+  **Subject** (catalog revisions or MCP servers).
+- **Clear filters** resets them.
+
+Every filter is in the URL, so copying the address shares exactly this view.
+
+<Screenshot id="lint-posture-filtered" alt="The queue filtered to open security errors: three active chips and two findings" />
+
+### Save a view
+
+1. Set the filters you want.
+2. **Click “Save view”**, enter a **Name** — for example `New security errors` — and leave **Pin to
+   toolbar** ticked.
+3. **Click “Save”.** The view appears as a chip under **Views**; click it to apply it again.
+
+<Screenshot id="lint-posture-save-view" alt="Save current view: a name, Pin to toolbar, and a preview of the saved query" />
+
+Views are personal to you. Each chip has **Pin view** / **Unpin view** and **Delete view**; to share a
+view, share its URL.
+
+## Read a finding
+
+**Click a row** (or press <Kbd keys="Enter"/> on it) to open its drawer:
+
+- **Evidence** — the scanner, profile, run, when it was recorded, its fingerprint and location, and a
+  remediation hint when there is one.
+- **Links** — the subject version, the policy result, the ticket and the owner.
+- **Remediation history** — every state change, with its rationale, who made it and when. **Open lint
+  report** opens the version's full report.
+
+<Screenshot id="lint-posture-finding" alt="A finding's drawer: evidence, links with owner and ticket, and its remediation history" />
+
+## Act on findings
+
+Tick the findings to act on (or press <Kbd keys="x"/> on a row). The bar that appears offers:
+
+| Action | New state | Use it when |
+| --- | --- | --- |
+| **Acknowledge** | Acknowledged | You have seen it and own it. |
+| **Mark fixed** | Fixed | The next scan should no longer report it. |
+| **False positive** | False positive | The rule is wrong about this case. |
+| **Request waiver** | Waiver requested | You want to accept the risk for a while (below). |
+| **Approve waiver** | Waived | You can approve waivers (below). |
+| **Reopen / reject** | Open | Undo a decision, or reject a requested waiver. |
+
+<Screenshot id="lint-posture-bulk" alt="Three findings selected, with the bulk bar's actions and owner assignment" />
+
+A toast confirms *Applied to 3 findings* with **Undo**. If the server refuses some — for lack of
+permission, say — it reports *Applied to 2 of 3 findings* and why; the rest are not rolled back.
+
+### Request and approve a waiver
+
+A waiver is accepted risk with a deadline.
+
+1. **Select the findings** and **click “Request waiver”** (or **“Request waiver”** in a finding's
+   drawer).
+2. Enter the **Rationale** — for example *Partner integrations still authenticate with Basic until
+   the OAuth2 migration ships in Q1.* — and optionally a **Linked ticket** (`https://tracker/SEC-2231`) and a proposed
+   **Expires** date.
+3. **Click “Request waiver”.** The findings move to **Waiver requested**.
+
+<Screenshot id="lint-posture-waive" alt="Request waiver for findings: rationale, linked ticket and a proposed expiry" />
+
+An approver — anyone with the `lint_findings:publish` permission — then:
+
+1. Filters on **State: Waiver requested** (or clicks the **Waivers** tile), selects the findings and
+   **clicks “Approve waiver”**.
+2. Confirms the **Rationale** and sets **Expires**, which is required.
+3. **Clicks “Approve waiver”.** The findings move to **Waived** until the expiry date.
+
+<Screenshot id="lint-posture-waive-approve" alt="Approve waiver: rationale, ticket and a required expiry, with the permission note" />
+
+To reject a request, the approver selects it and **clicks “Reopen / reject”**. Every step lands in
+the finding's remediation history.
+
+Waivers that let a blocked *import or export* through are different — they come from the [Import &
+export policy](./style-guides.mdx#import--export-policy) on Style guides.
+
+### Assign an owner
+
+Select the findings, type the owner's **user id** in **Assign owner (user id)** and **click
+“Assign”**. The state does not change; the owner shows in each finding's drawer.
+
+<Screenshot id="lint-posture-assign" alt="Assign owner: a user id typed beside the Assign button for three selected findings" />
+
+## Trends and quality ranks
+
+**Trends** charts the last 30 days: new findings, genuine fixes, waivers granted and expired, false
+positives and policy publications.
+
+<Screenshot id="lint-posture-trends" alt="Trends: remediation and policy series over the last 30 days" />
+
+**Quality ranks** shows, per format, the average score, readiness, grade distribution and how grades
+drifted over 7, 30, 90 or 180 days.
+
+<Screenshot id="lint-posture-ranks" alt="Quality ranks and grade drift: one card per format with scores and grade distribution" />
+
+## Permissions
+
+Acting on findings needs `lint_findings:edit`. Approving a waiver, revoking one, or resolving a
+request also needs `lint_findings:publish`. Every applied action is recorded and cannot be edited.
+
+## With the CLI or the API
+
+- REST: `GET /v1/lint/workspace/findings`, `…/summary`, `…/trends`, `…/quality-ranks`;
+  `POST /v1/lint/workspace/decisions/bulk` for every action; `GET` / `POST /v1/lint/workspace/views`;
+  `GET /v1/lint/decisions/{id}/events` for a finding's history — see the
+  [API reference](../reference/api-reference.md).
+- CLI: there are no commands for the queue or waivers. `apiome lint` and `apiome lint gate` lint a
+  version and report against policy — see [Lint and check quality](../build/lint-and-quality.md).
+
+## Where next
+
+- [Style guides](./style-guides.mdx)
+- [Access audit](./access-audit.mdx)

@@ -32,3 +32,40 @@ export function writeA11yFixture(name: string, html: string): void {
   fs.mkdirSync(A11Y_FIXTURE_DIR, { recursive: true });
   fs.writeFileSync(path.join(A11Y_FIXTURE_DIR, `${name}.html`), `${html}\n`);
 }
+
+/**
+ * An element's markup with its live form state written into the attributes.
+ *
+ * jsdom keeps what a test typed or chose as properties (`value`, `checked`, `selected`), and
+ * `outerHTML` serializes attributes only — so without this a dump shows the fields as React first
+ * rendered them: empty inputs, unticked boxes and every `<select>` on its first option. The live
+ * element is not changed; a clone is.
+ *
+ * @param element The element to dump.
+ * @returns Its markup, with typed values, ticks and chosen options in place.
+ */
+export function liveMarkup(element: Element): string {
+  const clone = element.cloneNode(true) as Element;
+  const live = element.querySelectorAll('input, textarea, select');
+  const copied = clone.querySelectorAll('input, textarea, select');
+  live.forEach((field, index) => {
+    const target = copied[index];
+    if (field instanceof HTMLTextAreaElement) {
+      target.textContent = field.value;
+    } else if (field instanceof HTMLSelectElement) {
+      Array.from(field.options).forEach((option, optionIndex) => {
+        const copy = (target as HTMLSelectElement).options[optionIndex];
+        if (option.selected) copy.setAttribute('selected', '');
+        else copy.removeAttribute('selected');
+      });
+    } else if (field instanceof HTMLInputElement) {
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        if (field.checked) target.setAttribute('checked', '');
+        else target.removeAttribute('checked');
+      } else {
+        target.setAttribute('value', field.value);
+      }
+    }
+  });
+  return clone.outerHTML;
+}
