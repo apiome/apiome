@@ -25,6 +25,8 @@ import { Card, CardHeader } from '@/app/components/ui/Card';
 import { GatedState } from '@/app/components/ui/EmptyState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
+import { LiveRegion } from '@/app/components/ui/LiveRegion';
+import { useSettledRepositoriesAnnouncement } from '@/app/hooks/useSettledRepositoriesAnnouncement';
 import {
   Select,
   SelectContent,
@@ -285,6 +287,10 @@ export function RepositoryDetailClient() {
     return () => window.clearInterval(timer);
   }, [currentTenantId, id, awaitingReady, load]);
 
+  // Announce the repository settling (ready / failed) while the user waits on it (HIVE-10.2).
+  const settleRows = useMemo(() => (repo ? [repo] : []), [repo]);
+  const settledAnnouncement = useSettledRepositoriesAnnouncement(settleRows);
+
   const performRemoveRepository = async () => {
     if (!id) return;
     setRemoving(true);
@@ -428,6 +434,7 @@ export function RepositoryDetailClient() {
 
   return (
     <Page>
+      <LiveRegion message={settledAnnouncement} data-testid="repository-live" />
       <PageHeader
         breadcrumb={[
           { label: 'Home', href: DASHBOARD_HREF },

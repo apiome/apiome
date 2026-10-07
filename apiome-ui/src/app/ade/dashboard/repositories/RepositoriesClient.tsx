@@ -12,6 +12,8 @@ import type { ShortcutBinding } from '@lib/shortcuts';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
+import { useSettledRepositoriesAnnouncement } from '@/app/hooks/useSettledRepositoriesAnnouncement';
+import { LiveRegion } from '@/app/components/ui/LiveRegion';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 import {
@@ -201,6 +203,9 @@ export default function RepositoriesClient() {
     }, REPOSITORY_STATUS_POLL_MS);
     return () => window.clearInterval(timer);
   }, [currentTenantId, polling, loadRepositories]);
+
+  // Announce a repository that finishes registering or scanning while the user waits (HIVE-10.2).
+  const settledAnnouncement = useSettledRepositoriesAnnouncement(repositories);
 
   // ---- narrowing ---------------------------------------------------------------------------
 
@@ -402,6 +407,7 @@ export default function RepositoriesClient() {
 
   return (
     <Page>
+      <LiveRegion message={settledAnnouncement} data-testid="repositories-live" />
       <PageHeader
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },

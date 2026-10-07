@@ -95,7 +95,7 @@ const DialogContent = React.forwardRef<
       {showCloseButton && (
         <DialogPrimitive.Close
           title={closeLabel}
-          className="absolute right-4 top-4 rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
+          className="hit-target absolute right-4 top-4 rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
         >
           <X className="size-4" aria-hidden="true" />
           <span className="sr-only">{closeLabel}</span>

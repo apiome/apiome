@@ -141,7 +141,7 @@
   /* ---- Ink ------------------------------------------------------------ */
   --color-fg: #1B1A17;
   --color-fg-muted: #625F59;
-  --color-fg-subtle: #8F8B84;
+  --color-fg-subtle: #6E6B65;
   --color-fg-faint: #B8B4AC;
   --color-fg-on-accent: #FFFFFF;
 
@@ -151,8 +151,8 @@
   --color-border-focus: var(--color-brand-azure);
 
   /* ---- Accent roles --------------------------------------------------- */
-  --color-accent: #1E7FD6;
-  --color-accent-hover: #1A6FBB;
+  --color-accent: #1B72C1;
+  --color-accent-hover: #1864A9;
   --color-accent-soft: #E7F1FC;
   --color-accent-fg: #12539A;
   --color-ink: #16265C;
@@ -173,7 +173,7 @@
   --color-warn: #C77700;
   --color-warn-soft: #FDF0D5;
   --color-warn-fg: #8A5300;
-  --color-danger: #D6403A;
+  --color-danger: #D43F3A;
   --color-danger-soft: #FCE8E6;
   --color-danger-fg: #A62F2A;
   --color-info: var(--color-accent);
@@ -206,8 +206,11 @@
   --shadow-lg: 0 16px 40px -12px rgba(20, 18, 14, 0.22), 0 0 0 1px rgba(20, 18, 14, 0.06);
   /* Reads the `:root` alias, not `--color-accent`: Tailwind resolves theme-variable
      references inside `color-mix()` at build time, which would freeze the focus ring at
-     the light-theme azure and stop it following the HIVE-1.2 per-theme swap. */
-  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+     the light-theme azure and stop it following the HIVE-1.2 per-theme swap.
+     HIVE-10.2 (#5338): a solid 1 px accent edge sits inside the 3 px halo. The 28 % halo
+     alone measures ~1.5:1 against a card, under the 3:1 SC 1.4.11 asks of a focus
+     indicator; `--accent` clears 3:1 in every theme (tests/a11y-token-contrast.test.ts). */
+  --shadow-focus: 0 0 0 1px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
   --shadow-raised: 0 1px 2px rgba(20, 18, 14, 0.08), 0 0 0 1px rgba(20, 18, 14, 0.06);
 
   /* ---- Control chrome (HIVE-2.1, DESIGN.md §7) -----------------------
@@ -434,6 +437,9 @@
   --page-pad: 2rem;          /* 32px */
   --card-pad: 1.25rem;       /* 20px */
   --nav-item-h: 2rem;        /* 32px */
+  /* Smallest pointer target (HIVE-10.2, DESIGN.md §9): 44px in comfortable density,
+     the 24px WCAG 2.2 AA floor (SC 2.5.8) in compact. Drawn by `.hit-target`. */
+  --target-min: 2.75rem;     /* 44px */
   /* Vertical padding of a data-table cell, derived rather than stated: it is half of what
      a `--row-h` row has left over after one line of `--fs-sm` body copy, so a table row
      *is* the row metric at any density and any font scale. The head strip takes 60% of it
@@ -547,7 +553,7 @@ html.dark:not([data-theme]) {
 
   --color-fg: #EDEBE6;
   --color-fg-muted: #A8A49C;
-  --color-fg-subtle: #7C7871;
+  --color-fg-subtle: #8D8983;
   --color-fg-faint: #57544E;
 
   --color-border: rgba(255, 250, 240, 0.09);
@@ -598,6 +604,7 @@ html.dark:not([data-theme]) {
   --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07);
   --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
   --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --color-fg-on-accent: #0B0B0C;
 }
 
 /* Maximum legibility: pure black canvas, pure white ink (21:1, AAA), and borders
@@ -641,6 +648,30 @@ html[data-theme="high-contrast"] {
   --shadow-md: 0 0 0 1px #FFFFFF;
   --shadow-lg: 0 0 0 2px #FFFFFF;
   --shadow-raised: 0 0 0 1px #FFFFFF;
+  --color-fg-on-accent: #0B0B0C;
+  /* HIVE-10.2 (#5338): a dark base keeps the dark theme's translucent chip + light ink,
+     so `-fg` reads as text on the page too (AA; AAA in High contrast). */
+  --color-ok-soft: rgba(74, 222, 128, 0.16);
+  --color-ok-fg: #4ADE80;
+  --color-warn-soft: rgba(252, 211, 77, 0.16);
+  --color-warn-fg: #FCD34D;
+  --color-danger-soft: rgba(255, 123, 123, 0.16);
+  --color-danger-fg: #FFB2B2;
+  --color-violet: #9C84EE;
+  --color-violet-soft: rgba(156, 132, 238, 0.16);
+  --color-violet-fg: #C1B0FA;
+  --color-orange: #F0873F;
+  --color-orange-soft: rgba(240, 135, 63, 0.14);
+  --color-orange-fg: #F8B085;
+  --color-rose: #ED6AA0;
+  --color-rose-soft: rgba(237, 106, 160, 0.14);
+  --color-rose-fg: #F79CC0;
+  --color-neutral: #A8A49C;
+  --color-neutral-soft: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #CFCBC3;
+  --color-honey: #F5B301;
+  --color-honey-soft: rgba(245, 179, 1, 0.14);
+  --color-honey-fg: #F8CB4F;
 }
 
 html[data-theme="blueprint"] {
@@ -672,6 +703,33 @@ html[data-theme="blueprint"] {
      highest-contrast ink it has — and the wordmark switches to its dark artwork. */
   --color-brand-ink: var(--color-ink);
   --brand-on-dark: 1;
+  --color-fg-on-accent: #0B0B0C;
+  /* HIVE-10.2 (#5338): a dark base keeps the dark theme's translucent chip + light ink,
+     so `-fg` reads as text on the page too (AA; AAA in High contrast). */
+  --color-ok: #34C08A;
+  --color-ok-soft: rgba(52, 192, 138, 0.14);
+  --color-ok-fg: #6FDDB0;
+  --color-warn: #F0A02F;
+  --color-warn-soft: rgba(240, 160, 47, 0.14);
+  --color-warn-fg: #F7C36F;
+  --color-danger: #F26A63;
+  --color-danger-soft: rgba(242, 106, 99, 0.14);
+  --color-danger-fg: #FF9A94;
+  --color-violet: #9C84EE;
+  --color-violet-soft: rgba(156, 132, 238, 0.16);
+  --color-violet-fg: #C1B0FA;
+  --color-orange: #F0873F;
+  --color-orange-soft: rgba(240, 135, 63, 0.14);
+  --color-orange-fg: #F8B085;
+  --color-rose: #ED6AA0;
+  --color-rose-soft: rgba(237, 106, 160, 0.14);
+  --color-rose-fg: #F79CC0;
+  --color-neutral: #A8A49C;
+  --color-neutral-soft: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #CFCBC3;
+  --color-honey: #F5B301;
+  --color-honey-soft: rgba(245, 179, 1, 0.14);
+  --color-honey-fg: #F8CB4F;
 }
 
 html[data-theme="whiteboard"] {
@@ -685,7 +743,7 @@ html[data-theme="whiteboard"] {
 
   --color-fg: #212121;
   --color-fg-muted: #5B6470;
-  --color-fg-subtle: #8A93A0;
+  --color-fg-subtle: #696F79;
   --color-fg-faint: #B7BEC8;
 
   --color-border: rgba(30, 40, 60, 0.1);
@@ -710,8 +768,8 @@ html[data-theme="solarized"] {
   --color-inset: #002530;
 
   --color-fg: #EEE8D5;
-  --color-fg-muted: #93A1A1;
-  --color-fg-subtle: #657B83;
+  --color-fg-muted: #A3AFAF;
+  --color-fg-subtle: #96A5AA;
   --color-fg-faint: #4A626A;
 
   --color-border: rgba(147, 161, 161, 0.18);
@@ -737,8 +795,29 @@ html[data-theme="solarized"] {
   --color-honey-fg: #E1B12E;
 
   --color-ok: #859900;
-  --color-warn: #CB4B16;
-  --color-danger: #DC322F;
+  --color-warn: #CE5522;
+  --color-danger: #DE413E;
+  --color-fg-on-accent: #0B0B0C;
+  /* HIVE-10.2 (#5338): a dark base keeps the dark theme's translucent chip + light ink,
+     so `-fg` reads as text on the page too (AA; AAA in High contrast). */
+  --color-ok-soft: rgba(133, 153, 0, 0.16);
+  --color-ok-fg: #ADBA52;
+  --color-warn-soft: rgba(203, 75, 22, 0.16);
+  --color-warn-fg: #E09575;
+  --color-danger-soft: rgba(220, 50, 47, 0.16);
+  --color-danger-fg: #EB8A88;
+  --color-violet: #9C84EE;
+  --color-violet-soft: rgba(156, 132, 238, 0.16);
+  --color-violet-fg: #C1B0FA;
+  --color-orange: #F0873F;
+  --color-orange-soft: rgba(240, 135, 63, 0.14);
+  --color-orange-fg: #F8B085;
+  --color-rose: #ED6AA0;
+  --color-rose-soft: rgba(237, 106, 160, 0.14);
+  --color-rose-fg: #F79CC0;
+  --color-neutral: #A8A49C;
+  --color-neutral-soft: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #CFCBC3;
 }
 
 html[data-theme="nord"] {
@@ -752,7 +831,7 @@ html[data-theme="nord"] {
 
   --color-fg: #ECEFF4;
   --color-fg-muted: #C7CFDC;
-  --color-fg-subtle: #97A2B5;
+  --color-fg-subtle: #B5BDC9;
   --color-fg-faint: #66718A;
 
   --color-border: rgba(216, 222, 233, 0.12);
@@ -779,7 +858,28 @@ html[data-theme="nord"] {
 
   --color-ok: #A3BE8C;
   --color-warn: #D08770;
-  --color-danger: #BF616A;
+  --color-danger: #C8777F;
+  --color-fg-on-accent: #0B0B0C;
+  /* HIVE-10.2 (#5338): a dark base keeps the dark theme's translucent chip + light ink,
+     so `-fg` reads as text on the page too (AA; AAA in High contrast). */
+  --color-ok-soft: rgba(163, 190, 140, 0.16);
+  --color-ok-fg: #CBDBBD;
+  --color-warn-soft: rgba(208, 135, 112, 0.16);
+  --color-warn-fg: #E9C7BC;
+  --color-danger-soft: rgba(191, 97, 106, 0.16);
+  --color-danger-fg: #E6C3C6;
+  --color-violet: #9C84EE;
+  --color-violet-soft: rgba(156, 132, 238, 0.16);
+  --color-violet-fg: #D2C7FB;
+  --color-orange: #F0873F;
+  --color-orange-soft: rgba(240, 135, 63, 0.14);
+  --color-orange-fg: #F9C09E;
+  --color-rose: #ED6AA0;
+  --color-rose-soft: rgba(237, 106, 160, 0.14);
+  --color-rose-fg: #F9B7D1;
+  --color-neutral: #A8A49C;
+  --color-neutral-soft: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #D2CFC7;
 }
 
 html[data-theme="darcula"] {
@@ -793,7 +893,7 @@ html[data-theme="darcula"] {
 
   --color-fg: #E8E8E8;
   --color-fg-muted: #B9BCC0;
-  --color-fg-subtle: #8A8F94;
+  --color-fg-subtle: #A4A8AB;
   --color-fg-faint: #5F6469;
 
   --color-border: rgba(255, 255, 255, 0.1);
@@ -821,6 +921,27 @@ html[data-theme="darcula"] {
   --color-ok: #6A8759;
   --color-warn: #CC7832;
   --color-danger: #FF6B68;
+  --color-fg-on-accent: #0B0B0C;
+  /* HIVE-10.2 (#5338): a dark base keeps the dark theme's translucent chip + light ink,
+     so `-fg` reads as text on the page too (AA; AAA in High contrast). */
+  --color-ok-soft: rgba(106, 135, 89, 0.16);
+  --color-ok-fg: #AABBA1;
+  --color-warn-soft: rgba(204, 120, 50, 0.16);
+  --color-warn-fg: #E0AE83;
+  --color-danger-soft: rgba(255, 107, 104, 0.16);
+  --color-danger-fg: #FFA8A5;
+  --color-violet: #9C84EE;
+  --color-violet-soft: rgba(156, 132, 238, 0.16);
+  --color-violet-fg: #C1B0FA;
+  --color-orange: #F0873F;
+  --color-orange-soft: rgba(240, 135, 63, 0.14);
+  --color-orange-fg: #F8B085;
+  --color-rose: #ED6AA0;
+  --color-rose-soft: rgba(237, 106, 160, 0.14);
+  --color-rose-fg: #F79CC0;
+  --color-neutral: #A8A49C;
+  --color-neutral-soft: rgba(255, 255, 255, 0.07);
+  --color-neutral-fg: #CFCBC3;
 }
 
 /* hex-allow-end */
@@ -853,6 +974,7 @@ html[data-density="compact"] {
   --page-pad: 1.5rem;        /* 24px */
   --card-pad: 1rem;          /* 16px */
   --nav-item-h: 1.75rem;     /* 28px */
+  --target-min: 1.5rem;      /* 24px */
   --space-6: 1.25rem;        /* 20px */
   --space-8: 1.5rem;         /* 24px */
 }
@@ -2578,6 +2700,48 @@ p {
 *:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
+}
+
+/* ==========================================================================
+   POINTER TARGETS (HIVE-10.2, #5338)
+   --------------------------------------------------------------------------
+   Authority: `docs/mockups/DESIGN.md` §9 — "44 px min touch targets in
+   comfortable density". A control keeps its drawn size (a 30 px button stays
+   30 px) and gains an invisible hit area of at least `--target-min` around its
+   centre, so the layout and the visual-parity gate do not move.
+
+   The hit area sits *behind* every real box: `z-index: -1` inside a parent the
+   `:has()` rule isolates. A neighbour's visible box therefore always wins, and
+   the expansion only claims the empty gap around a control — a click near the
+   edge of one button can never land on the next one. Hosts that are already
+   positioned (`absolute` close buttons, the `absolute` rail handle) keep their
+   position: the `relative` default skips them by class, because this stylesheet
+   stays unlayered and an unlayered rule would otherwise beat the utility.
+   ========================================================================== */
+.hit-target:not(.absolute, .fixed, .sticky) {
+  position: relative;
+}
+
+.hit-target::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, var(--target-min));
+  height: max(100%, var(--target-min));
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
+:where(:has(> .hit-target)) {
+  isolation: isolate;
+}
+
+/* Chrome hit-tests a table cell above its negative-z descendants, so inside a cell the hit area
+   sits at z 0 instead. A cell holds one control (a row checkbox, a row action), so there is no
+   sibling for it to cover; the next cell paints after it and still wins the overlap. */
+:is(td, th) > .hit-target::after {
+  z-index: 0;
 }
 
 /* ==========================================================================
@@ -10437,8 +10601,10 @@ button.auth-divider:disabled {
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  inline-size: 1.125rem;
-  block-size: 1.125rem;
+  /* 24 px: the WCAG 2.2 AA target floor (SC 2.5.8) for two actions side by side (HIVE-10.2).
+     Still inside the 30 px chip; the glyph stays 12 px. */
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
   border-radius: var(--r-full);
   color: var(--fg-muted);
   cursor: pointer;
@@ -12342,6 +12508,10 @@ button.auth-divider:disabled {
 
 .ver-desc-link {
   color: var(--accent-fg);
+  /* Underlined at rest (HIVE-10.2): a link inside running text must not rely on colour alone
+     (WCAG 1.4.1, axe `link-in-text-block`). */
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .ver-desc-link:hover {

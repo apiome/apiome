@@ -909,7 +909,7 @@ const DataTableFilterChip = React.forwardRef<HTMLButtonElement, DataTableFilterC
       // a group where only the active one announces its state is a group you cannot read.
       aria-pressed={active}
       className={cn(
-        'inline-flex h-[var(--control-h-sm)] shrink-0 items-center gap-1.5 rounded-full px-2.5',
+        'hit-target inline-flex h-[var(--control-h-sm)] shrink-0 items-center gap-1.5 rounded-full px-2.5',
         'text-xs font-medium whitespace-nowrap',
         'transition-[background-color,box-shadow,color] duration-[var(--dur-fast)]',
         'focus-visible:outline-none',

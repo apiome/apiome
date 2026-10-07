@@ -38,6 +38,7 @@ jest.mock('@lib/auth/session-client', () => ({
 }));
 
 import OauthSignupClient from '@/app/signup/oauth/OauthSignupClient';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** The client's source, for the assertions that read it rather than render it. */
 const CLIENT_SOURCE = readFileSync(
@@ -524,5 +525,12 @@ describe('OAuth sign-up — creating the account', () => {
       within(screen.getByTestId('oauth-signup-card')).getByText(/at least 2 characters/i)
     ).toBeInTheDocument();
     expect(mockCompleteOAuthSignup).not.toHaveBeenCalled();
+  });
+});
+
+describe('OAuth sign-up — the a11y gate fixture (HIVE-10.2)', () => {
+  it('renders the card (and writes its fixture on request)', () => {
+    const { container } = renderCard('github');
+    writeA11yFixture('signup-oauth', container.innerHTML);
   });
 });

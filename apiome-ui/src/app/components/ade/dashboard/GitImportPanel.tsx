@@ -938,18 +938,18 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                   disabled={isLoading}
                   className={`w-full px-3 py-2 flex items-center gap-2 border-b border-border transition-colors ${
                     isSelected
-                      ? 'bg-accent text-fg-on-accent'
+                      ? 'bg-accent-soft text-accent-fg'
                       : 'hover:bg-subtle text-fg'
                   } ${isLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  <span className={`flex-shrink-0 ${isSelected ? 'text-fg-on-accent' : 'text-fg-muted'}`}>
+                  <span className={`flex-shrink-0 ${isSelected ? 'text-accent-fg' : 'text-fg-muted'}`}>
                     {getProviderIcon(account.provider)}
                   </span>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className={`text-sm font-medium truncate ${isSelected ? 'text-fg-on-accent' : 'text-fg'}`}>
+                    <div className={`text-sm font-medium truncate ${isSelected ? 'text-accent-fg' : 'text-fg'}`}>
                       {account.provider.charAt(0).toUpperCase() + account.provider.slice(1)}
                     </div>
-                    <div className={`text-xs truncate ${isSelected ? 'text-fg-on-accent' : 'text-fg-muted'}`}>
+                    <div className={`text-xs truncate ${isSelected ? 'text-accent-fg' : 'text-fg-muted'}`}>
                       {account.provider_username || account.provider_email}
                     </div>
                   </div>
@@ -1100,20 +1100,20 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                     disabled={isLoading}
                     className={`w-full px-3 py-2 border-b border-border text-left transition-colors ${
                       isSelected
-                        ? 'bg-accent text-fg-on-accent'
+                        ? 'bg-accent-soft text-accent-fg'
                         : 'hover:bg-subtle text-fg'
                     } ${isLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-center gap-1">
-                      <span className={`text-sm font-medium flex-1 truncate ${isSelected ? 'text-fg-on-accent' : ''}`}>
+                      <span className={`text-sm font-medium flex-1 truncate ${isSelected ? 'text-accent-fg' : ''}`}>
                         {repo.name}
                       </span>
                       {repo.private && (
-                        <Lock className={`h-3 w-3 flex-shrink-0 ${isSelected ? 'text-fg-on-accent' : 'text-fg-faint'}`} />
+                        <Lock className={`h-3 w-3 flex-shrink-0 ${isSelected ? 'text-accent-fg' : 'text-fg-faint'}`} />
                       )}
                     </div>
                     {repo.description && (
-                      <div className={`text-xs truncate mt-0.5 ${isSelected ? 'text-fg-on-accent' : 'text-fg-muted'}`}>
+                      <div className={`text-xs truncate mt-0.5 ${isSelected ? 'text-accent-fg' : 'text-fg-muted'}`}>
                         {repo.description}
                       </div>
                     )}

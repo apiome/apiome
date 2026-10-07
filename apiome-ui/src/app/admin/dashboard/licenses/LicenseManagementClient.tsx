@@ -42,6 +42,7 @@ import { isCommercialProductFlag } from '../../../../../lib/commercial-products'
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
+import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -835,19 +836,30 @@ function Modal({
   /** Extra classes on the dialog panel (e.g. max width). */
   panelClassName?: string;
 }) {
+  // A Radix dialog under the existing look (HIVE-10.2): focus is trapped while open and returns
+  // to the trigger on close; Escape and the backdrop close it.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div
-        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full flex flex-col overflow-hidden ${
-          fixedViewportHeight
-            ? 'h-[90vh] max-h-[90vh] max-w-4xl'
-            : 'max-w-2xl max-h-[90vh] overflow-y-auto'
-        } ${panelClassName ?? ''}`.trim()}
-      >
+    <ModalFrame
+      open
+      onClose={onClose}
+      overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full flex flex-col overflow-hidden ${
+        fixedViewportHeight
+          ? 'h-[90vh] max-h-[90vh] max-w-4xl'
+          : 'max-w-2xl max-h-[90vh] overflow-y-auto'
+      } ${panelClassName ?? ''}`.trim()}
+    >
         <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-gray-900 dark:text-white font-semibold text-lg">{title}</h3>
-          <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors">
-            <X className="w-5 h-5" />
+          <ModalFrameTitle asChild>
+            <h3 className="text-gray-900 dark:text-white font-semibold text-lg">{title}</h3>
+          </ModalFrameTitle>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="hit-target text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
         <div
@@ -859,8 +871,7 @@ function Modal({
         >
           {children}
         </div>
-      </div>
-    </div>
+    </ModalFrame>
   );
 }
 

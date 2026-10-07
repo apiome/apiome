@@ -73,7 +73,7 @@ export default function FontScaleSlider({ value, onChange }: FontScaleSliderProp
 
       {/* Stop names, aligned under the track. Decorative: the input announces its own
           value, and repeating the six labels to a screen reader would only add noise. */}
-      <div aria-hidden className="mt-1 flex justify-between px-5 text-xs text-fg-faint">
+      <div aria-hidden className="mt-1 flex justify-between px-5 text-xs text-fg-subtle">
         {FONT_SCALES.map((stop) => (
           <span key={stop.id}>{stop.label}</span>
         ))}

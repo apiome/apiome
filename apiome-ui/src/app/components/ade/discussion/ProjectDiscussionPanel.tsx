@@ -52,6 +52,7 @@ import {
   type DiscussionSummary,
   type DiscussionThread,
 } from '@lib/comment-discussion';
+import { scrollBehavior } from '@lib/motion';
 
 /** The part of a version row the panel reads: its id and its label. */
 export interface ProjectDiscussionVersion {
@@ -337,7 +338,7 @@ export function ProjectDiscussionPanel({
     );
     // `center` rather than `start`: the row is meant to be read, not parked under the
     // filter bar that sits above the list.
-    row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row?.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
   }, [focusThreadId, current]);
 
   /**

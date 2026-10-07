@@ -65,7 +65,7 @@ export const RadioGroupItem = React.forwardRef<HTMLInputElement, RadioGroupItemP
     return (
       <label
         className={cn(
-          'inline-flex cursor-pointer items-center gap-2 text-sm text-fg',
+          'hit-target inline-flex cursor-pointer items-center gap-2 text-sm text-fg',
           props.disabled && 'cursor-not-allowed opacity-50',
           className
         )}

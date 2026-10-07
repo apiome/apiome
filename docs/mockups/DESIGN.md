@@ -75,12 +75,12 @@ All values live in `assets/hive.css :root`. Production maps them to Tailwind v4
 | `--bg-surface` | `#FFFFFF` | cards, tables, dialogs, inputs |
 | `--bg-subtle` | `#F3F2EE` | hovers, secondary fills |
 | `--bg-inset` | `#E9E8E3` | wells, code, tracks |
-| `--fg` / `--fg-muted` / `--fg-subtle` / `--fg-faint` | `#1B1A17` / `#625F59` / `#8F8B84` / `#B8B4AC` | text hierarchy |
+| `--fg` / `--fg-muted` / `--fg-subtle` / `--fg-faint` | `#1B1A17` / `#625F59` / `#6E6B65` / `#B8B4AC` | text hierarchy (`--fg-faint` is the disabled/decorative tier) |
 | `--border` / `--border-strong` | `rgba(28,25,20,.09)` / `.18` | hairlines |
 | `--ink` / `--ink-fg` | `#16265C` / `#FFF` | primary button (flips to light-on-dark in dark themes) |
-| `--accent` / `--accent-soft` / `--accent-fg` | `#1E7FD6` / `#E7F1FC` / `#12539A` | links, focus, selection, info |
+| `--accent` / `--accent-soft` / `--accent-fg` | `#1B72C1` / `#E7F1FC` / `#12539A` | links (`--accent-fg` for link text), focus, selection, info |
 | `--honey` / `--honey-soft` / `--honey-fg` | `#F5B301` / `#FFF3C4` / `#6B4E00` | brand ornament |
-| `--ok` `--warn` `--danger` (+ `-soft`, `-fg`) | `#0E8A5F` `#C77700` `#D6403A` | semantic |
+| `--ok` `--warn` `--danger` (+ `-soft`, `-fg`) | `#0E8A5F` `#C77700` `#D43F3A` | semantic |
 | `--violet` `--orange` `--rose` `--neutral` (+ `-soft`, `-fg`) | | extended status vocab |
 
 **Status vocabulary → color** (used by `.badge[data-status]`, must match the app’s
@@ -311,6 +311,16 @@ WCAG 2.2 AA minimum, AAA in *High contrast*. Focus ring 3 px azure at 28 %.
 have text or `aria-label`; all overlays trap focus and restore it; tables have
 `scope`d headers; live regions for save state and async jobs. Themes are tested
 for 4.5:1 body / 3:1 large text.
+
+HIVE-10.2 made this a gate rather than a goal: `apiome-ui/tests/a11y-token-contrast.test.ts`
+checks every text/mark token pair in every theme (7:1 for text in High contrast), and the CI
+axe gate (`apiome-ui/e2e/a11y/`, `.github/workflows/apiome-ui-a11y.yml`) runs every redesigned
+route in light, dark and High contrast at WCAG 2.2 AA. To clear it, `--fg-subtle` and the
+light `--accent` were darkened slightly, dark-based themes gained the dark theme's translucent
+status chips, and solid fills take dark ink in dark-based themes. Small controls keep their
+drawn size and gain an invisible 44 px hit area (`.hit-target`, 24 px in compact density).
+Keyboard paths per task: `docs/guide/keyboard.md`; contract and checklist:
+`docs/guide/accessibility.md`.
 
 ---
 

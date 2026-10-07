@@ -2,6 +2,8 @@ import { test, expect, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { themes } from '../src/app/config/themes';
 import { DENSITIES, FONT_SCALES } from '../src/app/config/preferences';
+// WCAG 2.2 A/AA (adds `target-size`) — the shared gate tags of HIVE-10.2 (#5338).
+import { WCAG_TAGS } from './support/a11y';
 
 /**
  * Two-factor screen a11y + preference-matrix tests (HIVE-4.2, #5296).
@@ -19,8 +21,6 @@ import { DENSITIES, FONT_SCALES } from '../src/app/config/preferences';
  *      none of which may give the document a horizontal scrollbar at 1280 px or 420 px.
  */
 
-/** WCAG 2.1 Level A/AA — the conformance target for the signed-out surfaces. */
-const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 /** The `sessionStorage` key the sign-in challenge leaves the offered methods in. */
 const METHODS_KEY = 'apiome:2fa-methods';

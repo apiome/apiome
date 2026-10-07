@@ -153,13 +153,14 @@ export default function ShortcutsGalleryPage() {
             className="flex items-center gap-2 text-sm text-fg"
             data-testid="toggle-list"
           >
-            <Switch checked={onAList} onCheckedChange={setOnAList} />A table is on screen
+            {/* `Switch` draws its own label, so the outer one cannot name its input (HIVE-10.2). */}
+            <Switch aria-label="A table is on screen" checked={onAList} onCheckedChange={setOnAList} />A table is on screen
           </label>
           <label
             className="flex items-center gap-2 text-sm text-fg"
             data-testid="toggle-workspace"
           >
-            <Switch checked={inWorkspace} onCheckedChange={setInWorkspace} />A workspace is
+            <Switch aria-label="A workspace is selected" checked={inWorkspace} onCheckedChange={setInWorkspace} />A workspace is
             selected
           </label>
         </div>

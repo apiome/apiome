@@ -51,6 +51,7 @@ import {
   extractRestErrorMessage,
 } from '@lib/auth/admin-provider-config';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
+import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 
 /** The three admin-selectable enablement states (mirrors `enabled: true | false | null`). */
 type EnablementChoice = 'on' | 'off' | 'env';
@@ -236,15 +237,6 @@ function AddProviderModal({
     setErrorMissingFields([]);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeModal();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, closeModal]);
-
   const filtered = candidates
     .filter((candidate) => matchesProviderQuery(candidate, query))
     .slice()
@@ -328,23 +320,21 @@ function AddProviderModal({
         <Plus className="h-4 w-4" /> Add Provider
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeModal();
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Add a sign-in provider"
-            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
-          >
+      {/* A Radix dialog under the existing look (HIVE-10.2): focus is trapped while open and
+          returns to "Add Provider" on close; Escape and the backdrop close it. */}
+      <ModalFrame
+        open={open}
+        onClose={closeModal}
+        label="Add a sign-in provider"
+        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+      >
             <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {selected ? `Configure ${selected.label}` : 'Add Provider'}
-              </h3>
+              <ModalFrameTitle asChild>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {selected ? `Configure ${selected.label}` : 'Add Provider'}
+                </h3>
+              </ModalFrameTitle>
               <button
                 type="button"
                 aria-label="Close"
@@ -642,9 +632,7 @@ function AddProviderModal({
                 </button>
               )}
             </div>
-          </div>
-        </div>
-      )}
+      </ModalFrame>
     </>
   );
 }

@@ -336,7 +336,9 @@ describe('the diamonds are shapes before they are colours', () => {
   /** The saturated role token each status is drawn from. */
   const TOKENS = ['--rose', '--warn', '--neutral'] as const;
 
-  it('records that the saturated role step is *not* a legible mark on this surface', () => {
+  it('the saturated role step is now a legible mark on this surface too (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // This is the finding that put a hairline round every diamond. Stated as a measurement
     // rather than as a comment, so a future change to the token layer that fixes it shows up
     // here as a failing test rather than as a stale note.
@@ -348,7 +350,7 @@ describe('the diamonds are shapes before they are colours', () => {
         if (contrastRatio(mark, surface) < WCAG_AA_NON_TEXT_MIN) failures.push(`${id}${token}`);
       }
     }
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('draws the contour in --fg-muted, which is legible in every appearance', () => {
@@ -510,7 +512,9 @@ describe('quiet text clears AA in every appearance', () => {
     expect(contrastRatio(muted, surface)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
-  it('records why the mockup’s --fg-subtle could not carry these labels', () => {
+  it('the mockup’s --fg-subtle now clears AA for these labels too (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // The subtle step is a *non-text* step; a month label and a lane name are text. It is
     // under the text floor in most appearances, which is the whole reason for the rule above.
     const under = APPEARANCES.filter(([, block]) => {
@@ -521,7 +525,7 @@ describe('quiet text clears AA in every appearance', () => {
       );
       return contrastRatio(subtle, surface) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(under.length).toBeGreaterThan(0);
+    expect(under.length).toBe(0);
   });
 });
 
@@ -590,7 +594,9 @@ describe('the tone inks', () => {
     expect(contrastRatio(ink, chip)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
-  it('records why the mockup’s solid accent fill could not carry the word', () => {
+  it('the mockup’s solid accent fill now carries the word at AA too (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // `--fg-on-accent` on `--accent` is the app's solid-fill pair; measured it is 1.95:1 in
     // Blueprint and 2.00:1 in Nord — the same limitation `.cat-facet__count` records.
     const under = APPEARANCES.filter(([, block]) => {
@@ -602,7 +608,7 @@ describe('the tone inks', () => {
       );
       return contrastRatio(ink, fill) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(under.length).toBeGreaterThan(0);
+    expect(under.length).toBe(0);
   });
 
   it.each(APPEARANCES)('keeps the today rule visible in the %s appearance', (_id, block) => {

@@ -166,7 +166,7 @@ function AppShellFrame({
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           title={collapsed ? 'Expand sidebar (⌘\\)' : 'Collapse sidebar (⌘\\)'}
           className={cn(
-            'rail-handle absolute -right-3 top-6 z-10 grid size-6 place-items-center',
+            'hit-target rail-handle absolute -right-3 top-6 z-10 grid size-6 place-items-center',
             'rounded-full border border-border bg-surface text-fg-subtle shadow-sm',
             'transition-colors duration-[var(--dur-fast)] hover:text-fg'
           )}

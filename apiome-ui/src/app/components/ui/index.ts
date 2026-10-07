@@ -65,3 +65,7 @@ export * from './mcp';
 // because their consumers are props, not stylesheets.
 export * from './iconSizes';
 export * from './svgTypography';
+
+// The announcer for status that changes on its own — save state, async jobs, bulk results
+// (HIVE-10.2, #5338, DESIGN.md §9).
+export * from './LiveRegion';

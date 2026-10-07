@@ -449,7 +449,9 @@ describe('the two hovers', () => {
     expect(onSubtle.map((rule) => rule.prelude)).toEqual(['.mcp-menu__item[data-highlighted], .mcp-menu__item:hover']);
   });
 
-  it('proves the deviation: muted text fails on --bg-subtle somewhere', () => {
+  it('muted text now clears AA on --bg-subtle everywhere (HIVE-10.2), so the deviation is no longer load-bearing', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // If this ever stops being true, the mockup's ground can be restored.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-surface', appearance, PAPER);
@@ -458,7 +460,7 @@ describe('the two hovers', () => {
         contrastRatio(paint('--fg-muted', appearance, subtle), subtle) < WCAG_AA_NORMAL_TEXT_MIN
       );
     });
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 });
 
@@ -470,13 +472,15 @@ describe('the deep-linked capability card', () => {
     );
   });
 
-  it('proves the deviation: muted text on --accent-soft fails somewhere', () => {
+  it('muted text now clears AA on --accent-soft everywhere (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-surface', appearance, PAPER);
       const soft = paint('--accent-soft', appearance, surface);
       return contrastRatio(paint('--fg-muted', appearance, soft), soft) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('clears the 3:1 non-text floor as a hairline in every appearance', () => {
@@ -497,7 +501,9 @@ describe('the ticked timeline row', () => {
     expect(body).not.toMatch(/background\s*:/);
   });
 
-  it('proves the deviation: the row’s own sub-line fails on --accent-soft somewhere', () => {
+  it('the row’s own sub-line now clears AA on --accent-soft everywhere (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // `.mcp-timeline__sub` is `--fg-muted`, which measures 3.86:1 on `--accent-soft` in
     // Solarized — the figure HIVE-7.7 recorded for the same pair and the browser sweep caught.
     const failures = APPEARANCES.filter(([, appearance]) => {
@@ -505,12 +511,14 @@ describe('the ticked timeline row', () => {
       const soft = paint('--accent-soft', appearance, surface);
       return contrastRatio(paint('--fg-muted', appearance, soft), soft) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 });
 
 describe('the danger zone frame', () => {
-  it('records the stated limit rather than claiming the frame clears 3:1 everywhere', () => {
+  it('the danger frame now clears 3:1 in every theme (HIVE-10.2), though the panel still never relies on it alone', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-surface', appearance, PAPER);
       return contrastRatio(paint('--danger', appearance, surface), surface) < WCAG_AA_NON_TEXT_MIN;
@@ -518,7 +526,7 @@ describe('the danger zone frame', () => {
     // At least one theme cannot clear it — which is why the panel never relies on the frame
     // alone: its heading prints "Danger zone" in `--danger-fg`, its button is `destructive`, and
     // deleting still requires the word DELETE typed into a dialog.
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
     expect(SECTION).toContain('emphasis and never the');
   });
 
@@ -537,7 +545,9 @@ describe('the danger zone frame', () => {
     }
   });
 
-  it('proves the deviation: no red in the token layer clears AA as text on the canvas', () => {
+  it('--danger-fg now clears AA as text on the canvas everywhere (HIVE-10.2); the saturated --danger still does not', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     const softFailures = APPEARANCES.filter(([, appearance]) => {
       const canvas = paint('--bg-canvas', appearance, PAPER);
       return (
@@ -548,7 +558,7 @@ describe('the danger zone frame', () => {
       const canvas = paint('--bg-canvas', appearance, PAPER);
       return contrastRatio(paint('--danger', appearance, canvas), canvas) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(softFailures.length).toBeGreaterThan(0);
+    expect(softFailures.length).toBe(0);
     expect(saturatedFailures.length).toBeGreaterThan(0);
   });
 });
@@ -585,7 +595,9 @@ describe('a tone-carrying figure', () => {
     expect(body).toContain('border-radius');
   });
 
-  it('proves why: no -fg ink clears AA as text on a plain surface everywhere', () => {
+  it('every -fg ink now clears AA as text on a plain surface (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     for (const tone of ['ok', 'warn', 'danger'] as const) {
       const failures = APPEARANCES.filter(([, appearance]) => {
         const surface = paint('--bg-surface', appearance, PAPER);
@@ -594,7 +606,7 @@ describe('a tone-carrying figure', () => {
           WCAG_AA_NORMAL_TEXT_MIN
         );
       });
-      expect({ tone, fails: failures.length > 0 }).toEqual({ tone, fails: true });
+      expect({ tone, fails: failures.length > 0 }).toEqual({ tone, fails: false });
     }
   });
 

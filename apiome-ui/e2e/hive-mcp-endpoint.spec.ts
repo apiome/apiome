@@ -175,87 +175,21 @@ function gridColumns(page: Page, selector: string): Promise<number> {
 }
 
 /**
- * The one blocking node this route cannot fix from inside itself.
+ * The serious and critical half of an axe run, as rule ids.
  *
- * `ui/Button`'s solid `danger` fill is `bg-danger text-fg-on-accent`, and `--fg-on-accent` is a
- * fixed `#FFFFFF` in every appearance while `--danger` is a *light* red in the dark ones. White
- * on it measures 2.99:1 in Dark, 2.50:1 in High contrast, 4.09:1 in Nord and 2.77:1 in Darcula.
- *
- * It is not fixable here, and not fixable by swapping the ink either: no single on-fill ink
- * clears AA on every role fill in every theme — in Nord `--danger` is 4.09:1 against white and
- * 3.05:1 against the theme's own dark ink, and in Solarized `--violet` is 5.62:1 against white
- * and 2.67:1 against it. A correct answer is a per-role, per-theme ink token that nothing in the
- * interface has yet, which is the same conclusion the roles block records for its granted
- * permission cell (`globals.css`, `.rol-perm`).
- *
- * So it is *stated* rather than hidden, and bounded: the filter below allows this node and
- * nothing else, and asserts what it allowed — a second failure of the same rule, or the same
- * failure somewhere the button is not, still fails the sweep.
- *
- * What keeps the screen usable meanwhile is that the fill is never the only signal: the button's
- * label reads "Delete endpoint", it sits in a panel headed "Danger zone", and deleting still
- * requires the word DELETE typed into a dialog.
- */
-const KNOWN_SOLID_DANGER_INK = 'ui/Button danger fill · --fg-on-accent on --danger';
-
-/**
- * The serious and critical half of an axe run.
+ * Until HIVE-10.2 (#5338) this allowed one documented node — `ui/Button`'s solid danger fill,
+ * white `--fg-on-accent` on the light red `--danger` of the dark-based themes. Those themes now
+ * paint solid fills with dark ink (`globals.css`, checked by `tests/a11y-token-contrast.test.ts`),
+ * so nothing is allowed any more.
  *
  * @param page The Playwright page.
- * @returns The rule ids that block, which DESIGN.md §9 requires to be empty — with the one
- *   documented exception above collapsed to {@link KNOWN_SOLID_DANGER_INK} so it stays visible
- *   in the assertion rather than silently filtered out.
+ * @returns The blocking rule ids, which DESIGN.md §9 requires to be empty.
  */
 async function blockingViolations(page: Page): Promise<string[]> {
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
-  const blocking = results.violations.filter((violation) =>
-    ['serious', 'critical'].includes(violation.impact ?? '')
-  );
-
-  // What `--danger` actually resolves to in the appearance under test, so the one allowed node
-  // is recognised by the *fill it is painted with* rather than by a class name — axe truncates
-  // `node.html` mid-attribute, so a `bg-danger` substring test silently stops matching.
-  const dangerFill = await page.evaluate(() => {
-    const probe = document.createElement('span');
-    probe.style.backgroundColor = 'var(--danger)';
-    document.body.appendChild(probe);
-    const value = getComputedStyle(probe).backgroundColor;
-    probe.remove();
-    return value;
-  });
-
-  const ids: string[] = [];
-  for (const violation of blocking) {
-    for (const node of violation.nodes) {
-      const selector = Array.isArray(node.target) ? String(node.target[0]) : String(node.target);
-      const onDangerFill =
-        violation.id === 'color-contrast' &&
-        (await page
-          .locator(selector)
-          .first()
-          .evaluate(
-            (element, fill) => getComputedStyle(element as Element).backgroundColor === fill,
-            dangerFill
-          )
-          .catch(() => false));
-      ids.push(onDangerFill ? KNOWN_SOLID_DANGER_INK : violation.id);
-    }
-  }
-  return ids;
-}
-
-/**
- * What a clean sweep looks like for one fixture in one appearance.
- *
- * @param name The fixture.
- * @param theme The appearance, or `null` for the light default.
- * @returns The exact list `blockingViolations` should return.
- */
-function expectedViolations(name: Fixture, theme: string | null | undefined): string[] {
-  // Only the settings panel carries a solid danger button, and only the four appearances whose
-  // role hues are light fail on it.
-  const failing = ['dark', 'high-contrast', 'nord', 'darcula'];
-  return name === 'settings' && theme && failing.includes(theme) ? [KNOWN_SOLID_DANGER_INK] : [];
+  return results.violations
+    .filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))
+    .map((violation) => violation.id);
 }
 
 /* -------------------------------------------------------------------------
@@ -409,7 +343,7 @@ test.describe('accessibility', () => {
     test(`the ${name} panel has no serious or critical axe violations`, async ({ page }) => {
       await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
       await mount(page, name);
-      expect(await blockingViolations(page)).toEqual(expectedViolations(name, null));
+      expect(await blockingViolations(page)).toEqual([]);
     });
   }
 
@@ -419,7 +353,7 @@ test.describe('accessibility', () => {
         await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
         await mount(page, name);
         await applyPreferences(page, { theme });
-        expect(await blockingViolations(page)).toEqual(expectedViolations(name, theme));
+        expect(await blockingViolations(page)).toEqual([]);
       });
     }
   }
@@ -430,7 +364,7 @@ test.describe('accessibility', () => {
       for (const name of ['versions', 'settings'] as Fixture[]) {
         await mount(page, name);
         await applyPreferences(page, { theme });
-        expect(await blockingViolations(page)).toEqual(expectedViolations(name, theme));
+        expect(await blockingViolations(page)).toEqual([]);
       }
     }
   });

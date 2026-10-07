@@ -389,7 +389,9 @@ describe('contrast in every theme', () => {
     expect(contrastRatio(ink, surface)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
-  it('would not have held with --fg-muted, which is why the note is not a quiet line', () => {
+  it('now also holds with --fg-muted (HIVE-10.2); the note keeps its stronger ink', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // Solarized measures 4.35:1 for `--fg-muted` on `--bg-subtle`. A measurement, not taste.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-subtle', appearance, PAPER);
@@ -399,7 +401,7 @@ describe('contrast in every theme', () => {
       );
     }).map(([name]) => name);
 
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('tints each diff value rather than colouring it on the bare surface', () => {
@@ -421,7 +423,9 @@ describe('contrast in every theme', () => {
     }
   });
 
-  it('would not have held on the bare surface, which is why the chips are tinted', () => {
+  it('now also holds on the bare surface (HIVE-10.2); the chips keep their tint', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // Nord measures 1.47:1 for `--danger-fg` on `--bg-surface`. Five themes fail outright.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-surface', appearance, PAPER);
@@ -431,7 +435,7 @@ describe('contrast in every theme', () => {
       );
     }).map(([name]) => name);
 
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('gives every icon-tile tone a soft/fg pair from the same family', () => {

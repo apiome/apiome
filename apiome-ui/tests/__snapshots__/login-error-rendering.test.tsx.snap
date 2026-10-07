@@ -179,7 +179,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -255,7 +255,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -331,7 +331,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -499,7 +499,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -805,7 +805,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -921,7 +921,7 @@ exports[`every known auth error code renders its own banner (OLO-3.2) renders th
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -997,7 +997,7 @@ exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -1073,7 +1073,7 @@ exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg
@@ -1149,7 +1149,7 @@ exports[`unknown error codes (OLO-3.2) falls back to the safe generic banner for
     class="flex shrink-0 items-center gap-1.5"
   >
     <a
-      class="inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
+      class="hit-target inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium tracking-[0.01em] no-underline transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-[var(--icon-button)] [&_svg]:shrink-0 bg-surface text-fg shadow-control hover:bg-subtle h-[var(--control-h-sm)] gap-1.5 px-2.5 text-xs rounded-full"
       href="/login?callbackUrl=%2Fade"
     >
       <svg

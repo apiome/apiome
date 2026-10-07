@@ -98,6 +98,7 @@ import {
   platformNavGatedReason,
   type PlatformNavItem,
 } from '../lib/platform-nav';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** Every rail destination the model describes, flattened. */
 const MODEL_ITEMS: PlatformNavItem[] = PLATFORM_NAV_GROUPS.flatMap((group) => group.items);
@@ -627,5 +628,12 @@ describe('AppShell — accessibility', () => {
     const { container } = await renderShell();
 
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe('AppShell — the a11y gate fixture (HIVE-10.2)', () => {
+  it('renders the shell (and writes its fixture on request)', async () => {
+    const { container } = await renderShell();
+    writeA11yFixture('shell', container.innerHTML);
   });
 });

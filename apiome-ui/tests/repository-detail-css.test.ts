@@ -732,8 +732,9 @@ describe('a state is never colour alone', () => {
   });
 
   it('states the danger frame’s limit rather than claiming it is a signal', () => {
-    // The frame is `--danger` at full strength and it does *not* clear 3:1 everywhere: 2.46:1
-    // in Nord, 2.81 in Solarized. That is allowed only because the frame is emphasis and never
+    // The frame is `--danger` at full strength. It did not clear 3:1 everywhere (2.46:1 in Nord,
+    // 2.81 in Solarized) until HIVE-10.2 (#5338) lightened those two marks; it does now. The
+    // frame is still emphasis and never
     // the only channel — the heading chip below carries the meaning in words and in a pair
     // that does clear AA, and the one control inside is a destructive button.
     expect(declaration('.repo-set-danger', 'box-shadow')).toContain('var(--danger)');
@@ -744,7 +745,7 @@ describe('a state is never colour alone', () => {
     }).map(([name]) => name);
 
     // Pinned, so a theme that *starts* failing is a change someone has to look at.
-    expect(failing.sort()).toEqual(['nord', 'solarized']);
+    expect(failing.sort()).toEqual([]);
 
     // The channel that does carry it, measured in all nine.
     for (const [name, block] of APPEARANCES) {

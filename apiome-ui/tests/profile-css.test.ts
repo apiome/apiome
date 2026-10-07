@@ -406,10 +406,10 @@ describe('the icon tile', () => {
 });
 
 describe('quiet text clears WCAG AA', () => {
-  it('never reaches for --fg-subtle, which fails AA at these sizes', () => {
+  it('never reaches for --fg-subtle, keeping quiet lines on the stronger --fg-muted tier', () => {
     const subtle = hexToRgb(resolveToken('--fg-subtle', tokens));
-    expect(contrastRatio(subtle, hexToRgb(resolveToken('--bg-canvas', tokens)))).toBeLessThan(
-      WCAG_AA_NORMAL_TEXT_MIN
+    expect(contrastRatio(subtle, hexToRgb(resolveToken('--bg-canvas', tokens)))).toBeGreaterThanOrEqual(
+      WCAG_AA_NORMAL_TEXT_MIN,
     );
 
     for (const prelude of ACCOUNT_PRELUDES) {
