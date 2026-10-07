@@ -77,12 +77,18 @@ No message contains the key, its hash or its prefix.
 
 ## Mounting it (AGX-2.1)
 
-```python
-from apiome_mcp.agent_access import AgentAccessMiddleware
+The agent runtime ([`apiome_mcp.agent_server.build_agent_server`](../src/apiome_mcp/agent_server.py),
+served at `/agent/mcp`) mounts it, after the bearer stash and before the AGX-3.2 quota middleware:
 
-agent_mcp = FastMCP("Apiome agent runtime", lifespan=database_lifespan)
+```python
+agent_mcp = FastMCP("Apiome agent runtime", lifespan=agent_lifespan, providers=[AgentToolsetProvider(proxy)])
+agent_mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
 agent_mcp.add_middleware(AgentAccessMiddleware())  # enabled tools read from AGX-1.2 curation
+agent_mcp.add_middleware(AgentQuotaMiddleware(guard=AgentQuotaGuard.from_settings(settings)))
 ```
+
+FastMCP runs middleware in the order it was added. The invocation proxy reads the verified key from
+`current_agent_access()`; see [AGENT_INVOCATION_PROXY.md](AGENT_INVOCATION_PROXY.md).
 
 - **Never mount it on the catalog server** (`apiome_mcp.server`). The catalog's `tools/list`
   always returns the full registry (MTG-2.1, [LIST_ALWAYS.md](LIST_ALWAYS.md); rules in

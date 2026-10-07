@@ -44,6 +44,7 @@ from .agent_tool_enrichment import (
     build_enrichment_prompt,
     enrichment_targets,
     parse_enrichment_reply,
+    served_description_overrides,
 )
 from .agent_toolsets import (
     CODE_TOOLSET_NOT_FOUND,
@@ -572,12 +573,9 @@ def compile_agent_toolset(tenant_id: str, toolset_id: str) -> CompiledToolsetOut
     api = _load_api(tenant_id, row)
     overrides: Dict[str, str] = {}
     if enrichment_on and exposed:
-        live = set(exposed)
-        overrides = {
-            str(r["target_key"]): str(r["accepted_description"])
-            for r in db.list_agent_toolset_enrichments(tenant_id, toolset_id, status="accepted")
-            if r.get("accepted_description") and str(r["operation_key"]) in live
-        }
+        overrides = served_description_overrides(
+            db.list_agent_toolset_enrichments(tenant_id, toolset_id, status="accepted"), exposed
+        )
     try:
         compiled = compile_mcp_tools(apply_description_overrides(api, overrides), exposed=exposed)
     except McpToolMappingError as exc:

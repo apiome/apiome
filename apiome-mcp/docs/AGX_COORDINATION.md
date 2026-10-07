@@ -60,6 +60,15 @@ and is mounted only on the AGX runtime's own FastMCP app. `tests/test_agent_acce
 build if the catalog server (`apiome_mcp.server.mcp`) ever carries it. Rules and error codes:
 [AGENT_ACCESS.md](AGENT_ACCESS.md).
 
+## Invocation proxy (AGX-2.1)
+
+The AGX runtime is its own FastMCP app, [`apiome_mcp.agent_server`](../src/apiome_mcp/agent_server.py),
+mounted at `/agent/mcp` next to the catalog's `/mcp` by
+[`apiome_mcp.http_app`](../src/apiome_mcp/http_app.py). Its tools come from a per-request provider
+(the key's compiled toolset); the catalog registry never sees them, and `tests/test_agent_server.py`
+fails the build if the catalog server carries that provider. Rules:
+[AGENT_INVOCATION_PROXY.md](AGENT_INVOCATION_PROXY.md).
+
 ## Invocation audit (AGX-3.3)
 
 Every agent `tools/call` writes exactly one metadata-only `agent_invocations` row through

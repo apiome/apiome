@@ -115,8 +115,9 @@ live `tools/call` is AGX-2.1 ([#4533](https://github.com/apiome/apiome/issues/45
 which owns request construction, vault injection, and response mapping; the
 `agent_toolsets` table and its `target` column shipped with AGX-1.2
 ([#4530](https://github.com/apiome/apiome/issues/4530), V270; `NOT NULL DEFAULT 'prod'`).
-AGX-2.1 is open at the time of writing, so the ticket's end-to-end criterion (an agent completing a list/create flow
-against the mock) is met once AGX-2.1 consumes this module.
+AGX-2.1 consumes this module on every call ([AGENT_INVOCATION_PROXY.md](AGENT_INVOCATION_PROXY.md)); its acceptance
+test has an agent list and create pets through a `mock` toolset. The process may reach the mock at a different root
+than the public one (`APIOME_MCP_MOCK_INVOCATION_BASE_URL`, e.g. `http://mock:8775` in docker compose).
 
 ## Related
 

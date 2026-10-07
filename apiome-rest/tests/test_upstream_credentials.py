@@ -46,8 +46,10 @@ from app.upstream_credentials import (
     credential_encryption_configured,
     delete_credential,
     list_credentials,
+    open_bound_credential,
     resolve_injection,
     rotate_credential,
+    select_bound_credential,
     validate_secret,
     validate_upstream_credential_keys,
 )
@@ -637,4 +639,39 @@ def test_a_use_ledger_failure_does_not_fail_the_invocation(store):
 
 def test_a_store_without_the_toolset_resolves_to_nothing(store):
     assert resolve_injection(_TENANT, _TOOLSET, "https://api.example.com/v1/pets") is None
+    assert store.uses == []
+
+
+# ============================================================================
+# The pure select/open steps the apiome-mcp agent runtime shares (AGX-2.1, #4533)
+# ============================================================================
+
+
+def test_select_bound_credential_picks_the_most_specific_binding():
+    rows = [
+        {"id": "a", "server_url": "https://api.example.com"},
+        {"id": "b", "server_url": "https://api.example.com/v1"},
+        {"id": "c", "server_url": "https://other.example.com/v1"},
+    ]
+    assert select_bound_credential(rows, "https://api.example.com/v1/pets")["id"] == "b"
+    assert select_bound_credential(rows, "https://api.example.com/v2/pets")["id"] == "a"
+    assert select_bound_credential(rows, "https://evil.example.com/v1/pets") is None
+    assert select_bound_credential([], "https://api.example.com/v1") is None
+
+
+def test_open_bound_credential_opens_without_writing_a_use(store):
+    create_credential(_TENANT, _TOOLSET, _create_body())
+    rows = db.get_upstream_credential_bindings(_TENANT, _TOOLSET)
+    row = select_bound_credential(rows, "https://api.example.com/v1/pets")
+    injection = open_bound_credential(row)
+    assert injection is not None
+    assert injection.apply("https://api.example.com/v1/pets", {})[1] == {"X-Api-Key": _SECRET}
+    assert store.uses == []
+
+
+def test_open_bound_credential_returns_none_when_the_key_is_gone(store, monkeypatch):
+    create_credential(_TENANT, _TOOLSET, _create_body())
+    row = db.get_upstream_credential_bindings(_TENANT, _TOOLSET)[0]
+    monkeypatch.setattr(settings, "upstream_credential_encryption_keys", json.dumps({"2": _key()}))
+    assert open_bound_credential(row) is None
     assert store.uses == []

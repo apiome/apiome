@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Mapping, Optional
+from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
@@ -82,9 +82,11 @@ __all__ = [
     "credential_encryption_configured",
     "delete_credential",
     "list_credentials",
+    "open_bound_credential",
     "record_use",
     "resolve_injection",
     "rotate_credential",
+    "select_bound_credential",
     "validate_secret",
     "validate_upstream_credential_keys",
 ]
@@ -675,15 +677,73 @@ def record_use(tenant_id: str, credential_id: str, toolset_id: str, outcome: str
         )
 
 
+def select_bound_credential(
+    rows: Sequence[Mapping[str, Any]], request_url: str
+) -> Optional[Mapping[str, Any]]:
+    """Pick the credential row bound to one outgoing request, without opening it.
+
+    Pure: no database and no cryptography. :func:`resolve_injection` and the apiome-mcp agent
+    runtime (AGX-2.1), which reads the same rows through its own async pool, share it so the two
+    services can never disagree about which secret goes with which URL.
+
+    Args:
+        rows: A toolset's credentials, as ``db.get_upstream_credential_bindings`` returns them.
+        request_url: The absolute upstream URL about to be called.
+
+    Returns:
+        The row whose server URL :func:`~app.upstream_credential_binding.binds` the URL (the most
+        specific one, when base paths nest), or ``None`` when no credential is bound to it.
+    """
+    bound = [row for row in rows if binds(str(row.get("server_url") or ""), request_url)]
+    if not bound:
+        return None
+    return max(bound, key=lambda candidate: len(str(candidate.get("server_url") or "")))
+
+
+def open_bound_credential(row: Mapping[str, Any]) -> Optional[CredentialInjection]:
+    """Open one credential row into the injection that carries it.
+
+    Writes no audit row: the caller records the use (:func:`record_use`, or the agent runtime's
+    own ledger insert) with the outcome this returns.
+
+    Args:
+        row: A row picked by :func:`select_bound_credential`.
+
+    Returns:
+        The injection, or ``None`` when the secret can't be opened (key not configured, blob fails
+        authentication, or its payload doesn't fit its kind). ``None`` means fail closed.
+    """
+    credential_id = str(row.get("id"))
+    payload = _CIPHER.unseal(row.get("encrypted_secret"), row.get("key_version"))
+    if payload is None:
+        return None
+    try:
+        return build_injection(
+            credential_id=credential_id,
+            kind=str(row.get("kind") or ""),
+            api_key_in=row.get("api_key_in"),
+            api_key_name=row.get("api_key_name"),
+            secret=payload,
+        )
+    except BindingError:
+        logger.warning(
+            "Upstream credential %s opened but does not fit its kind; failing closed",
+            credential_id,
+        )
+        return None
+
+
 def resolve_injection(
     tenant_id: str, toolset_id: str, request_url: str
 ) -> Optional[CredentialInjection]:
     """Open the credential bound to one outgoing request, for the invocation proxy.
 
-    This is the only place a secret is opened for use. The proxy calls it with the absolute URL
-    it is about to request; the credential whose server URL binds that URL (the most specific
-    one, when base paths nest) is opened and returned as a :class:`CredentialInjection`, which
-    the proxy applies with :meth:`CredentialInjection.apply`. Every open is audited as metadata.
+    This is the only place in apiome-rest a secret is opened for use. The proxy calls it with the
+    absolute URL it is about to request; the credential whose server URL binds that URL (the most
+    specific one, when base paths nest) is opened and returned as a :class:`CredentialInjection`,
+    which the proxy applies with :meth:`CredentialInjection.apply`. Every open is audited as
+    metadata. The selection and opening steps are :func:`select_bound_credential` and
+    :func:`open_bound_credential`.
 
     Args:
         tenant_id: Owning tenant.
@@ -700,29 +760,13 @@ def resolve_injection(
             (key not configured, blob fails authentication, or its payload doesn't fit its kind).
             The call must fail closed rather than go out without it.
     """
-    rows = db.get_upstream_credential_bindings(tenant_id, toolset_id)
-    bound = [row for row in rows if binds(str(row.get("server_url") or ""), request_url)]
-    if not bound:
+    row = select_bound_credential(
+        db.get_upstream_credential_bindings(tenant_id, toolset_id), request_url
+    )
+    if row is None:
         return None
-    row = max(bound, key=lambda candidate: len(str(candidate.get("server_url") or "")))
     credential_id = str(row.get("id"))
-
-    payload = _CIPHER.unseal(row.get("encrypted_secret"), row.get("key_version"))
-    injection: Optional[CredentialInjection] = None
-    if payload is not None:
-        try:
-            injection = build_injection(
-                credential_id=credential_id,
-                kind=str(row.get("kind") or ""),
-                api_key_in=row.get("api_key_in"),
-                api_key_name=row.get("api_key_name"),
-                secret=payload,
-            )
-        except BindingError:
-            logger.warning(
-                "Upstream credential %s opened but does not fit its kind; failing closed",
-                credential_id,
-            )
+    injection = open_bound_credential(row)
     if injection is None:
         record_use(tenant_id, credential_id, toolset_id, USE_OUTCOME_UNAVAILABLE)
         raise UpstreamCredentialUnavailableError(credential_id)

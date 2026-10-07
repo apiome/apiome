@@ -1,8 +1,9 @@
 """Recording stand-in for the psycopg pool the AGX-3.3 invocation audit and usage sweep use (#4539).
 
 :class:`RecordingPool` quacks like ``AsyncConnectionPool`` for the calls those modules make —
-``pool.connection()``, ``conn.transaction()``, ``conn.execute()`` (returning a cursor with
-``fetchone``) and ``conn.cursor(row_factory=...)``. Every statement lands in
+``pool.connection()``, ``conn.transaction()``, ``conn.commit()``, ``conn.execute()`` (returning a
+cursor with ``fetchone`` / ``fetchall``) and ``conn.cursor(row_factory=...)``. A responder that returns
+a list answers ``fetchall`` with it (and ``fetchone`` with its first row). Every statement lands in
 :attr:`RecordingPool.statements` as ``(sql, params)``; answers come from ``responder``.
 """
 
@@ -26,7 +27,14 @@ class _Cursor:
         return self
 
     async def fetchone(self) -> Any:
+        if isinstance(self._row, list):
+            return self._row[0] if self._row else None
         return self._row
+
+    async def fetchall(self) -> list[Any]:
+        if self._row is None:
+            return []
+        return list(self._row) if isinstance(self._row, list) else [self._row]
 
     async def __aenter__(self) -> _Cursor:
         return self
@@ -44,6 +52,9 @@ class _Connection:
 
     def cursor(self, row_factory: Any = None) -> _Cursor:
         return _Cursor(self._pool)
+
+    async def commit(self) -> None:
+        self._pool.commits += 1
 
     @asynccontextmanager
     async def transaction(self) -> Any:
@@ -69,6 +80,7 @@ class RecordingPool:
         self.statements: list[tuple[str, Any]] = []
         self.transactions = 0
         self.rollbacks = 0
+        self.commits = 0
         self.fail_on = fail_on
         self._responder = responder or (lambda sql, params: None)
 

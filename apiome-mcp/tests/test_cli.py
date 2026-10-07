@@ -104,7 +104,7 @@ def test_serve_validate_only_exits_without_stdio(monkeypatch: pytest.MonkeyPatch
     get_settings.cache_clear()
 
 
-def test_serve_http_runs_fastmcp_streamable_http(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_serve_http_runs_catalog_and_agent_streamable_http(monkeypatch: pytest.MonkeyPatch) -> None:
     from apiome_mcp.cli import main
     from apiome_mcp.settings import get_settings
 
@@ -118,19 +118,28 @@ def test_serve_http_runs_fastmcp_streamable_http(monkeypatch: pytest.MonkeyPatch
         "argv",
         ["apiome-mcp", "serve", "--transport", "http", "--host", "127.0.0.1", "--port", "9999"],
     )
-    mock_http = AsyncMock(return_value=None)
-    with patch("apiome_mcp.server.mcp.run_http_async", mock_http):
+    import uvicorn
+    from starlette.routing import Mount
+
+    served: list[uvicorn.Server] = []
+
+    async def fake_serve(self: uvicorn.Server, sockets: object = None) -> None:
+        served.append(self)
+
+    with patch.object(uvicorn.Server, "serve", fake_serve):
         main()
-    mock_http.assert_awaited_once()
-    call_kw = mock_http.await_args.kwargs
-    assert call_kw["transport"] == "streamable-http"
-    assert call_kw["host"] == "127.0.0.1"
-    assert call_kw["port"] == 9999
-    assert call_kw["path"] == "/mcp"
-    assert call_kw["log_level"] == "info"
-    mw = call_kw["middleware"]
-    assert len(mw) == 1
-    assert mw[0].cls.__name__ == "HttpCredentialExtractionMiddleware"
+    assert len(served) == 1
+    config = served[0].config
+    assert (config.host, config.port, config.log_level, config.lifespan) == ("127.0.0.1", 9999, "info", "on")
+    # AGX-2.1 (#4533): the catalog MCP at /mcp and the agent runtime at /agent/mcp, one port.
+    mounts = {route.path: route for route in config.app.routes if isinstance(route, Mount)}
+    assert set(mounts) == {"/agent", ""}
+    catalog_paths = {getattr(route, "path", None) for route in mounts[""].app.routes}
+    agent_paths = {getattr(route, "path", None) for route in mounts["/agent"].app.routes}
+    assert {"/mcp", "/health"} <= catalog_paths
+    assert "/mcp" in agent_paths
+    for mounted in mounts.values():
+        assert any(mw.cls.__name__ == "HttpCredentialExtractionMiddleware" for mw in mounted.app.user_middleware)
     get_settings.cache_clear()
 
 

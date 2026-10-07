@@ -35,6 +35,7 @@ from app.agent_tool_enrichment import (
     flag_operation,
     operation_has_examples,
     parse_enrichment_reply,
+    served_description_overrides,
     tool_description_text,
 )
 from app.canonical_model import (
@@ -381,3 +382,17 @@ def test_the_corpus_flags_and_prompts_without_error():
                 assert build_enrichment_prompt(api, op, targets)
         swept += 1
     assert swept > 300 and flagged > 0
+
+
+def test_served_description_overrides_keeps_accepted_text_of_exposed_operations():
+    rows = [
+        {"target_key": "GET /pets", "operation_key": "GET /pets", "accepted_description": "List pets."},
+        {"target_key": "GET /pets#query.limit", "operation_key": "GET /pets", "accepted_description": "Cap."},
+        {"target_key": "POST /pets", "operation_key": "POST /pets", "accepted_description": "Create."},
+        {"target_key": "GET /pets/{id}", "operation_key": "GET /pets/{id}", "accepted_description": None},
+    ]
+    assert served_description_overrides(rows, ["GET /pets", "GET /pets/{id}"]) == {
+        "GET /pets": "List pets.",
+        "GET /pets#query.limit": "Cap.",
+    }
+    assert served_description_overrides(rows, []) == {}

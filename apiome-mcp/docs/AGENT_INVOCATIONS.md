@@ -108,7 +108,10 @@ rows forever. Raw retention is at least 1 day. A missing or non-numeric key fall
 
 ## For later tickets
 
-- **AGX-2.1 (#4533)** wraps every `tools/call` in `audit_invocation`, as shown above.
+- **AGX-2.1 (#4533)** wraps every `tools/call` in `audit_invocation`
+  ([`agent_invocation_proxy`](../src/apiome_mcp/agent_invocation_proxy.py)): `success`,
+  `validation_failure` (`invalid_arguments`), `upstream_error` (the reason, e.g. `upstream_timeout`)
+  or `internal_error`. The body-capture opt-in is read with the toolset manifest, not a second query.
 - **AGX-3.2 (#4538)** counts today's calls per key from `agent_invocations` with V272's
   `agent_key_call_count` (served by `idx_agent_invocations_key_time`). `AgentQuotaMiddleware` refuses calls over
   a limit before the tool runs and writes their `quota_rejected` rows itself, so the AGX-2.1 call
