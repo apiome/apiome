@@ -28,7 +28,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-[9998] bg-overlay backdrop-blur-sm', className)}
+    className={cn('hive-overlay fixed inset-0 z-[9998] bg-overlay backdrop-blur-sm', className)}
     {...props}
   />
 ));
@@ -43,7 +43,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
  */
 const dialogContentVariants = cva(
   [
-    'fixed left-1/2 top-1/2 z-[9999] grid w-full -translate-x-1/2 -translate-y-1/2',
+    // `hive-dialog`: rise 8 px + fade in, sink out (DESIGN.md §3.4, globals.css).
+    'hive-dialog fixed left-1/2 top-1/2 z-[9999] grid w-full -translate-x-1/2 -translate-y-1/2',
     'max-h-[calc(100vh-3rem)] gap-4 overflow-y-auto rounded-xl bg-surface p-6 text-fg shadow-lg',
   ].join(' '),
   {

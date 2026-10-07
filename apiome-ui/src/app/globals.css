@@ -238,6 +238,11 @@
   --dur-fast: 120ms;
   --dur-base: 180ms;
   --dur-slow: 260ms;
+  /* Tailwind's own `transition`, `transition-colors` … utilities read these two when a class
+     names no duration or easing, so an unadorned utility moves on the §3.4 rhythm too
+     (HIVE-10.3) instead of Tailwind's 150 ms / ease-in-out default. */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out);
 
   /* ---- Layout (DESIGN.md §5.2, §5.3) ----------------------------------
      The rail is chrome wrapped around type, so its two widths are `rem` and
@@ -264,8 +269,8 @@
   --color-text-muted: var(--color-fg-muted);
 
   /* ---- Animation keyframes for Radix UI ------------------------------- */
-  --animate-in: enter 0.2s ease-out;
-  --animate-out: exit 0.15s ease-in;
+  --animate-in: enter var(--dur-base) var(--ease-out);
+  --animate-out: exit var(--dur-fast) var(--ease-out);
 }
 /* hex-allow-end */
 
@@ -1018,6 +1023,9 @@ html[data-motion="reduce"] *::before,
 html[data-motion="reduce"] *::after {
   animation-delay: 0ms !important;
   animation-duration: 0ms !important;
+  /* One pass of a zero-length loop: a spinner, shimmer, striped bar or pulse dot
+     settles on a single frame instead of cycling (HIVE-10.3). */
+  animation-iteration-count: 1 !important;
   transition-delay: 0ms !important;
   transition-duration: 0ms !important;
   scroll-behavior: auto !important;
@@ -1033,6 +1041,7 @@ html[data-motion="reduce"] *::after {
   *::after {
     animation-delay: 0ms !important;
     animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
     transition-delay: 0ms !important;
     transition-duration: 0ms !important;
     scroll-behavior: auto !important;
@@ -1822,6 +1831,75 @@ html[data-kbd-hints="off"] .kbd-group {
 
 .hive-drawer[data-state="closed"] {
   animation: hive-drawer-out var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
+/* ---- Dialog and overlay motion (HIVE-10.3, #5339; DESIGN.md §3.4) --------
+   Dialogs rise 8 px and fade at `--dur-slow`, as `hive.css` §15 `rise` draws
+   them; the scrim fades at `--dur-base`. Leaving is quicker than arriving.
+
+   No animation may block interaction: while a dialog, drawer or scrim plays
+   its exit it is still in the DOM (Radix waits for `animationend`), so a
+   closing layer stops taking pointer events at once — a click aimed at the
+   page behind it lands there instead of on a fading scrim. `transform` is
+   free for these keyframes because the dialog is centred with Tailwind's
+   `translate` property, which composes with it. */
+@keyframes hive-dialog-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hive-dialog-sink {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+}
+
+@keyframes hive-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hive-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.hive-dialog[data-state="open"] {
+  animation: hive-dialog-rise var(--dur-slow) var(--ease-out);
+}
+
+.hive-dialog[data-state="closed"] {
+  animation: hive-dialog-sink var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+
+.hive-overlay[data-state="open"] {
+  animation: hive-overlay-in var(--dur-base) var(--ease-out);
+}
+
+.hive-overlay[data-state="closed"] {
+  animation: hive-overlay-out var(--dur-fast) var(--ease-out);
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -2588,29 +2666,29 @@ html[data-kbd-hints="off"] .kbd-group {
 
 /* Animation utility classes */
 .animate-in {
-  animation: enter 0.2s ease-out;
+  animation: enter var(--dur-base) var(--ease-out);
 }
 
 .animate-out {
-  animation: exit 0.15s ease-in;
+  animation: exit var(--dur-fast) var(--ease-out);
 }
 
 [data-state="open"] .animate-in,
 .data-\[state\=open\]\:animate-in[data-state="open"] {
-  animation: enter 0.2s ease-out;
+  animation: enter var(--dur-base) var(--ease-out);
 }
 
 [data-state="closed"] .animate-out,
 .data-\[state\=closed\]\:animate-out[data-state="closed"] {
-  animation: exit 0.15s ease-in;
+  animation: exit var(--dur-fast) var(--ease-out);
 }
 
 .fade-in-0 {
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn var(--dur-base) var(--ease-out);
 }
 
 .fade-out-0 {
-  animation: fadeOut 0.15s ease-in;
+  animation: fadeOut var(--dur-fast) var(--ease-out);
 }
 
 /* Radix Collapsible horizontal slide (used by the canvas Tools mini-drawer) */
@@ -2641,11 +2719,11 @@ html[data-kbd-hints="off"] .kbd-group {
 }
 
 .collapsible-horizontal[data-state="open"] {
-  animation: collapsible-slide-right-in 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: collapsible-slide-right-in var(--dur-slow) var(--ease-out);
 }
 
 .collapsible-horizontal[data-state="closed"] {
-  animation: collapsible-slide-right-out 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: collapsible-slide-right-out var(--dur-base) var(--ease-out);
 }
 
 
@@ -6247,7 +6325,7 @@ button.auth-divider:disabled {
   border-radius: var(--r-md);
   color: inherit;
   text-decoration: none;
-  transition: background-color var(--dur-fast) ease-out;
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .help-result:hover {
@@ -6542,17 +6620,17 @@ button.auth-divider:disabled {
 /* Layout Animation Styles */
 /* Smooth transitions for node positions during layout changes */
 .layout-animating .react-flow__node {
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 
 /* Smooth transitions for edges during layout changes */
 .layout-animating .react-flow__edge {
-  transition: opacity 0.4s ease-in-out;
+  transition: opacity var(--dur-slow) var(--ease-out);
 }
 
 /* Ensure edge paths animate smoothly */
 .layout-animating .react-flow__edge-path {
-  transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: d var(--dur-slow) var(--ease-out);
 }
 
 /* Custom prose styles for markdown rendering in chat */
@@ -6629,7 +6707,7 @@ button.auth-divider:disabled {
 }
 
 .studio-chat-indeterminate-progress-fill {
-  animation: studio-chat-indeterminate-progress 1.25s ease-in-out infinite;
+  animation: studio-chat-indeterminate-progress 1.25s var(--ease-in-out) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -26026,7 +26104,7 @@ button.cid-entity__head {
   font-weight: 500;
   color: var(--fg);
   cursor: pointer;
-  transition: box-shadow var(--dur-fast) ease-out, color var(--dur-fast) ease-out;
+  transition: box-shadow var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
 .mcp-facet__chip:hover {
@@ -26276,7 +26354,7 @@ button.cid-entity__head {
 }
 
 .mcp-shadow-alert__chevron {
-  transition: transform var(--dur-base) ease-out;
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 .mcp-shadow-alert__chevron--open {
@@ -26453,7 +26531,7 @@ button.cid-entity__head {
   block-size: var(--icon-dense);
   flex-shrink: 0;
   color: var(--fg-faint);
-  transition: color var(--dur-fast) ease-out;
+  transition: color var(--dur-fast) var(--ease-out);
 }
 
 .mcp-card:hover .mcp-card__go,
@@ -26874,7 +26952,7 @@ button.cid-entity__head {
 .mcp-cap-item {
   padding: var(--space-3) var(--card-pad);
   scroll-margin-block-start: 6rem;
-  transition: background-color var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
+  transition: background-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .mcp-cap-item:hover {
@@ -27220,7 +27298,7 @@ button.cid-entity__head {
   gap: var(--space-3);
   padding: var(--space-3) var(--card-pad);
   cursor: pointer;
-  transition: background-color var(--dur-fast) ease-out;
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .mcp-timeline__row:hover {
@@ -28995,7 +29073,7 @@ tr:focus-within .pub-url__glyph {
   stroke: var(--fg-muted);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
-  transition: transform var(--dur-fast) ease-out;
+  transition: transform var(--dur-fast) var(--ease-out);
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -29941,7 +30019,7 @@ tr:focus-within .pub-url__glyph {
   block-size: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: transform var(--dur-slow) ease-out;
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 
 .xstd-progress__value {

@@ -92,7 +92,7 @@ function CategoryCostRow({ category }: { category: McpLintScoreCategory }) {
         role="presentation"
       >
         <div
-          className={`h-full rounded-full ${category.barClass} transition-all duration-500`}
+          className={`h-full rounded-full ${category.barClass} transition-all duration-[var(--dur-slow)] ease-out`}
           style={{ width: `${category.percent}%` }}
         />
       </div>

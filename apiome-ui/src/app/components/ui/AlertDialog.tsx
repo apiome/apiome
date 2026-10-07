@@ -28,8 +28,7 @@ const AlertDialogOverlay = React.forwardRef<
   <AlertDialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-[10050] bg-overlay backdrop-blur-sm',
-      'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
+      'hive-overlay fixed inset-0 z-[10050] bg-overlay backdrop-blur-sm',
       className
     )}
     {...props}
@@ -56,8 +55,9 @@ const AlertDialogContent = React.forwardRef<
           // The shared dialog surface, minus its own fixed centring: this one is centred by
           // the flex wrapper above, which is what keeps a confirm on top of an open dialog.
           dialogContentVariants({ size }),
+          // Its rise/sink comes with `hive-dialog` from the shared variants. The exit rule's
+          // `pointer-events: none` outranks this `pointer-events-auto` (unlayered vs utility).
           'pointer-events-auto static left-auto top-auto translate-x-0 translate-y-0',
-          'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
           className
         )}
         {...props}

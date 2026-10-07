@@ -18,7 +18,7 @@ exports[`BarSeries matches its snapshot 1`] = `
       tools: 18, prompts: 3
     </desc>
     <rect
-      class="fill-accent transition-all duration-500"
+      class="fill-accent transition-all duration-[var(--dur-slow)] ease-out"
       height="100"
       rx="1.5"
       width="41"
@@ -30,7 +30,7 @@ exports[`BarSeries matches its snapshot 1`] = `
       </title>
     </rect>
     <rect
-      class="fill-accent transition-all duration-500"
+      class="fill-accent transition-all duration-[var(--dur-slow)] ease-out"
       height="16.666666666666664"
       rx="1.5"
       width="41"
@@ -186,7 +186,7 @@ exports[`Gauge matches its snapshot 1`] = `
       stroke-width="10"
     />
     <path
-      class="text-orange-500 dark:text-orange-400 transition-all duration-500"
+      class="text-orange-500 dark:text-orange-400 transition-all duration-[var(--dur-slow)] ease-out"
       d="M 27.47 92.53 A 46 46 0 0 1 82.79 20.04"
       fill="none"
       stroke="currentColor"

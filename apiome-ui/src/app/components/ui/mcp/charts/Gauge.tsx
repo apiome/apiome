@@ -108,7 +108,7 @@ export function Gauge({
         stroke="currentColor"
         strokeWidth={10}
         strokeLinecap="round"
-        className={cn(strokeClass, 'transition-all duration-500')}
+        className={cn(strokeClass, 'transition-all duration-[var(--dur-slow)] ease-out')}
       />
       {center !== null ? (
         <text

@@ -99,7 +99,7 @@ export default function AdminLoginClient() {
             <button
               type="submit"
               disabled={isLoading || !password}
-              className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-[var(--dur-base)] flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

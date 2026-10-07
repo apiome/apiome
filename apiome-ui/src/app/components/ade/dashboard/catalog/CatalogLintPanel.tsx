@@ -163,7 +163,7 @@ function ScoreSummaryCard({ score, grade, children }: { score: number; grade: st
       </div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-subtle">
         <div
-          className={cn('h-full rounded-full transition-all duration-500', tier.barSolidClass)}
+          className={cn('h-full rounded-full transition-all duration-[var(--dur-slow)] ease-out', tier.barSolidClass)}
           style={{ width: `${score}%` }}
         />
       </div>
@@ -186,7 +186,7 @@ function CategoryScoreBar({ name, score }: { name: string; score: number }) {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-subtle">
         <div
-          className={cn('h-full rounded-full transition-all duration-500', tier.barSolidClass)}
+          className={cn('h-full rounded-full transition-all duration-[var(--dur-slow)] ease-out', tier.barSolidClass)}
           style={{ width: `${score}%` }}
         />
       </div>
