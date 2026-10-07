@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+// WCAG 2.2 A/AA (adds `target-size`) — the shared gate tags of HIVE-10.2 (#5338).
+import { WCAG_TAGS } from './support/a11y';
 
 /**
  * The lint posture workspace, measured in a browser (HIVE-5.8, #5311).
@@ -40,8 +42,6 @@ import AxeBuilder from '@axe-core/playwright';
  * Requires the app to be running (`PLAYWRIGHT_BASE_URL`, default `http://localhost:3000`).
  */
 
-/** WCAG 2.1 Level A/AA — the conformance target of DESIGN.md §9. */
-const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 /** The viewport width DESIGN.md §5 forbids horizontal document scroll at. */
 const DESKTOP_WIDTH = 1280;

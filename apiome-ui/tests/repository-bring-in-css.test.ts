@@ -559,7 +559,9 @@ describe('tone inks and their grounds', () => {
     }
   });
 
-  it('proves the deviation: the same inks would fail on the plain card', () => {
+  it('the same inks now clear AA on the plain card too (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // The reason every tone ink above is paired with its own `-soft` ground rather than being
     // painted on the card. If this ever stops being true the deviation can be revisited.
     const failures: string[] = [];
@@ -570,7 +572,7 @@ describe('tone inks and their grounds', () => {
         if (contrastRatio(bare, surface) < WCAG_AA_NORMAL_TEXT_MIN) failures.push(`${name}/${tone}`);
       }
     }
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('never inks a tone -fg directly on the card', () => {

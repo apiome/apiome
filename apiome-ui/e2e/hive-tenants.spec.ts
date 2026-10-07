@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+// WCAG 2.2 A/AA (adds `target-size`) — the shared gate tags of HIVE-10.2 (#5338).
+import { WCAG_TAGS } from './support/a11y';
 
 /**
  * Tenants and the manage drawer, measured in a browser (HIVE-5.1, #5304).
@@ -40,8 +42,6 @@ import AxeBuilder from '@axe-core/playwright';
  * Requires the app to be running (`PLAYWRIGHT_BASE_URL`, default `http://localhost:3000`).
  */
 
-/** WCAG 2.1 Level A/AA — the conformance target of DESIGN.md §9. */
-const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 /** The viewport width DESIGN.md §5 forbids horizontal document scroll at. */
 const DESKTOP_WIDTH = 1280;
@@ -96,9 +96,13 @@ const VTAB =
 
 /** One advanced tool row of the MCP settings section. */
 function toolRow(id: string, inCeiling: boolean): string {
+  // The markup `ui/Switch` renders (HIVE-10.2): a label carrying the 44 px hit area around a
+  // visually hidden `role="switch"` checkbox and the drawn track.
   const sw = (on: boolean, label: string) =>
-    `<span><button type="button" role="switch" aria-checked="${on}" aria-label="${label}" ` +
-    `class="hive-control inline-flex h-5 w-9 shrink-0 items-center rounded-full"></button></span>`;
+    `<span><label class="hit-target relative inline-flex shrink-0 cursor-pointer items-center">` +
+    `<input type="checkbox" role="switch" aria-label="${label}" class="peer sr-only"${on ? ' checked' : ''}>` +
+    `<span class="h-5 w-[2.125rem] rounded-full bg-inset shadow-[inset_0_0_0_1px_var(--border)] peer-checked:bg-accent"></span>` +
+    `</label></span>`;
   return `
     <div class="tnt-tool-row">
       <span class="min-w-0">

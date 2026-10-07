@@ -111,14 +111,14 @@ export const LIGHT_FALLBACK_PALETTE: Readonly<HiveEditorPalette> = {
   foreground: '#1B1A17',
   lineNumber: '#B8B4AC',
   muted: '#625F59',
-  subtle: '#8F8B84',
+  subtle: '#6E6B65',
   border: 'rgba(28, 25, 20, 0.18)',
   surface: '#FFFFFF',
-  accent: '#1E7FD6',
+  accent: '#1B72C1',
   warn: '#C77700',
   ok: '#0E8A5F',
   violet: '#6D4FD6',
-  danger: '#D6403A',
+  danger: '#D43F3A',
 };
 
 // ---------------------------------------------------------------------------------------

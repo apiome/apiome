@@ -471,7 +471,9 @@ describe('a hovered row keeps its muted second line legible', () => {
     expect(declaration(prelude, 'background')).toBe('var(--bg-inset)');
   });
 
-  it('is the ground that clears AA under --fg-muted in every theme, unlike --bg-subtle', () => {
+  it('is a ground that clears AA under --fg-muted in every theme, as --bg-subtle now does too (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     let subtleFails = 0;
     for (const [, appearance] of APPEARANCES) {
       const inset = paint('--bg-inset', appearance, PAPER);
@@ -486,7 +488,7 @@ describe('a hovered row keeps its muted second line legible', () => {
     }
     // Solarized is the one HIVE-6.5 recorded; if this ever reaches zero the deviation can be
     // reconsidered rather than carried forward by habit.
-    expect(subtleFails).toBeGreaterThan(0);
+    expect(subtleFails).toBe(0);
   });
 });
 

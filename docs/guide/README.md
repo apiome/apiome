@@ -56,6 +56,8 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | **CI contract gate** (GitHub Action `apiome/diff-action`) | [ci-diff-gate.md](ci-diff-gate.md) |
 | **CI contract gate on GitLab & Bitbucket** (container image + copy-paste pipelines) | [ci-gitlab-bitbucket.md](ci-gitlab-bitbucket.md) |
 | **MCP** setup quick-start (Claude Desktop / IDE hosts) | [mcp-quickstart.md](mcp-quickstart.md) |
+| **Keyboard** paths for every primary task, and the shortcut reference | [keyboard.md](keyboard.md) |
+| **Accessibility** contract, the CI axe gate, and the screen-reader checklist | [accessibility.md](accessibility.md) |
 
 ---
 

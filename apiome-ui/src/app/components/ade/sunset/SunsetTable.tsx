@@ -48,28 +48,10 @@ import {
   sunsetTimelineStatus,
   type SunsetEntry,
 } from './sunsetModel';
+import { prefersReducedMotion } from '@lib/motion';
 
 /** The dash a cell prints when the API has nothing for it. */
 const ABSENT = '—';
-
-/**
- * Whether motion should be suppressed right now.
- *
- * The stored preference *or* the operating system's, which is exactly what `globals.css`
- * keys its own `prefers-reduced-motion` rules off — read from the DOM rather than from
- * `usePreferences`, so this component works wherever it is mounted.
- *
- * @returns `true` when the reader has asked for less motion.
- */
-function prefersReducedMotion(): boolean {
-  if (typeof document === 'undefined') return false;
-  if (document.documentElement.dataset.motion === 'reduce') return true;
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
 
 export interface SunsetTableProps {
   /** The rows to draw, already narrowed by the project filter. */

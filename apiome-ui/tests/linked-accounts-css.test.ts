@@ -334,7 +334,9 @@ describe('the guard note clears WCAG AA in all nine themes', () => {
     }
   });
 
-  it('would not have held on the row itself, which is why the tint is there', () => {
+  it('now also holds on the bare row (HIVE-10.2); the tint stays for emphasis', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // The mockup paints the note as bare `--warn-fg` on the row. Four themes leave a role's
     // `-fg` at its light-palette value, and it is calibrated against its own `-soft` tint, not
     // against a page surface — so this is a measurement, not a preference.
@@ -343,7 +345,7 @@ describe('the guard note clears WCAG AA in all nine themes', () => {
       return contrastRatio(paint('--warn-fg', appearance, row), row) < WCAG_AA_NORMAL_TEXT_MIN;
     }).map(([name]) => name);
 
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 
   it('inks every quiet line in --fg-muted, never --fg-subtle', () => {

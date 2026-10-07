@@ -237,7 +237,15 @@ export function CatalogBulkImportPanel({
         ) : (
           <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
         )}
-        <span className="text-sm font-medium text-fg" data-testid="catalog-bulk-import-summary">
+        {/* The summary is the panel's live region: it changes once, from "Importing…" to the
+            outcome, so a reader hears the result without the per-row churn (HIVE-10.2). */}
+        <span
+          className="text-sm font-medium text-fg"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          data-testid="catalog-bulk-import-summary"
+        >
           {done
             ? bulkRunSummaryLine(rows, dryRun)
             : `${dryRun ? 'Verifying' : 'Importing'} ${plan.items.length} independent spec${

@@ -146,7 +146,9 @@ describe('Button — DESIGN.md §7 vocabulary', () => {
     render(<Button variant="link">Read more</Button>);
     const classes = classesOf(screen.getByRole('button'));
     expect(classes).toContain('h-auto');
-    expect(classes).toContain('text-accent');
+    // `--accent-fg`, not `--accent`: the label is small text and needs 4.5:1 (HIVE-10.2).
+    expect(classes).toContain('text-accent-fg');
+    expect(classes).not.toContain('text-accent');
   });
 });
 

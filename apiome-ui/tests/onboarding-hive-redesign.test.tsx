@@ -65,6 +65,7 @@ jest.mock('@lib/auth/onboarding-wizard-state-actions', () => ({
 import FirstTenantOnboardingWizard from '@/app/components/auth/onboarding/FirstTenantOnboardingWizard';
 import { SLUG_CHECK_DEBOUNCE_MS } from '@/app/components/auth/onboarding/OrganizationStep';
 import { FREE_LICENSE_SUMMARY } from '@lib/auth/free-license';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** The directory this ticket re-skinned, for the source sweep at the foot of the file. */
 const ONBOARDING_DIR = join(
@@ -449,5 +450,15 @@ describe('onboarding wizard — no named colour survives', () => {
     }
 
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('onboarding wizard — the a11y gate fixture (HIVE-10.2)', () => {
+  it('renders the welcome and organization steps (and writes their fixtures on request)', async () => {
+    const { container } = render(<FirstTenantOnboardingWizard />);
+    await screen.findByRole('button', { name: /set up your organization/i });
+    writeA11yFixture('onboarding-welcome', container.innerHTML);
+    openOrganizationStep();
+    writeA11yFixture('onboarding-organization', container.innerHTML);
   });
 });

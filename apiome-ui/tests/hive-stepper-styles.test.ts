@@ -168,12 +168,14 @@ describe('stepper — the two solid badges', () => {
 });
 
 describe('stepper — the two deviations from the mockup', () => {
-  it('sets an upcoming step in `--fg-muted`, which `--fg-subtle` does not clear AA for', () => {
+  it('sets an upcoming step in `--fg-muted`, the stronger of the two quiet inks', () => {
     // Same call, same reason, as HIVE-3.5's breadcrumbs and HIVE-4.1's terms line. The
     // three states stay apart by their badge, which is what carries the meaning.
     expect(declarationsOf('.step').get('color')).toBe('var(--fg-muted)');
     expect(ratio('--fg-muted', '--bg-surface')).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
-    expect(ratio('--fg-subtle', '--bg-surface')).toBeLessThan(WCAG_AA_NORMAL_TEXT_MIN);
+    // HIVE-10.2 (#5338) retuned --fg-subtle to clear AA in every theme; this page keeps the
+    // stronger --fg-muted tier it chose before, so the swap holds but is no longer load-bearing.
+    expect(ratio('--fg-subtle', '--bg-surface')).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
   it('wraps rather than pushing a horizontal scrollbar onto the page', () => {

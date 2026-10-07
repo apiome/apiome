@@ -51,6 +51,7 @@ import { NOTIFICATION_TYPES } from '../lib/notifications';
 import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
 import type { PreferencesTabId } from '../src/app/components/ade/preferences/preferencesDrawerBus';
 import { ThemeProvider } from '../src/app/providers/ThemeProvider';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** Install a `matchMedia` jsdom does not implement; nothing matches by default. */
 function mockMatchMedia(): void {
@@ -635,4 +636,14 @@ describe('accessibility', () => {
       expect(await axe(baseElement)).toHaveNoViolations();
     },
   );
+});
+
+describe('the a11y gate fixture (HIVE-10.2)', () => {
+  it('renders the open pane (and writes its fixture on request)', async () => {
+    const user = userEvent.setup();
+    renderHost();
+    await openPane(user);
+    const pane = await screen.findByRole('dialog');
+    writeA11yFixture('settings-pane', pane.outerHTML);
+  });
 });

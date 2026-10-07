@@ -131,6 +131,7 @@ import {
   type McpEndpointDetail,
   type McpVersionDetail,
 } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
+import { scrollBehavior } from '@lib/motion';
 
 interface Props {
   endpointId: string;
@@ -550,7 +551,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
     if (activeTab !== 'capabilities' || !pendingAnchor) return;
     const el = document.getElementById(pendingAnchor);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
       setHighlightedAnchor(pendingAnchor);
     }
     setPendingAnchor(null);

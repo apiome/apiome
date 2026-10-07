@@ -605,16 +605,16 @@ describe('contrast in every appearance', () => {
     }
   });
 
-  it('is why those wells are not --bg-subtle', () => {
-    // The measurement deviation 7 rests on: the same ink on the *other* quiet ground fails, in
-    // Solarized, by a tenth of a point. Stated as a test so the day the token moves, the
-    // deviation is revisited rather than silently kept.
+  it('kept those wells off --bg-subtle, a deviation HIVE-10.2 made unnecessary', () => {
+    // The measurement deviation 7 rested on: the same ink on the *other* quiet ground failed, in
+    // Solarized, by a tenth of a point. HIVE-10.2 (#5338) moved the token — it now clears — so
+    // the deviation is kept (no visual churn) but is no longer load-bearing.
     const solarized = APPEARANCES.find(([id]) => id === 'solarized');
     expect(solarized).toBeDefined();
     const block = solarized![1];
     const ground = paint('--bg-subtle', block, ['--bg-surface']);
     const ink = paint('--fg-muted', block, ['--bg-subtle', '--bg-surface']);
-    expect(contrastRatio(ink, ground)).toBeLessThan(WCAG_AA_NORMAL_TEXT_MIN);
+    expect(contrastRatio(ink, ground)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
   it('clears AA for code and identifiers in the inset wells', () => {
@@ -652,7 +652,7 @@ describe('contrast in every appearance', () => {
     }
   });
 
-  it('records where the KPI figure’s own ink clears large-text AA, and where it does not', () => {
+  it('records that the KPI figure’s own ink clears large-text AA in every appearance', () => {
     // The strip's `Unresolved $ref` figure is `--warn-fg` at `--fs-4xl`/700 on the card, which
     // is large text. It clears 3:1 in the four appearances whose warn ink is calibrated
     // against a light ground, and does not in the five that inherit the light `-fg` under a
@@ -664,7 +664,9 @@ describe('contrast in every appearance', () => {
       const ink = paint('--warn-fg', block, ['--bg-surface']);
       return contrastRatio(ink, ground) >= WCAG_AA_LARGE_TEXT_MIN;
     }).map(([id]) => id);
-    expect(clearing).toEqual(['light', 'dark', 'high-contrast', 'whiteboard']);
+    // HIVE-10.2 (#5338) gave the dark-based themes a light `-fg` ladder, so all nine now clear;
+    // the `--warn` hairline and the `--fg-muted` label stay as they were.
+    expect(clearing).toEqual(APPEARANCES.map(([id]) => id));
   });
 
   it('keeps every tinted ground a wash rather than a soft fill', () => {

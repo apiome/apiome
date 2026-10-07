@@ -23,7 +23,8 @@ import { Kbd } from './Kbd';
 
 /** Shared geometry, motion and interaction state — hive.css `.btn`. */
 const BUTTON_BASE = [
-  'inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap',
+  // `hit-target`: a ≥44 px pointer area behind the drawn box in comfortable density (HIVE-10.2).
+  'hit-target inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap',
   'rounded-md text-sm font-medium leading-none tracking-[0.01em] no-underline',
   'transition-[background-color,box-shadow,color,transform] duration-[var(--dur-fast)] ease-out',
   // The 3 px azure focus ring is the app-wide `*:focus-visible` rule in globals.css, which
@@ -61,7 +62,8 @@ const VARIANT_SUCCESS =
 const VARIANT_HONEY =
   'bg-honey text-honey-ink shadow-control-solid hover:bg-[color-mix(in_srgb,var(--honey)_88%,black)]';
 /** No chrome at all — a button that has to read as a link. */
-const VARIANT_LINK = 'h-auto bg-transparent p-0 text-accent hover:underline';
+// `--accent-fg`, not `--accent`: a link button's label is small text and needs 4.5:1 (HIVE-10.2).
+const VARIANT_LINK = 'h-auto bg-transparent p-0 text-accent-fg hover:underline';
 
 const buttonVariants = cva(BUTTON_BASE, {
   variants: {

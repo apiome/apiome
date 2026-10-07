@@ -299,7 +299,8 @@ export function TablesShowcase() {
         sort={sort}
         onSortChange={setSort}
         onRowActivate={() => undefined}
-        rowClassName={(project) => (project.status === 'deleted' ? 'opacity-60' : undefined)}
+        // Muted ink rather than opacity: a faded row drops its text and badge under 4.5:1 (HIVE-10.2).
+        rowClassName={(project) => (project.status === 'deleted' ? 'text-fg-muted' : undefined)}
         loading={state === 'loading'}
         error={state === 'error' ? 'Could not load projects — the API did not answer.' : undefined}
         empty={

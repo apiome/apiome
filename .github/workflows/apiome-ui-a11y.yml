@@ -1,0 +1,109 @@
+name: Apiome UI Accessibility
+
+# The HIVE-10.2 (#5338) accessibility gate. `docs/mockups/DESIGN.md` §9: WCAG 2.2 AA
+# everywhere, AAA text contrast in High contrast.
+#
+# Runs `yarn test:e2e:a11y` (`apiome-ui/playwright.a11y.config.ts`):
+#   - the axe gate over every redesigned route in the ledger (`apiome-ui/e2e/a11y/routes.ts`)
+#     in light, dark and high contrast — zero serious/critical violations at WCAG 2.2 A/AA,
+#     plus the in-browser probe of the 44 px pointer targets;
+#   - the keyboard walk (no keyboard trap; drawer, dialog and palette trap and restore focus);
+#   - the screen-reader smoke (landmarks, headings and names on login, home, projects, a dialog);
+#   - the inline-markup page suites the ledger names, and the login a11y + visual suite.
+#
+# Fixture pages are mounted into `GET /login` and the galleries under `/design-system` render
+# signed out, so it needs no REST API and no Postgres. It runs against a production build:
+# `next dev` can serve a stale CSS chunk, and a stale stylesheet makes axe pass or fail for the
+# wrong reason. The token-level contrast gate (`tests/a11y-token-contrast.test.ts`) runs with
+# the Jest suite in `apiome-ui.yml`.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apiome-ui/**'
+      - 'package.json'
+      - 'yarn.lock'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apiome-ui/**'
+      - 'package.json'
+      - 'yarn.lock'
+  workflow_dispatch:
+
+jobs:
+  a11y:
+    name: Accessibility gate (axe, keyboard, screen-reader smoke)
+    runs-on: self-hosted
+
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      BETTER_AUTH_SECRET: hive-a11y-ci-secret
+      # The login front door renders the same everywhere: GitHub + GitLab SSO on (dummy
+      # credentials), the decorative beta background off. Build-time for NEXT_PUBLIC_*.
+      GITHUB_ID: mock-github-client
+      GITHUB_SECRET: mock-github-secret
+      GITLAB_CLIENT_ID: mock-gitlab-client
+      GITLAB_CLIENT_SECRET: mock-gitlab-secret
+      NEXT_PUBLIC_BETA_MODE: ""
+      # Cap heap so the build cannot swap-thrash the shared self-hosted runner.
+      NODE_OPTIONS: --max-old-space-size=4096
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Pick a free port for the app under test
+        run: |
+          set -euo pipefail
+          # The runner is shared, so two concurrent runs must not both bind :3200.
+          port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')"
+          echo "A11Y_UI_PORT=${port}" >> "$GITHUB_ENV"
+          echo "App under test will listen on ${port}"
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install Apiome UI dependencies
+        run: yarn install
+        working-directory: apiome-ui
+
+      - name: Install Playwright Chromium
+        run: yarn playwright install chromium
+        working-directory: apiome-ui
+
+      - name: Build Apiome UI
+        run: yarn build
+        working-directory: apiome-ui
+
+      - name: Run the accessibility gate
+        run: yarn test:e2e:a11y
+        working-directory: apiome-ui
+        env:
+          CI: "1"
+          # Serve the build above (`next start`) instead of a dev server.
+          A11Y_USE_BUILD: "1"
+
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apiome-ui-a11y-report
+          path: apiome-ui/playwright-report-a11y/
+          if-no-files-found: warn
+        continue-on-error: true
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apiome-ui-a11y-traces
+          path: apiome-ui/test-results/
+          if-no-files-found: ignore
+        continue-on-error: true

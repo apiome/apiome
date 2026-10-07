@@ -218,6 +218,7 @@ import type { VerificationPolicyDecision } from '../style-guides/verification-po
 import { useMockUsage } from '@/app/hooks/useMockUsage';
 import { useOpenReviews } from '@/app/hooks/useOpenReviews';
 import { lookupReview } from '@lib/review-status';
+import { scrollBehavior } from '@lib/motion';
 
 /** Where the breadcrumb's first crumb goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -2491,8 +2492,8 @@ const Versions = () => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             const panel = document.getElementById('ade-named-branches-panel');
-            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            else historyGraphSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (panel) panel.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' });
+            else historyGraphSectionRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' });
           });
         });
       } else {

@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/Too
  * is icon-only — neither is a value this component can freeze.
  */
 export const RAIL_ITEM_CLASS =
-  'rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 ' +
+  'hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 ' +
   'text-sm font-medium transition-colors duration-[var(--dur-fast)]';
 
 /**

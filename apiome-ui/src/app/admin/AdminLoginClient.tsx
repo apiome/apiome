@@ -116,8 +116,10 @@ export default function AdminLoginClient() {
           </form>
 
           {/* Warning */}
-          <div className="mt-6 p-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg">
-            <p className="text-yellow-400 text-xs text-center">
+          {/* The warn chip pair rather than raw yellows: yellow-400 text measured under 2:1 on
+              the light page (HIVE-10.2); the pair clears AA in every theme. */}
+          <div className="mt-6 p-4 bg-warn-soft border border-warn/40 rounded-lg">
+            <p className="text-warn-fg text-xs text-center">
               ⚠️ This is a restricted area. Unauthorized access is prohibited.
             </p>
           </div>
@@ -127,7 +129,7 @@ export default function AdminLoginClient() {
         <div className="mt-6 text-center">
           <a
             href="/"
-            className="text-slate-500 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-400 text-sm transition-colors"
+            className="text-fg-muted hover:text-fg text-sm transition-colors"
           >
             ← Back to Apiome
           </a>

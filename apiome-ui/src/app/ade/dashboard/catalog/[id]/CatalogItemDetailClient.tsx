@@ -114,6 +114,7 @@ import { getProjectQualityHistory } from '@/app/utils/project-quality-score-hist
 import type { AnalysisSummary } from '@/app/utils/catalog-payload-analysis';
 import type { RelatedArtifact } from '@/app/utils/catalog-related-artifacts';
 import { cn } from '@lib/utils';
+import { scrollBehavior } from '@lib/motion';
 
 /** The detail payload (MFI-23.2 envelope + the MFI-23.9 `summary`/`source` enrichments). */
 interface CatalogItemDetail {
@@ -322,7 +323,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
     if (activeTab !== 'overview' || !pendingAnchor) return;
     const el = document.getElementById(pendingAnchor);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
       setHighlightedAnchor(pendingAnchor);
     }
     setPendingAnchor(null);

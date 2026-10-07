@@ -19,7 +19,7 @@
  */
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
@@ -100,6 +100,7 @@ import { APP_VERSION_BADGE } from '../lib/app-version';
 import { WHATS_NEW_SEEN_STORAGE_KEY } from '../src/app/components/shell/whatsNewSeen';
 import type { ExternalHomeCard } from '../lib/external-links';
 import type { LauncherSummary } from '../lib/db/launcher-summary';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** A commercial card exactly as `getCommercialAccessForSession()` hands one over. */
 const SUITE_CARD: ExternalHomeCard = {
@@ -410,5 +411,15 @@ describe('launcher — accessibility', () => {
   it('has no axe violations without a summary or a commercial card', async () => {
     const { container } = renderLauncher({ commercialHomeCards: [], summary: undefined });
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe('launcher — the a11y gate fixture (HIVE-10.2)', () => {
+  it('renders the launcher (and writes its fixture on request)', async () => {
+    const { container } = renderLauncher();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    writeA11yFixture('launcher', container.innerHTML);
   });
 });

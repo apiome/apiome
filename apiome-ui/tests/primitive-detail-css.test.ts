@@ -502,7 +502,7 @@ describe('what the block is allowed to paint in a tone', () => {
     }
   });
 
-  it('re-grounds the loose-validation caveat, whose Alert variant is under AA in Solarized', () => {
+  it('re-grounds the loose-validation caveat on --bg-inset, which clears AA in all nine', () => {
     // `Alert variant="neutral"` is `--bg-subtle`, on which `--fg-muted` measures 4.34:1 there —
     // a serious axe finding the browser suite caught. `--bg-inset` clears it in all nine.
     expect(declaration('.pd-note', 'background')).toBe('var(--bg-inset)');
@@ -516,9 +516,9 @@ describe('what the block is allowed to paint in a tone', () => {
         id,
         clears: true,
       });
-      if (id === 'solarized') {
-        expect(contrastRatio(muted, subtle)).toBeLessThan(WCAG_AA_NORMAL_TEXT_MIN);
-      }
+      // `--bg-subtle` failed in Solarized until HIVE-10.2 (#5338) retuned its --fg-muted; it now
+      // clears too, so the inset ground is kept but no longer load-bearing.
+      expect({ id, subtle: contrastRatio(muted, subtle) >= WCAG_AA_NORMAL_TEXT_MIN }).toEqual({ id, subtle: true });
     }
   });
 

@@ -25,7 +25,7 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      'peer grid size-4 shrink-0 place-items-center rounded-xs bg-surface text-fg-on-accent',
+      'hit-target peer grid size-4 shrink-0 place-items-center rounded-xs bg-surface text-fg-on-accent',
       'shadow-[inset_0_0_0_1px_var(--border-strong)]',
       'transition-[background-color,box-shadow] duration-[var(--dur-fast)]',
       'focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',

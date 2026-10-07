@@ -82,7 +82,7 @@ export const RAIL_MENU_SEPARATOR_CLASS = 'mx-1 my-1.5 h-px bg-border';
  * attribute here instead of from a variant the call site has to remember.
  */
 export const RAIL_MENU_ITEM_CLASS = [
-  'flex w-full items-center gap-2 rounded-sm px-2.5 text-left text-sm',
+  'hit-target flex w-full items-center gap-2 rounded-sm px-2.5 text-left text-sm',
   'min-h-nav-item py-1 transition-colors duration-[var(--dur-fast)]',
   'hover:bg-subtle aria-disabled:cursor-default aria-disabled:hover:bg-transparent',
 ].join(' ');

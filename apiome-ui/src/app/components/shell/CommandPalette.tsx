@@ -2,9 +2,11 @@
 
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { Command, defaultFilter } from 'cmdk';
+import { Command, defaultFilter, useCommandState } from 'cmdk';
 import { Search } from 'lucide-react';
 import { Kbd } from '@/app/components/ui/Kbd';
+import { LiveRegion } from '@/app/components/ui/LiveRegion';
+import { resultCountAnnouncement } from '@lib/a11y/announcements';
 import {
   Dialog,
   DialogDescription,
@@ -265,6 +267,8 @@ export default function CommandPalette({
               <Kbd>esc</Kbd>
             </div>
 
+            <PaletteResultCount search={search} />
+
             <Command.List className="palette__list">
               <Command.Empty className="palette__empty">
                 Nothing matches {search ? `“${search}”` : 'that'}.
@@ -312,4 +316,18 @@ export default function CommandPalette({
       </DialogPortal>
     </Dialog>
   );
+}
+
+/**
+ * Announces how many rows the typed query left (HIVE-10.2, #5338).
+ *
+ * cmdk filters silently: a reader typing into the combobox hears nothing until they arrow into
+ * the list. This reads cmdk's own filtered count, so the number is the rows actually shown, and
+ * says it in a polite live region. It must render inside `<Command>`, whose store it reads.
+ *
+ * @param props.search The query without the `>` commands prefix; empty announces nothing.
+ */
+function PaletteResultCount({ search }: { search: string }) {
+  const count = useCommandState((state) => state.filtered.count);
+  return <LiveRegion message={resultCountAnnouncement(count, search)} data-testid="palette-result-count" />;
 }

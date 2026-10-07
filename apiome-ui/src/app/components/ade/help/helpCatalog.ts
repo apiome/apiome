@@ -242,6 +242,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['model context protocol', 'claude desktop', 'ide', 'host', 'tool', 'stdio'],
   },
   {
+    id: 'keyboard',
+    title: 'Using Apiome from the keyboard',
+    summary: 'The keyboard path for every primary task, and every shortcut in one table.',
+    page: 'docs/guide/keyboard.md',
+    section: 'reference',
+    keywords: ['shortcuts', 'hotkeys', 'command palette', 'tab', 'focus', 'no mouse', 'accessibility'],
+  },
+  {
+    id: 'accessibility',
+    title: 'Accessibility in Apiome',
+    summary: 'The WCAG 2.2 AA contract, how the CI axe gate checks it, and the screen-reader checklist.',
+    page: 'docs/guide/accessibility.md',
+    section: 'reference',
+    keywords: ['a11y', 'wcag', 'axe', 'screen reader', 'contrast', 'high contrast', 'voiceover', 'nvda'],
+  },
+  {
     id: 'ci-diff-gate',
     title: 'CI contract gate (GitHub Action)',
     summary:

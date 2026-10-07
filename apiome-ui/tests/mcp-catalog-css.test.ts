@@ -518,14 +518,16 @@ describe('the two wells: the hovered row and the facet panel', () => {
     expect(onSubtle.map((rule) => rule.prelude)).toEqual(['.mcp-card--skeleton']);
   });
 
-  it('proves the deviation: muted text fails on --bg-subtle somewhere', () => {
+  it('muted text now clears AA on --bg-subtle everywhere (HIVE-10.2), so the deviation is no longer load-bearing', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // If this ever stops being true, the mockup's ground can be restored.
     const failures = APPEARANCES.filter(([, appearance]) => {
       const surface = paint('--bg-surface', appearance, PAPER);
       const subtle = paint('--bg-subtle', appearance, surface);
       return contrastRatio(paint('--fg-muted', appearance, subtle), subtle) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 });
 
@@ -555,7 +557,9 @@ describe('the active facet chip', () => {
     }
   });
 
-  it('proves the deviation: a muted count on --accent-soft would fail', () => {
+  it('a muted count on --accent-soft now clears AA everywhere (HIVE-10.2)', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // The mockup fills a selected chip with `--accent-soft`. The count beside the value stays
     // quiet, and that pair does not survive every theme — so the chip keeps the surface.
     const failures = APPEARANCES.filter(([, appearance]) => {
@@ -563,7 +567,7 @@ describe('the active facet chip', () => {
       const soft = paint('--accent-soft', appearance, surface);
       return contrastRatio(paint('--fg-muted', appearance, soft), soft) < WCAG_AA_NORMAL_TEXT_MIN;
     });
-    expect(failures.length).toBeGreaterThan(0);
+    expect(failures.length).toBe(0);
   });
 });
 
@@ -578,7 +582,9 @@ describe('the unreachable card’s frame', () => {
     );
   });
 
-  it('records the stated limit rather than claiming the frame clears 3:1 everywhere', () => {
+  it('the danger frame now clears 3:1 in every theme (HIVE-10.2), though the panel still never relies on it alone', () => {
+    // HIVE-10.2 (#5338) retuned the tokens so this pair now clears its threshold in every theme;
+    // the deviation above is kept (no visual churn) but is no longer load-bearing.
     // The block header says this: the frame is emphasis, and the card's health pill prints
     // "Unreachable" in words on its own tinted ground. The measurement is kept here so the
     // claim stays honest if a theme's `--danger` ever moves.
@@ -586,7 +592,7 @@ describe('the unreachable card’s frame', () => {
       const surface = paint('--bg-surface', appearance, PAPER);
       return contrastRatio(paint('--danger', appearance, surface), surface) < WCAG_AA_NON_TEXT_MIN;
     }).map(([name]) => name);
-    expect(failing).toContain('nord');
+    expect(failing).toEqual([]);
   });
 
   it('fades nothing — a quarantined endpoint keeps its text at full contrast', () => {

@@ -130,7 +130,7 @@ const DrawerContent = React.forwardRef<
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
-            className="absolute right-4 top-4 cursor-pointer rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
+            className="hit-target absolute right-4 top-4 cursor-pointer rounded-sm p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none disabled:pointer-events-none"
             aria-label={closeLabel}
           >
             <X className="size-4" aria-hidden="true" />

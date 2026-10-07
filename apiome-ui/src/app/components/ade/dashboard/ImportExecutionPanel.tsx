@@ -19,6 +19,8 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Card, cardVariants } from '../../../components/ui/Card';
 import { Alert } from '../../../components/ui/Alert';
+import { LiveRegion } from '../../../components/ui/LiveRegion';
+import { importJobAnnouncement } from '../../../../../lib/a11y/announcements';
 import { Progress } from '../../../components/ui/metrics/Progress';
 import {
   AlertTriangle,
@@ -296,6 +298,11 @@ export default function ImportExecutionPanel({
           <h3 className="text-base font-semibold text-fg">Import progress</h3>
           <Badge status={presentation.status}>{presentation.label}</Badge>
         </div>
+        {/* Whole steps and state changes only — never every percent tick (HIVE-10.2). */}
+        <LiveRegion
+          message={importJobAnnouncement(presentation.label, progress)}
+          data-testid="import-progress-live"
+        />
 
         <div className="mb-3 flex items-center gap-4">
           <Progress

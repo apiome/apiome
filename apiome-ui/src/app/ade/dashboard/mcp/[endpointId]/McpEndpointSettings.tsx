@@ -42,6 +42,8 @@ import { Card, CardBody } from "@/app/components/ui/Card";
 import { FormField } from "@/app/components/ui/FormField";
 import { Input } from "@/app/components/ui/Input";
 import { Label } from "@/app/components/ui/Label";
+import { LiveRegion } from "@/app/components/ui/LiveRegion";
+import { saveStateAnnouncement } from "@lib/a11y/announcements";
 import {
   Select,
   SelectContent,
@@ -365,6 +367,10 @@ export default function McpEndpointSettings({
               </p>
             ) : null}
 
+            <LiveRegion
+              message={saveStateAnnouncement({ saving, dirty, failed: Boolean(formError) })}
+              data-testid="mcp-settings-live"
+            />
             <div className="mcp-settings-actions">
               {dirty && !saving ? (
                 <span

@@ -253,11 +253,12 @@ describe('auth surfaces — quiet text still has to be readable', () => {
     expect(declarationsOf('.auth-slug-preview').get('color')).toBe('var(--fg-muted)');
   });
 
-  it('clears WCAG AA where the mockup’s subtle ink would not', () => {
+  it('clears WCAG AA with --fg-muted (the mockup’s subtle ink now clears it too)', () => {
     expect(ratio('--fg-muted', '--bg-surface')).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
     expect(ratio('--fg-muted', '--bg-canvas')).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
-    // The reason the swap was needed, stated rather than implied.
-    expect(ratio('--fg-subtle', '--bg-surface')).toBeLessThan(WCAG_AA_NORMAL_TEXT_MIN);
+    // HIVE-10.2 (#5338) retuned --fg-subtle to clear AA in every theme; this page keeps the
+    // stronger --fg-muted tier it chose before, so the swap holds but is no longer load-bearing.
+    expect(ratio('--fg-subtle', '--bg-surface')).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
   });
 
   it('keeps the accent headline legible even where `background-clip: text` is not', () => {

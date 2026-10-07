@@ -455,18 +455,18 @@ export default function HiveDesignSystemPage() {
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
-              <FormField label="Project name" required>
-                <Input placeholder="e.g. Payments API" />
+              <FormField label="Project name" required htmlFor="ds-project-name">
+                <Input id="ds-project-name" placeholder="e.g. Payments API" />
               </FormField>
-              <FormField label="Slug" helperText="Lowercase letters, numbers and dashes.">
-                <Input className="mono" defaultValue="payments-api" />
+              <FormField label="Slug" helperText="Lowercase letters, numbers and dashes." htmlFor="ds-slug">
+                <Input id="ds-slug" className="mono" defaultValue="payments-api" />
               </FormField>
-              <FormField label="Email" error="Enter a valid email address.">
-                <Input defaultValue="ada@example" />
+              <FormField label="Email" error="Enter a valid email address." htmlFor="ds-email">
+                <Input id="ds-email" defaultValue="ada@example" />
               </FormField>
-              <FormField label="Domain category">
+              <FormField label="Domain category" htmlFor="ds-domain">
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger id="ds-domain">
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
@@ -475,8 +475,8 @@ export default function HiveDesignSystemPage() {
                   </SelectContent>
                 </Select>
               </FormField>
-              <FormField label="Description">
-                <Textarea placeholder="What does this API do?" />
+              <FormField label="Description" htmlFor="ds-description">
+                <Textarea id="ds-description" placeholder="What does this API do?" />
               </FormField>
             </div>
             <div className="flex flex-col gap-4">
@@ -504,10 +504,11 @@ export default function HiveDesignSystemPage() {
               </FormField>
               <div className="flex items-start justify-between gap-4 border-t border-border py-3">
                 <div>
-                  <div className="text-sm font-medium text-fg">Compact density</div>
+                  <div id="ds-density-label" className="text-sm font-medium text-fg">Compact density</div>
                   <div className="text-xs text-fg-muted">Switch row with title and description.</div>
                 </div>
                 <Switch
+                  aria-labelledby="ds-density-label"
                   checked={density === 'compact'}
                   onCheckedChange={(next) => {
                     setDensity(next ? 'compact' : 'comfortable');
@@ -698,6 +699,16 @@ export default function HiveDesignSystemPage() {
                 Quality ranks
               </TabsTrigger>
             </TabsList>
+            {/* A tab must control a panel (`aria-controls`), so the specimen draws all three. */}
+            <TabsContent value="queue" className="text-sm text-fg-muted">
+              Four reviews waiting.
+            </TabsContent>
+            <TabsContent value="trends" className="text-sm text-fg-muted">
+              Findings over thirty days.
+            </TabsContent>
+            <TabsContent value="ranks" className="text-sm text-fg-muted">
+              Projects by quality score.
+            </TabsContent>
           </Tabs>
         </Section>
 

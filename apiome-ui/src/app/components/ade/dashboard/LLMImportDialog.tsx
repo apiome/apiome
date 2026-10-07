@@ -18,6 +18,7 @@ import {
 import { Button } from '../../../components/ui/Button';
 import * as Select from '@radix-ui/react-select';
 import { Markdown } from '@/app/components/ui/Markdown';
+import { scrollBehavior } from '@lib/motion';
 
 export interface LLMChatPanelProps {
   tenantId: string;
@@ -95,7 +96,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: scrollBehavior() });
   }, [messages, streamingContent]);
 
   // Handle sending a message

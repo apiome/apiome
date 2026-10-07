@@ -390,11 +390,11 @@ describe('quiet text clears WCAG AA', () => {
     }
   });
 
-  it('never reaches for --fg-subtle, which fails AA at these sizes', () => {
-    // The mockup's `.t-subtle` is `--fg-subtle`; it measures ~3.1:1 on the canvas, which is a
-    // serious axe finding for an 11–12 px line. HIVE-3.5, 4.1 and 4.5 made the same swap.
+  it('never reaches for --fg-subtle, keeping quiet lines on the stronger --fg-muted tier', () => {
+    // The mockup's `.t-subtle` is `--fg-subtle`; it measured ~3.1:1 on the canvas until HIVE-10.2
+    // (#5338) retuned it. HIVE-3.5, 4.1 and 4.5 made the same swap, which this page keeps.
     const subtle = hexToRgb(resolveToken('--fg-subtle', tokens));
-    expect(contrastRatio(subtle, hexToRgb(resolveToken('--bg-canvas', tokens)))).toBeLessThan(
+    expect(contrastRatio(subtle, hexToRgb(resolveToken('--bg-canvas', tokens)))).toBeGreaterThanOrEqual(
       WCAG_AA_NORMAL_TEXT_MIN,
     );
 

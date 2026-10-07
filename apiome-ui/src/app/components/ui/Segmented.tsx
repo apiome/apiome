@@ -57,7 +57,7 @@ const segmentedTrackClass =
  */
 const segmentedItemVariants = cva(
   [
-    'inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5',
+    'hit-target inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5',
     'whitespace-nowrap rounded-[calc(var(--r-md)-3px)] font-medium leading-none text-fg-muted',
     'transition-[background-color,box-shadow,color] duration-[var(--dur-fast)] ease-out',
     'hover:text-fg',

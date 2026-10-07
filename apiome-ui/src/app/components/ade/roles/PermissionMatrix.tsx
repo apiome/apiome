@@ -91,7 +91,7 @@ function PermToggle({
   return (
     <button
       type="button"
-      className="rol-perm"
+      className="hit-target rol-perm"
       aria-pressed={pressed}
       aria-label={label}
       disabled={disabled}

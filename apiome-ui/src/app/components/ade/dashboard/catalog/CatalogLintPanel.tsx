@@ -81,6 +81,7 @@ import { LintAxisCoveragePanel } from '@/app/components/ade/dashboard/lint/LintA
 import { SourceFormatChecksPanel } from '@/app/components/ade/dashboard/lint/SourceFormatChecksPanel';
 import { LintDecisionBadge } from '@/app/utils/lint-policy-ui';
 import { useReportedCount } from './useReportedCount';
+import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 
 interface CatalogLintPanelProps {
   /** The catalog item id to lint (a project id). */
@@ -1190,18 +1191,22 @@ export function CatalogLintPanel({
         </>
       ) : null}
 
-      {waiveTarget ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          data-testid="catalog-lint-waive-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Waive lint finding"
-        >
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-lg">
-            <h3 className="text-sm font-semibold text-fg">
-              Waive finding
-            </h3>
+      {/* A Radix dialog (HIVE-10.2): focus is trapped while open and restored on close; Escape
+          and the backdrop cancel, like the Cancel button. */}
+      <ModalFrame
+        open={waiveTarget !== null}
+        onClose={() => {
+          if (!waiveSaving) setWaiveTarget(null);
+        }}
+        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-lg"
+        data-testid="catalog-lint-waive-dialog"
+      >
+        {waiveTarget ? (
+          <>
+            <ModalFrameTitle asChild>
+              <h3 className="text-sm font-semibold text-fg">Waive finding</h3>
+            </ModalFrameTitle>
             <p className="mt-1 text-xs text-fg-muted">
               Raw severity stays visible; this records an audited policy decision with
               rationale and expiry.
@@ -1241,16 +1246,16 @@ export function CatalogLintPanel({
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-warn px-3 py-1.5 text-sm font-medium text-white hover:bg-warn disabled:opacity-50"
+                className="rounded-lg bg-warn-soft px-3 py-1.5 text-sm font-medium text-warn-fg hover:bg-warn-soft disabled:opacity-50"
                 onClick={() => void submitWaive()}
                 disabled={waiveSaving || !waiveRationale.trim() || !waiveExpiry}
               >
                 {waiveSaving ? 'Saving…' : 'Save waiver'}
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
+          </>
+        ) : null}
+      </ModalFrame>
     </Card>
   );
 }

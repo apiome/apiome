@@ -21,6 +21,8 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/app/components/ui/Card';
 import { Label } from '@/app/components/ui/Label';
+import { LiveRegion } from '@/app/components/ui/LiveRegion';
+import { saveStateAnnouncement } from '@lib/a11y/announcements';
 import { Skeleton } from '@/app/components/ui/Skeleton';
 import { Spinner } from '@/app/components/ui/Spinner';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
@@ -359,6 +361,10 @@ export default function CustomRulesTab({ state, readOnlyReason }: CustomRulesTab
             <span className="gd-editor-status__spacer" />
             <span>{state.dirty ? 'Draft — unsaved' : 'Saved'}</span>
           </div>
+          <LiveRegion
+            message={saveStateAnnouncement({ saving: state.saving, dirty: state.dirty })}
+            data-testid="custom-rules-live"
+          />
         </Card>
 
         <Card className="gd-preview-card">
