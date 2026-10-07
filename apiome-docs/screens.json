@@ -549,6 +549,72 @@
       "route": "/ade/dashboard/mcp/agents",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-a11y/agent-access-usage.html"
+    },
+    {
+      "id": "published-api-key-dialog",
+      "route": "/ade/dashboard/published",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-published/api-key-dialog.html"
+    },
+    {
+      "id": "mock-scenarios",
+      "route": "/ade/dashboard/published",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/mock-scenarios.html"
+    },
+    {
+      "id": "mock-scenario-try-it",
+      "route": "/ade/dashboard/published",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/mock-scenario-try-it.html"
+    },
+    {
+      "id": "mock-correlation",
+      "route": "/ade/dashboard/published",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-mock-correlation/correlation-dialog.html"
+    },
+    {
+      "id": "export-studio-source",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/source-ready.html"
+    },
+    {
+      "id": "export-verify",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/export-verify.html"
+    },
+    {
+      "id": "export-studio-job",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/job.html"
+    },
+    {
+      "id": "export-studio-failure",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/failure.html"
+    },
+    {
+      "id": "export-studio-gate",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/gate.html"
+    },
+    {
+      "id": "mock-test-drive",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/mock-test-drive.html"
+    },
+    {
+      "id": "sdk-settings",
+      "route": "/ade/dashboard/sdk-settings",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/sdk-settings.html"
     }
   ]
 }

@@ -25,7 +25,7 @@ in-scope API keys can reach it).
 2. Choose **Publish**, pick **public** or **private**, and add a revision note.
 3. If a gate fails, the UI reports which one — fix it (usually a missing description or an
    unacknowledged breaking change) and publish again.
-4. Published versions are listed under `/ade/dashboard/published`.
+4. Published versions are listed on [Published](./published.mdx) (`/ade/dashboard/published`).
 
 ## With the REST API
 

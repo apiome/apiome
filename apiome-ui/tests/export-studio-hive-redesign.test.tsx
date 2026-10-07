@@ -678,6 +678,26 @@ describe('the browser fixtures', () => {
     write('target-ready', pageColumn().outerHTML);
   });
 
+  it('renders the source step with an empty job history (the docs fixture)', async () => {
+    // The docs site's `export-studio-source` screenshot (DOCS-1.7): the Source step as a first
+    // export sees it, with no earlier jobs rather than the list's error.
+    await renderStudio();
+    const registry = global.fetch as unknown as jest.Mock;
+    global.fetch = jest.fn((input: unknown) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.includes('jobs')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, jobs: [], total: 0, offset: 0 }),
+        });
+      }
+      return registry(input);
+    }) as unknown as typeof fetch;
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await waitFor(() => expect(screen.queryByText(/load this list/)).not.toBeInTheDocument());
+    write('source-ready', pageColumn().outerHTML);
+  });
+
   it('renders the deep-link notices', async () => {
     await renderStudio({
       linkIssues: [

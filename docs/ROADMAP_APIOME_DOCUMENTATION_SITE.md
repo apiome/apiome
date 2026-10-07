@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.7 | #5624 | Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out | Document the publish surface, visibility, hosted mocks and scenarios, the EOL timeline and CSV, the five-step export studio, SDK generation settings | `documentation`, `export`, `mock-server` | Y | N | M | `apiome-docs/docs/ship/**`, `apiome-docs/screens.json` |
 | 1.8 | #5625 | Govern — Style guides, Lint posture, Access audit, Reviews | Document style guides and revisions, assignment and policies, the lint posture workspace (views, waivers, bulk actions), the audit ledger and drawer, and the review page | `documentation`, `governance`, `linting` | Y | N | M | `apiome-docs/docs/govern/**`, `apiome-docs/screens.json` |
 | 1.9 | #5626 | Workspace & account — Members, Roles, API keys, Tenants, Profile, Linked accounts, Preferences, Notifications, Help | Document tenant administration and the personal surfaces, including the Preferences pane (themes, font size, density) and the keyboard reference | `documentation`, `tenancy`, `api-keys`, `profile` | Y | N | M | `apiome-docs/docs/workspace/**`, `apiome-docs/screens.json` |
 | 1.10 | #5627 | Admin console & tools — as they exist today | Document `/admin/**` (sign-in, overview, users & signups, tenants, licenses, feature flags, property templates, auth providers) and `/ade/database`, `/ade/migration` honestly, with a note that the Hive redesign (Epic 9) is pending | `documentation`, `security`, `database` | Y | N | S | `apiome-docs/docs/admin/**`, `apiome-docs/screens.json` |
@@ -283,7 +282,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.7] Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out` — [#5624](https://github.com/apiome/apiome/issues/5624)
+### ✅ `apiome: [DOCS-1.7] Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out` — [#5624](https://github.com/apiome/apiome/issues/5624) — **Complete**
 **Problem statement.** Publishing, export fidelity and the mock runtime are documented as REST/CLI guides, but the UI surfaces (Published table, mock switches, Export studio wizard, SDK settings) are not.
 
 **Solution / scope.**
@@ -291,9 +290,9 @@ Milestone: **RC6** (epic and every issue).
 - Fold the existing mock guides under a “Mock runtime” subsection with the UI pages above them.
 
 **Acceptance criteria.**
-- [ ] Every Ship route has a page with a current screenshot
-- [ ] Export fidelity and mock guides are reachable from the UI pages
-- [ ] No broken links
+- [x] Every Ship route has a page with a current screenshot
+- [x] Export fidelity and mock guides are reachable from the UI pages
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

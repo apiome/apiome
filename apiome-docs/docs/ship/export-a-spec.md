@@ -67,7 +67,7 @@ downloaded document with `openapi-spec-validator`.
 
 ## Test-drive it
 
-For OpenAPI targets, the Export Studio's Review step can turn the artifact you just generated into
+For OpenAPI targets, the [Export studio](./export-studio.mdx)'s Review step can turn the artifact you just generated into
 a **live mock** for a few minutes — one click, a base URL you can `curl`, responses generated from
 the document's own response schemas, and a log of everything it served. It is the strongest check
 available: a document that cannot answer its own operations is a finding no static validation would
@@ -81,7 +81,7 @@ POST /v1/export/{tenant_slug}/mock
 The mock expires by itself, and servers without the Mock Server deployed report the capability as
 unavailable rather than offering a button that cannot work. See
 [export_mock_test_drive.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_mock_test_drive.md) for the endpoints,
-the lifetime rules and the configuration.
+the lifetime rules and the configuration, and [Mock try-out](./mock-try-out.mdx#test-drive-an-export) for the panel.
 
 ## Related
 

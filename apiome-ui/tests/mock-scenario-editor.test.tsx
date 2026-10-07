@@ -19,6 +19,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import { MockScenarioEditor } from '../src/app/components/ade/dashboard/MockScenarioEditor';
 import { toast } from 'sonner';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
@@ -609,5 +610,30 @@ describe('MockScenarioEditor — live preview (MSC-1.3)', () => {
     expect(
       (global.fetch as jest.Mock).mock.calls.some(([, init]) => init?.method === 'POST')
     ).toBe(false);
+  });
+});
+
+// ==================================================================================================
+// The docs fixture
+// ==================================================================================================
+
+/**
+ * The documentation site's Published page (`apiome-docs/screens.json`, DOCS-1.7) captures the
+ * scenario editor from this dump: `A11Y_FIXTURE_DUMP=1 npx jest tests/mock-scenario-editor.test.tsx
+ * -t "docs fixture"`. It is the stored `quota-exceeded` scenario with a rendered preview below it, and that
+ * preview (the Try it section) on its own for the Mock try-out page.
+ */
+describe('MockScenarioEditor — the docs fixture', () => {
+  it('renders a stored scenario and its preview', async () => {
+    mockAuthoringFetch();
+    renderEditor();
+
+    await screen.findByLabelText('Scenario 1 operation 1 key');
+    fireEvent.click(screen.getByTestId('mock-scenario-preview-panel-render'));
+    await screen.findByTestId('mock-scenario-preview-panel-result');
+
+    writeA11yFixture('mock-scenarios', screen.getByTestId('mock-scenario-editor-rev-1').outerHTML);
+    // The dialog scrolls, so the Mock try-out page captures its Try it section on its own.
+    writeA11yFixture('mock-scenario-try-it', screen.getByTestId('mock-scenario-preview').outerHTML);
   });
 });

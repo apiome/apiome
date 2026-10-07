@@ -13,7 +13,7 @@ browsable spec — the seeded, published `petstore-sample` project.
 
 ## In the UI
 
-- Open **Published** at `/ade/dashboard/published` to see your tenant's published versions.
+- Open [Published](./published.mdx) at `/ade/dashboard/published` to see your tenant's published versions.
 - The dedicated `apiome-browse` app renders the catalog and each spec's rendered OpenAPI.
 
 ## Interactive Swagger UI for a published spec
