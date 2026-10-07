@@ -31521,6 +31521,7 @@ class Database:
         v.version_id AS version_label,
         ts.enabled,
         ts.target,
+        ts.description_enrichment,
         ts.created_at,
         ts.updated_at,
         ts.created_by::text AS created_by,
@@ -31744,15 +31745,18 @@ class Database:
         *,
         enabled: Optional[bool] = None,
         target: Optional[str] = None,
+        description_enrichment: Optional[bool] = None,
         actor_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Change a toolset's ``enabled`` flag and/or ``target`` (AGX-1.2).
+        """Change a toolset's ``enabled`` flag, ``target`` and/or enrichment opt-out (AGX-1.2/1.3).
 
         Args:
             tenant_id: Owning tenant.
             toolset_id: The toolset.
             enabled: The new flag, or ``None`` to keep it.
             target: ``prod`` / ``mock``, or ``None`` to keep it.
+            description_enrichment: Whether accepted enrichment proposals are served (AGX-1.3), or
+                ``None`` to keep it.
             actor_id: The user changing it.
 
         Returns:
@@ -31766,12 +31770,13 @@ class Database:
             UPDATE apiome.agent_toolsets
             SET enabled = COALESCE(%s, enabled),
                 target = COALESCE(%s, target),
+                description_enrichment = COALESCE(%s, description_enrichment),
                 updated_by = %s::uuid,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s::uuid AND tenant_id = %s::uuid
             RETURNING id::text AS id
             """,
-            (enabled, target, actor, toolset_id, tenant_id),
+            (enabled, target, description_enrichment, actor, toolset_id, tenant_id),
         )
         if not rows:
             return None
@@ -31911,6 +31916,195 @@ class Database:
         if not rows:
             return None
         return self.get_agent_toolset_tool(tenant_id, toolset_id, tool_id)
+
+    # ------------------------------------------------------------------------------------------
+    # Agent toolset description enrichment — AGX-1.3 (#4531). `agent_toolset_enrichments` (V273).
+    # ------------------------------------------------------------------------------------------
+
+    #: One enrichment proposal. ``te`` is the proposal and ``ts`` its toolset.
+    _AGENT_TOOLSET_ENRICHMENT_COLUMNS = """
+        te.id::text AS id,
+        te.toolset_id::text AS toolset_id,
+        te.operation_key,
+        te.target_kind,
+        te.target_key,
+        te.parameter_name,
+        te.original_description,
+        te.proposed_description,
+        te.model,
+        te.status,
+        te.accepted_description,
+        te.reviewed_by::text AS reviewed_by,
+        te.reviewed_at,
+        te.created_at,
+        te.updated_at
+    """
+
+    def list_agent_toolset_enrichments(
+        self, tenant_id: str, toolset_id: str, *, status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Return a toolset's enrichment proposals, ordered by operation then target (AGX-1.3).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset.
+            status: When set, only proposals with this status (``accepted`` for compiling).
+
+        Returns:
+            The rows. Empty when the tenant has no such toolset (or an id is not a UUID).
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id):
+            return []
+        clauses = ["te.toolset_id = %s::uuid", "ts.tenant_id = %s::uuid"]
+        params: List[Any] = [toolset_id, tenant_id]
+        if status is not None:
+            clauses.append("te.status = %s")
+            params.append(status)
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_ENRICHMENT_COLUMNS}
+            FROM apiome.agent_toolset_enrichments te
+            JOIN apiome.agent_toolsets ts ON ts.id = te.toolset_id
+            WHERE {' AND '.join(clauses)}
+            ORDER BY te.operation_key, te.target_kind DESC, te.target_key
+            """,
+            tuple(params),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_agent_toolset_enrichment(
+        self, tenant_id: str, toolset_id: str, enrichment_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return one enrichment proposal of a toolset (AGX-1.3).
+
+        Args:
+            tenant_id: The caller's tenant.
+            toolset_id: The toolset the proposal must belong to.
+            enrichment_id: The proposal.
+
+        Returns:
+            The row, or ``None`` when it does not exist in that tenant's toolset.
+        """
+        if not self._upstream_scope_ok(tenant_id, toolset_id, enrichment_id):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._AGENT_TOOLSET_ENRICHMENT_COLUMNS}
+            FROM apiome.agent_toolset_enrichments te
+            JOIN apiome.agent_toolsets ts ON ts.id = te.toolset_id
+            WHERE te.id = %s::uuid AND te.toolset_id = %s::uuid AND ts.tenant_id = %s::uuid
+            """,
+            (enrichment_id, toolset_id, tenant_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_agent_toolset_enrichments(
+        self, tenant_id: str, toolset_id: str, proposals: Sequence[Mapping[str, Any]]
+    ) -> int:
+        """Store new enrichment proposals for a toolset, skipping described targets (AGX-1.3).
+
+        ``ON CONFLICT (toolset_id, target_key) DO NOTHING``: a target that already has a proposal,
+        whatever its status, keeps it. That makes the enrichment pass idempotent and means a
+        reviewed proposal is never overwritten.
+
+        Args:
+            tenant_id: Owning tenant (checked to own the toolset inside the transaction).
+            toolset_id: The toolset.
+            proposals: One mapping per proposal: ``operation_key``, ``target_kind``,
+                ``target_key``, ``parameter_name``, ``original_description``,
+                ``proposed_description`` and ``model``.
+
+        Returns:
+            How many proposals were inserted (0 when the tenant has no such toolset).
+        """
+        if not proposals or not self._upstream_scope_ok(tenant_id, toolset_id):
+            return 0
+
+        def work(cursor: Any) -> int:
+            cursor.execute(
+                "SELECT 1 AS found FROM apiome.agent_toolsets WHERE id = %s::uuid AND tenant_id = %s::uuid",
+                (toolset_id, tenant_id),
+            )
+            if cursor.fetchone() is None:
+                return 0
+            inserted = 0
+            for proposal in proposals:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.agent_toolset_enrichments
+                        (toolset_id, operation_key, target_kind, target_key, parameter_name,
+                         original_description, proposed_description, model)
+                    VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (toolset_id, target_key) DO NOTHING
+                    """,
+                    (
+                        toolset_id,
+                        proposal["operation_key"],
+                        proposal["target_kind"],
+                        proposal["target_key"],
+                        proposal.get("parameter_name"),
+                        proposal.get("original_description"),
+                        proposal["proposed_description"],
+                        proposal["model"],
+                    ),
+                )
+                inserted += max(cursor.rowcount or 0, 0)
+            return inserted
+
+        return int(self._guarded_tx(work) or 0)
+
+    def review_agent_toolset_enrichment(
+        self,
+        tenant_id: str,
+        toolset_id: str,
+        enrichment_id: str,
+        *,
+        status: str,
+        accepted_description: Optional[str],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Record a person's decision on one enrichment proposal (AGX-1.3).
+
+        Accepting stores the text to serve; rejecting clears it. Either way the reviewer and time
+        are stamped. V273's ``agent_toolset_enrichments_review_ck`` refuses an accepted row without
+        text, so this accessor cannot mark a proposal served without a review.
+
+        Args:
+            tenant_id: Owning tenant.
+            toolset_id: The toolset the proposal must belong to.
+            enrichment_id: The proposal.
+            status: ``accepted`` or ``rejected``.
+            accepted_description: The text to serve when accepting; ignored when rejecting.
+            actor_id: The reviewer.
+
+        Returns:
+            The row after the change, or ``None`` when no such proposal exists in the tenant's
+            toolset.
+        """
+        if status not in ("accepted", "rejected"):
+            raise ValueError(f"unsupported review status {status!r}")
+        if not self._upstream_scope_ok(tenant_id, toolset_id, enrichment_id):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        text = accepted_description if status == "accepted" else None
+        rows = self.execute_query(
+            """
+            UPDATE apiome.agent_toolset_enrichments AS te
+            SET status = %s,
+                accepted_description = %s,
+                reviewed_by = %s::uuid,
+                reviewed_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+            FROM apiome.agent_toolsets ts
+            WHERE te.id = %s::uuid AND te.toolset_id = %s::uuid
+              AND ts.id = te.toolset_id AND ts.tenant_id = %s::uuid
+            RETURNING te.id::text AS id
+            """,
+            (status, text, actor, enrichment_id, toolset_id, tenant_id),
+        )
+        if not rows:
+            return None
+        return self.get_agent_toolset_enrichment(tenant_id, toolset_id, enrichment_id)
 
     def next_sdk_publish_counter(
         self, tenant_id: str, project_id: str, ecosystem: str, release_series: str

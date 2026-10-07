@@ -1,17 +1,27 @@
-"""Agent toolset endpoints — AGX-1.2 (#4530).
+"""Agent toolset endpoints — AGX-1.2 (#4530) and the AGX-1.3 (#4531) enrichment pass.
 
-Seven routes over agent toolsets (:mod:`app.agent_toolsets`): the curated set of a published
-version's operations that agents may call.
+Eleven routes over agent toolsets (:mod:`app.agent_toolsets`): the curated set of a published
+version's operations that agents may call, and the review of their descriptions
+(:mod:`app.agent_toolset_enrichment`).
 
 ```
 GET    /v1/tenants/{t}/agent-toolsets                       list (?versionId=…)
 POST   /v1/tenants/{t}/agent-toolsets                       create for a published version
 GET    /v1/tenants/{t}/agent-toolsets/{id}                  describe, with every tool
-PATCH  /v1/tenants/{t}/agent-toolsets/{id}                  enabled / target
+PATCH  /v1/tenants/{t}/agent-toolsets/{id}                  enabled / target / enrichment
 DELETE /v1/tenants/{t}/agent-toolsets/{id}                  delete (credentials + agent keys too)
 GET    /v1/tenants/{t}/agent-toolsets/{id}/tools            the tool rows
 PATCH  /v1/tenants/{t}/agent-toolsets/{id}/tools/{toolId}   enable / disable one tool
+GET    /v1/tenants/{t}/agent-toolsets/{id}/enrichment       agent-hostile flags + proposals
+POST   /v1/tenants/{t}/agent-toolsets/{id}/enrichment       run the enrichment pass
+PATCH  /v1/tenants/{t}/agent-toolsets/{id}/enrichment/{pid} accept (or edit) / reject a proposal
+GET    /v1/tenants/{t}/agent-toolsets/{id}/compiled         the toolset as agents are served it
 ```
+
+**Nothing AI-generated reaches an agent without acceptance.** The enrichment pass stores copilot
+proposals as ``proposed``; only a person's ``accept`` makes ``/compiled`` serve the text, and only
+while the toolset's ``descriptionEnrichment`` is on. Without a configured copilot the pass only
+flags.
 
 **Safe by default.** A new toolset exposes only its version's read operations. A write op
 (``POST``/``PUT``/``PATCH``/``DELETE``…) is enabled one at a time, and only with
@@ -31,6 +41,9 @@ agent's access. Reading is ``api_keys:view``; create, update and delete are ``ap
 ``agent.toolset.create``, ``agent.toolset.update`` (before and after), ``agent.toolset.delete``
 and ``agent.toolset.tool.update``. The last records which operation, whether it is a write op,
 and enabled before/after; the audit row's actor and time answer "who enabled which write op, when".
+The enrichment pass adds ``agent.toolset.enrichment.run`` (what a run asked and stored) and
+``agent.toolset.enrichment.review`` (which description, the decision before and after, and whether
+the reviewer edited the text).
 """
 
 from __future__ import annotations
@@ -39,9 +52,23 @@ import logging
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
+from .agent_toolset_enrichment import (
+    CODE_ENRICHMENT_NOT_FOUND,
+    CompiledToolsetOut,
+    EnrichmentProposalOut,
+    EnrichmentReport,
+    EnrichmentReview,
+    EnrichmentRun,
+    EnrichmentRunResult,
+    compile_agent_toolset,
+    get_toolset_enrichment,
+    review_toolset_enrichment,
+    run_toolset_enrichment,
+)
 from .agent_toolsets import (
     AGENT_TOOLSET_SCHEMA_VERSION,
     CODE_TOOL_NOT_FOUND,
@@ -74,6 +101,8 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "AUDIT_CREATE",
     "AUDIT_DELETE",
+    "AUDIT_ENRICHMENT_REVIEW",
+    "AUDIT_ENRICHMENT_RUN",
     "AUDIT_TOOL_UPDATE",
     "AUDIT_UPDATE",
     "AgentToolListResponse",
@@ -89,6 +118,8 @@ AUDIT_CREATE = "agent.toolset.create"
 AUDIT_UPDATE = "agent.toolset.update"
 AUDIT_DELETE = "agent.toolset.delete"
 AUDIT_TOOL_UPDATE = "agent.toolset.tool.update"
+AUDIT_ENRICHMENT_RUN = "agent.toolset.enrichment.run"
+AUDIT_ENRICHMENT_REVIEW = "agent.toolset.enrichment.review"
 
 _BASE = "/{tenant_slug}/agent-toolsets"
 
@@ -97,6 +128,7 @@ _STATUS_BY_CODE = {
     CODE_TOOLSET_EXISTS: 409,
     CODE_TOOLSET_NOT_FOUND: 404,
     CODE_TOOL_NOT_FOUND: 404,
+    CODE_ENRICHMENT_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
     CODE_VERSION_UNPUBLISHED: 409,
 }
@@ -216,7 +248,11 @@ def _audit(
 
 def _settings(toolset: AgentToolsetOut) -> Dict[str, Any]:
     """The toolset settings an audit row quotes."""
-    return {"enabled": toolset.enabled, "target": toolset.target}
+    return {
+        "enabled": toolset.enabled,
+        "target": toolset.target,
+        "descriptionEnrichment": toolset.description_enrichment,
+    }
 
 
 @router.get(
@@ -353,7 +389,9 @@ async def get_agent_toolset_route(
     summary="Change an agent toolset's settings",
     description=(
         "Switch the whole toolset on or off (`enabled`; a disabled toolset exposes no tools) "
-        "and/or change its `target` (`prod` | `mock`). Tool selections are untouched.\n\n"
+        "and/or change its `target` (`prod` | `mock`), and/or opt out of description "
+        "enrichment (`descriptionEnrichment: false` serves the spec-derived descriptions even "
+        "where a proposal was accepted). Tool selections are untouched.\n\n"
         "Requires `api_keys:edit`. Audited as `agent.toolset.update`, before and after."
     ),
     responses={
@@ -549,3 +587,236 @@ async def update_agent_toolset_tool_route(
         detail={"toolsetId": str(toolset_id), **audit_tool_detail(before, after)},
     )
     return after
+
+
+# ============================================================================
+# Description enrichment — AGX-1.3 (#4531)
+# ============================================================================
+
+_ENRICHMENT_WHAT_IT_IS = (
+    "The enrichment pass looks for tools an agent will struggle with. Each flag lists "
+    "machine-readable reasons: `missing-description`, `thin-description`, `missing-examples`, "
+    "`undocumented-errors`, `missing-parameter-description`, `thin-parameter-description`. When "
+    "the copilot (an Ollama model, `APIOME_AGENT_ENRICHMENT_MODEL`) is configured, it also "
+    "proposes descriptions for the thin ones, written only from the spec's own documentation. "
+    "**Proposals are never served until a person accepts them.** Without the copilot, `mode` is "
+    "`flag-only`."
+)
+
+
+@router.get(
+    _BASE + "/{toolset_id}/enrichment",
+    response_model=EnrichmentReport,
+    summary="Describe an agent toolset's enrichment",
+    description=_ENRICHMENT_WHAT_IT_IS + "\n\nRequires `api_keys:view`.",
+    responses={
+        404: {"description": "No such agent toolset in this tenant."},
+        422: {"description": "The version's operations could not be read."},
+    },
+)
+async def get_agent_toolset_enrichment_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> EnrichmentReport:
+    """Report a toolset's agent-hostile tools and description proposals.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        toolset_id: The toolset.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The flags and proposals.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist; 422 when
+            its version cannot be read.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        return get_toolset_enrichment(_tenant_id(auth_data), str(toolset_id))
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.post(
+    _BASE + "/{toolset_id}/enrichment",
+    response_model=EnrichmentRunResult,
+    summary="Run the enrichment pass",
+    description=(
+        _ENRICHMENT_WHAT_IT_IS + "\n\nThe pass is idempotent: a description that already has a "
+        "proposal, whatever its status, is not asked about again. Each run asks the copilot about "
+        "at most 20 operations and reports `remainingOperations`; run it again to continue, or "
+        "pass `operations` to choose which.\n\nRequires `api_keys:edit`. Audited as "
+        "`agent.toolset.enrichment.run`."
+    ),
+    responses={
+        404: {"description": "No such agent toolset in this tenant."},
+        422: {
+            "description": (
+                "The version's operations could not be read, or `operations` names an operation "
+                "the toolset does not have."
+            )
+        },
+    },
+)
+async def run_agent_toolset_enrichment_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    body: Optional[EnrichmentRun] = Body(default=None),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> EnrichmentRunResult:
+    """Run the enrichment pass, then audit what it did.
+
+    The pass makes blocking calls to the copilot (up to one per operation), so it runs on a worker
+    thread: one slow model must not stall every other request.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        toolset_id: The toolset.
+        body: Optionally, the operations to ask about.
+        auth_data: The authenticated principal.
+
+    Returns:
+        What the run did and the report after it.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:edit``; 404 when the toolset does not exist; 422 when
+            its version cannot be read or ``operations`` is invalid.
+    """
+    actor_id = enforce_permission(db, auth_data, Resource.API_KEYS, Action.EDIT)
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        result = await run_in_threadpool(
+            run_toolset_enrichment, tenant_id, str(toolset_id), body
+        )
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+    _audit(
+        tenant_id=tenant_id,
+        action=AUDIT_ENRICHMENT_RUN,
+        auth_data=auth_data,
+        actor_id=actor_id,
+        target=str(toolset_id),
+        detail={
+            "mode": result.mode,
+            "model": result.model,
+            "generated": result.generated,
+            "attemptedOperations": result.attempted_operations,
+            "failedOperations": result.failed_operations,
+            "remainingOperations": result.remaining_operations,
+            "flagged": result.counts.get("flagged", 0),
+        },
+    )
+    return result
+
+
+@router.patch(
+    _BASE + "/{toolset_id}/enrichment/{proposal_id}",
+    response_model=EnrichmentProposalOut,
+    summary="Accept or reject a description proposal",
+    description=(
+        "`decision: accept` serves the proposal in the compiled toolset; pass `description` to "
+        "serve an edited text instead. `decision: reject` withdraws it, including a previously "
+        "accepted one. The reviewer and time are recorded on the proposal.\n\nRequires "
+        "`api_keys:edit`. Audited as `agent.toolset.enrichment.review`."
+    ),
+    responses={
+        404: {"description": "No such proposal in this tenant's agent toolset."},
+        422: {"description": "A blank or over-long edit, or an edit with `reject`."},
+    },
+)
+async def review_agent_toolset_enrichment_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    proposal_id: UUID,
+    body: EnrichmentReview,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> EnrichmentProposalOut:
+    """Record a decision on one proposal, then audit it.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        toolset_id: The toolset.
+        proposal_id: The proposal.
+        body: The decision and an optional edit.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The proposal after the review.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:edit``; 404 when the proposal does not exist; 422 for
+            an invalid edit.
+    """
+    actor_id = enforce_permission(db, auth_data, Resource.API_KEYS, Action.EDIT)
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        before, after = review_toolset_enrichment(
+            tenant_id, str(toolset_id), str(proposal_id), body, actor_id=actor_id
+        )
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+    _audit(
+        tenant_id=tenant_id,
+        action=AUDIT_ENRICHMENT_REVIEW,
+        auth_data=auth_data,
+        actor_id=actor_id,
+        target=after.id,
+        detail={
+            "toolsetId": str(toolset_id),
+            "operation": after.operation,
+            "targetKey": after.target_key,
+            "statusBefore": before.status,
+            "statusAfter": after.status,
+            "edited": after.status == "accepted"
+            and after.accepted_description != after.proposed_description,
+        },
+    )
+    return after
+
+
+@router.get(
+    _BASE + "/{toolset_id}/compiled",
+    response_model=CompiledToolsetOut,
+    summary="Compile an agent toolset",
+    description=(
+        "The toolset as agents are served it: the enabled tools as MCP `tools/list` entries. "
+        "While `descriptionEnrichment` is on, accepted description proposals replace the "
+        "spec-derived text (`enrichedTargets` lists which); proposed and rejected ones never do. "
+        "A disabled toolset compiles to no tools.\n\nRequires `api_keys:view`."
+    ),
+    responses={
+        404: {"description": "No such agent toolset in this tenant."},
+        422: {"description": "The version's operations could not be read or compiled."},
+    },
+)
+async def compile_agent_toolset_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CompiledToolsetOut:
+    """Compile a toolset with its accepted descriptions.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        toolset_id: The toolset.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The compiled toolset.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist; 422 when
+            its version cannot be read or compiled.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        return compile_agent_toolset(_tenant_id(auth_data), str(toolset_id))
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc

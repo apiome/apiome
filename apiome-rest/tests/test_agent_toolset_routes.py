@@ -141,6 +141,7 @@ def test_create_seeds_reads_only_and_is_audited(store, audits):
         "versionId": created["versionId"],
         "enabled": True,
         "target": "prod",
+        "descriptionEnrichment": True,
         "toolCount": 8,
         "enabledToolCount": 3,
     }
@@ -252,8 +253,16 @@ def test_patch_changes_settings_and_audits_before_and_after(store, audits):
     assert (response.json()["target"], response.json()["enabled"]) == ("mock", False)
     [row] = audits
     assert row["action"] == AUDIT_UPDATE
-    assert row["detail"]["before"] == {"enabled": True, "target": "prod"}
-    assert row["detail"]["after"] == {"enabled": False, "target": "mock"}
+    assert row["detail"]["before"] == {
+        "enabled": True,
+        "target": "prod",
+        "descriptionEnrichment": True,
+    }
+    assert row["detail"]["after"] == {
+        "enabled": False,
+        "target": "mock",
+        "descriptionEnrichment": True,
+    }
 
 
 def test_patch_refusals(store, audits):
