@@ -29,6 +29,7 @@ When user invokes **update-roadmap** with description, treat the description as 
   - Parallelism/Dependencies
   - Technical Stack
   - Epic grouping
+  - Documentation (Docusaurus) — the pages under `apiome-docs/docs/**`, screenshot ids, reference regeneration and release-notes entry the issue requires (the `create-issues` skill turns this into the standard section)
   - ASCII or Mermaid drawing for visual detail
 - Each roadmap epic section must contain a table indicating:
   - Issue number

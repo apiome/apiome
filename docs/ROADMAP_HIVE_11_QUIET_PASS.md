@@ -123,6 +123,7 @@ graph TD
 3. No raw hex, no hard-coded `px` type; status strings use `Badge[data-status]`; honey only per DESIGN.md §2 (as amended by HIVE-13.1).
 4. Every page that changes re-dumps its fixture under `apiome-ui/e2e/fixtures/` and keeps the parity, a11y and copy-voice gates green.
 5. Bump `apiome-ui/package.json` (AGENTS.md); no REST changes are expected, so no OpenAPI bump.
+6. Every issue carries the standard **Documentation (Docusaurus)** section (added 2026-10-07): the affected `apiome-docs` pages are updated, screenshots regenerated via `yarn docs:screenshots`, and a release-notes entry added in the same PR — see `docs/ROADMAP_APIOME_DOCUMENTATION_SITE.md` (#5618) and the implement skill's Phase 3b.
 
 ---
 
