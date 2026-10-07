@@ -36,7 +36,7 @@ async function finiteAnimations(page: Page): Promise<Array<{ name: string; ms: n
 }
 
 async function openGallery(page: Page): Promise<void> {
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await page.waitForLoadState('networkidle');
   await trigger(page).scrollIntoViewIfNeeded();
 }

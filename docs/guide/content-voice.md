@@ -128,7 +128,8 @@ own feature components). The notes record what HIVE-10.4 changed there.
 | `/admin/dashboard/users` | ✓ | — | ✓¹ | ✓ | Title → "Users"; "No users found" / "No pending signups" → `EmptyState`. |
 | `/admin` | — | — | ✓¹ | ✓ | Admin sign-in form; its fallback error already says "try again". |
 | `/design-system/command-palette` | n/a | n/a | n/a | n/a | Static gallery. |
-| `/design-system/hive` | ✓ | ✓ | ✓ | ✓ | Gallery of the feedback set itself. |
+| `/design-system` | ✓ | ✓ | ✓ | ✓ | The design system route; draws the whole feedback set. |
+| `/design-system/hive` | n/a | n/a | n/a | n/a | Redirects to `/design-system`. |
 | `/design-system/mcp` | ✓ | ✓ | ✓ | ✓ | Gallery of MCP primitives. |
 | `/design-system/page-header` | n/a | n/a | n/a | n/a | Static gallery. |
 | `/design-system/shortcuts` | n/a | n/a | n/a | n/a | Static gallery. |

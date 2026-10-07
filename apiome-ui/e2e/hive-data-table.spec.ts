@@ -19,7 +19,7 @@ import AxeBuilder from '@axe-core/playwright';
  * the bottom edge, and the dense variant really is shorter than the comfortable one at the
  * same font scale.
  *
- * Runs against `/design-system/hive#tables` — the gallery route, which needs no session and
+ * Runs against `/design-system#tables` — the gallery route, which needs no session and
  * no data, so this suite is deterministic. Requires the app to be running
  * (`PLAYWRIGHT_BASE_URL`, default `http://localhost:3000`).
  */
@@ -64,7 +64,7 @@ async function freezeMotion(page: Page): Promise<void> {
  */
 async function openTables(page: Page): Promise<void> {
   await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await expect(page.getByRole('table', { name: 'Projects' })).toBeVisible();
   await freezeMotion(page);
 }

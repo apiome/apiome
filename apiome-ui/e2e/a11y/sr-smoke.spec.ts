@@ -49,7 +49,7 @@ test('home: the launcher names its regions, its h1 and every application', async
 
 test('a dialog: an alertdialog named by its question, with its two answers', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await page.waitForLoadState('networkidle');
   await page.locator('#dialogs').getByRole('button', { name: 'Destructive confirm' }).click();
   const dialog = page.getByRole('alertdialog');

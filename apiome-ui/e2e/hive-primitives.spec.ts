@@ -18,7 +18,7 @@ import AxeBuilder from '@axe-core/playwright';
  *   • axe finds nothing serious with the drawer open, and nothing here forces the document
  *     sideways at 1280 px.
  *
- * Runs against `/design-system/hive` — the gallery route, which needs no session and no
+ * Runs against `/design-system` — the gallery route, which needs no session and no
  * data, so this suite is deterministic. Requires the app to be running
  * (`PLAYWRIGHT_BASE_URL`, default `http://localhost:3000`).
  */
@@ -73,7 +73,7 @@ async function freezeMotion(page: Page): Promise<void> {
  */
 async function openGallery(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await page.waitForLoadState('networkidle');
   await freezeMotion(page);
 }

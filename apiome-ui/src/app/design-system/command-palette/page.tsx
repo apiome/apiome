@@ -21,7 +21,7 @@
  * from the navigation model, once with a workspace and once without, so the gated Actions
  * of the third acceptance criterion are visible side by side with the ungated ones.
  *
- * Sibling galleries: `/design-system/hive` (the primitives), `/design-system/page-header`.
+ * Sibling galleries: `/design-system` (the primitives), `/design-system/page-header`.
  */
 
 import * as React from 'react';

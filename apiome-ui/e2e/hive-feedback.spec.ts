@@ -20,7 +20,7 @@ import AxeBuilder from '@axe-core/playwright';
  * The rest is the cross-cutting definition of done: the states announce themselves, axe finds
  * nothing serious on either base, and nothing here forces the document sideways.
  *
- * Runs against `/design-system/hive` — the gallery route, which needs no session and no data.
+ * Runs against `/design-system` — the gallery route, which needs no session and no data.
  * Requires the app to be running (`PLAYWRIGHT_BASE_URL`, default `http://localhost:3000`).
  */
 
@@ -56,7 +56,7 @@ function blockingViolations<T extends { impact?: string | null }>(violations: T[
  */
 async function openGallery(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await page.waitForLoadState('networkidle');
   await page.locator(OWNED_SECTION).scrollIntoViewIfNeeded();
 }
