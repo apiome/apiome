@@ -1,0 +1,108 @@
+---
+title: MCP servers
+description: Catalog the MCP servers your teams use, grade them, and compare their capabilities.
+sidebar_position: 1.5
+tags: [mcp]
+---
+
+<Route path="/ade/dashboard/mcp" />
+
+**MCP servers** catalogs the Model Context Protocol servers your workspace uses: Apiome discovers
+each server's tools, resources and prompts, lints them and grades the server. **Go to Bring in → MCP
+servers.** Its tabs are **Servers**, **Analytics** (*Preview*), **Capabilities**, **Compare** and
+**Agent access**; the middle three appear once you have a server.
+
+This page is about servers *you* bring in. To let an MCP host read *your* published specs, see
+[Connect an MCP host](../getting-started/connect-an-mcp-host.mdx).
+
+<Screenshot id="mcp-servers" alt="MCP servers in the dense list view: servers grouped by host with grade, transport and capabilities" />
+
+Search by name, host, URL or category; **Filters** narrows by host, grade, transport, safety,
+complexity, protocol, health, visibility, auth and category. Sort by grade (the default), name,
+last discovered, capabilities or health, and switch between **Grid** and **Dense list**.
+
+<Screenshot id="mcp-servers-grid" alt="MCP servers in the grid view, with filters, saved searches and collections" />
+
+## Add an MCP server
+
+The steps are **Connect → Discover capabilities → Lint & grade**. To try it on the local stack, use
+Apiome's own MCP server.
+
+1. **Click “Add MCP server”.**
+2. Enter the **Endpoint URL** — `http://localhost:8765/mcp` on the local stack — and, optionally, a
+   **Display name** (`Apiome specs`).
+3. Choose the **Transport**: **Streamable HTTP** (the default; right for the example),
+   **Server-Sent Events (SSE)** or **Standard I/O (stdio)**.
+4. Choose the **Auth type**: **None (anonymous)**, **Bearer token**, **Custom header** or **OAuth
+   2.1 access token**. Secrets are stored encrypted and never shown again.
+5. **Click “Discover →”.** When it finishes, the dialog says the server is cataloged — **click “View
+   endpoint”**.
+
+If discovery fails, read the reason, then **“Discard”** or **“Add this server anyway”**.
+
+<Screenshot id="import-wizard-mcp" alt="Add an MCP server: endpoint URL, display name, transport and authentication" />
+
+## An endpoint's page
+
+<Route path="/ade/dashboard/mcp/[endpointId]" />
+
+**Click a server.** The header shows its grade and has **Publish** / **Unpublish**, **Enable** /
+**Disable** and **“Re-discover”**. Tabs:
+
+| Tab | Shows |
+| --- | --- |
+| **Capabilities** | Every tool, resource and prompt, with its schema and annotations |
+| **Insight** | How the server is used |
+| **Versions** | Each discovery; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** |
+| **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
+| **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
+| **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
+
+<Screenshot id="mcp-endpoint-capabilities" alt="An MCP endpoint's Capabilities tab: grade, current version, server and its tools" />
+
+<Screenshot id="mcp-endpoint-versions" alt="An MCP endpoint's Versions tab: the version timeline and a diff between two discoveries" />
+
+<Screenshot id="mcp-endpoint-lint" alt="An MCP endpoint's Lint & score tab: the grade and must, should and advisory findings" />
+
+<Screenshot id="mcp-endpoint-settings" alt="An MCP endpoint's Settings tab: identity and connection, transport, visibility and discovery cadence" />
+
+## Analytics
+
+<Route path="/ade/dashboard/mcp/analytics" />
+
+**Catalog analytics** (*Preview*) breaks the catalog down by category, transport, protocol version,
+grade and health, with tool counts and change frequency. **“Export CSV”** downloads it.
+
+<Screenshot id="mcp-analytics" alt="Catalog analytics: endpoints, published and scored counts, and charts by category, transport and grade" />
+
+## Capabilities
+
+<Route path="/ade/dashboard/mcp/capabilities" />
+
+The **Capability directory** answers *what can be done here?* — every tool, resource and prompt
+across the catalog. Start from a preset (**Tools**, **Resources**, **Prompts**, **Public surface**)
+and filter by name, type, host or visibility.
+
+<Screenshot id="mcp-capabilities" alt="The Capability directory: presets and every capability with its type, server and host" />
+
+## Compare
+
+<Route path="/ade/dashboard/mcp/compare" />
+
+**Server comparison** puts two or three servers side by side — surface, quality, safety, docs, and
+latency. Pick the servers and **click “Compare”**.
+
+<Screenshot id="mcp-compare" alt="Server comparison: three servers side by side across surface, quality and safety metrics" />
+
+## With the CLI or the API
+
+- CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp
+  list|show|discover|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
+  `GET …/endpoints/{endpoint}/versions`, `GET /v1/mcp/{tenant}/browse`,
+  `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API
+  reference](../reference/api-reference.md).
+
+## Where next
+
+- [Agent access](./agent-access.mdx)

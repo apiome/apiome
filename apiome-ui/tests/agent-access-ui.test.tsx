@@ -57,6 +57,7 @@ jest.mock('@lib/auth/session-client', () => ({
 }));
 
 import AgentAccessClient from '../src/app/ade/dashboard/mcp/agents/AgentAccessClient';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // The fake BFF
@@ -581,5 +582,38 @@ describe('usage', () => {
     ) as unknown as typeof fetch;
     await user.click(screen.getByTestId('agx-tab-usage'));
     expect(await screen.findByTestId('agx-usage-error')).toHaveTextContent('Permission denied');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Agent access page (`apiome-docs/screens.json`, DOCS-1.6) is captured
+ * from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/agent-access-ui.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  test('renders the toolsets, agent keys and usage tabs', async () => {
+    keys = [
+      {
+        id: 'k-1',
+        name: 'claude-desktop',
+        keyPrefix: 'ak_1...',
+        toolsetId: 'ts-1',
+        toolAllowlist: ['listPets', 'createPet'],
+        status: 'active',
+        expiresAt: null,
+      },
+    ];
+    const user = await renderPage();
+    const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+    writeA11yFixture('agent-access-toolsets', page().outerHTML);
+
+    await user.click(screen.getByTestId('agx-tab-keys'));
+    await screen.findByTestId('agx-key-row-k-1');
+    writeA11yFixture('agent-access-keys', page().outerHTML);
+
+    await user.click(screen.getByTestId('agx-tab-usage'));
+    await screen.findByTestId('agx-usage');
+    writeA11yFixture('agent-access-usage', page().outerHTML);
   });
 });

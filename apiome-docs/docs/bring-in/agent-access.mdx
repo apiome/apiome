@@ -1,0 +1,51 @@
+---
+title: Agent access
+description: Expose published operations to AI agents as MCP tools, with keys and usage.
+sidebar_position: 1.6
+tags: [mcp, agents]
+---
+
+<Route path="/ade/dashboard/mcp/agents" />
+
+**Agent access** turns a published version of your API into MCP tools an AI agent can call — only
+the operations you choose, with keys you issue. **Go to MCP servers → Agent access.** It has three
+tabs: **Toolsets**, **Agent keys** and **Usage**. You need permission to manage API keys.
+
+## Enable agent access
+
+1. **Click “Enable Agent Access”.**
+2. Choose the **Published version** to expose, and where **Calls go to**: **Production** or
+   **Mock**.
+3. Confirm. Apiome creates a **toolset**: one tool per operation. Read operations are exposed right
+   away; write operations stay off until you switch each one on and confirm **Let agents call a
+   write operation?**
+
+<Screenshot id="agent-access" alt="Agent access, Toolsets tab: a toolset for Pet Store 1.0.0 with its operations, kinds and exposure switches" />
+
+## Create an agent key
+
+1. On the toolset, **click “Create agent key”** (or **Agent keys → Create agent key**).
+2. Enter a **Name** (for example `claude-desktop`) and a **Description**, choose the **Toolset**,
+   tick the **Tools this key may call**, and set **Expires in (days)** — expiry cannot change later.
+3. **Copy the key** from **Agent key created** — it is shown only once — and **click “I've saved my
+   key”**.
+
+The agent connects to Apiome's MCP endpoint with that key; see [Connect an MCP
+host](../getting-started/connect-an-mcp-host.mdx).
+
+<Screenshot id="agent-access-keys" alt="The Agent keys tab: a key with its toolset, status, tools, expiry and today's calls" />
+
+**Show revoked keys** includes revoked ones; **Revoke key** stops a key at once.
+
+## Usage
+
+**Usage** shows calls, error rate, latency and active agents over **7 days**, **30 days** or **90
+days**, with charts per day, per tool and per agent.
+
+<Screenshot id="agent-access-usage" alt="The Usage tab: calls, error rate, latency and active agents, with charts per day, tool and agent" />
+
+## With the API
+
+`GET` / `POST /v1/tenants/{tenant}/agent-toolsets`, `GET …/agent-toolsets/{toolset}/tools`,
+`GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET /v1/tenants/{tenant}/agent-usage` — see the [API
+reference](../reference/api-reference.md).
