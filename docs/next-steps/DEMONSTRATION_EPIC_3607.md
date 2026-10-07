@@ -42,7 +42,8 @@
 act: if the golden path needs a save, the gate answer is "not yet". Time it.
 
 **DO** — Have these ready as artifacts, not as live queries:
-- the beta cohort's issue list, labelled and triaged;
+- the beta cohort's issue list, labelled and triaged (queries in
+  [`docs/runbooks/BETA_TRIAGE.md`](../runbooks/BETA_TRIAGE.md) §6);
 - the open-bug query by severity;
 - the deferred list, each with a written reason;
 - the load-test report against the documented latency budget;
@@ -227,7 +228,8 @@ Every epic in this directory has `Future` children. They are listed per epic in 
 execution document and none of them gate the tag.
 
 **"Who is the beta cohort?"**
-Named in [RC1-4.1 #3620](https://github.com/apiome/apiome/issues/3620)'s triage notes.
+Named in [RC1-4.1 #3620](https://github.com/apiome/apiome/issues/3620)'s cohort comment — see
+[`BETA_TRIAGE.md`](../runbooks/BETA_TRIAGE.md) §2.
 
 ---
 
