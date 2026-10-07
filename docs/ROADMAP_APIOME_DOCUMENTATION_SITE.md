@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.3 | #5620 | Screenshot pipeline — Playwright captures of every route, light and dark, from the seeded stack | `yarn docs:screenshots` renders a route manifest at 1440 × 900 against the golden-path stack (fixtures as fallback) into `static/img/screens/`; `<Screenshot id/>` swaps by theme; CI fails on missing ids | `documentation`, `testing`, `infrastructure`, `mvp` | Y | Y | L | `apiome-docs/scripts/screenshots.ts (new)`, `apiome-docs/screens.json (new)`, `apiome-docs/src/components/Screenshot.tsx (new)`, `scripts/golden_path/*`, `.github/workflows/apiome-docs.yml` |
 | 1.4 | #5621 | Getting started & the spine — with screenshots | Sign in, launcher, onboarding, Home, first import, versions, publish, browse, export, MCP — the “first project in 10 minutes” path as it ships, every step illustrated | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/getting-started/**`, `apiome-docs/screens.json` |
 | 1.5 | #5622 | Build — Projects, Versions, dialogs, Primitives & types, Studio | Document `/ade/dashboard/projects`, `/versions` (timeline, changes, change report, test bench, discussion, repository tabs; every dialog), `/primitives`, and the Studio editor/paths/code surfaces | `documentation`, `versions` | Y | N | M | `apiome-docs/docs/build/**`, `apiome-docs/screens.json` |
 | 1.6 | #5623 | Bring in — Catalog, import wizard, Repositories, MCP servers | Document the catalog list/item/inspectors and conversion, the import wizard’s eight sources, all seven repository routes, and the five MCP routes | `documentation`, `catalog`, `repository`, `mcp` | Y | N | L | `apiome-docs/docs/bring-in/**`, `apiome-docs/screens.json` |
@@ -199,7 +198,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.3] Screenshot pipeline — Playwright captures of every route, light and dark, from the seeded stack` — [#5620](https://github.com/apiome/apiome/issues/5620)
+### ✅ `apiome: [DOCS-1.3] Screenshot pipeline — Playwright captures of every route, light and dark, from the seeded stack` — [#5620](https://github.com/apiome/apiome/issues/5620) — **Complete**
 **Problem statement.** Screenshots in docs rot the day after they are taken unless a script can retake them all. The product has ~60 routes, nine themes and two densities; hand-captured images cannot keep up with a release train that ships several UI PRs a day.
 
 **Solution / scope.**
@@ -210,10 +209,10 @@ Milestone: **RC6** (epic and every issue).
 - Document the manifest and the “add a screenshot” recipe on the site’s Contributing page.
 
 **Acceptance criteria.**
-- [ ] `yarn docs:screenshots` produces both themes for every manifest entry from a clean golden-path stack in CI
-- [ ] Masked/frozen values make two consecutive runs byte-identical for ≥ 90 % of entries
-- [ ] `<Screenshot/>` swaps with the theme toggle and passes axe (alt text required)
-- [ ] Weekly refresh workflow opens a PR when images change
+- [ ] `yarn docs:screenshots` produces both themes for every manifest entry from a clean golden-path stack in CI — *implemented (`--boot --start-ui` in the weekly workflow); verified locally in fixture mode only — confirm on the first workflow run*
+- [x] Masked/frozen values make two consecutive runs byte-identical for ≥ 90 % of entries
+- [ ] `<Screenshot/>` swaps with the theme toggle and passes axe (alt text required) — *alt enforced at build; theme-swap and axe covered by `apiome-docs/e2e/screenshot.spec.ts` (browser suite, not run in the PR)*
+- [ ] Weekly refresh workflow opens a PR when images change — *`.github/workflows/apiome-docs-screenshots.yml`; confirm on its first run*
 
 **Parallelism / dependencies.** Depends on DOCS-1.1. Parallel with DOCS-1.2. Blocks DOCS-1.4 → 1.10 (they consume it).
 

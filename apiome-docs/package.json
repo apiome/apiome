@@ -1,6 +1,6 @@
 {
   "name": "apiome-docs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "The Apiome documentation site (Docusaurus).",
   "scripts": {
@@ -12,7 +12,9 @@
     "check": "node scripts/check-docs.mjs && docusaurus build",
     "check:pages": "node scripts/check-docs.mjs",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "typecheck": "tsc"
+    "test:e2e": "playwright test",
+    "typecheck": "tsc",
+    "screenshots": "tsx scripts/screenshots.ts"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -30,11 +32,14 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "@playwright/test": "^1.59.1",
     "@types/react": "^19.2.14",
     "gray-matter": "^4.0.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "browserslist": {

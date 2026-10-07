@@ -10178,6 +10178,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "apiome-docs@workspace:apiome-docs"
   dependencies:
+    "@axe-core/playwright": "npm:^4.12.1"
     "@docusaurus/core": "npm:3.10.2"
     "@docusaurus/faster": "npm:3.10.2"
     "@docusaurus/module-type-aliases": "npm:3.10.2"
@@ -10190,12 +10191,14 @@ __metadata:
     "@fontsource-variable/inter": "npm:^5.2.8"
     "@fontsource/jetbrains-mono": "npm:^5.2.8"
     "@mdx-js/react": "npm:^3.0.0"
+    "@playwright/test": "npm:^1.59.1"
     "@types/react": "npm:^19.2.14"
     clsx: "npm:^2.0.0"
     gray-matter: "npm:^4.0.3"
     prism-react-renderer: "npm:^2.3.0"
     react: "npm:^19.2.5"
     react-dom: "npm:^19.2.5"
+    tsx: "npm:^4.21.0"
     typescript: "npm:^5.9.3"
   languageName: unknown
   linkType: soft

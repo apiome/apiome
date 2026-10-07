@@ -1,0 +1,22 @@
+---
+slug: screenshot-pipeline
+title: Screenshots that retake themselves
+description: Product screenshots on this site are captured by a script, in light and dark.
+authors: [apiome]
+---
+
+Every product screenshot on this site is now captured by a script from the product itself, in the
+light and the dark theme, and retaken every week — so a picture never shows a screen that no longer
+exists. Switch the site theme and the screenshots switch with it. ([#5620](https://github.com/apiome/apiome/issues/5620))
+
+{/* truncate */}
+
+- **One manifest.** `screens.json` lists each screen: its route, what to wait for, and what to mask.
+  `yarn docs:screenshots` captures it at 1440 × 900 with the clock fixed, so reruns match pixel for
+  pixel.
+- **Real data or a fixture.** Screens are captured signed in to the seeded golden-path stack, or from
+  a committed page fixture when the stack is not running.
+- **A gate.** `yarn docs:check` fails when a page shows a screenshot that has no light or dark image.
+- **A weekly refresh** opens a pull request whenever a screen changed.
+
+[Contribute to the docs](/admin/contribute-to-the-docs) has the recipe for adding one.

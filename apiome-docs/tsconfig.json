@@ -5,5 +5,5 @@
     "baseUrl": ".",
     "strict": true
   },
-  "exclude": [".docusaurus", "build", "test", "scripts"]
+  "exclude": [".docusaurus", "build", "test", "scripts", "e2e", "playwright.config.ts"]
 }

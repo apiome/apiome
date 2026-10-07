@@ -1,0 +1,104 @@
+name: Apiome Docs Screenshots
+
+# Weekly screenshot refresh for the documentation site (DOCS-1.3, #5620).
+#
+# Brings up the golden-path stack (scripts/golden_path/run.sh: postgres, migrate, seed, rest, mcp,
+# mock, then the golden-path smoke test), starts apiome-ui against it, recaptures every entry in
+# apiome-docs/screens.json in light and dark (`yarn docs:screenshots`), and opens a pull request when
+# any image changed. Runs every Monday and on demand from the Actions tab.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: apiome-docs-screenshots
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Recapture docs screenshots
+    runs-on: self-hosted
+    env:
+      # apiome-ui talks to the stack docker-compose brings up (default credentials and ports).
+      # Throwaway values for a throwaway stack — never reuse them anywhere real.
+      DATABASE_URL: postgresql://postgres:apiome_local_dev@localhost:5432/apiome
+      NEXT_PUBLIC_REST_API_BASE_URL: http://localhost:8000/v1
+      BETTER_AUTH_SECRET: docs-screenshots-ci-secret
+      APIOME_REST_URL: http://localhost:8000
+      APIOME_MCP_URL: http://localhost:8765/mcp
+      APIOME_MOCK_URL: http://localhost:8775
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Playwright Chromium
+        run: yarn playwright install chromium
+
+      # Python comes from uv, as in golden-path.yml: run.sh drives the apiome CLI through it.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install apiome-cli (golden-path harness)
+        run: uv sync
+        working-directory: apiome-cli
+
+      # --boot runs scripts/golden_path/run.sh --keep; --start-ui serves apiome-ui on :3300
+      # against it. The run fails if any manifest entry is not captured in both themes.
+      - name: Capture every screenshot from the golden-path stack
+        run: yarn docs:screenshots -- --boot --start-ui
+
+      - name: Check the site with the new images
+        run: yarn docs:check
+
+      - name: Open a pull request when images changed
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: docs/screenshot-refresh
+          delete-branch: true
+          add-paths: apiome-docs/static/img/screens/**
+          commit-message: 'docs: refresh product screenshots'
+          title: 'docs: refresh product screenshots'
+          body: |
+            The weekly screenshot refresh (`.github/workflows/apiome-docs-screenshots.yml`) recaptured
+            every entry in `apiome-docs/screens.json` from the golden-path stack, and some images
+            changed. Review the image diffs: an unexpected change is a UI change the docs pages may
+            need to describe.
+          labels: documentation
+
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose logs --no-color > docker-compose.logs.txt 2>&1 || true
+
+      - name: Upload stack logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-screenshots-stack-logs
+          path: docker-compose.logs.txt
+          if-no-files-found: ignore
+        continue-on-error: true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

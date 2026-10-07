@@ -11,7 +11,8 @@
     "docs:dev": "yarn workspace apiome-docs start",
     "docs:build": "yarn workspace apiome-docs build",
     "docs:serve": "yarn workspace apiome-docs serve",
-    "docs:check": "yarn workspace apiome-docs check"
+    "docs:check": "yarn workspace apiome-docs check",
+    "docs:screenshots": "yarn workspace apiome-docs screenshots"
   },
   "workspaces": [
     "apiome-cli",

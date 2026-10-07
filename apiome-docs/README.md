@@ -12,8 +12,10 @@ From the repository root:
 | `yarn docs:dev` | Dev server with live reload at <http://localhost:3200/apiome/> |
 | `yarn docs:build` | Production build into `apiome-docs/build/` |
 | `yarn docs:serve` | Serve the production build at <http://localhost:3200/apiome/> |
-| `yarn docs:check` | Page rules (below), then the production build — what CI runs |
+| `yarn docs:check` | Page and screenshot rules (below), then the production build — what CI runs |
+| `yarn docs:screenshots` | Recapture the product screenshots in `screens.json` (see [Screenshots](#screenshots)) |
 | `yarn workspace apiome-docs test` | Unit tests for the page rules and components |
+| `yarn workspace apiome-docs test:e2e` | Browser tests for `<Screenshot/>` against the built site (`yarn docs:build` first) |
 | `yarn workspace apiome-docs typecheck` | Type-check the config and components |
 
 `yarn build` (turbo) builds the site with every other workspace.
@@ -87,7 +89,7 @@ These are available in every `.mdx` page without an import:
 
 | Component | Use | Example |
 | --- | --- | --- |
-| `<Screenshot id alt caption?/>` | A product screenshot by manifest id. A placeholder until the screenshot pipeline lands (DOCS-1.3, #5620). Put it on its own line. | `<Screenshot id="projects-list" alt="The Projects list"/>` |
+| `<Screenshot id alt caption?/>` | A product screenshot by manifest id: light or dark with the site theme, lazy-loaded, linked to the full-size image, with a route badge. `alt` is required. Put it on its own line. | `<Screenshot id="catalog" alt="The Catalog page"/>` |
 | `<Route path/>` | A badge naming the product route a page describes | `<Route path="/ade/dashboard/versions"/>` |
 | `<Kbd keys/>` | A key or chord; `Mod` reads “Ctrl / ⌘”, `Plus` is the + key | `<Kbd keys="Mod+K"/>` |
 
@@ -96,6 +98,27 @@ These are available in every `.mdx` page without an import:
 Add a post to `release-notes/` named `YYYY-MM-DD-<slug>.mdx` with `title`, `description` and
 `authors: [apiome]`, and put `{/* truncate */}` after the summary paragraph.
 
+## Screenshots
+
+Every product screenshot is an entry in `screens.json`, captured by `scripts/screenshots.ts`
+(Playwright) into `static/img/screens/<id>.<theme>.png` in light and dark at 1440 × 900 — never by
+hand. The site's [Contribute to the docs](docs/admin/contribute-to-the-docs.mdx) page documents the
+manifest fields and the recipe; in short:
+
+```bash
+yarn docs:screenshots -- --id catalog --start-ui      # one entry, starting apiome-ui on :3300
+yarn docs:screenshots -- --start-ui --boot            # everything, from the golden-path stack
+```
+
+- **Golden-path** entries open the real route signed in as `ada@example.com` against
+  `scripts/golden_path/run.sh`; **fixture** entries (and golden-path entries' `fallback`) mount a
+  dump from `apiome-ui/e2e/fixtures/` into `/login`, so they need no database.
+- Appearance is pinned with `apiome-ui/e2e/support/a11y.ts` (theme, density, font scale, no motion),
+  the clock is fixed, and `mask` selectors are painted over, so reruns are byte-identical.
+- Set `DOCS_CHROMIUM_PATH` when Playwright's browser is not installed (`yarn playwright install chromium`).
+- `.github/workflows/apiome-docs-screenshots.yml` recaptures everything every Monday and opens a pull
+  request when an image changed.
+
 ## What the gate checks
 
 `yarn docs:check` fails when:
@@ -103,9 +126,12 @@ Add a post to `release-notes/` named `YYYY-MM-DD-<slug>.mdx` with `title`, `desc
 - a page has no `title` or `description`, or the description is over 14 words;
 - a folder under `docs/` has no `_category_.json` (with a `label`) or no `index.mdx`;
 - any internal link, Markdown link or anchor is broken (`onBrokenLinks`, `onBrokenAnchors` and
-  `onBrokenMarkdownLinks` are all `throw`).
+  `onBrokenMarkdownLinks` are all `throw`);
+- `screens.json` is invalid, or an entry lacks the image for a theme it declares;
+- a page uses `<Screenshot id/>` with an id that is not in the manifest or lacks a light or dark
+  image (examples in code blocks are ignored), or without `alt` text.
 
-DOCS-1.13 (#5630) extends it with orphan-page and screenshot checks.
+DOCS-1.13 (#5630) extends it with orphan-page checks.
 
 ## Theme
 

@@ -1,0 +1,115 @@
+---
+title: Contribute to the docs
+description: Write a page, add a screenshot, and pass the docs gate.
+sidebar_position: 3
+tags: [docs, screenshots]
+---
+
+This site is the `apiome-docs/` workspace in the Apiome repository. Every change to the product
+updates its pages in the same pull request, and `yarn docs:check` must pass before it merges.
+
+## Run the site
+
+From the repository root:
+
+| Command | What it does |
+| --- | --- |
+| `yarn docs:dev` | Live-reloading site at `http://localhost:3200/apiome/` |
+| `yarn docs:check` | Page and screenshot rules, then the production build — what CI runs |
+| `yarn docs:screenshots` | Recapture the product screenshots |
+| `yarn workspace apiome-docs test` | Unit tests for the rules and components |
+
+## Write a page
+
+1. Add `docs/<group>/<page>.md` — or `.mdx` when the page uses a component such as `<Screenshot/>`.
+2. Give it front matter: `title`, a `description` of **14 words or fewer**, `sidebar_position` and
+   `tags`.
+3. Write steps with bold UI nouns (“**click Import to catalog**”) and quote buttons as they read in
+   the product.
+
+The workspace [README](https://github.com/apiome/apiome/blob/main/apiome-docs/README.md) covers the
+groups, the components and the generated pages in full.
+
+## Add a screenshot
+
+Screenshots are never pasted by hand: each one is an entry in `apiome-docs/screens.json`, captured
+by a script in a light and a dark theme, and retaken every week.
+
+1. **Add an entry** to `screens.json`:
+
+   ```json
+   {
+     "id": "catalog",
+     "route": "/ade/dashboard/catalog",
+     "waitFor": "[data-testid=\"page-header\"]",
+     "mask": ["time"],
+     "data": "golden-path",
+     "fallback": "fixture:hive-catalog/table.html"
+   }
+   ```
+
+2. **Capture it**: `yarn docs:screenshots -- --id catalog`. This writes
+   `static/img/screens/catalog.light.png` and `catalog.dark.png`; commit both.
+3. **Place it** on an `.mdx` page:
+
+   ```mdx
+   <Screenshot id="catalog" alt="The Catalog page listing four imported items" />
+   ```
+
+The result looks like this — switch the site theme to see the dark capture:
+
+<Screenshot id="catalog" alt="The Catalog page: four imported items in a table with format, protocol, quality and status columns" caption="The catalog, captured from the committed fixture." />
+
+### Manifest fields
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `id` | yes | Lower-case words joined by hyphens; also the image file name |
+| `route` | yes | The product route the screen shows; it is opened in golden-path mode and shown as the route badge |
+| `waitFor` | yes | CSS selector that is visible once the screen is ready |
+| `data` | yes | `"golden-path"` (the real route, signed in to the seeded stack) or `"fixture:<dir>/<file>.html"` (a dump from `apiome-ui/e2e/fixtures/`) |
+| `fallback` | no | For a golden-path entry: the fixture to use when the stack is not running |
+| `mask` | no | CSS selectors painted over before the capture — dates, ids and counts that change between runs |
+| `clip` | no | `{"x", "y", "width", "height"}` to capture one region instead of the viewport |
+| `theme` | no | `["light", "dark"]` (default); a page can only show an entry that has both |
+| `viewport` | no | Default `{"width": 1440, "height": 900}` |
+| `density` | no | `comfortable` (default) or `compact` |
+| `fontScale` | no | `md` (default), or `xs`, `sm`, `lg`, `xl` |
+
+Every capture runs with the clock fixed at 15 June 2026, 09:30 UTC, and with motion off, so two runs
+produce the same pixels.
+
+### Where the pixels come from
+
+- **Golden-path mode** signs in as the seeded user (`ada@example.com`) and opens the real route. It
+  needs the golden-path stack — `scripts/golden_path/run.sh --keep` brings it up, or pass `--boot` —
+  and an apiome-ui pointed at it.
+- **Fixture mode** mounts a committed dump of the page into the sign-in route, which loads the
+  app's real styles and needs no database. Entries with a `fallback` use it when the stack is down.
+
+| Option | Use |
+| --- | --- |
+| `--id <id>` | Capture one entry; repeat it or separate ids with commas |
+| `--route <prefix>` | Capture every entry whose route starts with the prefix |
+| `--start-ui` | Start an apiome-ui dev server on port 3300 for the run |
+| `--ui-url <url>` | Capture from an apiome-ui that is already running (default `http://localhost:3300`) |
+| `--boot` | Bring the golden-path stack up first when it is not running |
+| `--fixtures-only` | Use fixtures even when the stack is up |
+
+Set `DOCS_CHROMIUM_PATH` to a Chromium executable if Playwright's own browser is not installed. The
+script exits with an error when any selected entry could not be captured.
+
+### What the gate checks
+
+`yarn docs:check` fails when:
+
+- a manifest entry is invalid, or is missing the image for a theme it declares;
+- a page uses `<Screenshot id/>` with an id that is not in the manifest, or that lacks a light or a
+  dark image.
+
+The build itself fails when a `<Screenshot/>` has no `alt` text.
+
+### The weekly refresh
+
+The **Apiome Docs Screenshots** workflow runs every Monday (and on demand). It brings up the
+golden-path stack, recaptures every entry, and opens a pull request when any image changed.
