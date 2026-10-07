@@ -1,0 +1,152 @@
+---
+title: Style guides
+description: Choose the rules specs are scored against, assign guides, and set quality policies.
+sidebar_position: 1.1
+tags: [governance, lint, style-guides]
+---
+
+<Route path="/ade/dashboard/style-guides" />
+
+A **style guide** is the set of lint rules — and their severities — that a project's specs are scored
+against. **Go to Govern → Style guides.** Three tabs run across the top: **Style guides**, **Import &
+export policy** and **Verification policy**.
+
+<Screenshot id="style-guides" alt="Style guides: four guides with how many rules are on, their assignments and when they were updated" />
+
+Only workspace administrators can create, assign or edit guides and policies. Other members see
+*Read-only for members.* and can still open any guide and browse its rules.
+
+<Screenshot id="style-guides-readonly" alt="Style guides as a member: the Read-only for members banner and no create or assign actions" />
+
+## The list
+
+| Column | What it shows |
+| --- | --- |
+| **Name** | The guide, its description, and **Built-in** or **Default** badges. |
+| **Rules on** | How many rules are enabled, for example `34 / 41`. |
+| **Assignments** | **Tenant default**, and one chip per project the guide is pinned to. |
+| **Updated** | When the guide last changed. |
+
+**Filter guides…** searches by name; the chips **All**, **Custom**, **Assigned** and **Unassigned**
+narrow the list. A row's menu has **Assign…**, **Duplicate**, **Edit** and **Delete**.
+
+The built-in **Apiome Recommended** guide is read-only — **Duplicate** it to customise it.
+
+<Screenshot id="style-guide-builtin" alt="The built-in Apiome Recommended guide's rule catalog, read-only, with the note to duplicate it" />
+
+## Create a guide
+
+1. **Click “New guide”** (or press <Kbd keys="N"/>), or **“Start from Recommended”** to copy the
+   built-in guide.
+2. Enter a **Name** — for example `Payments API Guide` — and an optional **Description**.
+3. Under **Copy rules from**, choose **Empty guide (no rules)** or an existing guide to copy its
+   enabled rules and severities.
+4. **Click “Create guide”.**
+
+<Screenshot id="style-guides-create-dialog" alt="New style guide: name, description and the guide to copy rules from" />
+
+**Edit** renames a guide or changes its description; rules and policy are edited on the guide's own
+page. **Delete** warns which projects fall back to the tenant default and cannot be undone.
+
+## Assign a guide
+
+A project is scored by the guide pinned to it, or else by the workspace's **tenant default**.
+
+1. In the guide's row menu, **choose “Assign…”**.
+2. **Click “Make tenant default”** to make it apply to every project without its own guide, and/or
+3. Under **Project assignments**, **select a project** and **click “Assign”**. The **×** beside a
+   project unpins it.
+4. **Click “Done”.** Each change is saved as you make it and applies from the next lint run.
+
+<Screenshot id="style-guides-assign-dialog" alt="Assign a style guide: tenant default and project assignments" />
+
+## A guide's page
+
+<Route path="/ade/dashboard/style-guides/[guideId]" />
+
+**Click a guide.** The header counts its enabled rules — *9 of 10 rules enabled* — and three tabs
+follow.
+
+### Rule catalog
+
+Every built-in rule, grouped by category. For each rule, **turn the switch on or off** and **choose a
+severity** — **Error**, **Warning** or **Info**. The **default** pill shows the catalog's baseline, and
+**modified** marks a change. Search by id, rationale or category, pick a category, or tick **Modified
+only**. **Click “Save changes”** (or **Discard**) in the bar at the foot.
+
+<Screenshot id="style-guide-rules" alt="A guide's Rule catalog: rules grouped by category with switches, default severity and severity choices" />
+
+What each rule checks is in [Built-in lint rules](../build/lint-rules.md).
+
+### Custom rules
+
+Write your own rules in YAML, in a Spectral-compatible dialect, with completion and inline problems.
+
+1. **Click “Insert rule”** for a starting snippet, and edit it. **Format** tidies the YAML.
+2. Under **Test against…**, **choose a Project and Version** and **click “Run”**. This is a dry run:
+   the findings list each violation, and clicking one jumps to its rule. Nothing is saved.
+3. **Click “Save”.** If the server rejects a rule, *Server validation failed.* names it in the editor.
+
+<Screenshot id="style-guide-custom-rule" alt="Custom rules: a YAML rule in the editor and a dry run with two findings" />
+
+The format, functions and limits are in [Custom lint rules](../build/custom-rules.md).
+
+### Policy
+
+The gates applied when lint results are judged against this guide:
+
+| Setting | What it does |
+| --- | --- |
+| **Quality minimum grade** | Results graded below it fail the quality gate. |
+| **Breaking-change publishes** | **Off**, **Warn (default)** or **Block** publishing a version with breaking changes. |
+| **Required approvals** | How many approvals a review round needs before publishing — see [Reviews](./reviews.mdx). |
+| **Required reviewer role** | At least one approval must come from this role. |
+| **CI outcomes** | Whether unwaived errors, missing coverage or axis gates fail `apiome lint gate`. |
+
+**Click “Save”.** Every save is an immutable policy version, listed under **Policy versions**.
+
+<Screenshot id="style-guide-policy" alt="A guide's Policy tab: minimum grade B, block breaking changes, two approvals from Release Manager" />
+
+## Import & export policy
+
+The quality floor applied when a document is **imported** and when an export is **delivered**:
+
+1. Under **Import intake** and **Export delivery**, set a **Minimum grade**, a **Minimum score** and
+   **Refuse findings at** a severity.
+2. Turn on **Refuse the import when a floor is missed** (or the export equivalent) to block; off, the
+   verdict is recorded and the import or delivery goes ahead.
+3. Under **Overrides**, turn on **Allow a blocked user to proceed by recording a waiver**, list the
+   **Roles permitted to waive** (for example `owner, release-manager`) and set the **Waiver lifetime
+   (hours)**.
+4. **Click “Save policy”.**
+
+<Screenshot id="style-guides-policies" alt="Import & export quality policy: a blocking import floor of grade C, advisory export delivery, waiver overrides and a per-format override" />
+
+**Active waivers** lists every accepted risk with its reason, who recorded it and when it expires.
+Per-format overrides are set through the REST API and shown read-only.
+
+## Verification policy
+
+Requires recent, passing contract evidence before a version is published or deployed: the **Required
+suite digests**, a **Max evidence age**, the **Required target network class**, the **Purpose**
+(publish, deploy or both), the **Breaking-change action** and the **Enforcement** — **advisory** or
+**block**. **Click “Save new version”.**
+
+<Screenshot id="style-guides-verification-policy" alt="Verification publish & deploy policy: suite digests, evidence age, enforcement and version history" />
+
+## With the CLI or the API
+
+- REST: `GET` / `POST /v1/style-guides/{tenant}`, `…/{id}/rules`, `…/{id}/custom-rules`,
+  `…/{id}/policy`, `PUT …/{id}/default`, `PUT …/{id}/assignments/projects/{project}`;
+  `/v1/tenants/{tenant}/governance/quality-policy`, `…/quality-waivers` and
+  `…/verification-policy` — see the [API reference](../reference/api-reference.md).
+- CLI: there are no commands to manage guides. `apiome lint gate --project … --version …` reports
+  against the assigned guide's policy, and `--min-grade` on `apiome import` and `apiome export`
+  applies the quality policy — see the [CLI quick-start](../reference/cli-quickstart.md).
+- History: every guide edit is an immutable revision, readable over REST — see
+  [Style-guide revisions and audit](./style-guide-revisions.md).
+
+## Where next
+
+- [Lint posture](./lint-posture.mdx)
+- [Lint and check quality](../build/lint-and-quality.md)

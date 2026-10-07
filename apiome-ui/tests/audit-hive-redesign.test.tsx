@@ -28,6 +28,7 @@ import { jest } from '@jest/globals';
 
 import AuditClient from '../src/app/ade/dashboard/audit/AuditClient';
 import { AUDIT_PAGE_SIZE } from '../src/app/components/ade/audit/auditModel';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -646,5 +647,84 @@ describe('an entry whose detail is an object and whose target is empty', () => {
     expect(await screen.findByText('permission.denied')).toBeInTheDocument();
     // The detail is flattened to a line rather than handed to JSX as an object.
     expect(screen.getByTestId('audit-table')).toHaveTextContent('resource: versions');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Access audit page (`apiome-docs/screens.json`, DOCS-1.8) is captured
+ * from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/audit-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /**
+   * A stand-in for the SHA-256 the ledger stores, stable across runs.
+   *
+   * @param seed What the hash is "of".
+   * @returns 64 hex characters.
+   */
+  function sha(seed: string): string {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('node:crypto').createHash('sha256').update(seed).digest('hex') as string;
+  }
+
+  /** A month of a real workspace's access changes, newest first, chained end to end. */
+  const DOCS_LEDGER: Row[] = (
+    [
+      ['evt-9f1c2a07', 'usr-priya', 'priya.raman@northwind.io', 'role.assigned', 'sam.okafor@northwind.io', 'web', { role: 'Release manager', previous_role: 'Editor' }, '2026-10-07T08:14:22Z'],
+      ['evt-8e0b19f6', 'usr-priya', 'priya.raman@northwind.io', 'permission.changed', 'Release manager', 'web', { granted: ['versions:publish', 'versions:sunset'], revoked: ['projects:delete'] }, '2026-10-06T16:02:41Z'],
+      ['evt-7d9a08e5', 'usr-marcus', 'marcus.lee@northwind.io', 'style_guide.policy_updated', 'Northwind REST', 'api', { required_approvals: 2, required_reviewer_role: 'release-manager' }, '2026-10-06T11:47:09Z'],
+      ['evt-6c8f97d4', 'usr-priya', 'priya.raman@northwind.io', 'member.invited', 'elena.vasquez@northwind.io', 'web', { role: 'Viewer' }, '2026-10-03T14:30:55Z'],
+      ['evt-5b7e86c3', null, 'operator@apiome.dev', 'admin.override', 'mcp.anonymous_calls', 'admin', { reason: 'OPS-2291 partner sandbox', enabled: false }, '2026-10-02T19:05:12Z'],
+      ['evt-4a6d75b2', 'usr-priya', 'priya.raman@northwind.io', 'role.created', 'Release manager', 'web', { permissions: ['versions:view', 'versions:edit', 'versions:publish'] }, '2026-09-30T10:12:00Z'],
+      ['evt-395c64a1', 'usr-marcus', 'marcus.lee@northwind.io', 'style_guide.rules_updated', 'Northwind REST', 'api', { rules_changed: 4, severity: 'error' }, '2026-09-26T09:21:33Z'],
+      ['evt-284b5390', 'usr-priya', 'priya.raman@northwind.io', 'member.suspended', 'contractor.jb@partner.dev', 'web', { reason: 'Engagement ended' }, '2026-09-22T17:44:18Z'],
+      ['evt-173a428f', 'usr-ci', 'ci-publisher', 'permission.denied', 'versions:publish', 'api_key', { resource: 'versions', action: 'publish' }, '2026-09-18T03:02:47Z'],
+      ['evt-06293170', 'usr-priya', 'priya.raman@northwind.io', 'member.reinstated', 'tomas.berg@northwind.io', 'web', { role: 'Editor' }, '2026-09-12T12:09:51Z'],
+      ['evt-f518206e', 'usr-marcus', 'marcus.lee@northwind.io', 'style_guide.assigned', 'Northwind REST', 'api', { project: 'payments-api' }, '2026-09-10T15:36:04Z'],
+    ] as const
+  ).map(([id, actorId, actor, action, target, source, detail, at], index, all) =>
+    row({
+      id,
+      actor_id: actorId,
+      actor_label: actor,
+      action,
+      target,
+      source,
+      detail,
+      created_at: at,
+      entry_hash: sha(id),
+      // Each entry's predecessor is the next (older) row; the oldest's predecessor is the entry
+      // written before this window, which the read does not hold.
+      prev_hash: sha(index + 1 < all.length ? all[index + 1][0] : 'evt-e40719d5'),
+    })
+  );
+
+  /** The page root — `.page` when the shell's chrome rendered one. */
+  const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders the ledger, a filtered ledger, the event drawer and its hash chain', async () => {
+    const user = userEvent.setup();
+    response = { ok: true, rows: DOCS_LEDGER };
+    await renderPage();
+    await screen.findByText('role.assigned');
+    writeA11yFixture('audit', liveMarkup(page()));
+
+    await user.click(chip('permission'));
+    await user.type(screen.getByTestId('audit-search'), 'release');
+    expect(within(screen.getByTestId('audit-table')).getByText('permission.changed')).toBeInTheDocument();
+    writeA11yFixture('audit-filtered', liveMarkup(page()));
+
+    await user.clear(screen.getByTestId('audit-search'));
+    await user.click(chip('all'));
+    await user.click(screen.getByTestId('audit-open-evt-9f1c2a07'));
+    const drawer = await screen.findByTestId('audit-drawer');
+    expect(drawer).toHaveTextContent('Verified against the entry written before it.');
+    writeA11yFixture('audit-drawer', liveMarkup(drawer));
+
+    const chain = within(drawer).getByTestId('audit-drawer-chain').closest('section') as HTMLElement;
+    writeA11yFixture('audit-chain', chain.outerHTML);
   });
 });

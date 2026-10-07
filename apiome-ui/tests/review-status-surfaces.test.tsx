@@ -45,6 +45,7 @@ import { ReviewStatusPill } from '@/app/components/ade/reviews/ReviewStatusPill'
 import VersionsTable from '@/app/components/ade/versions/VersionsTable';
 import type { Version } from '@/app/components/ade/versions/versionsModel';
 import { useOpenReviews } from '@/app/hooks/useOpenReviews';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 import {
   indexReviewsByVersion,
   summarizeProjectReviews,
@@ -485,5 +486,34 @@ describe('useOpenReviews', () => {
     fetchMock.mockImplementation(async () => ({ ok: false, json: async () => ({ success: false }) }));
     render(<Probe />);
     await waitFor(() => expect(screen.getByTestId('probe')).toHaveTextContent('none'));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* The docs fixtures                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The documentation site's Reviews page (`apiome-docs/screens.json`, DOCS-1.8) is captured from
+ * these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/review-status-surfaces.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  it('renders the publish dialog review card for a revision the approval gate refuses', () => {
+    render(
+      <ReviewStatusPanel
+        review={review({
+          versionLabel: '2.4.0',
+          state: 'changes_requested',
+          round: 1,
+          reviewerCount: 2,
+          approvedCount: 1,
+          changesRequestedCount: 1,
+          pendingCount: 0,
+        })}
+      />
+    );
+    const panel = screen.getByTestId('publish-review-panel');
+    expect(panel).toHaveTextContent('refuses this publish until the changes are addressed');
+    writeA11yFixture('review-publish-gate', panel.outerHTML);
   });
 });

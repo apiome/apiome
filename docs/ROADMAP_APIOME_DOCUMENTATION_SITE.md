@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.8 | #5625 | Govern — Style guides, Lint posture, Access audit, Reviews | Document style guides and revisions, assignment and policies, the lint posture workspace (views, waivers, bulk actions), the audit ledger and drawer, and the review page | `documentation`, `governance`, `linting` | Y | N | M | `apiome-docs/docs/govern/**`, `apiome-docs/screens.json` |
 | 1.9 | #5626 | Workspace & account — Members, Roles, API keys, Tenants, Profile, Linked accounts, Preferences, Notifications, Help | Document tenant administration and the personal surfaces, including the Preferences pane (themes, font size, density) and the keyboard reference | `documentation`, `tenancy`, `api-keys`, `profile` | Y | N | M | `apiome-docs/docs/workspace/**`, `apiome-docs/screens.json` |
 | 1.10 | #5627 | Admin console & tools — as they exist today | Document `/admin/**` (sign-in, overview, users & signups, tenants, licenses, feature flags, property templates, auth providers) and `/ade/database`, `/ade/migration` honestly, with a note that the Hive redesign (Epic 9) is pending | `documentation`, `security`, `database` | Y | N | S | `apiome-docs/docs/admin/**`, `apiome-docs/screens.json` |
 | 1.11 | #5628 | Reference — REST (OpenAPI), CLI, MCP tools, mock runtime, CI actions | Generate the REST reference from `apiome-rest/openapi.yaml`, the CLI reference from `apiome` help output, the MCP tool reference from the registry; fold mock-runtime and diff/mock-action docs under Reference | `documentation`, `rest`, `cli`, `mcp`, `openapi` | Y | N | L | `apiome-docs/docs/reference/**`, `apiome-docs/docusaurus.config.ts (openapi plugin)`, `apiome-cli/src/*/help_util.py`, `apiome-mcp/src/apiome_mcp/*`, `scripts/** (generators)` |
@@ -302,7 +301,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.8] Govern — Style guides, Lint posture, Access audit, Reviews` — [#5625](https://github.com/apiome/apiome/issues/5625)
+### ✅ `apiome: [DOCS-1.8] Govern — Style guides, Lint posture, Access audit, Reviews` — [#5625](https://github.com/apiome/apiome/issues/5625) — **Complete**
 **Problem statement.** Governance is documented at the rule level (lint rules, custom rules, Spectral/Schematron import, style-guide revisions) but not at the workflow level: how a reviewer triages findings, requests a waiver, assigns a guide, or reads the audit ledger.
 
 **Solution / scope.**
@@ -310,9 +309,9 @@ Milestone: **RC6** (epic and every issue).
 - Link the rule-level guides from each page.
 
 **Acceptance criteria.**
-- [ ] Every Govern route has a page with a current screenshot
-- [ ] Waiver and approval flows have step-by-step sections
-- [ ] No broken links
+- [x] Every Govern route has a page with a current screenshot
+- [x] Waiver and approval flows have step-by-step sections
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

@@ -123,6 +123,7 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
 }));
 
 import GuideEditorClient from '../src/app/ade/dashboard/style-guides/[guideId]/GuideEditorClient';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -641,5 +642,186 @@ describe('the read-only treatment', () => {
     await renderPage();
     expect(calls.some((call) => call.url.includes('/custom-rules'))).toBe(false);
     expect(calls.some((call) => call.url.includes('/policy'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Style guides page (`apiome-docs/screens.json`, DOCS-1.8) is captured
+ * from these dumps when the golden-path stack is not running. Written into
+ * `e2e/fixtures/hive-a11y/` with
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/guide-detail-hive-redesign.test.tsx -t "docs fixtures"`.
+ *
+ * One custom guide, "Acme REST", seen on each of its three tabs: a rule catalog spread over
+ * four categories with one rule switched off and one severity raised above its default, the
+ * custom-rules editor after a dry run that found two violations, and a policy with an armed
+ * approval gate and two saved policy versions. The editor is this suite's textarea stand-in
+ * for Monaco, carrying the same YAML.
+ */
+describe('the docs fixtures', () => {
+  const DOCS_RULES = [
+    ['operation-operationId', 'openapi', 'operations', 'error', 'Every operation needs an operationId so SDKs get stable method names.', true, 'error'],
+    ['operation-summary', 'openapi', 'operations', 'warning', 'A one-line summary is what the catalog and the reference show first.', true, 'warning'],
+    ['operation-tags', 'openapi', 'operations', 'warning', 'Tags group operations in the reference and in generated SDKs.', true, 'warning'],
+    ['path-kebab-case', 'openapi', 'naming', 'warning', 'Path segments should be lowercase kebab-case so URLs read consistently.', true, 'error'],
+    ['schema-names-pascal-case', 'openapi', 'naming', 'info', 'Component schema names become type names in most generators.', false, 'info'],
+    ['property-camel-case', 'openapi', 'naming', 'info', 'Property names in camelCase match the JSON your SDKs serialise.', true, 'info'],
+    ['info-contact', 'common', 'documentation', 'warning', 'Consumers need someone to reach when a contract breaks.', true, 'warning'],
+    ['info-description', 'common', 'documentation', 'warning', 'The API description is the first paragraph of its reference page.', true, 'warning'],
+    ['security-defined', 'openapi', 'security', 'error', 'Every operation is covered by a security requirement or explicitly marked public.', true, 'error'],
+    ['no-http-basic', 'openapi', 'security', 'warning', 'HTTP Basic sends reusable credentials on every request.', true, 'warning'],
+  ].map(([ruleId, pack, category, defaultSeverity, rationale, enabled, severity]) => ({
+    ruleId: ruleId as string,
+    pack: pack as string,
+    category: category as string,
+    defaultSeverity: defaultSeverity as string,
+    rationale: rationale as string,
+    docsAnchor: ruleId as string,
+    enabled: enabled as boolean,
+    severity: severity as string,
+  }));
+
+  const DOCS_YAML = [
+    'rules:',
+    '  operation-summary-max-length:',
+    '    description: Summaries stay under 60 characters.',
+    '    severity: warning',
+    '    given: $.paths[*][*].summary',
+    '    then:',
+    '      function: length',
+    '      functionOptions: { max: 60 }',
+    '  refund-idempotency-key:',
+    '    description: POST /refunds must declare an Idempotency-Key header.',
+    '    severity: error',
+    "    given: $.paths['/refunds'].post.parameters[*].name",
+    '    then:',
+    '      function: pattern',
+    '      functionOptions: { match: ^Idempotency-Key$ }',
+    '',
+  ].join('\n');
+
+  const DOCS_POLICY = {
+    guideId: GUIDE_ID,
+    axisGates: { quality: { minGrade: 'B' } },
+    requiredCoverage: ['quality'],
+    ciOutcomes: { failOnUnwaivedErrors: true, failOnRequiredCoverage: true, failOnAxisGates: false },
+    breakingPublishPolicy: 'block',
+    requiredApprovals: 2,
+    requiredReviewerRole: 'release-manager',
+  };
+
+  const DOCS_POLICY_VERSIONS = [
+    {
+      id: 'pv-2',
+      guideId: GUIDE_ID,
+      versionNumber: 2,
+      contentFingerprint: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8',
+      axisGates: DOCS_POLICY.axisGates,
+      requiredCoverage: DOCS_POLICY.requiredCoverage,
+      ciOutcomes: DOCS_POLICY.ciOutcomes,
+      actorLabel: 'maria.chen@acme.dev',
+      createdAt: '2026-09-26T13:20:00Z',
+    },
+    {
+      id: 'pv-1',
+      guideId: GUIDE_ID,
+      versionNumber: 1,
+      contentFingerprint: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b',
+      axisGates: { quality: { minGrade: 'C' } },
+      requiredCoverage: [],
+      ciOutcomes: { failOnUnwaivedErrors: true, failOnRequiredCoverage: true, failOnAxisGates: true },
+      actorLabel: 'devon.ruiz@acme.dev',
+      createdAt: '2026-08-14T09:05:00Z',
+    },
+  ];
+
+  beforeEach(() => {
+    const base = global.fetch;
+    const fn = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const method = init?.method || 'GET';
+      if (url.includes('/api/access/roles')) {
+        return jsonResponse({
+          success: true,
+          data: [
+            { id: 'r-owner', slug: 'owner', name: 'Owner', is_builtin: true },
+            { id: 'r-admin', slug: 'admin', name: 'Admin', is_builtin: true },
+            { id: 'r-release', slug: 'release-manager', name: 'Release Manager', is_builtin: false },
+          ],
+        });
+      }
+      if (method === 'GET' && url.endsWith(`${GUIDE_ID}/rules`)) {
+        return jsonResponse({ success: true, data: rulesView(DOCS_RULES as typeof RULES) });
+      }
+      if (method === 'GET' && url.endsWith(`${GUIDE_ID}/custom-rules`)) {
+        return jsonResponse({
+          success: true,
+          data: { guideId: GUIDE_ID, guideName: 'Acme REST', source: 'custom', yaml: DOCS_YAML, ruleCount: 2 },
+        });
+      }
+      if (url.includes(`${GUIDE_ID}/policy-versions`)) {
+        return jsonResponse({
+          success: true,
+          data: { versions: DOCS_POLICY_VERSIONS, count: DOCS_POLICY_VERSIONS.length },
+        });
+      }
+      if (method === 'GET' && url.endsWith(`${GUIDE_ID}/policy`)) {
+        return jsonResponse({ success: true, data: DOCS_POLICY });
+      }
+      return (base as typeof fetch)(input, init);
+    });
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = fn;
+  });
+
+  /** The page root, which is what the docs screenshot mounts. */
+  const page = () =>
+    (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders the rule catalog, the custom-rules editor after a dry run, and the policy', async () => {
+    render(<GuideEditorClient guideId={GUIDE_ID} />);
+    await screen.findByText('security-defined');
+    expect(screen.getByTestId('guide-enabled-count')).toHaveTextContent('9 of 10 rules enabled');
+    writeA11yFixture('style-guide-rules', liveMarkup(page()));
+
+    fireEvent.click(screen.getByTestId('guide-tab-custom'));
+    await screen.findByLabelText('Custom rules YAML');
+    await waitFor(() => expect(screen.getByTestId('custom-rules-run')).toBeEnabled());
+    fireEvent.click(screen.getByTestId('custom-rules-run'));
+    await screen.findByTestId('custom-rules-finding-f-1');
+    // Monaco is mocked as a bare textarea, which a browser draws as a two-line box. The dump
+    // shows the editor's text as a block instead, so the screenshot reads like the real editor.
+    const holder = document.createElement('div');
+    holder.innerHTML = liveMarkup(page());
+    const customPage = holder.firstElementChild as HTMLElement;
+    const yaml = customPage.querySelector('textarea[aria-label="Custom rules YAML"]');
+    if (yaml) {
+      const block = document.createElement('pre');
+      block.className = 'mono';
+      block.style.margin = '0';
+      block.style.padding = '12px 16px';
+      block.style.whiteSpace = 'pre';
+      block.textContent = (screen.getByLabelText('Custom rules YAML') as HTMLTextAreaElement).value;
+      yaml.replaceWith(block);
+    }
+    writeA11yFixture('style-guide-custom-rule', customPage.outerHTML);
+
+    fireEvent.click(screen.getByTestId('guide-tab-policy'));
+    const panel = await screen.findByTestId('guide-policy-panel');
+    await waitFor(() =>
+      expect(within(panel).getByLabelText('Required reviewer role')).toHaveValue('release-manager')
+    );
+    writeA11yFixture('style-guide-policy', liveMarkup(page()));
+  });
+
+  it('renders the built-in guide’s read-only catalog', async () => {
+    guideSource = 'builtin';
+    render(<GuideEditorClient guideId={GUIDE_ID} />);
+    await screen.findByText('security-defined');
+    expect(screen.getByTestId('guide-readonly-rules')).toBeInTheDocument();
+    writeA11yFixture('style-guide-builtin', liveMarkup(page()));
   });
 });

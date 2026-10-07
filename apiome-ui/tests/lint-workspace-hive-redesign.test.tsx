@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import LintPostureSummary from '../src/app/components/ade/lintWorkspace/LintPostureSummary';
@@ -42,6 +42,8 @@ import {
   summary,
   trends,
 } from './helpers/lint-workspace-fixtures';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import LintWorkspacePage from '../src/app/ade/dashboard/lint-workspace/page';
 
 /** The empty filter bundle, plus whatever a case is about. */
 function filters(overrides: Partial<WorkspaceFilters> = {}): WorkspaceFilters {
@@ -774,5 +776,473 @@ describe('LintQualityRanksPanel', () => {
 
     render(<LintQualityRanksPanel series={null} days={30} onDaysChange={jest.fn()} />);
     expect(screen.getByText('No quality-rank data yet')).toBeInTheDocument();
+  });
+});
+
+// =========================================================================================
+// The docs fixtures
+// =========================================================================================
+
+/** The address bar the page reads its filters from; each docs case sets its own. */
+let mockSearchParams = new URLSearchParams();
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useSearchParams: () => mockSearchParams,
+  usePathname: () => '/ade/dashboard/lint-workspace',
+}));
+
+jest.mock('@lib/auth/session-client', () => ({
+  useAuthSession: () => ({
+    data: { user: { user_id: 'u-ada', current_tenant_id: 't-acme', email: 'ada@acme.io' } },
+    status: 'authenticated',
+    update: jest.fn(),
+  }),
+  AuthSessionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+/**
+ * The documentation site's Lint posture page (`apiome-docs/screens.json`, DOCS-1.8) is captured
+ * from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/lint-workspace-hive-redesign.test.tsx -t "docs fixtures"`
+ *
+ * They render the real page against a mocked API: an Acme tenant with three REST catalogs and
+ * one MCP server, a queue of eight findings across every severity and most decision states,
+ * three saved views and a month of trends.
+ */
+describe('the docs fixtures', () => {
+  const originalFetch = global.fetch;
+
+  /** The queue, as the findings endpoint sends it. */
+  const DOCS_FINDINGS = [
+    finding({
+      sourceFingerprint: 'docs-f1',
+      ruleId: 'no-http-basic',
+      message: 'HTTP Basic auth scheme detected on the payouts surface.',
+      location: { path: 'components.securitySchemes.basicAuth', line: 412 },
+      projectId: 'p-payments',
+      projectName: 'Payments API',
+      subjectLabel: 'v2.4.0',
+      compositeGrade: 'C',
+      isNew: true,
+    }),
+    finding({
+      sourceFingerprint: 'docs-f2',
+      ruleId: 'oauth2-scopes-declared',
+      message: 'Operation GET /accounts/{id} requires OAuth2 but declares no scopes.',
+      location: { path: 'paths./accounts/{id}.get.security', line: 88 },
+      remediation: { fix: 'List the scopes the operation needs, e.g. accounts:read.' },
+      projectId: 'p-accounts',
+      projectName: 'Accounts API',
+      subjectLabel: 'v1.9.2',
+      versionRecordId: 'ver_accounts_192',
+      compositeGrade: 'B',
+      isNew: true,
+      evidenceRunId: 'run_a91c04',
+    }),
+    finding({
+      sourceFingerprint: 'docs-f3',
+      ruleId: 'no-secrets-in-examples',
+      message: 'Tool example for create_journal_entry contains a live-looking API key.',
+      location: { path: 'tools.create_journal_entry.examples[0].arguments.api_key' },
+      remediation: { fix: 'Replace the value with a placeholder such as sk_test_….' },
+      scannerId: 'apiome-mcp',
+      profile: 'Acme MCP · trust pack',
+      subjectType: 'mcp_endpoint_version',
+      versionRecordId: null,
+      mcpVersionId: 'mcpv_ledger_081',
+      projectId: null,
+      projectName: null,
+      subjectLabel: 'Ledger MCP 0.8.1',
+      compositeGrade: 'D',
+      isNew: false,
+      effectiveState: 'waiver_requested',
+      evidenceRunId: 'run_mcp_5521',
+      decision: {
+        id: 'dec-ledger-secrets',
+        projectId: null,
+        state: 'waiver_requested',
+        ownerUserId: 'u-grace',
+        rationale: 'Sandbox key, rotated nightly; the example is generated from the test tenant.',
+        linkedTicket: 'https://tracker.acme.io/SEC-2210',
+        expiresAt: null,
+      },
+      latestPolicyEvaluationId: 'ev_mcp_3310',
+    }),
+    finding({
+      sourceFingerprint: 'docs-f4',
+      ruleId: 'operation-4xx-response',
+      message: 'POST /payouts documents no 4xx response.',
+      severity: 'warning',
+      category: 'quality',
+      axisKey: 'quality',
+      location: { path: 'paths./payouts.post.responses', line: 640 },
+      remediation: { fix: 'Document at least a 400 and a 422 response with a problem+json body.' },
+      scannerId: 'spectral',
+      profile: 'Acme REST · baseline',
+      projectId: 'p-payments',
+      projectName: 'Payments API',
+      subjectLabel: 'v2.4.0',
+      compositeGrade: 'C',
+      isNew: false,
+      effectiveState: 'acknowledged',
+      decision: {
+        id: 'dec-payouts-4xx',
+        projectId: 'p-payments',
+        state: 'acknowledged',
+        ownerUserId: 'u-ada',
+        rationale: null,
+        linkedTicket: 'https://tracker.acme.io/PAY-1182',
+        expiresAt: null,
+      },
+      policyPassed: true,
+    }),
+    finding({
+      sourceFingerprint: 'docs-f5',
+      ruleId: 'operation-description',
+      message: 'Operation DELETE /inventory/items/{sku} has no description.',
+      severity: 'warning',
+      category: 'quality',
+      axisKey: 'quality',
+      location: { path: 'paths./inventory/items/{sku}.delete', line: 233 },
+      remediation: { fix: 'Describe what the operation does and when it fails.' },
+      scannerId: 'spectral',
+      profile: 'Acme REST · baseline',
+      projectId: 'p-inventory',
+      projectName: 'Inventory API',
+      subjectLabel: 'v3.0.0',
+      versionRecordId: 'ver_inventory_300',
+      compositeGrade: 'A',
+      isNew: true,
+      policyPassed: true,
+    }),
+    finding({
+      sourceFingerprint: 'docs-f6',
+      ruleId: 'tool-input-schema-strict',
+      message: 'Tool post_transfer accepts additional properties in its input schema.',
+      severity: 'warning',
+      category: 'protocol',
+      axisKey: 'protocol',
+      location: { path: 'tools.post_transfer.inputSchema' },
+      remediation: { fix: 'Set additionalProperties: false on the tool’s input schema.' },
+      scannerId: 'apiome-mcp',
+      profile: 'Acme MCP · trust pack',
+      subjectType: 'mcp_endpoint_version',
+      versionRecordId: null,
+      mcpVersionId: 'mcpv_ledger_081',
+      projectId: null,
+      projectName: null,
+      subjectLabel: 'Ledger MCP 0.8.1',
+      compositeGrade: 'D',
+      isNew: true,
+    }),
+    finding({
+      sourceFingerprint: 'docs-f7',
+      ruleId: 'sbom-license-declared',
+      message: 'Generated SDK dependency left-pad@1.3.0 declares no licence.',
+      severity: 'info',
+      category: 'supply_chain',
+      axisKey: 'supply_chain',
+      location: { path: 'sbom.components[14].licenses' },
+      remediation: null,
+      scannerId: 'apiome-supply-chain',
+      profile: 'Acme REST · supply chain',
+      projectId: 'p-accounts',
+      projectName: 'Accounts API',
+      subjectLabel: 'v1.9.2',
+      versionRecordId: 'ver_accounts_192',
+      compositeGrade: 'B',
+      isNew: false,
+      effectiveState: 'waived',
+      waived: true,
+      decision: {
+        id: 'dec-sbom-licence',
+        projectId: 'p-accounts',
+        state: 'waived',
+        ownerUserId: 'u-grace',
+        rationale: 'Upstream fix tracked; the package is MIT per its repository.',
+        linkedTicket: 'https://tracker.acme.io/OSS-311',
+        expiresAt: '2026-12-31T00:00:00Z',
+      },
+      policyPassed: true,
+    }),
+    finding({
+      sourceFingerprint: 'docs-f8',
+      ruleId: 'path-kebab-case',
+      message: 'Path segment /inventory/stockLevels is not kebab-case.',
+      severity: 'info',
+      category: 'quality',
+      axisKey: 'quality',
+      location: { path: 'paths./inventory/stockLevels', line: 512 },
+      remediation: { fix: 'Rename the segment to /inventory/stock-levels in the next major.' },
+      scannerId: 'spectral',
+      profile: 'Acme REST · baseline',
+      projectId: 'p-inventory',
+      projectName: 'Inventory API',
+      subjectLabel: 'v3.0.0',
+      versionRecordId: 'ver_inventory_300',
+      compositeGrade: 'A',
+      isNew: false,
+      effectiveState: 'false_positive',
+      decision: {
+        id: 'dec-stock-levels',
+        projectId: 'p-inventory',
+        state: 'false_positive',
+        ownerUserId: 'u-ada',
+        rationale: 'Frozen public path; renaming is a breaking change already scheduled for v4.',
+        linkedTicket: null,
+        expiresAt: null,
+      },
+      policyPassed: true,
+    }),
+  ].map((row) => ({ ...row, evidenceCreatedAt: '2026-10-06T08:52:00Z' }));
+
+  /** The two unwaived security errors the "Unwaived security errors" view narrows to. */
+  const SECURITY_ERRORS = DOCS_FINDINGS.filter(
+    (row) => row.severity === 'error' && row.axisKey === 'security' && row.effectiveState === 'open'
+  );
+
+  const DOCS_VIEWS = [
+    savedView({
+      id: 'view-security',
+      name: 'Unwaived security errors',
+      filters: { severity: ['error'], axis: ['security'], state: ['open'] },
+      isPinned: true,
+    }),
+    savedView({
+      id: 'view-waivers',
+      name: 'Waivers to review',
+      filters: { state: ['waiver_requested'] },
+      isPinned: true,
+    }),
+    savedView({
+      id: 'view-mcp',
+      name: 'MCP protocol warnings',
+      filters: { severity: ['warning'], axis: ['protocol'], subjectType: 'mcp_endpoint_version' },
+      isPinned: false,
+    }),
+  ];
+
+  const DOCS_SUMMARY = summary({
+    subjects: { catalog_revisions: 11, mcp_endpoint_versions: 3 },
+    gradeDistribution: { A: 4, B: 5, C: 2, D: 2, F: 0, ungraded: 1 },
+    axes: [
+      { key: 'quality', label: 'Quality', assessedCount: 14, notAssessedCount: 0, averageScore: 86, gradeDistribution: {}, severityCounts: {} },
+      { key: 'protocol', label: 'Protocol', assessedCount: 3, notAssessedCount: 11, averageScore: 71, gradeDistribution: {}, severityCounts: {} },
+      { key: 'security', label: 'Security', assessedCount: 12, notAssessedCount: 2, averageScore: 78, gradeDistribution: {}, severityCounts: {} },
+      { key: 'supply_chain', label: 'Supply chain', assessedCount: 9, notAssessedCount: 5, averageScore: 92, gradeDistribution: {}, severityCounts: {} },
+      { key: 'supportability', label: 'Supportability', assessedCount: 0, notAssessedCount: 14, averageScore: null, gradeDistribution: {}, severityCounts: {} },
+    ],
+    coverage: {
+      missingCount: 2,
+      subjects: [
+        { subjectType: 'catalog_revision', subjectId: 'ver_inventory_300', projectId: 'p-inventory', subjectLabel: 'v3.0.0', missingAxes: ['security'] },
+        { subjectType: 'mcp_endpoint_version', subjectId: 'mcpv_ledger_081', projectId: null, subjectLabel: 'Ledger MCP 0.8.1', missingAxes: ['supply_chain'] },
+      ],
+    },
+    findings: { open: 31, new_count: 9, unwaived_errors: 6, unwaived_security_errors: 2 },
+    waivers: { active: 5, requested: 1, expiring_soon: 1 },
+  });
+
+  /** Thirty days of remediation and policy activity. */
+  const DOCS_TRENDS = {
+    days: 30,
+    series: Array.from({ length: 30 }, (_, index) => ({
+      date: `2026-09-${String(index + 1).padStart(2, '0')}`,
+      newFindings: [3, 1, 0, 4, 2, 0, 1][index % 7],
+      remediatedFindings: [1, 2, 3, 1, 0, 2, 4][index % 7],
+      waiversGranted: index % 9 === 0 ? 1 : 0,
+      waiversExpired: index === 17 ? 1 : 0,
+      markedFalsePositive: index % 11 === 0 ? 1 : 0,
+      policyPackPublications: index === 4 || index === 21 ? 1 : 0,
+    })),
+  };
+
+  /** What the findings endpoint answers for a query string. */
+  function findingsReply(query: URLSearchParams) {
+    const narrowed = query.get('severity') === 'error' && query.get('axis') === 'security';
+    if (narrowed) {
+      return {
+        findings: SECURITY_ERRORS,
+        count: SECURITY_ERRORS.length,
+        total: SECURITY_ERRORS.length,
+        limit: 50,
+        offset: 0,
+        facets: {
+          severity: { error: 2 },
+          effectiveState: { open: 2 },
+          axis: { security: 2 },
+          grade: { B: 1, C: 1 },
+          scannerId: { 'apiome-security': 2 },
+        },
+      };
+    }
+    return {
+      findings: DOCS_FINDINGS,
+      count: DOCS_FINDINGS.length,
+      total: DOCS_FINDINGS.length,
+      limit: 50,
+      offset: 0,
+      facets: {
+        severity: { error: 3, warning: 3, info: 2 },
+        effectiveState: { open: 3, acknowledged: 1, waiver_requested: 1, waived: 1, false_positive: 1 },
+        axis: { quality: 3, security: 3, protocol: 1, supply_chain: 1 },
+        grade: { A: 2, B: 2, C: 2, D: 2 },
+        scannerId: { spectral: 3, 'apiome-security': 2, 'apiome-mcp': 2, 'apiome-supply-chain': 1 },
+      },
+    };
+  }
+
+  /** Answer every read the page and its drawer make. */
+  function installDocsFetch() {
+    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input), 'http://localhost');
+      let body: Record<string, unknown> = {};
+      if (url.pathname === '/api/lint/workspace/findings') body = findingsReply(url.searchParams);
+      else if (url.pathname === '/api/lint/workspace/summary') body = { ...DOCS_SUMMARY };
+      else if (url.pathname === '/api/lint/workspace/trends') body = { ...DOCS_TRENDS };
+      else if (url.pathname === '/api/lint/workspace/quality-ranks') body = { ...rankSeries() };
+      else if (url.pathname === '/api/lint/workspace/views') body = { views: DOCS_VIEWS };
+      else if (url.pathname.startsWith('/api/lint/decisions/')) {
+        body = {
+          events: [
+            {
+              id: 'evt-1',
+              beforeState: null,
+              afterState: 'open',
+              rationale: null,
+              actorLabel: null,
+              createdAt: 'Sep 28, 2026 09:14',
+            },
+            {
+              id: 'evt-2',
+              beforeState: 'open',
+              afterState: 'waiver_requested',
+              rationale: 'Sandbox key, rotated nightly; the example is generated from the test tenant.',
+              actorLabel: 'Grace Hopper',
+              createdAt: 'Oct 2, 2026 16:40',
+            },
+          ],
+        };
+      }
+      return { ok: true, status: 200, statusText: 'OK', json: async () => ({ success: true, ...body }) };
+    }) as unknown as typeof fetch;
+  }
+
+  /** The page root. */
+  const pageRoot = () => document.querySelector('.page') as HTMLElement;
+
+  /** Render the page and wait for the queue, the summary and the views to land. */
+  async function renderPage(query = '') {
+    mockSearchParams = new URLSearchParams(query);
+    installDocsFetch();
+    render(<LintWorkspacePage />);
+    await screen.findByTestId('lint-workspace-summary');
+    await waitFor(() => expect(screen.getAllByTestId('saved-view-chip')).toHaveLength(3));
+    await screen.findAllByText('no-http-basic');
+    // Let the trend and rank reads settle before anything is written.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+
+  /** Tick rows of the queue by their rule id. */
+  function selectRows(ruleIds: string[]) {
+    const table = screen.getByRole('table');
+    for (const ruleId of ruleIds) {
+      const row = within(table).getByText(ruleId).closest('tr') as HTMLElement;
+      fireEvent.click(within(row).getByRole('checkbox'));
+    }
+  }
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    mockSearchParams = new URLSearchParams();
+  });
+
+  it('writes the page and the finding drawer', async () => {
+    await renderPage();
+    expect(screen.getByTestId('tab-queue')).toHaveTextContent('8');
+    writeA11yFixture('lint-posture', liveMarkup(pageRoot()));
+
+    fireEvent.click(within(screen.getByRole('table')).getByText('no-secrets-in-examples'));
+    const drawer = await screen.findByTestId('finding-detail-drawer');
+    await waitFor(() => expect(screen.getAllByTestId('detail-history-event')).toHaveLength(2));
+    writeA11yFixture('lint-posture-finding', liveMarkup(drawer));
+  });
+
+  it('writes the queue narrowed by the "Unwaived security errors" view', async () => {
+    await renderPage('severity=error&axis=security&state=open');
+    const current = screen
+      .getAllByTestId('saved-view-chip')
+      .find((chip) => chip.hasAttribute('data-current'));
+    expect(current).toHaveTextContent('Unwaived security errors');
+    expect(screen.getByTestId('workspace-clear-filters')).toHaveTextContent('Clear filters (3)');
+    writeA11yFixture('lint-posture-filtered', liveMarkup(pageRoot()));
+  });
+
+  it('writes the bulk bar, the owner assignment and both waiver dialogs', async () => {
+    await renderPage();
+    selectRows(['no-http-basic', 'oauth2-scopes-declared', 'operation-description']);
+    expect(screen.getByText('3 findings selected')).toBeInTheDocument();
+    writeA11yFixture('lint-posture-bulk', liveMarkup(pageRoot()));
+
+    fireEvent.change(screen.getByTestId('bulk-owner-input'), { target: { value: 'u-grace' } });
+    expect(screen.getByTestId('bulk-assign-owner')).toBeEnabled();
+    writeA11yFixture('lint-posture-assign', liveMarkup(pageRoot()));
+    fireEvent.change(screen.getByTestId('bulk-owner-input'), { target: { value: '' } });
+
+    fireEvent.click(screen.getByTestId('bulk-waiver_requested'));
+    const request = await screen.findByTestId('waiver-dialog');
+    expect(request).toHaveTextContent('Request waiver for 3 findings');
+    fireEvent.change(screen.getByTestId('waiver-rationale'), {
+      target: {
+        value:
+          'Partner integrations still authenticate with Basic until the OAuth2 migration ships in Q1.',
+      },
+    });
+    fireEvent.change(screen.getByTestId('waiver-ticket'), {
+      target: { value: 'https://tracker.acme.io/SEC-2231' },
+    });
+    fireEvent.change(screen.getByTestId('waiver-expires'), { target: { value: '2026-12-31' } });
+    expect(screen.getByTestId('waiver-submit')).toBeEnabled();
+    writeA11yFixture('lint-posture-waive', liveMarkup(request));
+    fireEvent.click(within(request).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('waiver-dialog')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('bulk-waived'));
+    const approve = await screen.findByTestId('waiver-dialog');
+    expect(approve).toHaveTextContent('Approve waiver for 3 findings');
+    fireEvent.change(screen.getByTestId('waiver-rationale'), {
+      target: { value: 'Accepted by the security review board on Oct 6; re-scan after migration.' },
+    });
+    fireEvent.change(screen.getByTestId('waiver-ticket'), {
+      target: { value: 'https://tracker.acme.io/SEC-2231' },
+    });
+    fireEvent.change(screen.getByTestId('waiver-expires'), { target: { value: '2027-01-31' } });
+    expect(screen.getByTestId('waiver-permission-note')).toBeInTheDocument();
+    writeA11yFixture('lint-posture-waive-approve', liveMarkup(approve));
+  });
+
+  it('writes the save-view dialog, the trends tab and the quality ranks tab', async () => {
+    await renderPage('severity=warning&axis=protocol');
+    fireEvent.click(screen.getByTestId('lint-workspace-save-view'));
+    const dialog = await screen.findByTestId('saved-view-dialog');
+    fireEvent.change(screen.getByTestId('saved-view-name'), {
+      target: { value: 'Protocol warnings' },
+    });
+    expect(screen.getByTestId('saved-view-query')).toHaveTextContent('severity=warning');
+    writeA11yFixture('lint-posture-save-view', liveMarkup(dialog));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('saved-view-dialog')).not.toBeInTheDocument());
+
+    mockSearchParams = new URLSearchParams();
+    fireEvent.click(screen.getByTestId('tab-trends'));
+    await screen.findByTestId('lint-workspace-trends');
+    writeA11yFixture('lint-posture-trends', liveMarkup(pageRoot()));
+
+    fireEvent.click(screen.getByTestId('tab-ranks'));
+    await screen.findByTestId('lint-workspace-quality-ranks');
+    writeA11yFixture('lint-posture-ranks', liveMarkup(pageRoot()));
   });
 });

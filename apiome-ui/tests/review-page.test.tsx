@@ -54,6 +54,7 @@ jest.mock('@lib/external-links', () => ({
 
 import { toast } from 'sonner';
 import ReviewPageClient from '../src/app/components/ade/reviews/ReviewPageClient';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const REVIEW_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const PROJECT_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -460,5 +461,113 @@ describe('the reviewers card', () => {
     expect(within(earlier).getByText('Requested changes')).toBeInTheDocument();
     expect(within(earlier).getByText('Rename id to petId')).toBeInTheDocument();
     expect(within(earlier).getAllByText('Pending')).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Reviews page (`apiome-docs/screens.json`, DOCS-1.8) is captured from
+ * these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/review-page.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  const MARCUS = VIEWER;
+  const ELENA = DANA;
+
+  /** Round 2 of a review of Payments API v2.4.0: Elena has approved, Marcus (the viewer) has not. */
+  const OPEN = detail({
+    review: {
+      version_label: '2.4.0',
+      requested_by_name: 'Priya Raman',
+      round: 2,
+      reviewer_count: 2,
+      approved_count: 1,
+      pending_count: 1,
+      created_at: '2026-10-02T09:12:00Z',
+      updated_at: '2026-10-06T15:40:00Z',
+    },
+    reviewers: [
+      row({ id: 'row-marcus', user_id: MARCUS, user_name: 'Marcus Lee', created_at: '2026-10-05T10:00:00Z' }),
+      row({
+        id: 'row-elena',
+        user_id: ELENA,
+        user_name: 'Elena Vasquez',
+        decision: 'approve',
+        note: 'Refund webhooks look right. Thanks for documenting the retry headers.',
+        decided_at: '2026-10-06T15:40:00Z',
+        created_at: '2026-10-05T10:00:00Z',
+      }),
+    ],
+    history: [
+      row({
+        id: 'r1-marcus',
+        round: 1,
+        user_id: MARCUS,
+        user_name: 'Marcus Lee',
+        decision: 'request_changes',
+        note: 'DELETE /refunds/{refundId} drops the 409 response clients rely on. Keep it, or deprecate it first.',
+        decided_at: '2026-10-03T11:25:00Z',
+      }),
+      row({
+        id: 'r1-elena',
+        round: 1,
+        user_id: ELENA,
+        user_name: 'Elena Vasquez',
+        decision: 'approve',
+        decided_at: '2026-10-03T09:58:00Z',
+      }),
+    ],
+  });
+
+  /** The same round after Marcus approves: every reviewer has, so the review is approved. */
+  const APPROVED = detail({
+    ...OPEN,
+    review: { ...OPEN.review, state: 'approved', approved_count: 2, pending_count: 0, updated_at: '2026-10-07T08:30:00Z' },
+    reviewers: [
+      { ...OPEN.reviewers[0], decision: 'approve', note: 'The 409 is back. Approving for the 2.4 release.', decided_at: '2026-10-07T08:30:00Z' },
+      OPEN.reviewers[1],
+    ],
+  });
+
+  const DOCS_CHANGES = {
+    success: true,
+    head: { id: HEAD, label: '2.4.0' },
+    baseline: { id: 'base-231', label: '2.3.1' },
+    initialPublication: false,
+    changes: [
+      { ruleId: 'required-request-property-added', severity: 'breaking', pointer: '/paths/~1refunds/post/requestBody' },
+      { ruleId: 'operation-added', severity: 'non-breaking', pointer: '/paths/~1refunds~1{refundId}~1cancel/post' },
+      { ruleId: 'property-added', severity: 'non-breaking', pointer: '/components/schemas/Refund/properties/reason_code' },
+      { ruleId: 'response-header-added', severity: 'non-breaking', pointer: '/paths/~1refunds/post/responses/202/headers/Retry-After' },
+      { ruleId: 'description-changed', severity: 'docs-only', pointer: '/paths/~1refunds~1{refundId}/get' },
+    ],
+    counts: { breaking: 1, 'non-breaking': 3, 'docs-only': 1, total: 5 },
+    maxSeverity: 'breaking',
+    classifiedError: null,
+  };
+
+  /** The page root — `.page` when the shell's chrome rendered one. */
+  const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders an open review, then the reviewer approving it', async () => {
+    installFetch([
+      { test: new RegExp(`${BASE}$`), reply: () => ({ success: true, review: OPEN, project: { id: PROJECT_ID, name: 'Payments API', slug: 'payments-api' }, viewerId: MARCUS }) },
+      { test: /\/changes$/, reply: () => DOCS_CHANGES },
+      { test: /\/decision$/, method: 'POST', reply: () => ({ success: true, review: APPROVED }) },
+    ]);
+    render(<ReviewPageClient reviewId={REVIEW_ID} />);
+    await screen.findByRole('heading', { name: /^Review of v2\.4\.0/ });
+    await screen.findByTestId('review-classified');
+    writeA11yFixture('review', page().outerHTML);
+
+    fireEvent.change(screen.getByTestId('review-decision-note'), {
+      target: { value: 'The 409 is back. Approving for the 2.4 release.' },
+    });
+    fireEvent.click(screen.getByTestId('review-approve'));
+    expect(await screen.findByText('You approved this round.')).toBeInTheDocument();
+    expect(screen.getByTestId('review-status')).toHaveTextContent('Approved');
+    writeA11yFixture('review-decision', page().outerHTML);
   });
 });
