@@ -1,0 +1,124 @@
+---
+title: Repositories
+description: Register Git repositories, find the specs in them, and import them in bulk.
+sidebar_position: 1.4
+tags: [repositories, import, git]
+---
+
+<Route path="/ade/dashboard/repositories" />
+
+Register a Git repository and Apiome scans it for API specifications you can import — one at a time
+or many at once — and keeps them refreshed. **Go to Bring in → Repositories.** The tabs across the
+top are **Repositories**, **Discovered specs**, **Quota & rate limits** and **Webhook IP
+allowlist**.
+
+<Screenshot id="repositories" alt="Repositories: indexed files, imports and last scan, refresh activity, and the repository table" />
+
+The list shows each repository's **Provider**, **Branch**, **Files**, **Health**, **Status**, **Last
+scan** and how many files are **Importable**. Filter by provider and visibility, sort by most recently
+scanned or by name, and switch between **Grid** and **List**. A row's menu has **Open detail** and
+**Remove from list**.
+
+<Screenshot id="repositories-cards" alt="Repositories in Grid view, one card per repository with its health and scan state" />
+
+## Add a repository
+
+<Route path="/ade/dashboard/repositories/new" />
+
+1. **Click “Add repository”** (or press <Kbd keys="N"/>).
+2. Under **Where does the repository live?** choose:
+   - **Linked account** — pick from your connected GitHub, GitLab or Bitbucket account. Browsing a
+     provider's repositories works for GitHub only; **Manage linked accounts →** connects one.
+   - **Public Git URL** — paste an **HTTPS URL** such as
+     `https://github.com/apiome/apiome.git` and **click “Test”**.
+3. **Click “Continue”.** Apiome says **Repository registered.** and starts its first scan.
+
+<Screenshot id="repository-add" alt="Add a repository with no linked accounts yet: Linked account and Public Git URL choices, and Connect an account" />
+
+The page also shows a **Proposed steps 2–4** card marked *Redesign proposal — not in the app today*:
+it describes planned steps (browse, scan settings, confirm) that are not part of the product yet.
+
+<Screenshot id="repository-add-url" alt="Add a repository with Public Git URL: an HTTPS URL, Test and Continue" />
+
+<Screenshot id="repository-add-linked" alt="Add a repository with a linked GitHub account: choose a repository from the account" />
+
+## A repository's page
+
+<Route path="/ade/dashboard/repositories/[id]" />
+
+**Click a repository.** Five tabs:
+
+- **Preview** — files indexed, the importable estimate, branches, recent scans and recent imports.
+- **Files** — every file Apiome indexed on the branch. **Hide non-importable** narrows the list to
+  specifications; a file's menu has **View details**, **Import…**, **Open on provider** and **Copy
+  path**.
+- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
+- **Imports** — the import history.
+- **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
+  conflict (**Hold for review**, **Overwrite** or **New branch**), and **Remove repository**.
+
+<Screenshot id="repository-preview" alt="A repository's Preview tab: files indexed, importable estimate, branches, recent scans and imports" />
+
+<Screenshot id="repository-files" alt="A repository's Files tab: importable files with detected kind, quality and confidence" />
+
+<Screenshot id="repository-file-detail" alt="A file's details: detected metadata, the importable verdict and the source" />
+
+<Screenshot id="repository-settings" alt="A repository's Settings tab: source, scan cadence and refresh behaviour" />
+
+### Import from a repository
+
+1. On **Files**, tick the specifications to import and **click “Import selected”**.
+2. **One file** opens **Map & import**: choose an **Existing project** or **Create a new project**,
+   and the version to create, then import.
+3. **Several files** open **Import N selected files**: **Review** each file's target (a new
+   version of an existing project, or a new project), **Verify**, then **“Import N specs”**. Each
+   spec becomes its own import job.
+
+<Screenshot id="repository-map-import" alt="Map & import: target an existing project or create a new one, and the version to create" />
+
+<Screenshot id="repository-batch-import" alt="Import 2 selected files: each file's kind, resolution and target project" />
+
+## Discovered specs
+
+<Route path="/ade/dashboard/repositories/catalog" />
+
+**Discovered specs** lists every specification the scanner found across all repositories, with its
+**Status**: **Discovered**, **Mapped** (bound to a project), **Imported** or **Needs attention**.
+
+<Screenshot id="repositories-catalog" alt="Discovered specs: specs found across repositories with format, project and status" />
+
+## Quota & rate limits
+
+<Route path="/ade/dashboard/repositories/telemetry" />
+
+Repositories are polled within an hourly quota. **Quota & rate limits** shows how much of it this
+workspace uses — polls, repositories and files deferred, and content scanned — over **7d**, **30d**
+or **90d**.
+
+<Screenshot id="repositories-telemetry" alt="Quota & rate limits: polling quota, polls, deferrals and bytes scanned" />
+
+## Webhook IP allowlist
+
+<Route path="/ade/dashboard/repositories/webhook-ip-allowlist" />
+
+Provider webhooks are only accepted from the provider's published address ranges, refreshed daily.
+To allow a self-hosted Git server, add its range under **Additional ranges for this workspace** —
+**Address or CIDR** (for example `203.0.113.0/24`) and **Why** — and **click “Allow range”**.
+**Bypass allowlist** turns enforcement off with a stated reason. Only workspace administrators can
+change it.
+
+<Screenshot id="webhook-allowlist" alt="Webhook IP allowlist: enforcement, provider ranges and additional ranges for the workspace" />
+
+## With the CLI or the API
+
+- CLI: `apiome repos add --url https://github.com/apiome/apiome.git`, `apiome repos list`,
+  `apiome repos files <repo>`, `apiome repos import <repo> --files "**/openapi*.yaml"
+  --new-project` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `GET` / `POST /v1/tenants/{tenant}/repositories`, `GET …/repositories/{repo}/files`,
+  `POST …/repositories/{repo}/refresh`, `GET …/repository-quota-telemetry`,
+  `GET …/repository-webhook-ip-allowlist` — see the [API reference](../reference/api-reference.md).
+
+## Where next
+
+- [Import wizard](./import-wizard.mdx)
+- [Versions](../build/versions.mdx)

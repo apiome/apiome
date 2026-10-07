@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.6 | #5623 | Bring in — Catalog, import wizard, Repositories, MCP servers | Document the catalog list/item/inspectors and conversion, the import wizard’s eight sources, all seven repository routes, and the five MCP routes | `documentation`, `catalog`, `repository`, `mcp` | Y | N | L | `apiome-docs/docs/bring-in/**`, `apiome-docs/screens.json` |
 | 1.7 | #5624 | Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out | Document the publish surface, visibility, hosted mocks and scenarios, the EOL timeline and CSV, the five-step export studio, SDK generation settings | `documentation`, `export`, `mock-server` | Y | N | M | `apiome-docs/docs/ship/**`, `apiome-docs/screens.json` |
 | 1.8 | #5625 | Govern — Style guides, Lint posture, Access audit, Reviews | Document style guides and revisions, assignment and policies, the lint posture workspace (views, waivers, bulk actions), the audit ledger and drawer, and the review page | `documentation`, `governance`, `linting` | Y | N | M | `apiome-docs/docs/govern/**`, `apiome-docs/screens.json` |
 | 1.9 | #5626 | Workspace & account — Members, Roles, API keys, Tenants, Profile, Linked accounts, Preferences, Notifications, Help | Document tenant administration and the personal surfaces, including the Preferences pane (themes, font size, density) and the keyboard reference | `documentation`, `tenancy`, `api-keys`, `profile` | Y | N | M | `apiome-docs/docs/workspace/**`, `apiome-docs/screens.json` |
@@ -262,7 +261,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.6] Bring in — Catalog, import wizard, Repositories, MCP servers` — [#5623](https://github.com/apiome/apiome/issues/5623)
+### ✅ `apiome: [DOCS-1.6] Bring in — Catalog, import wizard, Repositories, MCP servers` — [#5623](https://github.com/apiome/apiome/issues/5623) — **Complete**
 **Problem statement.** Bring-in is the widest surface (catalog, 50+ formats, repositories with webhooks/telemetry/allowlists, MCP catalog/endpoint/analytics/capabilities/compare) and the existing guides cover import and conversion only.
 
 **Solution / scope.**
@@ -272,9 +271,9 @@ Milestone: **RC6** (epic and every issue).
 - MCP servers: catalog, endpoint (versions, capabilities, lint, settings), analytics, capabilities directory, compare, agent access.
 
 **Acceptance criteria.**
-- [ ] Every Bring-in route has a page with a current screenshot
-- [ ] Each import source has a worked example with sample data
-- [ ] Cross-links to the REST and MCP reference pages
+- [x] Every Bring-in route has a page with a current screenshot
+- [ ] Each import source has a worked example with sample data — *every source has a worked example with repository sample files, except SwaggerHub (placeholder owner/API) and Git (needs the reader's linked account)*
+- [x] Cross-links to the REST and MCP reference pages
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

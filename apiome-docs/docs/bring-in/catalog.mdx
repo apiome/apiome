@@ -1,0 +1,116 @@
+---
+title: Catalog
+description: Imports in formats other than OpenAPI, stored as they are and convertible later.
+sidebar_position: 1.1
+tags: [catalog]
+---
+
+<Route path="/ade/dashboard/catalog" />
+
+The **catalog** holds specifications in formats that do not map one-to-one to OpenAPI — gRPC,
+GraphQL, AsyncAPI, OData, WSDL, Avro, RAML, Smithy, TypeSpec and more. Catalog items keep their
+original format: you can search, diff, lint and export them, but not publish them. To publish one,
+[convert it to OpenAPI](#convert-to-openapi). OpenAPI and Swagger imports go to
+[Projects](../build/projects.mdx) instead.
+
+**Go to Bring in → Catalog.**
+
+<Screenshot id="catalog" alt="The Catalog in Table view: a banner explaining catalog items, supported formats, statistics, filters and four items" />
+
+## Find an item
+
+- **Filter** by text (<Kbd keys="/"/>), **Formats**, protocol (**REST**, **RPC**, **Event**,
+  **Graph**, **Data Schema**, **Agent**), source (**Uploaded file**, **Source URL**, **Pasted
+  content**, **Live discovery**) and grade.
+- **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
+- **Sort** by name, created, updated, quality, grade or format; choose the same column again to
+  reverse it.
+- **Cards** or **Table**; cards can be grouped by protocol. Your choices are remembered in this
+  browser.
+
+<Screenshot id="catalog-cards" alt="The Catalog in Cards view, grouped by protocol" />
+
+**Supported import formats** (collapsed under the banner) lists every format the catalog imports
+now, and the ones Apiome recognizes but cannot import yet. The full list is on [Supported
+formats](./supported-formats.md).
+
+<Screenshot id="catalog-formats" alt="The Supported import formats panel expanded: formats importable now and formats recognized but not yet importable" />
+
+## Add an item
+
+**Click “Import to catalog”** (or press <Kbd keys="I"/>) — see [Import
+wizard](./import-wizard.mdx#import-to-catalog).
+
+## An item's page
+
+<Route path="/ade/dashboard/catalog/[id]" />
+
+**Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
+**“Convert to OpenAPI Project”**, **“Export”** and **“View code”**. Eight tabs follow:
+
+| Tab | Shows |
+| --- | --- |
+| **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot |
+| **Format details** | The payload's native structure in its own vocabulary — see [Catalog format details](./catalog-format-details.md) |
+| **Source & code** | The raw imported source, read-only, with **“Download raw source”** |
+| **Provenance** | Where it came from: intake, format detection, normalization and the import job |
+| **Conversions** | Every conversion to OpenAPI, with its evidence |
+| **Lint & score** | The lint score and findings |
+| **Test bench** | Validate a payload against one of the item's schemas |
+| **Versions** | The item's revisions |
+
+<Screenshot id="catalog-item" alt="A catalog item's Overview tab: header with quality and lint scores, API surface and quality snapshot" />
+
+<Screenshot id="catalog-item-x12" alt="Format details for an X12 837 claim: envelopes, functional groups and segments" />
+
+<Screenshot id="catalog-item-copybook" alt="Format details for a COBOL copybook: the record layout with levels, PICTURE clauses, offsets and lengths" />
+
+<Screenshot id="catalog-item-provenance" alt="The Provenance tab: source intake, format detection, normalization and the catalog record" />
+
+<Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
+
+<Screenshot id="catalog-item-lint" alt="The Lint & score tab: requirement counts, the lint score and findings" />
+
+<Screenshot id="catalog-item-conversions" alt="The Conversions tab: conversion history, empty until a conversion is approved" />
+
+<Screenshot id="catalog-item-test-bench" alt="The Test bench tab: a schema picker, a payload editor and test suites" />
+
+<Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
+
+## Convert to OpenAPI
+
+1. **Click “Convert to OpenAPI Project”** on the item (or in its **⋯** menu). Apiome analyzes
+   what the source can carry onto OpenAPI.
+2. Read the **Fidelity** grade and the **Summary** — **What the source provides** and **What
+   OpenAPI favors but is missing**. **Projection graph** shows construct by construct how the
+   source maps.
+3. Optionally fill **Title**, **Version** and **Servers** under **Fill cheap gaps** and **click
+   “Apply & recompute preview”**.
+4. **Click “Convert”.** For a low-fidelity conversion, first tick **I understand the converted spec
+   will be incomplete and want to convert anyway.**
+
+Apiome creates a new OpenAPI project, and the item shows **Converted to OpenAPI project**. The full
+explanation of reason codes and evidence is on [Convert a catalog item to
+OpenAPI](./convert-to-openapi.md).
+
+**Export to another format…** in the item's menu produces a document in another format instead —
+it never creates a project.
+
+## Delete and restore
+
+**Delete item** hides an item; turn on **Show deleted** and choose **Undelete item** to bring it
+back. **Permanently delete** asks you to type the item's slug, then **“Delete everything”**. In
+Table view, tick items to delete or undelete several at once.
+
+## With the CLI or the API
+
+- CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
+  --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `GET /v1/catalog/{tenant}`, `GET /v1/catalog/{tenant}/{item}`,
+  `GET …/{item}/analysis|lint|source`, `POST …/{item}/convert`, `GET …/{item}/conversions` — see the
+  [API reference](../reference/api-reference.md).
+
+## Where next
+
+- [Import wizard](./import-wizard.mdx)
+- [Supported formats](./supported-formats.md)

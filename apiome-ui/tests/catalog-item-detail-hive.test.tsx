@@ -16,7 +16,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 const mockPush = jest.fn();
@@ -459,6 +459,37 @@ describe('the browser fixtures', () => {
     await waitFor(() => expect(screen.getByTestId('catalog-detail-pane-provenance')).toBeVisible());
     write('provenance', page().outerHTML);
 
+  });
+
+  /**
+   * The documentation site's catalog item page (`apiome-docs/screens.json`, DOCS-1.6) shows every
+   * tab. The ones no browser spec mounts are written here.
+   */
+  it('renders the remaining tabs for the docs fixtures', async () => {
+    await renderDetail();
+    // The Source & code and Lint panes read the raw payload as text; serve the X12 837 sample the
+    // repository ships, and give every other response a `text()` too.
+    const reads = global.fetch as unknown as (input: unknown) => Promise<Response>;
+    const sample = fs.readFileSync(
+      path.join(__dirname, '..', 'examples', 'edi-x12', '07-837-composite-claim.edi'),
+      'utf8',
+    );
+    global.fetch = jest.fn(async (input: unknown) => {
+      if (String(input).endsWith('/source')) {
+        return { ok: true, status: 200, text: async () => sample } as Response;
+      }
+      const response = await reads(input);
+      return { ...response, text: async () => JSON.stringify(await response.json()) } as Response;
+    }) as unknown as typeof fetch;
+    for (const tab of ['source', 'conversions', 'lint', 'test-bench', 'versions']) {
+      fireEvent.click(screen.getByTestId(`catalog-detail-tab-${tab}`));
+      await waitFor(() => expect(screen.getByTestId(`catalog-detail-pane-${tab}`)).toBeVisible());
+      // Let the pane's own load settle before it is written.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+      write(`tab-${tab}`, page().outerHTML);
+    }
   });
 
   it('writes the deleted surface, whose header has lost its two writing verbs', async () => {
