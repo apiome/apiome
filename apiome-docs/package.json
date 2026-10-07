@@ -1,0 +1,55 @@
+{
+  "name": "apiome-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Apiome documentation site (Docusaurus).",
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start --port 3200",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve --port 3200",
+    "clear": "docusaurus clear",
+    "check": "node scripts/check-docs.mjs && docusaurus build",
+    "check:pages": "node scripts/check-docs.mjs",
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/faster": "3.10.2",
+    "@docusaurus/plugin-content-docs": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-common": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "^0.55.0",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@mdx-js/react": "^3.0.0",
+    "clsx": "^2.0.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/react": "^19.2.14",
+    "gray-matter": "^4.0.3",
+    "typescript": "^5.9.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0"
+  }
+}

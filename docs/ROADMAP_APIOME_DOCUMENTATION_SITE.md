@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.1 | #67 | Scaffold the `apiome-docs` Docusaurus site, theme, build and deploy | New `apiome-docs` workspace (Docusaurus 3, TypeScript), Hive theme + bee mark, sidebars by job, `yarn docs:*` scripts, turbo build, CI build on PR and GitHub Pages deploy on `main` | `documentation`, `enhancement`, `infrastructure`, `mvp` | Y | Y | M | `apiome-docs/** (new)`, `package.json (workspaces)`, `turbo.json`, `.github/workflows/apiome-docs.yml (new)` |
 | 1.2 | #5619 | Migrate `docs/guide/**` into the site, grouped by job | Move the 42 guide pages into `apiome-docs/docs/` under the job sidebars, rewrite links, keep generated counts, leave redirect stubs | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/**`, `docs/guide/**`, `scripts/** (format-count generator)` |
 | 1.3 | #5620 | Screenshot pipeline — Playwright captures of every route, light and dark, from the seeded stack | `yarn docs:screenshots` renders a route manifest at 1440 × 900 against the golden-path stack (fixtures as fallback) into `static/img/screens/`; `<Screenshot id/>` swaps by theme; CI fails on missing ids | `documentation`, `testing`, `infrastructure`, `mvp` | Y | Y | L | `apiome-docs/scripts/screenshots.ts (new)`, `apiome-docs/screens.json (new)`, `apiome-docs/src/components/Screenshot.tsx (new)`, `scripts/golden_path/*`, `.github/workflows/apiome-docs.yml` |
 | 1.4 | #5621 | Getting started & the spine — with screenshots | Sign in, launcher, onboarding, Home, first import, versions, publish, browse, export, MCP — the “first project in 10 minutes” path as it ships, every step illustrated | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/getting-started/**`, `apiome-docs/screens.json` |
@@ -152,7 +151,7 @@ Milestone: **RC6** (epic and every issue).
 | 1.13 | #5630 | Docs contract & gates — the “Documentation (Docusaurus)” issue section, `docs:check`, Contributing page | Define the standard Documentation section every issue carries, the implement-skill phase that fulfils it, and `yarn docs:check` (links, orphans, screenshot ids, stale images) wired into CI | `documentation`, `testing`, `infrastructure`, `mvp` | Y | Y | M | `apiome-docs/scripts/check.ts (new)`, `apiome-docs/docs/contributing/**`, `.claude/skills/implement/SKILL.md`, `.claude/skills/create-issues/SKILL.md`, `AGENTS.md`, `.github/workflows/apiome-docs.yml` |
 | 1.14 | #5631 | Triage the legacy package docs — migrate, archive or delete | Sort `apiome-ui/docs/*.md` (hundreds), `apiome-browse/docs/`, `apiome-rest/docs/`, `docs/next-steps/`, `docs/runbooks/` into site pages, `docs/archive/`, or deletion; add a lint that blocks new loose Markdown outside the site | `documentation`, `refactor` | Y | N | M | `apiome-ui/docs/**`, `apiome-browse/docs/**`, `apiome-rest/docs/**`, `docs/next-steps/**`, `docs/runbooks/**`, `docs/archive/** (new)` |
 
-### `apiome: [DOCS-1.1] Scaffold the apiome-docs Docusaurus site, theme, build and deploy` — [#67](https://github.com/apiome/apiome/issues/67)
+### ✅ `apiome: [DOCS-1.1] Scaffold the apiome-docs Docusaurus site, theme, build and deploy` — [#67](https://github.com/apiome/apiome/issues/67) — **Complete**
 **Problem statement.** Apiome has no documentation site. User-facing docs live as 42 Markdown files under `docs/guide/`, hundreds of loose notes under `apiome-ui/docs/`, `apiome-browse/docs/` and `apiome-rest/docs/`, and the REST reference is only the running Swagger UI. Nothing is searchable, versioned, themed or screenshot-backed, and there is no place for an issue to say “the docs changed here”.
 
 **Solution / scope.**
@@ -165,11 +164,11 @@ Milestone: **RC6** (epic and every issue).
 - The repository `README.md` and `docs/guide/README.md` link to the site; `docs/mockups/README.md` keeps pointing at the design mockups (design docs stay in the repo, not on the site).
 
 **Acceptance criteria.**
-- [ ] `yarn workspace apiome-docs build` succeeds from a clean clone; `turbo run build` includes it
-- [ ] Site deploys from `main` to GitHub Pages and the URL is recorded in `README.md`
-- [ ] Light and dark themes use Hive tokens; the bee mark is the logo and favicon; honey appears only as ornament
-- [ ] Sidebar skeleton has the nine job groups with an index page each (content lands in DOCS-1.2 → 1.11)
-- [ ] Broken links fail the build; the README explains how to run and write docs
+- [x] `yarn workspace apiome-docs build` succeeds from a clean clone; `turbo run build` includes it
+- [x] Site deploys from `main` to GitHub Pages and the URL is recorded in `README.md` (`.github/workflows/apiome-docs.yml`; needs **Settings → Pages → Source: GitHub Actions** once)
+- [x] Light and dark themes use Hive tokens; the bee mark is the logo and favicon; honey appears only as ornament
+- [x] Sidebar skeleton has the nine job groups with an index page each (content lands in DOCS-1.2 → 1.11)
+- [x] Broken links fail the build; the README explains how to run and write docs
 
 **Parallelism / dependencies.** First. Blocks every other DOCS issue. Parallel with everything outside this epic.
 

@@ -1,0 +1,9 @@
+// Not used by `docusaurus start/build` — it powers IDE type-checking and `yarn typecheck`.
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true
+  },
+  "exclude": [".docusaurus", "build", "test", "scripts"]
+}

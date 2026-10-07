@@ -7,6 +7,10 @@ takes a specification from import to a published, queryable API surface.
 > `import OpenAPI → edit a class & a path → lint → cut a version → publish → view in browse →
 > export via CLI → query via MCP`
 
+> **Documentation site:** these guides are moving to **<https://apiome.github.io/apiome/>**
+> (Docusaurus, source in [`apiome-docs/`](../../apiome-docs/README.md)). Until each one is migrated,
+> this folder stays the source of truth.
+
 If you only read one other page first, read the project [README](../../README.md) ("Your first
 project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executable definition of
 "the product works").
