@@ -45,7 +45,8 @@ act: if the golden path needs a save, the gate answer is "not yet". Time it.
 - the beta cohort's issue list, labelled and triaged (queries in
   [`docs/runbooks/BETA_TRIAGE.md`](../runbooks/BETA_TRIAGE.md) §6);
 - the open-bug query by severity;
-- the deferred list, each with a written reason;
+- the deferred list, each with a written reason (both kept in
+  [`RC1_BURN_DOWN.md`](RC1_BURN_DOWN.md), queries in its §5);
 - the load-test report against the documented latency budget;
 - the axe results across `apiome-ui`, browse and the designer;
 - the `/security-review` output.
@@ -115,7 +116,8 @@ came from.
 
 ## ACT 3 — The bug ledger (2:30)
 
-**DO** — Show the open-bug query by severity. Zero Critical, zero High.
+**DO** — Show the open-bug query by severity. Zero Critical, zero High. The ledger,
+[`RC1_BURN_DOWN.md`](RC1_BURN_DOWN.md), has to say GREEN, and the query has to agree with it.
 
 **DO** — Now show the **deferred** list. Read two or three out, with the reason each was deferred.
 
