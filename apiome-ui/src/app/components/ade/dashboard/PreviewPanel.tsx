@@ -971,7 +971,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                     className={`p-1.5 rounded transition-colors ${
                       sortOrder === 'asc'
                         ? 'bg-accent-soft text-accent-fg'
-                        : 'text-fg-faint hover:text-fg-muted dark:hover:text-fg-faint hover:bg-inset'
+                        : 'text-fg-faint hover:text-fg-muted hover:bg-inset'
                     }`}
                     title="Sort A → Z"
                   >
@@ -982,7 +982,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                     className={`p-1.5 rounded transition-colors ${
                       sortOrder === 'desc'
                         ? 'bg-accent-soft text-accent-fg'
-                        : 'text-fg-faint hover:text-fg-muted dark:hover:text-fg-faint hover:bg-inset'
+                        : 'text-fg-faint hover:text-fg-muted hover:bg-inset'
                     }`}
                     title="Sort Z → A"
                   >
@@ -1056,7 +1056,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                     className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                       viewMode === 'summary'
                         ? 'bg-surface text-accent shadow-sm'
-                        : 'text-fg-muted hover:text-fg dark:hover:text-fg-on-accent'
+                        : 'text-fg-muted hover:text-fg'
                     }`}
                   >
                     Summary
@@ -1066,7 +1066,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                     className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                       viewMode === 'json'
                         ? 'bg-surface text-accent shadow-sm'
-                        : 'text-fg-muted hover:text-fg dark:hover:text-fg-on-accent'
+                        : 'text-fg-muted hover:text-fg'
                     }`}
                   >
                     JSON
@@ -1076,7 +1076,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                     className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
                       viewMode === 'yaml'
                         ? 'bg-surface text-accent shadow-sm'
-                        : 'text-fg-muted hover:text-fg dark:hover:text-fg-on-accent'
+                        : 'text-fg-muted hover:text-fg'
                     }`}
                   >
                     YAML

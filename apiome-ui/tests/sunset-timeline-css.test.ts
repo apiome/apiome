@@ -649,7 +649,7 @@ describe('what this block decides on purpose', () => {
     // `outline` is not reliably painted on an SVG group, so the ring is a `<circle>` — and
     // the group's own outline is cleared so no browser draws a second, clipped one.
     expect(declaration('.stl-marker', 'outline')).toBe('none');
-    expect(declaration('.stl-marker__ring', 'stroke')).toBe('var(--focus-ring)');
+    expect(declaration('.stl-marker__ring', 'stroke')).toBe('var(--accent)');
     expect(
       declaration(
         '.stl-marker:focus-visible .stl-marker__ring, .stl-marker[data-current] .stl-marker__ring',

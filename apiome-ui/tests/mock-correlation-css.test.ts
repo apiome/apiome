@@ -176,7 +176,7 @@ describe('the mode cards follow the HIVE-2.1 scoped choice-control pattern', () 
     // child combinator would light the whole card up when anything inside it took focus.
     const prelude = ".mock-corr__mode:has(> input[type='radio']:focus-visible)";
     expect(mscRule(prelude).prelude).toContain('> input');
-    expect(declaration(prelude, 'outline')).toContain('var(--focus-ring)');
+    expect(declaration(prelude, 'outline')).toContain('var(--accent)');
   });
 
   it('tints the chosen card and restates the ink that sits on the tint', () => {

@@ -512,7 +512,7 @@ describe('a chosen row is never colour alone', () => {
       '.repo-new-account:has(input:focus-visible)',
       '.repo-new-repo:has(input:focus-visible)',
     ]) {
-      expect(declaration(prelude, 'outline')).toBe('2px solid var(--focus-ring)');
+      expect(declaration(prelude, 'outline')).toBe('2px solid var(--accent)');
     }
   });
 });

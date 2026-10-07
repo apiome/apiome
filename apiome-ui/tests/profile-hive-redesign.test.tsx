@@ -824,7 +824,7 @@ describe('the sources', () => {
   });
 
   it('never puts a bare paragraph inside a tinted banner', () => {
-    // `globals.css` ends with an unlayered `p { color: var(--text-muted) }`, which outranks the
+    // `globals.css` ends with an unlayered `p { color: var(--fg-muted) }`, which outranks the
     // `text-accent-fg` utility `Alert` carries — so a `<p>` inside a banner renders muted ink on
     // the accent tint, 3.86:1 in Solarized and a serious axe finding. `AlertTitle` is an `h5`,
     // which no base rule touches, and a `<span>` inherits. This is the check that stops the

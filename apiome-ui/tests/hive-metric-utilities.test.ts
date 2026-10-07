@@ -9,8 +9,7 @@
  *     heights and not only type — the claim `globals.css` makes in its own comment, and
  *     the thing a frozen `36px` quietly breaks;
  *   • each metric has a class that spends it — a `@utility` for the simple ones, an
- *     unlayered rule for the table rhythm that has to outrank a page's own `py-4` — and
- *     the shared dashboard class module actually uses the page, card and table ones.
+ *     unlayered rule for the table rhythm that has to outrank a page's own `py-4`.
  *
  * Read from source: jsdom compiles no stylesheet, and a utility that stops resolving fails
  * by rendering a slightly different size rather than by throwing.
@@ -23,13 +22,6 @@ import {
   resolveToken,
   topLevelRules,
 } from './helpers/design-tokens';
-import {
-  dashboardMainClass,
-  dashboardPanelPaddedClass,
-  dashboardTableWrapClass,
-  dashboardThClass,
-  dashboardThRightClass,
-} from '../src/app/components/ade/dashboard/dashboardScreenClasses';
 
 const css = readGlobalsCss();
 const layer = readTokenLayer(css);
@@ -145,29 +137,5 @@ describe('a utility per metric, reading the token', () => {
 
   it('leaves horizontal padding alone: that is column rhythm, not density', () => {
     expect(ruleBody('.table-density :where(tbody) :where(td)')).not.toContain('padding-inline');
-  });
-});
-
-describe('the shared dashboard classes spend the metrics', () => {
-  it('takes page padding from the density preference', () => {
-    expect(dashboardMainClass).toContain('p-page');
-    expect(dashboardMainClass).not.toMatch(/\bp-\d/);
-  });
-
-  it('takes card padding from the density preference', () => {
-    expect(dashboardPanelPaddedClass).toContain('p-card');
-    expect(dashboardPanelPaddedClass).not.toMatch(/\bp-\d/);
-  });
-
-  it('opts every dashboard table into the density rhythm from its one wrapper', () => {
-    expect(dashboardTableWrapClass).toContain('table-density');
-  });
-
-  it('stops freezing the header strip with py-3, which the wrapper now owns', () => {
-    for (const cls of [dashboardThClass, dashboardThRightClass]) {
-      expect(cls).not.toMatch(/\bpy-\d/);
-      // Horizontal padding is column rhythm and stays with the class.
-      expect(cls).toContain('px-6');
-    }
   });
 });

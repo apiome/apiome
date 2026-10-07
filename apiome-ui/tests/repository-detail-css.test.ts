@@ -785,7 +785,7 @@ describe('focus is visible on every choice', () => {
     ]) {
       expect({ prelude, ring: declaration(prelude, 'outline') }).toEqual({
         prelude,
-        ring: '2px solid var(--focus-ring)',
+        ring: '2px solid var(--accent)',
       });
     }
   });

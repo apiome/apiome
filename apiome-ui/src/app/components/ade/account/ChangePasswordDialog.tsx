@@ -115,7 +115,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSubmit }: ChangePas
           {error && <Alert variant="error">{error}</Alert>}
 
           {/* A `<span>`, not a `<p>` and not `AlertTitle`. Not a `<p>` because the unlayered
-              `p { color: var(--text-muted) }` at the foot of `globals.css` outranks the
+              `p { color: var(--fg-muted) }` at the foot of `globals.css` outranks the
               banner's own `text-accent-fg` utility, so a paragraph here renders muted ink *on
               the accent tint* — 3.86:1 in Solarized, a serious axe finding. Not `AlertTitle`
               because it is an `h5` and the dialog's own title is an `h2`, which would make this

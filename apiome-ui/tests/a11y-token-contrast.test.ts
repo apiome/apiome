@@ -96,7 +96,7 @@ export function contrastPairs(): ContrastPair[] {
   const text = (fg: string, bgs: string[]) => bgs.forEach((bg) => pairs.push({ fg, bg, role: 'text' }));
   const mark = (fg: string, bgs: string[]) => bgs.forEach((bg) => pairs.push({ fg, bg, role: 'mark' }));
 
-  const pageSurfaces = ['canvas', 'surface', 'subtle', 'surface-muted', 'rail'];
+  const pageSurfaces = ['canvas', 'surface', 'subtle', 'rail'];
   text('fg', [...pageSurfaces, 'inset', 'accent-soft']);
   text('fg-muted', [...pageSurfaces, 'inset', 'accent-soft']);
   text('fg-subtle', pageSurfaces);

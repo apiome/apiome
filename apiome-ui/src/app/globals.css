@@ -256,18 +256,6 @@
   --page-narrow: 920px;
   --content-max: 1200px;
 
-  /* ---- Legacy utility aliases ----------------------------------------
-     `bg-background` / `text-foreground` / `bg-surface` … keep working for one
-     release. They point at the tokens directly since HIVE-1.2 retired the
-     pre-Hive per-theme class blocks that used to swap `--background` /
-     `--foreground`; a theme swap now reaches them through
-     `--color-canvas` / `--color-fg`. Retired by the token sweep in HIVE-1.6. */
-  --color-background: var(--color-canvas);
-  --color-foreground: var(--color-fg);
-  --color-surface-muted: var(--color-subtle);
-  --color-border-subtle: var(--color-border);
-  --color-text-muted: var(--color-fg-muted);
-
   /* ---- Animation keyframes for Radix UI ------------------------------- */
   --animate-in: enter var(--dur-base) var(--ease-out);
   --animate-out: exit var(--dur-fast) var(--ease-out);
@@ -452,29 +440,6 @@
      reads as a rule rather than as a row. */
   --table-cell-pad-y: calc((var(--row-h) - var(--fs-sm) * var(--lh-normal)) / 2);
   --table-head-pad-y: calc(var(--table-cell-pad-y) * 0.6);
-
-  /* ======================================================================
-     Legacy aliases — kept for one release so nothing breaks mid-migration.
-
-     These are the pre-Hive variable names; ~120 call sites still read them
-     (`var(--text-muted)`, `var(--surface)`, …). They are pointers now, so the
-     app picks up the Hive palette without a single component edit. Retired by
-     the `rem`/token sweep in HIVE-1.6.
-
-     `--radius-md` is intentionally *absent*: it used to be declared here as
-     `0.5rem`, which — being unlayered — silently overrode Tailwind's own
-     `--radius-md` and re-pointed every `rounded-md` utility. It now comes from
-     the `@theme` radii scale above.
-     ====================================================================== */
-  --background: var(--color-canvas);
-  --foreground: var(--color-fg);
-  --surface: var(--color-surface);
-  --surface-muted: var(--color-subtle);
-  --border-subtle: var(--color-border);
-  --focus-ring: var(--color-accent);
-  --text-muted: var(--color-fg-muted);
-  --shadow-subtle: var(--shadow-xs);
-  --control-height: var(--control-h);
 }
 
 /* Radix Themes resets typography inside <Theme> to its own
@@ -490,8 +455,10 @@ html .radix-themes {
 
   /* ---- Token-name collisions (HIVE-2.1, #5280) ------------------------
      `@radix-ui/themes` declares three names of its own on `.radix-themes`:
-     `--color-background`, `--color-overlay` and `--color-surface`. Those are
-     also `@theme` token names here, and Tailwind compiles `bg-surface` to
+     `--color-background`, `--color-overlay` and `--color-surface`. The last two
+     are also `@theme` token names here (`--color-background` was too, until
+     HIVE-10.6 retired the legacy `bg-background` utility; it is still restated
+     so Radix's own surfaces stay on the canvas), and Tailwind compiles `bg-surface` to
      `background-color: var(--color-surface)` — so inside `<Theme>` (which is
      the whole app: both layouts wrap their tree in it) every Hive component
      would inherit Radix's translucent panel white instead of the theme's
@@ -1609,7 +1576,7 @@ html[data-rail="collapsed"] {
 }
 
 .shortcut-sheet__action:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1685,11 +1652,11 @@ html[data-rail="collapsed"] {
 /* ---- Data-table rhythm (DESIGN.md §3.3, §8 "List page") -----------------
    Vertical padding of a table's cells, from the density tokens.
 
-   Descendant rules under one wrapper class rather than a class on every cell,
-   because the cells are written by ~40 different pages: `dashboardScreenClasses.ts`
-   puts `table-density` on the single shared wrapper and every dashboard table
-   gains the density response at once. Horizontal padding stays with the page —
-   that is column rhythm, not density.
+   Descendant rules under one wrapper class rather than a class on every cell:
+   `components/ui/DataTable` (HIVE-2.3, #5282) and the hand-built tables that keep
+   their own markup put `table-density` on the one wrapper, and every cell inside
+   gains the density response. Horizontal padding stays with the table — that is
+   column rhythm, not density.
 
    Deliberately *unlayered*, unlike the metric utilities above. Tailwind emits
    `py-4` into `@layer utilities`, which loses to any unlayered rule whatever its
@@ -1698,10 +1665,7 @@ html[data-rail="collapsed"] {
    row is exactly the frozen metric this ticket replaces, so the wrapper has to
    win. `:where()` keeps the selector at the weight of a bare element, so a table
    that genuinely needs its own row (a nested table, an editor row) still wins with
-   one unlayered rule of its own. `components/ui/DataTable` (HIVE-2.3, #5282)
-   puts the same class on its own card, so the primitive and the pages still on
-   the old class module keep exactly one definition of a row's rhythm between
-   them for the length of the migration. */
+   one unlayered rule of its own. */
 .table-density :where(thead) :where(th) {
   padding-block: var(--table-head-pad-y);
 }
@@ -2691,45 +2655,9 @@ html[data-kbd-hints="off"] .kbd-group {
   animation: fadeOut var(--dur-fast) var(--ease-out);
 }
 
-/* Radix Collapsible horizontal slide (used by the canvas Tools mini-drawer) */
-@keyframes collapsible-slide-right-in {
-  from {
-    width: 0;
-    opacity: 0;
-    transform: translateX(-4px);
-  }
-  to {
-    width: var(--radix-collapsible-content-width);
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes collapsible-slide-right-out {
-  from {
-    width: var(--radix-collapsible-content-width);
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    width: 0;
-    opacity: 0;
-    transform: translateX(-4px);
-  }
-}
-
-.collapsible-horizontal[data-state="open"] {
-  animation: collapsible-slide-right-in var(--dur-slow) var(--ease-out);
-}
-
-.collapsible-horizontal[data-state="closed"] {
-  animation: collapsible-slide-right-out var(--dur-base) var(--ease-out);
-}
-
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-canvas);
+  color: var(--fg);
   font-family: var(--app-font-sans);
   line-height: 1.45;
   letter-spacing: 0.002em;
@@ -2761,7 +2689,7 @@ h2 {
 }
 
 p {
-  color: var(--text-muted);
+  color: var(--fg-muted);
 }
 
 /* `input, textarea, select, button { font: inherit }` used to live here. It is
@@ -4058,7 +3986,7 @@ button.auth-divider:disabled {
 }
 
 /* And the lede, for the other half of the same trap: `p { color:
-   var(--text-muted) }` is unlayered, so a `text-fg-muted` utility here would be
+   var(--fg-muted) }` is unlayered, so a `text-fg-muted` utility here would be
    dead ink. */
 .launch-lede {
   margin-top: var(--space-4);
@@ -6617,22 +6545,6 @@ button.auth-divider:disabled {
   }
 }
 
-/* Layout Animation Styles */
-/* Smooth transitions for node positions during layout changes */
-.layout-animating .react-flow__node {
-  transition: transform var(--dur-slow) var(--ease-out);
-}
-
-/* Smooth transitions for edges during layout changes */
-.layout-animating .react-flow__edge {
-  transition: opacity var(--dur-slow) var(--ease-out);
-}
-
-/* Ensure edge paths animate smoothly */
-.layout-animating .react-flow__edge-path {
-  transition: d var(--dur-slow) var(--ease-out);
-}
-
 /* Custom prose styles for markdown rendering in chat */
 .prose {
   color: inherit;
@@ -6730,24 +6642,24 @@ button.auth-divider:disabled {
    `html[data-theme="high-contrast"]` swap above, so the panel follows the palette
    with no colour of its own. */
 [data-theme="high-contrast"] .projection-panel {
-  border-color: var(--border-subtle);
-  background: var(--background);
-  color: var(--foreground);
+  border-color: var(--border);
+  background: var(--bg-canvas);
+  color: var(--fg);
 }
 
 [data-theme="high-contrast"] .projection-panel [data-testid="projection-table"] {
-  border-color: var(--border-subtle);
+  border-color: var(--border);
 }
 
 [data-theme="high-contrast"] .projection-panel [data-testid^="projection-node-"] rect,
 [data-theme="high-contrast"] .projection-panel [data-testid^="projection-node-"] circle {
-  stroke: var(--foreground);
+  stroke: var(--fg);
   stroke-width: 2px;
 }
 
 [data-theme="high-contrast"] .projection-panel [data-testid^="projection-row-"] {
-  border-color: var(--border-subtle);
-  outline-color: var(--border-subtle);
+  border-color: var(--border);
+  outline-color: var(--border);
 }
 
 
@@ -8286,7 +8198,7 @@ button.auth-divider:disabled {
    `:focus-visible` treatment near line 1480; the two px here are the ring itself, which is a
    device measure and must not grow with the font scale. */
 .akey-scope-card:has(.akey-scope-radio:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -8734,7 +8646,7 @@ button.auth-divider:disabled {
 
 /* ---- The compliance footnote --------------------------------------------
    The lock line under the table. A `p`, so its colour has to be stated here to
-   beat the unlayered `p { color: var(--text-muted) }` base rule. */
+   beat the unlayered `p { color: var(--fg-muted) }` base rule. */
 .aud-note {
   display: flex;
   align-items: flex-start;
@@ -16250,7 +16162,7 @@ button.auth-divider:disabled {
 }
 
 .mock-corr__mode:has(> input[type='radio']:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -16447,7 +16359,7 @@ button.auth-divider:disabled {
 }
 
 .mock-tok__chip:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -23036,7 +22948,7 @@ button.cid-entity__head {
 }
 
 .repo-new-link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -23113,7 +23025,7 @@ button.cid-entity__head {
 /* The native dot is drawn, so it is the dot that takes the ring — but the ring
    has to be visible around the *card*, which is what the reader is choosing. */
 .repo-new-source:has(input:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -23208,7 +23120,7 @@ button.cid-entity__head {
 }
 
 .repo-new-account:has(input:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -23308,7 +23220,7 @@ button.cid-entity__head {
 }
 
 .repo-new-repo:has(input:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -23712,7 +23624,7 @@ button.cid-entity__head {
 }
 
 .repo-det-link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -24223,7 +24135,7 @@ button.cid-entity__head {
 }
 
 .repo-files-table__link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -24476,7 +24388,7 @@ button.cid-entity__head {
 }
 
 .repo-file-sort:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -24624,7 +24536,7 @@ button.cid-entity__head {
    but only the radio's own focus raises it, so tabbing into the nested select
    does not light the whole card up. */
 .repo-map-choice:has(> input[type='radio']:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -24899,7 +24811,7 @@ button.cid-entity__head {
 }
 
 .repo-set-policy:has(input:focus-visible) {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -29049,7 +28961,7 @@ tr:focus-within .pub-url__glyph {
 
 .stl-marker__ring {
   fill: none;
-  stroke: var(--focus-ring);
+  stroke: var(--accent);
   stroke-width: 2;
   opacity: 0;
   vector-effect: non-scaling-stroke;
@@ -32600,7 +32512,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .rvs-pill:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -32621,7 +32533,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .rvs-link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -32767,7 +32679,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .ntf-menu__link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -32899,7 +32811,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .ntf-note__link:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
@@ -32992,7 +32904,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .ntf-row--page:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -33025,7 +32937,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .ntf-item__mark:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -33097,7 +33009,7 @@ tr:focus-within .pub-url__glyph {
   max-inline-size: 100%;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--bg-surface);
   color: var(--fg);
   font-size: var(--fs-sm);
 }
@@ -33778,7 +33690,7 @@ tr:focus-within .pub-url__glyph {
 }
 
 .agx-toolset-card:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

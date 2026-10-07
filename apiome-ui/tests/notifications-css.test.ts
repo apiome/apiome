@@ -228,7 +228,7 @@ describe('legibility', () => {
       '.ntf-row--page:focus-visible',
       '.ntf-item__mark:focus-visible',
     ]) {
-      expect(declaration(prelude, 'outline')).toContain('var(--focus-ring)');
+      expect(declaration(prelude, 'outline')).toContain('var(--accent)');
     }
   });
 });

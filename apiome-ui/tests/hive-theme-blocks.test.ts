@@ -245,11 +245,6 @@ describe('the pre-Hive theme system is gone', () => {
     // preference to a real theme id and the `.dark` companion selector covers first paint.
     expect(css).not.toContain('prefers-color-scheme');
   });
-
-  it('points the legacy colour utilities straight at the tokens', () => {
-    expect(layer.theme.get('--color-background')).toBe('var(--color-canvas)');
-    expect(layer.theme.get('--color-foreground')).toBe('var(--color-fg)');
-  });
 });
 
 describe('every palette stays legible', () => {
