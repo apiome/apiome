@@ -1,0 +1,90 @@
+# Private beta / dogfood intake (RC1-4.1, #3620).
+# Labels come from .github/beta-labels.json; triage follows docs/runbooks/BETA_TRIAGE.md.
+# The Workflow options must match the `workflow` field of the `wf:*` labels there —
+# scripts/tests/test_beta_intake.py checks it.
+name: Beta feedback
+description: Something broke, confused you, or slowed you down while using Apiome in the private beta.
+title: "[beta] "
+labels: ["beta", "triage:new"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for using Apiome for real work. One report per problem, please — it keeps triage fast.
+        Don't paste secrets, API keys or private spec contents; a description is enough.
+
+  - type: dropdown
+    id: workflow
+    attributes:
+      label: Workflow
+      description: Which part of Apiome were you using?
+      options:
+        - Sign-in / tenant
+        - Import
+        - Lint / grade
+        - Studio editing
+        - Discussion & review
+        - Publish
+        - Mock
+        - SDK generation
+        - Browse (public)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: trying
+    attributes:
+      label: What were you trying to do?
+      description: The goal, in a sentence or two — not the clicks yet.
+      placeholder: Publish v1.2.0 of our Orders API after the review was approved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+      description: The steps you took and what you saw. Error messages verbatim if there were any.
+      placeholder: |
+        1. Opened the version and clicked Publish
+        2. The gate said "1 blocking finding" but the list was empty
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: How bad is it for you?
+      description: Your view. Triage sets the severity label.
+      options:
+        - Blocked me — I couldn't finish
+        - Painful workaround — I finished, but it cost me
+        - Annoying — it worked, but it was wrong or confusing
+        - Suggestion — nothing broke
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: App version and browser
+      description: The version is under your avatar menu (bottom of the rail) and on the Help page. Add the tenant name if it matters.
+      placeholder: apiome-ui 0.351.0 · Firefox 131 · tenant "acme"
+    validations:
+      required: false
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or logs
+      description: Drag images in here. Redact anything sensitive.
+    validations:
+      required: false

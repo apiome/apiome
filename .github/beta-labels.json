@@ -1,0 +1,28 @@
+{
+  "$comment": "Private beta / dogfood triage labels (RC1-4.1, #3620). Sync to GitHub with `python3 scripts/sync_beta_labels.py`. A `wf:*` label's `workflow` is the exact option text of the Workflow dropdown in .github/ISSUE_TEMPLATE/beta-feedback.yml. See docs/runbooks/BETA_TRIAGE.md.",
+  "labels": [
+    { "name": "beta", "color": "5319E7", "description": "Reported by the private beta / dogfood cohort (RC1-4.1)" },
+
+    { "name": "triage:new", "color": "EDEDED", "description": "Beta report not yet triaged" },
+    { "name": "triage:needs-info", "color": "FBCA04", "description": "Waiting on the reporter for steps, version or a screenshot" },
+    { "name": "triage:accepted", "color": "0E8A16", "description": "Confirmed and severity set; tracked by the RC1-4.2 burn-down" },
+    { "name": "triage:deferred", "color": "C5DEF5", "description": "Real, but not for v1.0.0-rc.1; the issue carries the written reason" },
+    { "name": "triage:duplicate", "color": "CFD3D7", "description": "Already reported; closed with a link to the original" },
+
+    { "name": "sev:critical", "color": "B60205", "description": "Spine broken or data lost, no workaround. Blocks the RC tag" },
+    { "name": "sev:high", "color": "D93F0B", "description": "A golden-path step fails or needs a workaround. Blocks the RC tag" },
+    { "name": "sev:medium", "color": "FBCA04", "description": "Wrong or confusing, but the workflow completes" },
+    { "name": "sev:low", "color": "C2E0C6", "description": "Cosmetic, copy, or a suggestion" },
+
+    { "name": "wf:sign-in", "color": "BFD4F2", "workflow": "Sign-in / tenant", "description": "Beta workflow: signing in, creating or entering a tenant" },
+    { "name": "wf:import", "color": "BFD4F2", "workflow": "Import", "description": "Beta workflow: importing a spec" },
+    { "name": "wf:lint", "color": "BFD4F2", "workflow": "Lint / grade", "description": "Beta workflow: linting and the grade" },
+    { "name": "wf:studio", "color": "BFD4F2", "workflow": "Studio editing", "description": "Beta workflow: editing in Studio" },
+    { "name": "wf:review", "color": "BFD4F2", "workflow": "Discussion & review", "description": "Beta workflow: comments, review requests, approval" },
+    { "name": "wf:publish", "color": "BFD4F2", "workflow": "Publish", "description": "Beta workflow: publishing and the publish gate" },
+    { "name": "wf:mock", "color": "BFD4F2", "workflow": "Mock", "description": "Beta workflow: turning a mock on and calling it" },
+    { "name": "wf:sdk", "color": "BFD4F2", "workflow": "SDK generation", "description": "Beta workflow: generating and downloading an SDK" },
+    { "name": "wf:browse", "color": "BFD4F2", "workflow": "Browse (public)", "description": "Beta workflow: the public Browse page" },
+    { "name": "wf:other", "color": "BFD4F2", "workflow": "Other", "description": "Beta workflow: anything outside the golden path" }
+  ]
+}
