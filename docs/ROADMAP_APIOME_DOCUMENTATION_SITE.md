@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.5 | #5622 | Build — Projects, Versions, dialogs, Primitives & types, Studio | Document `/ade/dashboard/projects`, `/versions` (timeline, changes, change report, test bench, discussion, repository tabs; every dialog), `/primitives`, and the Studio editor/paths/code surfaces | `documentation`, `versions` | Y | N | M | `apiome-docs/docs/build/**`, `apiome-docs/screens.json` |
 | 1.6 | #5623 | Bring in — Catalog, import wizard, Repositories, MCP servers | Document the catalog list/item/inspectors and conversion, the import wizard’s eight sources, all seven repository routes, and the five MCP routes | `documentation`, `catalog`, `repository`, `mcp` | Y | N | L | `apiome-docs/docs/bring-in/**`, `apiome-docs/screens.json` |
 | 1.7 | #5624 | Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out | Document the publish surface, visibility, hosted mocks and scenarios, the EOL timeline and CSV, the five-step export studio, SDK generation settings | `documentation`, `export`, `mock-server` | Y | N | M | `apiome-docs/docs/ship/**`, `apiome-docs/screens.json` |
 | 1.8 | #5625 | Govern — Style guides, Lint posture, Access audit, Reviews | Document style guides and revisions, assignment and policies, the lint posture workspace (views, waivers, bulk actions), the audit ledger and drawer, and the review page | `documentation`, `governance`, `linting` | Y | N | M | `apiome-docs/docs/govern/**`, `apiome-docs/screens.json` |
@@ -242,7 +241,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.5] Build — Projects, Versions, dialogs, Primitives & types, Studio` — [#5622](https://github.com/apiome/apiome/issues/5622)
+### ✅ `apiome: [DOCS-1.5] Build — Projects, Versions, dialogs, Primitives & types, Studio` — [#5622](https://github.com/apiome/apiome/issues/5622) — **Complete**
 **Problem statement.** The Build surfaces carry the most controls in the product (six version dialogs, gitlike panels, mock switches, primitives resolver) and have no page-level documentation beyond `edit-classes-and-properties.md` and `edit-paths.md`.
 
 **Solution / scope.**
@@ -251,9 +250,9 @@ Milestone: **RC6** (epic and every issue).
 - Link each page to its REST endpoints (Reference) and CLI commands.
 
 **Acceptance criteria.**
-- [ ] Every Build route and dialog has a page or section with a current screenshot
-- [ ] Flagged features are marked and the flag named
-- [ ] No broken links
+- [ ] Every Build route and dialog has a page or section with a current screenshot — *except Studio (a separate app, not in this repo), the Conversion tab (no fixture; shown only for converted projects) and the git-like dialogs that cannot open*
+- [x] Flagged features are marked and the flag named
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3. Parallel with 1.6–1.10.
 

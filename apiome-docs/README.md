@@ -92,6 +92,7 @@ These are available in every `.mdx` page without an import:
 | `<Screenshot id alt caption?/>` | A product screenshot by manifest id: light or dark with the site theme, lazy-loaded, linked to the full-size image, with a route badge. `alt` is required. Put it on its own line. | `<Screenshot id="catalog" alt="The Catalog page"/>` |
 | `<Route path/>` | A badge naming the product route a page describes | `<Route path="/ade/dashboard/versions"/>` |
 | `<Kbd keys/>` | A key or chord; `Mod` reads “Ctrl / ⌘”, `Plus` is the + key | `<Kbd keys="Mod+K"/>` |
+| `<Flag name on?/>` | A badge marking a feature-flagged surface, naming the flag and whether shipped builds have it on | `<Flag name="FEATURE_GITLIKE"/>` |
 
 ### Release notes
 

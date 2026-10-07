@@ -1,0 +1,36 @@
+---
+title: Studio
+description: Where classes, paths and code are edited — the Designer app.
+sidebar_position: 1.5
+tags: [studio, designer]
+---
+
+<Route path="/ade/studio" />
+
+Classes, properties, paths and operations are edited in **Studio**, the editing surface of the
+**Designer** app. Designer is a separate application — included with the Designer plan — so it has
+no entry in the Control Panel's sidebar. When your workspace has it, the launcher shows a
+**Designer Suite** card with **Suite Home**, **Designer** and **Paths Editor**; without it, ask a
+tenant admin to enable it.
+
+Links into Studio from the Control Panel use these routes, which open the same place in Designer:
+
+| Route | Opens |
+| --- | --- |
+| `/ade/studio`, `/ade/studio/editor` | The class and property editor |
+| `/ade/studio/paths` | The paths and operations editor |
+| `/ade/studio/code` | The code view |
+
+Designer's address comes from `NEXT_PUBLIC_STUDIO_URL` (default `https://suite.apiome.dev`).
+Because Designer is not part of this installation, this site has no screenshots of it.
+
+To edit without Designer, use the REST API or an import — the guides below show both.
+
+- [Edit classes and properties](./edit-classes-and-properties.md)
+- [Edit paths and operations](./edit-paths.md)
+
+## With the API
+
+`GET` / `POST /v1/classes/{tenant}`, `PUT /v1/classes/{tenant}/{class}`; `GET` / `POST
+/v1/paths/{tenant}/{version}`, `PUT /v1/paths/{tenant}/{version}/{path}` — see the [API
+reference](../reference/api-reference.md).

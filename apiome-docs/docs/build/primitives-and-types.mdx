@@ -1,0 +1,101 @@
+---
+title: Primitives and types
+description: The JSON Schema type registry your classes and properties reuse.
+sidebar_position: 1.4
+tags: [primitives, types, schemas]
+---
+
+<Route path="/ade/dashboard/primitives" />
+
+**Primitives & types** is the registry of reusable JSON Schema 2020-12 types — the money, address and
+identifier shapes your classes and properties point at with `$ref`. **Go to Build → Primitives &
+types.** It has four tabs: **Registry**, **Namespaces & scopes**, **Resolver** and **Settings**.
+
+Types come from two scopes: **core system types** every tenant can use (read-only), and your
+**tenant types**.
+
+## Registry
+
+<Screenshot id="primitives" alt="Primitives & types, Registry tab: counts of core and tenant types, type collections and the types table" />
+
+The tiles count **Core system types**, **Tenant types**, **Imported schemas**, **Properties bound**
+and **Unresolved $ref** (click it to jump to the resolver). The table lists each type's **Name**,
+**Namespace**, **Category**, **Description**, **Usage** and **Type**; search it, pick a category, and
+tick **Show system** to include the core types.
+
+**Click a type** to open its page:
+
+<Screenshot id="primitive-detail" alt="A type's page: its JSON Schema, metadata, where it is used, and its base chain" />
+
+The page shows the type's **JSON Schema (2020-12)** (**Copy**, **Download**), **Test this type**,
+**Reference resolution**, an **Example instance** and its **Dependents**; on the right, **Metadata**,
+**Used in** and **Base chain**. **“Edit”** and **“Export”** are in the header.
+
+To check a payload against the type, open **Test this type**, choose **Single** or **Array** and
+type the value — it is validated as you type.
+
+<Screenshot id="primitive-testing" alt="Test this type: a payload validated against the type, with the problems found" />
+
+## Create a type
+
+1. **Click “Create primitive”** (or press <Kbd keys="N"/>).
+2. On **Form**, enter a **Name** (for example `currency-code`) and choose its **Type** (`string`);
+   the type cannot change after you create it.
+3. Add a **Description**, **Tags**, constraints (format, pattern, length), **Allowed values (enum)**,
+   a **Default value** and **Examples**. The **Schema preview** at the bottom shows the result.
+   **Advanced JSON** edits the schema directly.
+4. **Click “Create”.**
+
+<Screenshot id="primitives-editor" alt="The Create primitive dialog: name, type, description, string constraints, allowed values, default and examples" />
+
+## Import types
+
+**Click “Import from schema”** (or press <Kbd keys="I"/>).
+
+1. **Source** — choose **JSON Schema**, **Type-def bundle** or **OpenAPI** (its component schemas),
+   and give it as a **File**, a **URL** or **Paste**. Pick a **Target namespace** if the types should
+   not go to the default one.
+2. **Review** — Apiome lists the types it found. For each one that clashes with an existing type,
+   choose **Keep existing**, **Overwrite** or **Import as new name**.
+3. **Click “Import N selected”**, then read the **Result**.
+
+<Screenshot id="primitives-import" alt="The Import primitives dialog on its Source step: source types, file, URL or paste, and namespace options" />
+
+## Namespaces & scopes
+
+A **namespace** groups types under a base URI and version, such as `tenant/acme/v1/types`. The tab
+shows the system root and your tenant namespaces, and the order a `$ref` is resolved in: your tenant
+namespace, then imported vendor namespaces, then the core system types.
+
+**Click “New namespace”** and enter a **Namespace path**, **Base URI**, **Version root** and
+**Description**; tick **Default namespace** to make new types land there. System namespaces are
+**Read-only**.
+
+<Screenshot id="primitives-namespaces" alt="Namespaces & scopes: the system root, tenant namespaces, the namespaces table and the resolution order" />
+
+## Resolver
+
+The **Resolver** shows how every `$ref` in your types resolves — **Resolved**, **Unresolved** or
+**Circular** — as a list and a reference graph. Filter by **Namespace**, and **click
+“Re-resolve”** after fixing a reference.
+
+<Screenshot id="primitives-resolver" alt="The Resolver tab: resolution base, reference graph and the list of references with their status" />
+
+## Settings
+
+**Settings** chooses the **JSON Schema dialect**, how references resolve (the base URL and `$ref`
+style), **Import defaults** and **Validation & publishing** rules for this tenant. **Click “Save
+settings”**, or **“Reset to defaults”**.
+
+<Screenshot id="primitives-settings" alt="The Settings tab: registry storage, JSON Schema dialect, validation switches and reference resolution" />
+
+## With the CLI or the API
+
+- CLI: `apiome types list|show|search` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `GET` / `POST /v1/primitives/{tenant}`, `POST /v1/primitives/{tenant}/import`,
+  `GET` / `POST /v1/types/{tenant}/namespaces`, `GET` / `PUT /v1/types/{tenant}/settings`,
+  `POST /v1/types/{tenant}/resolve` — see the [API reference](../reference/api-reference.md).
+
+## Where next
+
+- [Edit classes and properties](./edit-classes-and-properties.md)

@@ -1000,6 +1000,54 @@ describe('the browser fixtures', () => {
     await within(publish).findByTestId('publish-force-reason');
     write('publish', publish.outerHTML);
   });
+
+  /**
+   * The documentation site's Build pages (`apiome-docs/screens.json`, DOCS-1.5) show every tab
+   * and dialog of this screen. The tabs other than the timeline, and the Edit and Sunset dialogs,
+   * are written here; no browser spec mounts them.
+   */
+  it('renders the other tabs and the edit and sunset dialogs for the docs fixtures', async () => {
+    // The Repository tab reads the draft's binding and the tenant's repositories: an unbound draft.
+    installFetch([
+      {
+        test: /\/bindings\?version=/,
+        reply: () => ({
+          success: true,
+          version_id: HEAD_ID,
+          version_label: '2.4.0',
+          published: false,
+          bound: false,
+          binding: null,
+          released: [],
+        }),
+      },
+      { test: /^\/api\/repositories$/, reply: () => ({ success: true, repositories: [] }) },
+    ]);
+    await renderVersions();
+
+    for (const tab of ['changes', 'repository']) {
+      fireEvent.click(screen.getByTestId(`versions-tab-${tab}`));
+      await waitFor(() =>
+        expect(screen.getByTestId(`versions-tab-${tab}`)).toHaveAttribute('aria-selected', 'true'),
+      );
+      // Let the panel's own load settle before it is written.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+      write(`tab-${tab}`, (document.querySelector('.page') as HTMLElement).outerHTML);
+    }
+    fireEvent.click(screen.getByTestId('versions-tab-timeline'));
+
+    const draftMenu = await openRowMenu(HEAD_ID);
+    fireEvent.click(within(draftMenu).getByTestId('versions-row-action-edit'));
+    write('edit', (await screen.findByTestId('edit-version-dialog')).outerHTML);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('edit-version-dialog')).not.toBeInTheDocument());
+
+    const publishedMenu = await openRowMenu(V231_ID);
+    fireEvent.click(within(publishedMenu).getByTestId('versions-row-action-scheduleSunset'));
+    write('sunset', (await screen.findByTestId('sunset-schedule-dialog')).outerHTML);
+  });
 });
 
 /* keep `act` referenced for suites that need explicit flushes */
