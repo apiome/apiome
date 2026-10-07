@@ -17,6 +17,9 @@ may call as MCP tools.
   write op impossible to store, even through direct SQL.
 - **`target`** is `prod` (default) or `mock`: where AGX-2.1 sends tool calls (AGX-2.4 mock-target
   mode, `apiome_mcp.mock_target`).
+- **`descriptionEnrichment`** (default on) serves the description-enrichment proposals a person has
+  accepted. Switching it off serves the spec-derived descriptions. See
+  [agent_toolset_enrichment.md](agent_toolset_enrichment.md) (AGX-1.3).
 
 ## Where the pieces live
 
@@ -46,10 +49,13 @@ only in Studio, cannot get a toolset: the create is a `422 agent-toolset-source-
 | `GET` | `/v1/tenants/{t}/agent-toolsets` (`?versionId=…`) | `api_keys:view` | — |
 | `POST` | `/v1/tenants/{t}/agent-toolsets` | `api_keys:create` | `agent.toolset.create` |
 | `GET` | `/v1/tenants/{t}/agent-toolsets/{id}` (with every tool) | `api_keys:view` | — |
-| `PATCH` | `/v1/tenants/{t}/agent-toolsets/{id}` (`enabled`, `target`) | `api_keys:edit` | `agent.toolset.update` (before/after) |
+| `PATCH` | `/v1/tenants/{t}/agent-toolsets/{id}` (`enabled`, `target`, `descriptionEnrichment`) | `api_keys:edit` | `agent.toolset.update` (before/after) |
 | `DELETE` | `/v1/tenants/{t}/agent-toolsets/{id}` | `api_keys:delete` | `agent.toolset.delete` |
 | `GET` | `/v1/tenants/{t}/agent-toolsets/{id}/tools` | `api_keys:view` | — |
 | `PATCH` | `/v1/tenants/{t}/agent-toolsets/{id}/tools/{toolId}` (`enabled`, `confirmWriteOp`) | `api_keys:edit` | `agent.toolset.tool.update` |
+
+The enrichment routes (`…/{id}/enrichment`, `…/{id}/compiled`) are in
+[agent_toolset_enrichment.md](agent_toolset_enrichment.md).
 
 There is **no new RBAC resource**. A toolset, its upstream credentials (AGX-2.2) and its agent keys
 (AGX-3.1) are together one agent's access, and all three use the `api_keys` permissions. Every read

@@ -92,6 +92,18 @@ class Settings(BaseSettings):
     # Embedding (Ollama) for data_snapshot vectorization
     ollama_base_url: str = "http://localhost:11434"
 
+    # Agent toolset description enrichment (AGX-1.3, #4531). The Ollama chat model that proposes
+    # descriptions for thin tool/parameter descriptions. Unset (the default) means the copilot is
+    # disabled and the enrichment pass is flag-only: it reports agent-hostile operations and proposes
+    # nothing. Proposals are never served to agents until a person accepts them.
+    agent_enrichment_model: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_AGENT_ENRICHMENT_MODEL",
+            "agent_enrichment_model",
+        ),
+    )
+
     # "Similar servers" semantic-embedding signal (MCAT-18.4, #4648). Off by default: the feature's
     # always-available signal is capability-name overlap (Jaccard), which needs no embedding. When this
     # flag is off, the semantic cosine nearest-neighbour signal is skipped entirely (no vectors are read

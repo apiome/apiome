@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.200.0",
+    "version": "1.201.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -15531,7 +15531,7 @@
           "agent-access"
         ],
         "summary": "Change an agent toolset's settings",
-        "description": "Switch the whole toolset on or off (`enabled`; a disabled toolset exposes no tools) and/or change its `target` (`prod` | `mock`). Tool selections are untouched.\n\nRequires `api_keys:edit`. Audited as `agent.toolset.update`, before and after.",
+        "description": "Switch the whole toolset on or off (`enabled`; a disabled toolset exposes no tools) and/or change its `target` (`prod` | `mock`), and/or opt out of description enrichment (`descriptionEnrichment: false` serves the spec-derived descriptions even where a proposal was accepted). Tool selections are untouched.\n\nRequires `api_keys:edit`. Audited as `agent.toolset.update`, before and after.",
         "operationId": "update_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__patch",
         "parameters": [
           {
@@ -15939,6 +15939,424 @@
           },
           "422": {
             "description": "A write operation was enabled without `confirmWriteOp: true`."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/enrichment": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Describe an agent toolset's enrichment",
+        "description": "The enrichment pass looks for tools an agent will struggle with. Each flag lists machine-readable reasons: `missing-description`, `thin-description`, `missing-examples`, `undocumented-errors`, `missing-parameter-description`, `thin-parameter-description`. When the copilot (an Ollama model, `APIOME_AGENT_ENRICHMENT_MODEL`) is configured, it also proposes descriptions for the thin ones, written only from the spec's own documentation. **Proposals are never served until a person accepts them.** Without the copilot, `mode` is `flag-only`.\n\nRequires `api_keys:view`.",
+        "operationId": "get_agent_toolset_enrichment_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__enrichment_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Describeanagenttoolsetsenrichmentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Describeanagenttoolsetsenrichmentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Describeanagenttoolsetsenrichment Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Describeanagenttoolsetsenrichment Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for describe an agent toolset's enrichment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichmentReport",
+                  "description": "Response payload for describeanagenttoolsetsenrichmentresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such agent toolset in this tenant."
+          },
+          "422": {
+            "description": "The version's operations could not be read."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Run the enrichment pass",
+        "description": "The enrichment pass looks for tools an agent will struggle with. Each flag lists machine-readable reasons: `missing-description`, `thin-description`, `missing-examples`, `undocumented-errors`, `missing-parameter-description`, `thin-parameter-description`. When the copilot (an Ollama model, `APIOME_AGENT_ENRICHMENT_MODEL`) is configured, it also proposes descriptions for the thin ones, written only from the spec's own documentation. **Proposals are never served until a person accepts them.** Without the copilot, `mode` is `flag-only`.\n\nThe pass is idempotent: a description that already has a proposal, whatever its status, is not asked about again. Each run asks the copilot about at most 20 operations and reports `remainingOperations`; run it again to continue, or pass `operations` to choose which.\n\nRequires `api_keys:edit`. Audited as `agent.toolset.enrichment.run`.",
+        "operationId": "run_agent_toolset_enrichment_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__enrichment_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Runtheenrichmentpassauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Runtheenrichmentpassauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Runtheenrichmentpass Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Runtheenrichmentpass Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/EnrichmentRun"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for runtheenrichmentpassrequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for run the enrichment pass."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for run the enrichment pass.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichmentRunResult",
+                  "description": "Response payload for runtheenrichmentpassresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such agent toolset in this tenant."
+          },
+          "422": {
+            "description": "The version's operations could not be read, or `operations` names an operation the toolset does not have."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/enrichment/{proposal_id}": {
+      "patch": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Accept or reject a description proposal",
+        "description": "`decision: accept` serves the proposal in the compiled toolset; pass `description` to serve an edited text instead. `decision: reject` withdraws it, including a previously accepted one. The reviewer and time are recorded on the proposal.\n\nRequires `api_keys:edit`. Audited as `agent.toolset.enrichment.review`.",
+        "operationId": "review_agent_toolset_enrichment_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__enrichment__proposal_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id",
+              "description": "Proposal Id schema."
+            },
+            "description": "Path parameter identifying the proposal id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Acceptorrejectadescriptionproposalauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Acceptorrejectadescriptionproposalauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Acceptorrejectadescriptionproposal Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Acceptorrejectadescriptionproposal Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrichmentReview",
+                "description": "Request body for acceptorrejectadescriptionproposalrequest."
+              }
+            }
+          },
+          "description": "Request body for accept or reject a description proposal."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for accept or reject a description proposal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichmentProposalOut",
+                  "description": "Response payload for acceptorrejectadescriptionproposalresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such proposal in this tenant's agent toolset."
+          },
+          "422": {
+            "description": "A blank or over-long edit, or an edit with `reject`."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/compiled": {
+      "get": {
+        "tags": [
+          "agent-access"
+        ],
+        "summary": "Compile an agent toolset",
+        "description": "The toolset as agents are served it: the enabled tools as MCP `tools/list` entries. While `descriptionEnrichment` is on, accepted description proposals replace the spec-derived text (`enrichedTargets` lists which); proposed and rejected ones never do. A disabled toolset compiles to no tools.\n\nRequires `api_keys:view`.",
+        "operationId": "compile_agent_toolset_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__compiled_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "toolset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Toolset Id",
+              "description": "Toolset Id schema."
+            },
+            "description": "Path parameter identifying the toolset id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compileanagenttoolsetauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compileanagenttoolsetauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Compileanagenttoolset Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Compileanagenttoolset Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for compile an agent toolset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompiledToolsetOut",
+                  "description": "Response payload for compileanagenttoolsetresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such agent toolset in this tenant."
+          },
+          "422": {
+            "description": "The version's operations could not be read or compiled."
           }
         }
       }
@@ -87528,6 +87946,13 @@
             "description": "Target.",
             "example": "prod"
           },
+          "descriptionEnrichment": {
+            "type": "boolean",
+            "title": "Descriptionenrichment",
+            "default": true,
+            "description": "Description Enrichment.",
+            "example": false
+          },
           "toolCount": {
             "type": "integer",
             "title": "Toolcount",
@@ -87707,6 +88132,13 @@
             "description": "Target.",
             "example": "prod"
           },
+          "descriptionEnrichment": {
+            "type": "boolean",
+            "title": "Descriptionenrichment",
+            "default": true,
+            "description": "Description Enrichment.",
+            "example": false
+          },
           "toolCount": {
             "type": "integer",
             "title": "Toolcount",
@@ -87790,7 +88222,7 @@
           "createdAt"
         ],
         "title": "AgentToolsetOut",
-        "description": "A toolset, described with its tool counts.\n\nAttributes:\n    schema_version: The projection's shape.\n    id: The toolset id (what agent keys and upstream credentials bind to).\n    version_id: The published version it exposes.\n    project_id: That version's project.\n    version_label: The version's label (``1.0.0``).\n    enabled: Whether it serves agents at all.\n    target: ``prod`` or ``mock``.\n    tool_count: Callable operations in the version.\n    enabled_tool_count: How many of them are exposed.\n    enabled_write_op_count: How many exposed ones are write ops.\n    created_at: When it was created.\n    updated_at: When its settings last changed.\n    created_by: Who created it.\n    updated_by: Who last changed its settings."
+        "description": "A toolset, described with its tool counts.\n\nAttributes:\n    schema_version: The projection's shape.\n    id: The toolset id (what agent keys and upstream credentials bind to).\n    version_id: The published version it exposes.\n    project_id: That version's project.\n    version_label: The version's label (``1.0.0``).\n    enabled: Whether it serves agents at all.\n    target: ``prod`` or ``mock``.\n    description_enrichment: Whether accepted description-enrichment proposals are served\n        (AGX-1.3). ``False`` serves the spec-derived descriptions unchanged.\n    tool_count: Callable operations in the version.\n    enabled_tool_count: How many of them are exposed.\n    enabled_write_op_count: How many exposed ones are write ops.\n    created_at: When it was created.\n    updated_at: When its settings last changed.\n    created_by: Who created it.\n    updated_by: Who last changed its settings."
       },
       "AgentToolsetUpdate": {
         "properties": {
@@ -87825,12 +88257,26 @@
             ],
             "title": "Target",
             "description": "Target."
+          },
+          "descriptionEnrichment": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Agent Toolset Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Agent Toolset Update schema."
+              }
+            ],
+            "title": "Descriptionenrichment",
+            "description": "Description Enrichment."
           }
         },
         "additionalProperties": false,
         "type": "object",
         "title": "AgentToolsetUpdate",
-        "description": "Body of ``PATCH /v1/tenants/{t}/agent-toolsets/{id}``. At least one field is required.\n\nAttributes:\n    enabled: Switch the whole toolset on or off.\n    target: ``prod`` or ``mock``."
+        "description": "Body of ``PATCH /v1/tenants/{t}/agent-toolsets/{id}``. At least one field is required.\n\nAttributes:\n    enabled: Switch the whole toolset on or off.\n    target: ``prod`` or ``mock``.\n    description_enrichment: Serve accepted description-enrichment proposals (AGX-1.3), or\n        opt out and serve the spec-derived descriptions unchanged."
       },
       "AgentUsageAgent": {
         "properties": {
@@ -95191,7 +95637,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "completed_at": {
             "anyOf": [
@@ -97101,7 +97547,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97329,7 +97775,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97659,6 +98105,79 @@
         "title": "CompatibilityRulesPayload",
         "description": "Optional toggles for backward-compatibility checks (defaults are strict)."
       },
+      "CompiledToolsetOut": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "agx.toolset-enrichment.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "toolsetId": {
+            "type": "string",
+            "title": "Toolsetid",
+            "description": "Toolset ID.",
+            "example": "example"
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the resource is active.",
+            "example": true
+          },
+          "descriptionEnrichment": {
+            "type": "boolean",
+            "title": "Descriptionenrichment",
+            "description": "Description Enrichment.",
+            "example": false
+          },
+          "enrichedTargets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Enrichedtargets",
+            "description": "Enriched Targets.",
+            "maxItems": 1000
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Fingerprint.",
+            "example": "a1b2c3d4e5f6789012345678901234ab"
+          },
+          "tools": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Tools",
+            "description": "Tools.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolsetId",
+          "versionId",
+          "enabled",
+          "descriptionEnrichment",
+          "enrichedTargets",
+          "fingerprint",
+          "tools"
+        ],
+        "title": "CompiledToolsetOut",
+        "description": "The toolset as agents are served it: enabled tools, accepted descriptions applied.\n\nAttributes:\n    schema_version: The projection's shape.\n    toolset_id: The toolset.\n    version_id: Its published version.\n    enabled: Whether the toolset serves agents (a disabled one compiles to no tools).\n    description_enrichment: Whether accepted proposals were applied.\n    enriched_targets: The target keys whose accepted text was applied.\n    fingerprint: The compiled toolset's content hash.\n    tools: The MCP ``tools/list`` entries, in canonical order."
+      },
       "ConformanceFailure": {
         "properties": {
           "instance_id": {
@@ -97787,14 +98306,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -99819,7 +100338,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "9747cc57-72ac-4d57-8297-d607a0ec74c2"
+            "example": "8b7b2b7f-5937-4af2-aa37-5266814645e2"
           },
           "method": {
             "type": "string",
@@ -102346,7 +102865,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -104082,7 +104601,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "browse_url": {
             "anyOf": [
@@ -104759,6 +105278,462 @@
         ],
         "title": "EmitterDescriptor",
         "description": "Self-description of an export target for UI/CLI/REST enumeration (MFX-1.1)."
+      },
+      "EnrichmentFlagOut": {
+        "properties": {
+          "operation": {
+            "type": "string",
+            "title": "Operation",
+            "description": "HTTP method name (GET, POST, PUT, PATCH, DELETE, \u2026).",
+            "example": "GET"
+          },
+          "toolName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment flag."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment flag."
+              }
+            ],
+            "title": "Toolname",
+            "description": "Tool Name."
+          },
+          "reasons": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "Reasons.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation",
+          "reasons"
+        ],
+        "title": "EnrichmentFlagOut",
+        "description": "The agent-hostile reasons for one tool of the toolset.\n\nAttributes:\n    operation: The canonical operation key.\n    tool_name: The MCP tool name.\n    reasons: ``{code, message, parameter?}`` per reason; ``code`` is one of\n        :data:`app.agent_tool_enrichment.REASON_CODES`."
+      },
+      "EnrichmentProposalOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "operation": {
+            "type": "string",
+            "title": "Operation",
+            "description": "HTTP method name (GET, POST, PUT, PATCH, DELETE, \u2026).",
+            "example": "GET"
+          },
+          "targetKind": {
+            "type": "string",
+            "enum": [
+              "tool",
+              "parameter"
+            ],
+            "title": "Targetkind",
+            "description": "Target Kind.",
+            "example": "tool"
+          },
+          "targetKey": {
+            "type": "string",
+            "title": "Targetkey",
+            "description": "Target Key.",
+            "example": "example"
+          },
+          "parameter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Parameter",
+            "description": "Parameter."
+          },
+          "originalDescription": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Originaldescription",
+            "description": "Original Description."
+          },
+          "proposedDescription": {
+            "type": "string",
+            "title": "Proposeddescription",
+            "description": "Proposed Description.",
+            "example": "Example description for documentation and mocks."
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "description": "Model.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "accepted",
+              "rejected"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "proposed"
+          },
+          "acceptedDescription": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Accepteddescription",
+            "description": "Accepted Description."
+          },
+          "reviewedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Reviewedby",
+            "description": "Reviewed By."
+          },
+          "reviewedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Reviewedat",
+            "description": "Reviewed At."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for enrichment proposal."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for enrichment proposal."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "operation",
+          "targetKind",
+          "targetKey",
+          "proposedDescription",
+          "model",
+          "status"
+        ],
+        "title": "EnrichmentProposalOut",
+        "description": "One description proposal and its review.\n\nAttributes:\n    id: The proposal id (what the review route addresses).\n    operation: The operation the description belongs to.\n    target_kind: ``tool`` or ``parameter``.\n    target_key: The operation key, or the canonical parameter key.\n    parameter: For a parameter, its ``location.name`` label.\n    original_description: The spec's description when the proposal was made.\n    proposed_description: What the copilot proposed. Never served as is.\n    model: The model that proposed it.\n    status: ``proposed``, ``accepted`` or ``rejected``.\n    accepted_description: The text served once accepted (the proposal or an edit of it).\n    reviewed_by: Who accepted or rejected it.\n    reviewed_at: When.\n    created_at: When it was proposed."
+      },
+      "EnrichmentReport": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "agx.toolset-enrichment.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "toolsetId": {
+            "type": "string",
+            "title": "Toolsetid",
+            "description": "Toolset ID.",
+            "example": "example"
+          },
+          "descriptionEnrichment": {
+            "type": "boolean",
+            "title": "Descriptionenrichment",
+            "description": "Description Enrichment.",
+            "example": false
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "copilot",
+              "flag-only"
+            ],
+            "title": "Mode",
+            "description": "Mode.",
+            "example": "copilot"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Enrichment Report schema."
+              },
+              {
+                "type": "null",
+                "description": "Enrichment Report schema."
+              }
+            ],
+            "title": "Model",
+            "description": "Model."
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentFlagOut"
+            },
+            "type": "array",
+            "title": "Flags",
+            "description": "Flags.",
+            "maxItems": 1000
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentProposalOut"
+            },
+            "type": "array",
+            "title": "Proposals",
+            "description": "Proposals.",
+            "maxItems": 1000
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolsetId",
+          "descriptionEnrichment",
+          "mode",
+          "flags",
+          "proposals",
+          "counts"
+        ],
+        "title": "EnrichmentReport",
+        "description": "A toolset's enrichment state: flags, proposals and whether the copilot is on.\n\nAttributes:\n    schema_version: The projection's shape.\n    toolset_id: The toolset.\n    description_enrichment: Whether accepted proposals are served.\n    mode: ``copilot`` when a model is configured, else ``flag-only``.\n    model: The configured model, if any.\n    flags: The agent-hostile tools, ordered by operation key.\n    proposals: Every proposal, ordered by operation.\n    counts: ``flagged`` tools and proposals by status."
+      },
+      "EnrichmentReview": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "title": "Decision",
+            "description": "Decision.",
+            "example": "accept"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Enrichment Review schema."
+              },
+              {
+                "type": "null",
+                "description": "Enrichment Review schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "EnrichmentReview",
+        "description": "Body of ``PATCH \u2026/agent-toolsets/{id}/enrichment/{proposalId}``.\n\nAttributes:\n    decision: ``accept`` serves the description; ``reject`` withdraws it.\n    description: With ``accept``, an edited text to serve instead of the proposal."
+      },
+      "EnrichmentRun": {
+        "properties": {
+          "operations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 500,
+                "description": "Enrichment Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Enrichment Run schema."
+              }
+            ],
+            "title": "Operations",
+            "description": "Operations."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "EnrichmentRun",
+        "description": "Body of ``POST \u2026/agent-toolsets/{id}/enrichment``. Every field is optional.\n\nAttributes:\n    operations: Only ask about these operation keys (``GET /pets``). Default: every operation\n        with an undescribed target, in canonical order."
+      },
+      "EnrichmentRunResult": {
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion",
+            "default": "agx.toolset-enrichment.v1",
+            "description": "Schema Version.",
+            "example": "1.0.0"
+          },
+          "toolsetId": {
+            "type": "string",
+            "title": "Toolsetid",
+            "description": "Toolset ID.",
+            "example": "example"
+          },
+          "descriptionEnrichment": {
+            "type": "boolean",
+            "title": "Descriptionenrichment",
+            "description": "Description Enrichment.",
+            "example": false
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "copilot",
+              "flag-only"
+            ],
+            "title": "Mode",
+            "description": "Mode.",
+            "example": "copilot"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Enrichment Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Enrichment Run schema."
+              }
+            ],
+            "title": "Model",
+            "description": "Model."
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentFlagOut"
+            },
+            "type": "array",
+            "title": "Flags",
+            "description": "Flags.",
+            "maxItems": 1000
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/EnrichmentProposalOut"
+            },
+            "type": "array",
+            "title": "Proposals",
+            "description": "Proposals.",
+            "maxItems": 1000
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts",
+            "description": "Counts."
+          },
+          "generated": {
+            "type": "integer",
+            "title": "Generated",
+            "description": "Generated.",
+            "example": 1
+          },
+          "attemptedOperations": {
+            "type": "integer",
+            "title": "Attemptedoperations",
+            "description": "Attempted Operations.",
+            "example": 1
+          },
+          "failedOperations": {
+            "type": "integer",
+            "title": "Failedoperations",
+            "description": "Failed Operations.",
+            "example": 1
+          },
+          "remainingOperations": {
+            "type": "integer",
+            "title": "Remainingoperations",
+            "description": "Remaining Operations.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "toolsetId",
+          "descriptionEnrichment",
+          "mode",
+          "flags",
+          "proposals",
+          "counts",
+          "generated",
+          "attemptedOperations",
+          "failedOperations",
+          "remainingOperations"
+        ],
+        "title": "EnrichmentRunResult",
+        "description": "What one run of the pass did, plus the resulting report.\n\nAttributes:\n    generated: Proposals stored by this run.\n    attempted_operations: Operations the copilot was asked about.\n    failed_operations: Of those, how many got no usable answer (unreachable model, bad reply).\n    remaining_operations: Operations with undescribed targets left for a later run."
       },
       "EntityTargetConformance": {
         "properties": {
@@ -143468,7 +144443,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           }
         },
         "additionalProperties": false,
@@ -154689,7 +155664,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "detected_by": {
             "anyOf": [
@@ -161744,14 +162719,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-06T23:21:14Z"
+            "example": "2026-10-07T00:13:14Z"
           },
           "outcome": {
             "anyOf": [

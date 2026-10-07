@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.336.0] - 2026-10-06
+
+### Added
+- **Agent toolset description enrichment (#4531, AGX-1.3)**: flags tools an agent will struggle
+  with, and lets the copilot propose better descriptions that a person reviews before any agent
+  sees them.
+
+  ```bash
+  curl -sX POST "$APIOME/v1/tenants/acme/agent-toolsets/$TOOLSET/enrichment" -H "Authorization: Bearer $JWT"
+  curl -sX PATCH "$APIOME/v1/tenants/acme/agent-toolsets/$TOOLSET/enrichment/$PROPOSAL" \
+       -H "Authorization: Bearer $JWT" -H 'Content-Type: application/json' -d '{"decision": "accept"}'
+  curl -s "$APIOME/v1/tenants/acme/agent-toolsets/$TOOLSET/compiled" -H "Authorization: Bearer $JWT"
+  ```
+
+  - **Agent-hostile flags** with machine-readable reasons: `missing-description`,
+    `thin-description`, `missing-examples`, `undocumented-errors`,
+    `missing-parameter-description`, `thin-parameter-description`. They feed AGX-4.4.
+  - **Copilot proposals** from an Ollama chat model (`APIOME_AGENT_ENRICHMENT_MODEL`; unset means
+    flag-only), written only from the spec's own documentation. The pass is idempotent and asks
+    about at most 20 operations per run.
+  - **Human review.** `accept` (optionally edited) or `reject`. Only accepted text is compiled, and
+    only while the toolset's new `descriptionEnrichment` setting is on (the default). V273 adds
+    `agent_toolset_enrichments`; its CHECK makes accepted text without a review unrepresentable.
+  - **`GET …/compiled`** returns the toolset as agents are served it.
+  - Audited as `agent.toolset.enrichment.run` / `agent.toolset.enrichment.review` (metadata only).
+  - New `app.ollama_chat`: the stdlib Ollama chat client for REST-side copilot features.
+  - Docs: `docs/agent_toolset_enrichment.md`.
+
 ## [1.333.0] - 2026-10-05
 
 ### Added

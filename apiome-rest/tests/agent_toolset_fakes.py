@@ -13,6 +13,11 @@ enough that a curation bug shows up here too:
   ``agent_toolset_tools_write_confirmed_ck`` on every stored row;
 * toolset rows carry the version coordinates and tool counts ``_AGENT_TOOLSET_COLUMNS`` returns;
 * every call is logged in :attr:`FakeToolsetStore.calls`.
+
+AGX-1.3 (#4531) adds the enrichment accessors: proposals are unique per ``(toolset, target_key)``
+and inserted with ``ON CONFLICT DO NOTHING`` semantics, and :meth:`FakeToolsetStore._check_review`
+enforces V273's ``agent_toolset_enrichments_review_ck`` on every stored proposal. Deleting a toolset
+removes its proposals, as the cascade does.
 """
 
 from __future__ import annotations
@@ -33,6 +38,10 @@ ACCESSORS = (
     "list_agent_toolset_tools",
     "get_agent_toolset_tool",
     "set_agent_toolset_tool_enabled",
+    "list_agent_toolset_enrichments",
+    "get_agent_toolset_enrichment",
+    "insert_agent_toolset_enrichments",
+    "review_agent_toolset_enrichment",
 )
 
 
@@ -48,6 +57,7 @@ class FakeToolsetStore:
             ``published``, ``deleted``).
         toolsets: Stored toolsets by id.
         tools: Stored tool rows by id.
+        enrichments: Stored enrichment proposals by id (AGX-1.3).
         calls: The name of every accessor called, in order.
     """
 
@@ -55,6 +65,7 @@ class FakeToolsetStore:
         self.versions: Dict[str, Dict[str, Any]] = {}
         self.toolsets: Dict[str, Dict[str, Any]] = {}
         self.tools: Dict[str, Dict[str, Any]] = {}
+        self.enrichments: Dict[str, Dict[str, Any]] = {}
         self.calls: List[str] = []
 
     def install(self, monkeypatch: Any, db: Any) -> "FakeToolsetStore":
@@ -176,6 +187,7 @@ class FakeToolsetStore:
             "version_id": version_id,
             "enabled": enabled,
             "target": target,
+            "description_enrichment": True,
             "created_at": now,
             "updated_at": now,
             "created_by": actor_id,
@@ -206,6 +218,7 @@ class FakeToolsetStore:
         *,
         enabled: Optional[bool] = None,
         target: Optional[str] = None,
+        description_enrichment: Optional[bool] = None,
         actor_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         self.calls.append("update_agent_toolset")
@@ -216,6 +229,8 @@ class FakeToolsetStore:
             toolset["enabled"] = enabled
         if target is not None:
             toolset["target"] = target
+        if description_enrichment is not None:
+            toolset["description_enrichment"] = description_enrichment
         toolset["updated_by"] = actor_id
         toolset["updated_at"] = _now()
         return self._project(toolset)
@@ -229,6 +244,8 @@ class FakeToolsetStore:
         del self.toolsets[toolset["id"]]
         for tool_id in [key for key, tool in self.tools.items() if tool["toolset_id"] == toolset["id"]]:
             del self.tools[tool_id]
+        for key in [k for k, row in self.enrichments.items() if row["toolset_id"] == toolset["id"]]:
+            del self.enrichments[key]
         return projected
 
     def list_agent_toolset_tools(self, tenant_id: str, toolset_id: str) -> List[Dict[str, Any]]:
@@ -275,3 +292,114 @@ class FakeToolsetStore:
         )
         self._check(tool)
         return dict(tool)
+
+    # -- enrichment (AGX-1.3) --------------------------------------------------------------
+
+    @staticmethod
+    def _check_review(row: Mapping[str, Any]) -> None:
+        """V273's ``agent_toolset_enrichments_review_ck`` and ``…_parameter_ck``."""
+        status = row["status"]
+        accepted = row["accepted_description"]
+        reviewed = row["reviewed_at"] is not None
+        ok = (
+            (status == "proposed" and accepted is None and not reviewed)
+            or (status == "accepted" and accepted is not None and reviewed)
+            or (status == "rejected" and accepted is None and reviewed)
+        )
+        assert ok, ("agent_toolset_enrichments_review_ck violated", row)
+        assert (row["target_kind"] == "tool") == (row["parameter_name"] is None), (
+            "agent_toolset_enrichments_parameter_ck violated",
+            row,
+        )
+
+    def list_agent_toolset_enrichments(
+        self, tenant_id: str, toolset_id: str, *, status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        self.calls.append("list_agent_toolset_enrichments")
+        if self._owned(tenant_id, toolset_id) is None:
+            return []
+        rows = [
+            dict(row)
+            for row in self.enrichments.values()
+            if row["toolset_id"] == toolset_id and (status is None or row["status"] == status)
+        ]
+        # ORDER BY operation_key, target_kind DESC ('tool' before 'parameter'), target_key.
+        return sorted(
+            rows,
+            key=lambda row: (row["operation_key"], row["target_kind"] != "tool", row["target_key"]),
+        )
+
+    def get_agent_toolset_enrichment(
+        self, tenant_id: str, toolset_id: str, enrichment_id: str
+    ) -> Optional[Dict[str, Any]]:
+        self.calls.append("get_agent_toolset_enrichment")
+        row = self.enrichments.get(str(enrichment_id))
+        if row is None or row["toolset_id"] != toolset_id:
+            return None
+        if self._owned(tenant_id, toolset_id) is None:
+            return None
+        return dict(row)
+
+    def insert_agent_toolset_enrichments(
+        self, tenant_id: str, toolset_id: str, proposals: Sequence[Mapping[str, Any]]
+    ) -> int:
+        self.calls.append("insert_agent_toolset_enrichments")
+        if self._owned(tenant_id, toolset_id) is None:
+            return 0
+        taken = {
+            row["target_key"] for row in self.enrichments.values() if row["toolset_id"] == toolset_id
+        }
+        inserted = 0
+        for proposal in proposals:
+            if proposal["target_key"] in taken:
+                continue
+            now = _now()
+            row = {
+                "id": str(uuid.uuid4()),
+                "toolset_id": toolset_id,
+                "operation_key": proposal["operation_key"],
+                "target_kind": proposal["target_kind"],
+                "target_key": proposal["target_key"],
+                "parameter_name": proposal.get("parameter_name"),
+                "original_description": proposal.get("original_description"),
+                "proposed_description": proposal["proposed_description"],
+                "model": proposal["model"],
+                "status": "proposed",
+                "accepted_description": None,
+                "reviewed_by": None,
+                "reviewed_at": None,
+                "created_at": now,
+                "updated_at": now,
+            }
+            assert row["proposed_description"].strip(), "agent_toolset_enrichments_proposed_ck"
+            self._check_review(row)
+            self.enrichments[row["id"]] = row
+            taken.add(row["target_key"])
+            inserted += 1
+        return inserted
+
+    def review_agent_toolset_enrichment(
+        self,
+        tenant_id: str,
+        toolset_id: str,
+        enrichment_id: str,
+        *,
+        status: str,
+        accepted_description: Optional[str],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        self.calls.append("review_agent_toolset_enrichment")
+        if status not in ("accepted", "rejected"):
+            raise ValueError(f"unsupported review status {status!r}")
+        if self.get_agent_toolset_enrichment(tenant_id, toolset_id, enrichment_id) is None:
+            return None
+        row = self.enrichments[str(enrichment_id)]
+        row.update(
+            status=status,
+            accepted_description=accepted_description if status == "accepted" else None,
+            reviewed_by=actor_id,
+            reviewed_at=_now(),
+            updated_at=_now(),
+        )
+        self._check_review(row)
+        return dict(row)

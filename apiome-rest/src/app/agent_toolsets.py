@@ -130,12 +130,15 @@ class AgentToolsetUpdate(BaseModel):
     Attributes:
         enabled: Switch the whole toolset on or off.
         target: ``prod`` or ``mock``.
+        description_enrichment: Serve accepted description-enrichment proposals (AGX-1.3), or
+            opt out and serve the spec-derived descriptions unchanged.
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     enabled: Optional[bool] = None
     target: Optional[ToolsetTarget] = None
+    description_enrichment: Optional[bool] = Field(default=None, alias="descriptionEnrichment")
 
 
 class AgentToolUpdate(BaseModel):
@@ -194,6 +197,8 @@ class AgentToolsetOut(BaseModel):
         version_label: The version's label (``1.0.0``).
         enabled: Whether it serves agents at all.
         target: ``prod`` or ``mock``.
+        description_enrichment: Whether accepted description-enrichment proposals are served
+            (AGX-1.3). ``False`` serves the spec-derived descriptions unchanged.
         tool_count: Callable operations in the version.
         enabled_tool_count: How many of them are exposed.
         enabled_write_op_count: How many exposed ones are write ops.
@@ -214,6 +219,9 @@ class AgentToolsetOut(BaseModel):
     version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
     enabled: bool
     target: ToolsetTarget
+    description_enrichment: bool = Field(
+        default=True, serialization_alias="descriptionEnrichment"
+    )
     tool_count: int = Field(serialization_alias="toolCount")
     enabled_tool_count: int = Field(serialization_alias="enabledToolCount")
     enabled_write_op_count: int = Field(serialization_alias="enabledWriteOpCount")
@@ -334,6 +342,7 @@ def _toolset_out(row: Mapping[str, Any]) -> AgentToolsetOut:
         version_label=row.get("version_label"),
         enabled=bool(row["enabled"]),
         target=row["target"],
+        description_enrichment=bool(row.get("description_enrichment", True)),
         tool_count=_count(row.get("tool_count")),
         enabled_tool_count=_count(row.get("enabled_tool_count")),
         enabled_write_op_count=_count(row.get("enabled_write_op_count")),
@@ -475,7 +484,7 @@ def update_agent_toolset(
     *,
     actor_id: Optional[str] = None,
 ) -> Tuple[AgentToolsetOut, AgentToolsetOut]:
-    """Switch a toolset on or off and/or change its target.
+    """Switch a toolset on or off, change its target, and/or opt in or out of enrichment.
 
     Args:
         tenant_id: The caller's tenant.
@@ -490,13 +499,20 @@ def update_agent_toolset(
         AgentToolsetError: ``agent-toolset-invalid`` when the body changes nothing;
             ``agent-toolset-not-found`` when the tenant has no such toolset.
     """
-    if body.enabled is None and body.target is None:
-        raise AgentToolsetError(CODE_TOOLSET_INVALID, "set at least one of enabled, target")
+    if body.enabled is None and body.target is None and body.description_enrichment is None:
+        raise AgentToolsetError(
+            CODE_TOOLSET_INVALID, "set at least one of enabled, target, descriptionEnrichment"
+        )
     current = db.get_agent_toolset(tenant_id, toolset_id)
     if current is None:
         raise _not_found()
     row = db.update_agent_toolset(
-        tenant_id, toolset_id, enabled=body.enabled, target=body.target, actor_id=actor_id
+        tenant_id,
+        toolset_id,
+        enabled=body.enabled,
+        target=body.target,
+        description_enrichment=body.description_enrichment,
+        actor_id=actor_id,
     )
     if row is None:
         # Deleted between the read and the write.
