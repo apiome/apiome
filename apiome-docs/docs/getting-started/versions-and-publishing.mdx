@@ -1,0 +1,61 @@
+---
+title: Version and publish
+description: Cut a version of your project and publish it for others to use.
+sidebar_position: 7
+tags: [versions, publish]
+---
+
+<Route path="/ade/dashboard/versions" />
+
+A **version** freezes your project's schemas and paths under a number. Publishing a version makes
+it read-only and available to browse, export and MCP.
+
+## Open a project's versions
+
+**Go to Build → Projects and click your project.** Its **Timeline** lists every version, newest
+first; **All**, **Drafts** and **Published** filter it.
+
+<Screenshot id="versions" alt="A project's Versions page: the Timeline tab with compatibility and deprecation banners, project facts and the version list" />
+
+## Cut a version
+
+1. **Click “New version”.**
+2. Under **Copy source**, keep **Copy from version** to start from the latest version, or choose
+   **Create blank version**.
+3. Under **Version**, keep **Auto-generate version** and pick a **Bump strategy** — minor is the
+   default — or choose **Manual entry** and type a **Version ID** such as `1.1.0`.
+4. Under **Describe the release**, write a **Message** (for example `First public release`).
+   **External reference** and **Changelog** are optional.
+5. **Click “Create version”.** The new draft appears at the top of the timeline.
+
+## Publish it
+
+1. On the draft's row, **click the “Publish” lock button**, or open the row's **Actions** menu and
+   **choose “Publish”**.
+2. Choose the **Visibility**:
+   - **Private** (the default) — readers need an API key;
+   - **Public** — anyone can read the spec without a key.
+3. Enter a **Revision note** — one line that stays with this publish — and, if you like, a
+   **Changelog**.
+4. Check **Publish gates** on the right. **Review**, **Style guide**, **Breaking changes** and
+   **Verification policy** each say whether they pass. While one blocks, the footer says why and
+   **“Publish”** stays disabled: fix the finding (see [Lint and check
+   quality](../build/lint-and-quality.md)), or tick **Force publish (ignore validation errors)**
+   and give a reason.
+5. **Click “Publish”.**
+
+<Screenshot id="publish-dialog" alt="The Publish dialog: Private and Public visibility, revision note and changelog, and the publish gates panel" />
+
+The version is now read-only. To change it, cut a new version — or choose **Unpublish** from its
+**Actions** menu.
+
+## With the CLI or the API
+
+- REST: `POST /v1/versions/{tenant}/{project}` cuts a version; `POST
+  /v1/versions/{tenant}/{project}/{version}/publish` publishes it. See [Cut a
+  version](../ship/cut-a-version.md), [Publish a version](../ship/publish-a-version.md) and the [API
+  reference](../reference/api-reference.md).
+
+## Where next
+
+- [Browse and export it](./browse-and-export.mdx)

@@ -23,6 +23,7 @@ import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
 
 import { ATTENTION_HREF, type DashboardHome } from '@lib/db/dashboard-home-model';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** A real anchor, with navigation suppressed — jsdom logs an error rather than navigating. */
 jest.mock('next/link', () => ({
@@ -457,6 +458,23 @@ describe('Home — Needs attention', () => {
 /* -------------------------------------------------------------------------
    4. Accessibility and resilience
    ------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------
+   5. The browser fixture
+   ------------------------------------------------------------------------- */
+
+/**
+ * Home only renders behind a session, so the documentation site's screenshot pipeline
+ * (`apiome-docs/screens.json`, DOCS-1.3/1.4) captures it from this dump when the golden-path stack
+ * is not running. Written into `e2e/fixtures/hive-a11y/home.html` with
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/dashboard-home.test.tsx -t fixture`.
+ */
+describe('Home — the browser fixture', () => {
+  it('renders the loaded page for the fixture set', async () => {
+    const { container } = await renderLoaded();
+    writeA11yFixture('home', container.innerHTML);
+  });
+});
 
 describe('Home — accessibility and resilience', () => {
   it('has no serious or critical axe violations when loaded', async () => {

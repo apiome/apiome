@@ -1,18 +1,82 @@
 {
   "screens": [
     {
+      "id": "login",
+      "route": "/login",
+      "waitFor": "[data-testid=\"login-card\"]",
+      "data": "signed-out"
+    },
+    {
+      "id": "onboarding-welcome",
+      "route": "/onboarding",
+      "waitFor": "[data-testid=\"first-tenant-onboarding-wizard\"]",
+      "data": "fixture:hive-a11y/onboarding-welcome.html"
+    },
+    {
+      "id": "launcher",
+      "route": "/ade",
+      "waitFor": "[data-testid=\"launch-app-control-panel\"]",
+      "mask": [
+        "time"
+      ],
+      "data": "golden-path",
+      "fallback": "fixture:hive-a11y/launcher.html"
+    },
+    {
+      "id": "home",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": [
+        "time"
+      ],
+      "data": "golden-path",
+      "fallback": "fixture:hive-a11y/home.html"
+    },
+    {
+      "id": "import-wizard-source",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#imp-source-heading",
+      "data": "fixture:hive-import-wizard/source.html"
+    },
+    {
+      "id": "publish-dialog",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"publish-version-dialog\"]",
+      "data": "fixture:hive-versions/publish-ready.html"
+    },
+    {
+      "id": "export-studio",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "[data-testid=\"export-studio\"]",
+      "mask": [
+        "time"
+      ],
+      "data": "golden-path",
+      "fallback": "fixture:hive-export-studio/target-ready.html"
+    },
+    {
+      "id": "preferences",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"preferences-drawer\"]",
+      "data": "fixture:hive-a11y/settings-pane.html"
+    },
+    {
       "id": "catalog",
       "route": "/ade/dashboard/catalog",
       "waitFor": "[data-testid=\"page-header\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-catalog/table.html"
     },
     {
-      "id": "versions-timeline",
+      "id": "versions",
       "route": "/ade/dashboard/versions",
       "waitFor": "[data-testid=\"versions-head-badge\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-versions/timeline.html"
     },
@@ -20,7 +84,9 @@
       "id": "published",
       "route": "/ade/dashboard/published",
       "waitFor": "[data-testid=\"page-header\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-published/table.html"
     },
@@ -28,7 +94,9 @@
       "id": "primitives",
       "route": "/ade/dashboard/primitives",
       "waitFor": "[data-testid=\"page-header\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-primitives/registry.html"
     },
@@ -36,7 +104,9 @@
       "id": "mcp-servers",
       "route": "/ade/dashboard/mcp",
       "waitFor": "[data-testid=\"page-header\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-mcp-catalog/catalog-list.html"
     },
@@ -44,7 +114,9 @@
       "id": "sunset-timeline",
       "route": "/ade/dashboard/versions/sunset-timeline",
       "waitFor": "[data-testid=\"page-header\"]",
-      "mask": ["time"],
+      "mask": [
+        "time"
+      ],
       "data": "golden-path",
       "fallback": "fixture:hive-sunset-timeline/timeline.html"
     }

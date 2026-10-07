@@ -25,20 +25,10 @@ Panel → Dashboard**. The default service ports are:
 Every how-to page shows the **UI**, **REST**, and (where applicable) **CLI** way to do the same
 thing, plus a short *verify* step.
 
-## Walk the spine
+## Where next
 
-The spine is the end-to-end path a specification takes through Apiome. One page covers each step:
-
-1. [Import a specification](../bring-in/import-a-spec.md)
-2. [Edit classes and properties](../build/edit-classes-and-properties.md) and
-   [paths and operations](../build/edit-paths.md)
-3. [Lint and check quality](../build/lint-and-quality.md)
-4. [Cut a version](../ship/cut-a-version.md)
-5. [Publish a version](../ship/publish-a-version.md)
-6. [Browse published specs](../ship/browse-published-specs.md)
-7. [Export a spec](../ship/export-a-spec.md) with the [CLI](../reference/cli-quickstart.md)
-8. Query published specs with [MCP](../reference/mcp-quickstart.md)
-
-The project [README](https://github.com/apiome/apiome/blob/main/README.md) (“Your first project in
-~10 minutes”) and the [Golden Path](https://github.com/apiome/apiome/blob/main/docs/GOLDEN_PATH.md)
-(the executable definition of “the product works”) cover the same path from the repository side.
+[Sign in](./sign-in.mdx) with `ada@example.com` / `apiome-dev`, then follow the Getting started pages
+in order — they walk the spine from import to a published, browsable spec. The project
+[README](https://github.com/apiome/apiome/blob/main/README.md) and the
+[Golden Path](https://github.com/apiome/apiome/blob/main/docs/GOLDEN_PATH.md) cover the same path from
+the repository side.

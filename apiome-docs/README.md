@@ -111,7 +111,8 @@ yarn docs:screenshots -- --start-ui --boot            # everything, from the gol
 ```
 
 - **Golden-path** entries open the real route signed in as `ada@example.com` against
-  `scripts/golden_path/run.sh`; **fixture** entries (and golden-path entries' `fallback`) mount a
+  `scripts/golden_path/run.sh`; **signed-out** entries open their route with no session (the sign-in
+  page); **fixture** entries (and golden-path entries' `fallback`) mount a
   dump from `apiome-ui/e2e/fixtures/` into `/login`, so they need no database.
 - Appearance is pinned with `apiome-ui/e2e/support/a11y.ts` (theme, density, font scale, no motion),
   the clock is fixed, and `mask` selectors are painted over, so reruns are byte-identical.

@@ -1,0 +1,61 @@
+---
+title: Browse and export
+description: Find your published versions, share their URL, and export another format.
+sidebar_position: 8
+tags: [browse, export, publish]
+---
+
+## Published versions
+
+<Route path="/ade/dashboard/published" />
+
+**Go to Ship → Published.** **Published versions** lists every version you have published, with
+its **Visibility**, **Access URL** and publish date.
+
+<Screenshot id="published" alt="Published versions: a table of project versions with visibility, access URL and actions" />
+
+1. **Open a row's actions menu** and **choose View → OpenAPI** to read the spec, or **Swagger UI**
+   to try it out.
+2. **Choose “Copy URL”** to share the access URL.
+3. A private version asks for a key: paste one in **API key** and **click “Open with key”**.
+   **Create an API key** is on Home's **Quick actions**.
+4. To switch a version between private and public, **choose “Make Public”** (or **“Make
+   Private”**) and confirm with **“Change Visibility”**. Publishing and unpublishing happen on
+   [Versions](./versions-and-publishing.mdx).
+
+Public versions also appear in **Browser**, the public catalog on the launcher. See [Browse
+published specs](../ship/browse-published-specs.md) for the REST endpoints.
+
+## Export another format
+
+<Route path="/ade/dashboard/export/studio" />
+
+The **Export studio** turns a version into another format — AsyncAPI, GraphQL, Protocol Buffers,
+Avro and more — and tells you what the conversion keeps before it runs.
+
+1. On the project's **Versions** page, **open a version's Actions menu** and **choose “Export to
+   another format…”**, then **click “Open in Export Studio”**.
+2. **Source** shows the version you are exporting. **Click “Choose target”.**
+3. **Target** — pick a format. Each card has a fidelity badge for *this* source; **Download
+   original** gets the file you imported, unchanged.
+
+   <Screenshot id="export-studio" alt="The Export studio on its Target step: the original source card and target formats grouped by family with fidelity badges" />
+
+4. **Options**, then **Verify** — read what will be kept, changed or lost. **Click “Continue to
+   review”.**
+5. **Review & Generate** — **click “Generate”**, then **“Download .zip”** (or the single file)
+   when the job finishes. Recent jobs are listed under **Recent export jobs**.
+
+[Understand export fidelity](../ship/export-fidelity.md) explains the verify step in depth.
+
+## With the CLI
+
+```bash
+apiome spec export --project petstore-sample --version 1.0.0 --yaml -o petstore.yaml
+```
+
+See [Export a spec](../ship/export-a-spec.md) and the [CLI quick-start](../reference/cli-quickstart.md).
+
+## Where next
+
+- [Connect an MCP host](./connect-an-mcp-host.mdx)

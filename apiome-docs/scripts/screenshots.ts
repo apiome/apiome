@@ -10,6 +10,7 @@
  *
  * - `golden-path` — the real route, signed in as the seeded user, against the golden-path stack
  *   (`scripts/golden_path/run.sh`: Postgres, REST, MCP, mock, seeded tenant `acme-corp`).
+ * - `signed-out` — the real route with no session (the sign-in page), which needs only apiome-ui.
  * - `fixture:<dir>/<file>` — a committed dump from `apiome-ui/e2e/fixtures/`, mounted into
  *   `/login` (which compiles the real `globals.css` and needs no session). A `golden-path` entry
  *   with a `fallback` fixture uses it when the stack is not running.
@@ -63,6 +64,12 @@ const FIXED_TIME = new Date('2026-06-15T09:30:00Z');
 /** Paint for masked regions — a neutral grey that reads in both themes. */
 const MASK_COLOR = '#9aa3ad';
 
+/**
+ * CSS added to every capture: hides Next.js's development overlay (the "N" badge a `next dev`
+ * server injects as `<nextjs-portal>`), which is tooling, not product.
+ */
+const HIDE_DEV_TOOLING = 'nextjs-portal{display:none!important}';
+
 /** How long a page may take to show its `waitFor` selector. */
 const READY_TIMEOUT_MS = 60_000;
 
@@ -79,7 +86,7 @@ interface CaptureJob {
     fontScale: string;
   };
   theme: 'light' | 'dark';
-  source: {kind: 'golden-path'} | {kind: 'fixture'; dir: string; file: string};
+  source: {kind: 'golden-path'} | {kind: 'signed-out'} | {kind: 'fixture'; dir: string; file: string};
   output: string;
 }
 
@@ -195,7 +202,8 @@ async function signIn(browser: Browser, baseURL: string): Promise<Awaited<Return
 }
 
 /**
- * Load a job's content into the page: the real route, or a fixture mounted into `/login`.
+ * Load a job's content into the page: the real route (signed in or not), or a fixture mounted into
+ * `/login`.
  *
  * @param page The page.
  * @param job The capture.
@@ -241,6 +249,7 @@ async function capture(
       density: job.screen.density,
       fontScale: job.screen.fontScale,
     });
+    await page.addStyleTag({content: HIDE_DEV_TOOLING});
     await page.locator(job.screen.waitFor).first().waitFor({state: 'visible', timeout: READY_TIMEOUT_MS});
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
 

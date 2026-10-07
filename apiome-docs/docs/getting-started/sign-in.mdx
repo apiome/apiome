@@ -1,0 +1,58 @@
+---
+title: Sign in and create an account
+description: Sign in with your identity provider or email, and pass two-factor checks.
+sidebar_position: 3
+tags: [sign-in, accounts]
+---
+
+<Route path="/login" />
+
+Apiome opens on the sign-in page. Single sign-on comes first: each identity provider your
+administrator has enabled has its own button, and the email form sits underneath.
+
+<Screenshot id="login" alt="The sign-in page: Welcome back, with Email Address and Password fields and a Sign In button" />
+
+## Sign in
+
+1. **Open Apiome** in your browser. On the local stack that is the apiome-ui address you started
+   (see [Run Apiome locally](./run-locally.md)).
+2. **Choose your provider** — for example **“Continue with GitHub”** — and approve the request on
+   the provider's page. You come back to Apiome signed in.
+3. Or sign in with email: if the form is folded away, **click “or use your email”**. Fill in
+   **Email Address** and **Password**, then **click “Sign In”**.
+
+   On the local stack, use `ada@example.com` with the password `apiome-dev`.
+
+A wrong password shows **“Incorrect email or password.”** under the field — check both and try
+again.
+
+## Pass the two-factor check
+
+If your account has two-factor authentication, Apiome asks for a code before it lets you in.
+
+1. With an authenticator app, enter the six-digit code from the app in **Authentication code**.
+2. With email, **click “Send email code”**, then enter the code from your inbox in **Email code**.
+   The **Authenticator** and **Email code** tabs switch between the two when both are set up.
+3. **Click “Verify and continue”.**
+
+**“Back to sign in”** returns to the first page without signing you in.
+
+## Create an account
+
+**With a provider.** Click your provider's button on the sign-in page. The first time, Apiome asks
+you to **finish setting up your account**:
+
+1. Enter **Your name**, **Organization name** and **Organization URL slug** — the slug is
+   suggested from the name.
+2. **Click “Create account”.** Your organization is created on the Free plan and you land on the
+   launcher.
+
+**With email.** Under the form, **click “Create one”**, then fill in **Full Name**, **Email
+Address** and **Password** and **click “Create Account”**. This sends a sign-up request; the page
+says what happens next. Once you can sign in, Apiome takes you through
+[first-tenant onboarding](./onboarding.mdx) if you are not part of an organization yet.
+
+## Where next
+
+- [Set up your first organization](./onboarding.mdx)
+- [Find your way around: the launcher and Home](./launcher-and-home.mdx)

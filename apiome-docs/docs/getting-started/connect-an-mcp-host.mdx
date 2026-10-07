@@ -1,0 +1,48 @@
+---
+title: Connect an MCP host
+description: Let Claude Desktop, an IDE or an agent read your published specs.
+sidebar_position: 9
+tags: [mcp]
+---
+
+Apiome's **MCP server** gives MCP hosts — Claude Desktop, IDEs, agents — read-only access to your
+published specs. Anyone can read public specs; an **MCP API key** also unlocks the private specs
+of its tenant.
+
+## Create an MCP API key
+
+You need to be an administrator of the tenant.
+
+1. **Go to Tenants** and **click “Manage”** on your tenant's row.
+2. **Open the “Per-key capabilities” tab** and **click “Create MCP key”**.
+3. Enter a **Label** (for example `Claude Desktop`) and **click “Create key”**.
+4. **Copy the key now** — it is shown only once.
+
+## Point your host at Apiome
+
+The local stack serves MCP at `http://localhost:8765/mcp`. In your host's MCP settings, add a
+**Streamable HTTP** server with that URL and the key as a bearer token:
+
+```
+URL:     http://localhost:8765/mcp
+Header:  Authorization: Bearer <your-mcp-api-key>
+```
+
+Leave the header out to read public specs only.
+
+Hosts that only speak stdio, and the full set of options, are covered in the [MCP
+quick-start](../reference/mcp-quickstart.md).
+
+## Check it works
+
+1. Restart the host so it picks up the server.
+2. Ask it to list Apiome's specs — it calls `spec.list`, which includes the seeded `petstore-sample`
+   and anything you published.
+
+If a tool answers `capability_disabled`, a tenant administrator has to switch it on: **Tenants →
+Manage → MCP settings**.
+
+## Where next
+
+- [Keyboard and preferences](./keyboard-and-preferences.mdx)
+- [MCP rule catalogs](../govern/mcp-conformance-rules.md)

@@ -1,0 +1,53 @@
+---
+title: Import your first project
+description: Bring an existing API description into Apiome with the import wizard.
+sidebar_position: 6
+tags: [import, projects]
+---
+
+The quickest way to a project is to import a specification you already have. OpenAPI and
+Swagger become a **project** you can version and publish; other formats become a **catalog item**
+(see [Import a specification](../bring-in/import-a-spec.md)).
+
+To follow along, use the sample `apiome-ui/examples/openapi/30-openapi-3.0-petstore.yaml` from the
+Apiome repository.
+
+## Open the import wizard
+
+**On Home, click “Import a spec”** (or press <Kbd keys="I"/>). The same wizard opens from
+**Import** on the **Projects** page and **Import to catalog** on the **Catalog** page.
+
+<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with File Upload, URL Import, Clipboard Paste, Git Repository and other source cards" />
+
+## Import a file
+
+1. **Source.** Pick where the specification comes from:
+   - **File Upload** — drop a file or **click “Browse files”**;
+   - **URL Import** — a link to the file;
+   - **Clipboard Paste** — paste JSON or YAML;
+   - **Git Repository** — a file in GitHub or GitLab;
+   - **SwaggerHub**, **Postman Collection** and **MCP Server** where they apply.
+
+   Choose **File Upload**, select the petstore file and **click “Analyze →”**.
+2. **Analyze.** Apiome detects the format and checks the document.
+3. **Preview.** Review the schemas Apiome found and select the ones to keep, then **click
+   “Next →”**.
+4. **Import.** **Click “Import →”.** The import runs as a job — you can close the dialog and it
+   keeps running.
+5. **Done.** The new project is ready. **Click “Done”.**
+
+If the import fails, the wizard lists the failures and nothing is saved — fix the specification or
+choose another source and try again.
+
+Every import creates a new project. Open it from **Build → Projects**: clicking a project opens
+its **versions**.
+
+## With the CLI or the API
+
+- CLI: `apiome import openapi ./30-openapi-3.0-petstore.yaml` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- REST: `POST /v1/tenants/{tenant}/imports` — see the [API reference](../reference/api-reference.md).
+
+## Where next
+
+- [Version and publish it](./versions-and-publishing.mdx)
+- [Supported formats](../bring-in/supported-formats.md)

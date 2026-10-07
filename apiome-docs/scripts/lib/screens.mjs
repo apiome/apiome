@@ -39,7 +39,7 @@ export const SCREENS_DIR = 'img/screens';
 
 /**
  * @typedef {object} ScreenData
- * @property {'golden-path'|'fixture'} kind - Where the page's content comes from.
+ * @property {'golden-path'|'signed-out'|'fixture'} kind - Where the page's content comes from.
  * @property {string} [dir] - Fixture directory under `apiome-ui/e2e/fixtures/` (fixture only).
  * @property {string} [file] - Fixture file inside `dir` (fixture only).
  */
@@ -62,11 +62,12 @@ export const SCREENS_DIR = 'img/screens';
 /**
  * Parse a `data` / `fallback` value.
  *
- * @param {unknown} value - `"golden-path"` or `"fixture:<dir>/<file>"`.
+ * @param {unknown} value - `"golden-path"`, `"signed-out"` or `"fixture:<dir>/<file>"`.
  * @returns {ScreenData | null} The parsed source, or `null` when the value is not one of those.
  */
 export function parseData(value) {
   if (value === 'golden-path') return {kind: 'golden-path'};
+  if (value === 'signed-out') return {kind: 'signed-out'};
   const match = typeof value === 'string' ? FIXTURE_PATTERN.exec(value) : null;
   return match ? {kind: 'fixture', dir: match[1], file: match[2]} : null;
 }
@@ -107,7 +108,7 @@ export function normalizeScreen(raw) {
   }
 
   const data = parseData(raw.data);
-  if (!data) fail('`data` must be "golden-path" or "fixture:<dir>/<file>.html"');
+  if (!data) fail('`data` must be "golden-path", "signed-out" or "fixture:<dir>/<file>.html"');
 
   let fallback;
   if (raw.fallback !== undefined) {
@@ -314,7 +315,8 @@ export function checkScreenshots({screens, pages, staticDir}) {
  *
  * A `golden-path` entry is captured from the signed-in stack when it is up; otherwise from its
  * `fallback` fixture when it has one; otherwise it is skipped. A `fixture` entry never needs the
- * stack.
+ * stack, and a `signed-out` entry opens its route on apiome-ui without a session, which needs no
+ * stack either.
  *
  * @param {Screen[]} screens - The selected entries.
  * @param {{stackAvailable: boolean}} options - Whether the golden-path stack answered.
