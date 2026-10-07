@@ -168,7 +168,7 @@ export function PatDialog({
           {scopes ? (
             <Alert variant="info" data-testid="pat-scopes">
               {/* A `<span>`, not a `<p>` and not `AlertTitle`, for the two reasons
-                  `ChangePasswordDialog` states: the unlayered `p { color: var(--text-muted) }`
+                  `ChangePasswordDialog` states: the unlayered `p { color: var(--fg-muted) }`
                   at the foot of `globals.css` outranks the banner's ink utility, so a paragraph
                   here renders muted-on-accent (3.86:1 in Solarized, a serious axe finding); and
                   `AlertTitle` is an `h5` under an `h2` dialog title, which is a skipped heading

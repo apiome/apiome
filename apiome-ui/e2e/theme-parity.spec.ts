@@ -154,9 +154,9 @@ test.describe('Theme parity', () => {
   test('the swap reaches the aliases the components read', async ({ page }) => {
     await applyTheme(page, 'nord');
 
-    // `--background` is the pre-Hive alias ~120 call sites still use; it has to follow.
-    expect(await tokenValue(page, '--background')).toBe(await tokenValue(page, '--bg-canvas'));
-    expect(await tokenValue(page, '--text-muted')).toBe(await tokenValue(page, '--fg-muted'));
+    // The §3.1 spellings components read are pointers at the `@theme` tokens; they follow.
+    expect(await tokenValue(page, '--bg-canvas')).toBe(await tokenValue(page, '--color-canvas'));
+    expect(await tokenValue(page, '--fg-muted')).toBe(await tokenValue(page, '--color-fg-muted'));
     // The focus ring is built with `color-mix()`; it must mix the *theme's* accent.
     expect(await tokenValue(page, '--shadow-focus')).toContain(await tokenValue(page, '--accent'));
   });

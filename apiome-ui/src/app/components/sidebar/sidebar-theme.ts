@@ -29,8 +29,6 @@ export interface SidebarDensityTokens {
   rowGap: string;
   /** Search/filter input padding. */
   inputPaddingY: string;
-  /** Pixel value of nominal row height (used for virtualization sizing). */
-  rowHeightPx: number;
 }
 
 const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
@@ -42,7 +40,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     sectionPadding: 'px-2 py-2',
     rowGap: 'gap-0.5',
     inputPaddingY: 'py-1',
-    rowHeightPx: 28,
   },
   standard: {
     rowPaddingY: 'py-1.5',
@@ -52,7 +49,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     sectionPadding: 'px-3 py-3',
     rowGap: 'gap-1',
     inputPaddingY: 'py-1.5',
-    rowHeightPx: 34,
   },
   comfortable: {
     rowPaddingY: 'py-2.5',
@@ -62,7 +58,6 @@ const TOKENS: Record<SidebarDensity, SidebarDensityTokens> = {
     sectionPadding: 'px-3 py-3.5',
     rowGap: 'gap-1.5',
     inputPaddingY: 'py-2',
-    rowHeightPx: 42,
   },
 };
 
@@ -138,7 +133,7 @@ export function useSidebarTokens(): SidebarDensityTokens {
 
 /**
  * Shared color palette for the Linear/Vercel-style sidebar. Centralizing
- * these strings keeps the four sidebars visually identical and makes
+ * these strings keeps the three sidebars visually identical and makes
  * future theme adjustments a one-file change.
  */
 export const sidebarTheme = {
@@ -160,10 +155,6 @@ export const sidebarTheme = {
     'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300',
   rowSelectedRing:
     'ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800/60',
-  accent:
-    'text-indigo-600 dark:text-indigo-400',
-  accentBg:
-    'bg-indigo-600 hover:bg-indigo-500 text-white',
   iconBadge:
     'bg-indigo-50 dark:bg-indigo-950/50 ring-1 ring-indigo-100 dark:ring-indigo-900/60 text-indigo-600 dark:text-indigo-400',
   inputBase:

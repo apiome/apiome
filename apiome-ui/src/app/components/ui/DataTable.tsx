@@ -30,8 +30,8 @@ import { nextSortState } from './dataTableUrlState';
  * .table-foot .pager .bulk-bar`), `docs/mockups/DESIGN.md` §7 and §8 "List page", and the
  * Tables section of `docs/mockups/foundations/design-system.html`.
  *
- * Every list screen in the app used to build its own table out of the string constants in
- * `components/ade/dashboard/dashboardScreenClasses.ts`, and then re-implement sorting,
+ * Every list screen in the app used to build its own table out of a shared module of class
+ * strings (retired in HIVE-10.6, #5342), and then re-implement sorting,
  * selection, bulk actions, paging and the empty state on top of them — forty pages, forty
  * subtly different answers to the same five questions. This is the one answer:
  *

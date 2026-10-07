@@ -18,8 +18,9 @@
  * come back is a *platform* copy.
  */
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { sourceFiles } from './helpers/source-files';
 
 const APP_ROOT = join(__dirname, '..');
 
@@ -46,28 +47,6 @@ const RETIRED_SPECIFIER =
 
 /** Directories that must not reference the retired chrome. */
 const SCANNED_DIRS: readonly string[] = ['src', 'lib', 'tests', 'e2e'];
-
-const SCANNED_EXTENSIONS = /\.(ts|tsx)$/;
-
-/**
- * Every TypeScript source file under a directory, recursively.
- *
- * @param dir Absolute directory to walk.
- * @returns Absolute paths of every `.ts`/`.tsx` file beneath it.
- */
-function sourceFiles(dir: string): string[] {
-  const found: string[] = [];
-  for (const entry of readdirSync(dir)) {
-    if (entry === 'node_modules' || entry.startsWith('.')) continue;
-    const path = join(dir, entry);
-    if (statSync(path).isDirectory()) {
-      found.push(...sourceFiles(path));
-    } else if (SCANNED_EXTENSIONS.test(entry)) {
-      found.push(path);
-    }
-  }
-  return found;
-}
 
 /**
  * Every file the scan answers for — this one excepted.

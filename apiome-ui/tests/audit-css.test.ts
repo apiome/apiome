@@ -178,7 +178,7 @@ describe('the access-audit section of globals.css', () => {
 
   it('sits after the unlayered p base rule it has to outrank', () => {
     // `.aud-quiet`, `.aud-chain__note`, `.aud-note` and `.aud-callout` are all `p` elements;
-    // the bare `p { color: var(--text-muted) }` rule near line 2511 is unlayered, so a rule
+    // the bare `p { color: var(--fg-muted) }` rule near line 2511 is unlayered, so a rule
     // declared before it would lose whatever its specificity.
     for (const prelude of AUDIT_PRELUDES) {
       expect(auditRule(prelude).line).toBeGreaterThan(BASE_TYPE_RULE_LINE);

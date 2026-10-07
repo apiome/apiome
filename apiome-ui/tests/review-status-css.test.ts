@@ -128,7 +128,7 @@ describe('the review-status section of globals.css', () => {
     for (const prelude of ['.rvs-pill:focus-visible', '.rvs-link:focus-visible']) {
       expect({ prelude, outline: declaration(prelude, 'outline') }).toEqual({
         prelude,
-        outline: '2px solid var(--focus-ring)',
+        outline: '2px solid var(--accent)',
       });
     }
   });

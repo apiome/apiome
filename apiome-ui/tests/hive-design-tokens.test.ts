@@ -8,8 +8,9 @@
  *
  *   1. every token the design authority (`docs/mockups/DESIGN.md` §3.1) and the ticket's
  *      scope list name is declared and resolves to a literal — no dangling `var()`;
- *   2. the pre-Hive variable names still resolve, so the ~120 `var(--text-muted)` /
- *      `var(--surface)` call sites keep working through the migration;
+ *   2. the pre-Hive variable names stay retired (HIVE-10.6, #5342): the migration is over,
+ *      so `--text-muted`, `--surface`, … are declared nowhere and a stray read of one fails
+ *      here rather than silently resolving to nothing;
  *   3. the layering contract holds — `@theme static`, and no name declared in both
  *      `@theme` and the unlayered `:root` block (either mistake silently pins a token and
  *      breaks the per-theme swaps in `hive-theme-blocks.test.ts` without erroring);
@@ -71,22 +72,33 @@ const THEME_TOKEN_GROUPS: Record<string, string[]> = {
 };
 
 /**
- * Pre-Hive variable names, and the Hive token each now points at.
- *
- * Since HIVE-1.2 (#5275) these are plain pointers with no per-theme override of their
- * own: a theme swaps the token underneath, and the alias follows.
+ * Pre-Hive variable names, retired by HIVE-10.6 (#5342), and the Hive token that replaced
+ * each one. The values document the migration for anyone reading an old branch.
  */
-const LEGACY_ALIASES: Record<string, string> = {
-  '--background': '--color-canvas',
-  '--foreground': '--color-fg',
-  '--surface': '--color-surface',
-  '--surface-muted': '--color-subtle',
-  '--border-subtle': '--color-border',
-  '--focus-ring': '--color-accent',
-  '--text-muted': '--color-fg-muted',
+const RETIRED_ALIASES: Record<string, string> = {
+  '--background': '--bg-canvas',
+  '--foreground': '--fg',
+  '--surface': '--bg-surface',
+  '--surface-muted': '--bg-subtle',
+  '--border-subtle': '--border',
+  '--focus-ring': '--accent',
+  '--text-muted': '--fg-muted',
   '--shadow-subtle': '--shadow-xs',
   '--control-height': '--control-h',
 };
+
+/**
+ * The Tailwind colour utilities the pre-Hive names generated (`bg-background`,
+ * `text-text-muted`, …), retired with them. `--color-surface` is not on the list: it is a
+ * Hive token in its own right.
+ */
+const RETIRED_UTILITY_TOKENS = [
+  '--color-background',
+  '--color-foreground',
+  '--color-surface-muted',
+  '--color-border-subtle',
+  '--color-text-muted',
+];
 
 /**
  * Read a layout module's source.
@@ -205,30 +217,21 @@ describe('layering contract', () => {
   });
 });
 
-describe('legacy aliases — nothing breaks mid-migration', () => {
-  it.each(Object.keys(LEGACY_ALIASES))('%s is still declared at :root', (alias) => {
-    expect(layer.root.has(alias)).toBe(true);
+describe('legacy aliases — retired (HIVE-10.6, #5342)', () => {
+  it.each(Object.keys(RETIRED_ALIASES))('%s is no longer declared at :root', (alias) => {
+    expect(layer.root.has(alias)).toBe(false);
   });
 
-  it.each(Object.entries(LEGACY_ALIASES))('%s points at %s', (alias, token) => {
-    expect(layer.root.get(alias)).toBe(`var(${token})`);
+  it.each(Object.entries(RETIRED_ALIASES))('%s has a Hive replacement, %s, that resolves', (_alias, token) => {
+    expect(layer.root.has(token) || layer.theme.has(token)).toBe(true);
   });
 
-  it.each(Object.keys(LEGACY_ALIASES))('%s resolves to the same literal as its token', (alias) => {
-    expect(resolveToken(alias, layer)).toBe(resolveToken(LEGACY_ALIASES[alias], layer));
+  it.each(Object.keys(RETIRED_ALIASES))('nothing in the stylesheet reads var(%s)', (alias) => {
+    expect(css).not.toMatch(new RegExp(`var\\(${alias}[,)]`));
   });
 
-  it('keeps the Tailwind colour utilities the legacy names generated', () => {
-    for (const utility of [
-      '--color-background',
-      '--color-foreground',
-      '--color-surface',
-      '--color-surface-muted',
-      '--color-border-subtle',
-      '--color-text-muted',
-    ]) {
-      expect(layer.theme.has(utility)).toBe(true);
-    }
+  it.each(RETIRED_UTILITY_TOKENS)('%s is no longer a @theme utility token', (utility) => {
+    expect(layer.theme.has(utility)).toBe(false);
   });
 
   it('keeps --font-inter, which the capability and Mermaid graphs read directly', () => {

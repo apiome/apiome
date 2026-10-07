@@ -260,7 +260,7 @@ describe('launcher — the unlayered element rules are answered with classes', (
   });
 
   it('colours the lede from a class, for the same reason', () => {
-    // And `p { color: var(--text-muted) }` is why the lede is a `div` with a class rather
+    // And `p { color: var(--fg-muted) }` is why the lede is a `div` with a class rather
     // than a `<p>` with `text-fg-muted`.
     expect(declarationsOf('.launch-lede').get('color')).toBe('var(--fg-muted)');
   });

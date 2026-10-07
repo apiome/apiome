@@ -505,7 +505,7 @@ describe('the scope preset cards', () => {
 
   it('keeps a focus ring the card itself can show, since the radio is the focus target', () => {
     expect(declaration('.akey-scope-card:has(.akey-scope-radio:focus-visible)', 'outline')).toBe(
-      '2px solid var(--focus-ring)'
+      '2px solid var(--accent)'
     );
     expect(
       declaration('.akey-scope-card:has(.akey-scope-radio:focus-visible)', 'outline-offset')

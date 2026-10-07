@@ -247,10 +247,18 @@ describe('Radix Themes token-name collisions', () => {
     // because the failure mode is silent — a component simply paints the wrong colour, in
     // every theme at once, and nothing else in the suite can see it.
     const collisions = [...radixColorNames].filter((name) => layer.theme.has(name)).sort();
-    expect(collisions).toEqual(['--color-background', '--color-overlay', '--color-surface']);
+    expect(collisions).toEqual(['--color-overlay', '--color-surface']);
     for (const name of collisions) {
       expect(bridge.get(name)).toMatch(/^var\(--/);
     }
+  });
+
+  it('keeps --color-background on the canvas for Radix\'s own components', () => {
+    // No longer a collision: the legacy `bg-background` utility token left `@theme` in
+    // HIVE-10.6 (#5342). Radix still reads the name for its own surfaces, though, so the
+    // bridge keeps pointing it at the Hive canvas.
+    expect(layer.theme.has('--color-background')).toBe(false);
+    expect(bridge.get('--color-background')).toBe('var(--bg-canvas)');
   });
 
   it('points each collision back at the Hive token it shadowed', () => {
