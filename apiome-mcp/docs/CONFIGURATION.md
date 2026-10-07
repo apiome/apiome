@@ -36,6 +36,8 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 | **`APIOME_MCP_AGENT_UPSTREAM_BUDGET_SECONDS`** | No | `45` | AGX-2.1: most seconds all attempts and back-off pauses of one call may take together (**> 0**, **≤ 600**). |
 | **`APIOME_MCP_AGENT_UPSTREAM_BACKOFF_SECONDS`** | No | `0.2` | AGX-2.1: pause before the first retry; doubles each retry (**0–30**). |
 | **`APIOME_MCP_AGENT_RESPONSE_MAX_BYTES`** | No | `65536` | AGX-2.1: most upstream body bytes returned to the agent; longer bodies are cut and marked `[truncated: …]` (**1024–10000000**). |
+| **`APIOME_MCP_AGENT_REQUEST_MAX_BYTES`** | No | `1048576` | AGX-2.3: most request-body bytes one agent call may send; a larger body is refused with `request_too_large` before anything is sent (**1024–100000000**). |
+| **`APIOME_MCP_AGENT_UPSTREAM_ALLOW_PRIVATE`** | No | `false` | AGX-2.3: turn off the SSRF address rule for `prod` upstreams (local development only). The mock root is always exempt. |
 | **`APIOME_MCP_AGENT_TOOLSET_CACHE_SIZE`** | No | `256` | AGX-2.1: compiled agent toolsets kept in memory per process (**1–100000**). |
 | **`APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS`** | For `prod` toolsets with credentials | — | AGX-2.2 vault key map (no `APIOME_MCP_` prefix: it is read by the shared apiome-rest vault code). Must equal apiome-rest's value; without it, a call whose URL has a bound credential fails closed with `upstream_credential_unavailable`. |
 

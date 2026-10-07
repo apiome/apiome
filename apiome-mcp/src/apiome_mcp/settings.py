@@ -193,6 +193,22 @@ class Settings(BaseSettings):
             "marked truncated."
         ),
     )
+    agent_request_max_bytes: int = Field(
+        default=1_048_576,
+        ge=1024,
+        le=100_000_000,
+        description=(
+            "AGX-2.3: most request-body bytes one agent tools/call may send upstream; a larger body is refused "
+            "with request_too_large before anything is sent."
+        ),
+    )
+    agent_upstream_allow_private: bool = Field(
+        default=False,
+        description=(
+            "AGX-2.3: turn off the SSRF address rule for prod upstreams (local development against a private "
+            "API only). The configured mock root is always exempt."
+        ),
+    )
     agent_toolset_cache_size: int = Field(
         default=256,
         ge=1,

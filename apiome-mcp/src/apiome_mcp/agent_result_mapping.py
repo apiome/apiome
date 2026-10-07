@@ -25,6 +25,10 @@ identifiers to check (``404``), that credentials are the tenant's to fix (``401`
 retry (``429``, ``5xx``, timeouts). ``invalid_arguments`` uses JSON-RPC's ``-32602`` and lists every
 problem under ``invalidArguments``. No result ever contains an upstream credential: the request
 headers are never echoed.
+
+The AGX-2.3 rails (:mod:`apiome_mcp.agent_safety_rails`) add three refusals, each sent before
+anything reaches the upstream: ``upstream_blocked`` (the SSRF guard), ``method_not_allowed`` (a
+method the tool does not declare) and ``request_too_large`` (the request-body cap).
 """
 
 from __future__ import annotations
@@ -53,9 +57,12 @@ __all__ = [
     "failure_for_response",
     "fixed_failure",
     "invalid_arguments",
+    "method_not_allowed",
+    "request_too_large",
     "success_result",
     "timeout_failure",
     "unreachable_failure",
+    "upstream_blocked",
 ]
 
 #: ``structuredContent.error.code`` of every invocation failure except invalid arguments. Next to the
@@ -86,6 +93,9 @@ class InvocationReason(str, Enum):
     UPSTREAM_UNREACHABLE = "upstream_unreachable"
     UPSTREAM_NOT_CONFIGURED = "upstream_not_configured"
     UPSTREAM_CREDENTIAL_UNAVAILABLE = "upstream_credential_unavailable"
+    UPSTREAM_BLOCKED = "upstream_blocked"
+    METHOD_NOT_ALLOWED = "method_not_allowed"
+    REQUEST_TOO_LARGE = "request_too_large"
     TOOL_NOT_INVOCABLE = "tool_not_invocable"
     INVOCATION_FAILED = "invocation_failed"
 
@@ -478,6 +488,52 @@ def unreachable_failure(binding: OperationBinding, attempts: int) -> InvocationF
         hint="The upstream may be down; retry later with backoff, and stop if it persists.",
         outcome=InvocationOutcome.UPSTREAM_ERROR,
         retryable=True,
+    )
+
+
+def upstream_blocked(host: str) -> InvocationFailure:
+    """The failure for an upstream the AGX-2.3 SSRF guard refused (nothing was sent).
+
+    Args:
+        host: The host the spec named. The refused address is not shown.
+    """
+    return InvocationFailure(
+        reason=InvocationReason.UPSTREAM_BLOCKED,
+        message=(
+            f"The API host {host!r} resolves to a private, loopback, link-local or metadata address, so Apiome "
+            "refused to call it (SSRF guard). Nothing was sent."
+        ),
+        hint=(
+            "Not fixable by the agent: a tenant administrator must point the API's server at a public address. "
+            "Do not retry."
+        ),
+        outcome=InvocationOutcome.INTERNAL_ERROR,
+    )
+
+
+def method_not_allowed(declared: str, attempted: str) -> InvocationFailure:
+    """The failure for a request that would have used a method the tool does not declare (nothing was sent)."""
+    return InvocationFailure(
+        reason=InvocationReason.METHOD_NOT_ALLOWED,
+        message=(
+            f"This tool may only send {declared}; the request would have sent {attempted}, so it was refused. "
+            "Nothing was sent."
+        ),
+        hint=(
+            f"Call the tool without any method override; to {attempted} a resource, use the tool for that "
+            "operation if the toolset exposes one."
+        ),
+        outcome=InvocationOutcome.VALIDATION_FAILURE,
+    )
+
+
+def request_too_large(size: int, limit: int) -> InvocationFailure:
+    """The failure for a request body over the size cap (nothing was sent)."""
+    return InvocationFailure(
+        reason=InvocationReason.REQUEST_TOO_LARGE,
+        message=f"The request body is {size} bytes, over this runtime's {limit}-byte limit. Nothing was sent.",
+        hint="Send less in one call: split the payload across several calls, or leave out optional fields.",
+        outcome=InvocationOutcome.VALIDATION_FAILURE,
     )
 
 

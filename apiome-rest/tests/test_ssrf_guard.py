@@ -60,12 +60,38 @@ def test_validate_url_rejects_missing_host():
         "::1",              # IPv6 loopback
         "fd00::1",          # IPv6 unique-local
         "::ffff:10.0.0.1",  # IPv4-mapped private
+        "64:ff9b::a9fe:a9fe",  # NAT64 of 169.254.169.254 (AGX-2.3 / SIM-3.2 parity)
+        "64:ff9b::a00:1",   # NAT64 of 10.0.0.1
+        "2002:a00:1::",     # 6to4
     ],
 )
 def test_validate_url_blocks_internal_addresses(ip):
     with _resolve_to(ip):
         with pytest.raises(SSRFError, match="non-public"):
             validate_url("https://attacker.example/spec.json")
+
+
+def test_validate_url_allows_a_nat64_public_address():
+    with _resolve_to("64:ff9b::808:808"):  # NAT64 of 8.8.8.8
+        validate_url("https://example.com/openapi.json")  # no raise
+
+
+@pytest.mark.parametrize(
+    ("address", "blocked"),
+    [
+        ("169.254.169.254", True),
+        ("100.100.100.200", True),  # Alibaba metadata (CGNAT range)
+        ("fd00:ec2::254", True),    # AWS IPv6 metadata (unique-local)
+        ("fe80::1%eth0", True),     # zone index ignored
+        ("64:ff9b::7f00:1", True),  # NAT64 of loopback
+        ("not-an-ip", True),        # unparseable fails closed
+        ("", True),
+        ("93.184.216.34", False),
+        ("2606:4700::1111", False),
+    ],
+)
+def test_is_disallowed_address(address, blocked):
+    assert ssrf_guard.is_disallowed_address(address) is blocked
 
 
 def test_validate_url_allows_public_address():

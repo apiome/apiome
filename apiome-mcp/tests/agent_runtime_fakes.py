@@ -91,6 +91,8 @@ PETSTORE: dict[str, Any] = {
 #: Every Petstore operation key, and the tools they compile to.
 ALL_OPERATIONS = ("DELETE /pets/{petId}", "GET /pets", "GET /pets/{petId}", "POST /pets")
 ALL_TOOLS = frozenset({"listPets", "createPet", "showPetById", "deletePet"})
+#: The Petstore operations AGX-1.2 flags ``write_op`` (enabled here, as if confirmed).
+WRITE_OPERATIONS = ("DELETE /pets/{petId}", "POST /pets")
 
 
 def source_item(document: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -121,6 +123,7 @@ def manifest_row(**overrides: Any) -> dict[str, Any]:
         "version_label": "1.0.0",
         "available": True,
         "exposed": list(ALL_OPERATIONS),
+        "write_ops": list(WRITE_OPERATIONS),
         "accepted": [],
     }
     row.update(overrides)

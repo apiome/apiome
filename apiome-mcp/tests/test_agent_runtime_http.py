@@ -196,6 +196,25 @@ def test_tools_list_serves_the_compiled_toolset(base_url: str) -> None:
     assert tools["listPets"].outputSchema is None
 
 
+def test_tools_carry_annotations_from_the_write_op_flags(base_url: str) -> None:
+    async def run() -> list[mt.Tool]:
+        async with _client(base_url) as client:
+            return await client.list_tools()
+
+    tools = {tool.name: tool for tool in asyncio.run(run())}
+    for name in ("listPets", "showPetById"):
+        hints = tools[name].annotations
+        assert hints is not None
+        assert (hints.readOnlyHint, hints.destructiveHint, hints.idempotentHint) == (True, False, True)
+        assert "Changes data" not in (tools[name].description or "")
+    create, delete = tools["createPet"], tools["deletePet"]
+    assert create.annotations is not None and delete.annotations is not None
+    assert (create.annotations.readOnlyHint, create.annotations.destructiveHint) == (False, True)
+    assert (create.annotations.idempotentHint, delete.annotations.idempotentHint) == (False, True)
+    assert "Not idempotent" in (create.description or "")
+    assert "Idempotent: repeating" in (delete.description or "")
+
+
 def test_an_agent_lists_pets_and_creates_a_pet(base_url: str) -> None:
     listed = _call(base_url, "listPets", {"limit": 5})
     assert listed.isError is False
