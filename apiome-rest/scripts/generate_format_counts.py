@@ -6,7 +6,7 @@ Writes:
   - docs/format-counts.json                        (the machine-readable artifact)
   - apiome-browse/lib/generated/formatCounts.ts    (the portal's build-time constants)
   - apiome-ui/src/app/generated/formatCounts.ts    (the app's build-time constants)
-  - README.md, docs/guide/*.md                     (the count tokens embedded in their prose)
+  - README.md, apiome-docs/docs/**/*.md            (the count tokens embedded in their prose)
 
 Every number comes from `app.format_counts`, which projects the one registry traversal behind
 `GET /v1/formats/matrix`. Registering an adapter is all it takes to move every count above.

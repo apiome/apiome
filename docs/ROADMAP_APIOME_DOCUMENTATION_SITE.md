@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.2 | #5619 | Migrate `docs/guide/**` into the site, grouped by job | Move the 42 guide pages into `apiome-docs/docs/` under the job sidebars, rewrite links, keep generated counts, leave redirect stubs | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/**`, `docs/guide/**`, `scripts/** (format-count generator)` |
 | 1.3 | #5620 | Screenshot pipeline — Playwright captures of every route, light and dark, from the seeded stack | `yarn docs:screenshots` renders a route manifest at 1440 × 900 against the golden-path stack (fixtures as fallback) into `static/img/screens/`; `<Screenshot id/>` swaps by theme; CI fails on missing ids | `documentation`, `testing`, `infrastructure`, `mvp` | Y | Y | L | `apiome-docs/scripts/screenshots.ts (new)`, `apiome-docs/screens.json (new)`, `apiome-docs/src/components/Screenshot.tsx (new)`, `scripts/golden_path/*`, `.github/workflows/apiome-docs.yml` |
 | 1.4 | #5621 | Getting started & the spine — with screenshots | Sign in, launcher, onboarding, Home, first import, versions, publish, browse, export, MCP — the “first project in 10 minutes” path as it ships, every step illustrated | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/getting-started/**`, `apiome-docs/screens.json` |
 | 1.5 | #5622 | Build — Projects, Versions, dialogs, Primitives & types, Studio | Document `/ade/dashboard/projects`, `/versions` (timeline, changes, change report, test bench, discussion, repository tabs; every dialog), `/primitives`, and the Studio editor/paths/code surfaces | `documentation`, `versions` | Y | N | M | `apiome-docs/docs/build/**`, `apiome-docs/screens.json` |
@@ -178,7 +177,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.2] Migrate docs/guide/** into the site, grouped by job` — [#5619](https://github.com/apiome/apiome/issues/5619)
+### ✅ `apiome: [DOCS-1.2] Migrate docs/guide/** into the site, grouped by job` — [#5619](https://github.com/apiome/apiome/issues/5619) — **Complete**
 **Problem statement.** `docs/guide/` is the only user-facing documentation and it is a flat folder of 42 files joined by a hand-maintained README table. It has no search, no navigation hierarchy and no screenshots, and its “How do I…?” table duplicates what a sidebar should do.
 
 **Solution / scope.**
@@ -188,9 +187,9 @@ Milestone: **RC6** (epic and every issue).
 - Leave `docs/guide/README.md` as a one-paragraph pointer to the site plus the path map (old → new) so inbound links and the in-app Help page keep working; update the Help page links in `apiome-ui`.
 
 **Acceptance criteria.**
-- [ ] Every page under `docs/guide/` has a counterpart on the site and the old README lists the mapping
-- [ ] No broken links in the build; in-app Help & docs links resolve to the site
-- [ ] `supported-formats` counts still regenerate
+- [x] Every page under `docs/guide/` has a counterpart on the site and the old README lists the mapping
+- [x] No broken links in the build; in-app Help & docs links resolve to the site
+- [x] `supported-formats` counts still regenerate
 
 **Parallelism / dependencies.** Depends on DOCS-1.1.
 

@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.339.0] - 2026-10-07
+
+### Changed
+- **Guide pages moved to the documentation site (#5619, DOCS-1.2)**: every `docsPage` the API
+  returns now names a page of the Docusaurus site instead of the retired `docs/guide/` folder —
+  e.g. `GET /v1/lint/rules` → `"docsPage": "apiome-docs/docs/build/lint-rules.md"`. The value is
+  still a monorepo-relative source path; `apiome-ui` resolves it to
+  `https://apiome.github.io/apiome/build/lint-rules`. Affected fields: lint-rule catalog and
+  style-guide `docsPage`, blocking-rule `docs_page` (schema → `build/lint-rules`, MCP →
+  `govern/mcp-*-rules`), axis `algorithmDocsPage` (`build/axis-score`) and import-preflight rule
+  links. Blocking schema-rule `reference` URLs now point at the site
+  (`https://apiome.github.io/apiome/build/lint-rules#<rule>`).
+  - New `app.docs_site` builds those paths, the site URLs and the pages' front matter.
+  - `scripts/generate_lint_rule_docs.py`, `generate_supported_formats_doc.py` and
+    `generate_format_counts.py` write into `apiome-docs/docs/**`; generated pages open with front
+    matter and mark rule / format anchors as heading ids (`### `rule.id` {#rule-id}`).
+  - OpenAPI `info.version` 1.204.0 (description text only).
+
 ## [1.336.0] - 2026-10-06
 
 ### Added

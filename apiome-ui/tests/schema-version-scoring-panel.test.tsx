@@ -44,7 +44,7 @@ const CATALOG = {
     },
   ],
   count: 1,
-  docsPage: 'docs/guide/lint-rules.md',
+  docsPage: 'apiome-docs/docs/build/lint-rules.md',
 };
 
 function mockPanelFetch() {

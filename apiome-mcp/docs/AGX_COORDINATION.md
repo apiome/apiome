@@ -97,4 +97,4 @@ catalog registry above. Rules: [TOOL_COMPILER.md](TOOL_COMPILER.md).
 
 - List-always ADR: [LIST_ALWAYS.md](LIST_ALWAYS.md)
 - Call gate / resolver: [EFFECTIVE_POLICY.md](EFFECTIVE_POLICY.md)
-- Guide (list vs call for keys): [`docs/guide/mcp-quickstart.md`](../../docs/guide/mcp-quickstart.md)
+- Guide (list vs call for keys): [`apiome-docs/docs/reference/mcp-quickstart.md`](../../apiome-docs/docs/reference/mcp-quickstart.md)

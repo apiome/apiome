@@ -41,10 +41,10 @@ export interface LintAxisEvaluation {
 export type LintAxisBand = 'strong' | 'fair' | 'weak' | 'gap';
 
 /** Default algorithm docs page when the API omits algorithmDocsPage (CLX-4.3). */
-export const DEFAULT_ALGORITHM_DOCS_PAGE = 'docs/guide/axis-score.md';
+export const DEFAULT_ALGORITHM_DOCS_PAGE = 'apiome-docs/docs/build/axis-score.md';
 
 /** Style-guide / policy docs linked from displayed policy versions (CLX-4.3). */
-export const POLICY_DOCS_PAGE = 'docs/guide/lint-and-quality.md';
+export const POLICY_DOCS_PAGE = 'apiome-docs/docs/build/lint-and-quality.md';
 
 /** Build an external docs href for algorithm or policy documentation. */
 export function buildGovernanceDocsHref(docsPage: string | null | undefined): string {

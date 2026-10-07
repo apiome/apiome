@@ -5,7 +5,7 @@
 > **Companion pages:** [Emitter SPI](./emitter_spi.md) (the `Emitter` contract itself),
 > [projection guardrails](./projection_evidence_guardrails.md) (budgets, redaction,
 > telemetry), and the user-facing
-> [export-fidelity guide](../../docs/guide/export-fidelity.md) (what users see).
+> [export-fidelity guide](../../apiome-docs/docs/ship/export-fidelity.md) (what users see).
 
 apiome promises users that pre-export projection evidence is **truthful**: every
 non-preserved construct carries an honest cause category, a reviewed explanation, and —

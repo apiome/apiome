@@ -1,7 +1,7 @@
 """CPDO user-guide documentation contract — CPDO-4.3 (#4806).
 
-The guides at ``docs/guide/catalog-format-details.md`` and
-``docs/guide/convert-to-openapi.md`` document the payload-analysis and conversion
+The guides at ``apiome-docs/docs/bring-in/catalog-format-details.md`` and
+``apiome-docs/docs/bring-in/convert-to-openapi.md`` document the payload-analysis and conversion
 projection vocabularies. These tests couple the prose to the code registries it
 describes, the same way ``test_lint_rule_registry.py`` couples the lint docs page to the
 rule registry:
@@ -26,8 +26,10 @@ from app.projection_taxonomy import ConversionStatus, ProjectionReason
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-FORMAT_DETAILS_GUIDE = REPO_ROOT / "docs" / "guide" / "catalog-format-details.md"
-CONVERT_GUIDE = REPO_ROOT / "docs" / "guide" / "convert-to-openapi.md"
+GUIDE_DIR = REPO_ROOT / "apiome-docs" / "docs" / "bring-in"
+FORMAT_DETAILS_GUIDE = GUIDE_DIR / "catalog-format-details.md"
+CONVERT_GUIDE = GUIDE_DIR / "convert-to-openapi.md"
+# The old guide folder's README is now the old → new path map (DOCS-1.2, #5619).
 GUIDE_INDEX = REPO_ROOT / "docs" / "guide" / "README.md"
 
 # Primary references the roadmap requires the guide to maintain (CPDO-4.3:
@@ -130,5 +132,5 @@ def test_every_external_link_is_https():
 
 def test_guide_index_links_both_pages():
     index = _read(GUIDE_INDEX)
-    assert "(catalog-format-details.md)" in index
-    assert "(convert-to-openapi.md)" in index
+    assert "(../../apiome-docs/docs/bring-in/catalog-format-details.md)" in index
+    assert "(../../apiome-docs/docs/bring-in/convert-to-openapi.md)" in index

@@ -35,6 +35,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Every format now declares which versions it reads and writes, and which version an export produces by default
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
+- Documentation:
+  - The user guide is now a searchable documentation site, grouped by job; **Help & docs** links open it
 
 ## Bug Fixes
 

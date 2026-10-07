@@ -324,8 +324,8 @@ route in light, dark and High contrast at WCAG 2.2 AA. To clear it, `--fg-subtle
 light `--accent` were darkened slightly, dark-based themes gained the dark theme's translucent
 status chips, and solid fills take dark ink in dark-based themes. Small controls keep their
 drawn size and gain an invisible 44 px hit area (`.hit-target`, 24 px in compact density).
-Keyboard paths per task: `docs/guide/keyboard.md`; contract and checklist:
-`docs/guide/accessibility.md`.
+Keyboard paths per task: `apiome-docs/docs/reference/keyboard.md`; contract and checklist:
+`apiome-docs/docs/reference/accessibility.md`.
 
 ---
 
@@ -339,7 +339,7 @@ HIVE-10.4 made this a gate as well: `apiome-ui/tests/copy-voice-gate.test.ts` fa
 or page description over 14 words, "No … found" copy, or a "Manage …" / "… Management" title.
 The shared error surfaces (`ErrorState`, `ErrorBanner`, danger `Alert`, `toast.error`, error
 dialogs) add "— try again." to a failure that names no next action (`apiome-ui/lib/copy-voice.ts`).
-Rules and the per-route checklist: `docs/guide/content-voice.md`.
+Rules and the per-route checklist: `apiome-docs/docs/reference/content-voice.md`.
 
 ---
 

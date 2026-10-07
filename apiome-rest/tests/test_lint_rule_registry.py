@@ -121,13 +121,13 @@ def test_docs_anchor_slug_replaces_dots():
 
 
 def test_docs_page_has_an_anchor_for_every_rule():
-    # Guards against adding a rule without regenerating docs/guide/lint-rules.md
-    # (scripts/generate_lint_rule_docs.py).
+    # Guards against adding a rule without regenerating apiome-docs/docs/build/lint-rules.md
+    # (scripts/generate_lint_rule_docs.py). Anchors are explicit Docusaurus heading ids.
     docs_path = REPO_ROOT / LINT_RULE_DOCS_PAGE
     assert docs_path.is_file(), f"missing rule reference page: {docs_path}"
     content = docs_path.read_text(encoding="utf-8")
     for d in builtin_rule_descriptors():
-        assert f'<a id="{d.docs_anchor}"></a>' in content, (
+        assert f"{{#{d.docs_anchor}}}" in content, (
             f"rule {d.rule_id!r} has no anchor in {LINT_RULE_DOCS_PAGE}; "
             "regenerate with scripts/generate_lint_rule_docs.py"
         )

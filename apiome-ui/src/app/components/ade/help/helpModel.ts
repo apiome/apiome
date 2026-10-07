@@ -95,7 +95,7 @@ export const HELP_CARDS: readonly HelpCard[] = [
     description:
       'Import a spec, edit classes & paths, cut a version, lint & quality, export fidelity, MCP quick-start.',
     kind: 'external',
-    href: buildDocsHref('docs/guide/README.md'),
+    href: buildDocsHref('apiome-docs/docs/getting-started/index.mdx'),
     icon: BookOpen,
     tone: 'accent',
   },
@@ -104,7 +104,7 @@ export const HELP_CARDS: readonly HelpCard[] = [
     title: 'API & CLI reference',
     description: 'REST API, the apiome CLI, and CI diff-gate recipes for GitHub, GitLab and Bitbucket.',
     kind: 'external',
-    href: buildDocsHref('docs/guide/api-reference.md'),
+    href: buildDocsHref('apiome-docs/docs/reference/api-reference.md'),
     icon: Terminal,
     tone: 'ok',
   },

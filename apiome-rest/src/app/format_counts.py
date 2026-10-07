@@ -59,6 +59,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .browse_facets import protocol_label
 from .canonical_model import ApiParadigm
+from .docs_site import guide_page
 from .format_matrix import FormatMatrixRow, build_format_matrix
 
 __all__ = [
@@ -104,15 +105,15 @@ GENERATED_TS_MODULES: Tuple[str, ...] = (
 #: generator; nothing else in them is generated.
 MARKED_DOCUMENTS: Tuple[str, ...] = (
     "README.md",
-    "docs/guide/README.md",
-    "docs/guide/import-a-spec.md",
-    "docs/guide/export-a-spec.md",
+    guide_page("bring-in", "import-a-spec"),
+    guide_page("ship", "export-a-spec"),
 )
 
 #: Human-facing surfaces the guard scans for hand-typed counts. Deliberately a curated list rather
 #: than a tree walk: the point is to protect the copy a reader actually sees, and a walk over two
 #: Next.js apps would spend its time rejecting incidental numbers in unrelated code.
 GUARDED_SOURCES: Tuple[str, ...] = MARKED_DOCUMENTS + (
+    "docs/guide/README.md",
     "apiome-browse/lib/browseFacets.ts",
     "apiome-browse/lib/formatSurface.ts",
     "apiome-browse/src/app/HomeClient.tsx",
@@ -326,9 +327,9 @@ def _ts_header() -> List[str]:
         " *",
         " * Every count is measured from the import-source, emitter and capability registries by",
         " * `app.format_counts`, the same traversal behind `GET /v1/formats/matrix` and the",
-        " * generated `docs/guide/supported-formats.md` page. Copy that states a format count",
-        " * interpolates these constants so the number is resolved at build time and cannot go",
-        " * stale; a hand-typed count in guarded copy fails `tests/test_format_counts.py`.",
+        " * generated `apiome-docs/docs/bring-in/supported-formats.md` page. Copy that states a",
+        " * format count interpolates these constants so the number is resolved at build time and",
+        " * cannot go stale; a hand-typed count in guarded copy fails `tests/test_format_counts.py`.",
         " *",
         " * The counts are deployment-independent: a format whose toolchain is missing from a",
         " * particular deployment is still a format Apiome supports, and is still counted here.",

@@ -91,7 +91,7 @@ const RULES_VIEW = {
   ],
   count: 1,
   enabledCount: 1,
-  docsPage: 'docs/guide/lint-rules.md',
+  docsPage: 'apiome-docs/docs/build/lint-rules.md',
 };
 
 const CUSTOM_RULES_VIEW = {

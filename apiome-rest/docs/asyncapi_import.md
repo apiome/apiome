@@ -58,7 +58,7 @@ the Node toolchain is absent". It now means more than that: `asyncapi-parser` is
 `app.toolchain_selfcheck.REQUIRED_TOOL_KEYS`, so a deployment that cannot run it **refuses to
 start** (or, with `APIOME_REQUIRE_TOOLCHAIN=0`, starts with a loud `ERROR` and reports the format
 as missing on `GET /health`). There is deliberately no pure-Python fallback parser — see
-[the fallback policy](../../docs/guide/import-a-spec.md#the-fallback-policy-stated) for why a
+[the fallback policy](../../apiome-docs/docs/bring-in/import-a-spec.md#the-fallback-policy-stated) for why a
 reduced-capability parse was rejected. The exact `@asyncapi/parser` pin lives in
 `apiome-rest/toolchain/package.json` and is installed by the container build and by
 `scripts/install_dev_toolchain.sh`.

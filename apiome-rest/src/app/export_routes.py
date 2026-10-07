@@ -963,7 +963,7 @@ async def record_projection_metric(
         "surface. Tenant-scoped. Source-native evidence is **always** redacted (EFP-3.2); "
         "`redact_source` is accepted for compatibility and ignored. How to interpret the "
         "statuses, reason categories, and destination-documentation links is documented in "
-        "`docs/guide/export-fidelity.md` (EFP-3.3)."
+        "the *Understand export fidelity* guide, `apiome-docs/docs/ship/export-fidelity.md` (EFP-3.3)."
     ),
 )
 async def get_projection_evidence(

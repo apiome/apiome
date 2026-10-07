@@ -21,11 +21,11 @@ import { FORMAT_COUNTS, FORMAT_PARADIGMS } from './generated/formatCounts';
 /**
  * The generated supported-formats reference page.
  *
- * An absolute URL because the portal does not serve the repository's `docs/` tree — the production
- * image ships the app, not the guide — so a relative link would 404 for every visitor.
+ * An absolute URL because the page lives on the documentation site (`apiome-docs`, DOCS-1.2), not in
+ * the portal — the production image ships the app, not the guide — so a relative link would 404.
  */
 export const SUPPORTED_FORMATS_DOC_URL =
-  'https://github.com/apiome/apiome/blob/main/docs/guide/supported-formats.md';
+  'https://apiome.github.io/apiome/bring-in/supported-formats';
 
 /**
  * The headline claim: how many formats Apiome reads, how many it writes, and that the conversions

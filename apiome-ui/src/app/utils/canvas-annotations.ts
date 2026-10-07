@@ -14,7 +14,7 @@
  * OpenAPI and JSON Schema support vendor extensions, so both carry these
  * losslessly. Formats without an extension mechanism (GraphQL SDL, SQL DDL,
  * protobuf, Avro, Thrift, and the diagram exports) skip annotations; the skip
- * is documented in docs/guide/export-fidelity.md.
+ * is documented in apiome-docs/docs/ship/export-fidelity.md.
  */
 
 /** Document-level extension key carrying freeform canvas notes. */

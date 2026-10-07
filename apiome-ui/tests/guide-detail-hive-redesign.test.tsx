@@ -222,7 +222,7 @@ function rulesView(rules: typeof RULES) {
     rules,
     count: rules.length,
     enabledCount: rules.filter((rule) => rule.enabled).length,
-    docsPage: 'docs/guide/lint-rules.md',
+    docsPage: 'apiome-docs/docs/build/lint-rules.md',
   };
 }
 

@@ -82,7 +82,7 @@ function mockLintFetch(report: unknown, ok = true, sourceText: string = SOURCE_T
           success: true,
           rules: [],
           count: 0,
-          docsPage: 'docs/guide/lint-rules.md',
+          docsPage: 'apiome-docs/docs/build/lint-rules.md',
         }),
       });
     }

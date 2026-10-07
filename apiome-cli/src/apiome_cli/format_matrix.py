@@ -3,7 +3,7 @@
 ``apiome formats`` answers *"what formats does this deployment support, in which directions, at
 which versions?"* by printing ``GET /v1/formats/matrix`` — the server's one authoritative answer,
 built from the import-source registry, the emitter registry and the source-format capability
-registry. The same payload is what the generated ``docs/guide/supported-formats.md`` page is
+registry. The same payload is what the generated ``apiome-docs/docs/bring-in/supported-formats.md`` page is
 rendered from, so the CLI, the docs and the API cannot disagree.
 
 Two consequences shape this module:

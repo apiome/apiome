@@ -12,7 +12,7 @@ profile), the declared version coverage, the file extensions, the toolchain gate
 capability registry's boundary summary.
 
 The payload is built by :func:`app.format_matrix.build_format_matrix`, which is also what the
-generated ``docs/guide/supported-formats.md`` page renders — so the page and this endpoint cannot
+generated ``apiome-docs/docs/bring-in/supported-formats.md`` page renders — so the page and this endpoint cannot
 disagree, and ``apiome formats`` renders this response verbatim rather than deriving a fourth view.
 
 Like the other registry endpoints (``/v1/import/sources``, ``/v1/import/format-capabilities``) this

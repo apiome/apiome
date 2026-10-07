@@ -13,7 +13,7 @@ import { pinAppearance } from '../support/a11y';
  *   keyboard, keep Tab and Shift+Tab inside, close on Escape and return focus to their trigger.
  *
  * The task-by-task keyboard paths these checks stand behind are documented in
- * `docs/guide/keyboard.md`.
+ * `apiome-docs/docs/reference/keyboard.md`.
  */
 
 test.use({ viewport: { width: 1280, height: 900 } });

@@ -14,7 +14,7 @@ finding carries is a registered, documented id
 point — a plain catalogue in exactly the shape of ``OPENAPI_RULES``
 (``rule_id → (category, default_severity, rationale)``) which the registry folds in as one
 more source, and which the docs generator turns into anchors on
-``docs/guide/lint-rules.md``.
+``apiome-docs/docs/build/lint-rules.md``.
 
 **Default severities are warnings on purpose.** An unresolved external reference degrades
 the imported model's completeness, but it does not make the document invalid, and a

@@ -1,6 +1,6 @@
 """Generated supported-formats reference page — FMT-1.2 (#5413).
 
-``docs/guide/import-a-spec.md`` used to state *"Supported inputs: OpenAPI 3.x, Swagger 2.0,
+The import guide used to state *"Supported inputs: OpenAPI 3.x, Swagger 2.0,
 Arazzo 1.0, JSON Schema 2020-12"*. That is true of the **Projects** importer and silent about the
 Catalog importer carrying the other thirty-nine formats, so an evaluator reading our documentation
 concluded Apiome supports four. A second copy of the list lived in the UI's format gallery. Three
@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 
 from .canonical_model import ApiParadigm
+from .docs_site import guide_page, render_front_matter
 from .format_capability_registry import CapabilityProvenance, NativeHierarchy
 from .format_matrix import (
     INTERNAL_FORMAT_KEYS,
@@ -54,7 +55,7 @@ __all__ = [
 ]
 
 #: Path of the generated page, relative to the monorepo root.
-SUPPORTED_FORMATS_DOCS_PAGE = "docs/guide/supported-formats.md"
+SUPPORTED_FORMATS_DOCS_PAGE = guide_page("bring-in", "supported-formats")
 
 #: The one command that regenerates the page. Quoted in the file header and in the drift test's
 #: failure message, so a contributor who breaks the gate is told exactly how to fix it.
@@ -281,9 +282,13 @@ def _header(rows: Sequence[FormatRow]) -> List[str]:
     discovery = [r for r in importable if r.supports_live_discovery]
 
     return [
-        "# Supported formats",
-        "",
-        "<!-- GENERATED FILE — do not edit by hand.",
+        render_front_matter(
+            "Supported formats",
+            "Every format Apiome imports and exports, generated from the registries.",
+            3,
+            ["formats", "reference"],
+        )
+        + "<!-- GENERATED FILE — do not edit by hand.",
         f"     Regenerate with: {REGENERATE_COMMAND} -->",
         "",
         "Every format Apiome reads or writes, generated from the running registries — the "
@@ -478,9 +483,7 @@ def _boundaries_section(rows: Sequence[FormatRow]) -> List[str]:
         return lines
 
     for row in reviewed:
-        lines.append(f'<a id="{row.anchor}"></a>')
-        lines.append("")
-        lines.append(f"### {row.label}")
+        lines.append(f"### {row.label} {{#{row.anchor}}}")
         lines.append("")
         for note in row.boundary_notes:
             lines.append(f"- {' '.join(note.split())}")
@@ -489,7 +492,7 @@ def _boundaries_section(rows: Sequence[FormatRow]) -> List[str]:
 
 
 def render_supported_formats_page() -> str:
-    """Render the whole ``docs/guide/supported-formats.md`` page.
+    """Render the whole supported-formats page (:data:`SUPPORTED_FORMATS_DOCS_PAGE`).
 
     Deterministic: the same registries always produce the same bytes, which is what makes the
     committed page drift-checkable.
@@ -516,11 +519,12 @@ def render_supported_formats_page() -> str:
         [
             "## Related",
             "",
-            "- [How do I… import a specification?](import-a-spec.md)",
-            "- [How do I… export a specification?](export-a-spec.md)",
-            "- [Catalog format details](catalog-format-details.md) — what a catalog item "
+            "- [Import a specification](./import-a-spec.md)",
+            "- [Export a spec](../ship/export-a-spec.md)",
+            "- [Catalog format details](./catalog-format-details.md) — what a catalog item "
             "records per format.",
-            "- [Export fidelity](export-fidelity.md) — what survives a conversion between formats.",
+            "- [Export fidelity](../ship/export-fidelity.md) — what survives a conversion between "
+            "formats.",
             "",
         ]
     )

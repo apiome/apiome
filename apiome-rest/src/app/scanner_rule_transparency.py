@@ -15,7 +15,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .axis_score import ALGORITHM_DOCS_PAGE
-from .lint_rule_registry import docs_anchor_for
+from .docs_site import guide_page, site_url
+from .lint_rule_registry import LINT_RULE_DOCS_PAGE, docs_anchor_for
 from .mcp_owasp import CATALOG_REFERENCE as OWASP_REFERENCE
 
 #: Revision of this transparency catalog. Bump when remediation/fixture mappings change in a
@@ -26,16 +27,16 @@ TRANSPARENCY_CATALOG_REVISION = "1"
 SCANNER_EVALUATION_DOCS_PAGE = "apiome-rest/docs/scanner_evaluation.md"
 
 #: Product guide for style-guide / policy versions shown in the UI.
-POLICY_DOCS_PAGE = "docs/guide/lint-and-quality.md"
+POLICY_DOCS_PAGE = guide_page("build", "lint-and-quality")
 
 #: Generated MCP posture rule reference (anchors = docs_anchor_for(rule_id)).
-MCP_POSTURE_RULES_DOCS_PAGE = "docs/guide/mcp-trust-posture-rules.md"
+MCP_POSTURE_RULES_DOCS_PAGE = guide_page("govern", "mcp-trust-posture-rules")
 
 #: Generated MCP conformance rule reference.
-MCP_CONFORMANCE_RULES_DOCS_PAGE = "docs/guide/mcp-conformance-rules.md"
+MCP_CONFORMANCE_RULES_DOCS_PAGE = guide_page("govern", "mcp-conformance-rules")
 
 #: Generated MCP surface-lint rule reference.
-MCP_SURFACE_RULES_DOCS_PAGE = "docs/guide/mcp-surface-lint-rules.md"
+MCP_SURFACE_RULES_DOCS_PAGE = guide_page("govern", "mcp-surface-lint-rules")
 
 ENGINE_SCHEMA = "schema"
 ENGINE_MCP_SURFACE = "mcp_surface"
@@ -133,9 +134,7 @@ def _meta(
     )
 
 
-_SCHEMA_REF = (
-    "https://github.com/apiome/apiome/blob/main/docs/guide/lint-rules.md"
-)
+_SCHEMA_REF = site_url(LINT_RULE_DOCS_PAGE)
 _MCP_SPEC = "https://modelcontextprotocol.io/specification/2025-06-18/"
 
 
@@ -153,7 +152,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "only in an external (non-embedded) source — embed the description or switch to operationRef.",
         scan_modes=("lint",),
         fixture_id="catalog/arazzo-dangling-operation-id",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "arazzo.async-source-before-1-1": _meta(
         "arazzo.async-source-before-1-1",
@@ -166,7 +165,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "types under a 1.0 marker; the published 1.0 schema does not, so prefer declaring 1.1.",
         scan_modes=("lint",),
         fixture_id="catalog/arazzo-async-source-before-1-1",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "arzzo.unresolvable-operation-ref": _meta(
         "arzzo.unresolvable-operation-ref",
@@ -179,7 +178,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "static resolution — prefer embedded sources for gateable workflows.",
         scan_modes=("lint",),
         fixture_id="catalog/arzzo-unresolvable-operation-ref",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "compatibility.breaking": _meta(
         "compatibility.breaking",
@@ -192,7 +191,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "should not appear; if it does, file a scanner bug with the base/head pair.",
         scan_modes=("breaking", "lint"),
         fixture_id="catalog/compatibility-breaking",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "graphql.composition-error": _meta(
         "graphql.composition-error",
@@ -205,7 +204,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "changed since, re-import the set to refresh it.",
         scan_modes=("lint",),
         fixture_id="catalog/graphql-composition-error",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "graphql.composition-invalid-key": _meta(
         "graphql.composition-invalid-key",
@@ -218,7 +217,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "top-level field reported missing is genuinely undeclared in that subgraph's file.",
         scan_modes=("lint",),
         fixture_id="catalog/graphql-composition-invalid-key",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "graphql.composition-non-shareable-field": _meta(
         "graphql.composition-non-shareable-field",
@@ -231,7 +230,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "means two subgraphs genuinely both resolve the field.",
         scan_modes=("lint",),
         fixture_id="catalog/graphql-composition-non-shareable-field",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "graphql.composition-unresolvable-selection": _meta(
         "graphql.composition-unresolvable-selection",
@@ -244,7 +243,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "means no subgraph declares the selected field at all.",
         scan_modes=("lint",),
         fixture_id="catalog/graphql-composition-unresolvable-selection",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     "llm-tools.duplicate-tool-name": _meta(
         "llm-tools.duplicate-tool-name",
@@ -256,7 +255,7 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         "should still expose a single canonical name to agents.",
         scan_modes=("lint",),
         fixture_id="catalog/llm-tools-duplicate-tool-name",
-        docs_page="docs/guide/lint-rules.md",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
     # --- MCP surface lint ----------------------------------------------------------------------
     "naming.item-name-missing": _meta(
@@ -546,7 +545,7 @@ def _pack_transparency() -> Mapping[str, Mapping[str, Any]]:
         rule_id: {
             "remediation": meta.remediation,
             "fixture_id": meta.fixture_id,
-            "docs_page": "docs/guide/lint-rules.md",
+            "docs_page": LINT_RULE_DOCS_PAGE,
             "docs_anchor": docs_anchor_for(rule_id),
             "reference": _SCHEMA_REF + "#" + docs_anchor_for(rule_id),
         }

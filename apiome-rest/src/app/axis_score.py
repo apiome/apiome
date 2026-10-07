@@ -32,6 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
+from .docs_site import guide_page
 from .lint_evidence import (
     COVERAGE_FULL,
     COVERAGE_NONE,
@@ -59,7 +60,7 @@ ALGORITHM_VERSION = "2"
 
 #: Repository-relative guide documenting :data:`ALGORITHM_ID` / :data:`ALGORITHM_VERSION`
 #: (CLX-4.3, #4861). Displayed algorithm chips in the UI link here.
-ALGORITHM_DOCS_PAGE = "docs/guide/axis-score.md"
+ALGORITHM_DOCS_PAGE = guide_page("build", "axis-score")
 
 #: Axes that must be assessed before a composite may be published (v1).
 REQUIRED_AXES_FOR_COMPOSITE: Tuple[str, ...] = ("quality",)

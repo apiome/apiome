@@ -3,7 +3,7 @@
 Generate the supported-formats reference page (FMT-1.2, #5413).
 
 Writes:
-  - docs/guide/supported-formats.md
+  - apiome-docs/docs/bring-in/supported-formats.md (a docs-site page, with front matter)
 
 The page is derived from the import-source registry, the emitter registry and the source-format
 capability registry, so registering an adapter is all it takes to document a format. A test

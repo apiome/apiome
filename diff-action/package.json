@@ -1,6 +1,6 @@
 {
   "name": "@apiome/diff-action",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "GitHub Action wrapping apiome diff with a sticky PR changelog comment",
   "scripts": {
