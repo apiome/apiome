@@ -6,9 +6,9 @@
  *
  * Every count is measured from the import-source, emitter and capability registries by
  * `app.format_counts`, the same traversal behind `GET /v1/formats/matrix` and the
- * generated `docs/guide/supported-formats.md` page. Copy that states a format count
- * interpolates these constants so the number is resolved at build time and cannot go
- * stale; a hand-typed count in guarded copy fails `tests/test_format_counts.py`.
+ * generated `apiome-docs/docs/bring-in/supported-formats.md` page. Copy that states a
+ * format count interpolates these constants so the number is resolved at build time and
+ * cannot go stale; a hand-typed count in guarded copy fails `tests/test_format_counts.py`.
  *
  * The counts are deployment-independent: a format whose toolchain is missing from a
  * particular deployment is still a format Apiome supports, and is still counted here.

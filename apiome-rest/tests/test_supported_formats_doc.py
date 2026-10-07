@@ -39,8 +39,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PAGE_PATH = REPO_ROOT / SUPPORTED_FORMATS_DOCS_PAGE
 
 #: Guides that must no longer present the Projects importer's four formats as the whole product.
-IMPORT_GUIDE = REPO_ROOT / "docs/guide/import-a-spec.md"
-EXPORT_GUIDE = REPO_ROOT / "docs/guide/export-a-spec.md"
+IMPORT_GUIDE = REPO_ROOT / "apiome-docs/docs/bring-in/import-a-spec.md"
+EXPORT_GUIDE = REPO_ROOT / "apiome-docs/docs/ship/export-a-spec.md"
 
 
 @pytest.fixture(scope="module")
@@ -355,7 +355,7 @@ def test_reviewed_boundary_notes_have_anchors(page: str, rows: List[FormatRow]) 
     """Reviewed formats link from their Analysis cell to their notes; the anchors must exist."""
     for row in rows:
         if f"](#{row.anchor})" in page:
-            assert f'<a id="{row.anchor}"></a>' in page, row.key
+            assert f"{{#{row.anchor}}}" in page, row.key
 
 
 def test_boundary_section_only_carries_reviewed_prose(page: str) -> None:

@@ -363,7 +363,7 @@ def test_readme_states_the_measured_surface_and_links_the_generated_page(
 
 @pytest.mark.parametrize(
     "document",
-    ["docs/guide/import-a-spec.md", "docs/guide/export-a-spec.md", "docs/guide/README.md"],
+    ["apiome-docs/docs/bring-in/import-a-spec.md", "apiome-docs/docs/ship/export-a-spec.md"],
 )
 def test_guide_pages_carry_managed_counts(document: str) -> None:
     """The guide's counts were the ones most visibly wrong; none of them is typed any more."""

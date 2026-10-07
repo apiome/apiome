@@ -35,10 +35,35 @@ product's navigation rail:
 | Reference | `docs/reference/` | `/reference` |
 | Release notes | `release-notes/` (blog) | `/release-notes` |
 
-Each group folder holds a `_category_.json` (label, position) and an `index.mdx` landing page. The
-sidebar is generated from the folders, so a new page shows up as soon as it is saved in one.
+Each group folder holds a `_category_.json` (label, position) and an `index.mdx` landing page that
+lists the group's pages (`<DocCardList />`). The sidebar is generated from the folders, so a new page
+shows up as soon as it is saved in one. A group can nest a sub-category the same way — `ship/mocks/`
+has a `_category_.json` with a generated index.
 
-1. Add `docs/<group>/<page>.mdx`.
+The guides that used to live in `docs/guide/` were moved here (DOCS-1.2, #5619);
+[`docs/guide/README.md`](../docs/guide/README.md) maps each old file to its page, and `apiome-ui`'s
+`LEGACY_GUIDE_ROUTES` sends old `docs/guide/…` links to the same place.
+
+### `.md` or `.mdx`
+
+`markdown.format` is `detect`: a `.md` page is **CommonMark** and a `.mdx` page is **MDX**. Use `.mdx`
+when a page needs a component (`<Screenshot/>`, `<Route/>`, `<Kbd/>`). Plain `.md` keeps inline HTML
+comments such as the format-count tokens (`51<!--format-count:importable-->`) working, but drops raw
+HTML — so mark an anchor as a heading id (`### Apache Arrow {#format-arrow}`), never `<a id>`.
+
+### Generated pages
+
+Five pages are written by `apiome-rest` generators — edit the generator, not the page:
+
+| Page | Regenerate with (from `apiome-rest/`) |
+| --- | --- |
+| `bring-in/supported-formats.md` | `uv run python scripts/generate_supported_formats_doc.py` |
+| `build/lint-rules.md`, `govern/mcp-*-rules.md` | `uv run python scripts/generate_lint_rule_docs.py` |
+| the count tokens in `bring-in/import-a-spec.md`, `ship/export-a-spec.md` | `uv run python scripts/generate_format_counts.py` |
+
+The `apiome-rest` test suite fails when any of them is stale.
+
+1. Add `docs/<group>/<page>.md` (or `.mdx`, see below).
 2. Give it front matter:
 
    ```mdx
@@ -46,10 +71,12 @@ sidebar is generated from the folders, so a new page shows up as soon as it is s
    title: Cut a version
    description: Freeze a project's current state as a numbered, immutable version.
    sidebar_position: 3
+   tags: [versions]
    ---
    ```
 
-   `title` and `description` are required; the description is **14 words or fewer**.
+   `title` and `description` are required; the description is **14 words or fewer**. Do not repeat
+   the title as a `#` heading — the site renders it from the front matter.
 3. Write steps with bold UI nouns (“**click New version**”) and quote buttons as they read in the
    product.
 4. Link other pages with relative paths or site URLs (`[Ship](/ship)`) — never to `.html` files.

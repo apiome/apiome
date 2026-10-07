@@ -3,10 +3,12 @@
 Generate / refresh CLX-4.3 rule transparency docs.
 
 Writes:
-  - docs/guide/lint-rules.md (schema packs, with blocking transparency fields)
-  - docs/guide/mcp-surface-lint-rules.md
-  - docs/guide/mcp-conformance-rules.md
-  - docs/guide/mcp-trust-posture-rules.md
+  - apiome-docs/docs/build/lint-rules.md (schema packs, with blocking transparency fields)
+  - apiome-docs/docs/govern/mcp-surface-lint-rules.md
+  - apiome-docs/docs/govern/mcp-conformance-rules.md
+  - apiome-docs/docs/govern/mcp-trust-posture-rules.md
+
+Each page is a docs-site page (DOCS-1.2, #5619), so it opens with Docusaurus front matter.
 
 Run from apiome-rest:
     uv run python scripts/generate_lint_rule_docs.py
@@ -22,6 +24,7 @@ src = project_root / "src"
 if str(src) not in sys.path:
     sys.path.insert(0, str(src))
 
+from app.docs_site import render_front_matter  # noqa: E402
 from app.lint_rule_registry import LINT_RULE_DOCS_PAGE, builtin_rule_descriptors  # noqa: E402
 from app.mcp_conformance import RULE_REGISTRY as CONFORMANCE_RULES  # noqa: E402
 from app.mcp_lint import RULE_CATALOGUE  # noqa: E402
@@ -37,9 +40,12 @@ from app.scanner_rule_transparency import (  # noqa: E402
 MONOREPO = project_root.parent
 
 
-HEADER_SCHEMA = """\
-# Built-in lint rules
-
+HEADER_SCHEMA = render_front_matter(
+    "Built-in lint rules",
+    "Every built-in lint rule: stable id, default severity and rationale.",
+    7,
+    ["lint", "reference"],
+) + """\
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_lint_rule_docs.py -->
 
@@ -50,10 +56,10 @@ rule applies when no style guide overrides it.
 
 Blocking (`error`) rules additionally publish reference, remediation, false-positive guidance,
 fixture id, and scan-mode requirements (CLX-4.3 / #4861). See
-[scanner evaluation](../../apiome-rest/docs/scanner_evaluation.md).
+[scanner evaluation](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md).
 
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
-[lint-and-quality.md](lint-and-quality.md)).
+[Lint and check quality](./lint-and-quality.md)).
 """
 
 
@@ -100,8 +106,7 @@ def render_schema(descriptors) -> str:
     for pack in sorted(by_pack):
         lines.append(f"\n## Pack: `{pack}`\n")
         for d in by_pack[pack]:
-            lines.append(f'<a id="{d.docs_anchor}"></a>')
-            lines.append(f"### `{d.rule_id}`\n")
+            lines.append(f"### `{d.rule_id}` {{#{d.docs_anchor}}}\n")
             lines.append(f"- **Category:** {d.category}")
             lines.append(f"- **Default severity:** {d.default_severity}")
             lines.append(f"- **Rationale:** {d.rationale}")
@@ -112,10 +117,11 @@ def render_schema(descriptors) -> str:
     return "\n".join(lines)
 
 
-def _mcp_header(title: str, body: str) -> str:
+def _mcp_header(title: str, description: str, position: int, body: str) -> str:
+    """Render an MCP rule page's front matter, generated-file warning and intro paragraph."""
     return (
-        f"# {title}\n\n"
-        "<!-- GENERATED FILE — do not edit by hand.\n"
+        render_front_matter(title, description, position, ["mcp", "governance", "reference"])
+        + "<!-- GENERATED FILE — do not edit by hand.\n"
         "     Regenerate with: cd apiome-rest && uv run python scripts/generate_lint_rule_docs.py -->\n\n"
         f"{body}\n"
     )
@@ -125,6 +131,8 @@ def render_surface() -> str:
     lines = [
         _mcp_header(
             "MCP surface lint rules",
+            "Every lint rule Apiome applies to an MCP server's tool surface.",
+            4,
             "Catalog for :mod:`app.mcp_lint`. Blocking rules include CLX-4.3 transparency "
             "fields. Fetch via `GET /v1/mcp/lint/rules`.",
         )
@@ -133,8 +141,7 @@ def render_surface() -> str:
         category, severity = RULE_CATALOGUE[rule_id]
         meta = get_blocking_meta(rule_id)
         anchor = rule_id.replace(".", "-")
-        lines.append(f'<a id="{anchor}"></a>')
-        lines.append(f"### `{rule_id}`\n")
+        lines.append(f"### `{rule_id}` {{#{anchor}}}\n")
         lines.append(f"- **Category:** {category}")
         lines.append(f"- **Severity:** {severity}")
         if meta:
@@ -149,6 +156,8 @@ def render_conformance() -> str:
     lines = [
         _mcp_header(
             "MCP conformance rules",
+            "Every MCP conformance rule, with its specification reference and severity.",
+            3,
             "Catalog for :mod:`app.mcp_conformance`. Every rule cites an MCP specification "
             "reference. Blocking rules include CLX-4.3 transparency fields. "
             "Fetch via `GET /v1/mcp/conformance/rules`.",
@@ -156,8 +165,7 @@ def render_conformance() -> str:
     ]
     for rule in sorted(CONFORMANCE_RULES.values(), key=lambda r: r.rule_id):
         anchor = rule.rule_id.replace(".", "-")
-        lines.append(f'<a id="{anchor}"></a>')
-        lines.append(f"### `{rule.rule_id}`\n")
+        lines.append(f"### `{rule.rule_id}` {{#{anchor}}}\n")
         lines.append(f"- **Category:** {rule.category}")
         lines.append(f"- **Severity:** {rule.severity}")
         lines.append(f"- **Spec version:** {rule.spec_version}")
@@ -174,6 +182,8 @@ def render_posture() -> str:
     lines = [
         _mcp_header(
             "MCP trust-posture rules",
+            "Trust-posture rules for MCP servers, mapped to the OWASP MCP Top 10.",
+            5,
             "Catalog for :mod:`app.mcp_trust_posture`, mapped to the OWASP MCP Top 10. "
             "Blocking rules include CLX-4.3 transparency fields. "
             "Fetch via `GET /v1/mcp/trust-posture/rules`.",
@@ -181,8 +191,7 @@ def render_posture() -> str:
     ]
     for rule in sorted(POSTURE_RULES.values(), key=lambda r: r.rule_id):
         anchor = rule.rule_id.replace(".", "-")
-        lines.append(f'<a id="{anchor}"></a>')
-        lines.append(f"### `{rule.rule_id}`\n")
+        lines.append(f"### `{rule.rule_id}` {{#{anchor}}}\n")
         lines.append(f"- **Origin:** {rule.origin}")
         lines.append(f"- **Severity:** {rule.severity}")
         lines.append(f"- **OWASP:** {', '.join(rule.owasp_ids)}")

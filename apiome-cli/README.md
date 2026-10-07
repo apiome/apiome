@@ -271,7 +271,7 @@ apiome formats --json                   # the endpoint's response, verbatim, for
 
 The `Runtime` column keeps two facts apart: a format Apiome does not support, and a format **this
 deployment** is missing a binary for. Only the first is about the product — the second names the
-tool. The generated `docs/guide/supported-formats.md` page is rendered from the same response, so
+tool. The generated `apiome-docs/docs/bring-in/supported-formats.md` page is rendered from the same response, so
 the documentation, the API and this command cannot disagree.
 
 `--json` prints the response unchanged, so a script piping it receives exactly what a partner
@@ -598,7 +598,7 @@ registered yet.
 For GitHub pull requests, prefer the copy-paste Action
 [`apiome/apiome/diff-action`](../diff-action/) — it runs this command, fails the check on
 exit `1`, surfaces exit `2` distinctly, and upserts one sticky PR comment with `--format md`.
-See [CI contract gate](../docs/guide/ci-diff-gate.md).
+See [CI contract gate](../apiome-docs/docs/reference/ci-diff-gate.md).
 
 ### API change check suite (`checks`)
 
@@ -823,7 +823,7 @@ with `next_cursor` for paging. `--option key=value` folds per-target emit option
 the snapshot — different options are a different snapshot. Source-native values are
 always redacted server-side (`[redacted]`); statuses, reasons, and target locations
 remain. How to interpret the statuses, reason categories, and destination-documentation
-links is documented in [`docs/guide/export-fidelity.md`](../docs/guide/export-fidelity.md).
+links is documented in [`apiome-docs/docs/ship/export-fidelity.md`](../apiome-docs/docs/ship/export-fidelity.md).
 
 `export preflight` ranks every target for a revision *before* a job exists — source lint
 grade, projected fidelity, capability fit, policy verdict, and a composite readiness band —
@@ -1342,7 +1342,7 @@ apiome --json mock enable payments-api 1.0.0
 ### Run a portable mock (local / CI)
 
 `mock run` needs **no API key and no tenant scope**: it launches a
-version-pinned [mock bundle](../docs/guide/mock-bundle-format.md), which is the
+version-pinned [mock bundle](../apiome-docs/docs/ship/mocks/mock-bundle-format.md), which is the
 whole configuration. It prefers a locally installed `apiome-mock` and otherwise
 launches the official container image; both execute the same runtime, so both
 answer the same mock conformance corpus.
@@ -1368,7 +1368,7 @@ APIOME_MOCK_BUNDLE_SECRET=… apiome mock run bundle.json --require-signature
 Wait on `GET /ready` (not `/health`) before sending traffic — it reports the
 digest of the bundle actually being served. Full reference, including the
 runtime's flags, structured log events, and exit codes:
-[docs/guide/portable-mock-runtime.md](../docs/guide/portable-mock-runtime.md).
+[apiome-docs/docs/ship/mocks/portable-mock-runtime.md](../apiome-docs/docs/ship/mocks/portable-mock-runtime.md).
 
 ### Mock configuration as a file (`mock config`)
 

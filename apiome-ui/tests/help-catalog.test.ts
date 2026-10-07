@@ -3,10 +3,10 @@
  *
  * Two questions, and the first is the one that keeps the page honest:
  *
- *   1. **Does the catalog still describe `docs/guide`?** The listing is compiled into the
+ *   1. **Does the catalog still describe the docs site?** The listing is compiled into the
  *      bundle rather than read from disk (see `helpCatalog.ts`), which buys an instant,
- *      offline search at the cost of a listing that can fall behind the directory. So this
- *      suite reads the real directory and fails when a guide is missing from the catalog, or
+ *      offline search at the cost of a listing that can fall behind the site. So this suite
+ *      reads the real `apiome-docs/docs` tree and fails when a guide is missing from the catalog, or
  *      when the catalog names a page that no longer exists. That is the ticket's *"guide
  *      search returns results and links out correctly"* reduced to something a test can hold.
  *   2. **Does a search behave like a search?** Terms narrow rather than widen, the ranking is
@@ -15,7 +15,7 @@
  */
 
 import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join, relative } from 'node:path';
 
 import {
   GUIDE_ENTRIES,
@@ -30,12 +30,33 @@ import {
 /** The repository root, two levels above this package's `tests` directory. */
 const REPO_ROOT = join(__dirname, '..', '..');
 
-/** The guide directory the catalog claims to describe. */
-const GUIDE_DIR = join(REPO_ROOT, 'docs', 'guide');
+/** The docs site's page tree the catalog claims to describe. */
+const SITE_DOCS_DIR = join(REPO_ROOT, 'apiome-docs', 'docs');
 
-/** Every markdown file in `docs/guide`, by basename. */
-const GUIDE_FILES = readdirSync(GUIDE_DIR)
-  .filter((name) => name.endsWith('.md'))
+/** The site's home page, catalogued as the guide index (`README`, its old file name). */
+const SITE_HOME = 'apiome-docs/docs/getting-started/index.mdx';
+
+/**
+ * Every page source under a directory, recursively, as repository-relative paths.
+ *
+ * @param dir Absolute directory to walk.
+ * @returns `.md` / `.mdx` paths, skipping `_`-prefixed partials.
+ */
+function sitePages(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((item) => {
+    if (item.name.startsWith('_')) return [];
+    const full = join(dir, item.name);
+    if (item.isDirectory()) return sitePages(full);
+    return /\.mdx?$/.test(item.name) ? [relative(REPO_ROOT, full).split('\\').join('/')] : [];
+  });
+}
+
+/**
+ * The guide pages the catalog must list: every page except the group landing pages
+ * (`<group>/index.mdx`), which only list the pages under them — plus the site home.
+ */
+const GUIDE_PAGES = sitePages(SITE_DOCS_DIR)
+  .filter((page) => !/\/index\.mdx?$/.test(page) || page === SITE_HOME)
   .sort();
 
 /**
@@ -65,9 +86,9 @@ function ids(query: string): string[] {
    ------------------------------------------------------------------------- */
 
 describe('the guide catalog', () => {
-  it('has an entry for every markdown file in docs/guide', () => {
-    const catalogued = GUIDE_ENTRIES.map((guide) => `${guide.id}.md`).sort();
-    expect(catalogued).toEqual(GUIDE_FILES);
+  it('has an entry for every guide page on the docs site', () => {
+    const catalogued = GUIDE_ENTRIES.map((guide) => guide.page).sort();
+    expect(catalogued).toEqual(GUIDE_PAGES);
   });
 
   it('names only pages that exist on disk', () => {
@@ -75,9 +96,10 @@ describe('the guide catalog', () => {
     expect(missing.map((guide) => guide.page)).toEqual([]);
   });
 
-  it('derives every page path from the entry id, so the two cannot drift', () => {
+  it('names every page after its entry id, so the two cannot drift', () => {
     for (const guide of GUIDE_ENTRIES) {
-      expect(guide.page).toBe(`docs/guide/${guide.id}.md`);
+      if (guide.page === SITE_HOME) continue;
+      expect(basename(guide.page).replace(/\.mdx?$/, '')).toBe(guide.id);
     }
   });
 
@@ -120,15 +142,19 @@ describe('the guide catalog', () => {
    ------------------------------------------------------------------------- */
 
 describe('guideHref', () => {
-  it('links out to the page on the default branch', () => {
+  it('links out to the page on the documentation site', () => {
     expect(guideHref(entry('import-a-spec'))).toBe(
-      'https://github.com/apiome/apiome/blob/main/docs/guide/import-a-spec.md'
+      'https://apiome.github.io/apiome/bring-in/import-a-spec'
     );
   });
 
-  it('builds an absolute URL for every entry', () => {
+  it('links the guide index to the site home', () => {
+    expect(guideHref(entry('README'))).toBe('https://apiome.github.io/apiome/');
+  });
+
+  it('builds an absolute docs-site URL for every entry', () => {
     for (const guide of GUIDE_ENTRIES) {
-      expect(guideHref(guide)).toMatch(/^https:\/\/github\.com\/apiome\/apiome\/blob\/main\/docs\//);
+      expect(guideHref(guide)).toMatch(/^https:\/\/apiome\.github\.io\/apiome\//);
     }
   });
 });
@@ -161,7 +187,8 @@ describe('searchGuides', () => {
     const single = ids('mock');
     const pair = ids('mock fixture');
     expect(single.length).toBeGreaterThan(pair.length);
-    expect(pair).toEqual(['mock-fixture-packs']);
+    // The fixture-packs page is the best match; pages that only mention fixtures follow it.
+    expect(pair[0]).toBe('mock-fixture-packs');
   });
 
   it('ignores case and surrounding whitespace', () => {

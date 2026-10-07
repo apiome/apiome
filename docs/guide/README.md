@@ -1,89 +1,49 @@
-# Apiome — User Guide
+# Apiome — User Guide (moved)
 
-This is the user-facing documentation set for the Apiome **spine**: the end-to-end path that
-takes a specification from import to a published, queryable API surface.
+The user guide now lives on the documentation site, **<https://apiome.github.io/apiome/>**, grouped by
+the job you are doing (Getting started · Bring in · Build · Ship · Govern · Reference). Its source is
+[`apiome-docs/docs/`](../../apiome-docs/README.md); edit pages there, not here. This file stays so
+that old links keep working: find the page you were looking for in the map below.
 
-> **Spine in one line:**
-> `import OpenAPI → edit a class & a path → lint → cut a version → publish → view in browse →
-> export via CLI → query via MCP`
-
-> **Documentation site:** these guides are moving to **<https://apiome.github.io/apiome/>**
-> (Docusaurus, source in [`apiome-docs/`](../../apiome-docs/README.md)). Until each one is migrated,
-> this folder stays the source of truth.
-
-If you only read one other page first, read the project [README](../../README.md) ("Your first
-project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executable definition of
-"the product works").
-
----
-
-## How do I…? — one page per spine capability
-
-| Capability | Guide | UI | REST |
-|---|---|---|---|
-| **See every supported format** (generated from the registries) | [supported-formats.md](supported-formats.md) | `/ade/dashboard/catalog` | `GET /v1/formats/matrix` |
-| Import a spec (51<!--format-count:importable--> formats; Projects vs Catalog) | [import-a-spec.md](import-a-spec.md) | `/ade/studio` | `POST /v1/tenants/{tenant}/imports` |
-| Edit classes & properties | [edit-classes-and-properties.md](edit-classes-and-properties.md) | `/ade/studio` | `PUT /v1/classes/{tenant}/{class_id}` |
-| Edit paths & operations | [edit-paths.md](edit-paths.md) | `/ade/studio/paths` | `PUT /v1/paths/{tenant}/{version}/{path_id}` |
-| Lint & quality scoring | [lint-and-quality.md](lint-and-quality.md) | `/ade/studio` | `GET /v1/versions/{tenant}/{project}/{version}/lint` |
-| Axis score algorithm (`clx-axis-v1`) | [axis-score.md](axis-score.md) | Lint axes panels | `GET …/lint/axes` |
-| Cut a version | [cut-a-version.md](cut-a-version.md) | `/ade/dashboard/versions` | `POST /v1/versions/{tenant}/{project}` |
-| Publish a version | [publish-a-version.md](publish-a-version.md) | `/ade/dashboard/versions` | `POST /v1/versions/{tenant}/{project}/{version}/publish` |
-| Browse published specs | [browse-published-specs.md](browse-published-specs.md) | `/ade/dashboard/published` | `GET /v1/browse/tenants/{tenant}/projects` |
-| Export / download a spec | [export-a-spec.md](export-a-spec.md) | `/ade/dashboard/published` | `GET /v1/schema/{tenant}/{project}/{version}` |
-| Understand export fidelity (projection map, reasons, acknowledgement) | [export-fidelity.md](export-fidelity.md) | `/ade/dashboard/export/studio` | `POST /v1/export/{tenant}/projection-evidence` |
-| Read a catalog item's format details (X12, COBOL copybooks, statuses, redaction) | [catalog-format-details.md](catalog-format-details.md) | `/ade/dashboard/catalog` | `GET /v1/catalog/{tenant}/{item}/analysis` |
-| Convert a catalog item to OpenAPI (projection graph, reasons, evidence history) | [convert-to-openapi.md](convert-to-openapi.md) | `/ade/dashboard/catalog` | `POST /v1/catalog/{tenant}/{item}/convert` |
-
-## References & quick-starts
-
-| Topic | Guide |
-|---|---|
-| **API reference** (interactive Swagger UI for the REST API) | [api-reference.md](api-reference.md) |
-| **Built-in lint rules** (stable ids, severities, rationales — `GET /v1/lint/rules`) | [lint-rules.md](lint-rules.md) |
-| **Custom lint rules** (Spectral-compatible DSL — `POST /v1/lint/custom-rules/validate`) | [custom-rules.md](custom-rules.md) |
-| **Spectral ruleset import** (`.spectral.yaml` → built-ins + custom rules — `POST /v1/lint/custom-rules/import`) | [spectral-import.md](spectral-import.md) |
-| **Schematron import** (`.sch` rule set → a governance style guide — `POST /v1/lint/schematron/import`) | [schematron-import.md](schematron-import.md) |
-| **Style-guide revisions & audit** (immutable guide history, lint results pinned to a revision — `GET /v1/style-guides/{tenant}/{guide}/revisions`) | [style-guide-revisions.md](style-guide-revisions.md) |
-| **One mock engine** (the two mock implementations folded into one — what moved, what the built-in scenarios still do, how a stored instance config migrates) | [one-mock-engine.md](one-mock-engine.md) |
-| **Portable mock bundles** (offline, signed, version-pinned mock runtime — `GET …/mock/bundle`) | [mock-bundle-format.md](mock-bundle-format.md) |
-| **Portable mock runtime** (`apiome mock run`, official image, readiness, structured logs, conformance) | [portable-mock-runtime.md](portable-mock-runtime.md) |
-| **Mock fixture packs** (versioned seed data, digests, `__mock__/session/reset` lifecycle) | [mock-fixture-packs.md](mock-fixture-packs.md) |
-| **Mock callbacks & webhooks** (contract callbacks the mock *sends* — allowlisted destinations, schema-checked payloads, deterministic retries) | [mock-callbacks.md](mock-callbacks.md) |
-| **Request-correlated responses** (answer `GET /pets/42` with id 42 — no request header, configured on the version) | [mock-response-correlation.md](mock-response-correlation.md) |
-| **Mock response preview** (dry-run render: what does the mock return for this request, and which layer produced it) | [mock-response-preview.md](mock-response-preview.md) |
-| **Guarded proxy capture** (record real upstream traffic into reviewed, redacted fixtures — allowlists, redaction decisions, provenance on replay) | [mock-proxy-capture.md](mock-proxy-capture.md) |
-| **Serverless mock adapter** (run a bundle as a Lambda / Cloud Run / Azure function — limits, cold start, preflight) | [serverless-mock-adapter.md](serverless-mock-adapter.md) |
-| **Mock CI action** (start a pinned mock in a job, service URL, digests, auto-cleanup) | [mock-action/README.md](../../mock-action/README.md) |
-| **Release-proof mock attestation** (bundle digest + runtime + conformance result + fixture digests on a verification run, signed for offline verification) | [mock-release-attestation.md](mock-release-attestation.md) |
-| **CLI** quick-start (`apiome …`) | [cli-quickstart.md](cli-quickstart.md) |
-| **CI contract gate** (GitHub Action `apiome/diff-action`) | [ci-diff-gate.md](ci-diff-gate.md) |
-| **CI contract gate on GitLab & Bitbucket** (container image + copy-paste pipelines) | [ci-gitlab-bitbucket.md](ci-gitlab-bitbucket.md) |
-| **MCP** setup quick-start (Claude Desktop / IDE hosts) | [mcp-quickstart.md](mcp-quickstart.md) |
-| **Keyboard** paths for every primary task, and the shortcut reference | [keyboard.md](keyboard.md) |
-| **Accessibility** contract, the CI axe gate, and the screen-reader checklist | [accessibility.md](accessibility.md) |
-| **Content & voice** rules for empty, loading, error and gated states, and the per-route checklist | [content-voice.md](content-voice.md) |
-
----
-
-## Before you start
-
-Bring the local spine up with Docker and load the dev seed (the `acme-corp` tenant and the published
-`petstore-sample` project):
-
-```bash
-docker compose up --build --wait      # postgres, migrate, seed, rest (:8000), mcp (:8765)
-docker compose run --rm seed          # idempotent; ensures the dev tenant + sample exist
-```
-
-Then sign in to the UI with the dev login `ada@example.com` / `apiome-dev` and open **Control
-Panel → Dashboard**. The default service ports are:
-
-| Service | URL |
-|---|---|
-| REST API | `http://localhost:8000` (interactive docs at `/docs`) |
-| MCP server | `http://localhost:8765` (MCP endpoint at `/mcp`) |
-| UI | the Next.js app (`/ade/dashboard`, `/ade/studio`) |
-
-Every how-to page below shows the **UI**, **REST**, and (where applicable) **CLI** way to do the
-same thing, plus a short *verify* step. Depth grows post-RC — this set is intentionally lean.
+| Old file (`docs/guide/`) | Page on the site | Source |
+|---|---|---|
+| `README.md` (this index, *Before you start*) | [Run Apiome locally](https://apiome.github.io/apiome/getting-started/run-locally) | [`apiome-docs/docs/getting-started/run-locally.md`](../../apiome-docs/docs/getting-started/run-locally.md) |
+| `import-a-spec.md` | [Import a specification](https://apiome.github.io/apiome/bring-in/import-a-spec) | [`apiome-docs/docs/bring-in/import-a-spec.md`](../../apiome-docs/docs/bring-in/import-a-spec.md) |
+| `supported-formats.md` | [Supported formats](https://apiome.github.io/apiome/bring-in/supported-formats) | [`apiome-docs/docs/bring-in/supported-formats.md`](../../apiome-docs/docs/bring-in/supported-formats.md) |
+| `catalog-format-details.md` | [Read a catalog item's format details](https://apiome.github.io/apiome/bring-in/catalog-format-details) | [`apiome-docs/docs/bring-in/catalog-format-details.md`](../../apiome-docs/docs/bring-in/catalog-format-details.md) |
+| `convert-to-openapi.md` | [Convert a catalog item to OpenAPI](https://apiome.github.io/apiome/bring-in/convert-to-openapi) | [`apiome-docs/docs/bring-in/convert-to-openapi.md`](../../apiome-docs/docs/bring-in/convert-to-openapi.md) |
+| `spectral-import.md` | [Import a Spectral ruleset](https://apiome.github.io/apiome/bring-in/spectral-import) | [`apiome-docs/docs/bring-in/spectral-import.md`](../../apiome-docs/docs/bring-in/spectral-import.md) |
+| `schematron-import.md` | [Import a Schematron rule set](https://apiome.github.io/apiome/bring-in/schematron-import) | [`apiome-docs/docs/bring-in/schematron-import.md`](../../apiome-docs/docs/bring-in/schematron-import.md) |
+| `edit-classes-and-properties.md` | [Edit classes and properties](https://apiome.github.io/apiome/build/edit-classes-and-properties) | [`apiome-docs/docs/build/edit-classes-and-properties.md`](../../apiome-docs/docs/build/edit-classes-and-properties.md) |
+| `edit-paths.md` | [Edit paths and operations](https://apiome.github.io/apiome/build/edit-paths) | [`apiome-docs/docs/build/edit-paths.md`](../../apiome-docs/docs/build/edit-paths.md) |
+| `lint-and-quality.md` | [Lint and check quality](https://apiome.github.io/apiome/build/lint-and-quality) | [`apiome-docs/docs/build/lint-and-quality.md`](../../apiome-docs/docs/build/lint-and-quality.md) |
+| `axis-score.md` | [Axis score algorithm](https://apiome.github.io/apiome/build/axis-score) | [`apiome-docs/docs/build/axis-score.md`](../../apiome-docs/docs/build/axis-score.md) |
+| `custom-rules.md` | [Custom lint rules](https://apiome.github.io/apiome/build/custom-rules) | [`apiome-docs/docs/build/custom-rules.md`](../../apiome-docs/docs/build/custom-rules.md) |
+| `lint-rules.md` | [Built-in lint rules](https://apiome.github.io/apiome/build/lint-rules) | [`apiome-docs/docs/build/lint-rules.md`](../../apiome-docs/docs/build/lint-rules.md) |
+| `cut-a-version.md` | [Cut a version](https://apiome.github.io/apiome/ship/cut-a-version) | [`apiome-docs/docs/ship/cut-a-version.md`](../../apiome-docs/docs/ship/cut-a-version.md) |
+| `publish-a-version.md` | [Publish a version](https://apiome.github.io/apiome/ship/publish-a-version) | [`apiome-docs/docs/ship/publish-a-version.md`](../../apiome-docs/docs/ship/publish-a-version.md) |
+| `browse-published-specs.md` | [Browse published specs](https://apiome.github.io/apiome/ship/browse-published-specs) | [`apiome-docs/docs/ship/browse-published-specs.md`](../../apiome-docs/docs/ship/browse-published-specs.md) |
+| `export-a-spec.md` | [Export a spec](https://apiome.github.io/apiome/ship/export-a-spec) | [`apiome-docs/docs/ship/export-a-spec.md`](../../apiome-docs/docs/ship/export-a-spec.md) |
+| `export-fidelity.md` | [Understand export fidelity](https://apiome.github.io/apiome/ship/export-fidelity) | [`apiome-docs/docs/ship/export-fidelity.md`](../../apiome-docs/docs/ship/export-fidelity.md) |
+| `one-mock-engine.md` | [One mock engine](https://apiome.github.io/apiome/ship/mocks/one-mock-engine) | [`apiome-docs/docs/ship/mocks/one-mock-engine.md`](../../apiome-docs/docs/ship/mocks/one-mock-engine.md) |
+| `mock-bundle-format.md` | [Mock bundle format](https://apiome.github.io/apiome/ship/mocks/mock-bundle-format) | [`apiome-docs/docs/ship/mocks/mock-bundle-format.md`](../../apiome-docs/docs/ship/mocks/mock-bundle-format.md) |
+| `portable-mock-runtime.md` | [Portable mock runtime](https://apiome.github.io/apiome/ship/mocks/portable-mock-runtime) | [`apiome-docs/docs/ship/mocks/portable-mock-runtime.md`](../../apiome-docs/docs/ship/mocks/portable-mock-runtime.md) |
+| `mock-fixture-packs.md` | [Mock fixture packs](https://apiome.github.io/apiome/ship/mocks/mock-fixture-packs) | [`apiome-docs/docs/ship/mocks/mock-fixture-packs.md`](../../apiome-docs/docs/ship/mocks/mock-fixture-packs.md) |
+| `mock-callbacks.md` | [Mock callbacks and webhooks](https://apiome.github.io/apiome/ship/mocks/mock-callbacks) | [`apiome-docs/docs/ship/mocks/mock-callbacks.md`](../../apiome-docs/docs/ship/mocks/mock-callbacks.md) |
+| `mock-response-correlation.md` | [Request-correlated responses](https://apiome.github.io/apiome/ship/mocks/mock-response-correlation) | [`apiome-docs/docs/ship/mocks/mock-response-correlation.md`](../../apiome-docs/docs/ship/mocks/mock-response-correlation.md) |
+| `mock-response-preview.md` | [Mock response preview](https://apiome.github.io/apiome/ship/mocks/mock-response-preview) | [`apiome-docs/docs/ship/mocks/mock-response-preview.md`](../../apiome-docs/docs/ship/mocks/mock-response-preview.md) |
+| `mock-proxy-capture.md` | [Guarded proxy capture](https://apiome.github.io/apiome/ship/mocks/mock-proxy-capture) | [`apiome-docs/docs/ship/mocks/mock-proxy-capture.md`](../../apiome-docs/docs/ship/mocks/mock-proxy-capture.md) |
+| `serverless-mock-adapter.md` | [Serverless mock adapter](https://apiome.github.io/apiome/ship/mocks/serverless-mock-adapter) | [`apiome-docs/docs/ship/mocks/serverless-mock-adapter.md`](../../apiome-docs/docs/ship/mocks/serverless-mock-adapter.md) |
+| `mock-release-attestation.md` | [Release-proof mock attestation](https://apiome.github.io/apiome/ship/mocks/mock-release-attestation) | [`apiome-docs/docs/ship/mocks/mock-release-attestation.md`](../../apiome-docs/docs/ship/mocks/mock-release-attestation.md) |
+| `style-guide-revisions.md` | [Style-guide revisions and audit](https://apiome.github.io/apiome/govern/style-guide-revisions) | [`apiome-docs/docs/govern/style-guide-revisions.md`](../../apiome-docs/docs/govern/style-guide-revisions.md) |
+| `mcp-conformance-rules.md` | [MCP conformance rules](https://apiome.github.io/apiome/govern/mcp-conformance-rules) | [`apiome-docs/docs/govern/mcp-conformance-rules.md`](../../apiome-docs/docs/govern/mcp-conformance-rules.md) |
+| `mcp-surface-lint-rules.md` | [MCP surface lint rules](https://apiome.github.io/apiome/govern/mcp-surface-lint-rules) | [`apiome-docs/docs/govern/mcp-surface-lint-rules.md`](../../apiome-docs/docs/govern/mcp-surface-lint-rules.md) |
+| `mcp-trust-posture-rules.md` | [MCP trust-posture rules](https://apiome.github.io/apiome/govern/mcp-trust-posture-rules) | [`apiome-docs/docs/govern/mcp-trust-posture-rules.md`](../../apiome-docs/docs/govern/mcp-trust-posture-rules.md) |
+| `api-reference.md` | [API reference](https://apiome.github.io/apiome/reference/api-reference) | [`apiome-docs/docs/reference/api-reference.md`](../../apiome-docs/docs/reference/api-reference.md) |
+| `cli-quickstart.md` | [CLI quick-start](https://apiome.github.io/apiome/reference/cli-quickstart) | [`apiome-docs/docs/reference/cli-quickstart.md`](../../apiome-docs/docs/reference/cli-quickstart.md) |
+| `mcp-quickstart.md` | [MCP quick-start](https://apiome.github.io/apiome/reference/mcp-quickstart) | [`apiome-docs/docs/reference/mcp-quickstart.md`](../../apiome-docs/docs/reference/mcp-quickstart.md) |
+| `ci-diff-gate.md` | [CI contract gate on GitHub](https://apiome.github.io/apiome/reference/ci-diff-gate) | [`apiome-docs/docs/reference/ci-diff-gate.md`](../../apiome-docs/docs/reference/ci-diff-gate.md) |
+| `ci-gitlab-bitbucket.md` | [CI contract gate on GitLab and Bitbucket](https://apiome.github.io/apiome/reference/ci-gitlab-bitbucket) | [`apiome-docs/docs/reference/ci-gitlab-bitbucket.md`](../../apiome-docs/docs/reference/ci-gitlab-bitbucket.md) |
+| `keyboard.md` | [Keyboard](https://apiome.github.io/apiome/reference/keyboard) | [`apiome-docs/docs/reference/keyboard.md`](../../apiome-docs/docs/reference/keyboard.md) |
+| `accessibility.md` | [Accessibility](https://apiome.github.io/apiome/reference/accessibility) | [`apiome-docs/docs/reference/accessibility.md`](../../apiome-docs/docs/reference/accessibility.md) |
+| `content-voice.md` | [Content and voice](https://apiome.github.io/apiome/reference/content-voice) | [`apiome-docs/docs/reference/content-voice.md`](../../apiome-docs/docs/reference/content-voice.md) |

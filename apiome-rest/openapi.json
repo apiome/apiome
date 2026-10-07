@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.203.0",
+    "version": "1.204.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22125,7 +22125,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "502": {
             "content": {
@@ -66371,7 +66371,7 @@
           "export"
         ],
         "summary": "Page through projection evidence for one configured export",
-        "description": "Return one bounded, cursor-paginated page of source\u2192target projection evidence (EFP-2.1 / EFP-3.2) for the given source revision, target, and options \u2014 the traceable rows behind the projection summary that preview, verify, dispatch, and job results embed. The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped. Source-native evidence is **always** redacted (EFP-3.2); `redact_source` is accepted for compatibility and ignored. How to interpret the statuses, reason categories, and destination-documentation links is documented in `docs/guide/export-fidelity.md` (EFP-3.3).",
+        "description": "Return one bounded, cursor-paginated page of source\u2192target projection evidence (EFP-2.1 / EFP-3.2) for the given source revision, target, and options \u2014 the traceable rows behind the projection summary that preview, verify, dispatch, and job results embed. The same inputs resolve to the same snapshot hash on every surface. Tenant-scoped. Source-native evidence is **always** redacted (EFP-3.2); `redact_source` is accepted for compatibility and ignored. How to interpret the statuses, reason categories, and destination-documentation links is documented in the *Understand export fidelity* guide, `apiome-docs/docs/ship/export-fidelity.md` (EFP-3.3).",
         "operationId": "get_projection_evidence_v1_export__tenant_slug__projection_evidence_post",
         "parameters": [
           {
@@ -95637,7 +95637,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "completed_at": {
             "anyOf": [
@@ -97547,7 +97547,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97775,7 +97775,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "comment_count": {
             "type": "integer",
@@ -98306,14 +98306,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -100338,7 +100338,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "9124bfa0-35c7-4172-b7e5-4bdfad8f5381"
+            "example": "72e2a8ae-c709-4852-8f72-782b69bea88e"
           },
           "method": {
             "type": "string",
@@ -102865,7 +102865,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -104601,7 +104601,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "browse_url": {
             "anyOf": [
@@ -138274,9 +138274,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Request body for push webhook subscription create."
               },
@@ -138328,9 +138328,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Response payload for push webhook subscription."
               },
@@ -138433,9 +138433,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Request body for push webhook subscription update."
               },
@@ -144443,7 +144443,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           }
         },
         "additionalProperties": false,
@@ -155664,7 +155664,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "detected_by": {
             "anyOf": [
@@ -162719,14 +162719,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-07T01:45:16Z"
+            "example": "2026-10-07T19:37:36Z"
           },
           "outcome": {
             "anyOf": [

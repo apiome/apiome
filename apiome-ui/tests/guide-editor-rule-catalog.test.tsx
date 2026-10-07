@@ -73,7 +73,7 @@ function makeView(rules = RULES, source: 'builtin' | 'custom' = 'custom') {
     rules,
     count: rules.length,
     enabledCount: rules.filter((r) => r.enabled).length,
-    docsPage: 'docs/guide/lint-rules.md',
+    docsPage: 'apiome-docs/docs/build/lint-rules.md',
   };
 }
 

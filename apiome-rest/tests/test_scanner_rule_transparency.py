@@ -78,6 +78,6 @@ def test_generated_docs_pages_exist_with_blocking_anchors() -> None:
         for meta in BLOCKING_RULES.values():
             if meta.docs_page != page:
                 continue
-            assert f'id="{meta.docs_anchor}"' in text or f'<a id="{meta.docs_anchor}">' in text, (
+            assert f"{{#{meta.docs_anchor}}}" in text, (
                 f"missing anchor {meta.docs_anchor} in {found}"
             )

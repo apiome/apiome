@@ -315,4 +315,4 @@ signed; `404` means the run recorded no mock at all.
 
 Producer side: `apiome-mock attest` emits the block ready to attach; `apiome mock verify-attestation`
 verifies the envelope offline. See
-[docs/guide/mock-release-attestation.md](../../docs/guide/mock-release-attestation.md).
+[apiome-docs/docs/ship/mocks/mock-release-attestation.md](../../apiome-docs/docs/ship/mocks/mock-release-attestation.md).

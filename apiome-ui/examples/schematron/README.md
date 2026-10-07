@@ -7,7 +7,7 @@ schema language — it is a **rule** language, so it projects onto Apiome's lint
 because nothing here becomes a `CanonicalApi`.
 
 **The importer.** `POST /v1/lint/schematron/import` — see
-[`docs/guide/schematron-import.md`](../../../docs/guide/schematron-import.md). It is built from
+[`apiome-docs/docs/bring-in/schematron-import.md`](../../../apiome-docs/docs/bring-in/schematron-import.md). It is built from
 `app.schematron_parser` (composition and phases), `app.schematron_projection` (XPath → canonical-model
 rule, or a reason there is none) and `app.schematron_import` (the style-guide state), and is driven by
 these fixtures in `apiome-rest/tests/test_schematron_import.py`.

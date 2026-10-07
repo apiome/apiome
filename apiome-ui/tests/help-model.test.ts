@@ -79,11 +79,11 @@ describe('the help cards', () => {
     }
   });
 
-  it('links the written guides out to the repository', () => {
+  it('links the written guides out to the documentation site', () => {
     const guides = HELP_CARDS.filter((card) => card.id === 'user-guide' || card.id === 'api-cli');
     expect(guides).toHaveLength(2);
     for (const card of guides) {
-      expect(card.href).toMatch(/^https:\/\/github\.com\/apiome\/apiome\/blob\/main\/docs\/guide\//);
+      expect(card.href).toMatch(/^https:\/\/apiome\.github\.io\/apiome\//);
     }
   });
 

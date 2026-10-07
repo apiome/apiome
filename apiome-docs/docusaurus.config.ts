@@ -37,6 +37,11 @@ const config: Config = {
   onBrokenLinks: 'throw',
   onBrokenAnchors: 'throw',
   markdown: {
+    // `.md` pages are CommonMark and `.mdx` pages are MDX. The guides migrated from `docs/guide/`
+    // (and the pages the REST generators write) are plain Markdown with inline HTML comments
+    // (`42<!--format-count:importable-->`) and `<a id>` anchors, which MDX would reject; pages that
+    // use components (`<Screenshot/>`, `<Route/>`) are `.mdx`.
+    format: 'detect',
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },

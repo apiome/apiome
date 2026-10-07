@@ -59,6 +59,6 @@ describe('SUPPORTED_FORMATS_DOC_URL', () => {
   it('points at the generated reference page over an absolute URL', () => {
     // Relative would 404: the portal image ships the app, not the repository's docs tree.
     expect(SUPPORTED_FORMATS_DOC_URL.startsWith('https://')).toBe(true);
-    expect(SUPPORTED_FORMATS_DOC_URL.endsWith('docs/guide/supported-formats.md')).toBe(true);
+    expect(SUPPORTED_FORMATS_DOC_URL).toBe('https://apiome.github.io/apiome/bring-in/supported-formats');
   });
 });

@@ -1,0 +1,24 @@
+---
+slug: guides-on-the-site
+title: The user guide moves onto the site
+description: Every guide from the repository is now a page on this site.
+authors: [apiome]
+---
+
+All 39 guides that lived in the repository's `docs/guide/` folder are now pages on this site, grouped
+by job: [Bring in](/bring-in), [Build](/build), [Ship](/ship) (with its own [Mocks](/ship/mocks)
+section), [Govern](/govern) and [Reference](/reference). ([#5619](https://github.com/apiome/apiome/issues/5619))
+
+{/* truncate */}
+
+- **Search and a sidebar** replace the old hand-kept “How do I…?” table.
+- **New page:** [Run Apiome locally](/getting-started/run-locally) — the old index's *Before you
+  start* section.
+- **In the app**, **Help & docs** — the guide search, the **User guide** and **API & CLI reference**
+  cards — and every “View rule” and algorithm link open the page on this site.
+- **Old links keep working.** [`docs/guide/README.md`](https://github.com/apiome/apiome/blob/main/docs/guide/README.md)
+  maps each old file to its new page, and a lint result that still names a `docs/guide/` page opens
+  the new one.
+- **Generated pages stay generated.** *Supported formats*, *Built-in lint rules* and the three MCP
+  rule catalogs are written by the same generators, now straight into the site, and the format
+  counts in *Import a specification* and *Export a spec* still regenerate.

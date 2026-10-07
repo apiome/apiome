@@ -32,7 +32,7 @@ import {
  * The rail footer has linked to *Help & docs* since HIVE-3.4 (#5290), and until now the link
  * resolved to the not-found page. Help itself was scattered: an intro-video link on the login
  * screen, a YouTube row and two coming-soon rows on the launcher, and no path at all from
- * inside the app to the written guides in `docs/guide`. This is the small landing surface
+ * inside the app to the written guides on the documentation site (`apiome-docs`). This is the small landing surface
  * that makes the rail's link true and gives the guides one door.
  *
  * It is deliberately a *landing* page rather than a documentation viewer: the guides are

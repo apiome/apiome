@@ -111,6 +111,6 @@ that cannot work.
 ## Related
 
 - `mock_routes.py` — the engine's management + data planes (#3615)
-- [../../docs/guide/portable-mock-runtime.md](../../docs/guide/portable-mock-runtime.md) — the
+- [../../apiome-docs/docs/ship/mocks/portable-mock-runtime.md](../../apiome-docs/docs/ship/mocks/portable-mock-runtime.md) — the
   offline mock runtime (PMR)
 - [emitter_spi.md](emitter_spi.md) — the emitter registry the target list is derived from

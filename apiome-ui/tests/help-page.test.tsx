@@ -188,7 +188,7 @@ describe('guide search', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(screen.getByTestId('help-guide-publish-a-version')).toHaveAttribute(
       'href',
-      'https://github.com/apiome/apiome/blob/main/docs/guide/publish-a-version.md'
+      'https://apiome.github.io/apiome/ship/publish-a-version'
     );
     for (const link of results) {
       expect(link).toHaveAttribute('target', '_blank');
@@ -291,8 +291,8 @@ describe('the help cards', () => {
     render(<HelpPage />);
 
     for (const [id, href] of [
-      ['user-guide', 'https://github.com/apiome/apiome/blob/main/docs/guide/README.md'],
-      ['api-cli', 'https://github.com/apiome/apiome/blob/main/docs/guide/api-reference.md'],
+      ['user-guide', 'https://apiome.github.io/apiome/'],
+      ['api-cli', 'https://apiome.github.io/apiome/reference/api-reference'],
       ['video', 'https://www.youtube.com/@apiomedev'],
     ] as const) {
       const card = screen.getByTestId(`help-card-${id}`);

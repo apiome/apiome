@@ -18,7 +18,7 @@ canonical paradigms — REST, RPC, event-driven, graph, data schema and agent:
 Those numbers are measured from the adapter registries rather than maintained by hand, and so is the
 full list:
 
-- **[Supported formats](docs/guide/supported-formats.md)** — every format, its registry key,
+- **[Supported formats](apiome-docs/docs/bring-in/supported-formats.md)** — every format, its registry key,
   direction, version coverage, file extensions and boundaries, generated and drift-checked in CI.
 - `GET /v1/formats/matrix` — the same answer, machine-readable.
 - `apiome formats` — the same answer, at a terminal.
@@ -27,8 +27,8 @@ full list:
 
 The documentation site is **<https://apiome.github.io/apiome/>** — built with Docusaurus from
 [`apiome-docs/`](apiome-docs/README.md) and deployed from `main`. Run it locally with `yarn docs:dev`.
-The guides under [`docs/guide/`](docs/guide/README.md) move onto the site over the RC6 documentation
-epic.
+The guides that used to live in `docs/guide/` are on the site now; [`docs/guide/README.md`](docs/guide/README.md)
+maps each old file to its new page.
 
 ## Goals
 

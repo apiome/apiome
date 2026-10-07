@@ -26,7 +26,7 @@ export interface LintRuleCatalog {
 }
 
 /** Default docs page path returned by the REST catalog (GOV-1.2). */
-export const DEFAULT_LINT_RULES_DOCS_PAGE = 'docs/guide/lint-rules.md';
+export const DEFAULT_LINT_RULES_DOCS_PAGE = 'apiome-docs/docs/build/lint-rules.md';
 
 /** Build an external "View rule" href from the catalog's docs page + per-rule anchor. */
 export function buildLintRuleDocsHref(docsPage: string, docsAnchor: string): string {

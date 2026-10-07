@@ -1,7 +1,7 @@
 /**
  * The keyboard guide stays in step with the shortcut registry — HIVE-10.2 (#5338).
  *
- * `docs/guide/keyboard.md` documents the keyboard path for every primary task and ends with the
+ * `apiome-docs/docs/reference/keyboard.md` documents the keyboard path for every primary task and ends with the
  * full shortcut reference. That table is written from `lib/shortcuts.ts`; this suite fails when a
  * shortcut is declared there without a row in the guide, or its chord is spelled differently.
  */
@@ -24,7 +24,10 @@ import {
   type ShortcutDefinition,
 } from '../lib/shortcuts';
 
-const GUIDE = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'guide', 'keyboard.md'), 'utf8');
+const GUIDE = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apiome-docs', 'docs', 'reference', 'keyboard.md'),
+  'utf8'
+);
 
 /** Every shortcut the shell declares. */
 const DECLARED: ShortcutDefinition[] = [
@@ -44,7 +47,7 @@ const ROWS = GUIDE.slice(GUIDE.indexOf('## Shortcut reference'))
   .split('\n')
   .filter((line) => line.startsWith('| `'));
 
-describe('docs/guide/keyboard.md', () => {
+describe('apiome-docs/docs/reference/keyboard.md', () => {
   it('covers every shortcut the display order knows', () => {
     // A new declaration is added to SHORTCUT_DISPLAY_ORDER; if it is not in DECLARED either, this
     // suite cannot see it — so the two must agree.

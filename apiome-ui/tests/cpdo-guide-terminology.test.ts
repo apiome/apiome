@@ -1,8 +1,8 @@
 /**
  * CPDO user-guide <-> UI terminology contract — CPDO-4.3 (#4806).
  *
- * The guides at `docs/guide/catalog-format-details.md` and
- * `docs/guide/convert-to-openapi.md` promise that their vocabulary matches what the UI
+ * The guides at `apiome-docs/docs/bring-in/catalog-format-details.md` and
+ * `apiome-docs/docs/bring-in/convert-to-openapi.md` promise that their vocabulary matches what the UI
  * actually renders. This test reads the guides and asserts every reviewed UI label —
  * analysis statuses, value-visibility levels, projection-graph statuses with their
  * symbols, and the graph's lane labels — appears in the documentation verbatim. Renaming
@@ -26,7 +26,7 @@ import {
 } from '../src/app/components/ade/dashboard/catalog/conversionProjectionGraph';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const GUIDE_DIR = path.join(REPO_ROOT, 'docs', 'guide');
+const GUIDE_DIR = path.join(REPO_ROOT, 'apiome-docs', 'docs', 'bring-in');
 
 function readGuide(name: string): string {
   const file = path.join(GUIDE_DIR, name);
@@ -77,9 +77,9 @@ describe('CPDO guide <-> UI terminology (conversion projection)', () => {
 });
 
 describe('CPDO guide index', () => {
-  it('links both pages from the guide index', () => {
-    const index = readGuide('README.md');
-    expect(index).toContain('(catalog-format-details.md)');
-    expect(index).toContain('(convert-to-openapi.md)');
+  it('maps both pages from the old guide index to their site pages', () => {
+    const index = fs.readFileSync(path.join(REPO_ROOT, 'docs', 'guide', 'README.md'), 'utf8');
+    expect(index).toContain('(../../apiome-docs/docs/bring-in/catalog-format-details.md)');
+    expect(index).toContain('(../../apiome-docs/docs/bring-in/convert-to-openapi.md)');
   });
 });

@@ -31,7 +31,7 @@ jobs:
           base-url: ${{ vars.APIOME_BASE_URL }}
 ```
 
-Full guide: [`docs/guide/ci-diff-gate.md`](../docs/guide/ci-diff-gate.md).
+Full guide: [`apiome-docs/docs/reference/ci-diff-gate.md`](../apiome-docs/docs/reference/ci-diff-gate.md).
 
 ## Inputs
 
@@ -82,7 +82,7 @@ Copy-paste pipelines live in [`recipes/`](recipes/):
 | [`recipes/.gitlab-ci.yml`](recipes/.gitlab-ci.yml) | GitLab CI |
 | [`recipes/bitbucket-pipelines.yml`](recipes/bitbucket-pipelines.yml) | Bitbucket Pipelines |
 
-Guide: [`docs/guide/ci-gitlab-bitbucket.md`](../docs/guide/ci-gitlab-bitbucket.md). The guide
+Guide: [`apiome-docs/docs/reference/ci-gitlab-bitbucket.md`](../apiome-docs/docs/reference/ci-gitlab-bitbucket.md). The guide
 embeds those files verbatim and `tests/test_ci_recipes.sh` fails if either copy drifts.
 
 ## Develop / test

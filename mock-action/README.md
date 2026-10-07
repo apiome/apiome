@@ -1,6 +1,6 @@
 # Apiome Mock Runtime action (PMR-3.1)
 
-Start a version-pinned [portable mock](../docs/guide/portable-mock-runtime.md) for the rest of a CI
+Start a version-pinned [portable mock](../apiome-docs/docs/ship/mocks/portable-mock-runtime.md) for the rest of a CI
 job, get a loopback-only service URL back, and have the container removed automatically when the
 job ends — however it ends.
 
@@ -48,13 +48,13 @@ Export the bundle in an earlier step (or commit it) with
 
 `bundle-digest` and `runtime-version` are two of the four identities a release-proof mock
 attestation records. To turn a job's run into that evidence, follow it with `apiome-mock attest` —
-see [mock-release-attestation.md](../docs/guide/mock-release-attestation.md).
+see [mock-release-attestation.md](../apiome-docs/docs/ship/mocks/mock-release-attestation.md).
 
 ## What it guarantees
 
 **A safe service URL.** The runtime publishes on `127.0.0.1` by default, so nothing off the runner
 can reach the mock. No credential ever appears in the URL, and the bundle carries none: a bundle is
-credential-free by construction (see [the bundle format](../docs/guide/mock-bundle-format.md)). A
+credential-free by construction (see [the bundle format](../apiome-docs/docs/ship/mocks/mock-bundle-format.md)). A
 signing secret, when configured, is forwarded to the container **by name** rather than on a command
 line, where the process table would expose it to every process on the runner.
 

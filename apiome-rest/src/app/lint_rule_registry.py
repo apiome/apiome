@@ -9,7 +9,7 @@ link to a rationale.
 
 This registry gives every built-in rule one durable descriptor — a **stable id**, its
 **category**, its **default severity**, a **one-line rationale**, and a **docs anchor** into
-the rule reference page (``docs/guide/lint-rules.md``) — and is exposed over REST via
+the rule reference page (``apiome-docs/docs/build/lint-rules.md``) — and is exposed over REST via
 ``GET /v1/lint/rules`` (see :mod:`app.lint_routes`).
 
 Stable-id policy
@@ -47,6 +47,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
+from .docs_site import guide_page
 from .intake_lint_rules import INTAKE_PACK, INTAKE_RULES
 from .lint_engine import (
     available_lint_formats,
@@ -67,8 +68,8 @@ __all__ = [
 ]
 
 #: Repository-relative path of the human-readable rule reference every descriptor's
-#: ``docs_anchor`` points into.
-LINT_RULE_DOCS_PAGE = "docs/guide/lint-rules.md"
+#: ``docs_anchor`` points into — a page of the docs site (DOCS-1.2, #5619).
+LINT_RULE_DOCS_PAGE = guide_page("build", "lint-rules")
 
 #: Pack key recorded on descriptors sourced from the OpenAPI spec linter.
 _OPENAPI_PACK = "openapi"
@@ -79,8 +80,9 @@ def docs_anchor_for(rule_id: str) -> str:
 
     The anchor is the rule id with every ``.`` replaced by ``-`` (e.g.
     ``naming.schema-pascal-case`` -> ``naming-schema-pascal-case``). The reference page
-    emits an explicit ``<a id="...">`` marker per rule with exactly this slug, so the
-    anchor does not depend on any renderer's heading-slugification rules.
+    gives each rule's heading an explicit Docusaurus heading id (``### `rule.id` {#slug}``)
+    with exactly this slug, so the anchor does not depend on any renderer's
+    heading-slugification rules.
 
     :param rule_id: The rule's stable id.
     :returns: The anchor slug (without a leading ``#``).

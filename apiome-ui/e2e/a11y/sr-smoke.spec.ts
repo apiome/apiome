@@ -13,7 +13,7 @@ import { mountMarkup, readFixture } from '../support/a11y';
  * the markup it mounts.
  *
  * The manual pass with a real screen reader (VoiceOver, NVDA) follows the checklist in
- * `docs/guide/accessibility.md`; this is the part of it a machine can hold steady.
+ * `apiome-docs/docs/reference/accessibility.md`; this is the part of it a machine can hold steady.
  */
 
 test.use({ viewport: { width: 1280, height: 900 } });

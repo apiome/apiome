@@ -23,7 +23,14 @@ from apiome_mock.portable_config import (
     settings_from_args,
 )
 
-DOC_PATH = Path(__file__).resolve().parent.parent.parent / "docs" / "guide" / "portable-mock-runtime.md"
+DOC_PATH = (
+    Path(__file__).resolve().parent.parent.parent
+    / "apiome-docs"
+    / "docs"
+    / "ship"
+    / "mocks"
+    / "portable-mock-runtime.md"
+)
 
 
 def _parse(argv: list[str]) -> argparse.Namespace:

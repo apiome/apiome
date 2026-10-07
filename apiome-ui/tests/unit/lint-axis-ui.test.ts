@@ -75,17 +75,19 @@ describe('lintAxisUi', () => {
     });
     expect(evaluation).not.toBeNull();
     expect(evaluation!.algorithmId).toBe('clx-axis-v1');
-    expect(evaluation!.algorithmDocsPage).toBe('docs/guide/axis-score.md');
+    expect(evaluation!.algorithmDocsPage).toBe('apiome-docs/docs/build/axis-score.md');
     expect(evaluation!.compositeScore).toBe(90);
     expect(evaluation!.axes[1].assessed).toBe(false);
     expect(evaluation!.axes[1].score).toBeNull();
   });
 
   it('builds governance docs hrefs for algorithm and policy pages', () => {
-    expect(buildGovernanceDocsHref('docs/guide/axis-score.md')).toContain(
-      'docs/guide/axis-score.md',
+    expect(buildGovernanceDocsHref('apiome-docs/docs/build/axis-score.md')).toBe(
+      'https://apiome.github.io/apiome/build/axis-score',
     );
-    expect(buildGovernanceDocsHref(POLICY_DOCS_PAGE)).toContain('lint-and-quality.md');
+    expect(buildGovernanceDocsHref(POLICY_DOCS_PAGE)).toBe(
+      'https://apiome.github.io/apiome/build/lint-and-quality',
+    );
   });
 
   it('withholds composite when required coverage is incomplete', () => {

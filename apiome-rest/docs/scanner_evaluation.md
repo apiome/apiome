@@ -31,7 +31,7 @@ Catalog APIs enrich descriptors:
 - `GET /v1/mcp/conformance/rules`
 - `GET /v1/mcp/trust-posture/rules`
 
-Generated human docs: `docs/guide/lint-rules.md`, `docs/guide/mcp-*-rules.md`
+Generated human docs: `apiome-docs/docs/build/lint-rules.md`, `apiome-docs/docs/govern/mcp-*-rules.md`
 (`uv run python scripts/generate_lint_rule_docs.py`).
 
 ## Corpus layout
@@ -64,7 +64,7 @@ Before merging scanner / rule changes:
 Unscanned ≠ clean. Trust-posture and conformance engines report `skippedRules` when required
 evidence (source, SBOM, transcript, probe) is absent. Axis evaluations leave axes
 `not_assessed` until a scanner runs — see [mcp_trust_posture.md](./mcp_trust_posture.md) and
-[axis-score guide](../../docs/guide/axis-score.md).
+[axis-score guide](../../apiome-docs/docs/build/axis-score.md).
 
 ## Dynamic-scan consent risks
 

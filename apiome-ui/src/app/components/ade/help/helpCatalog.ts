@@ -2,19 +2,19 @@
  * The guide set, and the search over it (HIVE-4.9, #5303).
  *
  * Authority: `docs/mockups/foundations/help.html` — *"Search the guide… e.g. publish a
- * version, import RAML, MCP trust posture"* — and `docs/guide/README.md`, whose two tables
- * this file is the machine-readable form of.
+ * version, import RAML, MCP trust posture"* — and the guide pages of the documentation site
+ * (`apiome-docs/docs/`, DOCS-1.2 #5619), which this file is the machine-readable index of.
  *
  * ### Why the guides are listed here rather than read from disk
  *
- * `docs/guide` is markdown in the repository, not a route this app serves. Reading the
+ * The guide is a separate site built from `apiome-docs/docs/`, not a route this app serves. Reading the
  * directory at request time would need the docs tree inside the runtime image, which the
  * production `Dockerfile` does not ship, so a deployed instance would answer every search
  * with nothing. A listing compiled into the bundle searches instantly, works offline, and
  * costs one line per guide.
  *
  * The obvious failure mode of a hand-kept listing is drift — a guide is added and the search
- * never learns about it. `tests/help-catalog.test.ts` reads the real `docs/guide` directory
+ * never learns about it. `tests/help-catalog.test.ts` reads the real `apiome-docs/docs` tree
  * and fails when a file is missing from {@link GUIDE_ENTRIES} or names a page that no longer
  * exists, so the listing cannot silently fall behind the directory it describes.
  *
@@ -30,7 +30,7 @@ import { FORMAT_COUNTS } from '@/app/generated/formatCounts';
 import { buildDocsHref } from '@/app/utils/docsLinks';
 
 /**
- * Which of `docs/guide/README.md`'s two tables a guide belongs to.
+ * Which of the two Help sections a guide is listed under.
  *
  * `spine` is the end-to-end path a specification travels — import, edit, lint, cut, publish,
  * browse, export. `reference` is everything consulted rather than followed.
@@ -51,7 +51,7 @@ export interface GuideEntry {
   title: string;
   /** One line about what the page answers. Shown under the title in a result row. */
   summary: string;
-  /** Repository-relative path, e.g. `docs/guide/import-a-spec.md`. */
+  /** Repository-relative path of the page's source, e.g. `apiome-docs/docs/bring-in/import-a-spec.md`. */
   page: string;
   /** Which table of the guide index the page sits in. */
   section: GuideSection;
@@ -64,7 +64,7 @@ export interface GuideEntry {
 }
 
 /**
- * Every page in `docs/guide`, in the order `docs/guide/README.md` presents them.
+ * Every guide page on the documentation site: the spine first, then the references.
  *
  * The index itself is the last entry rather than the first: a reader searching for a task
  * wants the page that answers it, and "the whole guide" is what they fall back to.
@@ -75,7 +75,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Import a specification',
     summary:
       `Import any of ${FORMAT_COUNTS.importable} formats — and which of the two importers, Projects or Catalog, handles yours.`,
-    page: 'docs/guide/import-a-spec.md',
+    page: 'apiome-docs/docs/bring-in/import-a-spec.md',
     section: 'spine',
     keywords: ['upload', 'swagger', 'openapi', 'arazzo', 'json schema', 'job', 'raml', 'postman'],
   },
@@ -84,7 +84,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Edit classes & properties',
     summary:
       'Shape the data model your published spec exposes — a class becomes a component schema, its properties the fields.',
-    page: 'docs/guide/edit-classes-and-properties.md',
+    page: 'apiome-docs/docs/build/edit-classes-and-properties.md',
     section: 'spine',
     keywords: ['schema', 'component', 'model', 'field', 'attribute', 'type'],
   },
@@ -93,7 +93,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Edit paths & operations',
     summary:
       'Author URL templates and their operations — parameters, request bodies and responses — on a specific version.',
-    page: 'docs/guide/edit-paths.md',
+    page: 'apiome-docs/docs/build/edit-paths.md',
     section: 'spine',
     keywords: ['endpoint', 'route', 'get', 'post', 'parameter', 'response', 'request body'],
   },
@@ -102,7 +102,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Lint & check quality',
     summary:
       'The server-side quality score (A–F out of 100) and the itemized findings behind it, so the UI and the CLI always agree.',
-    page: 'docs/guide/lint-and-quality.md',
+    page: 'apiome-docs/docs/build/lint-and-quality.md',
     section: 'spine',
     keywords: ['grade', 'score', 'style guide', 'severity', 'finding', 'governance'],
   },
@@ -111,7 +111,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Axis score algorithm (clx-axis-v1)',
     summary:
       'How catalog and MCP lint evidence rolls into a multi-axis evaluation, and what each band means.',
-    page: 'docs/guide/axis-score.md',
+    page: 'apiome-docs/docs/build/axis-score.md',
     section: 'spine',
     keywords: ['coverage', 'weighting', 'band', 'evidence', 'grade', 'rollup'],
   },
@@ -120,7 +120,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Cut a version',
     summary:
       'Create a new revision of a project — classes carry over, paths are authored on the new revision.',
-    page: 'docs/guide/cut-a-version.md',
+    page: 'apiome-docs/docs/ship/cut-a-version.md',
     section: 'spine',
     keywords: ['revision', 'semver', 'branch', 'draft', 'base'],
   },
@@ -129,7 +129,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Publish a version',
     summary:
       'Freeze a version for browse, export and MCP consumers — and the publish gates that refuse one that is not ready.',
-    page: 'docs/guide/publish-a-version.md',
+    page: 'apiome-docs/docs/ship/publish-a-version.md',
     section: 'spine',
     keywords: ['release', 'gate', 'freeze', 'public', 'private', 'ship'],
   },
@@ -138,7 +138,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Browse published specs',
     summary:
       'The read surface for published versions: public ones need no authentication, private ones an in-scope API key.',
-    page: 'docs/guide/browse-published-specs.md',
+    page: 'apiome-docs/docs/ship/browse-published-specs.md',
     section: 'spine',
     keywords: ['catalog', 'discover', 'search', 'public', 'api key'],
   },
@@ -147,7 +147,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Export / download a spec',
     summary:
       'Reconstruct the full OpenAPI 3.1, Arazzo or JSON Schema document for a published version, in JSON or YAML.',
-    page: 'docs/guide/export-a-spec.md',
+    page: 'apiome-docs/docs/ship/export-a-spec.md',
     section: 'spine',
     keywords: ['fetch', 'yaml', 'json', 'bundle', 'artifact', 'save'],
   },
@@ -156,7 +156,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Understand export fidelity',
     summary:
       'What a projection to another format preserves, downgrades or drops — predicted before generation, with reasons.',
-    page: 'docs/guide/export-fidelity.md',
+    page: 'apiome-docs/docs/ship/export-fidelity.md',
     section: 'spine',
     keywords: [
       'projection',
@@ -174,7 +174,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: "Read a catalog item's format details",
     summary:
       'Payload analysis for an imported item: X12 envelopes and segments, COBOL copybooks, statuses and redaction.',
-    page: 'docs/guide/catalog-format-details.md',
+    page: 'apiome-docs/docs/bring-in/catalog-format-details.md',
     section: 'spine',
     keywords: ['x12', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
@@ -183,7 +183,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Convert a catalog item to OpenAPI',
     summary:
       'The evidence-first conversion: a deterministic projection map and its reason codes before anything is created.',
-    page: 'docs/guide/convert-to-openapi.md',
+    page: 'apiome-docs/docs/bring-in/convert-to-openapi.md',
     section: 'spine',
     keywords: ['projection graph', 'evidence', 'reason code', 'history', 'promote'],
   },
@@ -192,7 +192,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Supported formats',
     summary:
       'Every format Apiome imports and exports, generated from the registries — keys, input kinds, versions and extensions.',
-    page: 'docs/guide/supported-formats.md',
+    page: 'apiome-docs/docs/bring-in/supported-formats.md',
     section: 'reference',
     keywords: [
       'protobuf',
@@ -219,7 +219,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'API reference',
     summary:
       'The REST service publishes its own interactive reference — where it lives, and how to authenticate against it.',
-    page: 'docs/guide/api-reference.md',
+    page: 'apiome-docs/docs/reference/api-reference.md',
     section: 'reference',
     keywords: ['rest', 'swagger ui', 'fastapi', 'endpoint', 'openapi.json', 'token'],
   },
@@ -228,7 +228,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'CLI quick-start',
     summary:
       'Import documents, inspect tenant resources, lint and export specs from the terminal with the apiome CLI.',
-    page: 'docs/guide/cli-quickstart.md',
+    page: 'apiome-docs/docs/reference/cli-quickstart.md',
     section: 'reference',
     keywords: ['command line', 'terminal', 'shell', 'exit code', 'install', 'apiome diff'],
   },
@@ -237,7 +237,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'MCP setup quick-start',
     summary:
       'Point an MCP host — Claude Desktop, an IDE, automation — at your published specs, read-only.',
-    page: 'docs/guide/mcp-quickstart.md',
+    page: 'apiome-docs/docs/reference/mcp-quickstart.md',
     section: 'reference',
     keywords: ['model context protocol', 'claude desktop', 'ide', 'host', 'tool', 'stdio'],
   },
@@ -245,7 +245,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'keyboard',
     title: 'Using Apiome from the keyboard',
     summary: 'The keyboard path for every primary task, and every shortcut in one table.',
-    page: 'docs/guide/keyboard.md',
+    page: 'apiome-docs/docs/reference/keyboard.md',
     section: 'reference',
     keywords: ['shortcuts', 'hotkeys', 'command palette', 'tab', 'focus', 'no mouse', 'accessibility'],
   },
@@ -253,7 +253,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'accessibility',
     title: 'Accessibility in Apiome',
     summary: 'The WCAG 2.2 AA contract, how the CI axe gate checks it, and the screen-reader checklist.',
-    page: 'docs/guide/accessibility.md',
+    page: 'apiome-docs/docs/reference/accessibility.md',
     section: 'reference',
     keywords: ['a11y', 'wcag', 'axe', 'screen reader', 'contrast', 'high contrast', 'voiceover', 'nvda'],
   },
@@ -261,7 +261,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'content-voice',
     title: 'Content & voice',
     summary: 'How empty, loading, error and gated states read, and the per-route checklist.',
-    page: 'docs/guide/content-voice.md',
+    page: 'apiome-docs/docs/reference/content-voice.md',
     section: 'reference',
     keywords: ['copy', 'empty state', 'error message', 'loading', 'tone', 'writing', 'microcopy'],
   },
@@ -270,7 +270,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'CI contract gate (GitHub Action)',
     summary:
       'Gate pull requests when an OpenAPI change breaks a published version, with one sticky PR comment.',
-    page: 'docs/guide/ci-diff-gate.md',
+    page: 'apiome-docs/docs/reference/ci-diff-gate.md',
     section: 'reference',
     keywords: ['github actions', 'pipeline', 'breaking change', 'diff', 'pull request', 'workflow'],
   },
@@ -279,7 +279,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'CI contract gate on GitLab & Bitbucket',
     summary:
       'The same diff gate as a copy-paste GitLab CI or Bitbucket Pipelines job, run from the container image.',
-    page: 'docs/guide/ci-gitlab-bitbucket.md',
+    page: 'apiome-docs/docs/reference/ci-gitlab-bitbucket.md',
     section: 'reference',
     keywords: ['merge request', 'pipeline', 'container', 'docker', 'recipe'],
   },
@@ -288,7 +288,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Built-in lint rules',
     summary:
       'Reference for every rule in the catalog: stable ids, default severities and the rationale behind each one.',
-    page: 'docs/guide/lint-rules.md',
+    page: 'apiome-docs/docs/build/lint-rules.md',
     section: 'reference',
     keywords: ['rule id', 'severity', 'naming', 'catalog', 'registry'],
   },
@@ -297,7 +297,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Custom lint rules',
     summary:
       'Author organization-specific rules in a YAML dialect that is a strict subset of Spectral.',
-    page: 'docs/guide/custom-rules.md',
+    page: 'apiome-docs/docs/build/custom-rules.md',
     section: 'reference',
     keywords: ['spectral', 'dsl', 'yaml', 'organization', 'standard', 'validate'],
   },
@@ -306,7 +306,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Import a Spectral ruleset',
     summary:
       'Translate an existing .spectral.yaml into built-in and custom rules instead of re-authoring it.',
-    page: 'docs/guide/spectral-import.md',
+    page: 'apiome-docs/docs/bring-in/spectral-import.md',
     section: 'reference',
     keywords: ['stoplight', 'redocly', 'migrate', 'yaml', 'convert'],
   },
@@ -315,7 +315,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Import a Schematron rule set',
     summary:
       'Turn a .sch rule set into a governance style guide: one rule per assertion, with a reason for every assertion that cannot be scored.',
-    page: 'docs/guide/schematron-import.md',
+    page: 'apiome-docs/docs/bring-in/schematron-import.md',
     section: 'reference',
     keywords: ['.sch', 'xml', 'peppol', 'ubl', 'assert', 'xpath', 'governance', 'iso 19757'],
   },
@@ -324,7 +324,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Style-guide revisions & governance audit',
     summary:
       'Every edit appends an immutable revision, so a lint score always names what the guide contained at the time.',
-    page: 'docs/guide/style-guide-revisions.md',
+    page: 'apiome-docs/docs/govern/style-guide-revisions.md',
     section: 'reference',
     keywords: ['history', 'immutable', 'compliance', 'pinned', 'trail'],
   },
@@ -332,7 +332,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'mcp-conformance-rules',
     title: 'MCP conformance rules',
     summary: 'The conformance catalog, each rule citing the MCP specification reference it enforces.',
-    page: 'docs/guide/mcp-conformance-rules.md',
+    page: 'apiome-docs/docs/govern/mcp-conformance-rules.md',
     section: 'reference',
     keywords: ['specification', 'blocking', 'model context protocol', 'compliance'],
   },
@@ -340,7 +340,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'mcp-surface-lint-rules',
     title: 'MCP surface lint rules',
     summary: 'What is checked about an MCP surface itself — tools, descriptions and transparency fields.',
-    page: 'docs/guide/mcp-surface-lint-rules.md',
+    page: 'apiome-docs/docs/govern/mcp-surface-lint-rules.md',
     section: 'reference',
     keywords: ['tool', 'transparency', 'model context protocol', 'description'],
   },
@@ -348,7 +348,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'mcp-trust-posture-rules',
     title: 'MCP trust-posture rules',
     summary: 'Trust-posture checks mapped to the OWASP MCP Top 10, including the blocking ones.',
-    page: 'docs/guide/mcp-trust-posture-rules.md',
+    page: 'apiome-docs/docs/govern/mcp-trust-posture-rules.md',
     section: 'reference',
     keywords: ['owasp', 'security', 'risk', 'top 10', 'model context protocol'],
   },
@@ -357,7 +357,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Portable mock bundle format',
     summary:
       'One JSON document pinning everything the mock runtime needs to serve a version offline.',
-    page: 'docs/guide/mock-bundle-format.md',
+    page: 'apiome-docs/docs/ship/mocks/mock-bundle-format.md',
     section: 'reference',
     keywords: ['offline', 'signed', 'digest', 'pinned', 'schema', 'air-gapped'],
   },
@@ -366,7 +366,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Portable mock runtime',
     summary:
       'Serve a mock bundle on a laptop, in CI or inside an air-gapped network with `apiome mock run`.',
-    page: 'docs/guide/portable-mock-runtime.md',
+    page: 'apiome-docs/docs/ship/mocks/portable-mock-runtime.md',
     section: 'reference',
     keywords: ['mock server', 'image', 'readiness', 'logs', 'conformance', 'docker'],
   },
@@ -375,15 +375,91 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Mock fixture packs and data lifecycle',
     summary:
       'Versioned seed data with a stable content digest, and the reset that puts a test back where it started.',
-    page: 'docs/guide/mock-fixture-packs.md',
+    page: 'apiome-docs/docs/ship/mocks/mock-fixture-packs.md',
     section: 'reference',
     keywords: ['seed', 'stateful', 'reset', 'session', 'deterministic'],
   },
   {
+    id: 'one-mock-engine',
+    title: 'One mock engine',
+    summary:
+      'How the two mock implementations became one — what moved, and how a stored instance config migrates.',
+    page: 'apiome-docs/docs/ship/mocks/one-mock-engine.md',
+    section: 'reference',
+    keywords: ['scenario', 'migration', 'hosted mock', 'resolver'],
+  },
+  {
+    id: 'mock-callbacks',
+    title: 'Mock callbacks and webhooks',
+    summary:
+      'Callbacks the mock sends: allowlisted destinations, schema-checked payloads and deterministic retries.',
+    page: 'apiome-docs/docs/ship/mocks/mock-callbacks.md',
+    section: 'reference',
+    keywords: ['allowlist', 'retry', 'outbound', 'event'],
+  },
+  {
+    id: 'mock-response-correlation',
+    title: 'Request-correlated mock responses',
+    summary: 'Answer `GET /pets/42` with id 42 — no request header, configured on the version.',
+    page: 'apiome-docs/docs/ship/mocks/mock-response-correlation.md',
+    section: 'reference',
+    keywords: ['template', 'path parameter', 'echo', 'correlation'],
+  },
+  {
+    id: 'mock-response-preview',
+    title: 'Mock response preview',
+    summary: 'Dry-run a request to see what the mock returns, and which layer produced it.',
+    page: 'apiome-docs/docs/ship/mocks/mock-response-preview.md',
+    section: 'reference',
+    keywords: ['dry run', 'render', 'template', 'scenario'],
+  },
+  {
+    id: 'mock-proxy-capture',
+    title: 'Guarded proxy capture and replay',
+    summary:
+      'Record real upstream traffic into reviewed, redacted fixtures — allowlists, redaction and provenance.',
+    page: 'apiome-docs/docs/ship/mocks/mock-proxy-capture.md',
+    section: 'reference',
+    keywords: ['record', 'upstream', 'redaction', 'fixture', 'mock'],
+  },
+  {
+    id: 'serverless-mock-adapter',
+    title: 'Serverless mock adapter',
+    summary: 'Run a mock bundle as a Lambda, Cloud Run or Azure function — limits, cold start, preflight.',
+    page: 'apiome-docs/docs/ship/mocks/serverless-mock-adapter.md',
+    section: 'reference',
+    keywords: ['lambda', 'cloud run', 'azure', 'function', 'cold start'],
+  },
+  {
+    id: 'mock-release-attestation',
+    title: 'Release-proof mock attestation',
+    summary:
+      'Bundle digest, runtime, conformance result and fixture digests on a verification run, signed for offline checks.',
+    page: 'apiome-docs/docs/ship/mocks/mock-release-attestation.md',
+    section: 'reference',
+    keywords: ['verification', 'signature', 'dsse', 'provenance', 'digest'],
+  },
+  {
+    id: 'run-locally',
+    title: 'Run Apiome locally',
+    summary: 'Start the local stack with Docker, load the sample data and sign in.',
+    page: 'apiome-docs/docs/getting-started/run-locally.md',
+    section: 'spine',
+    keywords: ['docker', 'compose', 'seed', 'setup', 'install', 'dev login'],
+  },
+  {
+    id: 'docs-image',
+    title: 'Host the documentation site',
+    summary: 'Serve this guide next to your Apiome installation from the apiome-docs Docker image.',
+    page: 'apiome-docs/docs/admin/docs-image.mdx',
+    section: 'reference',
+    keywords: ['docker', 'self-host', 'nginx', 'docs image'],
+  },
+  {
     id: 'README',
     title: 'User guide index',
-    summary: 'Every guide in one table, from importing a spec to querying published ones over MCP.',
-    page: 'docs/guide/README.md',
+    summary: 'The documentation site home, grouped by job: build, bring in, ship, govern and reference.',
+    page: 'apiome-docs/docs/getting-started/index.mdx',
     section: 'reference',
     keywords: ['contents', 'overview', 'all guides', 'documentation', 'spine'],
   },

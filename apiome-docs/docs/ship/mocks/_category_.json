@@ -1,0 +1,12 @@
+{
+  "label": "Mocks",
+  "position": 7,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Mocks",
+    "description": "Serve a version before it exists: the mock engine, portable bundles, fixtures, callbacks and attestation.",
+    "slug": "/ship/mocks"
+  }
+}

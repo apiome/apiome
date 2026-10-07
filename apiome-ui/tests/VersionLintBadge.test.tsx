@@ -64,7 +64,7 @@ function mockBadgeFetch(report: object) {
             },
           ],
           count: 1,
-          docsPage: 'docs/guide/lint-rules.md',
+          docsPage: 'apiome-docs/docs/build/lint-rules.md',
         }),
       });
     }
