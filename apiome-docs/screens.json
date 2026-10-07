@@ -1,0 +1,52 @@
+{
+  "screens": [
+    {
+      "id": "catalog",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-catalog/table.html"
+    },
+    {
+      "id": "versions-timeline",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"versions-head-badge\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-versions/timeline.html"
+    },
+    {
+      "id": "published",
+      "route": "/ade/dashboard/published",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-published/table.html"
+    },
+    {
+      "id": "primitives",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-primitives/registry.html"
+    },
+    {
+      "id": "mcp-servers",
+      "route": "/ade/dashboard/mcp",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-mcp-catalog/catalog-list.html"
+    },
+    {
+      "id": "sunset-timeline",
+      "route": "/ade/dashboard/versions/sunset-timeline",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": ["time"],
+      "data": "golden-path",
+      "fallback": "fixture:hive-sunset-timeline/timeline.html"
+    }
+  ]
+}

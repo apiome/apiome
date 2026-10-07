@@ -456,6 +456,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['docker', 'self-host', 'nginx', 'docs image'],
   },
   {
+    id: 'contribute-to-the-docs',
+    title: 'Contribute to the docs',
+    summary: 'Write a docs page, add a screenshot to the manifest, and pass the docs gate.',
+    page: 'apiome-docs/docs/admin/contribute-to-the-docs.mdx',
+    section: 'reference',
+    keywords: ['screenshot', 'docusaurus', 'manifest', 'playwright', 'documentation', 'writing'],
+  },
+  {
     id: 'README',
     title: 'User guide index',
     summary: 'The documentation site home, grouped by job: build, bring in, ship, govern and reference.',
