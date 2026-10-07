@@ -48,6 +48,7 @@ from apiome_mcp.agent_access import (
 )
 from apiome_mcp.agent_invocation_proxy import InvocationConfig, InvocationProxy
 from apiome_mcp.agent_quotas import AgentQuotaGuard, AgentQuotaMiddleware
+from apiome_mcp.agent_safety_rails import build_upstream_client, described_with_idempotency, tool_annotations
 from apiome_mcp.agent_toolset_source import (
     ServedTool,
     ServedToolset,
@@ -80,11 +81,11 @@ AGENT_MCP_MOUNT = "/agent"
 
 
 def _http_client(settings: Settings) -> httpx.AsyncClient:
-    """The upstream client: no redirects (a redirect could carry a credential elsewhere), pooled."""
-    return httpx.AsyncClient(
-        follow_redirects=False,
-        timeout=httpx.Timeout(settings.agent_upstream_timeout_seconds),
-        limits=httpx.Limits(max_connections=200, max_keepalive_connections=50),
+    """The upstream client: SSRF-guarded except for the mock root, no redirects, pooled (AGX-2.3)."""
+    return build_upstream_client(
+        mock_base_url=InvocationConfig.from_settings(settings).mock_base_url,
+        timeout_seconds=settings.agent_upstream_timeout_seconds,
+        allow_private=settings.agent_upstream_allow_private,
     )
 
 
@@ -131,10 +132,18 @@ class AgentTool(Tool):
         """The MCP tool for ``served``: its compiled name, description and ``inputSchema``.
 
         No ``outputSchema`` is declared (AGX-1.1): a declared one would oblige every result,
-        including errors, to conform.
+        including errors, to conform. The MCP annotations and, for a write tool, the idempotency
+        note come from the AGX-1.2 ``write_op`` flag (AGX-2.3).
         """
         definition = served.definition
-        tool = cls(name=definition.name, description=definition.description, parameters=definition.input_schema)
+        write_op = definition.operation in toolset.manifest.write_ops
+        method = served.binding.method if served.binding is not None else None
+        tool = cls(
+            name=definition.name,
+            description=described_with_idempotency(definition.description, write_op=write_op, method=method),
+            parameters=definition.input_schema,
+            annotations=tool_annotations(write_op=write_op, method=method),
+        )
         tool._toolset = toolset
         tool._served = served
         tool._proxy = proxy

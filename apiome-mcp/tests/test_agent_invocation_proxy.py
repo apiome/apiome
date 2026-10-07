@@ -9,6 +9,7 @@ results, and exactly one audit row per call with the right outcome.
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any
 
 import httpx
@@ -313,3 +314,124 @@ def test_an_audit_failure_does_not_fail_the_call() -> None:
             )
 
     assert asyncio.run(run()).structured_content["httpStatus"] == 200
+
+
+# ============================================================================
+# AGX-2.3 safety rails
+# ============================================================================
+
+
+def _proxy_with(config: InvocationConfig, *, db: AgentDb, client: httpx.AsyncClient, tool: str, arguments: Any) -> Any:
+    pool = db.pool()
+    proxy = InvocationProxy(config, credentials=_Vault())
+
+    async def run() -> Any:
+        served = await load_served_toolset(pool, ServedToolsetCache(), TENANT_ID, TOOLSET_ID)  # type: ignore[arg-type]
+        assert served is not None
+        async with client:
+            return await proxy.invoke(
+                pool=pool,  # type: ignore[arg-type]
+                client=client,
+                key=KEY,
+                toolset=served,
+                tool=served.tools[tool],
+                arguments=arguments,
+            )
+
+    return asyncio.run(run()), pool
+
+
+@pytest.mark.parametrize(
+    ("tool", "arguments", "method"),
+    [
+        ("listPets", {}, "GET"),
+        ("showPetById", {"petId": "1"}, "GET"),
+        ("createPet", {"name": "Tom"}, "POST"),
+        ("deletePet", {"petId": "1"}, "DELETE"),
+    ],
+)
+def test_each_tool_sends_only_its_declared_method(tool: str, arguments: dict[str, Any], method: str) -> None:
+    _, upstream, _ = _call(tool, arguments)
+    assert [request.method for request in upstream.requests] == [method]
+
+
+def test_a_get_tool_refuses_a_method_override_header() -> None:
+    from agent_runtime_fakes import PETSTORE, source_item
+
+    document = json.loads(json.dumps(PETSTORE))
+    document["paths"]["/pets"]["get"]["parameters"].append(
+        {"name": "X-HTTP-Method-Override", "in": "header", "schema": {"type": "string"}}
+    )
+    db = AgentDb(source=source_item(document))
+    result, upstream, pool = _call("listPets", {"X-HTTP-Method-Override": "DELETE"}, db=db)
+    assert upstream.requests == []
+    payload = _mcp(result).structuredContent
+    assert payload["reason"] == "method_not_allowed"
+    assert "only send GET" in payload["error"]["message"] and payload["hint"]
+    assert (invocation_rows(pool)[0]["outcome"], invocation_rows(pool)[0]["error_code"]) == (
+        "validation_failure",
+        "method_not_allowed",
+    )
+
+
+def test_a_matching_method_override_header_is_allowed() -> None:
+    from agent_runtime_fakes import PETSTORE, source_item
+
+    document = json.loads(json.dumps(PETSTORE))
+    document["paths"]["/pets"]["get"]["parameters"].append(
+        {"name": "X-HTTP-Method-Override", "in": "header", "schema": {"type": "string"}}
+    )
+    result, upstream, _ = _call("listPets", {"X-HTTP-Method-Override": "get"}, db=AgentDb(source=source_item(document)))
+    assert [request.method for request in upstream.requests] == ["GET"]
+    assert result.structured_content["httpStatus"] == 200
+
+
+def test_an_oversized_request_body_is_refused_before_sending() -> None:
+    upstream = PetstoreUpstream()
+    config = InvocationConfig(policy=CONFIG.policy, mock_base_url=MOCK_ROOT, max_request_bytes=64)
+    result, pool = _proxy_with(
+        config, db=AgentDb(), client=upstream.client(), tool="createPet", arguments={"name": "x" * 200}
+    )
+    assert upstream.requests == []
+    payload = _mcp(result).structuredContent
+    assert payload["reason"] == "request_too_large"
+    assert "64-byte limit" in payload["error"]["message"] and payload["hint"]
+    assert invocation_rows(pool)[0]["error_code"] == "request_too_large"
+
+
+def test_a_body_at_the_cap_is_sent() -> None:
+    upstream = PetstoreUpstream()
+    body = b'{"name":"Tom"}'
+    config = InvocationConfig(policy=CONFIG.policy, mock_base_url=MOCK_ROOT, max_request_bytes=len(body))
+    result, _ = _proxy_with(config, db=AgentDb(), client=upstream.client(), tool="createPet", arguments={"name": "Tom"})
+    assert upstream.requests[0].read() == body
+    assert result.structured_content["httpStatus"] == 201
+
+
+@pytest.mark.parametrize("address", ["169.254.169.254", "10.0.0.7", "127.0.0.1", "::ffff:192.168.1.1"])
+def test_a_prod_server_resolving_to_a_private_address_is_blocked(address: str) -> None:
+    from apiome_mcp.agent_safety_rails import GuardedNetworkBackend, build_upstream_client
+
+    resolved: list[str] = []
+
+    async def resolve(host: str, port: int, timeout: float | None) -> list[str]:
+        resolved.append(host)
+        return [address]
+
+    client = build_upstream_client(
+        mock_base_url=MOCK_ROOT, timeout_seconds=1.0, backend=GuardedNetworkBackend(resolver=resolve)
+    )
+    result, pool = _proxy_with(
+        CONFIG, db=AgentDb(manifest=manifest_row(target="prod")), client=client, tool="listPets", arguments={}
+    )
+    payload = _mcp(result).structuredContent
+    assert payload["reason"] == "upstream_blocked"
+    assert "api.petstore.example" in payload["error"]["message"]
+    assert address not in str(payload)
+    assert payload["retryable"] is False
+    # Refused once, not retried.
+    assert resolved == ["api.petstore.example"]
+    assert (invocation_rows(pool)[0]["outcome"], invocation_rows(pool)[0]["error_code"]) == (
+        "internal_error",
+        "upstream_blocked",
+    )

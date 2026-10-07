@@ -84,6 +84,9 @@ class ToolsetManifest:
         exposed: Enabled operation keys, sorted.
         overrides: Accepted descriptions served to agents (``{target_key: text}``).
         body_capture: The toolset's AGX-3.3 body-capture opt-in.
+        write_ops: Enabled operation keys whose AGX-1.2 ``write_op`` flag is set (the served
+            tools' MCP annotations, AGX-2.3). Not part of :meth:`fingerprint`: annotations are
+            applied when tools are served, not compiled.
     """
 
     toolset_id: str
@@ -96,6 +99,7 @@ class ToolsetManifest:
     exposed: tuple[str, ...] = ()
     overrides: Mapping[str, str] = field(default_factory=dict)
     body_capture: BodyCapturePolicy = field(default_factory=BodyCapturePolicy)
+    write_ops: frozenset[str] = frozenset()
 
     def fingerprint(self) -> str:
         """A digest of everything the compiled tools depend on (not target or capture)."""
@@ -163,6 +167,12 @@ _MANIFEST = """
                 WHERE tt.toolset_id = ts.id AND tt.enabled),
                ARRAY[]::text[]
            ) AS exposed,
+           COALESCE(
+               (SELECT array_agg(tt.operation_key ORDER BY tt.operation_key)
+                FROM apiome.agent_toolset_tools tt
+                WHERE tt.toolset_id = ts.id AND tt.enabled AND tt.write_op),
+               ARRAY[]::text[]
+           ) AS write_ops,
            CASE WHEN ts.description_enrichment THEN COALESCE(
                (SELECT jsonb_agg(jsonb_build_object(
                            'target_key', te.target_key,
@@ -241,6 +251,7 @@ async def load_toolset_manifest(pool: AsyncConnectionPool, tenant_id: str, tools
         exposed=exposed,
         overrides=served_description_overrides(_accepted_rows(row.get("accepted")), exposed),
         body_capture=_capture_policy(row.get("body_capture_rate"), row.get("body_capture_until")),
+        write_ops=frozenset(str(key) for key in row.get("write_ops") or []),
     )
 
 

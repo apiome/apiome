@@ -1,6 +1,6 @@
-# Agent invocation proxy (AGX-2.1)
+# Agent invocation proxy (AGX-2.1, rails AGX-2.3)
 
-**Ticket:** AGX-2.1 ([#4533](https://github.com/apiome/apiome/issues/4533)).
+**Tickets:** AGX-2.1 ([#4533](https://github.com/apiome/apiome/issues/4533)), safety rails AGX-2.3 ([#4535](https://github.com/apiome/apiome/issues/4535), [`agent_safety_rails`](../src/apiome_mcp/agent_safety_rails.py)).
 Endpoint: **`/agent/mcp`** on the streamable-HTTP server (`apiome-mcp serve --transport http`).
 Code: [`agent_server`](../src/apiome_mcp/agent_server.py) (the app),
 [`agent_toolset_source`](../src/apiome_mcp/agent_toolset_source.py) (what is served),
@@ -94,9 +94,51 @@ call the same pure functions, so tool names match the stored `tool_name`s an all
 
 Header arguments that name `Host`, `Content-Length`, `Transfer-Encoding`, `Cookie`,
 `Authorization` or any other header the HTTP client or the vault owns are dropped. Every value is
-percent-encoded, so an argument cannot add a path segment or query pair. The SSRF / method / size
-rails are AGX-2.3 ([#4535](https://github.com/apiome/apiome/issues/4535)); `InvocationProxy` takes
-its `send` function as a parameter so those rails can wrap it.
+percent-encoded, so an argument cannot add a path segment or query pair.
+
+### Safety rails (AGX-2.3)
+
+[#4535](https://github.com/apiome/apiome/issues/4535), `apiome_mcp.agent_safety_rails`. Each rail
+refuses **before anything is sent**, with its own hint-carrying result.
+
+- **SSRF guard: resolve, check, then connect to the checked address.** Every `prod` connection
+  opens through `GuardedNetworkBackend`, installed in the upstream client's connection pool. It
+  resolves the host, refuses when **any** resolved address is private (RFC 1918), loopback,
+  link-local (`169.254.0.0/16`, which covers the `169.254.169.254` metadata endpoint), CGNAT
+  (`100.64.0.0/10`, Alibaba's `100.100.100.200`), unique-local (`fd00:ec2::254`), multicast,
+  reserved or unspecified (IPv4-mapped and NAT64 IPv6 forms are judged by the IPv4 inside),
+  then connects to an address it checked, never to the name. DNS rebinding (a public answer at
+  check time, a private one at connect time) therefore cannot reach the socket. TLS still verifies
+  the certificate against the host name. The address rule is apiome-rest's
+  `app.ssrf_guard.is_disallowed_address`, the same rule as the SIM-3.2 Try It relay. A blocked
+  call is not retried → `upstream_blocked`. An unresolvable host is `upstream_unreachable`.
+  Resolution counts against the call's time budget.
+- **Mock exemption.** The configured mock root (`APIOME_MCP_MOCK_INVOCATION_BASE_URL`, or the
+  public root) is deployment infrastructure and is exempt, for requests to exactly its origin
+  (scheme, host and port), as in SIM-3.2.
+- **No redirects, no environment proxies.** A `3xx` is returned as is. `HTTP(S)_PROXY` is ignored,
+  because a proxy would resolve the host outside the guard.
+- **Declared method only.** The request must use the method the tool was compiled from, and no
+  `X-HTTP-Method-Override` / `X-HTTP-Method` / `X-Method-Override` argument may name another one,
+  so a tool compiled from a `GET` never sends anything else → `method_not_allowed`.
+- **Request body cap.** `APIOME_MCP_AGENT_REQUEST_MAX_BYTES` (1 MiB) → `request_too_large`.
+  Responses are cut at `APIOME_MCP_AGENT_RESPONSE_MAX_BYTES` and marked `[truncated: …]`
+  (see Results).
+- **Local development.** `APIOME_MCP_AGENT_UPSTREAM_ALLOW_PRIVATE=true` turns the address rule
+  off so a `prod` toolset can call a private API. Never set it in a shared deployment.
+
+### MCP annotations
+
+Every served tool carries `annotations`, from the AGX-1.2 `write_op` flag stored for its operation:
+
+| `write_op` | `readOnlyHint` | `destructiveHint` | `idempotentHint` | Description note |
+|---|---|---|---|---|
+| false | true | false | true | none |
+| true, `PUT` / `DELETE` | false | true | true | *Changes data (PUT). Idempotent: … retrying after a failure is safe.* |
+| true, `POST` / `PATCH` / other | false | true | false | *Changes data (POST). Not idempotent: … check the current state before retrying.* |
+
+`openWorldHint` is always true. MCP clients can use these to ask for confirmation before
+destructive tools.
 
 ### Timeout and retry budget
 
@@ -149,6 +191,9 @@ body?}` (`body` when the whole response was JSON).
 | `upstream_unreachable` | could not connect | yes | `upstream_error` |
 | `upstream_not_configured` | `prod` and no absolute server URL | no | `internal_error` |
 | `upstream_credential_unavailable` | bound credential cannot be opened | no | `internal_error` |
+| `upstream_blocked` | the `prod` host resolves to a non-public address (SSRF guard) | no | `internal_error` |
+| `method_not_allowed` | the request would use a method the tool does not declare | no | `validation_failure` |
+| `request_too_large` | the request body is over `APIOME_MCP_AGENT_REQUEST_MAX_BYTES` | no | `validation_failure` |
 | `tool_not_invocable` | the operation has no HTTP method/path | no | `internal_error` |
 | `invocation_failed` | an unexpected error inside Apiome | — | `internal_error` |
 
@@ -187,5 +232,6 @@ Each call logs `agent_invocation` with `latency_ms`, `upstream_ms` and `overhead
 | `test_agent_upstream_auth.py` | vault open with apiome-rest's cipher, ledger rows, fail-closed |
 | `test_agent_toolset_source.py` | parity with the REST compiled view, enrichments, cache, fail-closed |
 | `test_agent_invocation_proxy.py` | the call path: mock/prod routing, injection, validation never sent, audit rows |
-| `test_agent_runtime_http.py` | acceptance over streamable HTTP: list + create pets, 400/404/500/timeout, P95 |
-| `test_agent_server.py` | middleware order, SDK cache off, settings |
+| `test_agent_runtime_http.py` | acceptance over streamable HTTP: list + create pets, 400/404/500/timeout, P95, tool annotations |
+| `test_agent_server.py` | middleware order, SDK cache off, settings, the guarded lifespan client |
+| `test_agent_safety_rails.py` | AGX-2.3: resolve-check-connect, rebinding, real loopback refusal, exact mock-origin exemption, no retry on a block, method/size rails, annotations |

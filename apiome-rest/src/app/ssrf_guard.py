@@ -50,14 +50,24 @@ class SSRFError(ValueError):
     """
 
 
+#: The well-known NAT64 prefix (RFC 6052). A NAT64 gateway turns ``64:ff9b::a.b.c.d`` into a
+#: connection to ``a.b.c.d``, so such an address is judged by the IPv4 address it embeds.
+_NAT64_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
+
+
 def _ip_is_disallowed(ip: ipaddress._BaseAddress) -> bool:
     """Return True when ``ip`` is anything other than a public, global address.
 
-    IPv4-mapped IPv6 addresses (``::ffff:10.0.0.1``) are unwrapped so an internal
-    IPv4 target cannot be smuggled through an IPv6 literal.
+    IPv4-mapped IPv6 addresses (``::ffff:10.0.0.1``) and NAT64 addresses
+    (``64:ff9b::10.0.0.1``) are unwrapped so an internal IPv4 target cannot be
+    smuggled through an IPv6 literal — the same rule as the SIM-3.2 Try It relay
+    (``apiome-ui/lib/tryit/relay.ts``). 6to4 (``2002::/16``) is refused outright by
+    the flags below.
     """
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
         ip = ip.ipv4_mapped
+    elif isinstance(ip, ipaddress.IPv6Address) and ip in _NAT64_PREFIX:
+        ip = ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
     # ``is_global`` is False for private, loopback, link-local, shared (CGNAT),
     # and unspecified ranges; the extra flags make the intent explicit and guard
     # against any edge the single property misses.
@@ -70,6 +80,27 @@ def _ip_is_disallowed(ip: ipaddress._BaseAddress) -> bool:
         or ip.is_reserved
         or ip.is_unspecified
     )
+
+
+def is_disallowed_address(address: str) -> bool:
+    """Whether a textual IP address is off-limits under the SSRF policy.
+
+    The public face of the address rule, for callers that resolve hosts themselves and
+    connect to the checked address (AGX-2.3's agent upstream guard in ``apiome-mcp``).
+    Unparseable input is disallowed (fail closed). This is the *address* rule only: it
+    ignores ``APIOME_SSRF_ALLOW_PRIVATE``, which the caller applies with its own setting.
+
+    Args:
+        address: An IPv4 or IPv6 address (an IPv6 zone index ``%eth0`` is ignored).
+
+    Returns:
+        ``True`` when a connection to ``address`` must be refused.
+    """
+    try:
+        ip = ipaddress.ip_address(address.split("%", 1)[0])
+    except ValueError:
+        return True
+    return _ip_is_disallowed(ip)
 
 
 def _resolve_host_ips(host: str) -> List[str]:

@@ -74,3 +74,35 @@ def test_a_bad_mock_invocation_root_fails_fast(env: None, monkeypatch: pytest.Mo
     monkeypatch.setenv("APIOME_MCP_MOCK_INVOCATION_BASE_URL", "file:///etc")
     with pytest.raises(ValueError):
         Settings()  # type: ignore[call-arg]
+
+
+def test_invocation_config_reads_the_request_cap(env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APIOME_MCP_AGENT_REQUEST_MAX_BYTES", "4096")
+    assert InvocationConfig.from_settings(Settings()).max_request_bytes == 4096  # type: ignore[call-arg]
+    monkeypatch.setenv("APIOME_MCP_AGENT_REQUEST_MAX_BYTES", "10")
+    with pytest.raises(ValueError):
+        Settings()  # type: ignore[call-arg]
+
+
+def test_the_rails_default_to_fail_closed(env: None) -> None:
+    settings = Settings()  # type: ignore[call-arg]
+    assert settings.agent_upstream_allow_private is False
+    assert settings.agent_request_max_bytes == 1_048_576
+
+
+def test_the_lifespan_client_is_guarded_with_the_mock_root_exempt(env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    from apiome_mcp.agent_safety_rails import UpstreamBlockedError
+    from apiome_mcp.agent_server import _http_client
+
+    monkeypatch.setenv("APIOME_MCP_MOCK_INVOCATION_BASE_URL", "http://mock.internal:8775")
+    client = _http_client(Settings())  # type: ignore[call-arg]
+    transport = client._transport
+    assert transport._origin == ("http", "mock.internal", 8775)  # type: ignore[attr-defined]
+    assert client.follow_redirects is False and client.trust_env is False
+
+    async def run() -> None:
+        async with client:
+            await client.get("http://127.0.0.1:9/")
+
+    with pytest.raises(UpstreamBlockedError):
+        asyncio.run(run())

@@ -27,9 +27,11 @@ Every call is audited as exactly one AGX-3.3 ``agent_invocations`` row
 into the MCP layer: an unexpected error becomes an ``invocation_failed`` result, recorded as
 ``internal_error``.
 
-**Hooks for later tickets.** The SSRF / method / size rails (AGX-2.3, #4535) belong between
-routing and sending: :class:`InvocationProxy` takes the ``send`` function, so a guard can wrap it.
-Quotas (AGX-3.2) already run before the tool, in ``AgentQuotaMiddleware``.
+**Safety rails (AGX-2.3, #4535).** Between injecting and sending, the request must use the tool's
+declared method and fit the request-body cap (:mod:`apiome_mcp.agent_safety_rails`); the upstream
+client's SSRF guard then refuses a ``prod`` host that resolves to a non-public address. Each refusal is
+its own result (``method_not_allowed``, ``request_too_large``, ``upstream_blocked``) and nothing is
+sent. Quotas (AGX-3.2) run before the tool, in ``AgentQuotaMiddleware``.
 """
 
 from __future__ import annotations
@@ -59,9 +61,19 @@ from apiome_mcp.agent_result_mapping import (
     failure_for_response,
     fixed_failure,
     invalid_arguments,
+    method_not_allowed,
+    request_too_large,
     success_result,
     timeout_failure,
     unreachable_failure,
+    upstream_blocked,
+)
+from apiome_mcp.agent_safety_rails import (
+    MethodNotAllowedError,
+    RequestTooLargeError,
+    UpstreamBlockedError,
+    enforce_declared_method,
+    enforce_request_size,
 )
 from apiome_mcp.agent_toolset_source import ServedTool, ServedToolset
 from apiome_mcp.agent_upstream_auth import UpstreamCredentialUnavailableError, resolve_upstream_injection
@@ -103,11 +115,13 @@ class InvocationConfig:
         policy: The upstream timeout / retry / size limits.
         mock_base_url: Root of the SIM mock the proxy sends ``mock`` traffic to.
         user_agent: The ``User-Agent`` sent upstream.
+        max_request_bytes: Most request-body bytes one call may send (AGX-2.3).
     """
 
     policy: UpstreamCallPolicy
     mock_base_url: str
     user_agent: str = f"apiome-mcp-agent/{__version__}"
+    max_request_bytes: int = 1_048_576
 
     @classmethod
     def from_settings(cls, settings: Settings) -> InvocationConfig:
@@ -122,6 +136,7 @@ class InvocationConfig:
                 max_response_bytes=settings.agent_response_max_bytes,
             ),
             mock_base_url=settings.mock_invocation_base_url or settings.mock_public_base_url,
+            max_request_bytes=settings.agent_request_max_bytes,
         )
 
 
@@ -201,7 +216,7 @@ class InvocationProxy:
         Args:
             config: Limits and the mock root.
             credentials: Opens the vault (default: :func:`resolve_upstream_injection`).
-            send: Sends the request (default: :func:`send_upstream`); AGX-2.3 rails can wrap it.
+            send: Sends the request (default: :func:`send_upstream`).
             monotonic: Clock for the overhead log line (tests).
         """
         self._config = config
@@ -299,6 +314,15 @@ class InvocationProxy:
         except InvalidArgumentsError as exc:
             return _failed(invalid_arguments(exc.issues)), 0
 
+        try:
+            enforce_declared_method(binding.method, request.method, request.headers)
+            enforce_request_size(request.content, self._config.max_request_bytes)
+        except MethodNotAllowedError as exc:
+            _log.warning("agent_invocation_method_refused", tool=tool.name, declared=exc.declared, sent=exc.attempted)
+            return _failed(method_not_allowed(exc.declared, exc.attempted)), 0
+        except RequestTooLargeError as exc:
+            return _failed(request_too_large(exc.size, exc.limit)), 0
+
         manifest = toolset.manifest
         try:
             is_mock = parse_target(manifest.target) is InvocationTarget.MOCK
@@ -340,6 +364,8 @@ class InvocationProxy:
             response = await self._send(
                 client, request.method, url, headers=headers, content=request.content, policy=policy
             )
+        except UpstreamBlockedError as exc:
+            return _failed(upstream_blocked(exc.host)), 0
         except UpstreamTimeoutError as exc:
             return _failed(timeout_failure(binding, policy.budget_seconds, exc.attempts)), exc.elapsed_ms
         except UpstreamUnreachableError as exc:

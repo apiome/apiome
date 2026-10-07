@@ -16,7 +16,16 @@ from app.agent_tool_enrichment import apply_description_overrides
 from app.catalog_conversion import build_conversion_source
 from app.mcp_tool_mapping import compile_mcp_tools
 
-from agent_runtime_fakes import ALL_OPERATIONS, ALL_TOOLS, TENANT_ID, TOOLSET_ID, AgentDb, manifest_row, source_item
+from agent_runtime_fakes import (
+    ALL_OPERATIONS,
+    ALL_TOOLS,
+    TENANT_ID,
+    TOOLSET_ID,
+    WRITE_OPERATIONS,
+    AgentDb,
+    manifest_row,
+    source_item,
+)
 from apiome_mcp.agent_toolset_source import (
     ServedToolsetCache,
     ToolsetSourceUnavailableError,
@@ -48,6 +57,27 @@ def test_the_manifest_carries_target_slugs_exposure_and_capture() -> None:
     )
     assert manifest.exposed == ALL_OPERATIONS
     assert manifest.body_capture.rate == 0.5
+
+
+def test_the_manifest_carries_the_write_op_flags() -> None:
+    db = AgentDb()
+    manifest = asyncio.run(load_toolset_manifest(db.pool(), TENANT_ID, TOOLSET_ID))  # type: ignore[arg-type]
+    assert manifest is not None
+    assert manifest.write_ops == frozenset(WRITE_OPERATIONS)
+
+
+def test_the_write_op_flags_do_not_change_the_compile_key() -> None:
+    db = AgentDb(manifest=manifest_row(write_ops=[]))
+    bare = asyncio.run(load_toolset_manifest(db.pool(), TENANT_ID, TOOLSET_ID))  # type: ignore[arg-type]
+    flagged = asyncio.run(load_toolset_manifest(AgentDb().pool(), TENANT_ID, TOOLSET_ID))  # type: ignore[arg-type]
+    assert bare is not None and flagged is not None
+    assert bare.write_ops == frozenset() and bare.fingerprint() == flagged.fingerprint()
+
+
+def test_the_manifest_sql_reads_only_enabled_write_ops() -> None:
+    from apiome_mcp.agent_toolset_source import _MANIFEST
+
+    assert "tt.enabled AND tt.write_op" in _MANIFEST and "AS write_ops" in _MANIFEST
 
 
 @pytest.mark.parametrize("manifest", [None, manifest_row(available=False)])
