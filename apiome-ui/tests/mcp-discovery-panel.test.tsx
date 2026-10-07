@@ -169,7 +169,7 @@ describe('discovery done', () => {
     ];
     renderPanel();
 
-    expect(await screen.findByText('No capabilities found')).toBeInTheDocument();
+    expect(await screen.findByText('Server exposes no capabilities')).toBeInTheDocument();
   });
 
   test('an unavailable lint report omits the grade card rather than failing the step', async () => {

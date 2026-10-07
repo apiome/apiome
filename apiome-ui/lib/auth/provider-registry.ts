@@ -381,7 +381,7 @@ export const PROVIDER_VALIDATION_ENV_KEY = 'AUTH_PROVIDER_VALIDATION';
 const SETUP_DOC = 'apiome-ui/docs/AUTH_PROVIDER_SETUP.md';
 
 /** The admin screen that writes the DB provider config, named in DB-aware validation messages. */
-const ADMIN_CONFIG_SCREEN = 'Admin → System Configuration (/admin/dashboard/settings)';
+const ADMIN_CONFIG_SCREEN = 'Admin → System settings (/admin/dashboard/settings)';
 
 /**
  * Where the config being validated came from (OLO-8.8, #4974).

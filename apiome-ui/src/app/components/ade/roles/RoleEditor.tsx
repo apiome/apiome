@@ -145,7 +145,7 @@ export default function RoleEditor({
         data-testid="roles-empty"
         icon={<Shield aria-hidden />}
         title="No roles defined yet."
-        description="Built-in roles are seeded when the first member joins. Create a custom role to hand out narrower access."
+        description="Built-in roles arrive with the first member. Create a custom role for narrower access."
         action={action}
       />
     ) : (
@@ -153,7 +153,7 @@ export default function RoleEditor({
         data-testid="roles-none-selected"
         icon={<MousePointerClick aria-hidden />}
         title="Select a role to edit its permissions."
-        description="Pick a role on the left, or create a new one to start from an empty matrix."
+        description="Pick a role on the left, or create one from an empty matrix."
         action={action}
       />
     );

@@ -281,10 +281,10 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
    */
   const handleSavePatToken = useCallback(
     async (token: string): Promise<string | null> => {
-      if (!patTarget) return 'No linked account found. Please link your account first.';
+      if (!patTarget) return 'This account is not linked yet — link it, then add the token.';
       // Unreachable from the UI — the PAT row only exists on a linked card — but the id is what
       // the write is scoped by, so it is checked rather than assumed.
-      if (!patTarget.accountId) return 'No linked account found. Please link your account first.';
+      if (!patTarget.accountId) return 'This account is not linked yet — link it, then add the token.';
 
       setIsBusy(true);
       try {

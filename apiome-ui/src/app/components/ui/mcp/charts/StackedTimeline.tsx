@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import {
   chartCategoricalTone,
   chartSeriesStyle,
@@ -84,7 +84,7 @@ export function StackedTimeline({
   const summary =
     periods
       .map((p) => `${p.label}: ${columnTotal(p)}`)
-      .join(', ') || 'No data';
+      .join(', ') || CHART_EMPTY_LABEL;
   const label = title ?? `Stacked timeline — ${summary}`;
   const hitLabel = (p: StackPeriod, i: number) =>
     periodActionLabel ? periodActionLabel(p, i) : p.label;

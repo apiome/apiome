@@ -15,6 +15,7 @@ import {
   BookmarkPlus,
   Trash2,
   History,
+  FolderGit2,
 } from 'lucide-react';
 import { SiGithub, SiGitlab, SiGoogle, SiAmazon } from 'react-icons/si';
 import { getLinkedAccountsForUser } from '../../../../../lib/db/helper';
@@ -36,6 +37,9 @@ import {
   type GitImportRecentSpec,
 } from '../../../utils/git-import-recent-specs';
 import { Button } from '../../../components/ui/Button';
+import { EmptyState, GatedState } from '../../ui/EmptyState';
+import { LoadingState } from '../../ui/LoadingState';
+import { SkeletonText } from '../../ui/Skeleton';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 import { SpecMetaTiles } from '../import/SpecMetaTiles';
 
@@ -674,28 +678,13 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
 
   if (linkedAccounts.length === 0) {
     return (
-      <div className="p-6 rounded-lg bg-warn-soft">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
-          <div>
-            <div className="font-medium text-warn">
-              No Linked Accounts Found
-            </div>
-            <div className="text-sm text-warn mt-1">
-              Please link a GitHub or GitLab account from the{' '}
-              <a
-                href="/ade/dashboard/linked-accounts"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-warn-fg"
-              >
-                Linked Accounts
-              </a>{' '}
-              page to import from Git repositories.
-            </div>
-          </div>
-        </div>
-      </div>
+      <GatedState
+        variant="compact"
+        title="Link a Git account first"
+        description="Git imports read from a linked GitHub or GitLab account."
+        href="/ade/dashboard/linked-accounts"
+        actionLabel="Go to Linked accounts"
+      />
     );
   }
 
@@ -1079,11 +1068,14 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                 <Loader2 className="h-6 w-6 animate-spin text-accent" />
               </div>
             ) : repositories.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-4">
-                <span className="text-sm text-fg-muted text-center">
-                  No repositories found
-                </span>
-              </div>
+              <EmptyState
+                variant="compact"
+                surface={false}
+                icon={<FolderGit2 />}
+                titleAs="p"
+                title="No repositories on this account"
+                description="Create one on the provider, or link another account."
+              />
             ) : filteredRepos.length === 0 ? (
               <div className="flex items-center justify-center h-full p-4">
                 <span className="text-sm text-fg-muted text-center">
@@ -1159,16 +1151,16 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                 </span>
               </div>
             ) : isLoading ? (
-              <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                <span className="text-sm text-fg-muted">Loading...</span>
-              </div>
+              <LoadingState message="Loading files…" skeleton={<SkeletonText lines={6} className="p-4" />} />
             ) : repoFiles.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-4">
-                <span className="text-sm text-fg-muted text-center">
-                  No files found
-                </span>
-              </div>
+              <EmptyState
+                variant="compact"
+                surface={false}
+                icon={<FolderOpen />}
+                titleAs="p"
+                title="This folder is empty"
+                description="Pick another folder or branch."
+              />
             ) : (
               <>
                 {/* Parent directory (..) entry when in a subdirectory */}

@@ -67,7 +67,7 @@ import {
   Server,
   Wrench,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../../components/ui/toast';
 
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
@@ -798,7 +798,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 <EmptyState
                   icon={<Radar aria-hidden />}
                   title="Not yet discovered"
-                  description="This endpoint has no current version snapshot. Run discovery to populate its tools, resources, and prompts."
+                  description="No snapshot yet. Run discovery to list its tools, resources and prompts."
                   action={
                     <Button type="button" onClick={() => void rediscover()} disabled={busy !== null}>
                       <Radar aria-hidden />

@@ -704,7 +704,7 @@ describe('the Session card', () => {
 
     fireEvent.click(screen.getByTestId('profile-sign-out-everywhere'));
     expect(
-      await screen.findByText('Other sessions could not be revoked. This browser was signed out.')
+      await screen.findByText('Other sessions could not be revoked, but this browser was signed out. Sign in again to retry.')
     ).toBeInTheDocument();
   });
 

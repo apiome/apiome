@@ -5,7 +5,7 @@ import { Markdown, MARKDOWN_EMPTY_EM_DASH } from '@/app/components/ui/Markdown';
 import { githubMarkdownComponents } from '@/app/components/ui/markdownGithubComponents';
 import Mustache from 'mustache';
 import { FileText, LayoutTemplate, Loader2, RefreshCw, Settings2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 import { Button } from '@/app/components/ui/Button';
 import { Label } from '@/app/components/ui/Label';
 import { Textarea } from '@/app/components/ui/Textarea';

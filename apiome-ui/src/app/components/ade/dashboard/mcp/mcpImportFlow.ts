@@ -236,7 +236,7 @@ function pluralize(count: number, noun: string): string {
  * joined with a middot, e.g. "3 tools · 2 resources · 1 prompt". Returns:
  *   - `null` when the job carried no counts (older runs / nothing to summarize), so callers
  *      can omit the summary line entirely.
- *   - "No capabilities found" when the server was reached but exposed nothing.
+ *   - "Server exposes no capabilities" when the server was reached but exposed nothing.
  * The labels mirror the catalog's capability kinds (tool / resource / template / prompt).
  */
 export function discoverySummary(job: McpDiscoveryJob | null | undefined): string | null {
@@ -249,7 +249,7 @@ export function discoverySummary(job: McpDiscoveryJob | null | undefined): strin
   if (counts.resource_template) parts.push(pluralize(counts.resource_template, 'resource template'));
   if (counts.prompt) parts.push(pluralize(counts.prompt, 'prompt'));
 
-  if (parts.length === 0) return 'No capabilities found';
+  if (parts.length === 0) return 'Server exposes no capabilities';
   return parts.join(' · ');
 }
 

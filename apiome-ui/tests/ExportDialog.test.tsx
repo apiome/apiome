@@ -493,7 +493,7 @@ describe('ExportDialog — target-card grid (MFX-6.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
 
     await waitFor(() =>
-      expect(screen.getByText('Target proto is unavailable.')).toBeInTheDocument(),
+      expect(screen.getByText('Target proto is unavailable — try again.')).toBeInTheDocument(),
     );
     // Back on the Fidelity step, the acknowledgement persists and the user can retry.
     expect(screen.getByRole('button', { name: /^export anyway$/i })).toBeEnabled();
@@ -878,7 +878,7 @@ describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => 
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /^export anyway$/i }));
 
-    await waitFor(() => expect(screen.getByText('Emit failed.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Emit failed — try again.')).toBeInTheDocument());
     expect(onExported).not.toHaveBeenCalled();
   });
 });

@@ -78,7 +78,7 @@ export default function DashboardOverview() {
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200/90">
               This is the foundation for your super admin portal. Use the sidebar to navigate between different management sections.
-              The User Management section is now fully implemented with signup approval and user management features.
+              The Users section is now fully implemented with signup approval and user management features.
             </p>
           </div>
         </div>

@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import { Loader2, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { Button } from '../../../ui/Button';
 import { Card } from '../../../ui/Card';
 import { Textarea } from '../../../ui/Textarea';

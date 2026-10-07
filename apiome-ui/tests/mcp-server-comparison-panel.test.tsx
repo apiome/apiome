@@ -90,7 +90,7 @@ describe('ServerComparisonPanel', () => {
   it('shows the error state with the message', () => {
     render(<ServerComparisonPanel servers={null} loading={false} error="boom" />);
     expect(screen.getByText(/comparison unavailable/i)).toBeInTheDocument();
-    expect(screen.getByText('boom')).toBeInTheDocument();
+    expect(screen.getByText('boom — try again.')).toBeInTheDocument();
   });
 
   it('prompts to pick more servers when fewer than two are selected', () => {

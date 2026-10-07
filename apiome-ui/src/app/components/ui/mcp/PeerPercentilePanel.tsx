@@ -96,7 +96,7 @@ export function PeerPercentilePanel({ profile, loading, error }: Props) {
         variant="compact"
         icon={<Trophy className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Not enough peers to rank yet"
-        description="This server has no measured axis to rank, or no peers in its category to rank against. Register and discover more servers in this category — then grade, documentation, safety, and latency rankings appear here."
+        description="Nothing to rank yet. Discover more servers in this category to compare them."
       />
     );
   }

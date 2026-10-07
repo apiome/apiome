@@ -74,7 +74,7 @@ describe('CatalogAnalyticsDashboard', () => {
   it('shows the error state with the message', () => {
     render(<CatalogAnalyticsDashboard data={null} loading={false} error="boom" />);
     expect(screen.getByText(/catalog analytics unavailable/i)).toBeInTheDocument();
-    expect(screen.getByText('boom')).toBeInTheDocument();
+    expect(screen.getByText('boom — try again.')).toBeInTheDocument();
   });
 
   it('shows the empty-catalog first-run state', () => {

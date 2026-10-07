@@ -214,7 +214,7 @@ export function ScoreBreakdownPanel({ report, loading, error, onNavigateToItem }
           variant="compact"
           icon={<CheckCircle2 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
           title="No findings"
-          description="This snapshot's surface passes every lint rule — a clean bill of health, nothing deducted the grade."
+          description="This snapshot passes every lint rule; nothing was deducted from its grade."
         />
       ) : (
         <>

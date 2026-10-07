@@ -393,7 +393,7 @@ describe('AlertDialog', () => {
     const onClose = jest.fn();
     const { rerender } = render(<AlertDialog open message="It broke" onClose={onClose} />);
 
-    await user.click(screen.getByRole('button', { name: 'OK' }));
+    await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledTimes(1);
 
     onClose.mockClear();
@@ -404,7 +404,7 @@ describe('AlertDialog', () => {
 
   it('puts focus on its one action', async () => {
     render(<AlertDialog open message="It broke" onClose={jest.fn()} />);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'OK' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
   });
 });
 
@@ -550,7 +550,7 @@ describe('useDialog', () => {
         );
         await user.click(await screen.findByRole('button', { name: 'Delete' }));
         expect(
-          await screen.findByText('Something went wrong. Please try again.')
+          await screen.findByText('Something went wrong — try again.')
         ).toBeInTheDocument();
       });
     });
@@ -622,7 +622,7 @@ describe('useDialog', () => {
   describe('alert', () => {
     it('resolves when it is dismissed', async () => {
       const user = await ask((d) => d.alert({ message: 'Saved', variant: 'success' }));
-      await user.click(await screen.findByRole('button', { name: 'OK' }));
+      await user.click(await screen.findByRole('button', { name: 'Close' }));
       await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('undefined'));
     });
   });

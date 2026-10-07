@@ -92,7 +92,7 @@ export function DiscoveryHealthPanel({ health, loading, error }: Props) {
         variant="compact"
         icon={<Activity className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No discovery history yet"
-        description="This endpoint has not been discovered yet, so there is no reliability timeline to show. Run discovery to start recording its health."
+        description="Not discovered yet. Run discovery to start recording its health."
       />
     );
   }

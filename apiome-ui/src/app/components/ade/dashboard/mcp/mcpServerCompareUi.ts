@@ -532,7 +532,7 @@ export const MCP_COMPARE_PICKER_EMPTY_TITLE = 'No discovered MCP servers to comp
 
 /** Its body copy. */
 export const MCP_COMPARE_PICKER_EMPTY_DESC =
-  'Register and discover servers in the catalog first — a server with no current version has no surface to align.';
+  'Discover servers in the catalog first; a server needs a version to compare.';
 
 /** Shown while the catalog behind the picker is in flight. */
 export const MCP_COMPARE_CATALOG_LOADING = 'Loading the MCP catalog…';

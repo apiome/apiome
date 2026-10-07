@@ -77,7 +77,7 @@ export function SessionCard({
       const revoked = await onSignOutEverywhere(SIGN_OUT_DESTINATION);
       // The navigation is the success case, so this only ever runs when the revoke failed and
       // the local sign-out has not taken the page away yet.
-      if (!revoked) setError('Other sessions could not be revoked. This browser was signed out.');
+      if (!revoked) setError('Other sessions could not be revoked, but this browser was signed out. Sign in again to retry.');
     } catch {
       setError('Could not sign out. Try again.');
     } finally {

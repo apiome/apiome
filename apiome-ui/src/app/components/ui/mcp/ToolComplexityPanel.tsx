@@ -304,7 +304,7 @@ export function ToolComplexityPanel({ tools, loading, error }: Props) {
           variant="compact"
           icon={<Layers3 className="h-8 w-8 text-fg-on-accent" aria-hidden />}
           title="No tools match this filter"
-          description="No tool on this snapshot matches the selected filter. Choose “All tools” to see them all."
+          description="No tool matches this filter. Choose “All tools” to see every tool."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

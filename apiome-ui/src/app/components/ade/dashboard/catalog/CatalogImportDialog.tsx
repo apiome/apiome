@@ -1168,7 +1168,7 @@ export function CatalogImportDialog({
                   tone="neutral"
                   icon={<SlidersHorizontal />}
                   title="No additional options"
-                  description="Nothing to configure for this data type. Continue to the quality pre-flight — nothing is written to the catalog until you confirm it there."
+                  description="Nothing to set for this data type. Continue to the quality pre-flight."
                   data-testid="catalog-import-no-options"
                 />
               )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { UNKNOWN_FAILURE, voiceFailure } from '../../../../lib/copy-voice';
 import ConfirmDialog, { type ConfirmDialogProps } from '../dialogs/ConfirmDialog';
 import AlertDialog, { type AlertDialogProps } from '../dialogs/AlertDialog';
 import PromptDialog, { type PromptDialogProps } from '../dialogs/PromptDialog';
@@ -94,18 +95,16 @@ interface DialogState<TOptions, TResult> {
   error: string | null;
 }
 
-/** The message to show when a `perform` throws something that is not an `Error`. */
-const UNKNOWN_FAILURE = 'Something went wrong. Please try again.';
-
 /**
  * Read a thrown value as a sentence for the dialog.
  *
  * @param cause Whatever `perform` threw.
- * @returns Its message, or a generic one for a non-`Error`.
+ * @returns Its message — a failure naming a next action (DESIGN.md §10), a rule as written —
+ *   or a generic one for a non-`Error`.
  */
 function failureMessage(cause: unknown): string {
-  if (cause instanceof Error && cause.message) return cause.message;
-  if (typeof cause === 'string' && cause) return cause;
+  if (cause instanceof Error && cause.message) return voiceFailure(cause.message);
+  if (typeof cause === 'string' && cause) return voiceFailure(cause);
   return UNKNOWN_FAILURE;
 }
 

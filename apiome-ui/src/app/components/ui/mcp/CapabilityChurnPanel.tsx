@@ -81,7 +81,7 @@ export function CapabilityChurnPanel({ series, loading, error, onSelectVersion }
         variant="compact"
         icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No history yet"
-        description="This endpoint has no recorded snapshots to chart. Run discovery to start building its evolution history."
+        description="No snapshots to chart yet. Run discovery to start its history."
       />
     );
   }

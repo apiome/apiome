@@ -225,7 +225,7 @@ describe('OLO-8.8 boot validation against DB-sourced config', () => {
     const { register } = await import('../src/instrumentation');
 
     await expect(register()).rejects.toThrow(/Refusing to start/);
-    await expect(register()).rejects.toThrow(/Admin → System Configuration/);
+    await expect(register()).rejects.toThrow(/Admin → System settings/);
   });
 
   test('an unreadable DB source downgrades strict to a warning instead of aborting', async () => {

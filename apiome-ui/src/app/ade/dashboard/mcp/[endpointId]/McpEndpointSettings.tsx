@@ -35,7 +35,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, Power, PowerOff, Save, Server, Trash2, TriangleAlert } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from '../../../../components/ui/toast';
 import { useDialog } from "@/app/components/providers/DialogProvider";
 import { Button } from "@/app/components/ui/Button";
 import { Card, CardBody } from "@/app/components/ui/Card";

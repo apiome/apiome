@@ -152,7 +152,7 @@ export default function MigrationHeader() {
               <Select.Content className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]" position="popper" sideOffset={5}>
                 <Select.Viewport className="p-1">
                   {projects.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No projects available</div>
+                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No projects yet — create one in Projects</div>
                   ) : (
                     projects.map((project) => (
                       <Select.Item
@@ -193,7 +193,7 @@ export default function MigrationHeader() {
               <Select.Content className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]" position="popper" sideOffset={5}>
                 <Select.Viewport className="p-1">
                   {versions.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No versions available</div>
+                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No versions yet — create one in Versions</div>
                   ) : (
                     versions.map((version) => (
                       <Select.Item
@@ -235,7 +235,7 @@ export default function MigrationHeader() {
               <Select.Content className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]" position="popper" sideOffset={5}>
                 <Select.Viewport className="p-1">
                   {versions.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No versions available</div>
+                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No versions yet — create one in Versions</div>
                   ) : (
                     versions.map((version) => (
                       <Select.Item

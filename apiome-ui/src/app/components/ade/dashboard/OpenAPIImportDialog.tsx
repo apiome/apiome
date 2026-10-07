@@ -624,7 +624,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                 {linkedAccounts.length === 0 ? (
                   <Alert severity="info">
                     <Typography variant="body2">
-                      No linked accounts found. Please link an account from the{' '}
+                      No linked accounts yet — link one on the{' '}
                       <a href="/ade/dashboard/linked-accounts" target="_blank" rel="noopener noreferrer">
                         Linked Accounts
                       </a>{' '}

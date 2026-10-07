@@ -175,7 +175,7 @@ import ImportDialog from '../../../components/ade/dashboard/ImportDialog';
 import { findNewlyImportedProject } from './imported-project';
 import { useConversionHistory } from '../../../components/ade/dashboard/catalog/useConversionHistory';
 import { DEFAULT_HISTORY_WINDOW } from './version-history-dag';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 import { localDatetimeLocalToUtcIso, utcIsoToDatetimeLocalValue } from '../../../utils/revision-deprecation';
 import { usePushConflictBanner } from '@/app/providers/PushConflictBannerProvider';
 import ServerAheadPushBanner from '@/app/components/ade/ServerAheadPushBanner';
@@ -3640,7 +3640,7 @@ const Versions = () => {
               <EmptyState
                 icon={<Package />}
                 title="No versions yet"
-                description="Get started by creating your first version — or import a spec into this project."
+                description="Create the first version, or import a spec into this project."
                 data-testid="versions-empty"
                 action={
                   <Button onClick={handleNewVersionClick} disabled={!selectedProjectId}>

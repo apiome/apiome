@@ -474,7 +474,7 @@ export default function LintQueueTable({
             surface={false}
             icon={<ShieldCheck aria-hidden />}
             title="No lint findings in this workspace."
-            description="Findings appear here once a scan records evidence against a revision or an MCP server."
+            description="Findings appear once a scan checks a revision or an MCP server."
           />
         )
       }

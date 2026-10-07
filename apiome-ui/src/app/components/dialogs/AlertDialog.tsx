@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/AlertDialog';
+import { voiceFailure } from '../../../../lib/copy-voice';
 import { cn } from '../../../../lib/utils';
 import { useReturnFocus } from './useReturnFocus';
 import {
@@ -57,11 +58,16 @@ const AlertDialog: React.FC<AlertDialogProps> = ({
   title,
   message,
   variant,
-  confirmLabel = 'OK',
+  // A verb, not "OK" — DESIGN.md §10 (HIVE-10.4).
+  confirmLabel = 'Close',
   onClose,
 }) => {
   const tone = normalizeDialogTone(variant, 'info');
   const ToneIcon = DIALOG_TONE_ICON[tone];
+  // A failure names its next action (DESIGN.md §10, HIVE-10.4); rules and other tones are
+  // left as written.
+  const text =
+    typeof message === 'string' && tone === 'danger' ? voiceFailure(message) : message;
   const actionRef = React.useRef<HTMLButtonElement>(null);
   const returnFocus = useReturnFocus(open);
 
@@ -85,11 +91,7 @@ const AlertDialog: React.FC<AlertDialogProps> = ({
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div>
-              {typeof message === 'string' ? (
-                <p className="whitespace-pre-wrap">{message}</p>
-              ) : (
-                message
-              )}
+              {typeof text === 'string' ? <p className="whitespace-pre-wrap">{text}</p> : text}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

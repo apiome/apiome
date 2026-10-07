@@ -34,7 +34,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType }
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
 import { FolderTree, GitFork, Library, Plus, Settings2, Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
 import { GatedState } from '@/app/components/ui/EmptyState';

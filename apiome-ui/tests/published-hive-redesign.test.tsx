@@ -218,6 +218,9 @@ async function renderPublished(
   await act(async () => {
     await Promise.resolve();
   });
+  // One microtask is not always enough for the read to land; wait until the table has
+  // stopped loading rather than racing it.
+  await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeNull());
 }
 
 /** One row's `<tr>`, found by the row id the table stamps on it. */
@@ -401,7 +404,7 @@ describe('the access URL', () => {
       fireEvent.click(screen.getByTestId(`published-access-url-${PAYMENTS_231.id}`));
     });
 
-    expect(mockToastError).toHaveBeenCalledWith('Failed to copy URL to clipboard.');
+    expect(mockToastError).toHaveBeenCalledWith('Failed to copy URL to clipboard — try again.');
     consoleError.mockRestore();
   });
 });

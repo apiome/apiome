@@ -381,7 +381,7 @@ function DiffPanel({
         tone="neutral"
         icon={<GitCompareArrows aria-hidden />}
         title="Pick two versions"
-        description="Choose a base and a target — from the selectors or by ticking two versions in the timeline — to see exactly what changed."
+        description="Pick a base and a target, or tick two versions in the timeline."
         data-testid="mcp-diff-unselected"
       />
     );

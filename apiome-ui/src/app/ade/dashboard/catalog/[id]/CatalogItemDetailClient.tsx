@@ -443,8 +443,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         <PageBody>
           <ErrorState
             data-testid="catalog-detail-error"
-            title="Catalog item not found."
-            description={error || 'Catalog item not found.'}
+            title="Catalog item unavailable"
+            description={error || 'It may have been deleted — go back to the catalog.'}
             onRetry={() => void load()}
             action={
               <Button variant="outline" onClick={() => router.push(CATALOG_LIST_HREF)}>

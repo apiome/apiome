@@ -20,7 +20,7 @@
 import * as React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Copy, Ellipsis, ExternalLink, FileSearch, Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
 

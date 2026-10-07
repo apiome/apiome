@@ -35,6 +35,9 @@ import {
 } from '../../../../../lib/db/admin-helper';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { EmptyState } from '@/app/components/ui/EmptyState';
+import { LoadingState } from '@/app/components/ui/LoadingState';
+import { SkeletonText } from '@/app/components/ui/Skeleton';
 
 interface Tenant {
   id: string;
@@ -400,7 +403,7 @@ export default function TenantManagementClient() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tenant Management</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tenants</h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage tenants and assign users</p>
             </div>
             <button
@@ -513,14 +516,15 @@ export default function TenantManagementClient() {
               </div>
               <div className="max-h-[600px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
                 {loading ? (
-                  <div className="p-12 text-center">
-                    <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto" />
-                  </div>
+                  <LoadingState message="Loading tenants…" skeleton={<SkeletonText lines={6} className="p-4" />} />
                 ) : tenants.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400 text-sm">No tenants found</p>
-                  </div>
+                  <EmptyState
+                    variant="compact"
+                    surface={false}
+                    icon={<Building2 />}
+                    title="No tenants yet"
+                    description="Create a tenant to group users and their projects."
+                  />
                 ) : (
                   tenants.map((tenant) => (
                     <div
@@ -648,10 +652,13 @@ export default function TenantManagementClient() {
                     <p className="text-gray-400 text-sm">Select a tenant to view users</p>
                   </div>
                 ) : tenantUsers.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400 text-sm">No users in this tenant</p>
-                  </div>
+                  <EmptyState
+                    variant="compact"
+                    surface={false}
+                    icon={<Users />}
+                    title="No users in this tenant"
+                    description="Add users to give them access to its projects."
+                  />
                 ) : (
                   tenantUsers.map((user) => (
                     <div key={user.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
@@ -973,10 +980,13 @@ export default function TenantManagementClient() {
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {availableUsers.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 text-sm">No available users to add</p>
-                </div>
+                <EmptyState
+                  variant="compact"
+                  surface={false}
+                  icon={<Users />}
+                  title="Everyone is already here"
+                  description="Every user already belongs to this tenant."
+                />
               ) : (
                 <div className="space-y-2">
                   {availableUsers.map((user) => (

@@ -32,7 +32,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlaskConical, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 import {
   Dialog,
   DialogContent,

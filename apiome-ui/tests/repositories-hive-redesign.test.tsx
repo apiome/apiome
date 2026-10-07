@@ -602,7 +602,7 @@ describe('narrowing', () => {
     await screen.findByText('No repositories yet');
     expect(
       screen.getByText(
-        'Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and file indexing appear here.'
+        'Register one through a linked account or a public clone URL.'
       )
     ).toBeInTheDocument();
     expect(screen.getByTestId('repositories-empty-add')).toHaveAttribute(

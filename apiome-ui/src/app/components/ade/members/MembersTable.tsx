@@ -423,7 +423,7 @@ export default function MembersTable({
           <EmptyState
             icon={<Users aria-hidden />}
             title="No members yet"
-            description="Invite teammates by email and pick a role — they get access as soon as they accept."
+            description="Invite teammates by email; they get access as soon as they accept."
             action={
               canInviteNow ? (
                 <Button onClick={onInvite}>

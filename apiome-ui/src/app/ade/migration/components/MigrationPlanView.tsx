@@ -13,11 +13,15 @@ import {
   Play,
   BarChart3,
   ShieldCheck,
+  Database,
 } from 'lucide-react';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 import { Switch } from '../../../components/ui/Switch';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
+import { EmptyState } from '@/app/components/ui/EmptyState';
+import { LoadingState } from '@/app/components/ui/LoadingState';
+import { SkeletonText } from '@/app/components/ui/Skeleton';
 
 const PAGE_SIZE = 20;
 
@@ -434,9 +438,15 @@ export default function MigrationPlanView() {
             {viewMode === 'none' ? (
               <div className="p-3 text-sm text-gray-500 dark:text-gray-400">View all or search to load.</div>
             ) : loading ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">Loading…</div>
+              <LoadingState message="Loading records…" skeleton={<SkeletonText className="p-3" />} />
             ) : rows.length === 0 ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">No records.</div>
+              <EmptyState
+                variant="inline"
+                icon={<Database />}
+                titleAs="p"
+                title="No matching records"
+                description="Try a different search, or view all records."
+              />
             ) : (
               <ul className="p-1 space-y-0.5">
                 {rows.map((row, idx) => {

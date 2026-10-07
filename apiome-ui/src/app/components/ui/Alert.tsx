@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { voiceFailure } from '../../../../lib/copy-voice';
 import { cn } from '../../../../lib/utils';
 import { AlertCircle, CheckCircle2, Info, AlertTriangle, Sparkles, X } from 'lucide-react';
 
@@ -87,6 +88,13 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     const IconComponent = iconMap[variant || 'default'];
     const leading =
       icon === undefined ? <IconComponent className="mt-px size-4 shrink-0" aria-hidden="true" /> : icon;
+    // DESIGN.md §10 (HIVE-10.4): a red banner whose body is a bare failure string and that
+    // offers no action of its own says what to do — `{error}` from a catch block is the
+    // common case. Rules, rich bodies and every other tone are left as written.
+    const body =
+      (variant === 'danger' || variant === 'error') && !actions && typeof children === 'string'
+        ? voiceFailure(children)
+        : children;
 
     return (
       <div
@@ -96,7 +104,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         {leading}
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="min-w-0 flex-1">{body}</div>
         {actions && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
         {onClose && (
           <button

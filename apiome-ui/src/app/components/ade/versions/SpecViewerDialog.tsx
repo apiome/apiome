@@ -19,7 +19,7 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { Copy, Download, FileJson2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 
 import { Button } from '@/app/components/ui/Button';
 import { Dialog, DialogContent, DialogFooter } from '@/app/components/ui/Dialog';

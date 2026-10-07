@@ -1,7 +1,7 @@
 import AuthProviderSettingsClient from './AuthProviderSettingsClient';
 
 /**
- * System Configuration (`/admin/dashboard/settings`, OLO-8.7, #4973).
+ * System settings (`/admin/dashboard/settings`, OLO-8.7, #4973).
  *
  * The admin sidebar has reserved this path since the portal shipped; it now hosts the sign-in
  * provider configuration screen. Auth gating happens in the shared dashboard layout

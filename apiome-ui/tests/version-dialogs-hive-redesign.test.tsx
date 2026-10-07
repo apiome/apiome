@@ -464,7 +464,9 @@ describe('the lint & score panel', () => {
 
     render(<SchemaVersionScoringPanel projectId="p-1" versionId="v-1" />);
 
-    expect(await screen.findByText(VERSION_DIALOG_COPY.lintUnavailable)).toBeInTheDocument();
+    // The danger banner adds the next action (DESIGN.md §10, HIVE-10.4).
+    expect(await screen.findByText('Lint report unavailable — try again.')).toBeInTheDocument();
+    expect(VERSION_DIALOG_COPY.lintUnavailable).toBe('Lint report unavailable.');
   });
 });
 

@@ -21,6 +21,12 @@ import { cn } from '../../../../../../lib/utils';
  * SSR-safe: no DOM/`window` access and no non-deterministic ids (gradient ids are derived from a
  * `React.useId()` in the consumer when needed).
  */
+/**
+ * What an empty chart says, visibly and in its summary (HIVE-10.4, #5340): a statement of
+ * the situation in the DESIGN.md §2 voice, not the "No data" a query would report.
+ */
+export const CHART_EMPTY_LABEL = 'Nothing to chart yet';
+
 export interface ChartFrameProps {
   /** Accessible name for the whole figure and the SVG (`aria-label` + `<title>`). Required. */
   title: string;
@@ -32,7 +38,7 @@ export interface ChartFrameProps {
   preserveAspectRatio?: string;
   /** Whether the data is empty — renders the empty state instead of the SVG. */
   isEmpty?: boolean;
-  /** Label shown in the empty state; defaults to "No data". */
+  /** Label shown in the empty state; defaults to {@link CHART_EMPTY_LABEL}. */
   emptyLabel?: string;
   /**
    * A visually-hidden tabular representation of the data for assistive tech. Render a `<table>`
@@ -64,7 +70,7 @@ export function ChartFrame({
   viewBox,
   preserveAspectRatio = 'xMidYMid meet',
   isEmpty = false,
-  emptyLabel = 'No data',
+  emptyLabel = CHART_EMPTY_LABEL,
   tableFallback,
   className,
   svgClassName,

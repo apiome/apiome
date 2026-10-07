@@ -216,11 +216,11 @@ export const MCP_CAPABILITY_DIRECTORY_ERROR_TITLE = 'Could not load the capabili
 export const MCP_CAPABILITY_DIRECTORY_ERROR_FALLBACK = 'Could not load the capability directory.';
 
 /** The empty state's heading — no rows matched, which filters can cause. */
-export const MCP_CAPABILITY_DIRECTORY_EMPTY_TITLE = 'No capabilities found';
+export const MCP_CAPABILITY_DIRECTORY_EMPTY_TITLE = 'No capabilities match';
 
-/** Its body copy. */
+/** Its body copy — ≤ 14 words (DESIGN.md §10). */
 export const MCP_CAPABILITY_DIRECTORY_EMPTY_DESC =
-  'Try clearing a filter or discover MCP servers so their tools, resources, and prompts appear here.';
+  'Clear a filter, or discover MCP servers to list their tools here.';
 
 /** Shown in place of the screen when the session has no workspace to read a catalog for. */
 export const MCP_CAPABILITY_DIRECTORY_NO_TENANT =

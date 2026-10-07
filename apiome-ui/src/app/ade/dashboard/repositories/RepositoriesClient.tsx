@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LayoutGrid, List, Plus, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import type { ShortcutBinding } from '@lib/shortcuts';
@@ -391,7 +391,7 @@ export default function RepositoriesClient() {
       variant="compact"
       surface={false}
       title="No repositories yet"
-      description="Register a Git repository through a linked account or a public clone URL. After the API is enabled, scans and file indexing appear here."
+      description="Register one through a linked account or a public clone URL."
       action={
         <Button asChild data-testid="repositories-empty-add">
           <Link href={ADD_REPOSITORY_HREF}>

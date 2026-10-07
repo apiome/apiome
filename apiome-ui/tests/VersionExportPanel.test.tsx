@@ -147,7 +147,7 @@ describe('VersionExportPanel — fidelity pre-summary (MFX-6.5)', () => {
   it('surfaces a targets load failure', async () => {
     global.fetch = mockFetch(null) as unknown as typeof fetch;
     render(<VersionExportPanel artifact={ARTIFACT} version={VERSION} artifactLabel={LABEL} active />);
-    await waitFor(() => expect(screen.getByText('Targets unavailable.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Targets unavailable — try again.')).toBeInTheDocument());
     expect(screen.queryByTestId('version-export-presummary')).not.toBeInTheDocument();
   });
 

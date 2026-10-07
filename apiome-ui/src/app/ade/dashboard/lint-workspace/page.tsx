@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ListChecks, Medal, RefreshCw, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import { Badge } from '@/app/components/ui/Badge';

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import { chartSeriesStyle, type ChartSeriesTone, CHART_SURFACE } from './chartTokens';
 import { maxValue, pointsToPath, pointsToSegments, trendLinePoints } from './chartGeometry';
 
@@ -88,7 +88,7 @@ export function TrendLine({
   const gaps = data.length - present.length;
   const summary =
     last === null
-      ? 'No data'
+      ? CHART_EMPTY_LABEL
       : `${present.length} of ${data.length} point${data.length === 1 ? '' : 's'} measured` +
         `, latest ${last}, max ${maxValue(present)}` +
         (gaps ? `, ${gaps} gap${gaps === 1 ? '' : 's'}` : '') +
