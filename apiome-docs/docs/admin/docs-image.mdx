@@ -1,0 +1,39 @@
+---
+title: Host the documentation site
+description: Run this documentation site from the apiome-docs Docker image.
+sidebar_position: 2
+---
+
+The documentation site ships as a Docker image, so you can serve it next to your Apiome installation
+— on a private network, or under your own domain.
+
+## Run the image
+
+The image serves the site on port **8080** as a non-root user:
+
+```bash
+docker run -d --name apiome-docs -p 3200:8080 <registry>/apiome-docs:latest
+```
+
+Open `http://localhost:3200/`. `GET /healthz` answers `ok`, and the image declares a Docker health
+check that uses it.
+
+Images are tagged with the docs version, `latest` and the commit they were built from.
+
+## Build it yourself
+
+Build from the root of the Apiome repository:
+
+```bash
+docker build -f apiome-docs/Dockerfile -t apiome-docs .
+```
+
+The build runs the same page rules and link checks as CI, so a broken link fails it.
+
+| Build argument | Default | Use |
+| --- | --- | --- |
+| `DOCS_URL` | `http://localhost` | The public origin, used in canonical links and the sitemap |
+| `DOCS_BASE_URL` | `/` | A sub-path to serve under; must start and end with `/` |
+
+To serve the site under a sub-path, build with that `DOCS_BASE_URL` and put the container behind a
+reverse proxy that strips the prefix.

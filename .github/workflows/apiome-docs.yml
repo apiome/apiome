@@ -1,7 +1,8 @@
 name: Apiome Docs
 
 # Builds the Docusaurus documentation site (apiome-docs/) on every PR that touches it or the
-# repository guides, and deploys it to GitHub Pages from `main`.
+# repository guides, and deploys it to GitHub Pages from `main`. The apiome-docs Docker image
+# (nginx serving the static build) is built on every run and pushed to the registry from `main`.
 #
 # One-time repository setting: Settings → Pages → Build and deployment → Source: "GitHub Actions".
 
@@ -13,6 +14,7 @@ on:
       - 'docs/**'
       - 'package.json'
       - 'yarn.lock'
+      - '.dockerignore'
       - '.github/workflows/apiome-docs.yml'
   pull_request:
     branches: [ main, develop ]
@@ -21,12 +23,16 @@ on:
       - 'docs/**'
       - 'package.json'
       - 'yarn.lock'
+      - '.dockerignore'
       - '.github/workflows/apiome-docs.yml'
   # Allow manual trigger (deploys when run on main)
   workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  IMAGE_NAME: apiome-docs
 
 # One Pages deployment at a time; a newer push supersedes a queued one but never cancels a
 # deployment already in progress.
@@ -88,3 +94,79 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  image:
+    name: Build and push apiome-docs image
+    needs: build
+    runs-on: self-hosted
+    env:
+      # Falls back to a local name so the tags stay valid when secrets are absent (fork PRs).
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'apiome.local' }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # Pull requests only prove the image builds; `main` publishes it.
+      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Read package version
+        id: meta
+        working-directory: apiome-docs
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        run: |
+          chmod +x .github/scripts/setup-buildx-self-hosted.sh
+          .github/scripts/setup-buildx-self-hosted.sh
+
+      - name: Log in to Docker registry
+        if: env.PUBLISH == 'true'
+        run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
+
+      # Build from the repository root: the docs workspace installs against the root lockfile.
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apiome-docs/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          provenance: false
+          sbom: false
+          # Set the DOCS_IMAGE_URL repository variable to the public origin the image is served
+          # from, so canonical links and the sitemap point there.
+          build-args: |
+            DOCS_URL=${{ vars.DOCS_IMAGE_URL || 'http://localhost' }}
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Smoke-test the image
+        run: |
+          set -euo pipefail
+          image="${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          cid=$(docker run -d --rm -p 127.0.0.1::8080 "$image")
+          trap 'docker stop "$cid" >/dev/null' EXIT
+          port=$(docker port "$cid" 8080/tcp | head -1 | sed 's/.*://')
+          for _ in $(seq 1 20); do
+            curl -fsS "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:${port}/" | grep -q '<title>'
+          curl -fsS "http://127.0.0.1:${port}/release-notes" | grep -q 'Release notes'
+
+      - name: Push Docker image
+        if: env.PUBLISH == 'true'
+        run: |
+          chmod +x .github/scripts/docker-push-with-retry.sh
+          .github/scripts/docker-push-with-retry.sh \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}" \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest" \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"

@@ -1,0 +1,14 @@
+---
+slug: documentation-docker-image
+title: Host the documentation yourself
+description: The documentation site now ships as a Docker image.
+authors: [apiome]
+---
+
+The documentation site now ships as a Docker image, so you can serve it next to your own Apiome
+installation. See [Host the documentation site](/admin/docs-image).
+
+{/* truncate */}
+
+The image serves the static site with nginx on port 8080, answers a `/healthz` health check, and is
+published from `main` tagged with the docs version, `latest` and the commit SHA.

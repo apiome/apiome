@@ -96,6 +96,23 @@ request that touches `apiome-docs/**` or `docs/**`, and deploys `apiome-docs/bui
 on every push to `main`. The repository's **Settings → Pages → Source** must be set to
 “GitHub Actions” once.
 
+### Docker image
+
+`apiome-docs/Dockerfile` builds the site (running `yarn docs:check`) and serves it with nginx on
+port 8080 as a non-root user. Build it from the repository root:
+
+```bash
+docker build -f apiome-docs/Dockerfile -t apiome-docs .
+docker run --rm -p 3200:8080 apiome-docs   # http://localhost:3200/
+```
+
+The image is built for `/` (`DOCS_BASE_URL=/`); pass `--build-arg DOCS_URL=https://docs.example.com`
+to set the public origin used in canonical links and the sitemap. `GET /healthz` answers `ok`.
+
+The `image` job in `apiome-docs.yml` builds and smoke-tests the image on every pull request, and on
+`main` pushes it to `$DOCKER_REGISTRY/apiome-docs` tagged with the `package.json` version, `latest`
+and the commit SHA. Set the `DOCS_IMAGE_URL` repository variable to the image's public origin.
+
 ### Base URL and trailing slashes
 
 | Setting | Default | Override |

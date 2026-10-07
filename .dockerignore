@@ -12,3 +12,5 @@
 **/.ruff_cache
 **/coverage
 **/.coverage
+apiome-docs/build
+apiome-docs/.docusaurus
