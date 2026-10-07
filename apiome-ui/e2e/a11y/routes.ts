@@ -66,7 +66,7 @@ const ADDITIONAL: A11yRoute[] = [
     mockup: 'foundations/settings-pane.html',
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['settings-pane.html'] },
   },
-  { id: 'design-system', mockup: 'foundations/design-system.html', subject: { kind: 'route', path: '/design-system/hive' } },
+  { id: 'design-system', mockup: 'foundations/design-system.html', subject: { kind: 'route', path: '/design-system' } },
 
   // Overlays drawn over a page.
   { id: 'import-wizard', mockup: 'build/import-wizard.html', subject: { kind: 'fixtures', dir: 'hive-import-wizard' } },

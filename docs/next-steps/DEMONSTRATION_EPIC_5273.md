@@ -252,7 +252,7 @@ The other half of RC1-4.3 — latency budgets for the spine endpoints under load
 | Surface | Where |
 |---|---|
 | Design system route | <http://localhost:3000/design-system> |
-| Hive gallery | <http://localhost:3000/design-system/hive> |
+| Hive gallery | <http://localhost:3000/design-system> |
 | Command palette | <http://localhost:3000/design-system/command-palette> |
 | Members (dense table) | <http://localhost:3000/ade/dashboard/members> |
 | Design language | `docs/mockups/DESIGN.md` §9 (a11y), §3.4 (motion), §10 (voice) |

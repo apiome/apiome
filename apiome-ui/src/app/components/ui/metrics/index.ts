@@ -17,7 +17,7 @@
  *   tech — `role="meter"` with `aria-valuetext` for the ring and the meter, `role="progressbar"`
  *   for the bar, `role="img"` with a summarised `aria-label` for the sparkline.
  *
- * Live gallery: `/design-system/hive` §Metrics.
+ * Live gallery: `/design-system` §Metrics.
  *
  * ## Import path
  *

@@ -277,6 +277,11 @@ stand-in for `lib/platform-nav.ts`).
 | `.hex-bg .glow-honey` | brand ornament | new |
 | `.brand-mark` `.brand-word` `.brand-sub` | the mark itself: bee glyph, wordmark artwork, rail lock-up | `components/brand/BrandMark` (`.bee-glyph`, `.brand-wordmark`, `.brand-lockup`) |
 
+Every component in that column is drawn live at **`/design-system`** (HIVE-10.5), with the
+theme, density and font-scale switchers on the page. The MCP primitives are a section there and
+also have their own page at `/design-system/mcp`. `apiome-ui/tests/design-system-gallery.test.ts`
+fails CI when a `components/ui` component ships without a specimen on the route.
+
 ---
 
 ## 8. Patterns

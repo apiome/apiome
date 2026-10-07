@@ -20,7 +20,7 @@
  * container in a fixed-height frame, so all three are on screen at once and each one
  * scrolls under its own header.
  *
- * Sibling galleries: `/design-system/hive` (the primitives), `/design-system/mcp`.
+ * Sibling galleries: `/design-system` (the primitives), `/design-system/mcp`.
  */
 
 import * as React from 'react';

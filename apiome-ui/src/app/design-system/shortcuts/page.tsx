@@ -18,7 +18,7 @@
  *   • **"Works in all nine themes, both densities and all six font scales"** (roadmap §6),
  *     with no horizontal document scroll and no axe violations.
  *
- * Sibling galleries: `/design-system/hive` (the primitives), `/design-system/page-header`,
+ * Sibling galleries: `/design-system` (the primitives), `/design-system/page-header`,
  * `/design-system/command-palette`.
  */
 

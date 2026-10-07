@@ -20,7 +20,7 @@ import AxeBuilder from '@axe-core/playwright';
  *   • axe finds nothing serious with each dialog open — the state the sibling suites cannot
  *     reach, because they only ever screenshot the page behind it.
  *
- * Runs against `/design-system/hive#dialogs` — the gallery route, which needs no session and
+ * Runs against `/design-system#dialogs` — the gallery route, which needs no session and
  * no data. Requires the app to be running (`PLAYWRIGHT_BASE_URL`, default
  * `http://localhost:3000`).
  */
@@ -52,7 +52,7 @@ function blockingViolations<T extends { impact?: string | null }>(violations: T[
 async function openGallery(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/design-system/hive');
+  await page.goto('/design-system');
   await page.waitForLoadState('networkidle');
   await page.locator(OWNED_SECTION).scrollIntoViewIfNeeded();
 }

@@ -126,14 +126,14 @@ test.describe('pointer targets (.hit-target)', () => {
   }
 
   test('every small control on the gallery reaches 44 px in comfortable density', async ({ page }) => {
-    await openRoute(page, '/design-system/hive');
+    await openRoute(page, '/design-system');
     await pinAppearance(page, null, { density: 'comfortable' });
     // 21 px out from the centre: just inside a 44 px square.
     expect(await probeHitTargets(page, 21)).toEqual([]);
   });
 
   test('targets fall back to the 24 px AA floor in compact density', async ({ page }) => {
-    await openRoute(page, '/design-system/hive');
+    await openRoute(page, '/design-system');
     await pinAppearance(page, null, { density: 'compact' });
     expect(await probeHitTargets(page, 11)).toEqual([]);
     const size = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--target-min').trim());

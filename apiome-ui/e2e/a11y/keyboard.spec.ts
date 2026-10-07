@@ -95,13 +95,13 @@ test.describe('overlays trap focus and restore it', () => {
   });
 
   test('the drawer', async ({ page }) => {
-    await page.goto('/design-system/hive');
+    await page.goto('/design-system');
     await page.waitForLoadState('networkidle');
     await checkOverlay(page, page.getByRole('button', { name: 'Open drawer' }), page.getByRole('dialog'));
   });
 
   test('a dialog', async ({ page }) => {
-    await page.goto('/design-system/hive');
+    await page.goto('/design-system');
     await page.waitForLoadState('networkidle');
     const trigger = page.locator('#dialogs').getByRole('button').first();
     await trigger.scrollIntoViewIfNeeded();
