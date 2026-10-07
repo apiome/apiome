@@ -1,0 +1,90 @@
+name: Apiome Docs
+
+# Builds the Docusaurus documentation site (apiome-docs/) on every PR that touches it or the
+# repository guides, and deploys it to GitHub Pages from `main`.
+#
+# One-time repository setting: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-docs/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/apiome-docs.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'apiome-docs/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/apiome-docs.yml'
+  # Allow manual trigger (deploys when run on main)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One Pages deployment at a time; a newer push supersedes a queued one but never cancels a
+# deployment already in progress.
+concurrency:
+  group: apiome-docs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Check and Build Apiome Docs
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run docs unit tests
+        run: yarn workspace apiome-docs test
+
+      - name: Type-check
+        run: yarn workspace apiome-docs typecheck
+
+      # Page rules, then the production build (broken links and anchors fail it).
+      - name: Check and build the site
+        run: yarn docs:check
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: apiome-docs/build
+
+  deploy:
+    name: Deploy Apiome Docs to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: self-hosted
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

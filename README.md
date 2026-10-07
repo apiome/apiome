@@ -23,6 +23,13 @@ full list:
 - `GET /v1/formats/matrix` — the same answer, machine-readable.
 - `apiome formats` — the same answer, at a terminal.
 
+## Documentation
+
+The documentation site is **<https://apiome.github.io/apiome/>** — built with Docusaurus from
+[`apiome-docs/`](apiome-docs/README.md) and deployed from `main`. Run it locally with `yarn docs:dev`.
+The guides under [`docs/guide/`](docs/guide/README.md) move onto the site over the RC6 documentation
+epic.
+
 ## Goals
 
 The Apiome application is a work in progress.
@@ -78,6 +85,10 @@ Adding an example to the import corpus (`apiome-ui/examples/`)?  Read the
 [corpus contributor guide](docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the manifest fields,
 the licensing rules for documents derived from third-party specs, the anonymization rule for
 captured payloads, and the review checklist.
+
+Every change updates the documentation site in the same pull request — see
+[`apiome-docs/README.md`](apiome-docs/README.md) for how to run it, write a page and pass
+`yarn docs:check`.
 
 ## Donations
 

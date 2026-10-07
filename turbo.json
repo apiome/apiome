@@ -15,6 +15,11 @@
     "apiome-mock#build": {
       "outputs": []
     },
+    "apiome-docs#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!.docusaurus/**", "!build/**"],
+      "outputs": ["build/**"]
+    },
     "@suite/designer#build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
