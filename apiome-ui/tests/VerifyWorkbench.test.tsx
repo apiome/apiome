@@ -14,6 +14,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 import { VerifyWorkbench } from '../src/app/components/ade/dashboard/export/VerifyWorkbench';
 import type {
   ExportVerifyResponse,
@@ -351,5 +352,22 @@ describe('VerifyWorkbench — auto re-verify + config attribution (MFX-42.6)', (
     const first = renderWorkbench();
     fireEvent.click(screen.getByTestId('verify-run'));
     expect(first.onRun).toHaveBeenLastCalledWith();
+  });
+});
+
+/**
+ * The documentation site's Export studio page (`apiome-docs/screens.json`, DOCS-1.7) captures the
+ * Verify step from this dump: `A11Y_FIXTURE_DUMP=1 npx jest tests/VerifyWorkbench.test.tsx -t
+ * "docs fixture"` — a lossy gRPC conversion, waiting for its acknowledgement.
+ */
+describe('VerifyWorkbench — the docs fixture', () => {
+  it('renders a lossy verdict awaiting acknowledgement', () => {
+    const result = makeResult('lossy');
+    // The suite's placeholder advisory reads "advisory copy"; a screenshot needs real words.
+    result.fidelity!.advisory!.message =
+      'Two constructs have no proto3 equivalent and are dropped; one is approximated and one synthesized.';
+    const { container } = renderWorkbench({ hasRun: true, result, verdict: 'lossy' });
+    expect(screen.getByTestId('verify-verdict')).toBeInTheDocument();
+    writeA11yFixture('export-verify', container.innerHTML);
   });
 });

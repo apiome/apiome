@@ -291,6 +291,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 
 ## Related
 
+- [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference

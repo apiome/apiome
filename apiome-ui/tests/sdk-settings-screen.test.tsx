@@ -11,6 +11,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 import SdkSettingsClient from '@/app/ade/dashboard/sdk-settings/SdkSettingsClient';
 import {
   SDK_FIELD_KEYS,
@@ -357,5 +358,42 @@ describe('the public SDK switch (SDK-3.3)', () => {
     await screen.findByTestId('sdk-settings-preview');
 
     expect(screen.getByText('Enabled')).toBeInTheDocument();
+  });
+});
+
+/**
+ * The documentation site's SDK settings page (`apiome-docs/screens.json`, DOCS-1.7) is captured
+ * from this dump: `A11Y_FIXTURE_DUMP=1 npx jest tests/sdk-settings-screen.test.tsx -t "docs
+ * fixture"` — workspace defaults filled in, public SDK access on, and the in-force panel.
+ */
+describe('the docs fixture', () => {
+  it('renders configured workspace defaults', async () => {
+    const body = {
+      packageNamePatterns: {
+        npm: '@acme/{project}-sdk',
+        pypi: 'acme-{project}',
+        gomod: 'github.com/acme/{project}-go',
+      },
+      licenseHeader: 'Copyright (c) {year} Acme, Inc.\nSPDX-License-Identifier: Apache-2.0',
+      userAgent: 'acme-sdk/{version}',
+      publicSdkEnabled: true,
+    };
+    mockFetch({
+      settings: settings({
+        source: 'tenant',
+        settings: { ...body, publicSdkEnabled: true },
+        scopeBody: body,
+        tenantSettingsId: 'ts-1',
+        resolved: {
+          packageNames: { npm: '@acme/petstore-sdk', pypi: 'acme-petstore' },
+          licenseHeader: 'Copyright (c) 2026 Acme, Inc.\nSPDX-License-Identifier: Apache-2.0',
+          userAgent: 'acme-sdk/1.0.0',
+        },
+      }),
+    });
+    render(<SdkSettingsClient />);
+    await screen.findByTestId('sdk-settings-preview');
+    expect(screen.getByLabelText('npm package name')).toHaveValue('@acme/{project}-sdk');
+    writeA11yFixture('sdk-settings', (document.querySelector('.page') as HTMLElement).outerHTML);
   });
 });

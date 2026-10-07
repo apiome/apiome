@@ -19,6 +19,7 @@ import React from 'react';
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 import { MockTestDrivePanel } from '../src/app/components/ade/dashboard/export/MockTestDrivePanel';
 import {
   resetMockCapabilityCache,
@@ -489,5 +490,34 @@ describe('the test-drive hook', () => {
 
     rerender({ target: 'protobuf' });
     await waitFor(() => expect(result.current.instance).toBeNull());
+  });
+});
+
+/* ------------------------------------------------------------------------ */
+/* The docs fixture                                                          */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * The documentation site's Mock try-out page (`apiome-docs/screens.json`, DOCS-1.7) captures a
+ * running test drive from this dump: `A11Y_FIXTURE_DUMP=1 npx jest
+ * tests/mock-test-drive-panel.test.tsx -t "docs fixture"` — a live mock, one answered request
+ * and the request log.
+ */
+describe('the docs fixture', () => {
+  it('renders a running mock with a response and its log', () => {
+    renderPanel({
+      instance: { ...INSTANCE, requestCount: 2 },
+      log: LOG,
+      lastResult: {
+        request: { method: 'GET', path: '/widgets', url: '/v1/mock/mock-1/widgets' },
+        status: 200,
+        durationMs: 4,
+        headers: { 'x-mock-schema-valid': 'true', 'x-mock-scenario': 'happy-path' },
+        body: '[{"id":1,"name":"widget"}]',
+        truncated: false,
+      },
+    });
+    expect(screen.getByTestId('mock-result-status')).toHaveTextContent('HTTP 200');
+    writeA11yFixture('mock-test-drive', document.body.firstElementChild!.outerHTML);
   });
 });

@@ -898,4 +898,14 @@ describe('the browser fixtures', () => {
     await screen.findByTestId('published-visibility-error');
     write('error', page().outerHTML);
   });
+
+  /* The docs site's Published page (DOCS-1.7) captures the dialog a private row's key button
+     opens. */
+  it('renders the API key dialog (and writes its fixture on request)', async () => {
+    await renderPublished();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId(`published-row-key-${PAYMENTS_220.id}`));
+    });
+    write('api-key-dialog', (await screen.findByTestId('published-api-key-dialog')).outerHTML);
+  });
 });
