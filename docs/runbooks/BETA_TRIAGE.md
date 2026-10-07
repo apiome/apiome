@@ -65,6 +65,10 @@ least two of whom are not on the team.
 Every beta issue ends up with exactly one label from each of the three groups below. `beta`
 stays on it for life.
 
+Severity and triage state are not beta-only. Any defect that reaches the RC1 burn-down, such as
+the OLO-7.3 security follow-ups, gets a `sev:*` and a `triage:*` label too. `beta` and `wf:*` are
+for cohort reports only.
+
 ### Origin
 
 | Label | Meaning |
@@ -131,7 +135,8 @@ Daily, by the release lead or whoever holds the triage rota:
    - replace `triage:new` with the resulting state;
    - reply to the reporter with what happens next.
 3. **Hand off.** Accepted `sev:critical` and `sev:high` issues go straight to the RC1-4.2 burn-down
-   ([#3621](https://github.com/apiome/apiome/issues/3621)): link them from that ticket. Critical
+   ([#3621](https://github.com/apiome/apiome/issues/3621)): add a row to the ledger,
+   [`RC1_BURN_DOWN.md`](../next-steps/RC1_BURN_DOWN.md) §2, and set its gate status to RED. Critical
    issues are also raised the same day with whoever owns the affected service.
 4. **Defer deliberately.** A `triage:deferred` issue without a written reason is not deferred. It
    is untriaged. A `sev:critical` or `sev:high` issue can only be deferred by the release lead, and
