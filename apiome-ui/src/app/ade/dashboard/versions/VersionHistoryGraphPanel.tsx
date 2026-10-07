@@ -50,7 +50,7 @@ import {
   type VersionHistoryTag,
   type VersionHistoryVertex,
 } from './version-history-dag';
-import { motionDuration } from '@lib/motion';
+import { MOTION_MS, motionDuration } from '@lib/motion';
 
 const nodeTypes = { revisionHistory: RevisionHistoryNode };
 
@@ -117,7 +117,7 @@ function GraphCanvas({
       if (!n) return;
       const width = n.width ?? 200;
       const height = n.height ?? 52;
-      setCenter(n.position.x + width / 2, n.position.y + height / 2, { zoom: 1.2, duration: motionDuration(400) });
+      setCenter(n.position.x + width / 2, n.position.y + height / 2, { zoom: 1.2, duration: motionDuration(MOTION_MS.slow) });
     },
     [getNode, setCenter]
   );
@@ -130,7 +130,7 @@ function GraphCanvas({
           variant="secondary"
           size="sm"
           title="Fit all revisions in view"
-          onClick={() => fitView({ padding: 0.2, maxZoom: 1.35, duration: motionDuration(400) })}
+          onClick={() => fitView({ padding: 0.2, maxZoom: 1.35, duration: motionDuration(MOTION_MS.slow) })}
         >
           <Crosshair aria-hidden />
           Fit all

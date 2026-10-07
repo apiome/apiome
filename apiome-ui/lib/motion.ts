@@ -12,6 +12,21 @@
  */
 
 /**
+ * The three durations of `docs/mockups/DESIGN.md` §3.4, in milliseconds, for motion started from
+ * script. They mirror `--dur-fast` / `--dur-base` / `--dur-slow` in `globals.css`
+ * (`tests/motion-pass.test.ts` keeps the two in step); nothing in the interface animates longer
+ * than `slow` (HIVE-10.3, #5339).
+ */
+export const MOTION_MS = {
+  /** Hover, toggles. */
+  fast: 120,
+  /** Menus, tabs. */
+  base: 180,
+  /** Dialogs, drawers, the rail — and the longest any motion may run. */
+  slow: 260,
+} as const;
+
+/**
  * Whether motion should be suppressed right now: the stored preference (`data-motion="reduce"`
  * on `<html>`, written by the preferences boot script) or the operating system's.
  *

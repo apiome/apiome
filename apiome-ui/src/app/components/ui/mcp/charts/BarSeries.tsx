@@ -79,7 +79,7 @@ export function BarSeries({ data, tone = 'indigo', domainMax, title, className }
             width={bandW}
             height={h}
             rx={1.5}
-            className={cn(style.fillClass, 'transition-all duration-500')}
+            className={cn(style.fillClass, 'transition-all duration-[var(--dur-slow)] ease-out')}
           >
             <title>{`${d.label}: ${d.value}`}</title>
           </rect>

@@ -15,7 +15,8 @@ For using the app without a mouse, see [keyboard.md](keyboard.md).
 | Every overlay traps focus while open and returns it on close; no keyboard trap anywhere | `apiome-ui/e2e/a11y/keyboard.spec.ts` |
 | Pointer targets of at least 44 px in comfortable density (24 px in compact) | `.hit-target` in `globals.css`; `tests/a11y-hit-target.test.ts` and the gate's in-browser probe |
 | Save state, async jobs and bulk results are announced | `ui/LiveRegion` + `lib/a11y/announcements.ts` |
-| Reduced motion is respected, in CSS and in script | the `data-motion` / `prefers-reduced-motion` rules in `globals.css`; `lib/motion.ts` for scroll and canvas animation |
+| Motion follows `DESIGN.md` §3.4: 120 / 180 / 260 ms, one easing, nothing longer than 260 ms but the mockups' own loading loops; no animation blocks a click | `apiome-ui/tests/motion-pass.test.ts`; `e2e/a11y/motion.spec.ts` measures what the browser runs |
+| Reduced motion is respected, in CSS and in script — state changes are instant and loops stop | the `data-motion` / `prefers-reduced-motion` rules in `globals.css` (zero durations, one iteration); `lib/motion.ts` for scroll and canvas animation |
 
 ## The axe gate (CI)
 

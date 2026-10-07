@@ -335,7 +335,7 @@ export default function MigrationPlanView() {
                       aria-label={`Data quality confidence ${label.toLowerCase()}`}
                     >
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ease-out ${barClass}`}
+                        className={`h-full rounded-full transition-all duration-[var(--dur-slow)] ease-out ${barClass}`}
                         style={{ width: percent != null ? `${percent}%` : '0%' }}
                       />
                     </div>

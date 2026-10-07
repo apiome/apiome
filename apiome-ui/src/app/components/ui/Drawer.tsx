@@ -59,7 +59,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-[9998] bg-overlay backdrop-blur-sm', className)}
+    className={cn('hive-overlay fixed inset-0 z-[9998] bg-overlay backdrop-blur-sm', className)}
     {...props}
   />
 ));
