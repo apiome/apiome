@@ -168,6 +168,10 @@ services:
       APIOME_MCP_HTTP_PORT: ${APIOME_MCP_HTTP_PORT:-8765}
       # AGX-2.4: toolsets with target=mock route tools/call to the mock service below.
       APIOME_MCP_MOCK_PUBLIC_BASE_URL: ${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
+      # AGX-2.1: the agent runtime (/agent/mcp) calls the mock from inside the compose network.
+      APIOME_MCP_MOCK_INVOCATION_BASE_URL: ${APIOME_MCP_MOCK_INVOCATION_BASE_URL:-http://mock:8775}
+      # AGX-2.1: opens the AGX-2.2 upstream vault; must match the rest service's value.
+      APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
     depends_on:
       postgres:
         condition: service_healthy

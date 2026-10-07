@@ -55,13 +55,14 @@ wheels = [
 
 [[package]]
 name = "apiome-mcp"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "../apiome-mcp" }
 dependencies = [
     { name = "apiome-rest" },
     { name = "bcrypt" },
     { name = "fastmcp" },
     { name = "httpx" },
+    { name = "jsonschema" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic" },
@@ -76,6 +77,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=4.0" },
     { name = "fastmcp", specifier = ">=3.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "jsonschema", specifier = ">=4.20.0" },
     { name = "pgvector", specifier = ">=0.4.2" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.0" },
     { name = "pydantic", specifier = ">=2.9.2" },
@@ -89,6 +91,7 @@ dev = [
     { name = "mypy", specifier = ">=1.13.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "ruff", specifier = ">=0.8.0" },
+    { name = "types-jsonschema", specifier = ">=4.20.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
 ]
 
@@ -153,7 +156,7 @@ dev = [
 
 [[package]]
 name = "apiome-rest"
-version = "1.336.0"
+version = "1.337.0"
 source = { editable = "../apiome-rest" }
 dependencies = [
     { name = "asn1tools" },

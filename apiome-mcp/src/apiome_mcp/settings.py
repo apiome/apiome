@@ -144,6 +144,62 @@ class Settings(BaseSettings):
         ),
     )
 
+    mock_invocation_base_url: str | None = Field(
+        default=None,
+        description=(
+            "AGX-2.1: root of the SIM mock as this process reaches it, when that differs from "
+            "mock_public_base_url (e.g. http://mock:8775 inside docker compose). Unset = the public root."
+        ),
+    )
+    agent_upstream_timeout_seconds: float = Field(
+        default=30.0,
+        gt=0,
+        le=300,
+        description="AGX-2.1: most seconds one upstream attempt of an agent tools/call may take.",
+    )
+    agent_upstream_connect_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        le=60,
+        description="AGX-2.1: most seconds opening the upstream connection may take.",
+    )
+    agent_upstream_max_retries: int = Field(
+        default=2,
+        ge=0,
+        le=5,
+        description=(
+            "AGX-2.1: retries after the first upstream attempt. Idempotent methods retry on timeouts, dropped "
+            "connections and 502/503/504; other methods only when the connection could not be opened."
+        ),
+    )
+    agent_upstream_budget_seconds: float = Field(
+        default=45.0,
+        gt=0,
+        le=600,
+        description="AGX-2.1: most seconds all upstream attempts and back-off pauses of one call may take together.",
+    )
+    agent_upstream_backoff_seconds: float = Field(
+        default=0.2,
+        ge=0,
+        le=30,
+        description="AGX-2.1: pause before the first upstream retry; doubles each retry.",
+    )
+    agent_response_max_bytes: int = Field(
+        default=65_536,
+        ge=1024,
+        le=10_000_000,
+        description=(
+            "AGX-2.1: most upstream response-body bytes returned to the agent; longer bodies are cut and "
+            "marked truncated."
+        ),
+    )
+    agent_toolset_cache_size: int = Field(
+        default=256,
+        ge=1,
+        le=100_000,
+        description="AGX-2.1: compiled agent toolsets kept in memory per process.",
+    )
+
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:
         if self.database_pool_max_size < self.database_pool_min_size:
@@ -157,6 +213,14 @@ class Settings(BaseSettings):
     def validate_mock_public_base_url(cls, value: str) -> str:
         """Fail fast on a mock root that is not an absolute http(s) URL; strip trailing slashes."""
         return normalize_base_url("mock_public_base_url", value)
+
+    @field_validator("mock_invocation_base_url")
+    @classmethod
+    def validate_mock_invocation_base_url(cls, value: str | None) -> str | None:
+        """Same rule as the public root; blank means unset."""
+        if value is None or not value.strip():
+            return None
+        return normalize_base_url("mock_invocation_base_url", value)
 
     @field_validator("log_level", mode="before")
     @classmethod

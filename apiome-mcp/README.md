@@ -39,7 +39,7 @@ Canonical planning doc: [**Planned Roadmap — MCP Server**](../docs/PLANNED_ROA
 | Transport | Entry | Notes |
 |-----------|--------|--------|
 | **stdio** | `uv run apiome-mcp serve --transport stdio` | For local hosts (Claude Desktop, MCP Inspector). Credentials for tools can be passed via `tools/call` **`_meta`** (see [Authentication](#authentication)). |
-| **Streamable HTTP** | `uv run apiome-mcp serve --transport http` | MCP endpoint at **`http://<host>:<port>/mcp`** (bind with **`APIOME_MCP_HTTP_HOST`** / **`APIOME_MCP_HTTP_PORT`** or **`--host`** / **`--port`**). Bearer tokens are read from **`Authorization`** per request. |
+| **Streamable HTTP** | `uv run apiome-mcp serve --transport http` | Catalog MCP at **`http://<host>:<port>/mcp`** and the AGX-2.1 agent runtime at **`http://<host>:<port>/agent/mcp`** (bind with **`APIOME_MCP_HTTP_HOST`** / **`APIOME_MCP_HTTP_PORT`** or **`--host`** / **`--port`**). Bearer tokens are read from **`Authorization`** per request. |
 
 Running **`uv run apiome-mcp serve`** without **`--transport`** loads settings and exits—useful to validate **`.env`**.
 
@@ -135,6 +135,15 @@ middleware, limits each agent key to its license tier's calls per second and cal
 invocation. apiome-rest reports usage against the caps at
 ``GET /v1/tenants/{t}/agent-keys/{id}/usage``. See **[docs/AGENT_QUOTAS.md](docs/AGENT_QUOTAS.md)**
 (#4538).
+
+**Agent invocation proxy (AGX-2.1):** ``/agent/mcp`` serves an agent key's toolset (the same
+compiled view apiome-rest shows at ``…/agent-toolsets/{id}/compiled``) and turns each ``tools/call``
+into one upstream HTTP request: arguments validated against the ``inputSchema`` (failures never
+reach the upstream), path/query/header/body built per the spec's serialization rules, routed to the
+SIM mock or the spec's server, the AGX-2.2 upstream credential injected server-side, sent within a
+timeout and retry budget, and mapped to a result (the body, or an ``isError`` result with a reason
+code and a hint). Every call writes one AGX-3.3 invocation row. See
+**[docs/AGENT_INVOCATION_PROXY.md](docs/AGENT_INVOCATION_PROXY.md)** (#4533).
 
 Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` modules.
 

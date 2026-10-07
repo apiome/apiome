@@ -71,20 +71,23 @@ async def _run_agent_usage_sweep() -> int:
 
 
 async def _run_http_transport(host: str, port: int, *, log_level: str) -> None:
-    """Streamable HTTP via FastMCP (``http_app`` → ``create_streamable_http_app``); serves MCP at ``/mcp``."""
-    from starlette.middleware import Middleware as StarletteMiddleware
+    """Streamable HTTP: the catalog MCP at ``/mcp`` and the AGX-2.1 agent runtime at ``/agent/mcp``."""
+    import uvicorn
 
-    from apiome_mcp.http_credential_middleware import HttpCredentialExtractionMiddleware
+    from apiome_mcp.agent_server import build_agent_server
+    from apiome_mcp.http_app import build_http_app
     from apiome_mcp.server import mcp
 
-    await mcp.run_http_async(
-        transport="streamable-http",
+    app = build_http_app(mcp, build_agent_server())
+    config = uvicorn.Config(
+        app,
         host=host,
         port=port,
-        path="/mcp",
         log_level=log_level.lower(),
-        middleware=[StarletteMiddleware(HttpCredentialExtractionMiddleware)],
+        lifespan="on",
+        timeout_graceful_shutdown=2,
     )
+    await uvicorn.Server(config).serve()
 
 
 def main() -> None:
@@ -109,7 +112,8 @@ def main() -> None:
         metavar="NAME",
         help=(
             "Run with this transport (omit to validate env and exit). "
-            "Use stdio for Claude Desktop; use http for streamable HTTP (MCP at /mcp)."
+            "Use stdio for Claude Desktop; use http for streamable HTTP "
+            "(catalog MCP at /mcp, agent runtime at /agent/mcp)."
         ),
     )
     serve_parser.add_argument(
@@ -182,7 +186,7 @@ def main() -> None:
                 raise SystemExit(2)
             port = args.port if args.port is not None else settings.http_port
             with bound_contextvars(request_id="cli-serve-http", tool_name=None):
-                log.info("mcp_http_starting", host=host, port=port, path="/mcp")
+                log.info("mcp_http_starting", host=host, port=port, path="/mcp", agent_path="/agent/mcp")
             asyncio.run(_run_http_transport(host, port, log_level=settings.log_level))
             return
         with bound_contextvars(request_id="cli-serve", tool_name=None):

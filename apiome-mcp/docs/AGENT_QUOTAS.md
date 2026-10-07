@@ -137,5 +137,6 @@ them.
   reports a negative `remaining`.
 - **Mock-target calls count.** Calls to a toolset with `target: mock` use the same caps as
   production calls, because they are invocations like any other.
-- **The AGX-2.1 call path is not built yet.** Until it records invocations, the stored count stays
-  at zero. The guard then enforces from the calls this process admitted.
+- **Admitted calls are counted from the AGX-2.1 call path's invocation rows**
+  ([AGENT_INVOCATION_PROXY.md](AGENT_INVOCATION_PROXY.md)); a row that fails to write is not
+  counted by other instances until it exists, while this process still counts what it admitted.

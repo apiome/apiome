@@ -63,6 +63,7 @@ __all__ = [
     "operation_has_examples",
     "parameter_label",
     "parse_enrichment_reply",
+    "served_description_overrides",
     "tool_description_text",
 ]
 
@@ -623,6 +624,32 @@ def parse_enrichment_reply(
 # ---------------------------------------------------------------------------
 # Applying accepted descriptions
 # ---------------------------------------------------------------------------
+
+
+def served_description_overrides(
+    rows: Iterable[Mapping[str, Any]], exposed: Iterable[str]
+) -> Dict[str, str]:
+    """Pick the accepted descriptions that are served to agents.
+
+    One rule for every packaging of the served toolset: apiome-rest's ``/compiled`` view and the
+    apiome-mcp agent runtime (AGX-2.1) both call this, so an agent is served exactly what the
+    Control Panel previews.
+
+    Args:
+        rows: ``agent_toolset_enrichments`` rows with ``status = 'accepted'``; each carries
+            ``target_key``, ``operation_key`` and ``accepted_description``.
+        exposed: Operation keys the toolset currently exposes. A proposal for an operation that is
+            no longer exposed is not served.
+
+    Returns:
+        ``{target_key: accepted text}``, ready for :func:`apply_description_overrides`.
+    """
+    live = set(exposed)
+    return {
+        str(row["target_key"]): str(row["accepted_description"])
+        for row in rows
+        if row.get("accepted_description") and str(row.get("operation_key")) in live
+    }
 
 
 def apply_description_overrides(

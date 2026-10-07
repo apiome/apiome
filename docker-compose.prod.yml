@@ -111,6 +111,8 @@ services:
       # AGX-2.4 sandbox toolsets (target=mock) must reach the same mock host the Control
       # Panel publishes, so both services read one deploy domain.
       APIOME_MCP_MOCK_PUBLIC_BASE_URL: https://${DEPLOY_MOCK_DOMAIN:?set DEPLOY_MOCK_DOMAIN in your .env}
+      # AGX-2.1: production calls reach the mock through its public domain, like agents do.
+      APIOME_MCP_MOCK_INVOCATION_BASE_URL: ""
     depends_on: !override
       postgres:
         condition: service_healthy
