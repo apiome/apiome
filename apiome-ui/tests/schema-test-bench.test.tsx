@@ -63,6 +63,7 @@ import { SchemaTestBench } from '../src/app/components/ade/dashboard/test-bench/
 import { BENCH_MARKER_OWNER } from '../src/app/utils/schema-test-bench';
 import { loadSavedBenchPayloads } from '../src/app/utils/schema-test-bench-saved-payloads';
 import { TEST_BENCH_PAYLOAD_MAX_BYTES } from '../src/app/utils/preview-budgets';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const { __harness: monacoHarness } = jest.requireMock('@monaco-editor/react') as {
   __harness: {
@@ -463,5 +464,8 @@ describe('SchemaTestBench', () => {
     await waitFor(() => expect(screen.getByTestId('test-bench-status')).toBeInTheDocument());
 
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    // The docs site's `versions-test-bench` screenshot (`apiome-docs/screens.json`) is captured
+    // from this state: `A11Y_FIXTURE_DUMP=1 npx jest tests/schema-test-bench.test.tsx -t richest`.
+    writeA11yFixture('test-bench', container.innerHTML);
   });
 });

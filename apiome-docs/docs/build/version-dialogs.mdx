@@ -1,0 +1,123 @@
+---
+title: Version dialogs
+description: Create, edit, publish, sunset, compare and export versions — every dialog explained.
+sidebar_position: 1.3
+tags: [versions, dialogs]
+---
+
+Every change to a version goes through a dialog on [Versions](./versions.mdx). This page covers each
+one, in the order you are likely to meet them.
+
+## New version
+
+**Click “New version”** in the page header.
+
+1. **Copy source** — **Copy from version** starts from an existing version's classes; leave it on
+   **Create blank version** to start empty.
+2. **Version** — keep **Auto-generate version** and pick a **Bump strategy** (**Minor** by default,
+   or **Patch**); the dialog shows the number it will create. Or choose **Manual entry** and type a
+   **Version ID** such as `2.5.0`.
+3. **Describe the release** — a **Message** is required (for example `Add refund webhooks`);
+   **External reference** (a ticket id) and **Changelog** are optional.
+4. **Click “Create version”.**
+
+<Screenshot id="version-new-dialog" alt="The New version dialog: copy source, version strategy and bump, and the release message and changelog" />
+
+## Edit
+
+**Click “Edit”** on a row, or choose **Edit** from its **Actions** menu. The **Version ID** cannot
+change. You can set the **Lifecycle** (Stable, Beta, Deprecated, Archived), a **Deprecation message**,
+a **Sunset** date (entered in local time, stored as UTC), a **Successor revision**, and the
+**Revision note** and **Changelog**. **Click “Save changes”.**
+
+On a published version the notes are frozen; only the deprecation and sunset metadata can change.
+
+<Screenshot id="version-edit-dialog" alt="The Edit version dialog: lifecycle, deprecation message, sunset, successor, revision note and changelog" />
+
+## Publish
+
+**Click “Publish”** on a draft's row. Choose **Private** or **Public**, write a **Revision note**,
+check the **Publish gates**, and **click “Publish”**. The full walk-through, including **Force
+publish (ignore validation errors)**, is in [Version and
+publish](../getting-started/versions-and-publishing.mdx).
+
+<Screenshot id="publish-dialog" alt="The Publish dialog: visibility, revision note, changelog and the publish gates panel" />
+
+## Schedule sunset
+
+**Choose “Schedule sunset (EOL)…”** from a published version's **Actions** menu.
+
+1. Set **Lifecycle** to **Deprecated** — a sunset needs it.
+2. Write a **Deprecation message** telling consumers what to do.
+3. Pick the **Sunset date and time** (local time; stored in UTC).
+4. Pick the **Successor revision** consumers should move to, if there is one.
+5. **Click “Save”.**
+
+The version then appears on the [sunset timeline](/ship) and in the deprecation banner on the
+timeline.
+
+<Screenshot id="version-sunset-dialog" alt="The Schedule sunset (EOL) dialog: revision, lifecycle, deprecation message, sunset date and successor" />
+
+## Compare
+
+**Click “Compare”** in the page header (it needs at least two versions). Pick **Version 1 (base)** and
+**Version 2 (compare to)**, then **click “Compare versions”**. The result has five tabs:
+
+- **Diff View** — the two documents side by side;
+- **Schema Changes** — each version's revision note and changelog, with breaking hints;
+- **Breaking doc** — the compatibility report: whether the change is breaking, the rules that fired
+  and where;
+- **Migration guide** — what consumers need to change;
+- **Canvas** — the two schema layouts, with added, removed and moved elements coloured.
+
+<Screenshot id="version-compare-cards" alt="Compare, Schema Changes: the base and compare versions' revision notes and changelogs side by side, with a breaking hint" />
+
+<Screenshot id="version-compat-report" alt="Compare, Breaking doc: the overall verdict, the rules that fired, and breaking and safe changes by path" />
+
+<Screenshot id="version-canvas-compare" alt="Compare, Canvas: the base and compare schema layouts with a legend for added, removed, moved and unchanged elements" />
+
+## Export
+
+**Choose “Export to another format…”** from a row's **Actions** menu. Pick a target format, read its
+fidelity — what survives the conversion — and **click “Export”** (or **“Export anyway”** when the
+fidelity check warns). **“Open in Export Studio”** continues in the full [Export
+studio](../getting-started/browse-and-export.mdx#export-another-format).
+
+<Screenshot id="version-export-panel" alt="The export panel: convert to any format, best-fidelity and lossy targets, and recent exports" />
+
+**View spec** from the same menu shows the generated OpenAPI document as JSON or YAML, with
+**“Copy”** and **“Download”**.
+
+## Git-like features
+
+<Flag name="FEATURE_GITLIKE" />
+
+Apiome has branch, merge, fork and tag tooling for versions, but it is switched off: `FEATURE_GITLIKE`
+is a constant in `apiome-ui/lib/feature-flags.ts`, `false` in every shipped build. Production builds
+hide these controls; development builds draw them disabled with a **gitlike** marker. Turning them on
+takes a code change and a rebuild.
+
+| Control | What it would do |
+| --- | --- |
+| **Merge branches** (page header) | Preview and apply a merge of two branches, resolving conflicts path by path |
+| **Branch from here** | Start a named branch at a revision |
+| **Rollback branch to this revision…** | Revert a branch to an earlier revision |
+| **Fork to another project…** | Copy a revision into another project |
+| **Tag this revision** | Give a revision a named tag |
+| **Compare with current**, **Relationship graph** | Compare against the head; show how revisions relate |
+| **Freeze schema**, **Lock revision (delete policy)**, **Delete** | Protect or remove a revision |
+| **Change report** tab | The publication change report — see [Versions](./versions.mdx#change-report-) |
+
+<Screenshot id="version-merge-conflicts" alt="Merge conflicts, from a development build: two paths needing a resolution, with Mine, Theirs and Manual choices" caption="From a development build — this screen cannot be opened in a shipped build." />
+
+## With the API
+
+`POST /v1/versions/{tenant}/{project}` (new), `PUT /v1/versions/{tenant}/{project}/{version}` (edit
+and sunset), `POST …/publish`, `POST /v1/versions/{tenant}/{project}/compatibility` and `POST
+/v1/diff/{tenant}/classified` (compare), `POST /v1/export/{tenant}/document` (export). See the [API
+reference](../reference/api-reference.md).
+
+## Where next
+
+- [Versions](./versions.mdx)
+- [Understand export fidelity](../ship/export-fidelity.md)

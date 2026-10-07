@@ -79,6 +79,7 @@ jest.mock('@/app/components/ade/dashboard/LLMImportDialog', () => ({
 }));
 
 import ProjectsClient from '../src/app/ade/dashboard/projects/ProjectsClient';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -597,5 +598,29 @@ describe('the edit dialog', () => {
     await user.click(within(dialog).getByTestId('projects-edit-submit'));
     await waitFor(() => expect(mockUpdateProject).toHaveBeenCalled());
     expect((mockUpdateProject.mock.calls[0] as string[])[0]).toBe(PAYMENTS.id);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Projects page (`apiome-docs/screens.json`, DOCS-1.5) is captured from
+ * these dumps when the golden-path stack is not running. Written into `e2e/fixtures/hive-a11y/`
+ * with `A11Y_FIXTURE_DUMP=1 npx jest tests/projects-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  it('renders the cards, the table and the New project dialog', async () => {
+    const { user } = await renderProjects();
+    const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+    writeA11yFixture('projects-cards', page().outerHTML);
+
+    await user.click(screen.getByTestId('projects-view-table'));
+    await screen.findByTestId('projects-table-foot');
+    writeA11yFixture('projects-table', page().outerHTML);
+
+    await user.click(screen.getByTestId('projects-create'));
+    writeA11yFixture('projects-create-dialog', (await screen.findByTestId('projects-create-dialog')).outerHTML);
   });
 });

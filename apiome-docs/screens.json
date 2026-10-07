@@ -119,6 +119,154 @@
       ],
       "data": "golden-path",
       "fallback": "fixture:hive-sunset-timeline/timeline.html"
+    },
+    {
+      "id": "versions-changes",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/tab-changes.html"
+    },
+    {
+      "id": "versions-test-bench",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/test-bench.html"
+    },
+    {
+      "id": "versions-discussion",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:project-discussion/panel.html"
+    },
+    {
+      "id": "versions-repository",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/tab-repository.html"
+    },
+    {
+      "id": "version-new-dialog",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/new.html"
+    },
+    {
+      "id": "version-edit-dialog",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/edit.html"
+    },
+    {
+      "id": "version-sunset-dialog",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-versions/sunset.html"
+    },
+    {
+      "id": "version-compare-cards",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/compare-cards.html",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 240
+      }
+    },
+    {
+      "id": "version-canvas-compare",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/canvas-compare.html",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 360
+      }
+    },
+    {
+      "id": "version-compat-report",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/compat-report.html"
+    },
+    {
+      "id": "version-export-panel",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/export-panel.html"
+    },
+    {
+      "id": "version-merge-conflicts",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-version-dialogs/merge-conflicts.html"
+    },
+    {
+      "id": "primitives-namespaces",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/namespaces.html"
+    },
+    {
+      "id": "primitives-resolver",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/resolver.html"
+    },
+    {
+      "id": "primitives-settings",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/settings.html"
+    },
+    {
+      "id": "primitives-import",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/import.html"
+    },
+    {
+      "id": "primitives-editor",
+      "route": "/ade/dashboard/primitives",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitives/editor.html"
+    },
+    {
+      "id": "primitive-detail",
+      "route": "/ade/dashboard/primitives/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitive-detail/detail.html"
+    },
+    {
+      "id": "primitive-testing",
+      "route": "/ade/dashboard/primitives/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-primitive-detail/detail-testing.html"
+    },
+    {
+      "id": "projects",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "mask": [
+        "time"
+      ],
+      "data": "golden-path",
+      "fallback": "fixture:hive-a11y/projects-cards.html"
+    },
+    {
+      "id": "projects-table",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "[data-testid=\"projects-table-foot\"]",
+      "data": "fixture:hive-a11y/projects-table.html"
+    },
+    {
+      "id": "projects-create-dialog",
+      "route": "/ade/dashboard/projects",
+      "waitFor": "[data-testid=\"projects-create-dialog\"]",
+      "data": "fixture:hive-a11y/projects-create-dialog.html"
     }
   ]
 }
