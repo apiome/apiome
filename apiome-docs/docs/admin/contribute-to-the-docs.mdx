@@ -67,7 +67,7 @@ The result looks like this — switch the site theme to see the dark capture:
 | `id` | yes | Lower-case words joined by hyphens; also the image file name |
 | `route` | yes | The product route the screen shows; it is opened in golden-path mode and shown as the route badge |
 | `waitFor` | yes | CSS selector that is visible once the screen is ready |
-| `data` | yes | `"golden-path"` (the real route, signed in to the seeded stack) or `"fixture:<dir>/<file>.html"` (a dump from `apiome-ui/e2e/fixtures/`) |
+| `data` | yes | `"golden-path"` (the real route, signed in to the seeded stack), `"signed-out"` (the real route with no session, such as `/login` — needs only apiome-ui) or `"fixture:<dir>/<file>.html"` (a dump from `apiome-ui/e2e/fixtures/`) |
 | `fallback` | no | For a golden-path entry: the fixture to use when the stack is not running |
 | `mask` | no | CSS selectors painted over before the capture — dates, ids and counts that change between runs |
 | `clip` | no | `{"x", "y", "width", "height"}` to capture one region instead of the viewport |
@@ -76,7 +76,7 @@ The result looks like this — switch the site theme to see the dark capture:
 | `density` | no | `comfortable` (default) or `compact` |
 | `fontScale` | no | `md` (default), or `xs`, `sm`, `lg`, `xl` |
 
-Every capture runs with the clock fixed at 15 June 2026, 09:30 UTC, and with motion off, so two runs
+Next.js's development overlay is hidden in every capture. Every capture runs with the clock fixed at 15 June 2026, 09:30 UTC, and with motion off, so two runs
 produce the same pixels.
 
 ### Where the pixels come from
@@ -84,6 +84,8 @@ produce the same pixels.
 - **Golden-path mode** signs in as the seeded user (`ada@example.com`) and opens the real route. It
   needs the golden-path stack — `scripts/golden_path/run.sh --keep` brings it up, or pass `--boot` —
   and an apiome-ui pointed at it.
+- **Signed-out** entries open their route without signing in, so they work with or without the
+  stack.
 - **Fixture mode** mounts a committed dump of the page into the sign-in route, which loads the
   app's real styles and needs no database. Entries with a `fallback` use it when the stack is down.
 

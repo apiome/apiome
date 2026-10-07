@@ -137,7 +137,6 @@ Milestone: **RC6** (epic and every issue).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.4 | #5621 | Getting started & the spine — with screenshots | Sign in, launcher, onboarding, Home, first import, versions, publish, browse, export, MCP — the “first project in 10 minutes” path as it ships, every step illustrated | `documentation`, `mvp` | N | Y | M | `apiome-docs/docs/getting-started/**`, `apiome-docs/screens.json` |
 | 1.5 | #5622 | Build — Projects, Versions, dialogs, Primitives & types, Studio | Document `/ade/dashboard/projects`, `/versions` (timeline, changes, change report, test bench, discussion, repository tabs; every dialog), `/primitives`, and the Studio editor/paths/code surfaces | `documentation`, `versions` | Y | N | M | `apiome-docs/docs/build/**`, `apiome-docs/screens.json` |
 | 1.6 | #5623 | Bring in — Catalog, import wizard, Repositories, MCP servers | Document the catalog list/item/inspectors and conversion, the import wizard’s eight sources, all seven repository routes, and the five MCP routes | `documentation`, `catalog`, `repository`, `mcp` | Y | N | L | `apiome-docs/docs/bring-in/**`, `apiome-docs/screens.json` |
 | 1.7 | #5624 | Ship — Published, Sunset timeline, Export studio, SDK settings, mock try-out | Document the publish surface, visibility, hosted mocks and scenarios, the EOL timeline and CSV, the five-step export studio, SDK generation settings | `documentation`, `export`, `mock-server` | Y | N | M | `apiome-docs/docs/ship/**`, `apiome-docs/screens.json` |
@@ -222,7 +221,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.4] Getting started & the spine — with screenshots` — [#5621](https://github.com/apiome/apiome/issues/5621)
+### ✅ `apiome: [DOCS-1.4] Getting started & the spine — with screenshots` — [#5621](https://github.com/apiome/apiome/issues/5621) — **Complete**
 **Problem statement.** The README’s “first project in ~10 minutes” and the golden path are the only end-to-end narratives, and neither shows what the screens look like after the Hive redesign.
 
 **Solution / scope.**
@@ -231,9 +230,9 @@ Milestone: **RC6** (epic and every issue).
 - Add the corresponding `screens.json` entries (login, launcher, onboarding-welcome, home, import-wizard-source, versions, publish-dialog, published, export-studio, preferences).
 
 **Acceptance criteria.**
-- [ ] A new user can follow the pages from sign-in to a published, browsable spec on the golden-path stack without reading anything else
-- [ ] Every screen named has a current light + dark screenshot
-- [ ] Copy-voice rules hold (sentence case, verbs on buttons, no “Manage…” titles)
+- [ ] A new user can follow the pages from sign-in to a published, browsable spec on the golden-path stack without reading anything else — *written against the shipped UI; walk it on the golden-path stack to confirm*
+- [x] Every screen named has a current light + dark screenshot
+- [x] Copy-voice rules hold (sentence case, verbs on buttons, no “Manage…” titles)
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

@@ -17,9 +17,10 @@ Full reference: [`apiome-mcp/README.md`](https://github.com/apiome/apiome/blob/m
 
 ## 1. Get an MCP API key (optional, for private specs)
 
-Create an MCP-type key in the UI under **Dashboard → API keys** (`/ade/dashboard/api-keys`). Keys are
-stored hashed and can be scoped to specific tenants/projects. You can skip this if you only need
-public specs.
+A tenant administrator creates MCP keys under **Tenants** (`/ade/dashboard/tenants`): **click
+“Manage”** on the tenant, open **Per-key capabilities**, and **click “Create MCP key”**. Give it a
+**Label** and copy the key when it is shown — it is stored hashed and shown only once. (The **API
+keys** page creates REST keys, not MCP keys.) You can skip this if you only need public specs.
 
 Tenant admins also govern **which tools that key may call** (ceiling, defaults, and per-key
 capabilities). Listing the catalog is never filtered by those settings — see

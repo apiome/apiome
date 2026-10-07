@@ -36,6 +36,7 @@ function entry(overrides = {}) {
 describe('parseData', () => {
   it('reads golden-path and fixture sources', () => {
     assert.deepEqual(parseData('golden-path'), {kind: 'golden-path'});
+    assert.deepEqual(parseData('signed-out'), {kind: 'signed-out'});
     assert.deepEqual(parseData('fixture:hive-catalog/table.html'), {
       kind: 'fixture',
       dir: 'hive-catalog',
@@ -191,6 +192,17 @@ describe('planCapture', () => {
         'img/screens/c.dark.png:fixture',
       ],
     );
+  });
+  it('captures a signed-out entry from the live route whether or not the stack is up', () => {
+    const login = normalizeScreen(entry({id: 'login', route: '/login', data: 'signed-out'})).screen;
+    for (const stackAvailable of [true, false]) {
+      const {jobs, skipped} = planCapture([login], {stackAvailable});
+      assert.deepEqual(skipped, []);
+      assert.deepEqual(jobs.map((job) => job.source.kind), ['signed-out', 'signed-out']);
+    }
+  });
+  it('rejects a fallback on a signed-out entry', () => {
+    assert.match(normalizeScreen(entry({data: 'signed-out', fallback: 'fixture:a/b.html'})).problems[0], /only applies/);
   });
   it('falls back to the fixture, or skips, when the stack is down', () => {
     const {jobs, skipped} = planCapture([golden, withFallback, fixture], {stackAvailable: false});

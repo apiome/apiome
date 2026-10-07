@@ -993,6 +993,9 @@ describe('the browser fixtures', () => {
     const publish = await screen.findByTestId('publish-version-dialog');
     await within(publish).findByTestId('publish-guide-violations-panel');
     await waitFor(() => expect(within(publish).getByTestId('verification-policy-panel')).toHaveTextContent('Passed'));
+    // As a first-time publisher sees it, before any override — the docs site's screenshot
+    // (`apiome-docs/screens.json` `publish-dialog`) is captured from this one.
+    write('publish-ready', publish.outerHTML);
     fireEvent.click(within(publish).getByTestId('publish-force'));
     await within(publish).findByTestId('publish-force-reason');
     write('publish', publish.outerHTML);

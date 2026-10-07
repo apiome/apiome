@@ -31,7 +31,7 @@ The same reference is in the app: press **`?`** anywhere outside a text field, o
 
 ### Sign in (and two-factor)
 1. On `/login`, `Tab` to **Continue with GitHub** / **Continue with GitLab** and press `↵`, or
-   `Tab` to **or use your email**, press `↵`, then fill **Email** and **Password** and press `↵`.
+   `Tab` to **or use your email**, press `↵`, then fill **Email Address** and **Password** and press `↵`.
 2. On the two-factor screen, type the six-digit code (focus starts in the field) and press `↵`.
    When both an authenticator app and an emailed code are offered, `Tab` to the method switch
    and use `←` `→` to change method.
