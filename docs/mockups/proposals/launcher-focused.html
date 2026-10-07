@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>All apps — focused launcher (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local: launcher chrome (no rail) — tokens only */
+  .lch { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 var(--page-pad); }
+  .lch-top { height: 64px; display: flex; align-items: center; gap: 10px; }
+  .lch-top .brand-word { font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.03em; }
+  .lch-hero { position: relative; padding-top: 48px; padding-bottom: 36px; }
+  .lch-hero h1 { font-size: clamp(2.25rem, 3.6vw, 3rem); font-weight: 600; letter-spacing: -0.025em; line-height: 1.08; }
+  .lch-hero .grad { background: linear-gradient(90deg, var(--accent), var(--accent-fg)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lch-hero .greet { font-size: var(--fs-lg); color: var(--fg-muted); font-weight: 500; }
+  .lch-hero .comb { position: absolute; right: -10px; top: 10px; width: 300px; height: 260px; pointer-events: none; animation: float 8s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+  html[data-motion="reduce"] .lch-hero .comb { animation: none; }
+  .lch-eyebrow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .app-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+  @media (max-width: 1100px) { .app-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lch-hero .comb { display: none; } }
+  @media (max-width: 640px) { .app-grid { grid-template-columns: 1fr; } }
+  .app-card { --_c: var(--accent); position: relative; display: flex; flex-direction: column; min-height: 212px; padding: 20px; color: inherit; text-decoration: none; overflow: hidden; text-align: left; width: 100%; }
+  .app-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--_c), color-mix(in srgb, var(--_c) 20%, transparent)); }
+  .app-card:hover { text-decoration: none; }
+  .app-card__go { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--border-strong); color: var(--fg-muted); transition: all var(--dur-fast) var(--ease-out); }
+  .app-card__go [data-lucide] { width: 15px; height: 15px; }
+  .app-card:hover .app-card__go { background: var(--fg); color: var(--bg-surface); box-shadow: none; }
+  .app-card__tag { font-size: var(--fs-2xs); font-weight: 600; letter-spacing: var(--track-caps); text-transform: uppercase; color: var(--fg-subtle); margin-top: 16px; }
+  .app-card__name { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; margin-top: 2px; }
+  .app-card__desc { font-size: var(--fs-sm); color: var(--fg-muted); margin-top: 6px; }
+  .app-card__foot { margin-top: auto; padding-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .app-card--primary { box-shadow: var(--shadow-md), 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+  .next-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); padding: 12px 2px 0; }
+  .next-line .tag { background: transparent; box-shadow: inset 0 0 0 1px var(--border-strong); }
+  .res-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: inherit; text-decoration: none; }
+  .res-row + .res-row { border-top: 1px solid var(--border); }
+  .res-row:hover { text-decoration: none; }
+  .res-row:hover .lr-title { color: var(--accent-fg); }
+  .res-row .lr-title { font-size: var(--fs-sm); font-weight: 500; }
+  .res-row .lr-sub { font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .ship-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; font-size: var(--fs-sm); }
+  .ship-row + .ship-row { border-top: 1px solid var(--border); }
+  .ship-row .when { margin-left: auto; font-size: var(--fs-xs); color: var(--fg-subtle); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lch-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 28px; padding-bottom: 40px; font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .lch-foot button { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .lch-foot button:hover { color: var(--fg); }
+</style>
+</head>
+<body data-shell="bare" data-page="proposals/launcher-focused">
+<main class="page hex-bg glow-honey" style="overflow:hidden">
+  <!-- Top row: brand · (no version badge) · preferences · account · sign out -->
+  <header class="lch lch-top" id="annot-1">
+    <a class="row gap-2" href="launcher-focused.html" style="color:inherit" title="Apiome home"><span class="brand-mark"></span><span class="brand-word">apiome</span></a>
+    <div class="ml-auto row gap-1">
+      <button class="btn btn--ghost btn--icon" aria-label="What’s new" data-tip="What’s new" data-action="open" data-target="whats-new" style="position:relative"><i data-lucide="sparkles"></i><span class="dot dot--honey" style="position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--honey)"></span></button>
+      <button class="btn btn--ghost btn--icon" aria-label="Preferences" data-tip="Preferences (⌘,)" data-action="open" data-target="settings-pane"><i data-lucide="settings-2"></i></button>
+      <a class="btn btn--ghost btn--pill" href="../account/profile.html" aria-label="Account menu for Ada Lovelace" style="padding-left:6px"><span class="avatar avatar--sm avatar--a">AL</span>Ada</a>
+      <a class="btn btn--ghost btn--icon" href="../auth/login.html" aria-label="Sign out" data-tip="Sign out"><i data-lucide="log-out"></i></a>
+    </div>
+  </header>
+
+  <!-- Hero: shorter; the one primary CTA lives on the Control Panel card -->
+  <section class="lch lch-hero">
+    <svg class="comb" viewBox="0 0 300 260" aria-hidden="true">
+      <g transform="translate(150 130)">
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" fill="var(--honey)" opacity=".9"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(104 0)" fill="var(--honey-soft)" stroke="var(--honey)" stroke-opacity=".5"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(-104 0)" fill="var(--honey-soft)" stroke="var(--honey)" stroke-opacity=".5"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(52 -90)" fill="var(--accent-soft)" stroke="var(--accent)" stroke-opacity=".5"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(-52 -90)" fill="none" stroke="var(--border-strong)"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(52 90)" fill="none" stroke="var(--border-strong)"/>
+        <polygon points="0,-58 50,-29 50,29 0,58 -50,29 -50,-29" transform="translate(-52 90)" fill="var(--accent-soft)" stroke="var(--accent)" stroke-opacity=".5"/>
+        <polygon points="0,-22 19,-11 19,11 0,22 -19,11 -19,-11" fill="var(--brand-navy)" opacity=".85"/>
+      </g>
+    </svg>
+    <div class="greet">Good afternoon, Ada</div>
+    <h1 class="mt-1">Your API<br /><span class="grad">specification workspace</span></h1>
+    <div class="row gap-2 mt-5 wrap">
+      <a class="chip" href="../workspace/tenants.html"><span class="avatar avatar--xs avatar--hex avatar--brand">AC</span>Acme Corp <span class="t-faint">· Owner · Free</span></a>
+      <a class="chip" href="../build/projects.html"><i data-lucide="folder-kanban"></i>3 projects</a>
+      <a class="chip" href="../ship/published.html"><i data-lucide="globe"></i>5 published</a>
+      <a class="chip" href="../govern/lint-posture.html"><i data-lucide="shield-check"></i>2 need attention</a>
+    </div>
+  </section>
+
+  <!-- Applications: only things you can open -->
+  <section class="lch" id="annot-2">
+    <div class="lch-eyebrow"><span class="t-caps">Applications</span><span class="t-sm t-muted">Only what you can open right now.</span></div>
+    <div class="app-grid">
+      <a class="card card--hover app-card app-card--primary" href="../home/overview.html" style="--_c:var(--accent)">
+        <span class="app-card__go" aria-hidden="true"><i data-lucide="arrow-right"></i></span>
+        <span class="icon-tile icon-tile--lg icon-tile--accent icon-tile--hex"><i data-lucide="layout-dashboard"></i></span>
+        <div class="app-card__tag">Governance</div>
+        <div class="app-card__name">Control Panel</div>
+        <p class="app-card__desc">Projects, versions, catalog, repositories, MCP servers and workspace settings.</p>
+        <div class="app-card__foot"><span>Included · last opened 2 h ago</span><span class="kbd">G</span></div>
+      </a>
+      <div class="card app-card" style="--_c:var(--neutral);opacity:.72" aria-label="Commercial suite (not installed)">
+        <span class="app-card__go" aria-hidden="true"><i data-lucide="puzzle"></i></span>
+        <span class="icon-tile icon-tile--lg"><i data-lucide="layers"></i></span>
+        <div class="app-card__tag">Commercial suite</div>
+        <div class="app-card__name">Licensed apps</div>
+        <p class="app-card__desc">Suite apps you are entitled to appear here automatically. They are supplied and designed by their own product repositories.</p>
+        <div class="app-card__foot"><span class="badge badge--outline">Host-injected</span></div>
+      </div>
+      <a class="card card--hover app-card" href="https://browse.apiome.dev/" target="_blank" rel="noopener" style="--_c:var(--ok)">
+        <span class="app-card__go" aria-hidden="true"><i data-lucide="arrow-up-right"></i></span>
+        <span class="icon-tile icon-tile--lg icon-tile--ok icon-tile--hex"><i data-lucide="globe"></i></span>
+        <div class="app-card__tag">Public catalog</div>
+        <div class="app-card__name">Browser</div>
+        <p class="app-card__desc">Discover and compare published specifications from every organization.</p>
+        <div class="app-card__foot"><span class="row gap-1"><i data-lucide="external-link" style="width:12px;height:12px"></i>Opens in a new tab</span></div>
+      </a>
+    </div>
+    <!-- Everything “coming soon”, in one quiet line instead of three disabled cards/rows -->
+    <div class="next-line" id="annot-3"><i data-lucide="telescope" class="t-subtle" style="width:15px;height:15px"></i><span>Coming next:</span><span class="tag">Developer Suite · SDKs &amp; tooling</span><span class="tag">Community</span><span class="tag">Marketplace</span><button class="btn btn--link btn--sm" data-action="open" data-target="whats-new">Follow in What’s new</button></div>
+  </section>
+
+  <!-- Resources + recently shipped -->
+  <section class="lch mt-6" style="display:grid;grid-template-columns:7fr 5fr;gap:var(--space-4)">
+    <div class="card" style="padding:18px 20px">
+      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">Resources</span><span class="t-sm t-muted">Learn, then get back to work.</span></div>
+      <a class="res-row" href="../foundations/help.html"><span class="icon-tile icon-tile--accent"><i data-lucide="circle-help"></i></span><div class="grow"><div class="lr-title">Help &amp; docs</div><div class="lr-sub">Guides, shortcuts, videos and support</div></div><i data-lucide="arrow-right" class="t-subtle"></i></a>
+      <a class="res-row" href="https://www.youtube.com/@apiomedev" target="_blank" rel="noopener"><span class="icon-tile icon-tile--rose"><i data-lucide="youtube"></i></span><div class="grow"><div class="lr-title">Video walkthroughs</div><div class="lr-sub">Short screencasts on YouTube</div></div><i data-lucide="arrow-up-right" class="t-subtle"></i></a>
+      <a class="res-row" href="#" data-action="open" data-target="shortcuts"><span class="icon-tile icon-tile--honey"><i data-lucide="keyboard"></i></span><div class="grow"><div class="lr-title">Keyboard shortcuts</div><div class="lr-sub">⌘K palette · G then a letter to jump</div></div><span class="kbd">?</span></a>
+    </div>
+    <div class="card" style="padding:18px 20px" id="annot-4">
+      <div class="lch-eyebrow" style="margin-bottom:4px"><span class="t-caps">Recently shipped</span><span class="t-sm t-muted">From What’s new</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Access audit</div><div class="t-xs t-subtle">Append-only ledger of who did what, with drawer detail.</div></div><span class="when">v0.344</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Lint posture <span class="badge badge--honey">Preview</span></div><div class="t-xs t-subtle">Catalog-wide findings, waivers and remediation trends.</div></div><span class="when">v0.339</span></div>
+      <div class="ship-row"><span class="dot dot--ok" style="margin-top:6px"></span><div><div class="t-500">Design system route</div><div class="t-xs t-subtle">Every component, every theme, at <span class="mono">/design-system</span>.</div></div><span class="when">v0.350</span></div>
+      <button class="btn btn--sm btn--ghost mt-2" data-action="open" data-target="whats-new"><i data-lucide="sparkles"></i>All release notes</button>
+    </div>
+  </section>
+
+  <footer class="lch lch-foot" id="annot-5">
+    <button data-action="open" data-target="whats-new" title="View What’s new"><span class="mono">v0.351.0 RC · build 2026.10.07</span><span class="dot" style="width:5px;height:5px;background:var(--honey)"></span></button>
+    <span>© 2021 – 2026 NobuData LLC</span>
+  </footer>
+</main>
+
+<script>
+  document.addEventListener('hive:mounted', () => {
+    const put = (sel, n, dx, dy) => { const el = document.querySelector(sel); if (!el) return; const dot = document.createElement('span'); dot.className = 'mock-annot'; dot.textContent = n; el.style.position = el.style.position || 'relative'; dot.style.left = (dx ?? -10) + 'px'; dot.style.top = (dy ?? -10) + 'px'; el.appendChild(dot); };
+    put('#annot-1', 1, 4, 20); put('#annot-2', 2, -26, 0); put('#annot-3', 3, -26, 12); put('#annot-4', 4); put('#annot-5', 5, -26, 24);
+    if (window.Hive) Hive.icons();
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade — proposal, supersedes <code>home/launcher.html</code> (keeps its page contract and hrefs)</p>
+  <h4>Problem (observed 2026-10-07 on the shipped page)</h4>
+  <ul>
+    <li>Of eight tiles and rows on the launcher, four cannot be opened: “Developer Suite — coming soon”, “Community — soon”, “Marketplace — soon” and the “On the roadmap: Audit — Planned” card. Access audit shipped (it is in the rail), so the roadmap card is also stale.</li>
+    <li>The build badge (“v0.346.0 RC”) sits beside the brand at the top, a placement DESIGN.md §5.1 retired in favour of the user menu footer.</li>
+    <li>Eyebrow copy (“Jump into the tool you need right now”, “Learn, connect, and extend your workflow”) is filler by the §10 test.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> Top row: brand · What’s new (honey dot when unread) · Preferences · account · Sign out. The build string moves to the footer, still opening What’s new.</li>
+    <li><b>2</b> Applications shows only openable tiles (3-up). Control Panel carries the one emphasised card (<code>.app-card--primary</code>) and “last opened”. Host-injected commercial tiles slot in as today.</li>
+    <li><b>3</b> One quiet “Coming next” line replaces three disabled surfaces and the dead Configure/Enable buttons pattern; it links to What’s new rather than promising dates.</li>
+    <li><b>4</b> “Recently shipped” replaces “On the roadmap”: three most recent What’s new entries, so the launcher never advertises a feature the rail already has.</li>
+    <li><b>5</b> Footer: build string + honey dot → What’s new; copyright unchanged.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Greeting with time of day and first name, hero title, workspace/summary chips, Control Panel / Browser / commercial cards with the same hrefs and new-tab behaviour, Preferences, account chip, Sign out, What’s new dialog, keyboard hint <code>G</code>.</li></ul>
+  <h4>States</h4>
+  <ul><li>No entitlement: the commercial tile is hidden and the grid is 2-up. No What’s new entries: “Recently shipped” card is omitted and Resources spans the row. No tenant: unchanged — the onboarding guard replaces the launcher.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>Amends §10 with a “coming soon” rule: unreleased features appear once, as text, never as disabled controls; and §5.1 (build string placement) is restated.</li></ul>
+</template>
+</body>
+</html>

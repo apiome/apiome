@@ -15,6 +15,10 @@ it is the top-level navigation page; every screen is one click away.
   preferences are *live* on every mockup and persist in `localStorage`.
 * One HTML file per screen, grouped by job: `home/ build/ sources/ ship/ govern/
   workspace/ account/ auth/ tools/ admin/ foundations/`.
+* **`PROPOSALS.md` + `proposals/`** — round-2 proposals from the 2026-10-07 look & feel
+  review of the *shipped* redesign (density, header actions, rail fit, launcher focus, honey
+  usage). Each proposal supersedes part of an existing mockup and says which; it does not
+  replace the original until its ticket lands.
 * **Out of scope:** the commercial suite apps (designer / paths workspaces) are
   owned by their own repositories. This set never designs or links to them — it
   only reserves the entitlement-gated slots the host injects at runtime.
@@ -73,6 +77,7 @@ and what it ships, are in `DESIGN.md §12`.
 | `sources/mcp-servers.html` · `mcp-endpoint.html` · `mcp-analytics.html` · `mcp-capabilities.html` · `mcp-compare.html` | `/ade/dashboard/mcp/**` | app |
 | `tools/database.html` · `migration.html` | `/ade/database` · `/ade/migration` | app |
 | `admin/login.html` · `overview.html` · `users.html` · `tenants.html` · `licenses.html` · `feature-flags.html` · `templates.html` · `settings.html` | `/admin/**` | admin |
+| `proposals/versions-status-strip.html` · `catalog-quiet.html` · `launcher-focused.html` · `rail-compact.html` | `/ade/dashboard/versions` · `/catalog` · `/ade` · shell (round-2 proposals, see `PROPOSALS.md`) | app · bare |
 
 ## Extending the design system
 

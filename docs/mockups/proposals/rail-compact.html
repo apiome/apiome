@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rail — fits 900 px (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<script src="../assets/hive.js" defer></script>
+<style>
+  .legend li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: var(--fs-sm); }
+  .legend .n { width: 20px; height: 20px; border-radius: 50%; background: var(--honey); color: #2A1F00; font-size: 11px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0; }
+  .budget { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); }
+  .budget th { text-align: left; font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--track-caps); color: var(--fg-subtle); padding: 0 10px 8px; }
+  .budget td { padding: 7px 10px; border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .budget td.num { text-align: right; font-family: var(--font-mono); }
+  .budget tr.total td { font-weight: 600; border-top: 2px solid var(--border-strong); }
+  /* Proposed rail tweaks, applied to the live rail by the script below */
+  .nav-group__label .group-count { margin-left: auto; font-size: var(--fs-2xs); color: var(--fg-faint); font-family: var(--font-mono); display: none; }
+  .nav-group.is-collapsed .nav-group__label .group-count { display: inline; }
+  .nav-group.is-collapsed .nav-group__label [data-lucide] { margin-left: 4px; }
+  .rail__nav .nav-group { margin-top: 6px; }
+  .nav-item .nav-count { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full); background: var(--accent); color: #fff; font-size: var(--fs-2xs); font-weight: 600; display: inline-grid; place-items: center; }
+</style>
+</head>
+<body data-shell="app" data-nav="" data-page="proposals/rail-compact" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div>
+          <div class="crumbs"><a href="../index.html">Mockups</a><i data-lucide="chevron-right"></i><span>Proposals</span><i data-lucide="chevron-right"></i><span>Rail</span></div>
+          <h1 class="page-title">Rail that fits 900 px</h1>
+          <p class="page-desc">The rail on the left <em>is</em> the proposal — the shared shell, re-cut by the script on this page. Toggle <strong>Callouts</strong> to number the changes.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" data-action="toggle-rail"><i data-lucide="panel-left-close"></i>Collapse rail <span class="kbd">⌘\</span></button>
+          <button class="btn btn--primary" data-action="annot"><i data-lucide="message-square-dot"></i>Toggle callouts</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <section class="grid grid-main-aside">
+      <div class="card">
+        <div class="card__header"><div class="card__title"><i data-lucide="panel-left"></i>What changes</div><span class="t-xs t-subtle">264 px · 34 px rows · footer pinned</span></div>
+        <div class="card__body">
+          <ol class="legend">
+            <li><span class="n">1</span><div><b>Workspace group starts collapsed.</b> Members · Roles · API keys are admin chores, not daily work; a collapsed group shows its count and opens with one click (state already persists under <code>hive.navCollapsed</code>, DESIGN.md §5.2). Build / Bring in / Ship / Govern stay open.</div></li>
+            <li><span class="n">2</span><div><b>Tenants leaves the rail.</b> It becomes the last row of the workspace switcher menu (“Manage workspaces…”), where switching already happens. The route is unchanged.</div></li>
+            <li><span class="n">3</span><div><b>Tools (Data browser · Migrations) get a home in the user menu</b> under “Admin console”. The shipped rail already leaves them out (<code>lib/platform-nav.ts</code> defers the Tools group), so today they are reachable only from deep links; one menu row makes them discoverable without spending rail height. They still render in the legacy palette until P6 lands.</div></li>
+            <li><span class="n">4</span><div><b>SDK settings folds into Export studio</b> as a tab (“SDK & branding”). Both configure how a published version leaves the system.</div></li>
+            <li><span class="n">5</span><div><b>Notifications shows a count</b> in the footer rather than only a bell, and the footer order becomes Notifications · Help · Preferences · user.</div></li>
+            <li><span class="n">6</span><div><b>“Preview” pill → dot.</b> The honey pill on Lint posture reads as a badge of honour on every page; a 6 px honey dot after the label says “preview” without shouting, and the tooltip carries the word.</div></li>
+          </ol>
+        </div>
+      </div>
+      <aside class="col gap-4">
+        <div class="card card--pad">
+          <div class="t-h4">Vertical budget at 900 px</div>
+          <p class="t-xs t-muted mt-1">Measured on the shipped shell fixture (comfortable density, md font). The nav scrolls when it exceeds the budget; the footer is pinned.</p>
+          <table class="budget mt-3">
+            <thead><tr><th>Region</th><th class="num">Today</th><th class="num">Proposed</th></tr></thead>
+            <tbody>
+              <tr><td>Brand + workspace + search</td><td class="num">160</td><td class="num">160</td></tr>
+              <tr><td>Nav items (34 px)</td><td class="num">17 × 34 = 578</td><td class="num">12 × 34 = 408*</td></tr>
+              <tr><td>Group labels (≈ 26 px)</td><td class="num">5 × 26 = 128</td><td class="num">5 × 26 = 128</td></tr>
+              <tr><td>Footer (3 rows + user)</td><td class="num">160</td><td class="num">160</td></tr>
+              <tr class="total"><td>Total</td><td class="num t-danger">≈ 1 030</td><td class="num t-ok">≈ 860</td></tr>
+            </tbody>
+          </table>
+          <p class="t-xs t-subtle mt-2">* 15 items after Tenants and SDK settings leave, minus the 3 Workspace rows while the group is collapsed. Nothing scrolls at 900 px; below ≈ 860 px the nav scrolls as today, and under 900 px wide the rail collapses to icons.</p>
+        </div>
+        <div class="card card--pad"><div class="t-h4">Try it</div><div class="row gap-2 wrap mt-2"><button class="btn btn--sm" data-action="open" data-target="ws-menu">Workspace menu</button><button class="btn btn--sm" data-action="open" data-target="user-menu">User menu</button><button class="btn btn--sm" data-action="open" data-target="palette">⌘K</button></div><p class="t-xs t-subtle mt-2">The shared menus are the current mockup’s; the proposal adds “Manage workspaces…” to the first and “Data browser · Migrations” to the second.</p></div>
+      </aside>
+    </section>
+
+    <section class="card">
+      <div class="card__header"><div class="card__title"><i data-lucide="list-tree"></i>Resulting navigation model</div><span class="t-xs t-subtle">DESIGN.md §6, amended</span></div>
+      <div class="card__body">
+        <table class="table table--dense" style="max-width:760px">
+          <thead><tr><th>Group</th><th>Items</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>—</td><td>Home</td><td class="t-muted">—</td></tr>
+            <tr><td>Build</td><td>Projects · Primitives &amp; types</td><td class="t-muted">—</td></tr>
+            <tr><td>Bring in</td><td>Catalog · Repositories · MCP servers</td><td class="t-muted">—</td></tr>
+            <tr><td>Ship</td><td>Published · Sunset timeline · Export studio</td><td><span class="badge badge--outline">SDK settings → Export studio tab</span></td></tr>
+            <tr><td>Govern</td><td>Style guides · Lint posture <span class="dot" style="background:var(--honey);width:6px;height:6px"></span> · Access audit</td><td><span class="badge badge--outline">Preview pill → dot</span></td></tr>
+            <tr><td>Workspace <span class="t-faint mono">(3)</span></td><td>Members · Roles · API keys</td><td><span class="badge badge--outline">collapsed by default</span> <span class="badge badge--outline">Tenants → workspace menu</span></td></tr>
+            <tr><td>Footer</td><td>Notifications <span class="badge badge--accent">3</span> · Help &amp; docs · Preferences · user</td><td><span class="badge badge--outline">count on Notifications</span></td></tr>
+            <tr><td>User menu</td><td>Profile · Linked accounts · Preferences · What’s new · Shortcuts · <b>Data browser · Migrations</b> · Admin console · All apps · Sign out</td><td><span class="badge badge--outline">Tools group → user menu</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  // Re-cut the shared rail into the proposed shape, then number the changes.
+  document.addEventListener('hive:mounted', () => {
+    const rail = document.querySelector('.rail');
+    if (!rail) return;
+    const groupByLabel = (label) => [...rail.querySelectorAll('.nav-group')].find((g) => g.getAttribute('data-group') === label);
+    const removeItem = (id) => { const el = rail.querySelector(`[data-nav-id="${id}"]`); if (el) el.remove(); };
+
+    // 2 · 3 · 4 — items that leave the rail (the shipped rail has no Tools group; the mockup model does)
+    removeItem('tenants'); removeItem('sdk-settings'); removeItem('database'); removeItem('migration');
+    const tools = groupByLabel('Tools'); if (tools) tools.remove();
+
+    // 1 — Workspace starts collapsed, with a count
+    const ws = groupByLabel('Workspace');
+    if (ws) {
+      ws.classList.add('is-collapsed');
+      const lbl = ws.querySelector('.nav-group__label');
+      lbl.setAttribute('aria-expanded', 'false');
+      const count = document.createElement('span'); count.className = 'group-count'; count.textContent = ws.querySelectorAll('.nav-item').length;
+      lbl.insertBefore(count, lbl.querySelector('[data-lucide]'));
+    }
+    // Every group label gets a count (shown only while collapsed)
+    rail.querySelectorAll('.nav-group').forEach((g) => { const lbl = g.querySelector('.nav-group__label'); if (!lbl || lbl.querySelector('.group-count')) return; const c = document.createElement('span'); c.className = 'group-count'; c.textContent = g.querySelectorAll('.nav-item').length; lbl.insertBefore(c, lbl.querySelector('[data-lucide]')); });
+
+    // 6 — Preview pill → honey dot + tooltip
+    const lint = rail.querySelector('[data-nav-id="lint"]');
+    if (lint) { const pill = lint.querySelector('.nav-pill'); if (pill) { const d = document.createElement('span'); d.className = 'dot'; d.style.cssText = 'width:6px;height:6px;background:var(--honey);margin-left:6px'; d.title = 'Preview'; pill.replaceWith(d); } lint.title = 'Lint posture · Preview'; }
+
+    // 5 — Notifications with a count, first in the footer
+    const bottom = rail.querySelector('.rail__bottom');
+    if (bottom) {
+      const n = document.createElement('a'); n.className = 'nav-item'; n.href = '#'; n.innerHTML = '<i data-lucide="bell"></i><span>Notifications</span><span class="nav-count" aria-label="3 unread">3</span>';
+      bottom.insertBefore(n, bottom.firstChild);
+    }
+
+    // Menus: add the moved destinations
+    const wsMenu = document.querySelector('#ws-menu .menu');
+    if (wsMenu) { const sep = document.createElement('div'); sep.className = 'menu__sep'; const a = document.createElement('a'); a.className = 'menu__item'; a.href = '../workspace/tenants.html'; a.innerHTML = '<i data-lucide="building-2"></i>Manage workspaces…'; wsMenu.appendChild(sep); wsMenu.appendChild(a); }
+    const userMenu = document.querySelector('#user-menu .menu');
+    if (userMenu) { const sep = document.createElement('div'); sep.className = 'menu__sep'; const a = document.createElement('a'); a.className = 'menu__item'; a.href = '../tools/database.html'; a.innerHTML = '<i data-lucide="database"></i>Data browser'; const b = document.createElement('a'); b.className = 'menu__item'; b.href = '../tools/migration.html'; b.innerHTML = '<i data-lucide="route"></i>Migrations'; userMenu.appendChild(sep); userMenu.appendChild(a); userMenu.appendChild(b); }
+
+    // Callouts
+    const put = (el, n, dx, dy) => { if (!el) return; const dot = document.createElement('span'); dot.className = 'mock-annot'; dot.textContent = n; el.style.position = el.style.position || 'relative'; dot.style.left = (dx ?? -10) + 'px'; dot.style.top = (dy ?? -10) + 'px'; el.appendChild(dot); };
+    put(ws, 1, 214, 0); put(rail.querySelector('.ws-switch'), 2, 214, 10); put(rail.querySelector('.rail__user'), 3, 214, 12); put(rail.querySelector('[data-nav-id="export"]'), 4, 214, 6); put(bottom && bottom.firstChild, 5, 214, 6); put(lint, 6, 214, 6);
+    if (window.Hive) Hive.icons();
+  });
+</script>
+
+<template id="notes">
+  <p class="route">Shell — proposal; amends <code>foundations/shell.html</code> §Rail and DESIGN.md §5.2 / §6. Routes are unchanged.</p>
+  <h4>Problem (measured 2026-10-07 on the shipped shell)</h4>
+  <ul>
+    <li>The expanded rail carries 17 destinations in 5 groups plus a 4-row footer: ≈ 1 030 px of content (shell fixture, 2026-10-07). At 900 px tall (a 1440 × 900 laptop, or 1536 × 864 at 125 %) the nav scrolls behind a hidden scrollbar and the Workspace group is below the fold.</li>
+    <li>Tools (Data browser · Migrations) have no navigation entry at all in the shipped shell, and still render in the legacy palette (their mockups are <em>awaiting-redesign</em> in the parity ledger).</li>
+    <li>Two always-on honey pills (“Preview” in the rail, “gitlike” in headers) compete with the one brand ornament honey is reserved for (DESIGN.md §2).</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul><li>See the legend on the page: 1 Workspace collapsed by default with count · 2 Tenants → workspace switcher menu · 3 Tools → user menu · 4 SDK settings → Export studio tab · 5 Notifications count in the footer · 6 Preview pill → dot.</li></ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Every route and its gating; the icon rail; ⌘K; group collapse persistence (<code>hive.navCollapsed</code>); the admin rail variant.</li></ul>
+  <h4>States</h4>
+  <ul><li>No tenant: gated items render at 45 % as today; the Workspace group label still shows its count. Rail collapsed: counts and dots hide with the labels; the Notifications count stays as a 6 px dot on the bell.</li></ul>
+  <h4>Implementation</h4>
+  <ul><li><code>lib/platform-nav.ts</code> (groups, default-collapsed flag per group, item moves); <code>RailFooter</code> (count); <code>WorkspaceSwitcher</code> + <code>UserMenu</code> (new rows); Export studio tabs. No new tokens.</li></ul>
+</template>
+</body>
+</html>

@@ -398,3 +398,23 @@ other. P6 can run in parallel with P3–P5 once P2 lands.
 See `README.md` for the full mockup → route → components table. Every mockup
 also carries a **Notes** panel (bottom-right mock bar → *Notes*) with the route,
 what it replaces, and per-screen implementation notes.
+
+## 14. Round-2 proposals (2026-10-07) — *proposed, not yet adopted*
+
+A look & feel review of the shipped redesign (`apiome-ui` 0.351.0) found that the
+tokens, components and themes hold, and that what remains is **density and
+attention**: standing stat strips and banners push the first row of data 600–870 px
+down at 1440 × 900, headers exceed the one-primary rule, the rail overflows a 900 px
+window, and unopenable “coming soon” surfaces take prime space. The findings, the
+measurements and four mockups are in **`PROPOSALS.md`** and `proposals/`:
+
+| Mockup | Proposes |
+| --- | --- |
+| `proposals/versions-status-strip.html` | status strip (one row, one open detail) instead of stacked banners; ⋯ overflow in the header; record switcher in the breadcrumb; one toolbar per table |
+| `proposals/catalog-quiet.html` | facts line instead of a stat strip on list pages; dismissible first-visit explainer + ghost link; one card per list |
+| `proposals/launcher-focused.html` | only openable tiles; one “Coming next” line; Recently shipped from What’s new; build string in the footer |
+| `proposals/rail-compact.html` | Workspace collapsed by default with counts; Tenants / SDK settings / Tools re-homed; Notifications count; Preview pill → dot |
+
+If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (default-collapsed
+groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
+and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.

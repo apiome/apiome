@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Versions — status strip (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .crumb-switch { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px 0 8px; margin: -3px -6px; border-radius: var(--r-sm); color: var(--fg); font-weight: 500; font-size: var(--fs-xs); background: transparent; border: 0; cursor: pointer; }
+  .crumb-switch:hover { background: var(--bg-subtle); }
+  .crumb-switch [data-lucide] { width: 12px; height: 12px; opacity: .7; }
+
+  /* Status strip — one row, one open detail at a time */
+  .status-strip { background: var(--bg-surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+  .status-strip__row { display: flex; align-items: center; gap: 6px; padding: 8px 10px; flex-wrap: wrap; }
+  .status-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 9px; border-radius: var(--r-full); font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); background: transparent; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px var(--border); }
+  .status-chip [data-lucide] { width: 14px; height: 14px; }
+  .status-chip:hover { background: var(--bg-subtle); color: var(--fg); }
+  .status-chip.is-open { box-shadow: none; color: var(--fg); }
+  .status-chip--ok [data-lucide] { color: var(--ok); }      .status-chip--ok.is-open { background: var(--ok-soft); color: var(--ok-fg); }
+  .status-chip--accent [data-lucide] { color: var(--accent); } .status-chip--accent.is-open { background: var(--accent-soft); color: var(--accent-fg); }
+  .status-chip--warn [data-lucide] { color: var(--warn); }  .status-chip--warn.is-open { background: var(--warn-soft); color: var(--warn-fg); }
+  .status-chip .dot { width: 6px; height: 6px; }
+  .status-strip__detail { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px 12px; border-top: 1px solid var(--border); font-size: var(--fs-sm); color: var(--fg-muted); }
+  .status-strip__detail .banner-title { color: var(--fg); font-weight: 600; }
+  .status-strip__detail .banner-actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  .status-strip__detail [data-lucide] { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
+  .status-strip__detail[data-tone="ok"] [data-lucide]:first-child { color: var(--ok); }
+  .status-strip__detail[data-tone="accent"] [data-lucide]:first-child { color: var(--accent); }
+  .status-strip__detail[data-tone="warn"] [data-lucide]:first-child { color: var(--warn); }
+
+  .ver-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .ver-cell .ver-line { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .ver-cell .ver-link { font-family: var(--font-mono); font-weight: 600; color: var(--fg); }
+  .versions-table th:nth-child(1), .versions-table td:nth-child(1) { width: 225px; min-width: 225px; }
+  .versions-table td { vertical-align: top; padding-top: 10px; padding-bottom: 10px; }
+  .fork-box { display: inline-flex; gap: 6px; align-items: center; padding: 3px 8px; border-radius: var(--r-sm); background: var(--violet-soft); color: var(--violet-fg); font-size: var(--fs-2xs); }
+  .mock-cell { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+  .mock-cell .mock-url { display: flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--fg-muted); max-width: 165px; }
+  .mock-cell .mock-url code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .page-actions { flex-wrap: wrap; justify-content: flex-end; }
+
+  /* before / after measurement strip */
+  .measure { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--border); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .measure > div { background: var(--bg-surface); padding: 14px 16px; }
+  .measure .n { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: var(--track-tight); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body data-shell="app" data-nav="projects" data-page="proposals/versions-status-strip" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs">
+            <a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Build</span><i data-lucide="chevron-right"></i><a href="../build/projects.html">Projects</a><i data-lucide="chevron-right"></i>
+            <button class="crumb-switch" data-action="open" data-target="project-switch" aria-haspopup="menu" title="Switch project" id="annot-1">Payments API<i data-lucide="chevrons-up-down"></i></button>
+          </div>
+          <h1 class="page-title">Payments API
+            <span class="fmt fmt--openapi">OpenAPI 3.1</span>
+            <span class="badge badge--dot" data-status="draft" title="Head revision v2.4.0 is a draft">v2.4.0 draft</span>
+            <span class="badge badge--ok" title="Stored quality score of the head revision"><i data-lucide="shield-check"></i>B · 88</span>
+          </h1>
+          <p class="page-desc">Revisions and releases for this project · <a href="../ship/sunset-timeline.html">Sunset timeline (EOL schedule)</a></p>
+        </div>
+        <div class="page-actions" id="annot-2">
+          <a class="btn" href="../build/version-dialogs.html#compare" title="Compare two revisions"><i data-lucide="git-compare-arrows"></i>Compare</a>
+          <button class="btn" title="Import a specification into a new project"><i data-lucide="upload"></i>Import</button>
+          <button class="btn btn--icon" data-action="open" data-target="more-menu" aria-label="More actions" title="More actions"><i data-lucide="ellipsis"></i></button>
+          <button class="btn btn--primary" data-action="open" data-target="new-version"><i data-lucide="git-fork"></i>New version</button>
+        </div>
+      </div>
+      <div class="tabs" data-tabs="main-views" role="tablist" aria-label="Versions views">
+        <button class="tab is-active" role="tab"><i data-lucide="scroll-text"></i>Timeline<span class="count">6</span></button>
+        <button class="tab" role="tab"><i data-lucide="git-compare-arrows"></i>Changes<span class="count">4</span></button>
+        <a class="tab" href="../build/version-dialogs.html#change-report" role="tab"><i data-lucide="file-text"></i>Change report</a>
+        <a class="tab" href="../build/version-dialogs.html#test-bench" role="tab"><i data-lucide="flask-conical"></i>Test bench</a>
+        <button class="tab" role="tab"><i data-lucide="messages-square"></i>Discussion</button>
+        <button class="tab" role="tab"><i data-lucide="git-branch"></i>Repository</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ===== Status strip: three banners → one row, one open at a time ===== -->
+    <section class="status-strip" id="annot-3" aria-label="Project status">
+      <div class="status-strip__row">
+        <span class="t-caps" style="margin-right:4px">Status</span>
+        <button class="status-chip status-chip--ok" data-detail="compat" aria-expanded="false"><i data-lucide="shield-check"></i>Compatible <span class="t-faint">v2.3.0 → v2.3.1</span></button>
+        <button class="status-chip status-chip--accent" data-detail="new" aria-expanded="false"><i data-lucide="sparkles"></i>What’s new <span class="t-faint">v2.4.0 draft</span></button>
+        <button class="status-chip status-chip--warn is-open" data-detail="sunset" aria-expanded="true"><i data-lucide="sunset"></i>v2.2.0 deprecated <span class="t-faint">· sunset 30 Sep</span></button>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn btn--ghost btn--sm" data-collapse-strip title="Hide the detail row">Collapse<i data-lucide="chevron-up"></i></button>
+      </div>
+      <div class="status-strip__detail" data-tone="ok" data-detail-for="compat" hidden>
+        <i data-lucide="shield-check"></i>
+        <div><span class="banner-title">Compatible.</span> Parent → head check recorded 2 h ago: <span class="mono">v2.3.1 → v2.4.0</span> has 3 additive changes and no breaking changes.</div>
+        <div class="banner-actions"><a class="btn btn--sm" href="../build/version-dialogs.html#compat-report">View report</a></div>
+      </div>
+      <div class="status-strip__detail" data-tone="accent" data-detail-for="new" hidden>
+        <i data-lucide="sparkles"></i>
+        <div><span class="banner-title">What’s new in v2.4.0 (draft).</span> Refund reasons on <span class="mono">POST /refunds</span>, payout webhook events, <span class="mono">Idempotency-Key</span> documented on all writes.</div>
+        <div class="banner-actions"><button class="btn btn--sm">Open changes</button></div>
+      </div>
+      <div class="status-strip__detail" data-tone="warn" data-detail-for="sunset">
+        <i data-lucide="sunset"></i>
+        <div><span class="banner-title">v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.</span> Successor <span class="mono">v2.3.1</span>. Migrate to <span class="mono">/payment-intents</span> before sunset. Consumers see the same warning on compatibility checks.</div>
+        <div class="banner-actions"><a class="btn btn--sm" href="../ship/sunset-timeline.html">Sunset timeline</a><a class="btn btn--sm" href="#" target="_blank" rel="noopener">Migration guide<i data-lucide="arrow-up-right"></i></a></div>
+      </div>
+    </section>
+
+    <!-- Related artifacts + project facts: unchanged, but the facts card is a single kv list -->
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) 340px">
+      <section class="card">
+        <div class="card__header"><div class="card__title"><i data-lucide="link"></i>Related artifacts</div><a class="t-xs" href="../sources/catalog.html">Show all representations</a></div>
+        <div>
+          <div class="list-row"><div class="grow min-w-0"><div class="lr-title"><a href="../sources/catalog-item.html">payments-api.graphql</a></div><div class="lr-sub row gap-2 mt-1"><span class="fmt fmt--graphql">GraphQL</span><span class="badge badge--outline">http</span><span>Linked</span></div></div><div class="lr-actions"><button class="btn btn--sm btn--ghost"><i data-lucide="unlink"></i>Unlink</button></div></div>
+          <div class="list-row" style="opacity:.7"><div class="grow min-w-0"><div class="lr-title t-strike t-muted">payments-legacy.wsdl</div><div class="lr-sub row gap-2 mt-1"><span class="fmt fmt--wsdl">WSDL</span><span>Deleted</span></div></div><div class="lr-actions"><button class="btn btn--sm btn--ghost"><i data-lucide="unlink"></i>Unlink</button></div></div>
+        </div>
+        <div class="card__footer"><button class="btn btn--sm"><i data-lucide="sparkles"></i>Suggest links</button></div>
+      </section>
+      <section class="card card--pad" id="annot-4">
+        <div class="row-between"><div class="t-h4">Project</div><span class="flag" title="Compiled but hidden today (FEATURE_GITLIKE=false)"><i data-lucide="flag"></i>gitlike</span></div>
+        <dl class="kv mt-3">
+          <dt>Id</dt><dd class="mono">8f2a1c00</dd>
+          <dt>Slug</dt><dd class="mono">payments-api</dd>
+          <dt>Head</dt><dd class="mono">v2.4.0 · 9d3f7a21</dd>
+          <dt>Last published</dt><dd class="mono">v2.3.1 · 08/03/26</dd>
+          <dt>Publishable</dt><dd>Yes (not a catalog item)</dd>
+        </dl>
+        <hr class="mt-4 mb-3" />
+        <div class="row gap-2 wrap">
+          <a class="btn btn--sm" href="../ship/published.html"><i data-lucide="globe"></i>Published surface</a>
+          <a class="btn btn--sm" href="../ship/export-studio.html"><i data-lucide="package-open"></i>Export studio</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== One toolbar instead of two: filters live in the table toolbar ===== -->
+    <section class="table-wrap" id="annot-5">
+      <div class="table-toolbar">
+        <div class="input-wrap" style="width:240px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Message, changelog, commit…" aria-label="Search revisions" /></div>
+        <select class="select select--sm" style="width:150px" aria-label="Lifecycle filter"><option>All lifecycles</option><option>Stable</option><option>Beta</option><option>Deprecated</option><option>Archived</option></select>
+        <button class="btn btn--sm" data-action="open" data-target="time-filter" aria-haspopup="dialog"><i data-lucide="calendar"></i>Any time<i data-lucide="chevron-down"></i></button>
+        <button class="btn btn--sm" data-action="open" data-target="author-filter" aria-haspopup="menu"><i data-lucide="user"></i>All authors<i data-lucide="chevron-down"></i></button>
+        <span class="chip is-active" data-action="chip">All <span class="t-faint">6</span></span>
+        <span class="chip" data-action="chip">Drafts <span class="t-faint">2</span></span>
+        <span class="chip" data-action="chip">Published <span class="t-faint">4</span></span>
+        <span class="spacer"></span>
+        <button class="btn btn--sm btn--ghost"><i data-lucide="arrow-up-down"></i>Sorted by created ↓<i data-lucide="chevron-down"></i></button>
+      </div>
+      <div class="scroll-x">
+      <table class="table versions-table">
+        <thead><tr>
+          <th class="sortable">Version <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Revision / changelog <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Status <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th>Mock</th>
+          <th class="sortable">Created by <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable is-sorted" aria-sort="descending">Created <span class="sort"><i data-lucide="arrow-down"></i></span></th>
+          <th><span class="sr-only">Actions</span></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.4.0</a><span class="badge badge--ok">Stable</span><span class="badge badge--outline">HEAD</span><span class="badge badge--ok"><i data-lucide="shield-check"></i>B · 88</span></div><div class="t-2xs t-subtle mono">9d3f7a21</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Add refund reasons and payout webhooks</div><div class="cell-sub t-truncate">- added: RefundReason enum · - added: payout.settled event</div></td>
+            <td><span class="badge badge--dot" data-status="draft">Draft</span></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm" role="switch" aria-checked="false" aria-label="Mock for version 2.4.0" data-action="switch"></button><span class="t-xs t-muted">Draft mock off</span></div></div></td>
+            <td><div class="t-sm">Ada Lovelace</div><div class="cell-sub">ada@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">08/15/26 03:12</td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Publish" style="color:var(--ok)"><i data-lucide="lock"></i></button><button class="btn btn--ghost btn--sm btn--icon" data-tip="Edit"><i data-lucide="pencil"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+          <tr>
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.3.1</a><span class="badge badge--ok">Stable</span><span class="badge badge--outline"><i data-lucide="lock"></i>Published</span><span class="badge badge--ok"><i data-lucide="shield-check"></i>A · 94</span></div><div class="t-2xs t-subtle mono">4c8e1b09</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Patch: fix Refund.amount minimum</div><div class="cell-sub t-truncate">- fixed: Refund.amount minimum 0.01</div></td>
+            <td><span class="badge badge--dot" data-status="published"><i data-lucide="circle-check"></i>Published</span></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm is-on" role="switch" aria-checked="true" aria-label="Mock for version 2.3.1" data-action="switch"></button><span class="t-xs t-muted">Mock on</span></div><div class="mock-url"><code>https://mock.apiome.dev/acme/payments-api/2.3.1</code><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy mock URL"><i data-lucide="copy"></i></button></div><div class="row gap-2 t-xs"><a href="#"><i data-lucide="flask-conical" style="width:12px;height:12px"></i> Scenarios</a><a href="#"><i data-lucide="link-2" style="width:12px;height:12px"></i> Correlation</a></div></div></td>
+            <td><div class="t-sm">Grace Hopper</div><div class="cell-sub">grace@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">08/02/26 10:40<div class="cell-sub t-ok">Published 08/03/26</div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Unpublish" style="color:var(--orange)"><i data-lucide="lock-open"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+          <tr>
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.3.0</a><span class="badge badge--ok">Stable</span><span class="badge badge--outline"><i data-lucide="lock"></i>Published</span><span class="badge badge--warn"><i data-lucide="shield-check"></i>C · 71</span></div><div class="t-2xs t-subtle mono">77ab0c5e</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Payouts resource + settlement reports</div><div class="cell-sub t-truncate">- added: /payouts, /payouts/{id}/report</div></td>
+            <td><div class="row gap-1 wrap"><span class="badge badge--dot" data-status="published"><i data-lucide="circle-check"></i>Published</span><span class="badge" data-status="disabled">Disabled</span></div></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm" role="switch" aria-checked="false" aria-label="Mock for version 2.3.0" data-action="switch"></button><span class="t-xs t-muted">Mock off</span></div></div></td>
+            <td><div class="t-sm">Linus Torvalds</div><div class="cell-sub">linus@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">07/21/26 05:30<div class="cell-sub t-ok">Published 07/21/26</div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Edit"><i data-lucide="pencil"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+          <tr>
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.2.0</a><span class="badge" data-status="deprecated">Deprecated</span><span class="badge badge--outline"><i data-lucide="lock"></i>Published</span><span class="badge badge--ok"><i data-lucide="shield-check"></i>B · 82</span></div><div class="fork-box"><i data-lucide="git-fork" style="width:11px;height:11px"></i>Fork · from v1.9.0 (Orders Service)</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Card tokenisation + 3DS challenge flow</div><div class="cell-sub t-truncate">Sunset 2026-09-30 · successor v2.3.1</div></td>
+            <td><span class="badge badge--dot" data-status="published"><i data-lucide="circle-check"></i>Published</span></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm" role="switch" aria-checked="false" aria-label="Mock for version 2.2.0" data-action="switch"></button><span class="t-xs t-muted">Mock off</span></div></div></td>
+            <td><div class="t-sm">Ada Lovelace</div><div class="cell-sub">ada@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">06/10/26 08:15<div class="cell-sub t-ok">Published 06/10/26</div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Schedule sunset (EOL)"><i data-lucide="sunset"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+          <tr style="opacity:.8">
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.1.0</a><span class="badge" data-status="archived">Archived</span><span class="badge badge--outline"><i data-lucide="lock"></i>Published</span><span class="badge badge--outline"><i data-lucide="shield"></i>Locked</span><span class="badge badge--outline">Lint —</span></div><div class="t-2xs t-subtle mono">1f0e9d88</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Initial public release</div><div class="cell-sub t-faint">—</div></td>
+            <td><span class="badge badge--dot" data-status="published"><i data-lucide="circle-check"></i>Published</span></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm" role="switch" aria-checked="false" aria-label="Mock for version 2.1.0" data-action="switch"></button><span class="t-xs t-muted">Mock off</span></div></div></td>
+            <td><div class="t-sm">Ada Lovelace</div><div class="cell-sub">ada@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">03/02/26 03:00<div class="cell-sub t-ok">Published 03/02/26</div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+          <tr>
+            <td><div class="ver-cell"><div class="ver-line"><a class="ver-link" href="#">v2.0.0-beta.1</a><span class="badge" data-status="beta">Beta</span><span class="badge badge--outline">Lint —</span></div><div class="t-2xs t-subtle mono">b3d1e6a0</div></div></td>
+            <td style="max-width:260px"><div class="cell-primary t-truncate">Experimental: instant payouts</div><div class="cell-sub t-truncate">Spike for instant payouts; not for release.</div></td>
+            <td><span class="badge badge--dot" data-status="draft">Draft</span></td>
+            <td><div class="mock-cell"><div class="row gap-2"><button class="switch switch--sm is-on" role="switch" aria-checked="true" aria-label="Mock for version 2.0.0-beta.1" data-action="switch"></button><span class="t-xs t-muted">Private mock on</span><span class="badge" data-status="private">Private</span></div><div class="mock-url"><code>https://mock.apiome.dev/acme/payments-api/2.0.0-beta.1</code><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy mock URL"><i data-lucide="copy"></i></button></div></div></td>
+            <td><div class="t-sm">Linus Torvalds</div><div class="cell-sub">linus@example.com</div></td>
+            <td class="t-num t-muted" style="white-space:nowrap">02/14/26 08:48</td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Publish" style="color:var(--ok)"><i data-lucide="lock"></i></button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions"><i data-lucide="ellipsis"></i></button></div></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="table-foot"><span>6 revisions · sorted by created ↓ · lifecycle filter: all</span><span>Head <span class="mono">v2.4.0</span> · last published <span class="mono">v2.3.1</span></span></div>
+    </section>
+
+    <!-- ===== Why: the vertical budget at 1440 × 900 (measured on the shipped page, 2026-10-07) ===== -->
+    <section>
+      <div class="section-title"><h2>Why this layout</h2><span class="t-muted">Measured on the shipped page at 1440 × 900, comfortable density</span></div>
+      <div class="measure">
+        <div><div class="t-caps">First revision row — today</div><div class="n mt-1">≈ 870 px</div><div class="t-xs t-subtle mt-1">Below the fold: three stacked banners (≈ 200 px) + two filter bars (≈ 130 px) sit above the table.</div></div>
+        <div><div class="t-caps">First revision row — this proposal</div><div class="n mt-1 t-ok">≈ 670 px</div><div class="t-xs t-subtle mt-1">Status strip (≈ 110 px with one detail open, ≈ 46 px collapsed) + one toolbar — measured on this mockup; ≈ 610 px with the strip collapsed.</div></div>
+        <div><div class="t-caps">Header controls</div><div class="n mt-1">6 → 4</div><div class="t-xs t-subtle mt-1">Project switcher moves into the breadcrumb; Merge branches, Sunset timeline, Export studio and Published surface sit in the ⋯ menu (DESIGN.md §1.2, §5.3).</div></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Overflow menu (header ⋯) -->
+<div class="overlay" id="more-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:76px 170px 0 0">
+  <div class="menu" role="menu" style="min-width:260px">
+    <div class="menu__label">This project</div>
+    <a class="menu__item" href="#" aria-disabled="true" style="opacity:.55" title="Create at least two named branches to merge"><i data-lucide="git-merge"></i>Merge branches…<span class="flag" style="margin-left:auto"><i data-lucide="flag"></i>gitlike</span></a>
+    <a class="menu__item" href="../ship/sunset-timeline.html"><i data-lucide="sunset"></i>Sunset timeline</a>
+    <a class="menu__item" href="../ship/published.html"><i data-lucide="globe"></i>Published surface</a>
+    <a class="menu__item" href="../ship/export-studio.html"><i data-lucide="package-open"></i>Export studio</a>
+    <div class="menu__sep"></div>
+    <a class="menu__item" href="#"><i data-lucide="link"></i>Copy link to project<span class="kbd">⌘⇧C</span></a>
+  </div>
+</div>
+
+<!-- Project switcher (breadcrumb) -->
+<div class="overlay" id="project-switch" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:52px 0 0 492px">
+  <div class="menu" role="menu" style="min-width:300px">
+    <div style="padding:4px 4px 8px"><div class="input-wrap"><i data-lucide="search"></i><input class="input input--sm" placeholder="Jump to project…" aria-label="Jump to project" /></div></div>
+    <a class="menu__item" href="#" aria-current="true" style="background:var(--bg-subtle)"><span class="fmt fmt--openapi">OpenAPI</span>Payments API<i data-lucide="check" style="margin-left:auto;color:var(--accent)"></i></a>
+    <a class="menu__item" href="#"><span class="fmt fmt--openapi">OpenAPI</span>Orders Service</a>
+    <a class="menu__item" href="#"><span class="fmt fmt--asyncapi">AsyncAPI</span>Inventory Events</a>
+    <div class="menu__sep"></div>
+    <a class="menu__item" href="../build/projects.html"><i data-lucide="folder-kanban"></i>All projects</a>
+  </div>
+</div>
+
+<!-- Time filter popover -->
+<div class="overlay" id="time-filter" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:690px 0 0 740px">
+  <div class="menu" role="dialog" aria-label="Created between" style="min-width:300px;padding:12px">
+    <div class="t-caps mb-2">Created between</div>
+    <div class="grid grid-2" style="gap:8px">
+      <label class="field"><span class="label t-xs">From</span><input class="input input--sm" type="date" aria-label="From date" /></label>
+      <label class="field"><span class="label t-xs">To</span><input class="input input--sm" type="date" aria-label="To date" /></label>
+    </div>
+    <div class="row gap-1 wrap mt-3"><span class="chip" data-action="chip">Last 7 days</span><span class="chip" data-action="chip">Last 30 days</span><span class="chip" data-action="chip">This quarter</span></div>
+    <div class="row gap-2 mt-3" style="justify-content:flex-end"><button class="btn btn--sm btn--ghost" data-action="close">Clear</button><button class="btn btn--sm btn--primary" data-action="close">Apply</button></div>
+  </div>
+</div>
+
+<!-- Author filter menu -->
+<div class="overlay" id="author-filter" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:690px 0 0 850px">
+  <div class="menu" role="menu" style="min-width:220px">
+    <a class="menu__item" href="#" data-action="close"><i data-lucide="check" style="color:var(--accent)"></i>All authors</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--a">AL</span>Ada Lovelace</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--b">GH</span>Grace Hopper</a>
+    <a class="menu__item" href="#" data-action="close"><span class="avatar avatar--xs avatar--c">LT</span>Linus Torvalds</a>
+  </div>
+</div>
+
+<!-- New version: unchanged — see build/version-dialogs.html -->
+<div class="overlay" id="new-version" data-overlay>
+  <div class="dialog dialog--sm" role="dialog"><div class="dialog__header"><span class="icon-tile icon-tile--ok"><i data-lucide="git-fork"></i></span><div><div class="dialog__title">New version</div><div class="dialog__desc">Unchanged from <a href="../build/versions.html">build/versions.html</a> — this proposal only touches the page chrome.</div></div><button class="btn btn--ghost btn--icon dialog__close" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div><div class="dialog__footer"><button class="btn" data-action="close">Close</button></div></div>
+</div>
+
+<script>
+  // Status strip: one detail open at a time; clicking the open chip (or Collapse) hides the detail row.
+  document.addEventListener('hive:mounted', () => {
+    const strip = document.querySelector('.status-strip');
+    const chips = [...strip.querySelectorAll('.status-chip')];
+    const details = [...strip.querySelectorAll('.status-strip__detail')];
+    const show = (id) => {
+      chips.forEach((c) => { const on = !!id && c.getAttribute('data-detail') === id; c.classList.toggle('is-open', on); c.setAttribute('aria-expanded', on); });
+      details.forEach((d) => { d.hidden = d.getAttribute('data-detail-for') !== id; });
+      strip.querySelector('[data-collapse-strip]').hidden = !id;
+    };
+    chips.forEach((c) => c.addEventListener('click', () => show(c.classList.contains('is-open') ? null : c.getAttribute('data-detail'))));
+    strip.querySelector('[data-collapse-strip]').addEventListener('click', () => show(null));
+
+    // Numbered callouts (toggle with the Callouts button, bottom-right).
+    const put = (sel, n, dx, dy) => { const el = document.querySelector(sel); if (!el) return; const dot = document.createElement('span'); dot.className = 'mock-annot'; dot.textContent = n; el.style.position = el.style.position || 'relative'; dot.style.left = (dx ?? -10) + 'px'; dot.style.top = (dy ?? -10) + 'px'; el.appendChild(dot); };
+    put('#annot-1', 1, -22, -2); put('#annot-2', 2, -26, 8); put('#annot-3', 3); put('#annot-4', 4); put('#annot-5', 5);
+    if (window.Hive) Hive.icons();
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/versions?projectId=… — proposal, supersedes the banner block and header of <code>build/versions.html</code> (everything else there still applies)</p>
+  <h4>Problem (measured 2026-10-07 on the shipped page)</h4>
+  <ul>
+    <li>Three full-width banners (Compatible · What’s new · Deprecated) stack above the content on every visit: ≈ 200 px before the first card, and the first revision row lands ≈ 870 px down at 1440 × 900 — below the fold.</li>
+    <li>Two separate filter bars (“Timeline” search/author/dates, then lifecycle select + chips) for one table.</li>
+    <li>Six header controls (project select, Import, Compare, Merge branches, gitlike flag, New version) against DESIGN.md §1.2 “one primary, secondaries, overflow”.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> Project switcher becomes the last breadcrumb (typeahead menu). The header keeps the title for the page it is on.</li>
+    <li><b>2</b> Actions: Compare · Import · ⋯ · <b>New version</b>. The ⋯ menu holds Merge branches [gitlike], Sunset timeline, Published surface, Export studio, Copy link.</li>
+    <li><b>3</b> <code>.status-strip</code>: one row of status chips; exactly one detail open at a time; the most severe tone (danger &gt; warn &gt; accent &gt; ok) opens by default on first paint, and the choice persists per project for the session. A chip with nothing to say is not rendered. Chips are keyboard-reachable buttons with <code>aria-expanded</code>.</li>
+    <li><b>4</b> Project facts: a single <code>.kv</code> list; the two deep links move into the ⋯ menu and stay here as small buttons.</li>
+    <li><b>5</b> One <code>.table-toolbar</code>: search, lifecycle, “Any time” date popover, author menu, state chips, sort. Filters stay in the URL as today.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Every tab, every row control, row menu, dialogs, mock switches, Related artifacts, gitlike panels (collapsed into the strip as a fourth chip when <code>FEATURE_GITLIKE</code> is on: “Server is ahead” → warn tone).</li></ul>
+  <h4>States</h4>
+  <ul><li>No status → the strip is not rendered. One status → the chip renders already open with no Collapse button. Loading → one skeleton chip. The deprecation detail keeps its two actions; the compat detail keeps View report.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>Amends §5.4 (adds the status strip as an overlay-free pattern) and §8 “List page” (one toolbar per table; stacked banners cap at one).</li></ul>
+</template>
+</body>
+</html>

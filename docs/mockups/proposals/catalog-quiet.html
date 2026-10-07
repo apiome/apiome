@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Catalog — quiet list page (proposal) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<script src="../assets/hive.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .about-link { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-fg); font-size: var(--fs-sm); background: none; border: 0; padding: 0; cursor: pointer; }
+  .about-link [data-lucide] { width: 13px; height: 13px; }
+  .about-link:hover { text-decoration: underline; }
+
+  /* Facts line: the stat strip, folded into one sentence */
+  .facts { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--fg); font-weight: 600; }
+  .facts .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-faint); }
+  .facts .fmt { height: 18px; font-size: var(--fs-2xs); }
+  .facts-toggle { margin-left: auto; }
+
+  /* Dismissible callout: the explainer on first visit only */
+  .callout--dismiss { display: flex; align-items: flex-start; gap: 10px; background: var(--accent-soft); color: var(--accent-fg); border-left: 0; }
+  .callout--dismiss [data-lucide] { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
+  .callout--dismiss .callout__actions { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
+
+  .table .cell-sub, .table td.t-num { white-space: nowrap; }
+  .table td:nth-child(2) { min-width: 300px; }
+  .table td:nth-child(2) .row { white-space: nowrap; }
+  .grade { width: 22px; height: 22px; border-radius: var(--r-full); display: inline-grid; place-items: center; font-size: var(--fs-2xs); font-weight: 700; color: #fff; }
+  .grade--a { background: var(--ok); } .grade--c { background: var(--orange); } .grade--d { background: var(--danger); } .grade--none { background: var(--bg-inset); color: var(--fg-subtle); }
+
+  .measure { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--border); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .measure > div { background: var(--bg-surface); padding: 14px 16px; }
+  .measure .n { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: var(--track-tight); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body data-shell="app" data-nav="catalog" data-page="proposals/catalog-quiet" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Bring in</span><i data-lucide="chevron-right"></i><span>Catalog</span></div>
+          <h1 class="page-title">Catalog</h1>
+          <p class="page-desc">Non-OpenAPI specs, stored as-is and converted only when you’re ready. <button class="about-link" data-action="open" data-target="about-catalog" id="annot-1"><i data-lucide="circle-help"></i>How the catalog works</button></p>
+        </div>
+        <div class="page-actions">
+          <label class="row gap-2 t-sm t-muted" style="margin-right:6px"><button class="switch switch--sm" role="switch" aria-checked="false" data-action="switch"></button>Show deleted</label>
+          <button class="btn btn--primary" data-action="open" data-target="import-note"><i data-lucide="upload"></i>Import to catalog<span class="kbd">I</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body" style="gap:var(--space-4)">
+
+    <!-- ===== Facts line: what the 4-stat strip said, in one line ===== -->
+    <div class="facts" id="annot-2">
+      <span><b>3</b> items</span><span class="sep"></span>
+      <span class="row gap-1"><b>3</b> formats <span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--proto">gRPC</span><span class="fmt fmt--asyncapi">AsyncAPI</span></span><span class="sep"></span>
+      <span>avg quality <b>B · 83</b></span><span class="sep"></span>
+      <span><b>1</b> converted to OpenAPI</span><span class="sep"></span>
+      <span class="t-subtle">1 deleted · 1 disabled</span>
+      <button class="btn btn--ghost btn--sm facts-toggle" data-action="toggle" data-target="stat-strip" aria-expanded="false" aria-controls="stat-strip"><i data-lucide="chart-no-axes-column"></i>Show stats</button>
+    </div>
+    <!-- The strip is still here — one click away, remembered per device -->
+    <section class="stat-grid stat-grid--4" id="stat-strip" hidden>
+      <div class="stat"><div class="stat__label"><i data-lucide="library"></i>Cataloged items</div><div class="stat__value">3</div><div class="row gap-1"><span class="badge badge--ok">2 active</span><span class="badge badge--warn">1 disabled</span></div></div>
+      <div class="stat"><div class="stat__label"><i data-lucide="gauge"></i>Avg quality</div><div class="stat__value t-ok">B<small>· 83</small></div><div class="stat__foot">across 3 items</div></div>
+      <div class="stat"><div class="stat__label"><i data-lucide="layers"></i>Formats represented</div><div class="stat__value">3</div><div class="stat__foot">GraphQL · gRPC / Protobuf · AsyncAPI</div></div>
+      <div class="stat"><div class="stat__label"><i data-lucide="route"></i>Converted to OpenAPI</div><div class="stat__value">1</div><div class="row gap-1"><span class="badge badge--accent">promotion path</span></div></div>
+    </section>
+
+    <!-- ===== One card: toolbar + views + table ===== -->
+    <section class="table-wrap" id="annot-3">
+      <div class="table-toolbar">
+        <div class="input-wrap" style="width:230px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Filter catalog…  ( / )" aria-label="Filter catalog" /></div>
+        <button class="btn btn--sm" aria-haspopup="menu"><i data-lucide="layers"></i>Format<i data-lucide="chevron-down"></i></button>
+        <select class="select select--sm" style="width:130px" aria-label="Protocol"><option>All protocols</option><option>REST</option><option>RPC</option><option>Event</option><option>Graph</option><option>Data Schema</option></select>
+        <select class="select select--sm" style="width:124px" aria-label="Source"><option>All sources</option><option>Uploaded file</option><option>Source URL</option><option>Pasted content</option></select>
+        <select class="select select--sm" style="width:110px" aria-label="Grade"><option>Any grade</option><option>A</option><option>B</option><option>C</option><option>D</option><option>F</option></select>
+        <span class="spacer"></span>
+        <div class="segmented segmented--sm" data-tabs="views" role="tablist" aria-label="View">
+          <button data-action="tab" data-target="cards" role="tab" data-tip="Cards"><i data-lucide="layout-grid"></i>Cards</button>
+          <button class="is-active" data-action="tab" data-target="table" role="tab" data-tip="Table"><i data-lucide="rows-3"></i>Table</button>
+        </div>
+      </div>
+      <div class="table-toolbar" style="padding-top:6px">
+        <span class="chip is-active" data-action="chip">All <span class="t-faint">3</span></span>
+        <span class="chip" data-action="chip">Active <span class="t-faint">2</span></span>
+        <span class="chip" data-action="chip"><i data-lucide="triangle-alert"></i>Needs attention <span class="t-faint">1</span></span>
+        <span class="chip" data-action="chip" data-tip="Turn on Show deleted to use this view">Deleted <span class="t-faint">1</span></span>
+        <span class="spacer"></span>
+        <button class="btn btn--sm btn--ghost"><i data-lucide="arrow-up-down"></i>Sorted by artifact ↑<i data-lucide="chevron-down"></i></button>
+      </div>
+      <div class="scroll-x">
+      <table class="table">
+        <thead><tr>
+          <th class="cell-check"><label class="check"><input type="checkbox" aria-label="Select all" /></label></th>
+          <th class="sortable is-sorted" aria-sort="ascending">Artifact <span class="sort"><i data-lucide="arrow-up"></i></span></th>
+          <th class="sortable">Format <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Protocol <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Source <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable t-right">Quality <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Grade <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Status <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Updated <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="cell-check"><label class="check"><input type="checkbox" data-action="select-row" aria-label="Select Events Bus" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--hex avatar--a">EB</span><div><div class="cell-primary"><a href="../sources/catalog-item.html">Events Bus</a></div><div class="cell-sub mono">events-bus</div></div></div></td>
+            <td><span class="fmt fmt--asyncapi">AsyncAPI</span></td>
+            <td><span class="badge badge--violet"><i data-lucide="radio"></i>Event</span></td>
+            <td class="t-faint">—</td>
+            <td class="t-right t-num t-faint">—</td>
+            <td><span class="grade grade--none">–</span></td>
+            <td><span class="badge badge--dot" data-status="disabled">Disabled</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+          <tr>
+            <td class="cell-check"><label class="check"><input type="checkbox" data-action="select-row" aria-label="Select Ledger Graph" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--hex avatar--a">LG</span><div><div class="cell-primary"><a href="../sources/catalog-item.html">Ledger Graph</a></div><div class="cell-sub mono">ledger-graph</div><div class="row gap-2 mt-1"><span class="badge badge--ok">Converted →</span><a class="t-xs" href="../build/versions.html">Ledger Graph (OpenAPI)</a></div></div></div></td>
+            <td><span class="fmt fmt--graphql">GraphQL</span></td>
+            <td><span class="badge badge--rose"><i data-lucide="share-2"></i>Graph</span></td>
+            <td><span class="tag"><i data-lucide="upload" style="width:11px;height:11px"></i> ledger.graphql</span></td>
+            <td class="t-right t-num">91</td>
+            <td><span class="grade grade--a">A</span></td>
+            <td><span class="badge badge--dot" data-status="ok">Active</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+          <tr>
+            <td class="cell-check"><label class="check"><input type="checkbox" data-action="select-row" aria-label="Select Orders RPC" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--hex avatar--a">OR</span><div><div class="cell-primary"><a href="../sources/catalog-item.html">Orders RPC</a></div><div class="cell-sub mono">orders-rpc</div></div></div></td>
+            <td><span class="fmt fmt--proto">Protobuf</span></td>
+            <td><span class="badge badge--ok"><i data-lucide="cable"></i>RPC</span></td>
+            <td><span class="tag"><i data-lucide="link" style="width:11px;height:11px"></i> acme.io/orders.proto</span></td>
+            <td class="t-right t-num">74</td>
+            <td><span class="grade grade--c">C</span></td>
+            <td><span class="badge badge--dot" data-status="ok">Active</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="table-foot"><span>3 items · sorted by artifact ↑</span><span class="t-subtle">1 deleted item hidden — turn on <b>Show deleted</b></span></div>
+    </section>
+
+    <!-- ===== First visit: the explainer, once, with a way back ===== -->
+    <section>
+      <div class="section-title"><h2>First visit</h2><span class="t-muted">The explainer shows once per device, then lives behind “How the catalog works”</span></div>
+      <div class="callout callout--dismiss" role="note" id="annot-4">
+        <i data-lucide="info"></i>
+        <div><span class="t-600">Catalog items are non-publishable.</span> They come from formats that don’t map 1:1 to OpenAPI (gRPC, GraphQL, AsyncAPI, OData, WSDL…). They are cataloged, versioned, diffed &amp; linted like Projects — the path to a publishable spec is <b>Convert to OpenAPI</b>. OpenAPI/Swagger imports land in <a href="../build/projects.html">Projects</a>.</div>
+        <div class="callout__actions"><button class="btn btn--sm btn--ghost" data-action="open" data-target="about-catalog">Learn more</button><button class="btn btn--sm">Got it</button></div>
+      </div>
+    </section>
+
+    <!-- ===== Why ===== -->
+    <section>
+      <div class="section-title"><h2>Why this layout</h2><span class="t-muted">Measured on the shipped page at 1440 × 900, comfortable density</span></div>
+      <div class="measure">
+        <div><div class="t-caps">First catalog row — today</div><div class="n mt-1">≈ 600 px</div><div class="t-xs t-subtle mt-1">Explainer (≈ 75 px) + Supported formats row (≈ 70 px) + 4-stat strip (≈ 125 px) + two toolbars precede the list on every visit.</div></div>
+        <div><div class="t-caps">First catalog row — this proposal</div><div class="n mt-1 t-ok">≈ 345 px</div><div class="t-xs t-subtle mt-1">Facts line (≈ 28 px) + one card with both toolbar rows — measured on this mockup. Stats expand in place; the explainer is a dialog.</div></div>
+        <div><div class="t-caps">Same rule, other pages</div><div class="n mt-1">7 lists</div><div class="t-xs t-subtle mt-1">Repositories, Primitives, Repository detail, MCP analytics, Members (seats), Style guides (read-only note), Sunset timeline (note) open with a strip or a standing note today.</div></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- How the catalog works -->
+<div class="overlay" id="about-catalog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="about-title">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="library"></i></span><div><div class="dialog__title" id="about-title">How the catalog works</div><div class="dialog__desc">Everything the standing banner and the formats row used to say.</div></div><button class="btn btn--ghost btn--icon dialog__close" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="dialog__body col gap-4">
+      <div class="col gap-2 t-sm">
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--accent"><i data-lucide="file-input"></i></span><div><div class="t-600">Catalog items are stored as-is</div><div class="t-muted">gRPC, GraphQL, AsyncAPI, OData, WSDL, Avro, RAML, Smithy, TypeSpec, API Blueprint and 30+ more are kept in their original format, versioned, diffed and linted like Projects.</div></div></div>
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--ok"><i data-lucide="route"></i></span><div><div class="t-600">They are not publishable until converted</div><div class="t-muted">The one path to a publishable spec is <b>Convert to OpenAPI</b>, with a fidelity preview before you commit.</div></div></div>
+        <div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="folder-kanban"></i></span><div><div class="t-600">OpenAPI and Swagger go to Projects</div><div class="t-muted">Importing one of those never creates a catalog item — it lands in <a href="../build/projects.html">Projects</a> directly.</div></div></div>
+      </div>
+      <div>
+        <div class="row-between"><div class="t-caps">Supported import formats</div><span class="t-xs t-subtle">44 importable · 4 recognised</span></div>
+        <div class="row gap-1 wrap mt-2"><span class="fmt fmt--proto">Protobuf</span><span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--asyncapi">AsyncAPI</span><span class="fmt fmt--x12">EDI X12</span><span class="fmt fmt--copybook">Copybook</span><span class="fmt fmt--avro">Avro</span><span class="fmt fmt--raml">RAML</span><span class="fmt fmt--wsdl">WSDL</span><span class="fmt fmt--wit">WIT</span><span class="fmt fmt--postman">Postman</span><span class="fmt fmt--mcp">MCP</span><span class="tag">+33 more</span></div>
+        <div class="t-xs t-subtle mt-2">The full list, with docs links, also opens from the Import dialog’s “Which formats?” link.</div>
+      </div>
+    </div>
+    <div class="dialog__footer"><a class="btn btn--ghost" href="../../guide/supported-formats.md"><i data-lucide="book-open"></i>Supported formats guide</a><button class="btn btn--primary" data-action="close">Got it</button></div>
+  </div>
+</div>
+
+<!-- Import entry: unchanged, formats link added -->
+<div class="overlay" id="import-note" data-overlay>
+  <div class="dialog dialog--sm" role="dialog"><div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="upload"></i></span><div><div class="dialog__title">Import to catalog</div><div class="dialog__desc">Unchanged from <a href="../build/import-wizard.html">build/import-wizard.html</a>, plus a “Which formats can I import?” link on step 1 that opens the dialog above.</div></div><button class="btn btn--ghost btn--icon dialog__close" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div><div class="dialog__footer"><button class="btn" data-action="close">Close</button></div></div>
+</div>
+
+<script>
+  document.addEventListener('hive:mounted', () => {
+    const put = (sel, n, dx, dy) => { const el = document.querySelector(sel); if (!el) return; const dot = document.createElement('span'); dot.className = 'mock-annot'; dot.textContent = n; el.style.position = el.style.position || 'relative'; dot.style.left = (dx ?? -10) + 'px'; dot.style.top = (dy ?? -10) + 'px'; el.appendChild(dot); };
+    put('#annot-1', 1, -22, -2); put('#annot-2', 2, -26, 0); put('#annot-3', 3); put('#annot-4', 4);
+    const t = document.querySelector('.facts-toggle');
+    t.addEventListener('click', () => { const open = !document.getElementById('stat-strip').hidden; t.setAttribute('aria-expanded', open); t.innerHTML = `<i data-lucide="chart-no-axes-column"></i>${open ? 'Hide stats' : 'Show stats'}`; Hive.icons(); });
+    if (window.Hive) Hive.icons();
+  });
+</script>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/catalog — proposal, supersedes the top of <code>sources/catalog.html</code> (cards view, inspectors, dialogs there still apply)</p>
+  <h4>Problem (measured 2026-10-07 on the shipped page)</h4>
+  <ul>
+    <li>Three standing blocks precede the list on every visit — the non-publishable explainer, the Supported import formats row and the 4-stat strip — so the first catalog row is ≈ 600 px down at 1440 × 900 before any filtering.</li>
+    <li>The explainer teaches once but costs ≈ 75 px forever. The same pattern recurs on Style guides (“Read-only for members”), Sunset timeline (“Rows include the same structured warnings…”), Members (seat meter + Identity-provider cards) and Lint posture.</li>
+  </ul>
+  <h4>Callouts</h4>
+  <ul>
+    <li><b>1</b> The explainer becomes a ghost link in the page description (“How the catalog works”) that opens a dialog. Same copy, zero standing height.</li>
+    <li><b>2</b> <code>.facts</code>: the stat strip folded into one tabular line under the header; “Show stats” expands the unchanged <code>.stat-grid</code> in place and the choice persists (<code>hive.catalog.stats</code>, per device).</li>
+    <li><b>3</b> One <code>.table-wrap</code> owns filters, view chips, view switch and the table — one card instead of three.</li>
+    <li><b>4</b> First visit only: a dismissible <code>.callout--dismiss</code> with <b>Got it</b> (persists <code>hive.seen.catalog-explainer</code>) and <b>Learn more</b>. Dismissing never hides information — the dialog keeps it.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Cards/Table views, protocol grouping, all filters and URL state, Show deleted, bulk actions, row inspectors, import wizard and the formats list (now in the dialog and on Import step 1).</li></ul>
+  <h4>States</h4>
+  <ul><li>Empty catalog: facts line reads “0 items”, stats toggle hidden, the <code>.empty</code> state inside the card as today. Error: inline banner with retry replaces the table body. Loading: facts line skeleton + 3 skeleton rows.</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>Amends §8 “List page”: stat strips collapse to a facts line by default on list pages (Home and Analytics keep full strips); explanatory banners are dismissible and re-openable from the header.</li></ul>
+</template>
+</body>
+</html>

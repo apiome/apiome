@@ -243,6 +243,12 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'govern/style-guides.html', reason: 'no-page-fixture' },
   { mockup: 'home/launcher.html', reason: 'other-shell' },
   { mockup: 'home/overview.html', reason: 'no-page-fixture' },
+  // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07): each supersedes part of a shipped
+  // page and is compared once its ticket lands and the page fixture is re-dumped.
+  { mockup: 'proposals/catalog-quiet.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/rail-compact.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/versions-status-strip.html', reason: 'awaiting-redesign' },
   { mockup: 'sources/repository-new.html', reason: 'overlay-not-page' },
   { mockup: 'tools/database.html', reason: 'awaiting-redesign' },
   { mockup: 'tools/migration.html', reason: 'awaiting-redesign' },
