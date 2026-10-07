@@ -159,7 +159,7 @@ export default function RepositoryImportSpecMetadataPanel({
             </div>
           ) : (
             <p className="repo-det-note">
-              No metadata block was found in this file for reference.
+              This file carries no metadata block to compare against.
             </p>
           )}
         </CardContent>

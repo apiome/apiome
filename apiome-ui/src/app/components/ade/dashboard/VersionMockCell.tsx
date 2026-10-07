@@ -24,7 +24,7 @@
 
 import { useState } from 'react';
 import { Copy, FlaskConical, Link2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 import { Badge } from '../../ui/Badge';
 import { Button } from '../../ui/Button';
 import { Switch } from '../../ui/Switch';

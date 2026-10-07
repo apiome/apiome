@@ -31,7 +31,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link2, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 
 import { Button } from '../../ui/Button';
 import { Dialog, DialogContent } from '../../ui/Dialog';

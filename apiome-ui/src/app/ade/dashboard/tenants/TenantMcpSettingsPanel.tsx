@@ -31,7 +31,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CircleAlert, Lock, Shield } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';

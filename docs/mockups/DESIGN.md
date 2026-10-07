@@ -330,6 +330,12 @@ Titles are nouns (“Projects”), buttons are verbs (“New project”), descri
 answer “what is this for?” in ≤ 14 words. Avoid “Manage”, “Configure” as titles.
 Errors: what happened + what to do (“Slug is taken — try `acme-eu`”).
 
+HIVE-10.4 made this a gate as well: `apiome-ui/tests/copy-voice-gate.test.ts` fails on a state
+or page description over 14 words, "No … found" copy, or a "Manage …" / "… Management" title.
+The shared error surfaces (`ErrorState`, `ErrorBanner`, danger `Alert`, `toast.error`, error
+dialogs) add "— try again." to a failure that names no next action (`apiome-ui/lib/copy-voice.ts`).
+Rules and the per-route checklist: `docs/guide/content-voice.md`.
+
 ---
 
 ## 11. Implementation mapping & migration strategy

@@ -134,7 +134,7 @@ export function TrustProfilePanel({ profile, loading, error }: Props) {
         variant="compact"
         icon={<ShieldQuestion className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="Not enough signal to profile yet"
-        description="This server has not been scored, documented, changed, or tested enough to build a trust profile. Run discovery and test its tools to populate its axes."
+        description="Not enough history for a trust profile yet. Run discovery and test its tools."
       />
     );
   }

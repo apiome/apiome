@@ -27,7 +27,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { GitBranch, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Card, CardContent } from '@/app/components/ui/Card';

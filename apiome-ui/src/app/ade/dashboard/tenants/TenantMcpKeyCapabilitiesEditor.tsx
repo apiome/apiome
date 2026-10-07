@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CircleAlert, Check, Copy, KeyRound, Lock, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
 import {

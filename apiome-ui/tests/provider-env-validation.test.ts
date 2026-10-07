@@ -289,7 +289,7 @@ describe('DB-sourced config awareness (OLO-8.8, #4974)', () => {
     expect(issue.origin).toBe('env-only');
     expect(issue.message).toContain('GITHUB_SECRET is unset or blank while GITHUB_ID is set');
     expect(issue.message).toContain('Set all of GITHUB_ID, GITHUB_SECRET to enable GitHub sign-in');
-    expect(issue.message).not.toContain('System Configuration');
+    expect(issue.message).not.toContain('System settings');
   });
 
   it('names both stores and the admin screen when the DB source answered', () => {
@@ -298,7 +298,7 @@ describe('DB-sourced config awareness (OLO-8.8, #4974)', () => {
     expect(issue.message).toContain(
       'GITHUB_SECRET is unset or blank in both the stored provider config and env'
     );
-    expect(issue.message).toContain('Admin → System Configuration (/admin/dashboard/settings)');
+    expect(issue.message).toContain('Admin → System settings (/admin/dashboard/settings)');
     expect(issue.message).toContain('which takes precedence');
     expect(issue.message).not.toContain('may already be fully configured in the database');
   });

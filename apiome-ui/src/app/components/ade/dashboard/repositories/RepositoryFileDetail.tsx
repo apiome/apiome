@@ -44,7 +44,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';

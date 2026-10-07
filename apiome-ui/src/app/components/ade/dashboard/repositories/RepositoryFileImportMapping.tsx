@@ -51,7 +51,7 @@ import {
 } from 'lucide-react';
 import { useAuthSession } from '@lib/auth/session-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { createProject } from '@lib/db/helper';
 import { startImport, getImportStatus } from '@lib/db/import-actions';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '@/app/utils/project-quality-score-history';

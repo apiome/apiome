@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { LayoutGrid, List, Plus, TriangleAlert, Trash2, Undo2, Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { useAuthSession } from '@lib/auth/session-client';

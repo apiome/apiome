@@ -1,5 +1,5 @@
 /**
- * System Configuration screen — sign-in provider cards (OLO-8.7, #4973).
+ * System settings screen — sign-in provider cards (OLO-8.7, #4973).
  *
  * Integration tests (RTL) for `AuthProviderSettingsClient` against a mocked
  * `/api/admin/auth-providers` proxy, covering the issue's acceptance criteria:

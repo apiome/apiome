@@ -220,7 +220,7 @@ export function RepositoryFileSpecRelationshipFlow({ document }: { document: unk
       <EmptyState
         variant="compact"
         title="Nothing to plot"
-        description="No components.schemas or definitions map was found in this document. OpenAPI and Swagger bundles with model schemas produce the relationship view."
+        description="This document has no model schemas. Open an OpenAPI or Swagger bundle instead."
       />
     );
   }

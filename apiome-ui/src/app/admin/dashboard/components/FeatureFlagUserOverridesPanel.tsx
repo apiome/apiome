@@ -311,7 +311,7 @@ export function FeatureFlagUserOverridesPanel({
           Feature packages
         </h4>
         <p className="mb-2 text-xs text-gray-500 dark:text-slate-400">
-          Bulk add or remove the same flags together (defined under License Management → Flag packages).
+          Bulk add or remove the same flags together (defined under Licenses → Flag packages).
         </p>
         {groups.length === 0 ? (
           <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs italic text-gray-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">

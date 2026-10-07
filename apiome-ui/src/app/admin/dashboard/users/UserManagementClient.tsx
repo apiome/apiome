@@ -37,6 +37,7 @@ import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOver
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 
 interface User {
   id: string;
@@ -378,7 +379,7 @@ export default function UserManagementClient() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts and approve signups</p>
             </div>
             <button
@@ -523,10 +524,12 @@ export default function UserManagementClient() {
         // Signups Table
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
           {signups.length === 0 ? (
-            <div className="p-12 text-center">
-              <UserPlus className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">No pending signups</p>
-            </div>
+            <EmptyState
+              surface={false}
+              icon={<UserPlus />}
+              title="No pending signups"
+              description="New signups that need approval appear here."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -638,10 +641,12 @@ export default function UserManagementClient() {
         // Users Table
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
           {users.length === 0 ? (
-            <div className="p-12 text-center">
-              <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">No users found</p>
-            </div>
+            <EmptyState
+              surface={false}
+              icon={<Users />}
+              title="No users yet"
+              description="People appear here once they sign up or are approved."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

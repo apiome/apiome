@@ -105,7 +105,7 @@ describe('ScoreBreakdownPanel', () => {
     const clean = report({ score: 100, grade: 'A', findings: [], ruleHits: {}, severityCounts: { error: 0, warning: 0, info: 0 } });
     render(<ScoreBreakdownPanel report={clean} loading={false} error={null} />);
     expect(screen.getByText('No findings')).toBeInTheDocument();
-    expect(screen.getByText(/clean bill of health/i)).toBeInTheDocument();
+    expect(screen.getByText(/passes every lint rule/i)).toBeInTheDocument();
     // No point-cost breakdown is rendered for a clean report.
     expect(screen.queryByText('Points lost by rule group')).not.toBeInTheDocument();
   });

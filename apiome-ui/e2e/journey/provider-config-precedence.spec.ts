@@ -91,7 +91,7 @@ async function openAdminProviderSettings(page: Page): Promise<void> {
   await page.waitForURL(/\/admin\/dashboard/, { timeout: 30_000 });
 
   await page.goto('/admin/dashboard/settings');
-  await expect(page.getByRole('heading', { name: 'System Configuration' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'System settings' })).toBeVisible();
 }
 
 /** The provider's configuration card. Only rendered once the provider has something stored. */

@@ -10,6 +10,9 @@ import InsertStubModal from './InsertStubModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/Dialog';
 import dynamic from 'next/dynamic';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
+import { EmptyState } from '@/app/components/ui/EmptyState';
+import { LoadingState } from '@/app/components/ui/LoadingState';
+import { SkeletonText } from '@/app/components/ui/Skeleton';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -396,9 +399,15 @@ export default function QueryManager() {
       {(viewMode === 'viewAll' || viewMode === 'search') && (
         <div className="flex-1 flex flex-col min-h-0 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           {loading ? (
-            <div className="p-4 text-sm text-gray-500">Loading...</div>
+            <LoadingState message="Loading records…" skeleton={<SkeletonText className="p-4" />} />
           ) : rows.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No records found.</div>
+            <EmptyState
+              variant="inline"
+              icon={<Database />}
+              titleAs="p"
+              title="No matching records"
+              description="Try a different search, or view all records."
+            />
           ) : (
             <>
               <div className="flex-1 overflow-auto p-2">
@@ -623,9 +632,14 @@ export default function QueryManager() {
                     Events
                   </div>
                   {recordHistoryLoading ? (
-                    <div className="p-3 text-sm text-gray-500">Loading…</div>
+                    <LoadingState message="Loading history…" skeleton={<SkeletonText className="p-3" />} />
                   ) : recordHistory.length === 0 ? (
-                    <div className="p-3 text-sm text-gray-500">No history</div>
+                    <EmptyState
+                      variant="inline"
+                      titleAs="p"
+                      title="No history yet"
+                      description="Edits to this record appear here."
+                    />
                   ) : (
                     <div className="overflow-auto flex-1 min-h-0 p-1">
                       {recordHistory.map((evt, idx) => (

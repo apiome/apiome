@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import { chartSeriesStyle, type ChartSeriesTone, CHART_SURFACE } from './chartTokens';
 import { maxValue, polarToCartesian, polygonPoints, radarPoints } from './chartGeometry';
 
@@ -45,7 +45,7 @@ export function Radar({ axes, max, tone = 'indigo', title, className }: RadarPro
   const verts = radarPoints(values, domainMax, CENTER, CENTER, R);
   const polygon = polygonPoints(verts);
 
-  const summary = axes.map((a) => `${a.label}: ${a.value}`).join(', ') || 'No data';
+  const summary = axes.map((a) => `${a.label}: ${a.value}`).join(', ') || CHART_EMPTY_LABEL;
   const label = title ?? `Radar chart — ${summary}`;
 
   return (

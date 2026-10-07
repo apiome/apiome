@@ -46,7 +46,7 @@
 
 import * as React from 'react';
 import { RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
 

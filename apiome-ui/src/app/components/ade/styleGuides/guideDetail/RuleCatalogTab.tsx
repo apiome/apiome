@@ -170,7 +170,7 @@ export default function RuleCatalogTab({ state, readOnlyReason }: RuleCatalogTab
                 ? 'No rules have been modified.'
                 : 'No rules match your search.'
             }
-            description="Clear the search, the category or the Modified only filter to see the rest of the catalog."
+            description="Clear the search, category or Modified only filter to see every rule."
             data-testid="rule-catalog-empty"
           />
         ) : (

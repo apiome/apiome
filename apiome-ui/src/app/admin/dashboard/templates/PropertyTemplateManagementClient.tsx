@@ -21,6 +21,7 @@ import {
 import { SkeletonTableRows } from '@/app/components/ui/Skeleton';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
+import { EmptyState } from '@/app/components/ui/EmptyState';
 import {
   getAllPropertyTemplates,
   getPropertyTemplateStats,
@@ -570,8 +571,15 @@ export default function PropertyTemplateManagementClient() {
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
             {loading ? null : filteredTemplates.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                  No templates found
+                <td colSpan={7}>
+                  <EmptyState
+                    variant="inline"
+                    dashed
+                    tone="neutral"
+                    titleAs="p"
+                    title="No matching templates"
+                    description="Clear the search or filters to see every template."
+                  />
                 </td>
               </tr>
             ) : (

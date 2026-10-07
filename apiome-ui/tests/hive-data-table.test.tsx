@@ -710,7 +710,7 @@ describe('the states a list is in when it has no rows', () => {
       />
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Could not load projects.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load projects — try again.');
     expect(screen.getByRole('columnheader', { name: 'Project' })).toBeInTheDocument();
   });
 

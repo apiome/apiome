@@ -130,7 +130,7 @@ export function ToolLatencyPanel({ reliability, loading, error }: Props) {
         variant="compact"
         icon={<Timer className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No tool calls yet"
-        description="No tools on this server have been exercised in the test console recently, so there is no latency or error-rate data to show. Run a tool from the Test tab to start recording it."
+        description="No recent tool runs to measure. Run a tool from the Test tab."
       />
     );
   }

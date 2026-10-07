@@ -39,7 +39,7 @@
 
 import { FileCode2, GitCommitHorizontal, Layers, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';

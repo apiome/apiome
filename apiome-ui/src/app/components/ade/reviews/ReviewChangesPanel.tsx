@@ -159,7 +159,7 @@ export function ReviewChangesPanel({ reviewId }: ReviewChangesPanelProps) {
       <EmptyState
         icon={<GitCompareArrows />}
         title="First publication"
-        description="Nothing in this project is published yet, so there is nothing to compare this version with. Its whole document is on the Spec tab."
+        description="Nothing published to compare with yet. The whole document is on the Spec tab."
         data-testid="review-changes-initial"
       />
     );

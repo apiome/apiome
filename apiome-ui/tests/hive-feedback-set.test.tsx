@@ -274,7 +274,7 @@ describe('GatedState — the lock preset', () => {
 describe('ErrorState — what happened, and what to do', () => {
   it('announces itself assertively, because a failure that arrives late must interrupt', () => {
     render(<ErrorState description="Boom." />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Boom.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Boom — try again.');
   });
 
   it('keeps the pre-Hive contract: default title, description, and a wired retry', () => {

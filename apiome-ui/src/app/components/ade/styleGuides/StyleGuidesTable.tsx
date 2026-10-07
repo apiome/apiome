@@ -351,7 +351,7 @@ export default function StyleGuidesTable({
           <EmptyState
             icon={<BookOpenCheck aria-hidden />}
             title="No style guides yet."
-            description="Start from Apiome Recommended and tailor it, or create an empty guide and add rules as you go."
+            description="Start from Apiome Recommended, or create an empty guide and add rules."
             action={
               canMutate ? (
                 <>

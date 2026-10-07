@@ -201,7 +201,7 @@ export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSele
         variant="compact"
         icon={<GitCompareArrows className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No capabilities to chart"
-        description="This endpoint has no discovered capabilities across its snapshots yet. Run discovery to start building its lifespan history."
+        description="No capabilities discovered yet. Run discovery to start their lifespan history."
       />
     );
   }

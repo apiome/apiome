@@ -39,7 +39,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Copy, Globe, Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { Alert } from '../../../ui/Alert';
 import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';

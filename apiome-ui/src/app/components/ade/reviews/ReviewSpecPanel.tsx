@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { Copy } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';

@@ -226,7 +226,7 @@ describe('CatalogImportDialog — URL + paste intake (MFI-26.2)', () => {
     await waitFor(() => expect(screen.getByText(/kept verbatim/i)).toBeInTheDocument());
     await confirmThroughQualityStep();
 
-    await waitFor(() => expect(screen.getByText('Adapter unavailable.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Adapter unavailable — try again.')).toBeInTheDocument());
     expect(starts).toHaveLength(0);
   });
 

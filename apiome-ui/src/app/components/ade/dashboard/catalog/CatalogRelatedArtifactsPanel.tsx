@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Link2, Unlink, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../ui/toast';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';

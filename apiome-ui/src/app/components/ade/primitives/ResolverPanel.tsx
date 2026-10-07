@@ -267,7 +267,7 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
           <EmptyState
             icon={<GitFork aria-hidden />}
             title="No references to resolve"
-            description="None of this tenant’s primitives carry a relative $ref yet. References appear here once types reference one another."
+            description="No primitive references another yet. References appear here once types link up."
             variant="compact"
           />
         </Card>

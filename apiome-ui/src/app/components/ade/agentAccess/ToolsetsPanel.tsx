@@ -87,7 +87,7 @@ export default function ToolsetsPanel(props: ToolsetsPanelProps) {
       <EmptyState
         icon={<Bot aria-hidden />}
         title="No version has Agent Access yet"
-        description="Pick a published version to expose its operations to AI agents as MCP tools. Reads are on by default; writes need your confirmation, one at a time."
+        description="Pick a published version to expose its operations to agents as MCP tools."
         action={
           <Button onClick={onEnable} data-testid="agx-toolsets-empty-enable">
             <Plus aria-hidden />

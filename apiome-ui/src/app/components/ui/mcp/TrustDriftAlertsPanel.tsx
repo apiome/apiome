@@ -88,7 +88,7 @@ export function TrustDriftAlertsPanel({ endpointId }: Props) {
       <EmptyState
         icon={<ShieldQuestion className="h-8 w-8 text-fg-on-accent" aria-hidden />}
         title="No approved baseline yet"
-        description="Approve a trust baseline for this endpoint to start catching drift, shadowing, and trust regressions against what you blessed."
+        description="Approve a trust baseline to start catching drift and shadowing against it."
       />
     );
   }

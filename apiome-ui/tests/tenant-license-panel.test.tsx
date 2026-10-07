@@ -200,7 +200,7 @@ describe('TenantLicensePanel', () => {
   it('shows the raw proxy error for non-license failures', async () => {
     mockFetchFailure('REST API unreachable');
     renderExpanded();
-    expect(await screen.findByText('REST API unreachable')).toBeInTheDocument();
+    expect(await screen.findByText('REST API unreachable — try again.')).toBeInTheDocument();
   });
 });
 

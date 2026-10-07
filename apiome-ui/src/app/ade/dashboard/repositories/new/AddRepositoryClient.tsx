@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '../../../../components/ui/toast';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import { getLinkedAccountsForUser } from '@lib/db/helper';

@@ -167,7 +167,7 @@ export function ContinueWorking({ projects, loading }: ContinueWorkingProps) {
           surface
           variant="compact"
           title="No projects yet"
-          description="Create a project or import a spec, and the work you were last in shows up here."
+          description="Create a project or import a spec to pick up work here."
         />
       )}
     </section>

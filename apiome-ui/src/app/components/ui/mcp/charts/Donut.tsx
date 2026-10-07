@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import {
   chartCategoricalTone,
   chartSeriesStyle,
@@ -49,7 +49,7 @@ export function Donut({ segments, title, centerLabel, className }: DonutProps) {
   const summary =
     usable
       .map((s) => `${s.label}: ${s.value} (${Math.round((s.value / (total || 1)) * 100)}%)`)
-      .join(', ') || 'No data';
+      .join(', ') || CHART_EMPTY_LABEL;
   const label = title ?? `Donut chart — ${summary}`;
 
   // Precompute each segment's arc angles walking clockwise from 12 o'clock. The running offset is

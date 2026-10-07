@@ -58,6 +58,7 @@ project in ~10 minutes") and the [Golden Path](../GOLDEN_PATH.md) (the executabl
 | **MCP** setup quick-start (Claude Desktop / IDE hosts) | [mcp-quickstart.md](mcp-quickstart.md) |
 | **Keyboard** paths for every primary task, and the shortcut reference | [keyboard.md](keyboard.md) |
 | **Accessibility** contract, the CI axe gate, and the screen-reader checklist | [accessibility.md](accessibility.md) |
+| **Content & voice** rules for empty, loading, error and gated states, and the per-route checklist | [content-voice.md](content-voice.md) |
 
 ---
 

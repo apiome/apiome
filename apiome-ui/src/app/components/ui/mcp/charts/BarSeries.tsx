@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import { chartSeriesStyle, type ChartSeriesTone, CHART_SURFACE } from './chartTokens';
 import { clamp, maxValue } from './chartGeometry';
 
@@ -41,7 +41,7 @@ export function BarSeries({ data, tone = 'indigo', domainMax, title, className }
   const n = Math.max(1, data.length);
   const bandW = (100 - GAP * (n + 1)) / n;
 
-  const summary = data.map((d) => `${d.label}: ${d.value}`).join(', ') || 'No data';
+  const summary = data.map((d) => `${d.label}: ${d.value}`).join(', ') || CHART_EMPTY_LABEL;
   const label = title ?? `Bar chart — ${summary}`;
 
   return (

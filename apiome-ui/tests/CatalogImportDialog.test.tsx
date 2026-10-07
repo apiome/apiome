@@ -142,6 +142,6 @@ describe('CatalogImportDialog — source grid (MFI-26.1)', () => {
     expect(
       await screen.findByRole('heading', { name: 'No additional options' }),
     ).toBeInTheDocument();
-    expect(card).toHaveTextContent('Nothing to configure for this data type');
+    expect(card).toHaveTextContent('Nothing to set for this data type');
   });
 });

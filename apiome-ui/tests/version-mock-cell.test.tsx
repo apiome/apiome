@@ -150,7 +150,7 @@ describe('VersionMockCell — toggle', () => {
     fireEvent.click(getToggle());
 
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith('Failed to enable mock for v1.0.0.')
+      expect(toast.error).toHaveBeenCalledWith('Failed to enable mock for v1.0.0 — try again.')
     );
   });
 });
@@ -174,7 +174,7 @@ describe('VersionMockCell — mock URL', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy mock URL for version 1.0.0' }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to copy mock URL to clipboard.'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to copy mock URL to clipboard — try again.'));
   });
 
   it('hides the URL block while the mock is disabled', () => {

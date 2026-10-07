@@ -348,8 +348,8 @@ export default function PrimitiveTypesTable({
       empty={
         <EmptyState
           icon={<FileCode aria-hidden />}
-          title="No Primitives Found"
-          description="Try adjusting your filters or create a new primitive."
+          title="No matching primitives"
+          description="Clear a filter, or create a new primitive."
           variant="compact"
         />
       }

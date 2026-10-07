@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
+import { withNextAction } from '../../../../lib/copy-voice';
 import { cn } from '../../../../lib/utils';
 import { Alert, AlertDescription, AlertTitle } from './Alert';
 import { Button } from './Button';
@@ -41,6 +42,37 @@ import { EmptyState, type EmptyStateProps, type EmptyStateVariant } from './Empt
 
 /** The retry label the whole app uses, so the verb is learnable. */
 const RETRY_LABEL = 'Try again';
+
+/**
+ * What an error surface says when it has neither a way out nor a description to carry one
+ * (HIVE-10.4, #5340): DESIGN.md §10 wants every failure to name a next action.
+ */
+export const ERROR_FALLBACK_GUIDANCE = 'Reload the page, or try again in a moment.';
+
+/**
+ * Make sure a failure tells the reader what to do (DESIGN.md §10, HIVE-10.4).
+ *
+ * A surface with a retry button or an action already names the way out, so its description
+ * is left exactly as written. Without one, a plain-string description gains a next action
+ * via {@link withNextAction}, and a missing description becomes
+ * {@link ERROR_FALLBACK_GUIDANCE}. Rich (non-string) descriptions are the caller's own words
+ * and are never rewritten.
+ *
+ * @param description The caller's description.
+ * @param hasWayOut Whether the surface renders a retry button or an action.
+ * @returns The description to render.
+ */
+export function guideErrorDescription(
+  description: React.ReactNode,
+  hasWayOut: boolean
+): React.ReactNode {
+  if (hasWayOut) return description;
+  if (description == null || description === false || description === '') {
+    return ERROR_FALLBACK_GUIDANCE;
+  }
+  if (typeof description === 'string') return withNextAction(description);
+  return description;
+}
 
 export interface ErrorStateProps
   extends Omit<EmptyStateProps, 'title' | 'tone' | 'action' | 'brand'> {
@@ -90,7 +122,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
       tone="danger"
       icon={icon ?? <AlertTriangle />}
       title={title}
-      description={description}
+      description={guideErrorDescription(description, Boolean(onRetry || action))}
       variant={variant}
       action={
         onRetry ? (
@@ -143,31 +175,34 @@ export const ErrorBanner = React.forwardRef<HTMLDivElement, ErrorBannerProps>(
   (
     { className, title, description, onRetry, retryLabel = RETRY_LABEL, action, onClose, ...props },
     ref
-  ) => (
-    <Alert
-      ref={ref}
-      variant="danger"
-      onClose={onClose}
-      className={cn(className)}
-      actions={
-        onRetry || action ? (
-          <>
-            {onRetry ? (
-              <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                <RefreshCw aria-hidden />
-                {retryLabel}
-              </Button>
-            ) : null}
-            {action}
-          </>
-        ) : undefined
-      }
-      {...props}
-    >
-      {title ? <AlertTitle>{title}</AlertTitle> : null}
-      {description ? <AlertDescription>{description}</AlertDescription> : null}
-    </Alert>
-  )
+  ) => {
+    const guided = guideErrorDescription(description, Boolean(onRetry || action));
+    return (
+      <Alert
+        ref={ref}
+        variant="danger"
+        onClose={onClose}
+        className={cn(className)}
+        actions={
+          onRetry || action ? (
+            <>
+              {onRetry ? (
+                <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                  <RefreshCw aria-hidden />
+                  {retryLabel}
+                </Button>
+              ) : null}
+              {action}
+            </>
+          ) : undefined
+        }
+        {...props}
+      >
+        {title ? <AlertTitle>{title}</AlertTitle> : null}
+        {guided ? <AlertDescription>{guided}</AlertDescription> : null}
+      </Alert>
+    );
+  }
 );
 ErrorBanner.displayName = 'ErrorBanner';
 

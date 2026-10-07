@@ -374,7 +374,7 @@ export default function ApiKeysTable({
           <EmptyState
             icon={<KeyRound aria-hidden />}
             title="No API keys yet"
-            description="Create your first API key to reach this tenant's data over the REST API. Scoped CI tokens can only read diffs and lint gates."
+            description="Create a key to reach this tenant's data over the REST API."
             action={
               <Button onClick={onCreate}>
                 <Plus aria-hidden />

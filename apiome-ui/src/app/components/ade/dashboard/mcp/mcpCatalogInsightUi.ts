@@ -247,7 +247,7 @@ export const MCP_ANALYTICS_EMPTY_TITLE = 'No servers in the catalog yet';
 
 /** Its body copy. */
 export const MCP_ANALYTICS_EMPTY_DESC =
-  'Register and discover MCP servers to populate catalog-wide analytics — category, transport, grade and health mixes appear once the first snapshot lands.';
+  'Register and discover MCP servers to see catalog-wide analytics.';
 
 /** Shown in place of the screen when the session has no workspace to read a catalog for. */
 export const MCP_ANALYTICS_NO_TENANT =

@@ -31,7 +31,7 @@ describe('Sparkline', () => {
 
   it('renders an empty state (not a crash) for no data', () => {
     render(<Sparkline data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -68,12 +68,12 @@ describe('TrendLine', () => {
 
   it('renders an empty state when every entry is a gap (no crash, not a flat zero line)', () => {
     render(<TrendLine data={[null, null]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('renders an empty state for no data', () => {
     render(<TrendLine data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -98,7 +98,7 @@ describe('BarSeries', () => {
 
   it('renders an empty state for no bars', () => {
     render(<BarSeries data={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -122,7 +122,7 @@ describe('Donut', () => {
 
   it('renders an empty state when every value is zero', () => {
     render(<Donut segments={[{ label: 'a', value: 0 }]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -150,7 +150,7 @@ describe('StackedTimeline', () => {
 
   it('renders an empty state when there are no periods', () => {
     render(<StackedTimeline series={series} periods={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -234,7 +234,7 @@ describe('Radar', () => {
 
   it('renders an empty state for fewer than three axes', () => {
     render(<Radar axes={[{ label: 'a', value: 1 }, { label: 'b', value: 2 }]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -259,7 +259,7 @@ describe('Heatmap', () => {
 
   it('renders an empty state for an empty matrix', () => {
     render(<Heatmap matrix={[]} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {
@@ -285,7 +285,7 @@ describe('Gauge', () => {
 
   it('renders an empty state for a non-finite value', () => {
     render(<Gauge value={Number.NaN} />);
-    expect(screen.getByRole('img', { name: /No data/ })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Nothing to chart yet/ })).toBeInTheDocument();
   });
 
   it('matches its snapshot', () => {

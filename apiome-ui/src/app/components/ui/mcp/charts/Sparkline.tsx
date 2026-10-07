@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '../../../../../../lib/utils';
-import { ChartFrame } from './ChartFrame';
+import { CHART_EMPTY_LABEL, ChartFrame } from './ChartFrame';
 import { chartSeriesStyle, type ChartSeriesTone } from './chartTokens';
 import { maxValue, pointsToPath, sparklinePoints } from './chartGeometry';
 
@@ -52,7 +52,7 @@ export function Sparkline({
   const last = data.length ? data[data.length - 1] : null;
   const summary =
     last === null
-      ? 'No data'
+      ? CHART_EMPTY_LABEL
       : `${data.length} point${data.length === 1 ? '' : 's'}, latest ${last}, max ${maxValue(data)}`;
   const label = title ?? `Trend — ${summary}`;
 

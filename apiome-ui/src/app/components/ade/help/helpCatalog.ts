@@ -258,6 +258,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['a11y', 'wcag', 'axe', 'screen reader', 'contrast', 'high contrast', 'voiceover', 'nvda'],
   },
   {
+    id: 'content-voice',
+    title: 'Content & voice',
+    summary: 'How empty, loading, error and gated states read, and the per-route checklist.',
+    page: 'docs/guide/content-voice.md',
+    section: 'reference',
+    keywords: ['copy', 'empty state', 'error message', 'loading', 'tone', 'writing', 'microcopy'],
+  },
+  {
     id: 'ci-diff-gate',
     title: 'CI contract gate (GitHub Action)',
     summary:

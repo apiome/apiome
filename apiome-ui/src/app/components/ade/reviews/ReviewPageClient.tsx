@@ -24,7 +24,7 @@
  */
 
 import * as React from 'react';
-import { toast } from 'sonner';
+import { toast } from '../../ui/toast';
 import { FileJson2, GitCompareArrows, MessagesSquare, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/app/components/shell/PageHeader';
