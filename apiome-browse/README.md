@@ -209,7 +209,7 @@ import { getPublicTenants } from "../../lib/db/helper";
 import { getPublicTenants } from "@/lib/db/helper";
 ```
 
-See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for path reference table.
+See the archived [TROUBLESHOOTING.md](../docs/archive/apiome-browse/TROUBLESHOOTING.md) for the path reference table.
 
 ## Security
 
@@ -228,16 +228,14 @@ See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for path reference table.
 ## Documentation
 
 - **README.md**: This file - project overview
-- **GETTING_STARTED.md**: Detailed setup guide
-- **FEATURES.md**: Comprehensive feature documentation
-- **TROUBLESHOOTING.md**: Common issues and solutions
-- **QUICK_REFERENCE.md**: Quick reference guide
-- **DEPLOYMENT_CHECKLIST.md**: Pre-deployment checklist
-- **IMPLEMENTATION_SUMMARY.md**: Technical implementation details
+- **User guide**: [Browse published specs](https://apiome.github.io/apiome/ship/browse-published-specs) on the documentation site
+- The package's older notes (setup, features, troubleshooting, deployment checklist) are archived
+  in [`docs/archive/apiome-browse/`](../docs/archive/apiome-browse/) — history, not a description
+  of the product as it is (DOCS-1.14)
 
 ## Troubleshooting
 
-For common issues and solutions, see [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+For common issues and solutions, see the archived [TROUBLESHOOTING.md](../docs/archive/apiome-browse/TROUBLESHOOTING.md).
 
 Quick fixes:
 - **Module not found**: Use relative imports for `lib` directory

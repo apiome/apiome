@@ -13,6 +13,23 @@ Every issue carries a **Documentation (Docusaurus)** section listing what its pu
 docs — pages, screenshots, reference, release notes and the gate — and the
 [pull request checklist](#pull-request-checklist) below is the same list.
 
+## Where docs live
+
+| What | Where |
+| --- | --- |
+| How to use Apiome — every page of this site | `apiome-docs/docs/` |
+| Contributor references that code points at by path (SPI guides, wire contracts, the sign-in provider guide) | `apiome-rest/docs/`, `apiome-mcp/docs/` and a few files in `apiome-ui/docs/` and `apiome-db/docs/` |
+| Old implementation notes — fix summaries, feature write-ups, test journeys | [`docs/archive/`](https://github.com/apiome/apiome/tree/main/docs/archive), read-only |
+
+The archive is history: it does **not** describe the product as it is. Its
+[inventory](https://github.com/apiome/apiome/blob/main/docs/archive/INVENTORY.md) lists every
+triaged file and the page of this site that now covers its area.
+
+**Do not add Markdown notes beside the code.** `scripts/check-loose-docs.sh` runs on every pull
+request and fails when a new `.md` appears under `apiome-*/docs/` — other than `README.md`,
+`CHANGELOG.md` and `AGENTS.md` — unless it is listed in `scripts/loose-docs-allowlist.txt`. Write a
+page here instead; add an allow-list line only for a contributor reference that code points at.
+
 ## Run the site
 
 From the repository root:

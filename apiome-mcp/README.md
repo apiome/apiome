@@ -247,7 +247,7 @@ Links below are relative to this directory (`apiome-mcp/`).
 
 ### Package-specific
 
-- [apiome-ui — Planned Feature Roadmap — Paths](../apiome-ui/docs/PLANNED_FEATURE_ROADMAP_PATHS.md)
+- [apiome-ui — Planned Feature Roadmap — Paths](../docs/archive/apiome-ui/PLANNED_FEATURE_ROADMAP_PATHS.md)
 - [apiome-browse — Feature Roadmap](../apiome-browse/FEATURE_ROADMAP.md)
 
 ### Future themed roadmaps (`docs/`)

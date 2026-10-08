@@ -654,7 +654,7 @@ deliberate operator choice.
 - A secret stored from the admin screen is written **encrypted**; the database never holds
   plaintext. See [Encryption at rest](#encryption-at-rest-and-key-rotation-auth_config_enc_key).
 - Docker deployments: see [`.env.docker`](../.env.docker) and
-  [`DOCKER_README.md`](./DOCKER_README.md) for where these variables are injected.
+  [`DOCKER_README.md`](../../docs/archive/apiome-ui/DOCKER_README.md) for where these variables are injected.
 
 ## Database provider config store (OLO-8.2, env-fallback)
 

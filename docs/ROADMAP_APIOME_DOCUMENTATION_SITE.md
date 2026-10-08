@@ -426,7 +426,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.14] Triage the legacy package docs — migrate, archive or delete` — [#5631](https://github.com/apiome/apiome/issues/5631)
+### ✅ `apiome: [DOCS-1.14] Triage the legacy package docs — migrate, archive or delete` — [#5631](https://github.com/apiome/apiome/issues/5631) — **Complete**
 **Problem statement.** Hundreds of implementation notes (fix summaries, feature write-ups, test journeys) sit beside the code with no index. Some are the only description of a feature; most are stale. They mislead both people and agents.
 
 **Solution / scope.**
@@ -435,9 +435,9 @@ Milestone: **RC6** (epic and every issue).
 - A repo lint (`scripts/check-loose-docs.sh` in CI) that fails when a new `.md` appears under `apiome-*/docs/` unless allow-listed (README, CHANGELOG, AGENTS).
 
 **Acceptance criteria.**
-- [ ] Inventory committed with a disposition for every file
-- [ ] No user-facing content remains outside the site or the archive
-- [ ] Loose-docs lint active in CI
+- [x] Inventory committed with a disposition for every file
+- [x] No user-facing content remains outside the site or the archive
+- [x] Loose-docs lint active in CI
 
 **Parallelism / dependencies.** Depends on DOCS-1.2. Can run late; independent of 1.4–1.12.
 

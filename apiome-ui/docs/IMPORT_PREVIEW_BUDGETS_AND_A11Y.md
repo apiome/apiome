@@ -41,7 +41,7 @@ Two mechanisms appear below, with different obligations:
 | Catalog **Format details** native-analysis tree (CPDO-2.1) | 50 rows (`ANALYSIS_TREE_VIRTUALIZE_ABOVE`) | Windowed | Rows window ("windowed" note); the focused row is pinned | Scroll — every node of the stored analysis is reachable. Nodes the analyzer's own 5000-node budget dropped are a *separate* statement (see below) |
 
 The last row is not an import-preview surface: it belongs to the catalog item detail screen
-and is documented in [CATALOG_FORMAT_DETAILS.md](./CATALOG_FORMAT_DETAILS.md). It lives in
+and is documented in [Read a catalog item's format details](https://apiome.github.io/apiome/bring-in/catalog-format-details). It lives in
 the same registry because `preview-budgets.ts` is where every bound is defined, and because
 it reuses the same `computeWindowedRange` machinery and the same focus-pinning rule. Note
 that surface has **two** independent bounds — this client-side windowing, and the

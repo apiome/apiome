@@ -22,6 +22,12 @@ From the repository root:
 
 ## Write a page
 
+Product documentation lives here and nowhere else: old implementation notes were archived to
+[`docs/archive/`](../docs/archive/README.md) (DOCS-1.14, #5631), and `scripts/check-loose-docs.sh`
+fails a pull request that adds a loose `.md` under `apiome-*/docs/` (README, CHANGELOG and AGENTS
+files, and the contributor references in `scripts/loose-docs-allowlist.txt`, are allowed).
+
+
 Pages live in `docs/`, one folder per sidebar group — the same jobs, in the same order, as the
 product's navigation rail:
 

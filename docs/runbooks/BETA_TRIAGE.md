@@ -9,7 +9,7 @@ release gate can answer one question with evidence: **are there zero open Critic
 High issues?**
 
 Dogfooding starts at Wave 0 and runs the whole time (see
-[`RC5_EPIC_ORDER_OF_EXECUTION.md`](../next-steps/RC5_EPIC_ORDER_OF_EXECUTION.md)). It is the
+[`RC5_EPIC_ORDER_OF_EXECUTION.md`](../archive/repository/next-steps/RC5_EPIC_ORDER_OF_EXECUTION.md)). It is the
 input to the burn-down, not a step after it.
 
 ---
@@ -152,7 +152,7 @@ Turnaround: reporters hear back **within one working day**, even if the answer i
 ## 5. Suggested first session for a cohort member
 
 The golden path from the gate demo (Act 1 of
-[`DEMONSTRATION_EPIC_3607.md`](../next-steps/DEMONSTRATION_EPIC_3607.md)). Do it on your own API:
+[`DEMONSTRATION_EPIC_3607.md`](../archive/repository/next-steps/DEMONSTRATION_EPIC_3607.md)). Do it on your own API:
 
 1. Sign in; create a tenant or enter yours.
 2. Import a spec. Lint it and read the grade.
