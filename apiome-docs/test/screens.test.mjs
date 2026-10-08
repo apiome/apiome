@@ -106,6 +106,20 @@ describe('normalizeScreen', () => {
       assert.match(problems[0], /`tags` must list distinct values from legacy/);
     }
   });
+  it('keeps the source paths staleness is judged by, and leaves them out when unset', () => {
+    const sources = ['apiome-ui/src/app/components/ade/WhatsNewDialog.tsx'];
+    assert.deepEqual(normalizeScreen(entry({sources})).screen.sources, sources);
+    assert.equal('sources' in normalizeScreen(entry()).screen, false);
+  });
+
+  it('rejects empty, non-list, blank or absolute source paths', () => {
+    for (const sources of [[], 'apiome-ui/src', [''], ['/etc/passwd'], [42]]) {
+      const {screen, problems} = normalizeScreen(entry({sources}));
+      assert.equal(screen, null, JSON.stringify(sources));
+      assert.match(problems[0], /`sources`/);
+    }
+  });
+
   it('reports every bad field, named by id', () => {
     const {screen, problems} = normalizeScreen(
       entry({

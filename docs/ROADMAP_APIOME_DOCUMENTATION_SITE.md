@@ -404,7 +404,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.13] Docs contract & gates — the “Documentation (Docusaurus)” issue section, docs:check, Contributing page` — [#5630](https://github.com/apiome/apiome/issues/5630)
+### ✅ `apiome: [DOCS-1.13] Docs contract & gates — the “Documentation (Docusaurus)” issue section, docs:check, Contributing page` — [#5630](https://github.com/apiome/apiome/issues/5630) — **Complete**
 **Problem statement.** Documentation only stays current if it is part of the definition of done. Today no issue template, skill or CI gate mentions docs, so pages and screenshots drift the moment a feature ships.
 
 **Solution / scope.**
@@ -414,9 +414,9 @@ Milestone: **RC6** (epic and every issue).
 - `implement` skill: the Documentation phase is mandatory; the PR body lists docs pages and screenshot ids changed.
 
 **Acceptance criteria.**
-- [ ] `docs:check` runs in CI on every PR and fails on each listed condition (negative fixtures included)
-- [ ] Contributing page published
-- [ ] Skills and AGENTS.md reference the section and the check
+- [x] `docs:check` runs in CI on every PR and fails on each listed condition (negative fixtures included)
+- [x] Contributing page published
+- [x] Skills and AGENTS.md reference the section and the check
 
 **Parallelism / dependencies.** Depends on DOCS-1.1 and 1.3. The issue-section and skill parts are already in place; this issue makes them enforceable.
 

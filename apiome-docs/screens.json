@@ -1084,7 +1084,10 @@
       "id": "whats-new",
       "route": "/ade/dashboard/help",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/whats-new.html"
+      "data": "fixture:hive-a11y/whats-new.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/WhatsNewDialog.tsx"
+      ]
     },
     {
       "id": "admin-sign-in",

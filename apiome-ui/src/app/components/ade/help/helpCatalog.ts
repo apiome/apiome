@@ -826,10 +826,21 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'contribute-to-the-docs',
     title: 'Contribute to the docs',
-    summary: 'Write a docs page, add a screenshot to the manifest, and pass the docs gate.',
+    summary:
+      'Run the docs site, write a page, add a screenshot, and pass the docs gate every pull request runs.',
     page: 'apiome-docs/docs/admin/contribute-to-the-docs.mdx',
     section: 'reference',
-    keywords: ['screenshot', 'docusaurus', 'manifest', 'playwright', 'documentation', 'writing'],
+    keywords: [
+      'screenshot',
+      'docusaurus',
+      'manifest',
+      'playwright',
+      'documentation',
+      'writing',
+      'contributing',
+      'docs:check',
+      'checklist',
+    ],
   },
   {
     id: 'README',

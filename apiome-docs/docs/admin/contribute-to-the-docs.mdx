@@ -1,12 +1,17 @@
 ---
 title: Contribute to the docs
-description: Write a page, add a screenshot, and pass the docs gate.
+description: Run the site, write a page, add a screenshot, and pass the docs gate.
 sidebar_position: 13
 tags: [docs, screenshots]
 ---
 
-This site is the `apiome-docs/` workspace in the Apiome repository. Every change to the product
-updates its pages in the same pull request, and `yarn docs:check` must pass before it merges.
+This site is the `apiome-docs/` workspace in the Apiome repository. Documentation is part of the
+definition of done: every change to the product updates its pages in the same pull request, and
+`yarn docs:check` runs on **every** pull request and must pass before it merges.
+
+Every issue carries a **Documentation (Docusaurus)** section listing what its pull request owes the
+docs — pages, screenshots, reference, release notes and the gate — and the
+[pull request checklist](#pull-request-checklist) below is the same list.
 
 ## Run the site
 
@@ -34,6 +39,20 @@ Some pages are **generated** and say so in their front matter (`generated:`): th
 references under [Reference](/reference), the CI action pages, the supported-formats table and the
 lint-rule catalogs. Change the code they come from and rerun the generator named on
 [Reference](/reference) — a hand edit is overwritten, and CI fails until the page matches its source.
+
+## Regenerate the reference
+
+The [Reference](/reference) pages for the REST API, the CLI and the MCP server are generated from
+their source. When a pull request changes one of them, rerun its generator and commit the pages:
+
+| You changed | Run |
+| --- | --- |
+| A REST endpoint (`apiome-rest/openapi.yaml`) — bump its `info.version` too | `cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py` |
+| A CLI command or option | `cd apiome-cli && uv run python scripts/generate_cli_reference_docs.py` |
+| An MCP tool, resource or prompt | `cd apiome-mcp && uv run python scripts/generate_mcp_reference_docs.py` |
+| The `diff-action` or `mock-action` README | `yarn workspace apiome-docs sync:action-pages` |
+
+CI reruns each generator with `--check` and fails when a committed page no longer matches.
 
 ## Add a screenshot
 
@@ -81,6 +100,7 @@ The result looks like this — switch the site theme to see the dark capture:
 | `density` | no | `comfortable` (default) or `compact` |
 | `fontScale` | no | `md` (default), or `xs`, `sm`, `lg`, `xl` |
 | `appTheme` | no | A product theme — `light`, `dark`, `high-contrast`, `blueprint`, `whiteboard`, `solarized`, `nord` or `darcula` — pinned in both captures, whatever the site theme. For theme galleries |
+| `sources` | no | Repository paths whose changes make the image [stale](#what-the-gate-checks). Defaults to the route's folder under `apiome-ui/src/app/`; list the component instead when the screen is a dialog or a shared panel, e.g. `["apiome-ui/src/app/components/ade/WhatsNewDialog.tsx"]` |
 | `tags` | no | `["legacy"]` marks a surface that predates the Hive redesign (#5272): a page showing it needs the `<Legacy/>` callout, and the weekly refresh lists it when its image changes |
 
 Next.js's development overlay is hidden in every capture. Every capture runs with the clock fixed at 15 June 2026, 09:30 UTC, and with motion off, so two runs
@@ -112,16 +132,38 @@ script exits with an error when any selected entry could not be captured.
 
 `yarn docs:check` fails when:
 
+- a page has no `title` or `description`, or the description is over **14 words**;
+- a page is an **orphan** — in no sidebar: directly in `docs/` instead of a group folder, or hidden
+  with `unlisted: true`, `draft: true` or `displayed_sidebar: null`;
+- an **internal link** is broken — a relative link to a page that does not exist, or a site path such
+  as `/ship/export-a-spec` that nothing serves. The build then checks every anchor too;
 - a manifest entry is invalid, or is missing the image for a theme it declares;
 - a page uses `<Screenshot id/>` with an id that is not in the manifest, or that lacks a light or a
-  dark image.
-- a page shows a screenshot tagged `legacy` without the `<Legacy/>` callout.
+  dark image;
+- a page shows a screenshot tagged `legacy` without the `<Legacy/>` callout;
+- a screenshot is **stale**: it was captured before the last two releases closed and the code behind
+  its route (or its `sources`) changed since. Recapture it with `yarn docs:screenshots -- --id <id>`;
 - the REST reference was generated from an older `apiome-rest/openapi.yaml`.
 
-The build itself fails when a `<Screenshot/>` has no `alt` text.
+The build itself fails when a `<Screenshot/>` has no `alt` text. The message names the page, the
+link or the screenshot id, and the command that fixes it.
 
 ### The weekly refresh
 
 The **Apiome Docs Screenshots** workflow runs every Monday (and on demand). It brings up the
 golden-path stack, recaptures every entry, and opens a pull request when any image changed. The pull
 request lists any changed `legacy` screen, since that usually means its redesign has landed.
+
+## Pull request checklist
+
+Paste this into the pull request description and tick what applies; say why for anything that does
+not:
+
+```markdown
+### Documentation
+- [ ] Pages: <paths under apiome-docs/docs/ added or changed>
+- [ ] Screenshots: <ids added or recaptured with `yarn docs:screenshots -- --id <id>`>
+- [ ] Reference: <REST / CLI / MCP pages regenerated, or "no REST, CLI or MCP change">
+- [ ] Release notes: <apiome-rest/CHANGELOG.md entry, release-notes post, What's new line>
+- [ ] `yarn docs:check` passes
+```

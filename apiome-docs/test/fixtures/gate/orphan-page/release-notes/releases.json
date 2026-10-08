@@ -1,0 +1,26 @@
+{
+  "repository": "https://github.com/apiome/apiome",
+  "releases": [
+    {
+      "name": "RC1",
+      "closed": "2026-06-01",
+      "restAfter": "1.0.0",
+      "restThrough": "1.1.0",
+      "whatsNewRef": "x"
+    },
+    {
+      "name": "RC2",
+      "closed": "2026-08-01",
+      "restAfter": "1.1.0",
+      "restThrough": "1.2.0",
+      "whatsNewRef": "x"
+    },
+    {
+      "name": "RC3",
+      "closed": "2026-09-15",
+      "restAfter": "1.2.0",
+      "restThrough": "1.3.0",
+      "whatsNewRef": "x"
+    }
+  ]
+}
