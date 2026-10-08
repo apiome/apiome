@@ -1,0 +1,636 @@
+<style>/* this gets exported as style.css and can be used for the default theming */
+/* these are the necessary styles for React/Svelte Flow, they get used by base.css and style.css */
+.react-flow {
+  direction: ltr;
+
+  --xy-edge-stroke-default: #b1b1b7;
+  --xy-edge-stroke-width-default: 1;
+  --xy-edge-stroke-selected-default: #555;
+
+  --xy-connectionline-stroke-default: #b1b1b7;
+  --xy-connectionline-stroke-width-default: 1;
+
+  --xy-attribution-background-color-default: rgba(255, 255, 255, 0.5);
+
+  --xy-minimap-background-color-default: #fff;
+  --xy-minimap-mask-background-color-default: rgba(240, 240, 240, 0.6);
+  --xy-minimap-mask-stroke-color-default: transparent;
+  --xy-minimap-mask-stroke-width-default: 1;
+  --xy-minimap-node-background-color-default: #e2e2e2;
+  --xy-minimap-node-stroke-color-default: transparent;
+  --xy-minimap-node-stroke-width-default: 2;
+
+  --xy-background-color-default: transparent;
+  --xy-background-pattern-dots-color-default: #91919a;
+  --xy-background-pattern-lines-color-default: #eee;
+  --xy-background-pattern-cross-color-default: #e2e2e2;
+  background-color: var(--xy-background-color, var(--xy-background-color-default));
+  --xy-node-color-default: inherit;
+  --xy-node-border-default: 1px solid #1a192b;
+  --xy-node-background-color-default: #fff;
+  --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);
+  --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(0, 0, 0, 0.08);
+  --xy-node-boxshadow-selected-default: 0 0 0 0.5px #1a192b;
+  --xy-node-border-radius-default: 3px;
+
+  --xy-handle-background-color-default: #1a192b;
+  --xy-handle-border-color-default: #fff;
+
+  --xy-selection-background-color-default: rgba(0, 89, 220, 0.08);
+  --xy-selection-border-default: 1px dotted rgba(0, 89, 220, 0.8);
+
+  --xy-controls-button-background-color-default: #fefefe;
+  --xy-controls-button-background-color-hover-default: #f4f4f4;
+  --xy-controls-button-color-default: inherit;
+  --xy-controls-button-color-hover-default: inherit;
+  --xy-controls-button-border-color-default: #eee;
+  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.08);
+
+  --xy-edge-label-background-color-default: #ffffff;
+  --xy-edge-label-color-default: inherit;
+  --xy-resize-background-color-default: #3367d9;
+}
+.react-flow.dark {
+  --xy-edge-stroke-default: #3e3e3e;
+  --xy-edge-stroke-width-default: 1;
+  --xy-edge-stroke-selected-default: #727272;
+
+  --xy-connectionline-stroke-default: #b1b1b7;
+  --xy-connectionline-stroke-width-default: 1;
+
+  --xy-attribution-background-color-default: rgba(150, 150, 150, 0.25);
+
+  --xy-minimap-background-color-default: #141414;
+  --xy-minimap-mask-background-color-default: rgba(60, 60, 60, 0.6);
+  --xy-minimap-mask-stroke-color-default: transparent;
+  --xy-minimap-mask-stroke-width-default: 1;
+  --xy-minimap-node-background-color-default: #2b2b2b;
+  --xy-minimap-node-stroke-color-default: transparent;
+  --xy-minimap-node-stroke-width-default: 2;
+
+  --xy-background-color-default: #141414;
+  --xy-background-pattern-dots-color-default: #777;
+  --xy-background-pattern-lines-color-default: #777;
+  --xy-background-pattern-cross-color-default: #777;
+  --xy-node-color-default: #f8f8f8;
+  --xy-node-border-default: 1px solid #3c3c3c;
+  --xy-node-background-color-default: #1e1e1e;
+  --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);
+  --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(255, 255, 255, 0.08);
+  --xy-node-boxshadow-selected-default: 0 0 0 0.5px #999;
+
+  --xy-handle-background-color-default: #bebebe;
+  --xy-handle-border-color-default: #1e1e1e;
+
+  --xy-selection-background-color-default: rgba(200, 200, 220, 0.08);
+  --xy-selection-border-default: 1px dotted rgba(200, 200, 220, 0.8);
+
+  --xy-controls-button-background-color-default: #2b2b2b;
+  --xy-controls-button-background-color-hover-default: #3e3e3e;
+  --xy-controls-button-color-default: #f8f8f8;
+  --xy-controls-button-color-hover-default: #fff;
+  --xy-controls-button-border-color-default: #5b5b5b;
+  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.08);
+
+  --xy-edge-label-background-color-default: #141414;
+  --xy-edge-label-color-default: #f8f8f8;
+}
+.react-flow__background {
+  background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)));
+  pointer-events: none;
+  z-index: -1;
+}
+.react-flow__container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+.react-flow__pane {
+  z-index: 1;
+}
+.react-flow__pane.draggable {
+    cursor: grab;
+  }
+.react-flow__pane.dragging {
+    cursor: grabbing;
+  }
+.react-flow__pane.selection {
+    cursor: pointer;
+  }
+.react-flow__viewport {
+  transform-origin: 0 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.react-flow__renderer {
+  z-index: 4;
+}
+.react-flow__selection {
+  z-index: 6;
+}
+.react-flow__nodesselection-rect:focus,
+.react-flow__nodesselection-rect:focus-visible {
+  outline: none;
+}
+.react-flow__edge-path {
+  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));
+  stroke-width: var(--xy-edge-stroke-width, var(--xy-edge-stroke-width-default));
+  fill: none;
+}
+.react-flow__connection-path {
+  stroke: var(--xy-connectionline-stroke, var(--xy-connectionline-stroke-default));
+  stroke-width: var(--xy-connectionline-stroke-width, var(--xy-connectionline-stroke-width-default));
+  fill: none;
+}
+.react-flow .react-flow__edges {
+  position: absolute;
+}
+.react-flow .react-flow__edges svg {
+    overflow: visible;
+    position: absolute;
+    pointer-events: none;
+  }
+.react-flow__edge {
+  pointer-events: visibleStroke;
+}
+.react-flow__edge.selectable {
+    cursor: pointer;
+  }
+.react-flow__edge.animated path {
+    stroke-dasharray: 5;
+    animation: dashdraw 0.5s linear infinite;
+  }
+.react-flow__edge.animated path.react-flow__edge-interaction {
+    stroke-dasharray: none;
+    animation: none;
+  }
+.react-flow__edge.inactive {
+    pointer-events: none;
+  }
+.react-flow__edge.selected,
+  .react-flow__edge:focus,
+  .react-flow__edge:focus-visible {
+    outline: none;
+  }
+.react-flow__edge.selected .react-flow__edge-path,
+  .react-flow__edge.selectable:focus .react-flow__edge-path,
+  .react-flow__edge.selectable:focus-visible .react-flow__edge-path {
+    stroke: var(--xy-edge-stroke-selected, var(--xy-edge-stroke-selected-default));
+  }
+.react-flow__edge-textwrapper {
+    pointer-events: all;
+  }
+.react-flow__edge .react-flow__edge-text {
+    pointer-events: none;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+  }
+/* Arrowhead marker styles - use CSS custom properties as default */
+.react-flow__arrowhead polyline {
+  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));
+}
+.react-flow__arrowhead polyline.arrowclosed {
+  fill: var(--xy-edge-stroke, var(--xy-edge-stroke-default));
+}
+.react-flow__connection {
+  pointer-events: none;
+}
+.react-flow__connection .animated {
+    stroke-dasharray: 5;
+    animation: dashdraw 0.5s linear infinite;
+  }
+svg.react-flow__connectionline {
+  z-index: 1001;
+  overflow: visible;
+  position: absolute;
+}
+.react-flow__nodes {
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+.react-flow__node {
+  position: absolute;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  pointer-events: all;
+  transform-origin: 0 0;
+  box-sizing: border-box;
+  cursor: default;
+}
+.react-flow__node.selectable {
+    cursor: pointer;
+  }
+.react-flow__node.draggable {
+    cursor: grab;
+    pointer-events: all;
+  }
+.react-flow__node.draggable.dragging {
+      cursor: grabbing;
+    }
+.react-flow__nodesselection {
+  z-index: 3;
+  transform-origin: left top;
+  pointer-events: none;
+}
+.react-flow__nodesselection-rect {
+    position: absolute;
+    pointer-events: all;
+    cursor: grab;
+  }
+.react-flow__handle {
+  position: absolute;
+  pointer-events: none;
+  min-width: 5px;
+  min-height: 5px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--xy-handle-background-color, var(--xy-handle-background-color-default));
+  border: 1px solid var(--xy-handle-border-color, var(--xy-handle-border-color-default));
+  border-radius: 100%;
+}
+.react-flow__handle.connectingfrom {
+    pointer-events: all;
+  }
+.react-flow__handle.connectionindicator {
+    pointer-events: all;
+    cursor: crosshair;
+  }
+.react-flow__handle-bottom {
+    top: auto;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+  }
+.react-flow__handle-top {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+.react-flow__handle-left {
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+  }
+.react-flow__handle-right {
+    top: 50%;
+    right: 0;
+    transform: translate(50%, -50%);
+  }
+.react-flow__edgeupdater {
+  cursor: move;
+  pointer-events: all;
+}
+.react-flow__pane.selection .react-flow__panel {
+  pointer-events: none;
+}
+.react-flow__panel {
+  position: absolute;
+  z-index: 5;
+  margin: 15px;
+}
+.react-flow__panel.top {
+    top: 0;
+  }
+.react-flow__panel.bottom {
+    bottom: 0;
+  }
+.react-flow__panel.top.center, .react-flow__panel.bottom.center {
+      left: 50%;
+      transform: translateX(-15px) translateX(-50%);
+    }
+.react-flow__panel.left {
+    left: 0;
+  }
+.react-flow__panel.right {
+    right: 0;
+  }
+.react-flow__panel.left.center, .react-flow__panel.right.center {
+      top: 50%;
+      transform: translateY(-15px) translateY(-50%);
+    }
+.react-flow__attribution {
+  font-size: 10px;
+  background: var(--xy-attribution-background-color, var(--xy-attribution-background-color-default));
+  padding: 2px 3px;
+  margin: 0;
+}
+.react-flow__attribution a {
+    text-decoration: none;
+    color: #999;
+  }
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+}
+.react-flow__edgelabel-renderer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  left: 0;
+  top: 0;
+}
+.react-flow__viewport-portal {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+.react-flow__minimap {
+  background: var(
+    --xy-minimap-background-color-props,
+    var(--xy-minimap-background-color, var(--xy-minimap-background-color-default))
+  );
+}
+.react-flow__minimap-svg {
+    display: block;
+  }
+.react-flow__minimap-mask {
+    fill: var(
+      --xy-minimap-mask-background-color-props,
+      var(--xy-minimap-mask-background-color, var(--xy-minimap-mask-background-color-default))
+    );
+    stroke: var(
+      --xy-minimap-mask-stroke-color-props,
+      var(--xy-minimap-mask-stroke-color, var(--xy-minimap-mask-stroke-color-default))
+    );
+    stroke-width: var(
+      --xy-minimap-mask-stroke-width-props,
+      var(--xy-minimap-mask-stroke-width, var(--xy-minimap-mask-stroke-width-default))
+    );
+  }
+.react-flow__minimap-node {
+    fill: var(
+      --xy-minimap-node-background-color-props,
+      var(--xy-minimap-node-background-color, var(--xy-minimap-node-background-color-default))
+    );
+    stroke: var(
+      --xy-minimap-node-stroke-color-props,
+      var(--xy-minimap-node-stroke-color, var(--xy-minimap-node-stroke-color-default))
+    );
+    stroke-width: var(
+      --xy-minimap-node-stroke-width-props,
+      var(--xy-minimap-node-stroke-width, var(--xy-minimap-node-stroke-width-default))
+    );
+  }
+.react-flow__background-pattern.dots {
+    fill: var(
+      --xy-background-pattern-color-props,
+      var(--xy-background-pattern-color, var(--xy-background-pattern-dots-color-default))
+    );
+  }
+.react-flow__background-pattern.lines {
+    stroke: var(
+      --xy-background-pattern-color-props,
+      var(--xy-background-pattern-color, var(--xy-background-pattern-lines-color-default))
+    );
+  }
+.react-flow__background-pattern.cross {
+    stroke: var(
+      --xy-background-pattern-color-props,
+      var(--xy-background-pattern-color, var(--xy-background-pattern-cross-color-default))
+    );
+  }
+.react-flow__controls {
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--xy-controls-box-shadow, var(--xy-controls-box-shadow-default));
+}
+.react-flow__controls.horizontal {
+    flex-direction: row;
+  }
+.react-flow__controls-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 26px;
+    width: 26px;
+    padding: 4px;
+    border: none;
+    background: var(--xy-controls-button-background-color, var(--xy-controls-button-background-color-default));
+    border-bottom: 1px solid
+      var(
+        --xy-controls-button-border-color-props,
+        var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default))
+      );
+    color: var(
+      --xy-controls-button-color-props,
+      var(--xy-controls-button-color, var(--xy-controls-button-color-default))
+    );
+    cursor: pointer;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+  }
+.react-flow__controls-button svg {
+      width: 100%;
+      max-width: 12px;
+      max-height: 12px;
+      fill: currentColor;
+    }
+.react-flow__edge.updating .react-flow__edge-path {
+      stroke: #777;
+    }
+.react-flow__edge-text {
+    font-size: 10px;
+  }
+.react-flow__node.selectable:focus,
+  .react-flow__node.selectable:focus-visible {
+    outline: none;
+  }
+.react-flow__node-input,
+.react-flow__node-default,
+.react-flow__node-output,
+.react-flow__node-group {
+  padding: 10px;
+  border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));
+  width: 150px;
+  font-size: 12px;
+  color: var(--xy-node-color, var(--xy-node-color-default));
+  text-align: center;
+  border: var(--xy-node-border, var(--xy-node-border-default));
+  background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
+}
+.react-flow__node-input.selectable:hover, .react-flow__node-default.selectable:hover, .react-flow__node-output.selectable:hover, .react-flow__node-group.selectable:hover {
+      box-shadow: var(--xy-node-boxshadow-hover, var(--xy-node-boxshadow-hover-default));
+    }
+.react-flow__node-input.selectable.selected,
+    .react-flow__node-input.selectable:focus,
+    .react-flow__node-input.selectable:focus-visible,
+    .react-flow__node-default.selectable.selected,
+    .react-flow__node-default.selectable:focus,
+    .react-flow__node-default.selectable:focus-visible,
+    .react-flow__node-output.selectable.selected,
+    .react-flow__node-output.selectable:focus,
+    .react-flow__node-output.selectable:focus-visible,
+    .react-flow__node-group.selectable.selected,
+    .react-flow__node-group.selectable:focus,
+    .react-flow__node-group.selectable:focus-visible {
+      box-shadow: var(--xy-node-boxshadow-selected, var(--xy-node-boxshadow-selected-default));
+    }
+.react-flow__node-group {
+  background-color: var(--xy-node-group-background-color, var(--xy-node-group-background-color-default));
+}
+.react-flow__nodesselection-rect,
+.react-flow__selection {
+  background: var(--xy-selection-background-color, var(--xy-selection-background-color-default));
+  border: var(--xy-selection-border, var(--xy-selection-border-default));
+}
+.react-flow__nodesselection-rect:focus,
+  .react-flow__nodesselection-rect:focus-visible,
+  .react-flow__selection:focus,
+  .react-flow__selection:focus-visible {
+    outline: none;
+  }
+.react-flow__controls-button:hover {
+      background: var(
+        --xy-controls-button-background-color-hover-props,
+        var(--xy-controls-button-background-color-hover, var(--xy-controls-button-background-color-hover-default))
+      );
+      color: var(
+        --xy-controls-button-color-hover-props,
+        var(--xy-controls-button-color-hover, var(--xy-controls-button-color-hover-default))
+      );
+    }
+.react-flow__controls-button:disabled {
+      pointer-events: none;
+    }
+.react-flow__controls-button:disabled svg {
+        fill-opacity: 0.4;
+      }
+.react-flow__controls-button:last-child {
+    border-bottom: none;
+  }
+.react-flow__controls.horizontal .react-flow__controls-button {
+    border-bottom: none;
+    border-right: 1px solid
+      var(
+        --xy-controls-button-border-color-props,
+        var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default))
+      );
+  }
+.react-flow__controls.horizontal .react-flow__controls-button:last-child {
+    border-right: none;
+  }
+.react-flow__resize-control {
+  position: absolute;
+}
+.react-flow__resize-control.left,
+.react-flow__resize-control.right {
+  cursor: ew-resize;
+}
+.react-flow__resize-control.top,
+.react-flow__resize-control.bottom {
+  cursor: ns-resize;
+}
+.react-flow__resize-control.top.left,
+.react-flow__resize-control.bottom.right {
+  cursor: nwse-resize;
+}
+.react-flow__resize-control.bottom.left,
+.react-flow__resize-control.top.right {
+  cursor: nesw-resize;
+}
+/* handle styles */
+.react-flow__resize-control.handle {
+  width: 5px;
+  height: 5px;
+  border: 1px solid #fff;
+  border-radius: 1px;
+  background-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));
+  translate: -50% -50%;
+}
+.react-flow__resize-control.handle.left {
+  left: 0;
+  top: 50%;
+}
+.react-flow__resize-control.handle.right {
+  left: 100%;
+  top: 50%;
+}
+.react-flow__resize-control.handle.top {
+  left: 50%;
+  top: 0;
+}
+.react-flow__resize-control.handle.bottom {
+  left: 50%;
+  top: 100%;
+}
+.react-flow__resize-control.handle.top.left {
+  left: 0;
+}
+.react-flow__resize-control.handle.bottom.left {
+  left: 0;
+}
+.react-flow__resize-control.handle.top.right {
+  left: 100%;
+}
+.react-flow__resize-control.handle.bottom.right {
+  left: 100%;
+}
+/* line styles */
+.react-flow__resize-control.line {
+  border-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));
+  border-width: 0;
+  border-style: solid;
+}
+.react-flow__resize-control.line.left,
+.react-flow__resize-control.line.right {
+  width: 1px;
+  transform: translate(-50%, 0);
+  top: 0;
+  height: 100%;
+}
+.react-flow__resize-control.line.left {
+  left: 0;
+  border-left-width: 1px;
+}
+.react-flow__resize-control.line.right {
+  left: 100%;
+  border-right-width: 1px;
+}
+.react-flow__resize-control.line.top,
+.react-flow__resize-control.line.bottom {
+  height: 1px;
+  transform: translate(0, -50%);
+  left: 0;
+  width: 100%;
+}
+.react-flow__resize-control.line.top {
+  top: 0;
+  border-top-width: 1px;
+}
+.react-flow__resize-control.line.bottom {
+  border-bottom-width: 1px;
+  top: 100%;
+}
+.react-flow__edge-textbg {
+  fill: var(--xy-edge-label-background-color, var(--xy-edge-label-background-color-default));
+}
+.react-flow__edge-text {
+  fill: var(--xy-edge-label-color, var(--xy-edge-label-color-default));
+}
+</style><div><div class="hive-shell relative"><a href="#main-content" class="sr-only rounded-md px-3 py-2 text-sm font-medium focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-surface focus:text-fg focus:shadow-md">Skip to content</a><aside data-testid="app-rail" class="rail relative flex h-full min-h-0 flex-col overflow-visible border-r border-border bg-rail"><button type="button" data-testid="rail-collapse" aria-label="Collapse sidebar" title="Collapse sidebar (⌘\)" class="hit-target rail-handle absolute -right-3 top-6 z-10 grid size-6 place-items-center rounded-full border border-border bg-surface text-fg-subtle shadow-sm transition-colors duration-[var(--dur-fast)] hover:text-fg"><svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-left transition-transform duration-[var(--dur-base)]" aria-hidden="true"><path d="m11 17-5-5 5-5"></path><path d="m18 17-5-5 5-5"></path></svg></button><div class="shrink-0 space-y-2 px-3 pb-2 pt-3"><a href="/ade" data-testid="rail-brand" aria-label="Apiome home" class="rail-item flex w-full items-center rounded-md px-1.5 py-1 transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg"><span class="brand-lockup" aria-hidden="true"><img alt="" loading="lazy" width="28" height="28" decoding="async" data-nimg="1" class="bee-glyph" style="color: transparent;" srcset="/_next/image?url=%2Fbee-logo.png&amp;w=32&amp;q=75 1x, /_next/image?url=%2Fbee-logo.png&amp;w=64&amp;q=75 2x" src="/_next/image?url=%2Fbee-logo.png&amp;w=64&amp;q=75"><span class="brand-lockup__text"><span class="brand-lockup__name">apiome</span><span class="brand-lockup__sub">Platform</span></span></span></a><div class="relative"><button type="button" data-testid="rail-workspace" aria-haspopup="menu" aria-expanded="false" class="rail-item flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-[var(--dur-fast)] disabled:cursor-wait hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg"><span aria-hidden="true" data-tone="e" class="relative inline-grid select-none place-items-center overflow-hidden font-semibold size-6.5 text-2xs avatar-hex bg-rose-soft text-rose-fg shrink-0">NO</span><span class="sr-only">Switch workspace</span><span class="rail-label min-w-0 flex-1 flex-col gap-0.5"><span class="truncate text-sm font-semibold leading-tight text-fg">Northwind</span><span class="truncate text-2xs text-fg-muted">Admin · Free</span></span><span class="rail-label shrink-0 items-center text-fg-subtle"><svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-up-down" aria-hidden="true"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg></span></button></div><button type="button" data-testid="rail-search" class="rail-item flex min-h-9 w-full items-center gap-2 rounded-md border border-border bg-surface px-2.5 text-sm text-fg-muted shadow-xs transition-colors duration-[var(--dur-fast)] hover:border-border-strong hover:text-fg"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search shrink-0" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg><span class="sr-only">Search or jump to…</span><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span aria-hidden="true" class="truncate">Search or jump to…</span><span class="kbd-group" aria-hidden="true"><kbd class="kbd">⌘</kbd><kbd class="kbd">K</kbd></span></span></button></div><nav aria-label="Primary" data-testid="rail-nav" class="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4 [scrollbar-width:none]"><div class="rail-group pt-1"><ul id="rail-group-home" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard" data-testid="rail-nav-home" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Home</span></span></a></li></ul></div><div class="rail-group pt-1"><button type="button" aria-expanded="true" aria-controls="rail-group-build" data-testid="rail-group-toggle-build" class="rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors duration-[var(--dur-fast)] hover:text-fg-muted">Build<svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><ul id="rail-group-build" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard/projects" data-testid="rail-nav-projects" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-kanban shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path><path d="M8 10v4"></path><path d="M12 10v2"></path><path d="M16 10v6"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Projects</span></span></a></li><li><a href="/ade/dashboard/primitives" data-testid="rail-nav-primitives" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shapes shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"></path><rect x="3" y="14" width="7" height="7" rx="1"></rect><circle cx="17.5" cy="17.5" r="3.5"></circle></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Primitives &amp; types</span></span></a></li></ul></div><div class="rail-group pt-1"><button type="button" aria-expanded="true" aria-controls="rail-group-bring-in" data-testid="rail-group-toggle-bring-in" class="rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors duration-[var(--dur-fast)] hover:text-fg-muted">Bring in<svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><ul id="rail-group-bring-in" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard/catalog" data-testid="rail-nav-catalog" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-library shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="m16 6 4 14"></path><path d="M12 6v14"></path><path d="M8 8v12"></path><path d="M4 4v16"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Catalog</span></span></a></li><li><a href="/ade/dashboard/repositories" data-testid="rail-nav-repositories" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-git-branch shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M15 6a9 9 0 0 0-9 9V3"></path><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Repositories</span></span></a></li><li><a href="/ade/dashboard/mcp" data-testid="rail-nav-mcp" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-network shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"></rect><rect x="2" y="16" width="6" height="6" rx="1"></rect><rect x="9" y="2" width="6" height="6" rx="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">MCP servers</span></span></a></li></ul></div><div class="rail-group pt-1"><button type="button" aria-expanded="true" aria-controls="rail-group-ship" data-testid="rail-group-toggle-ship" class="rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors duration-[var(--dur-fast)] hover:text-fg-muted">Ship<svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><ul id="rail-group-ship" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard/published" data-testid="rail-nav-published" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Published</span></span></a></li><li><a href="/ade/dashboard/versions/sunset-timeline" data-testid="rail-nav-sunset-timeline" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sunset shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M12 10V2"></path><path d="m4.93 10.93 1.41 1.41"></path><path d="M2 18h2"></path><path d="M20 18h2"></path><path d="m19.07 10.93-1.41 1.41"></path><path d="M22 22H2"></path><path d="m16 6-4 4-4-4"></path><path d="M16 18a4 4 0 0 0-8 0"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Sunset timeline</span></span></a></li><li><a href="/ade/dashboard/export/studio" data-testid="rail-nav-export-studio" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package-open shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M12 22v-9"></path><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"></path><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"></path><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.83 2.2a1.64 1.64 0 0 0-1.63 0L3 4.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Export studio</span></span></a></li><li><a href="/ade/dashboard/sdk-settings" data-testid="rail-nav-sdk-settings" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">SDK settings</span></span></a></li></ul></div><div class="rail-group pt-1"><button type="button" aria-expanded="true" aria-controls="rail-group-govern" data-testid="rail-group-toggle-govern" class="rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors duration-[var(--dur-fast)] hover:text-fg-muted">Govern<svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><ul id="rail-group-govern" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard/style-guides" data-testid="rail-nav-style-guides" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open-check shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M12 21V7"></path><path d="m16 12 2 2 4-4"></path><path d="M22 6V4a1 1 0 0 0-1-1h-5a4 4 0 0 0-4 4 4 4 0 0 0-4-4H3a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h6a3 3 0 0 1 3 3 3 3 0 0 1 3-3h6a1 1 0 0 0 1-1v-1.3"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Style guides</span></span></a></li><li><a href="/ade/dashboard/lint-workspace" data-testid="rail-nav-lint-workspace" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Lint posture</span><div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-[0.4375rem] text-2xs font-semibold leading-none tracking-[0.01em] [&amp;_svg]:size-[0.6875rem] [&amp;_svg]:shrink-0 bg-honey-soft text-honey-fg h-5 shrink-0">Preview</div></span></a></li><li><a href="/ade/dashboard/audit" data-testid="rail-nav-audit" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scroll-text shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M15 12h-5"></path><path d="M15 8h-5"></path><path d="M19 17V5a2 2 0 0 0-2-2H4"></path><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Access audit</span></span></a></li></ul></div><div class="rail-group pt-1"><button type="button" aria-expanded="true" aria-controls="rail-group-workspace" data-testid="rail-group-toggle-workspace" class="rail-label group/heading h-6 w-full select-none items-center gap-1 rounded-sm px-2.5 text-2xs font-semibold uppercase tracking-[0.08em] text-fg-subtle transition-colors duration-[var(--dur-fast)] hover:text-fg-muted">Workspace<svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down ml-auto opacity-0 transition-[opacity,transform] duration-[var(--dur-base)] group-hover/heading:opacity-80" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button><ul id="rail-group-workspace" class="m-0 list-none space-y-0.5 p-0"><li><a href="/ade/dashboard/members" data-testid="rail-nav-members" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Members</span></span></a></li><li><a href="/ade/dashboard/roles" data-testid="rail-nav-roles" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Roles</span></span></a></li><li><a href="/ade/dashboard/api-keys" data-testid="rail-nav-api-keys" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">API keys</span></span></a></li><li><a href="/ade/dashboard/tenants" data-testid="rail-nav-tenants" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-building2 lucide-building-2 shrink-0 transition-colors duration-[var(--dur-fast)] text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M10 12h4"></path><path d="M10 8h4"></path><path d="M14 21v-3a2 2 0 0 0-4 0v3"></path><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"></path><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">Tenants</span></span></a></li></ul></div></nav><div class="shrink-0 space-y-0.5 border-t border-border px-3 py-2"><div class="relative"><button type="button" data-testid="rail-notifications" aria-haspopup="menu" aria-expanded="false" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><span class="ntf-bell"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell shrink-0 text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"></path><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"></path></svg></span><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="truncate">Notifications</span></span><span class="sr-only">Notifications — no unread notifications</span></button></div><a href="/ade/dashboard/help" data-testid="rail-help" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-question-mark shrink-0 text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg><span class="rail-label min-w-0 flex-1 items-center"><span class="truncate">Help &amp; docs</span></span></a><button type="button" data-testid="rail-preferences" class="hit-target rail-item group/item flex h-nav-item w-full items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg text-fg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="1.125rem" height="1.125rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings2 lucide-settings-2 shrink-0 text-fg-subtle group-hover/item:text-fg" aria-hidden="true"><path d="M14 17H5"></path><path d="M19 7h-9"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg><span class="rail-label min-w-0 flex-1 items-center justify-between gap-2"><span class="truncate">Preferences</span><span class="kbd-group" aria-hidden="true"><kbd class="kbd">⌘</kbd><kbd class="kbd">,</kbd></span></span></button><div class="relative"><button type="button" data-testid="rail-user" aria-haspopup="menu" aria-expanded="false" class="rail-item flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-[var(--dur-fast)] hover:bg-[color-mix(in_srgb,var(--fg)_5%,transparent)] hover:text-fg"><span aria-hidden="true" data-tone="b" class="relative inline-grid select-none place-items-center overflow-hidden font-semibold size-6.5 text-2xs rounded-full bg-violet-soft text-violet-fg shrink-0">PR</span><span class="sr-only">Account menu — 1 unread release note</span><span class="rail-label min-w-0 flex-1 flex-col"><span class="truncate text-sm font-semibold leading-tight text-fg">Priya Raman</span><span class="truncate text-2xs text-fg-muted">priya.raman@northwind.io</span></span><span data-testid="rail-user-unread" aria-hidden="true" class="size-2 shrink-0 rounded-full bg-honey"></span><span class="rail-label shrink-0 items-center text-fg-subtle"><svg xmlns="http://www.w3.org/2000/svg" width="0.9375rem" height="0.9375rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ellipsis" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></span></button></div></div></aside><main id="main-content" tabindex="-1" class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-canvas outline-none"><div style="display: flex; flex-direction: column; flex: 1 1 0%; min-height: 0;"><div class="bg-gradient-to-r from-white via-slate-50 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 border-b border-gray-200/80 dark:border-gray-700/80 px-2 py-1.5 shadow-sm" style="position: relative; z-index: 1000; flex-shrink: 0;"><div class="flex flex-wrap items-center gap-4 w-full"><div class="flex items-center gap-2" style="position: relative; z-index: 1001;"><button type="button" role="combobox" aria-controls="radix-_r_2b_" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="inline-flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-indigo-300 dark:hover:border-indigo-500/50 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed"><svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg><span style="pointer-events: none;">Payments API</span><span aria-hidden="true" class="ml-auto"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></button></div><div class="flex items-center gap-2" style="position: relative; z-index: 1001;"><button type="button" role="combobox" aria-controls="radix-_r_2c_" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="inline-flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-indigo-300 dark:hover:border-indigo-500/50 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed"><svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg><span style="pointer-events: none;">🔒 2.3.0 - Postal addresses</span><span aria-hidden="true" class="ml-auto"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></button></div><div class="flex items-center gap-2" style="position: relative; z-index: 1001;"><span class="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0" aria-hidden="true">→</span><button type="button" role="combobox" aria-controls="radix-_r_2d_" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" class="inline-flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-indigo-300 dark:hover:border-indigo-500/50 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed"><svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg><span style="pointer-events: none;">🔒 2.4.0 - Customer tiers renamed</span><span aria-hidden="true" class="ml-auto"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></button></div></div></div><div style="display: flex; flex: 1 1 0%; overflow: hidden; min-height: 0;"><aside class="shrink-0 flex h-full relative overflow-hidden border-r bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 " style="width: 280px; min-width: 280px;"><div class="flex flex-col h-full flex-1 min-w-0"><div class="shrink-0 flex items-center gap-3 px-3 border-b h-12 border-slate-200 dark:border-slate-800"><div class="shrink-0 w-7 h-7 rounded-md flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/50 ring-1 ring-indigo-100 dark:ring-indigo-900/60 text-indigo-600 dark:text-indigo-400"><span class="[&amp;>svg]:w-3.5 [&amp;>svg]:h-3.5"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-git-compare-arrows" aria-hidden="true"><circle cx="5" cy="6" r="3"></circle><path d="M12 6h5a2 2 0 0 1 2 2v7"></path><path d="m15 9-3-3 3-3"></path><circle cx="19" cy="18" r="3"></circle><path d="M12 18H7a2 2 0 0 1-2-2V9"></path><path d="m9 15 3 3-3 3"></path></svg></span></div><div class="min-w-0 flex-1"><div class="text-sm font-semibold leading-tight truncate text-slate-900 dark:text-slate-100">Classes</div><div class="text-2xs leading-tight truncate mt-0.5 text-slate-500 dark:text-slate-400">4 classes · 1 differ</div></div></div><div class="shrink-0 px-3 py-2 border-b border-slate-200/70 dark:border-slate-800/70"><div class="relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg><input placeholder="Filter classes…" class="w-full pl-7 pr-2 text-xs rounded-md border transition-colors py-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" type="text" value=""></div></div><div class="flex-1 min-h-0 flex flex-col overflow-y-auto"><div class="px-3 py-3"><div class="flex items-center justify-between px-1 mb-1.5 "><span class="text-2xs font-semibold tracking-[0.08em] uppercase text-slate-400 dark:text-slate-500">Schema diff</span></div><ul class="flex flex-col gap-1"><li><button type="button" class="group relative flex items-center w-full text-left rounded-md transition-colors px-2.5 py-1.5 text-sm bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800/60 font-medium"><span class="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-indigo-500" aria-hidden="true"></span><span class="shrink-0 mr-2 flex items-center justify-center w-4 h-4 text-amber-500 dark:text-amber-400" title="Schema differs between versions"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-alert w-3.5 h-3.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg></span><span class="font-medium truncate flex-1 min-w-0">Customer</span><span class="shrink-0 ml-2 px-1.5 py-0.5 rounded text-2xs font-semibold tabular-nums bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300" title="2 rules for this class">2</span></button></li><li><button type="button" class="group relative flex items-center w-full text-left rounded-md transition-colors px-2.5 py-1.5 text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900"><span class="shrink-0 mr-2 flex items-center justify-center w-4 h-4 text-emerald-500 dark:text-emerald-400" title="Schemas match"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check w-3.5 h-3.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg></span><span class="font-medium truncate flex-1 min-w-0">Invoice</span></button></li><li><button type="button" class="group relative flex items-center w-full text-left rounded-md transition-colors px-2.5 py-1.5 text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900"><span class="shrink-0 mr-2 flex items-center justify-center w-4 h-4 text-emerald-500 dark:text-emerald-400" title="Schemas match"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check w-3.5 h-3.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg></span><span class="font-medium truncate flex-1 min-w-0">Payment</span></button></li><li><button type="button" class="group relative flex items-center w-full text-left rounded-md transition-colors px-2.5 py-1.5 text-sm text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900"><span class="shrink-0 mr-2 flex items-center justify-center w-4 h-4 text-emerald-500 dark:text-emerald-400" title="Schemas match"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check w-3.5 h-3.5" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg></span><span class="font-medium truncate flex-1 min-w-0">Refund</span></button></li></ul></div></div><div class="shrink-0 px-3 py-2 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"><div role="radiogroup" aria-label="Sidebar density" class="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 "><button type="button" role="radio" aria-checked="false" title="Compact" class="flex items-center justify-center w-6 h-6 rounded transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rows3 lucide-rows-3 w-3.5 h-3.5" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M21 9H3"></path><path d="M21 15H3"></path></svg><span class="sr-only">Compact</span></button><button type="button" role="radio" aria-checked="true" title="Standard" class="flex items-center justify-center w-6 h-6 rounded transition-colors bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rows2 lucide-rows-2 w-3.5 h-3.5" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 12h18"></path></svg><span class="sr-only">Standard</span></button><button type="button" role="radio" aria-checked="false" title="Comfortable" class="flex items-center justify-center w-6 h-6 rounded transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square w-3.5 h-3.5" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg><span class="sr-only">Comfortable</span></button></div></div></div></aside><main style="flex: 1 1 0%; overflow: auto; position: relative; display: flex; flex-direction: column;"><div dir="ltr" data-orientation="horizontal" class="h-full flex flex-col min-h-0"><div role="tablist" aria-orientation="horizontal" class="flex items-end gap-0.5 border-b border-border w-full shrink-0 flex-nowrap" tabindex="0" data-orientation="horizontal" style="outline: none;"><button type="button" role="tab" aria-selected="true" aria-controls="radix-_r_2k_-content-designer" data-state="active" id="radix-_r_2k_-trigger-designer" class="-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-sm border-b-2 border-transparent font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none min-h-[var(--control-h)] px-3 py-1.5 text-sm data-[state=active]:border-fg data-[state=active]:text-fg data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:border-border-strong data-[state=inactive]:hover:text-fg disabled:cursor-not-allowed disabled:border-transparent disabled:text-fg-faint disabled:opacity-50 disabled:hover:border-transparent" tabindex="-1" data-orientation="horizontal" data-radix-collection-item=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-palette h-4 w-4" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"></path><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle></svg>Designer</button><button type="button" role="tab" aria-selected="false" aria-controls="radix-_r_2k_-content-explorer" data-state="inactive" id="radix-_r_2k_-trigger-explorer" class="-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-sm border-b-2 border-transparent font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none min-h-[var(--control-h)] px-3 py-1.5 text-sm data-[state=active]:border-fg data-[state=active]:text-fg data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:border-border-strong data-[state=inactive]:hover:text-fg disabled:cursor-not-allowed disabled:border-transparent disabled:text-fg-faint disabled:opacity-50 disabled:hover:border-transparent" tabindex="-1" data-orientation="horizontal" data-radix-collection-item=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list h-4 w-4" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg>Explorer</button><button type="button" role="tab" aria-selected="false" aria-controls="radix-_r_2k_-content-scheduler" data-state="inactive" id="radix-_r_2k_-trigger-scheduler" class="-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-sm border-b-2 border-transparent font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none min-h-[var(--control-h)] px-3 py-1.5 text-sm data-[state=active]:border-fg data-[state=active]:text-fg data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:border-border-strong data-[state=inactive]:hover:text-fg disabled:cursor-not-allowed disabled:border-transparent disabled:text-fg-faint disabled:opacity-50 disabled:hover:border-transparent" tabindex="-1" data-orientation="horizontal" data-radix-collection-item=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-clock h-4 w-4" aria-hidden="true"><path d="M16 14v2.2l1.6 1"></path><path d="M16 2v4"></path><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"></path><path d="M3 10h5"></path><path d="M8 2v4"></path><circle cx="16" cy="16" r="6"></circle></svg>Scheduler</button></div><div data-state="active" data-orientation="horizontal" role="tabpanel" aria-labelledby="radix-_r_2k_-trigger-designer" id="radix-_r_2k_-content-designer" tabindex="0" class="focus-visible:rounded-md focus-visible:outline-none flex-1 flex flex-col min-h-0 mt-0 data-[state=inactive]:hidden" style=""><div class="flex-1 min-h-0"><div class="w-full h-full min-h-0"><div data-testid="rf__wrapper" style="width: 100%; height: 100%; overflow: hidden; position: relative; z-index: 0;" class="react-flow bg-gray-50 dark:bg-gray-900 light" role="application"><div class="react-flow__renderer" style="position: absolute; width: 100%; height: 100%; top: 0px; left: 0px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><div class="react-flow__pane draggable" style="position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;"><div class="react-flow__viewport xyflow__viewport react-flow__container" style="transform: translate(79.06024096385539px,26.753012048192772px) scale(0.8313253012048193);"><div class="react-flow__edges"><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="migration-edge-prop-customerId" data-testid="rf__edge-migration-edge-prop-customerId" aria-label="Edge from migration-from to migration-to" aria-describedby="react-flow__edge-desc-1"><path id="migration-edge-prop-customerId" d="M244.5 206.25L264.5 206.25L445 206.25L445 206.25L625.5 206.25L645.5 206.25" fill="none" class="react-flow__edge-path"></path><path d="M244.5 206.25L264.5 206.25L445 206.25L445 206.25L625.5 206.25L645.5 206.25" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path><foreignObject x="435" y="196.25" width="20" height="20" class="nodrag nopan" style="overflow: visible; pointer-events: all;"><button type="button" aria-label="Add migration rule (passthrough)" title="Passthrough: no rule applied. Click to add a rule." style="height: 100%; min-width: 20px; padding: 0px 6px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; transition: background-color 0.12s ease, border-color 0.12s ease; border: 1px dashed var(--node-border); background: var(--node-surface); color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); font-size: 11px; font-weight: 600; line-height: 1;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus" aria-hidden="true" style="flex-shrink: 0;"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></foreignObject></g></svg><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="migration-edge-prop-fullName" data-testid="rf__edge-migration-edge-prop-fullName" aria-label="Edge from migration-from to migration-to" aria-describedby="react-flow__edge-desc-1"><path id="migration-edge-prop-fullName" d="M244.5 230.75L264.5 230.75L445 230.75L445 230.75L625.5 230.75L645.5 230.75" fill="none" class="react-flow__edge-path"></path><path d="M244.5 230.75L264.5 230.75L445 230.75L445 230.75L625.5 230.75L645.5 230.75" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path><foreignObject x="435" y="220.75" width="20" height="20" class="nodrag nopan" style="overflow: visible; pointer-events: all;"><button type="button" aria-label="Add migration rule (passthrough)" title="Passthrough: no rule applied. Click to add a rule." style="height: 100%; min-width: 20px; padding: 0px 6px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; transition: background-color 0.12s ease, border-color 0.12s ease; border: 1px dashed var(--node-border); background: var(--node-surface); color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); font-size: 11px; font-weight: 600; line-height: 1;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus" aria-hidden="true" style="flex-shrink: 0;"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button></foreignObject></g></svg><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="edge-from-email-to-rule-email" data-testid="rf__edge-edge-from-email-to-rule-email" aria-label="Edge from migration-from to migration-rule-email" aria-describedby="react-flow__edge-desc-1"><path id="edge-from-email-to-rule-email" d="M244.5 255.25L268.5 255.25L 290,255.25Q 290,255.25 290,255.25L 290,272Q 290,272 290,272L311.5 272L335.5 272" fill="none" class="react-flow__edge-path"></path><path d="M244.5 255.25L268.5 255.25L 290,255.25Q 290,255.25 290,255.25L 290,272Q 290,272 290,272L311.5 272L335.5 272" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path></g></svg><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="edge-rule-email-to-email" data-testid="rf__edge-edge-rule-email-to-email" aria-label="Edge from migration-rule-email to migration-to" aria-describedby="react-flow__edge-desc-1"><path id="edge-rule-email-to-email" d="M472.5 272L496.5 272L 559,272Q 559,272 559,272L 559,255.25Q 559,255.25 559,255.25L621.5 255.25L645.5 255.25" fill="none" class="react-flow__edge-path"></path><path d="M472.5 272L496.5 272L 559,272Q 559,272 559,272L 559,255.25Q 559,255.25 559,255.25L621.5 255.25L645.5 255.25" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path></g></svg><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="edge-from-tier-to-rule-tier" data-testid="rf__edge-edge-from-tier-to-rule-tier" aria-label="Edge from migration-from to migration-rule-tier" aria-describedby="react-flow__edge-desc-1"><path id="edge-from-tier-to-rule-tier" d="M244.5 279.75L268.5 279.75L 290,279.75Q 290,279.75 290,279.75L 290,302Q 290,302 290,302L311.5 302L335.5 302" fill="none" class="react-flow__edge-path"></path><path d="M244.5 279.75L268.5 279.75L 290,279.75Q 290,279.75 290,279.75L 290,302Q 290,302 290,302L311.5 302L335.5 302" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path></g></svg><svg style="z-index: 0;"><g class="react-flow__edge react-flow__edge-migrationRule nopan inactive" tabindex="0" role="group" aria-roledescription="edge" data-id="edge-rule-tier-to-tier" data-testid="rf__edge-edge-rule-tier-to-tier" aria-label="Edge from migration-rule-tier to migration-to" aria-describedby="react-flow__edge-desc-1"><path id="edge-rule-tier-to-tier" d="M472.5 302L496.5 302L 559,302Q 559,302 559,302L 559,279.75Q 559,279.75 559,279.75L621.5 279.75L645.5 279.75" fill="none" class="react-flow__edge-path"></path><path d="M472.5 302L496.5 302L 559,302Q 559,302 559,302L 559,279.75Q 559,279.75 559,279.75L621.5 279.75L645.5 279.75" fill="none" stroke-opacity="0" stroke-width="20" class="react-flow__edge-interaction"></path></g></svg></div><div class="react-flow__edgelabel-renderer"></div><div class="react-flow__nodes" style="position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;"><div class="react-flow__node react-flow__node-migrationClass" style="z-index: 0; transform: translate(30px,150px); pointer-events: all; visibility: visible;" data-id="migration-from" data-testid="rf__node-migration-from" tabindex="0" role="group" aria-roledescription="node" aria-describedby="react-flow__node-desc-1"><div style="position: relative; background: var(--node-surface); color: var(--node-text); border: 1px solid var(--node-border); border-radius: 8px; min-width: 210px; max-width: 290px; box-shadow: var(--node-shadow-sm); overflow: hidden; transition: box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease; font-size: 12px;"><div><div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: transparent; color: var(--node-text); position: relative;"><div style="width: 26px; height: 26px; border-radius: 6px; background: color-mix(in srgb, var(--node-accent-from) 14%, transparent); color: var(--node-accent-from); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: -0.3px; flex-shrink: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></div><div style="flex: 1 1 0%; min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 0;"><div style="min-width: 0;"><div style="display: flex; align-items: baseline; gap: 6px; min-width: 0;"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--node-text-muted); flex-shrink: 0;">From</span><span style="font-size: 13px; font-weight: 600; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Customer">Customer</span></div></div></div></div></div><div style="padding: 6px 10px 8px;"><ul style="list-style: none; margin: 0px; padding: 0px; display: flex; flex-direction: column;"><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="customerId">customerId</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-customerId" data-nodeid="migration-from" data-handlepos="right" data-id="1-migration-from-prop-customerId-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); right: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="fullName">fullName</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-fullName" data-nodeid="migration-from" data-handlepos="right" data-id="1-migration-from-prop-fullName-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); right: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="email">email</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-email" data-nodeid="migration-from" data-handlepos="right" data-id="1-migration-from-prop-email-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); right: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="tier">tier</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-tier" data-nodeid="migration-from" data-handlepos="right" data-id="1-migration-from-prop-tier-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); right: -16px;"></div></li></ul></div></div></div><div class="react-flow__node react-flow__node-migrationClass" style="z-index: 0; transform: translate(650px,150px); pointer-events: all; visibility: visible;" data-id="migration-to" data-testid="rf__node-migration-to" tabindex="0" role="group" aria-roledescription="node" aria-describedby="react-flow__node-desc-1"><div style="position: relative; background: var(--node-surface); color: var(--node-text); border: 1px solid var(--node-border); border-radius: 8px; min-width: 210px; max-width: 290px; box-shadow: var(--node-shadow-sm); overflow: hidden; transition: box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease; font-size: 12px;"><div><div style="display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: transparent; color: var(--node-text); position: relative;"><div style="width: 26px; height: 26px; border-radius: 6px; background: color-mix(in srgb, var(--node-accent-to) 14%, transparent); color: var(--node-accent-to); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; letter-spacing: -0.3px; flex-shrink: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg></div><div style="flex: 1 1 0%; min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 0;"><div style="min-width: 0;"><div style="display: flex; align-items: baseline; gap: 6px; min-width: 0;"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--node-text-muted); flex-shrink: 0;">To</span><span style="font-size: 13px; font-weight: 600; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Customer">Customer</span></div></div></div></div></div><div style="padding: 6px 10px 8px;"><ul style="list-style: none; margin: 0px; padding: 0px; display: flex; flex-direction: column;"><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="customerId">customerId</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-customerId" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-customerId-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="fullName">fullName</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-fullName" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-fullName-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="email">email</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-email" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-email-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="tier">tier</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-tier" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-tier-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="postalCode">postalCode</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">string</span><div data-handleid="prop-postalCode" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-postalCode-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li><li style="position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 22px; padding: 3px 2px; border-bottom: 1px solid var(--node-border-muted);"><span style="font-size: 12px; font-weight: 500; color: var(--node-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="marketingOptIn">marketingOptIn</span><span style="font-size: 10px; color: var(--node-text-muted); font-family: var(--app-font-mono, monospace); flex-shrink: 0;">boolean</span><div data-handleid="prop-marketingOptIn" data-nodeid="migration-to" data-handlepos="left" data-id="1-migration-to-prop-marketingOptIn-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; top: 50%; transform: translateY(-50%); left: -16px;"></div></li></ul></div></div></div><div class="react-flow__node react-flow__node-migrationRule" style="z-index: 0; transform: translate(340px,260px); pointer-events: all; visibility: visible;" data-id="migration-rule-email" data-testid="rf__node-migration-rule-email" tabindex="0" role="group" aria-roledescription="node" aria-describedby="react-flow__node-desc-1"><div style="position: relative; z-index: 10; height: 22px; min-width: 128px; background: var(--node-surface-muted); border-left: 3px solid var(--node-accent-rule); border-radius: 4px; box-shadow: var(--node-shadow-sm); overflow: hidden;"><div data-handleid="input" data-nodeid="migration-rule-email" data-handlepos="left" data-id="1-migration-rule-email-input-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; left: -10px; top: 50%; transform: translateY(-50%);"></div><button type="button" class="nodrag nopan" title="Edit rule" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0px 8px; font-size: 11px; font-weight: 500; color: var(--node-text); background: transparent; cursor: pointer; pointer-events: auto;"><span style="display: block; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Normalize email</span></button><div data-handleid="out-email" data-nodeid="migration-rule-email" data-handlepos="right" data-id="1-migration-rule-email-out-email-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; right: -10px; top: 50%; transform: translateY(-50%);"></div></div></div><div class="react-flow__node react-flow__node-migrationRule" style="z-index: 0; transform: translate(340px,290px); pointer-events: all; visibility: visible;" data-id="migration-rule-tier" data-testid="rf__node-migration-rule-tier" tabindex="0" role="group" aria-roledescription="node" aria-describedby="react-flow__node-desc-1"><div style="position: relative; z-index: 10; height: 22px; min-width: 128px; background: var(--node-surface-muted); border-left: 3px solid var(--node-accent-rule); border-radius: 4px; box-shadow: var(--node-shadow-sm); overflow: hidden;"><div data-handleid="input" data-nodeid="migration-rule-tier" data-handlepos="left" data-id="1-migration-rule-tier-input-target" class="react-flow__handle react-flow__handle-left nodrag nopan target connectablestart connectableend" style="background: var(--node-accent-from); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; left: -10px; top: 50%; transform: translateY(-50%);"></div><button type="button" class="nodrag nopan" title="Edit rule" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0px 8px; font-size: 11px; font-weight: 500; color: var(--node-text); background: transparent; cursor: pointer; pointer-events: auto;"><span style="display: block; width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Rename tiers</span></button><div data-handleid="out-tier" data-nodeid="migration-rule-tier" data-handlepos="right" data-id="1-migration-rule-tier-out-tier-source" class="react-flow__handle react-flow__handle-right nodrag nopan source connectablestart connectableend" style="background: var(--node-accent-to); width: 9px; height: 9px; min-width: 0; min-height: 0; border: 1.5px solid var(--node-surface); border-radius: 50%; right: -10px; top: 50%; transform: translateY(-50%);"></div></div></div></div><div class="react-flow__viewport-portal"></div></div></div></div><svg class="react-flow__background" style="position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;" data-testid="rf__background"><pattern id="pattern-1" x="9.228915662650575" y="6.80120481927711" width="9.975903614457831" height="9.975903614457831" patternUnits="userSpaceOnUse" patternTransform="translate(-5.9879518072289155,-5.9879518072289155)"><circle cx="0.41566265060240964" cy="0.41566265060240964" r="0.41566265060240964" class="react-flow__background-pattern dots"></circle></pattern><rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-1)"></rect></svg><div class="react-flow__panel react-flow__controls vertical bottom left" data-testid="rf__controls" aria-label="Control Panel"><button type="button" class="react-flow__controls-button react-flow__controls-zoomin" title="Zoom In" aria-label="Zoom In"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M32 18.133H18.133V32h-4.266V18.133H0v-4.266h13.867V0h4.266v13.867H32z"></path></svg></button><button type="button" class="react-flow__controls-button react-flow__controls-zoomout" title="Zoom Out" aria-label="Zoom Out"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 5"><path d="M0 0h32v4.2H0z"></path></svg></button><button type="button" class="react-flow__controls-button react-flow__controls-fitview" title="Fit View" aria-label="Fit View"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 30"><path d="M3.692 4.63c0-.53.4-.938.939-.938h5.215V0H4.708C2.13 0 0 2.054 0 4.63v5.216h3.692V4.631zM27.354 0h-5.2v3.692h5.17c.53 0 .984.4.984.939v5.215H32V4.631A4.624 4.624 0 0027.354 0zm.954 24.83c0 .532-.4.94-.939.94h-5.215v3.768h5.215c2.577 0 4.631-2.13 4.631-4.707v-5.139h-3.692v5.139zm-23.677.94c-.531 0-.939-.4-.939-.94v-5.138H0v5.139c0 2.577 2.13 4.707 4.708 4.707h5.138V25.77H4.631z"></path></svg></button><button type="button" class="react-flow__controls-button react-flow__controls-interactive" title="Toggle Interactivity" aria-label="Toggle Interactivity"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 32"><path d="M21.333 10.667H19.81V7.619C19.81 3.429 16.38 0 12.19 0 8 0 4.571 3.429 4.571 7.619v3.048H3.048A3.056 3.056 0 000 13.714v15.238A3.056 3.056 0 003.048 32h18.285a3.056 3.056 0 003.048-3.048V13.714a3.056 3.056 0 00-3.048-3.047zM12.19 24.533a3.056 3.056 0 01-3.047-3.047 3.056 3.056 0 013.047-3.048 3.056 3.056 0 013.048 3.048 3.056 3.056 0 01-3.048 3.047zm4.724-13.866H7.467V7.619c0-2.59 2.133-4.724 4.723-4.724 2.591 0 4.724 2.133 4.724 4.724v3.048z"></path></svg></button></div><div class="react-flow__panel react-flow__minimap bottom right" data-testid="rf__minimap"><svg width="200" height="150" viewBox="-122.04637681159417 -180.61884057971014 1131.686956521739 862.2376811594203" class="react-flow__minimap-svg" role="img" aria-labelledby="react-flow__minimap-desc-1" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"><title id="react-flow__minimap-desc-1">Mini Map</title><rect class="react-flow__minimap-node" x="30" y="150" rx="5" ry="5" width="210" height="152" shape-rendering="geometricPrecision"></rect><rect class="react-flow__minimap-node" x="650" y="150" rx="5" ry="5" width="210" height="201" shape-rendering="geometricPrecision"></rect><rect class="react-flow__minimap-node" x="340" y="260" rx="5" ry="5" width="128" height="24" shape-rendering="geometricPrecision"></rect><rect class="react-flow__minimap-node" x="340" y="290" rx="5" ry="5" width="128" height="24" shape-rendering="geometricPrecision"></rect><path class="react-flow__minimap-mask" d="M-148.99130434782606,-207.56376811594203h1185.5768115942026v916.127536231884h-1185.5768115942026z
+        M-95.10144927536228,-32.18115942028986h1077.7971014492753v565.3623188405797h-1077.7971014492753z" fill-rule="evenodd" pointer-events="none"></path></svg></div><div class="react-flow__panel react-flow__attribution bottom right" data-message="Please only hide this attribution when you are subscribed to React Flow Pro: https://pro.reactflow.dev"><a href="https://reactflow.dev" target="_blank" rel="noopener noreferrer" aria-label="React Flow attribution">React Flow</a></div><div id="react-flow__node-desc-1" style="display: none;">Press enter or space to select a node. You can then use the arrow keys to move the node around. Press delete to remove it and escape to cancel.</div><div id="react-flow__edge-desc-1" style="display: none;">Press enter or space to select an edge. You can then press delete to remove it or escape to cancel.</div><div id="react-flow__aria-live-1" aria-live="assertive" aria-atomic="true" style="position: absolute; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); clip-path: inset(100%);"></div></div></div></div><div class="flex-1 min-h-0"><div class="h-full flex flex-col min-h-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"><div class="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-database w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5V19A9 3 0 0 0 21 19V5"></path><path d="M3 12A9 3 0 0 0 21 12"></path></svg><h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Data inspection — Customer</h3></div><div class="flex-1 min-h-0 flex overflow-hidden"><div class="shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30" style="width: 20%; min-width: 0;"><div class="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2"><div class="flex items-center gap-2"><input placeholder="Search records..." class="flex-1 min-w-0 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder:text-gray-400" type="text" value=""><button type="button" class="shrink-0 p-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" title="Search"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search w-4 h-4" aria-hidden="true"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg></button></div><button type="button" class="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list w-4 h-4" aria-hidden="true"><path d="M3 5h.01"></path><path d="M3 12h.01"></path><path d="M3 19h.01"></path><path d="M8 5h13"></path><path d="M8 12h13"></path><path d="M8 19h13"></path></svg>View all records</button></div><div class="flex-1 min-h-0 overflow-auto"><ul class="p-1 space-y-0.5"><li><button type="button" class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-100"><div class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">0193a8e2-7c41-7d0e-9b2a-41f0c2d9e811</div><div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{"customerId":"0193a8e2-7c41-7d0e-9b2a-41f0c2d9e811","fullNa…</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">10/6/26, 3:22 PM</div></button></li><li><button type="button" class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"><div class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">0193a8e2-6b30-7c1f-8a19-30e1b1c8d702</div><div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{"customerId":"0193a8e2-6b30-7c1f-8a19-30e1b1c8d702","fullNa…</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">10/5/26, 9:41 AM</div></button></li><li><button type="button" class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"><div class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">0193a8e2-5a2f-7b2e-97f8-2fd0a0b7c6f3</div><div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{"customerId":"0193a8e2-5a2f-7b2e-97f8-2fd0a0b7c6f3","fullNa…</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">10/3/26, 1:05 PM</div></button></li><li><button type="button" class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"><div class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">0193a8e2-491e-7a3d-86e7-1ec09fa6b5e4</div><div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{"customerId":"0193a8e2-491e-7a3d-86e7-1ec09fa6b5e4","fullNa…</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">9/30/26, 8:17 AM</div></button></li><li><button type="button" class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"><div class="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">0193a8e2-380d-794c-75d6-0dbf8e95a4d5</div><div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{"customerId":"0193a8e2-380d-794c-75d6-0dbf8e95a4d5","fullNa…</div><div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">9/29/26, 11:48 AM</div></button></li></ul></div></div><div class="flex-1 min-w-0 flex overflow-hidden"><div class="flex-1 min-w-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"><div class="h-11 flex items-center gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-braces w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"></path><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"></path></svg><span class="text-sm font-medium text-gray-700 dark:text-gray-300">Before</span></div><div class="flex-1 min-h-0 overflow-hidden"><pre data-testid="monaco-stand-in" class="h-full overflow-auto p-3 font-mono text-xs bg-gray-900 text-gray-100">{
+  "customerId": "0193a8e2-7c41-7d0e-9b2a-41f0c2d9e811",
+  "fullName": "Elena Vasquez",
+  "email": "Elena.Vasquez@northwind.io",
+  "tier": "gold"
+}</pre></div></div><div class="flex-1 min-w-0 flex flex-col bg-white dark:bg-gray-900"><div class="h-11 flex items-center justify-between gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0"><div class="flex items-center gap-2 min-w-0"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-braces w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path><path d="M14 2v5a1 1 0 0 0 1 1h5"></path><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"></path><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"></path></svg><span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">After rules applied</span></div><button type="button" class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play w-4 h-4" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"></path></svg>Evaluate</button></div><div class="flex-1 min-h-0 overflow-hidden flex flex-col"><pre data-testid="monaco-stand-in" class="h-full overflow-auto p-3 font-mono text-xs bg-gray-900 text-gray-100">{
+  "customerId": "0193a8e2-7c41-7d0e-9b2a-41f0c2d9e811",
+  "fullName": "Elena Vasquez",
+  "email": "elena.vasquez@northwind.io",
+  "tier": "plus"
+}</pre></div></div></div></div></div></div></div><div data-state="inactive" data-orientation="horizontal" role="tabpanel" aria-labelledby="radix-_r_2k_-trigger-explorer" hidden="" id="radix-_r_2k_-content-explorer" tabindex="0" class="focus-visible:rounded-md focus-visible:outline-none flex-1 min-h-0 mt-0 data-[state=inactive]:hidden overflow-auto"></div><div data-state="inactive" data-orientation="horizontal" role="tabpanel" aria-labelledby="radix-_r_2k_-trigger-scheduler" hidden="" id="radix-_r_2k_-content-scheduler" tabindex="0" class="focus-visible:rounded-md focus-visible:outline-none flex-1 min-h-0 mt-0 data-[state=inactive]:hidden overflow-auto"></div></div></main></div></div></main></div></div>

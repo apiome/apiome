@@ -22,6 +22,12 @@ import '@testing-library/jest-dom';
 import AuthProviderSettingsClient from '../src/app/admin/dashboard/settings/AuthProviderSettingsClient';
 import type { AdminProviderConfigView } from '../lib/auth/admin-provider-config';
 
+// `AdminSidebar` (the docs fixtures' frame) reads the App Router; the settings client does not.
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => '/admin/dashboard/settings',
+}));
+
 /** Build a full masked view with sensible env-fallback defaults. */
 function makeView(overrides: Partial<AdminProviderConfigView>): AdminProviderConfigView {
   return {
@@ -894,5 +900,129 @@ describe('AuthProviderSettingsClient — removing a provider', () => {
       ).not.toBeInTheDocument()
     );
     expect(deleteHandler).toHaveBeenCalledWith('/api/admin/auth-providers/atlassian');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Sign-in providers page (`apiome-docs/screens.json`, DOCS-1.10) is
+ * captured from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/auth-provider-settings.test.tsx -t "docs fixtures"`.
+ *
+ * The screen is drawn inside the admin console's own frame — `AdminSidebar` beside the page, as
+ * `admin/dashboard/layout.tsx` lays it out — so the capture shows where System settings sits.
+ * Every credential below is an obvious placeholder.
+ */
+describe('the docs fixtures', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { liveMarkup, writeA11yFixture } = require('./helpers/a11y-fixture-dump') as typeof import('./helpers/a11y-fixture-dump');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const AdminSidebar = require('../src/app/admin/dashboard/AdminSidebar').default as React.ComponentType;
+
+  /** GitHub, enabled from the database, with its secret stored. */
+  const DOCS_GITHUB = makeView({
+    enabled: true,
+    enabled_source: 'db',
+    client_id: 'Iv1.example0docs0id',
+    client_id_source: 'db',
+    secret_set: true,
+    secret_source: 'db',
+    missing_for_enable: [],
+    can_enable: true,
+    updated_at: '2026-09-28T14:05:00Z',
+    updated_by: 'operator@northwind.io',
+  });
+  /** Microsoft, still governed by `.env`, with only the tenant stored. */
+  const DOCS_AZURE = makeView({
+    provider_id: 'azure',
+    label: 'Microsoft',
+    config: { AZURE_AD_TENANT: 'northwind.onmicrosoft.com' },
+    updated_at: '2026-10-02T09:12:00Z',
+    updated_by: 'operator@northwind.io',
+  });
+  /** Okta, offered by Add Provider (nothing stored yet). */
+  const DOCS_OKTA = makeView({
+    provider_id: 'okta',
+    label: 'Okta',
+    required_fields: ['client_id', 'client_secret', 'issuer'],
+    missing_for_enable: ['client_id', 'client_secret', 'issuer'],
+  });
+  const DOCS_LIST = {
+    providers: [
+      DOCS_GITHUB,
+      DOCS_AZURE,
+      makeView({ provider_id: 'gitlab', label: 'GitLab' }),
+      makeView({ provider_id: 'google', label: 'Google' }),
+      DOCS_OKTA,
+      makeView({ provider_id: 'keycloak', label: 'Keycloak' }),
+      makeView({ provider_id: 'oidc', label: 'OIDC' }),
+      makeView({ provider_id: 'auth0', label: 'Auth0' }),
+    ],
+  };
+
+  /** The admin console frame around the screen, as the dashboard layout renders it. */
+  function AdminFrame({ children }: { children: React.ReactNode }) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <AdminSidebar />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+      </div>
+    );
+  }
+
+  /** Everything rendered, portals included, without the `<body>` tag. */
+  const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
+
+  it('renders the provider list after Validate, Add Provider and its configure step', async () => {
+    mockFetch(undefined, [DOCS_LIST]);
+    render(
+      <AdminFrame>
+        <AuthProviderSettingsClient />
+      </AdminFrame>
+    );
+    const github = await card('GitHub');
+    expect(github.getByText('Enabled (database)')).toBeInTheDocument();
+    const microsoft = await card('Microsoft');
+    expect(microsoft.getByText('Env-derived')).toBeInTheDocument();
+
+    // Validate on GitHub: complete, so it can be enabled.
+    fireEvent.click(github.getByRole('button', { name: /Validate/ }));
+    await github.findByText('Database configuration is complete — this provider can be enabled.');
+    writeA11yFixture('admin-auth-providers', bodyMarkup());
+
+    // Add Provider: the picker, searched.
+    const picker = await openAddModal();
+    fireEvent.change(picker.getByRole('textbox', { name: 'Search providers' }), { target: { value: 'o' } });
+    expect(picker.getByRole('option', { name: /Okta/ })).toBeInTheDocument();
+    writeA11yFixture('admin-auth-provider-add', bodyMarkup());
+
+    // The configure step for Okta, filled in.
+    fireEvent.change(picker.getByRole('textbox', { name: 'Search providers' }), { target: { value: '' } });
+    fireEvent.click(picker.getByRole('option', { name: /Okta/ }));
+    const dialog = within(screen.getByRole('dialog', { name: 'Add a sign-in provider' }));
+    expect(dialog.getByText('Configure Okta')).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole('radio', { name: 'Enabled' }));
+    fireEvent.change(dialog.getByLabelText('Client ID'), { target: { value: '0oa-example-docs-client' } });
+    fireEvent.change(dialog.getByLabelText('Client secret'), { target: { value: 'example-not-a-secret' } });
+    fireEvent.change(dialog.getByLabelText('Issuer'), { target: { value: 'https://northwind.okta.com/oauth2/default' } });
+    writeA11yFixture('admin-auth-provider-configure', bodyMarkup());
+  });
+
+  it('renders the inline Remove confirmation', async () => {
+    // Microsoft first, so its confirmation sits inside the captured viewport.
+    mockFetch(undefined, [{ providers: [DOCS_AZURE, DOCS_GITHUB] }]);
+    render(
+      <AdminFrame>
+        <AuthProviderSettingsClient />
+      </AdminFrame>
+    );
+    const microsoft = await card('Microsoft');
+    fireEvent.click(microsoft.getByRole('button', { name: /Remove/ }));
+    expect(microsoft.getByRole('button', { name: 'Remove provider' })).toBeInTheDocument();
+    expect(microsoft.getByText(/Sign-in for this provider falls back to \.env\./)).toBeInTheDocument();
+    writeA11yFixture('admin-auth-provider-remove', bodyMarkup());
   });
 });

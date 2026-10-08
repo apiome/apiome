@@ -10,7 +10,9 @@ import {
   SCREEN_DEFAULTS,
   checkScreenshots,
   findScreenshotReferences,
+  hasLegacyCallout,
   imagePath,
+  legacyReport,
   loadManifest,
   normalizeScreen,
   parseData,
@@ -92,6 +94,17 @@ describe('normalizeScreen', () => {
     const source = fs.readFileSync(path.join(SITE_DIR, '..', 'apiome-ui', 'src', 'app', 'config', 'themes.ts'), 'utf8');
     const ids = [...source.matchAll(/^ {4}id: '([a-z-]+)',$/gm)].map((match) => match[1]).filter((id) => id !== 'system');
     assert.deepEqual([...new Set(ids)].sort(), [...APP_THEMES].sort());
+  });
+  it('keeps tags, defaulting to none', () => {
+    assert.deepEqual(normalizeScreen(entry()).screen.tags, []);
+    assert.deepEqual(normalizeScreen(entry({tags: ['legacy']})).screen.tags, ['legacy']);
+  });
+  it('rejects unknown, repeated or non-list tags', () => {
+    for (const tags of [['old'], ['legacy', 'legacy'], 'legacy']) {
+      const {screen, problems} = normalizeScreen(entry({tags}));
+      assert.equal(screen, null);
+      assert.match(problems[0], /`tags` must list distinct values from legacy/);
+    }
   });
   it('reports every bad field, named by id', () => {
     const {screen, problems} = normalizeScreen(
@@ -304,6 +317,49 @@ describe('checkScreenshots', () => {
       'docs/a.mdx: <Screenshot id="nope"/> is not in screens.json',
       'docs/a.mdx: <Screenshot id="dark-only"/> needs both a light and a dark image',
     ]);
+  });
+});
+
+describe('legacy screens', () => {
+  let staticDir;
+  const screens = [
+    normalizeScreen(entry({id: 'admin-users', route: '/admin/dashboard/users', tags: ['legacy']})).screen,
+    normalizeScreen(entry()).screen,
+  ];
+
+  beforeEach(() => {
+    staticDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-legacy-'));
+    fs.mkdirSync(path.join(staticDir, 'img', 'screens'), {recursive: true});
+    for (const id of ['admin-users', 'catalog']) {
+      for (const theme of ['light', 'dark']) fs.writeFileSync(path.join(staticDir, imagePath(id, theme)), '');
+    }
+  });
+  afterEach(() => fs.rmSync(staticDir, {recursive: true, force: true}));
+
+  it('requires the <Legacy/> callout on a page that shows a legacy screenshot', () => {
+    const pages = [
+      {page: 'docs/without.mdx', source: '<Screenshot id="admin-users" alt="x"/>'},
+      {page: 'docs/with.mdx', source: '<Legacy />\n\n<Screenshot id="admin-users" alt="x"/>'},
+      {page: 'docs/current.mdx', source: '<Screenshot id="catalog" alt="x"/>'},
+    ];
+    assert.deepEqual(checkScreenshots({screens, pages, staticDir}), [
+      'docs/without.mdx: shows legacy screenshot(s) admin-users but has no <Legacy/> callout',
+    ]);
+  });
+  it('does not count a callout inside code', () => {
+    assert.equal(hasLegacyCallout('Use `<Legacy/>` on the page.'), false);
+    assert.equal(hasLegacyCallout('```mdx\n<Legacy />\n```'), false);
+    assert.equal(hasLegacyCallout('<Legacy />'), true);
+  });
+  it('lists the legacy entries whose images changed, and nothing otherwise', () => {
+    const report = legacyReport({
+      screens,
+      changedFiles: ['apiome-docs/static/img/screens/admin-users.dark.png', 'apiome-docs/static/img/screens/catalog.light.png'],
+    });
+    assert.match(report, /^### Legacy screens changed/);
+    assert.match(report, /- `admin-users` \(`\/admin\/dashboard\/users`\)/);
+    assert.doesNotMatch(report, /catalog/);
+    assert.equal(legacyReport({screens, changedFiles: ['apiome-docs/static/img/screens/catalog.dark.png']}), '');
   });
 });
 

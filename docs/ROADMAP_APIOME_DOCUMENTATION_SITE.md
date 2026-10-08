@@ -341,7 +341,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.10] Admin console & tools — as they exist today` — [#5627](https://github.com/apiome/apiome/issues/5627)
+### ✅ `apiome: [DOCS-1.10] Admin console & tools — as they exist today` — [#5627](https://github.com/apiome/apiome/issues/5627) — **Complete**
 **Problem statement.** Operators configure sign-in providers, licenses and flags in the admin console, which has README-level notes only (`apiome-ui/src/app/admin/README.md`). The console is still the legacy UI, so screenshots must say so to avoid confusion when Epic 9 lands.
 
 **Solution / scope.**
@@ -349,9 +349,9 @@ Milestone: **RC6** (epic and every issue).
 - A callout on each page: “This surface predates the Hive redesign; it is scheduled under #5272.” Screenshots carry a `legacy` tag in the manifest so the weekly refresh flags them when Epic 9 ships.
 
 **Acceptance criteria.**
-- [ ] Every admin and tools route has a page with a current screenshot and the legacy callout
-- [ ] Runbooks and env reference are linked
-- [ ] No broken links
+- [x] Every admin and tools route has a page with a current screenshot and the legacy callout
+- [x] Runbooks and env reference are linked
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

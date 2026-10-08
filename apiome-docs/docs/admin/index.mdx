@@ -1,13 +1,29 @@
 ---
 title: Admin & tools
-description: "The admin console, data browser and migrations for operators."
+description: "Operating Apiome: the admin console, data browser, migrations and runbooks."
 sidebar_label: Admin & tools
 sidebar_position: 1
 ---
 
-Admin & tools is for the people who run an Apiome installation: the **admin console** (users,
-tenants, licenses, feature flags, auth providers), the **data browser** and **migrations**.
+Admin & tools is for the people who run an Apiome installation. Start with
+[Operating Apiome](./operating-apiome.mdx) — the services, the environment reference and the
+runbooks for deploying, backing up and triaging.
 
-To serve this site yourself, see [Host the documentation site](/admin/docs-image). More pages for this
-group are on the way; until then, see the [runbooks](https://github.com/apiome/apiome/tree/main/docs/runbooks)
-in the repository.
+**The admin console** at `/admin` is where operators manage the whole installation:
+[signing in and the overview](./admin-console.mdx), [Users](./users.mdx),
+[Tenants](./admin-tenants.mdx), [Licenses](./licenses.mdx), [Feature flags](./feature-flags.mdx),
+[Sign-in providers](./auth-providers.mdx) and [Property templates](./property-templates.mdx).
+
+**The tools** — the [Data browser](./data-browser.mdx) and [Migrations](./migrations.mdx) — work on a
+workspace's data directly.
+
+These screens predate the Hive redesign, so they look unlike the rest of Apiome; every page
+carries a note saying so, and the redesign is tracked in
+[#5272](https://github.com/apiome/apiome/issues/5272).
+
+To serve this site yourself, see [Host the documentation site](./docs-image.mdx); to change it, see
+[Contribute to the docs](./contribute-to-the-docs.mdx).
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
