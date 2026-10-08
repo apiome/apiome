@@ -271,7 +271,8 @@ class ProviderLimits:
     Every field is a *provider-published* number rather than a measurement of this runtime, so the
     table can be checked against the provider's documentation without re-running anything. It is
     data on purpose: :mod:`apiome_mock.serverless_preflight` checks a bundle against it and
-    ``apiome-docs/docs/ship/mocks/serverless-mock-adapter.md`` renders the same values, so the two cannot drift.
+    ``apiome-docs/docs/reference/mock-runtime/serverless-mock-adapter.md`` renders the same values, so
+    the two cannot drift.
 
     Attributes:
         max_package_bytes: Largest deployable code package, uncompressed. The mock bundle is only

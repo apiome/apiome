@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.204.0
+  version: 1.204.1
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -16823,7 +16823,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyncErrorDetail'
                 description: Response payload for mergeabounddraftagainstitsrepositoryrefresponse422.
-          description: Unprocessable Entity
+          description: Unprocessable Content
         '502':
           content:
             application/json:
@@ -71272,7 +71272,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         completed_at:
           anyOf:
           - type: string
@@ -72726,7 +72726,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -72899,7 +72899,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73340,13 +73340,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -74915,7 +74915,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 72e2a8ae-c709-4852-8f72-782b69bea88e
+          example: b55d4d39-e235-4342-9de3-e518ae4cdc64
         method:
           type: string
           title: Method
@@ -77058,7 +77058,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         envelope:
           additionalProperties: true
           type: object
@@ -78438,7 +78438,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         browse_url:
           anyOf:
           - type: string
@@ -105062,9 +105062,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Request body for push webhook subscription create.
           - type: 'null'
             description: Request body for push webhook subscription create.
@@ -105105,9 +105105,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Response payload for push webhook subscription.
           - type: 'null'
             description: Response payload for push webhook subscription.
@@ -105171,9 +105171,9 @@ components:
           anyOf:
           - type: string
             enum:
-            - docs-only
-            - non-breaking
             - breaking
+            - non-breaking
+            - docs-only
             description: Request body for push webhook subscription update.
           - type: 'null'
             description: Request body for push webhook subscription update.
@@ -109886,7 +109886,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
       additionalProperties: false
       type: object
       required:
@@ -118685,7 +118685,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         detected_by:
           anyOf:
           - type: string
@@ -124142,13 +124142,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-07T19:37:36Z'
+          example: '2026-10-08T00:57:09Z'
         outcome:
           anyOf:
           - type: string

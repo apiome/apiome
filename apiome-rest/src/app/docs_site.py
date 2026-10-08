@@ -35,7 +35,7 @@ def guide_page(group: str, slug: str) -> str:
     """Return the monorepo-relative source path of a guide page.
 
     Args:
-        group: Sidebar folder under ``apiome-docs/docs``, e.g. ``build`` or ``ship/mocks``.
+        group: Sidebar folder under ``apiome-docs/docs``, e.g. ``build`` or ``reference/mock-runtime``.
         slug: File name without the extension, e.g. ``lint-rules``.
 
     Returns:

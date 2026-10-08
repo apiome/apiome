@@ -17,8 +17,8 @@ no per-invocation entropy, so the same request against the same bundle produces 
 whichever function instance answers it. The one thing that legitimately differs between instances
 is ``X-Mock-Session`` state, which lives in the instance's memory: sessions survive warm
 invocations on one instance and are absent on a cold one. That is a property of function
-environments, not a defect, and it is surfaced (see ``apiome-docs/docs/ship/mocks/serverless-mock-adapter.md``)
-rather than papered over.
+environments, not a defect, and it is surfaced (see
+``apiome-docs/docs/reference/mock-runtime/serverless-mock-adapter.md``) rather than papered over.
 
 **Cold start.** The bundle is loaded, verified, and compiled once per execution environment, at
 import time via :func:`get_adapter`, and reused by every warm invocation. The cost of that is

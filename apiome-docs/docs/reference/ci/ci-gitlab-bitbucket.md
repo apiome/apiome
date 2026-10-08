@@ -206,4 +206,4 @@ echo "exit: $?"                    # 0 pass · 1 gate failed · 2 error
 - [CI contract gate (GitHub Action)](./ci-diff-gate.md)
 - Recipe sources (kept in sync with this page by CI): [`diff-action/recipes/`](https://github.com/apiome/apiome/tree/main/diff-action/recipes/)
 - Action & image source: [`diff-action/`](https://github.com/apiome/apiome/tree/main/diff-action/)
-- CLI quick-start: [CLI quick-start](./cli-quickstart.md)
+- CLI quick-start: [CLI quick-start](../cli-quickstart.md)

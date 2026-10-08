@@ -5,9 +5,14 @@ sidebar_position: 2
 tags: [rest]
 ---
 
-The Apiome REST API is a **FastAPI** application, so it publishes its own interactive API
-reference automatically — there is nothing to generate or host separately. Point a browser at the
-running REST service.
+The Apiome REST API is a **FastAPI** application. Its reference is published two ways:
+
+- **On this site** — the [REST API reference](./rest/index.mdx), generated from
+  `apiome-rest/openapi.yaml`: a page per tag with every operation's parameters, request body and
+  responses. It is regenerated whenever the OpenAPI document changes, and the site build fails if it
+  was not.
+- **On the running service** — the interactive Swagger UI and ReDoc below, which can also send
+  requests.
 
 The REST service listens on **`http://localhost:8000`** by default (the `rest` service in
 `docker-compose.yml`).

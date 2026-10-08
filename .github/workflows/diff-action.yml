@@ -9,14 +9,14 @@ on:
   push:
     paths:
       - "diff-action/**"
-      - "apiome-docs/docs/reference/ci-diff-gate.md"
-      - "apiome-docs/docs/reference/ci-gitlab-bitbucket.md"
+      - "apiome-docs/docs/reference/ci/ci-diff-gate.md"
+      - "apiome-docs/docs/reference/ci/ci-gitlab-bitbucket.md"
       - ".github/workflows/diff-action.yml"
   pull_request:
     paths:
       - "diff-action/**"
-      - "apiome-docs/docs/reference/ci-diff-gate.md"
-      - "apiome-docs/docs/reference/ci-gitlab-bitbucket.md"
+      - "apiome-docs/docs/reference/ci/ci-diff-gate.md"
+      - "apiome-docs/docs/reference/ci/ci-gitlab-bitbucket.md"
       - ".github/workflows/diff-action.yml"
   release:
     types: [published]

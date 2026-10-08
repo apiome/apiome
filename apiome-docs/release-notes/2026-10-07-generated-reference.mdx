@@ -1,0 +1,20 @@
+---
+slug: generated-reference
+title: REST, CLI and MCP reference, generated from the code
+description: Generated REST, CLI and MCP reference, with mock runtime and CI under Reference.
+authors: [apiome]
+---
+
+[Reference](/reference) now carries the three surfaces generated straight from their source, so
+they cannot drift from it: the [REST API](/reference/rest) — a page for each of its tags — the
+[CLI](/reference/cli) — a page for each command, plus the exit codes — and the [MCP server's
+tools](/reference/mcp). ([#5628](https://github.com/apiome/apiome/issues/5628))
+
+{/* truncate */}
+
+- **Fails on drift** — each project's tests and a CI job fail when a page no longer matches its
+  source, and the site build fails when `openapi.yaml` changed without regenerating the REST pages.
+- **Mock runtime and CI moved under Reference** — the mock engine guides are now at
+  [Reference → Mock runtime](/reference/mock-runtime), and [Reference → CI](/reference/ci) holds the
+  contract-gate guides with the `diff-action` and `mock-action` READMEs.
+- **Quick-starts link the reference** instead of restating the command and tool lists.

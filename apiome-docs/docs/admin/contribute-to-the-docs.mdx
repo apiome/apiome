@@ -30,6 +30,11 @@ From the repository root:
 The workspace [README](https://github.com/apiome/apiome/blob/main/apiome-docs/README.md) covers the
 groups, the components and the generated pages in full.
 
+Some pages are **generated** and say so in their front matter (`generated:`): the REST, CLI and MCP
+references under [Reference](/reference), the CI action pages, the supported-formats table and the
+lint-rule catalogs. Change the code they come from and rerun the generator named on
+[Reference](/reference) — a hand edit is overwritten, and CI fails until the page matches its source.
+
 ## Add a screenshot
 
 Screenshots are never pasted by hand: each one is an entry in `apiome-docs/screens.json`, captured
@@ -111,6 +116,7 @@ script exits with an error when any selected entry could not be captured.
 - a page uses `<Screenshot id/>` with an id that is not in the manifest, or that lacks a light or a
   dark image.
 - a page shows a screenshot tagged `legacy` without the `<Legacy/>` callout.
+- the REST reference was generated from an older `apiome-rest/openapi.yaml`.
 
 The build itself fails when a `<Screenshot/>` has no `alt` text.
 

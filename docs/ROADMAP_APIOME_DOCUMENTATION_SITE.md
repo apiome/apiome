@@ -361,7 +361,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.11] Reference — REST (OpenAPI), CLI, MCP tools, mock runtime, CI actions` — [#5628](https://github.com/apiome/apiome/issues/5628)
+### ✅ `apiome: [DOCS-1.11] Reference — REST (OpenAPI), CLI, MCP tools, mock runtime, CI actions` — [#5628](https://github.com/apiome/apiome/issues/5628) — **Complete**
 **Problem statement.** The REST reference is only the running Swagger UI; the CLI and MCP tool surfaces are documented by hand in quick-starts that drift from the code; `AGENTS.md` requires an OpenAPI version bump on every REST change but nothing publishes it.
 
 **Solution / scope.**
@@ -371,9 +371,9 @@ Milestone: **RC6** (epic and every issue).
 - Move mock bundle/runtime/fixture/callback/attestation guides and the diff-action / mock-action READMEs under Reference → Mock runtime / CI.
 
 **Acceptance criteria.**
-- [ ] REST, CLI and MCP references regenerate from source in CI and fail on drift
-- [ ] Every REST tag has a page; every CLI command has a page
-- [ ] Quick-starts link to the generated reference instead of restating it
+- [x] REST, CLI and MCP references regenerate from source in CI and fail on drift
+- [x] Every REST tag has a page; every CLI command has a page
+- [x] Quick-starts link to the generated reference instead of restating it
 
 **Parallelism / dependencies.** Depends on DOCS-1.1. Parallel with 1.2–1.10.
 

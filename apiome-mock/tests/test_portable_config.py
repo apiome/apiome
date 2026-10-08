@@ -27,8 +27,8 @@ DOC_PATH = (
     Path(__file__).resolve().parent.parent.parent
     / "apiome-docs"
     / "docs"
-    / "ship"
-    / "mocks"
+    / "reference"
+    / "mock-runtime"
     / "portable-mock-runtime.md"
 )
 

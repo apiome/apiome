@@ -39,7 +39,7 @@ product's navigation rail:
 
 Each group folder holds a `_category_.json` (label, position) and an `index.mdx` landing page that
 lists the group's pages (`<DocCardList />`). The sidebar is generated from the folders, so a new page
-shows up as soon as it is saved in one. A group can nest a sub-category the same way — `ship/mocks/`
+shows up as soon as it is saved in one. A group can nest a sub-category the same way — `reference/mock-runtime/`
 has a `_category_.json` with a generated index.
 
 The guides that used to live in `docs/guide/` were moved here (DOCS-1.2, #5619);
@@ -55,15 +55,23 @@ HTML — so mark an anchor as a heading id (`### Apache Arrow {#format-arrow}`),
 
 ### Generated pages
 
-Five pages are written by `apiome-rest` generators — edit the generator, not the page:
+These pages are written by generators — edit the generator (or its source), not the page:
 
-| Page | Regenerate with (from `apiome-rest/`) |
+| Page | Regenerate with |
 | --- | --- |
-| `bring-in/supported-formats.md` | `uv run python scripts/generate_supported_formats_doc.py` |
-| `build/lint-rules.md`, `govern/mcp-*-rules.md` | `uv run python scripts/generate_lint_rule_docs.py` |
-| the count tokens in `bring-in/import-a-spec.md`, `ship/export-a-spec.md` | `uv run python scripts/generate_format_counts.py` |
+| `bring-in/supported-formats.md` | `cd apiome-rest && uv run python scripts/generate_supported_formats_doc.py` |
+| `build/lint-rules.md`, `govern/mcp-*-rules.md` | `cd apiome-rest && uv run python scripts/generate_lint_rule_docs.py` |
+| the count tokens in `bring-in/import-a-spec.md`, `ship/export-a-spec.md` | `cd apiome-rest && uv run python scripts/generate_format_counts.py` |
+| `reference/rest/**` — a page per OpenAPI tag | `cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py` |
+| `reference/cli/**` — a page per command, exit codes | `cd apiome-cli && uv run python scripts/generate_cli_reference_docs.py` |
+| `reference/mcp/**` — tools, resources, prompts | `cd apiome-mcp && uv run python scripts/generate_mcp_reference_docs.py` |
+| `reference/ci/diff-action.md`, `mock-action.md` — the actions' READMEs | `yarn workspace apiome-docs sync:action-pages` |
 
-The `apiome-rest` test suite fails when any of them is stale.
+Each owning project's test suite fails when its pages are stale, the `reference` job in
+`.github/workflows/apiome-docs.yml` runs every generator with `--check`, and `yarn docs:check` fails
+when `apiome-rest/openapi.yaml` changed without regenerating `reference/rest/` (the index records the
+document's SHA-256 as `openapi_sha256`). Pages written by a generator carry `generated:` in their front
+matter, and the in-app guide search does not need a catalog entry for them.
 
 1. Add `docs/<group>/<page>.md` (or `.mdx`, see below).
 2. Give it front matter:
@@ -136,6 +144,7 @@ yarn docs:screenshots -- --start-ui --boot            # everything, from the gol
 - a page uses `<Screenshot id/>` with an id that is not in the manifest or lacks a light or dark
   image (examples in code blocks are ignored), or without `alt` text.
 - a page shows a screenshot tagged `legacy` in `screens.json` without the `<Legacy/>` callout.
+- `docs/reference/rest/` was generated from an older `apiome-rest/openapi.yaml`.
 
 DOCS-1.13 (#5630) extends it with orphan-page checks.
 

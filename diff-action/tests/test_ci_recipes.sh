@@ -12,7 +12,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO_ROOT="$(cd "${ROOT}/.." && pwd)"
-DOC="${REPO_ROOT}/apiome-docs/docs/reference/ci-gitlab-bitbucket.md"
+DOC="${REPO_ROOT}/apiome-docs/docs/reference/ci/ci-gitlab-bitbucket.md"
 
 # shellcheck source=diff-action/tests/recipe_lib.sh
 . "${ROOT}/tests/recipe_lib.sh"

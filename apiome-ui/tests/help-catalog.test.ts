@@ -14,7 +14,7 @@
  *      says so rather than falling back to everything.
  */
 
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 
 import {
@@ -55,8 +55,23 @@ function sitePages(dir: string): string[] {
  * The guide pages the catalog must list: every page except the group landing pages
  * (`<group>/index.mdx`), which only list the pages under them — plus the site home.
  */
+/**
+ * Whether a page is generated reference — a REST tag, a CLI command, the MCP tools, a CI action's
+ * README (DOCS-1.11, #5628). Such pages carry `generated:` in their front matter and number in the
+ * hundreds; the guide search reaches them through their hand-written index and quick-start pages
+ * rather than one catalog line each.
+ *
+ * @param page Repository-relative path of the page.
+ * @returns `true` when its front matter declares `generated:`.
+ */
+function isGeneratedReference(page: string): boolean {
+  const frontMatter = /^---\n([\s\S]*?)\n---/.exec(readFileSync(join(REPO_ROOT, page), 'utf8'));
+  return frontMatter !== null && /^generated:/m.test(frontMatter[1]);
+}
+
 const GUIDE_PAGES = sitePages(SITE_DOCS_DIR)
   .filter((page) => !/\/index\.mdx?$/.test(page) || page === SITE_HOME)
+  .filter((page) => !isGeneratedReference(page))
   .sort();
 
 /**

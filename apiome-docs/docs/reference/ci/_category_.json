@@ -1,0 +1,12 @@
+{
+  "label": "CI",
+  "position": 9,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "CI",
+    "description": "The GitHub Actions and CI recipes that gate pull requests and run mocks.",
+    "slug": "/reference/ci"
+  }
+}
