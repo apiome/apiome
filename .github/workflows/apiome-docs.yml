@@ -16,6 +16,13 @@ on:
       - 'yarn.lock'
       - '.dockerignore'
       - '.github/workflows/apiome-docs.yml'
+      # Sources of the generated reference (DOCS-1.11): a change here can leave a page stale.
+      - 'apiome-rest/openapi.yaml'
+      - 'apiome-rest/src/app/rest_reference_doc.py'
+      - 'apiome-cli/src/**'
+      - 'apiome-mcp/src/**'
+      - 'diff-action/README.md'
+      - 'mock-action/README.md'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -25,6 +32,13 @@ on:
       - 'yarn.lock'
       - '.dockerignore'
       - '.github/workflows/apiome-docs.yml'
+      # Sources of the generated reference (DOCS-1.11): a change here can leave a page stale.
+      - 'apiome-rest/openapi.yaml'
+      - 'apiome-rest/src/app/rest_reference_doc.py'
+      - 'apiome-cli/src/**'
+      - 'apiome-mcp/src/**'
+      - 'diff-action/README.md'
+      - 'mock-action/README.md'
   # Allow manual trigger (deploys when run on main)
   workflow_dispatch:
 
@@ -76,10 +90,50 @@ jobs:
         with:
           path: apiome-docs/build
 
+  # The REST, CLI and MCP reference pages are generated from source (DOCS-1.11, #5628). Each
+  # generator re-renders in memory with --check and fails when a committed page differs, so a
+  # change to the OpenAPI document, the command tree or the tool registry cannot ship without
+  # its reference.
+  reference:
+    name: Generated reference is current
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Python comes from uv (see apiome-mcp.yml for why not setup-python). No python-version
+      # pin: each project resolves its own from pyproject.toml.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: REST reference (apiome-rest/openapi.yaml)
+        working-directory: apiome-rest
+        run: |
+          uv sync --frozen
+          uv run python scripts/generate_rest_reference_docs.py --check
+
+      - name: CLI reference (the apiome command tree)
+        working-directory: apiome-cli
+        run: |
+          uv sync --frozen
+          uv run python scripts/generate_cli_reference_docs.py --check
+
+      - name: MCP reference (the MCP server registry)
+        working-directory: apiome-mcp
+        run: |
+          uv sync --frozen
+          uv run python scripts/generate_mcp_reference_docs.py --check
+
+      - name: CI action pages (diff-action / mock-action READMEs)
+        run: node apiome-docs/scripts/sync-action-pages.mjs --check
+
   deploy:
     name: Deploy Apiome Docs to GitHub Pages
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, reference]
     runs-on: self-hosted
 
     permissions:

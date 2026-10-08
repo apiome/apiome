@@ -1,7 +1,7 @@
 ---
 title: "MCP quick-start"
 description: "Connect Claude Desktop or an IDE to published specs over MCP."
-sidebar_position: 4
+sidebar_position: 6
 tags: [mcp]
 ---
 
@@ -82,20 +82,10 @@ brings the MCP server up on `:8765`.
 
 ## Tools available to the host
 
-| Tool | What it returns |
-|---|---|
-| `ping` | Service name, version, DB reachability, timestamp |
-| `spec.list` | Published specs (public; + in-scope private with a key) |
-| `project.list` | Distinct projects visible to the caller |
-| `spec.list_my_specs` | Specs for the authenticated key only |
-| `spec.describe` | Metadata for one spec revision |
-| `spec.get_openapi` | Full OpenAPI 3.1 JSON for a revision |
-| `spec.export_yaml` | The same document as YAML |
-| `spec.list_operations` / `spec.describe_operation` | Operation index / one operation's fragments |
-| `spec.list_components` / `spec.describe_component` | Component index / one component definition |
-| `spec.search` | Full-text search over public specs |
-| `spec.search_semantic` | Semantic search (needs `APIOME_MCP_OPENAI_API_KEY`) |
-| `spec.list_tags` | Distinct public tags with counts |
+The server's tools — `ping`, `project.list` and the `spec.*` family for listing, describing,
+exporting and searching published specs — are listed with every parameter in the generated
+[MCP tools reference](./mcp/tools.md). Semantic search (`spec.search_semantic`) needs
+`APIOME_MCP_OPENAI_API_KEY` on the server.
 
 ## Governed keys: list vs call
 
@@ -136,6 +126,7 @@ If a later tool call fails with `capability_disabled`, use
 
 ## Related
 
+- [MCP reference](./mcp/index.mdx) — every tool, resource and prompt, generated from the server
 - [Publish a version](../ship/publish-a-version.md) — only published specs are visible over MCP
 - [Browse published specs](../ship/browse-published-specs.md) — the same catalog, in the UI
 - **Tenants → MCP Settings** (`/ade/dashboard/tenants`) — tenant ceiling, defaults, and per-key call grants

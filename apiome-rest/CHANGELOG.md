@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.339.1] - 2026-10-07
+
+### Added
+- **Generated REST reference on the documentation site (#5628, DOCS-1.11)**:
+  `scripts/generate_rest_reference_docs.py` renders `openapi.yaml` into
+  `apiome-docs/docs/reference/rest/` — one page per tag (plus `untagged`) with every operation's
+  parameters, request body, responses and the schemas it uses. The index records the document's
+  SHA-256 (`openapi_sha256`), and `yarn docs:check` fails when `openapi.yaml` changes without
+  regenerating; `--check` and `tests/test_rest_reference_docs.py` fail on stale pages. Rendering
+  lives in `app.rest_reference_doc`. No API change; the OpenAPI version moves to 1.204.1.
+
 ## [1.339.0] - 2026-10-07
 
 ### Changed

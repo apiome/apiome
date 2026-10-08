@@ -1,6 +1,6 @@
 {
   "name": "apiome-docs",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "The Apiome documentation site (Docusaurus).",
   "scripts": {
@@ -14,7 +14,8 @@
     "test": "node --test \"test/**/*.test.mjs\"",
     "test:e2e": "playwright test",
     "typecheck": "tsc",
-    "screenshots": "tsx scripts/screenshots.ts"
+    "screenshots": "tsx scripts/screenshots.ts",
+    "sync:action-pages": "node scripts/sync-action-pages.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",

@@ -1,0 +1,109 @@
+---
+title: "REST API reference"
+description: "Every Apiome REST endpoint, generated from the OpenAPI document, one page per tag."
+sidebar_label: REST API
+sidebar_position: 1
+tags: [rest, reference]
+generated: apiome-rest/scripts/generate_rest_reference_docs.py
+openapi_sha256: 96448dfedcf7b6410da5e48e6e9236b22f1894878fd106468498b38eaf179c87
+---
+
+{/* GENERATED FILE — do not edit by hand.
+    Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py */}
+
+The Apiome REST API, version **1.204.1** — 773 operations under 80 tags (and 8 untagged), generated from [`apiome-rest/openapi.yaml`](https://github.com/apiome/apiome/blob/main/apiome-rest/openapi.yaml). Each tag has a page listing its endpoints with their parameters, request bodies, responses and the schemas they use. A running service also serves the same document interactively — see [API reference](../api-reference.md) for Swagger UI and ReDoc.
+
+## Authentication
+
+Endpoints that need a caller accept either of these schemes:
+
+| Scheme | Type | Sent as | Description |
+| --- | --- | --- | --- |
+| `ApiKey` | apiKey | `X-API-Key` header | API key for tenant-scoped access (alternative to JWT) |
+| `Bearer` | http | `Authorization: Bearer …` | JWT token from NextAuth (Authorization: Bearer &lt;token&gt;) |
+
+## Tags
+
+| Tag | Operations |
+| --- | --- |
+| [Access](./access.md) | 14 |
+| [Admin auth providers](./admin-auth-providers.md) | 3 |
+| [Agent access](./agent-access.md) | 22 |
+| [Agent outputs](./agent-outputs.md) | 1 |
+| [API check suite](./api-check-suite.md) | 10 |
+| [API keys](./api-keys.md) | 2 |
+| [Browse](./browse.md) | 9 |
+| [Catalog](./catalog.md) | 10 |
+| [Change report templates](./change-report-templates.md) | 4 |
+| [Classes](./classes.md) | 11 |
+| [Classified diff](./classified-diff.md) | 1 |
+| [Comments](./comments.md) | 10 |
+| [Compatibility](./compatibility.md) | 3 |
+| [Consumer contracts](./consumer-contracts.md) | 10 |
+| [Contract assurance](./contract-assurance.md) | 23 |
+| [Data](./data.md) | 6 |
+| [Deploy gate](./deploy-gate.md) | 4 |
+| [Domains](./domains.md) | 6 |
+| [Draft bindings](./draft-bindings.md) | 7 |
+| [Export](./export.md) | 11 |
+| [Export jobs](./export-jobs.md) | 6 |
+| [Export mock](./export-mock.md) | 6 |
+| [Formats](./formats.md) | 1 |
+| [Governance](./governance.md) | 25 |
+| [Identity](./identity.md) | 4 |
+| [Import sources](./import-sources.md) | 4 |
+| [Internal auth providers](./internal-auth-providers.md) | 1 |
+| [License](./license.md) | 1 |
+| [Lint](./lint.md) | 11 |
+| [Lint decisions](./lint-decisions.md) | 4 |
+| [Lint workspace](./lint-workspace.md) | 9 |
+| [MCP catalog](./mcp-catalog.md) | 80 |
+| [MCP keys](./mcp-keys.md) | 7 |
+| [MCP manifest](./mcp-manifest.md) | 3 |
+| [MCP policy](./mcp-policy.md) | 3 |
+| [MCP probe](./mcp-probe.md) | 6 |
+| [MCP trust drift](./mcp-trust-drift.md) | 4 |
+| [Migration plans](./migration-plans.md) | 3 |
+| [Mock server](./mock-server.md) | 20 |
+| [Notifications](./notifications.md) | 3 |
+| [Onboarding](./onboarding.md) | 5 |
+| [OpenAPI change report](./openapi-change-report.md) | 1 |
+| [Ops](./ops.md) | 9 |
+| [Paths](./paths.md) | 33 |
+| [Platform admin](./platform-admin.md) | 1 |
+| [Primitives](./primitives.md) | 12 |
+| [Project tags](./project-tags.md) | 7 |
+| [Projects](./projects.md) | 11 |
+| [Properties](./properties.md) | 5 |
+| [Provider checks](./provider-checks.md) | 4 |
+| [Registry audit](./registry-audit.md) | 1 |
+| [Repository webhooks](./repository-webhooks.md) | 1 |
+| [Reviews](./reviews.md) | 7 |
+| [Schema test suites](./schema-test-suites.md) | 11 |
+| [Schema validation](./schema-validation.md) | 3 |
+| [SDK generation](./sdk-generation.md) | 3 |
+| [SDK git delivery](./sdk-git-delivery.md) | 6 |
+| [SDK publishing](./sdk-publishing.md) | 6 |
+| [SDK regen](./sdk-regen.md) | 7 |
+| [Slate](./slate.md) | 17 |
+| [Slate cache](./slate-cache.md) | 10 |
+| [Slate functions](./slate-functions.md) | 27 |
+| [Slate git preview](./slate-git-preview.md) | 8 |
+| [Slate insights](./slate-insights.md) | 29 |
+| [Slate security](./slate-security.md) | 19 |
+| [Snippets](./snippets.md) | 1 |
+| [Spec import](./spec-import.md) | 14 |
+| [Spec sync](./spec-sync.md) | 4 |
+| [Style guides](./style-guides.md) | 19 |
+| [Tenant repositories](./tenant-repositories.md) | 28 |
+| [Tenants](./tenants.md) | 3 |
+| [Type registry](./type-registry.md) | 8 |
+| [Types public](./types-public.md) | 1 |
+| [Untagged](./untagged.md) | 8 |
+| [Version change report](./version-change-report.md) | 4 |
+| [Version changelog](./version-changelog.md) | 2 |
+| [Version tags](./version-tags.md) | 4 |
+| [Versions](./versions.md) | 52 |
+| [Webhooks](./webhooks.md) | 6 |
+| [Workflow audit](./workflow-audit.md) | 1 |
+| [Workspace](./workspace.md) | 10 |

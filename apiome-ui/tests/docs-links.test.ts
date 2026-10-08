@@ -65,7 +65,7 @@ describe('buildDocsHref', () => {
       `${DOCS_SITE_BASE}build/lint-rules#naming-schema-pascal-case`
     );
     expect(buildDocsHref('/docs/guide/portable-mock-runtime.md')).toBe(
-      `${DOCS_SITE_BASE}ship/mocks/portable-mock-runtime`
+      `${DOCS_SITE_BASE}reference/mock-runtime/portable-mock-runtime`
     );
     expect(buildDocsHref('docs/guide/README.md')).toBe(DOCS_SITE_BASE);
   });

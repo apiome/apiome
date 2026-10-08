@@ -270,7 +270,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'CI contract gate (GitHub Action)',
     summary:
       'Gate pull requests when an OpenAPI change breaks a published version, with one sticky PR comment.',
-    page: 'apiome-docs/docs/reference/ci-diff-gate.md',
+    page: 'apiome-docs/docs/reference/ci/ci-diff-gate.md',
     section: 'reference',
     keywords: ['github actions', 'pipeline', 'breaking change', 'diff', 'pull request', 'workflow'],
   },
@@ -279,7 +279,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'CI contract gate on GitLab & Bitbucket',
     summary:
       'The same diff gate as a copy-paste GitLab CI or Bitbucket Pipelines job, run from the container image.',
-    page: 'apiome-docs/docs/reference/ci-gitlab-bitbucket.md',
+    page: 'apiome-docs/docs/reference/ci/ci-gitlab-bitbucket.md',
     section: 'reference',
     keywords: ['merge request', 'pipeline', 'container', 'docker', 'recipe'],
   },
@@ -357,7 +357,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Portable mock bundle format',
     summary:
       'One JSON document pinning everything the mock runtime needs to serve a version offline.',
-    page: 'apiome-docs/docs/ship/mocks/mock-bundle-format.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-bundle-format.md',
     section: 'reference',
     keywords: ['offline', 'signed', 'digest', 'pinned', 'schema', 'air-gapped'],
   },
@@ -366,7 +366,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Portable mock runtime',
     summary:
       'Serve a mock bundle on a laptop, in CI or inside an air-gapped network with `apiome mock run`.',
-    page: 'apiome-docs/docs/ship/mocks/portable-mock-runtime.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/portable-mock-runtime.md',
     section: 'reference',
     keywords: ['mock server', 'image', 'readiness', 'logs', 'conformance', 'docker'],
   },
@@ -375,7 +375,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Mock fixture packs and data lifecycle',
     summary:
       'Versioned seed data with a stable content digest, and the reset that puts a test back where it started.',
-    page: 'apiome-docs/docs/ship/mocks/mock-fixture-packs.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-fixture-packs.md',
     section: 'reference',
     keywords: ['seed', 'stateful', 'reset', 'session', 'deterministic'],
   },
@@ -384,7 +384,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'One mock engine',
     summary:
       'How the two mock implementations became one — what moved, and how a stored instance config migrates.',
-    page: 'apiome-docs/docs/ship/mocks/one-mock-engine.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/one-mock-engine.md',
     section: 'reference',
     keywords: ['scenario', 'migration', 'hosted mock', 'resolver'],
   },
@@ -393,7 +393,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Mock callbacks and webhooks',
     summary:
       'Callbacks the mock sends: allowlisted destinations, schema-checked payloads and deterministic retries.',
-    page: 'apiome-docs/docs/ship/mocks/mock-callbacks.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-callbacks.md',
     section: 'reference',
     keywords: ['allowlist', 'retry', 'outbound', 'event'],
   },
@@ -401,7 +401,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'mock-response-correlation',
     title: 'Request-correlated mock responses',
     summary: 'Answer `GET /pets/42` with id 42 — no request header, configured on the version.',
-    page: 'apiome-docs/docs/ship/mocks/mock-response-correlation.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-response-correlation.md',
     section: 'reference',
     keywords: ['template', 'path parameter', 'echo', 'correlation'],
   },
@@ -409,7 +409,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'mock-response-preview',
     title: 'Mock response preview',
     summary: 'Dry-run a request to see what the mock returns, and which layer produced it.',
-    page: 'apiome-docs/docs/ship/mocks/mock-response-preview.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-response-preview.md',
     section: 'reference',
     keywords: ['dry run', 'render', 'template', 'scenario'],
   },
@@ -418,7 +418,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Guarded proxy capture and replay',
     summary:
       'Record real upstream traffic into reviewed, redacted fixtures — allowlists, redaction and provenance.',
-    page: 'apiome-docs/docs/ship/mocks/mock-proxy-capture.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-proxy-capture.md',
     section: 'reference',
     keywords: ['record', 'upstream', 'redaction', 'fixture', 'mock'],
   },
@@ -426,7 +426,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     id: 'serverless-mock-adapter',
     title: 'Serverless mock adapter',
     summary: 'Run a mock bundle as a Lambda, Cloud Run or Azure function — limits, cold start, preflight.',
-    page: 'apiome-docs/docs/ship/mocks/serverless-mock-adapter.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/serverless-mock-adapter.md',
     section: 'reference',
     keywords: ['lambda', 'cloud run', 'azure', 'function', 'cold start'],
   },
@@ -435,7 +435,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     title: 'Release-proof mock attestation',
     summary:
       'Bundle digest, runtime, conformance result and fixture digests on a verification run, signed for offline checks.',
-    page: 'apiome-docs/docs/ship/mocks/mock-release-attestation.md',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-release-attestation.md',
     section: 'reference',
     keywords: ['verification', 'signature', 'dsse', 'provenance', 'digest'],
   },

@@ -29,7 +29,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def test_guide_page_builds_a_site_source_path() -> None:
     assert guide_page("build", "lint-rules") == "apiome-docs/docs/build/lint-rules.md"
-    assert guide_page("/ship/mocks/", "mock-callbacks") == ("apiome-docs/docs/ship/mocks/mock-callbacks.md")
+    assert guide_page("/reference/mock-runtime/", "mock-callbacks") == (
+        "apiome-docs/docs/reference/mock-runtime/mock-callbacks.md"
+    )
 
 
 def test_site_url_drops_the_root_and_extension() -> None:

@@ -1,12 +1,12 @@
 {
   "label": "Mock runtime",
-  "position": 7,
+  "position": 8,
   "collapsible": true,
   "collapsed": true,
   "link": {
     "type": "generated-index",
     "title": "Mock runtime",
     "description": "The engine behind hosted mocks: bundles, fixtures, callbacks, correlation, capture and attestation.",
-    "slug": "/ship/mocks"
+    "slug": "/reference/mock-runtime"
   }
 }

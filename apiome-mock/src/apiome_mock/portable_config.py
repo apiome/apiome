@@ -3,8 +3,8 @@
 The portable runtime has one configuration rule: **every knob is declared here, and nothing else
 is read**. :data:`RUNTIME_OPTIONS` is the single source of truth — the ``apiome-mock run`` argument
 parser is generated from it, :class:`PortableSettings` maps one-to-one onto it, and the reference
-table in ``apiome-docs/docs/ship/mocks/portable-mock-runtime.md`` is checked against it by the test suite. A knob
-that is not in this list cannot be set, and a knob in this list is settable exactly two ways:
+table in ``apiome-docs/docs/reference/mock-runtime/portable-mock-runtime.md`` is checked against it
+by the test suite. A knob that is not in this list cannot be set, and a knob in this list is settable exactly two ways:
 
 1. a command-line flag (``--port 9000``), which wins; or
 2. an environment variable (``APIOME_MOCK_HTTP_PORT=9000``).

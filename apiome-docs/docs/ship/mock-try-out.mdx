@@ -25,7 +25,7 @@ heaviest:
 
 Nothing is saved and nothing is sent: the preview uses the editor's unsaved draft, so you can try a
 change before **Save scenarios**. Latency and chaos are reported rather than applied. Details are in
-[Mock response preview](./mocks/mock-response-preview.md).
+[Mock response preview](../reference/mock-runtime/mock-response-preview.md).
 
 <Screenshot id="mock-scenario-try-it" alt="Try it: GET /pets rendered as HTTP 429, answered by the quota-exceeded scenario, rule 1, as an unsaved draft" />
 
@@ -70,7 +70,7 @@ the reason, on a server without mock infrastructure.
 
 - CLI: `apiome mock preview <project> <version> -X GET --path /pets/42` renders a request like **Try
   it**; `apiome mock run BUNDLE` serves a version offline — see
-  [Portable mock runtime](./mocks/portable-mock-runtime.md).
+  [Portable mock runtime](../reference/mock-runtime/portable-mock-runtime.md).
 - REST: `POST /v1/versions/{tenant}/{project_id}/{version_record_id}/mock/preview` (Try it);
   `POST /v1/export/{tenant}/mock`, `GET /v1/export/{tenant}/mock/{mock_id}/requests` and
   `DELETE /v1/export/{tenant}/mock/{mock_id}` (test drive) — see the
@@ -78,5 +78,5 @@ the reason, on a server without mock infrastructure.
 
 ## Where next
 
-The [Mock runtime](/ship/mocks) guides cover the bundle format, fixture packs, callbacks,
+The [Mock runtime](/reference/mock-runtime) guides cover the bundle format, fixture packs, callbacks,
 correlation, proxy capture and attestation.

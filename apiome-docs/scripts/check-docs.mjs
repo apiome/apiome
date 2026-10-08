@@ -6,7 +6,8 @@
  * Usage: node scripts/check-docs.mjs [docsDir]   (defaults to apiome-docs/docs)
  *
  * The screenshot manifest (`screens.json`), the images (`static/img/screens/`) and the release
- * notes are read from the directory above `docsDir`.
+ * notes are read from the directory above `docsDir`; the generated REST reference is checked
+ * against `apiome-rest/openapi.yaml` (see scripts/lib/rest-reference.mjs).
  * Exits 1 and lists every problem when a rule fails.
  */
 import fs from 'node:fs';
@@ -14,6 +15,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import {checkDocs, listPages} from './lib/pages.mjs';
+import {checkRestReference} from './lib/rest-reference.mjs';
 import {checkScreenshots, loadManifest} from './lib/screens.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +36,10 @@ const pages = pageDirs.flatMap((dir) =>
 );
 problems.push(
   ...checkScreenshots({screens: manifest.screens, pages, staticDir: path.join(siteDir, 'static')}),
+);
+
+problems.push(
+  ...checkRestReference({docsDir, openapiFile: path.join(siteDir, '..', 'apiome-rest', 'openapi.yaml')}),
 );
 
 if (problems.length > 0) {

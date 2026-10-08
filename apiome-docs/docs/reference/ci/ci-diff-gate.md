@@ -85,5 +85,5 @@ apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --fo
 
 - Action source: [`diff-action/`](https://github.com/apiome/apiome/tree/main/diff-action/)
 - GitLab / Bitbucket recipes: [CI contract gate on GitLab and Bitbucket](./ci-gitlab-bitbucket.md)
-- CLI quick-start: [CLI quick-start](./cli-quickstart.md)
+- CLI quick-start: [CLI quick-start](../cli-quickstart.md)
 - Classified diff details: [`apiome-cli` README](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md#classified-diff-ci-gate)

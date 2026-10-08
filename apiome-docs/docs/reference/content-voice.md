@@ -1,7 +1,7 @@
 ---
 title: "Content and voice"
 description: "How empty, loading, error and gated states read, and the per-route checklist."
-sidebar_position: 9
+sidebar_position: 10
 tags: [content]
 ---
 

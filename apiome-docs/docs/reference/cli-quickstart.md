@@ -1,7 +1,7 @@
 ---
 title: "CLI quick-start"
 description: "Import, inspect, lint and export specs from the terminal with apiome."
-sidebar_position: 3
+sidebar_position: 4
 tags: [cli]
 ---
 
@@ -106,28 +106,16 @@ acknowledged snapshot that no longer matches the current preview fails with a
 `STALE_PREVIEW` error (exit `1`) telling you to re-preview and re-acknowledge. See
 [Understand export fidelity](../ship/export-fidelity.md) for how to read the evidence.
 
-## Command groups
+## Every command
 
-| Group | What it does |
-|---|---|
-| `doctor`, `health` | Connectivity / health (no auth) |
-| `formats` | The format matrix: what this deployment reads/writes, and at which versions |
-| `auth` | Inspect signed-in identity and accessible tenants |
-| `config` | Show / set / unset saved defaults |
-| `projects`, `properties`, `schemas`, `types` | List & fetch tenant resources |
-| `versions`, `paths`, `operations`, `workflows` | Inspect a project version's surface |
-| `import` | Import OpenAPI / Swagger / Arazzo / JSON Schema (`auto` detects) |
-| `lint` | Server-computed quality score & findings |
-| `spec` | Export reconstructed OpenAPI / Arazzo documents |
-| `export` | Emit a version to another format; list targets; page projection evidence |
-| `repos` | List & inspect linked Git repositories |
-
-Useful global flags: `--json` (raw JSON for scripting), `--tenant`, `--api-key`, `--base-url`,
-`--verbose`, `--timeout`. Run `apiome help` or `apiome <group> --help` for the rest.
+The [CLI reference](./cli/index.mdx) is generated from the command tree itself: a page per
+top-level command with every subcommand's usage, arguments and options, plus the
+[exit codes](./cli/exit-codes.md) a script can branch on. Run `apiome help` or
+`apiome <group> --help` for the same text in the terminal.
 
 ## Related
 
 - [Import a specification](../bring-in/import-a-spec.md), [Lint and check quality](../build/lint-and-quality.md),
   [Export a spec](../ship/export-a-spec.md) — the spine, from the CLI
-- [CI contract gate on GitHub](./ci-diff-gate.md) — GitHub Action wrapping `apiome diff` for PR gates
-- [API reference](./api-reference.md) — the routes behind these commands
+- [CI contract gate on GitHub](./ci/ci-diff-gate.md) — GitHub Action wrapping `apiome diff` for PR gates
+- [REST API reference](./rest/index.mdx) — the routes behind these commands

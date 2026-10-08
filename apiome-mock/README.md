@@ -24,7 +24,7 @@ Export one from apiome-rest with
 `GET /v1/versions/{tenant}/{project_id}/{version_record_id}/mock/bundle`. Loading verifies the
 runtime compatibility window, every content digest, the HMAC signature, and that no tenant
 credentials are present; incompatibility raises `MockBundleIncompatibleError` with the required
-version range. Full format reference: [apiome-docs/docs/ship/mocks/mock-bundle-format.md](../apiome-docs/docs/ship/mocks/mock-bundle-format.md).
+version range. Full format reference: [apiome-docs/docs/reference/mock-runtime/mock-bundle-format.md](../apiome-docs/docs/reference/mock-runtime/mock-bundle-format.md).
 
 ## Portable runtime (PMR-1.2)
 
@@ -68,7 +68,7 @@ cold start against the provider's budget, and refuses a bundle carrying a cloud 
 code `7`). Provider limits live as data in `apiome_mock/serverless_providers.py`, so the CLI and
 the guide read one table.
 
-Full guide: [apiome-docs/docs/ship/mocks/serverless-mock-adapter.md](../apiome-docs/docs/ship/mocks/serverless-mock-adapter.md).
+Full guide: [apiome-docs/docs/reference/mock-runtime/serverless-mock-adapter.md](../apiome-docs/docs/reference/mock-runtime/serverless-mock-adapter.md).
 
 ## CI parity and the mock action (PMR-3.1)
 
@@ -91,7 +91,7 @@ seeded determinism — so parity is asserted across all of it.
 To start a pinned runtime inside a CI job (loopback-only URL, reported digests, automatic
 cleanup), use the [mock action](../mock-action/README.md).
 
-Full guide: [apiome-docs/docs/ship/mocks/portable-mock-runtime.md](../apiome-docs/docs/ship/mocks/portable-mock-runtime.md).
+Full guide: [apiome-docs/docs/reference/mock-runtime/portable-mock-runtime.md](../apiome-docs/docs/reference/mock-runtime/portable-mock-runtime.md).
 
 ## Release-proof attestation (PMR-3.2)
 
@@ -110,7 +110,7 @@ all yields `missing` — never silence. The emitted `mock` block is exactly what
 `POST /v1/tenants/{tenant}/verification-runs` accepts, and `apiome mock verify-attestation` checks
 the server's signed statement offline.
 
-Full guide: [apiome-docs/docs/ship/mocks/mock-release-attestation.md](../apiome-docs/docs/ship/mocks/mock-release-attestation.md).
+Full guide: [apiome-docs/docs/reference/mock-runtime/mock-release-attestation.md](../apiome-docs/docs/reference/mock-runtime/mock-release-attestation.md).
 
 ## Declarative matching and templates (PMR-2.1)
 
@@ -190,7 +190,7 @@ response echoes the pack name, digest, and seeded resource count. State is names
 tenant + project + version + `X-Mock-Session` token, and a reset can only ever touch the
 caller's own namespace — data never crosses tenant, version, or session boundaries. Control
 routes bypass scenarios and chaos injection. Full guide:
-[apiome-docs/docs/ship/mocks/mock-fixture-packs.md](../apiome-docs/docs/ship/mocks/mock-fixture-packs.md).
+[apiome-docs/docs/reference/mock-runtime/mock-fixture-packs.md](../apiome-docs/docs/reference/mock-runtime/mock-fixture-packs.md).
 
 ## Callbacks and webhooks (PMR-2.3)
 
@@ -242,7 +242,7 @@ curl $MOCK/demo/orders/1.0.0/__mock__/callbacks/deliveries
 Every attempt also emits a `mock_callback_attempt` log line and every delivery a terminal
 `mock_callback_delivery` line. Records and logs carry the destination's origin and path but never
 its query string, header values, or payload. Full guide:
-[apiome-docs/docs/ship/mocks/mock-callbacks.md](../apiome-docs/docs/ship/mocks/mock-callbacks.md).
+[apiome-docs/docs/reference/mock-runtime/mock-callbacks.md](../apiome-docs/docs/reference/mock-runtime/mock-callbacks.md).
 
 ## Guarded proxy capture (PMR-2.4)
 
@@ -278,7 +278,7 @@ A published pack carries a `provenance` block (fixture pack format v2), so repla
 data came from: `__mock__/fixture-packs` reports each pack's `origin` and `redactionStatus`, and
 `__mock__/session/reset` echoes the same facts plus `X-Mock-Fixture-Origin` /
 `X-Mock-Fixture-Redaction` headers. Full guide:
-[apiome-docs/docs/ship/mocks/mock-proxy-capture.md](../apiome-docs/docs/ship/mocks/mock-proxy-capture.md).
+[apiome-docs/docs/reference/mock-runtime/mock-proxy-capture.md](../apiome-docs/docs/reference/mock-runtime/mock-proxy-capture.md).
 
 ## Stored active scenario (MSC-2.1)
 
@@ -379,7 +379,7 @@ answers `503` and renders for nobody, and the token is compared in constant time
 A preview never writes (session state lives and dies inside the call, no callback is dispatched)
 and never applies chaos — configured latency and error injection are *reported* in `chaos` instead,
 so a preview does not sleep or randomly answer 500. Full guide:
-[apiome-docs/docs/ship/mocks/mock-response-preview.md](../apiome-docs/docs/ship/mocks/mock-response-preview.md).
+[apiome-docs/docs/reference/mock-runtime/mock-response-preview.md](../apiome-docs/docs/reference/mock-runtime/mock-response-preview.md).
 
 ## Mock configuration as a file (MSC-1.4)
 

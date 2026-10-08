@@ -103,13 +103,13 @@ request with the `X-Mock-Scenario` header. Requests without the header get the d
    saving:*.
 
 Then call it: `curl -H 'X-Mock-Scenario: quota-exceeded' <mock URL>/pets`. The format, match rules
-and templates are in the [Mock runtime](/ship/mocks) guides.
+and templates are in the [Mock runtime](/reference/mock-runtime) guides.
 
 ### Correlation
 
 **Click “Correlation”** to make the default response answer with the request's own values —
 `GET /pets/42` returns `"id": 42`. The editor and its modes are documented in
-[Request-correlated responses](./mocks/mock-response-correlation.md).
+[Request-correlated responses](../reference/mock-runtime/mock-response-correlation.md).
 
 <Screenshot id="mock-correlation" alt="Response correlation: correlation modes, explicit bindings with a token picker, and a rendered preview" />
 
