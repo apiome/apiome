@@ -1,0 +1,152 @@
+---
+title: Sign-in providers
+description: Configure GitHub, Microsoft, Google, Okta and other OAuth sign-in from the admin console.
+sidebar_position: 8
+tags: [admin, legacy, sign-in, oauth]
+---
+
+<Route path="/admin/dashboard/settings" />
+
+<Legacy />
+
+**System settings** holds the installation's **sign-in providers** — the OAuth and OpenID Connect
+identity providers people can use on the sign-in page and link on
+[Linked accounts](../workspace/linked-accounts.mdx). Each provider can be configured in the
+**database**, from this screen, or in **`.env`**; a value stored here overrides the environment, and a
+blank field falls back to it. **Sign in to the admin console and choose System settings** in the
+sidebar.
+
+<Screenshot id="admin-auth-providers" alt="System settings: the GitHub card enabled from the database with its secret set and a successful Validate, and the Microsoft card below it" />
+
+The list shows only providers that are **configured** — anything stored in the database for them, or
+a row that once existed. A provider set up purely in `.env` does not appear until you add it.
+
+## The providers
+
+| Provider | Id | Required to enable | Extra settings |
+| --- | --- | --- | --- |
+| GitHub | `github` | client ID, client secret | **OAuth base URL**, **API base URL** (GitHub Enterprise Server) |
+| GitLab | `gitlab` | client ID, client secret | **Base URL** (self-hosted GitLab) |
+| Microsoft | `azure` | client ID, client secret | **Tenant** (`common` allows any), **Authority base URL** |
+| Google | `google` | client ID, client secret | **Workspace domain** — restrict sign-in to one domain |
+| Okta | `okta` | client ID, client secret, issuer | **Issuer** |
+| AWS (Cognito) | `aws` | client ID, client secret, issuer | **Issuer** (the user-pool issuer) |
+| Keycloak | `keycloak` | client ID, client secret, issuer | **Issuer** (the realm issuer) |
+| OIDC | `oidc` | client ID, client secret, issuer | **Issuer**, **Display name**, **Scopes** |
+| Auth0 | `auth0` | client ID, client secret, issuer | **Issuer** |
+| LINE | `line` | client ID, client secret | — |
+| VK | `vk` | client ID, client secret | — |
+| WeChat | `wechat` | client ID, client secret | — |
+
+**OIDC** is any conformant OpenID provider (Authentik, PingFederate, ZITADEL and others); one
+generic OIDC provider is supported per installation.
+
+## Register the OAuth application
+
+Each provider needs an OAuth (or OIDC) application registered on its side. Its **callback** or
+**redirect URI** is:
+
+```text
+<BETTER_AUTH_URL>/api/auth/oauth2/callback/<id>
+```
+
+where `<BETTER_AUTH_URL>` is the public URL of the Apiome web app and `<id>` is the provider's id from
+the table — for example `https://apiome.example.com/api/auth/oauth2/callback/github`. Copy the
+application's **client ID** and **client secret**; issuer-based providers also give you an
+**issuer** URL, such as `https://acme.okta.com/oauth2/default`.
+
+## Add a provider
+
+1. **Click “Add Provider”** at the top right.
+2. **Search** or scroll the list and **click the provider** — for example **Okta**.
+
+   <Screenshot id="admin-auth-provider-add" alt="The Add Provider dialog searched for o, listing Google, Keycloak, OIDC and Okta with their ids" />
+
+3. In **Configure Okta**, choose the **Enablement**:
+   - **Enabled** — turn the provider on, using the credentials stored here;
+   - **Disabled** — turn it off, whatever `.env` says;
+   - **Use .env** — leave it to the environment variables.
+4. Enter the **Client ID**, the **Client secret** and any extra settings, such as the **Issuer**.
+   Leave a field blank to fall back to `.env`.
+5. **Click “Save”**. The provider's card appears in the list.
+
+<Screenshot id="admin-auth-provider-configure" alt="Configure Okta: Enabled chosen, a client ID, a masked client secret and the Northwind Okta issuer filled in" />
+
+**Back** returns to the list of providers; **Cancel** closes the dialog without saving.
+
+## Edit a provider
+
+Each card carries the same fields. Its chip says how the provider is enabled now — **Enabled
+(database)**, **Disabled (database)** or **Env-derived** — and every field that has no stored value
+shows **using .env fallback**.
+
+- **Change a field** and **click “Save”**. Only the fields you changed are sent. A **Saved** note
+  confirms it, and the footer reads *Last changed … by …*.
+- **The client secret is write-only.** The card shows only **Secret: set** or **Secret: not set** —
+  never the value. **Type a new value** to replace it, or **click “Clear stored secret”** to remove it
+  on the next save (the provider then uses `.env`); **Undo** cancels that.
+- **Choosing “Enabled” needs every required field stored here.** Values in `.env` do not count. If
+  one is missing, saving is refused and the card lists what to fill in.
+
+Changes reach the sign-in page on the next sign-in, after the configuration cache expires — within
+30 seconds by default (`AUTH_PROVIDER_CONFIG_CACHE_TTL_MS`, 5–60 seconds). No restart is needed.
+
+## Validate a provider
+
+**Click “Validate”** to check whether the stored configuration is complete:
+
+- *Database configuration is complete — this provider can be enabled.*
+- *Not ready to enable — missing: …* — save the listed fields on the card first.
+
+For **OIDC**, Validate also fetches the issuer's discovery document
+(`<issuer>/.well-known/openid-configuration`) and reports the error if it cannot be read, so a wrong
+issuer fails here rather than on the sign-in page.
+
+## Remove a provider
+
+**Click “Remove”** and then **“Remove provider”** to confirm. This deletes the provider's stored row —
+client ID, stored secret, enablement override and settings — and sign-in for the provider falls back
+to `.env`. A removed secret cannot be recovered. The provider then appears in **Add Provider** again.
+
+<Screenshot id="admin-auth-provider-remove" alt="The Microsoft card asking to confirm removal of its stored configuration, with Remove provider and Cancel" />
+
+## Configure in `.env` instead
+
+Every field has an environment variable in `apiome-ui/.env` — the console shows the variable under
+each extra setting. The client credentials are:
+
+| Provider | Client ID | Client secret |
+| --- | --- | --- |
+| GitHub | `GITHUB_ID` | `GITHUB_SECRET` |
+| GitLab | `GITLAB_CLIENT_ID` | `GITLAB_CLIENT_SECRET` |
+| Microsoft | `AZURE_AD_CLIENT_ID` | `AZURE_AD_CLIENT_SECRET` |
+| Google | `GOOGLE_CLIENT_ID` | `GOOGLE_CLIENT_SECRET` |
+| Okta | `OKTA_CLIENT_ID` | `OKTA_CLIENT_SECRET` |
+| AWS (Cognito) | `COGNITO_CLIENT_ID` | `COGNITO_CLIENT_SECRET` |
+| Keycloak | `KEYCLOAK_CLIENT_ID` | `KEYCLOAK_CLIENT_SECRET` |
+| OIDC | `OIDC_CLIENT_ID` | `OIDC_CLIENT_SECRET` |
+| Auth0 | `AUTH0_CLIENT_ID` | `AUTH0_CLIENT_SECRET` |
+| LINE | `LINE_CLIENT_ID` | `LINE_CLIENT_SECRET` |
+| VK | `VK_CLIENT_ID` | `VK_CLIENT_SECRET` |
+| WeChat | `WECHAT_CLIENT_ID` | `WECHAT_CLIENT_SECRET` |
+
+`apiome-ui/.env.example` lists them all with their extra settings — see
+[Operating Apiome](./operating-apiome.mdx).
+
+## With the API
+
+The console calls the REST API's super-admin endpoints:
+
+- `GET /v1/admin/auth-providers` — every provider's configuration, with secrets masked;
+- `PUT /v1/admin/auth-providers/{provider_id}` — update the fields sent;
+- `DELETE /v1/admin/auth-providers/{provider_id}` — remove the stored row.
+
+See the [API reference](../reference/api-reference.md). There is no CLI command for sign-in
+providers.
+
+## Where next
+
+- [Sign in](../getting-started/sign-in.mdx) — what people see on the sign-in page
+- [Linked accounts](../workspace/linked-accounts.mdx)
+- [Users](./users.mdx)
+- [Operating Apiome](./operating-apiome.mdx)

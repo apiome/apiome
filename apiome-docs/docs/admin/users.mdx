@@ -1,0 +1,106 @@
+---
+title: Users
+description: Approve signups, create accounts, assign licenses and disable or delete users.
+sidebar_position: 4
+tags: [admin, legacy, users]
+---
+
+<Route path="/admin/dashboard/users" />
+
+<Legacy />
+
+**Users** holds every account on the installation, across all workspaces, and the queue of people
+who have signed up and are waiting for an account. **Sign in to the [admin console](./admin-console.mdx)
+and choose Users** in the sidebar.
+
+This is the installation-wide account list. To manage who belongs to *one* workspace and with which
+role, use [Members & seats](../workspace/members.mdx) in the app, or [Tenants](./admin-tenants.mdx) here.
+
+<Screenshot id="admin-users-signups" alt="Users on the Pending Signups tab: three people waiting, with source and date" />
+
+The four cards at the top are live:
+
+| Card | Shows | Underneath |
+| --- | --- | --- |
+| **Total Users** | Every account | How many were created in the last 7 days |
+| **Verified Users** | Accounts with a verified email | How many are enabled |
+| **Pending Signups** | Requests in the queue | How many arrived today |
+| **Recent Signups** | Requests from the last 7 days | *Last 7 days* |
+
+**Refresh** reloads the cards and both tabs. The result of every action shows in a banner above
+the cards for five seconds.
+
+## Approve a signup
+
+The page opens on **Pending Signups**, whose tab carries the queue's count. Each row shows the
+person's **Name**, **Email**, **Source** (*Direct* when the signup did not record one) and **Date**.
+
+1. **Click the ⋮ button** at the end of the row.
+2. **Click “Create User”.**
+3. **Click “Create account”** in *Create an account for &lt;name&gt;?*
+
+The person gets a verified, enabled account with the password they chose when they signed up, can
+sign in straight away, and leaves the queue. If an account with that email already exists, the
+banner reads *User with this email already exists* and nothing changes.
+
+To turn a request down instead, **click “Delete Signup”** and confirm with **“Delete request”**. The
+request leaves the queue; nobody is emailed, and the address can sign up again.
+
+## Find and manage an account
+
+**Click “Active Users”** for every account, with its **License**, **Status** and **Created** date.
+**Status** shows two badges: **Verified** or **Unverified**, and **Enabled** or **Disabled**.
+
+<Screenshot id="admin-users" alt="The Active Users tab: five accounts with license, verified and enabled badges, and creation date" />
+
+**Click the ⋮ button** on a row for its actions:
+
+<Screenshot id="admin-users-menu" alt="A user's actions: Mark Unverified, Disable User, the license list, Manage Feature Flags and Delete User" />
+
+| Action | Effect |
+| --- | --- |
+| **Mark Verified** / **Mark Unverified** | Sets whether the email counts as verified. An unverified account cannot sign in. |
+| **Disable User** / **Enable User** | A disabled account cannot sign in. Nothing is deleted. |
+| **Assign License…** | Opens the list of enabled licenses; **click one** to assign it, replacing any license the user had. **Remove License** appears when the user has one. See [Licenses](./licenses.mdx). |
+| **Manage Feature Flags…** | Opens **Feature Flags** for this user — the flags their license grants, and per-user overrides. **Click “Done”** to close it. See [Feature flags](./feature-flags.mdx). |
+| **Delete User** | Deletes the account — see below. |
+
+## Create an account
+
+To add someone who has not signed up:
+
+1. **Click “New User”** at the top right.
+2. Fill in **Name**, **Email** and **Password** (at least 8 characters; it is stored as a bcrypt
+   hash). Give the person this temporary password by a channel you trust.
+3. Leave **Mark email as verified** and **Enable account immediately** ticked so they can sign in
+   at once, or untick either to hold the account back.
+4. **Click “Create User”.**
+
+<Screenshot id="admin-users-create-dialog" alt="Create New User with a name, email and temporary password, both boxes ticked" />
+
+The email is stored in lower case. The page switches to **Active Users**, where the new account
+appears.
+
+## Delete an account
+
+1. **Click the ⋮ button** on the row, then **“Delete User”**.
+2. **Type the user's email** in the confirmation field. **Delete user** stays off until it matches.
+3. **Click “Delete user”.**
+
+<Screenshot id="admin-users-delete-dialog" alt="The delete confirmation: the user's email typed to confirm, and the Delete user button" />
+
+The account, every tenant membership it carried and any license assigned to it are gone; this cannot
+be undone. To stop someone signing in but keep their account, **disable** it instead.
+
+## With the API
+
+There is no REST endpoint or CLI command for these screens: apiome-ui reads and writes the
+`apiome.users` and `apiome.signup` tables through its own server. Inside one workspace, membership and
+roles are managed from [Members & seats](../workspace/members.mdx) instead.
+
+## Where next
+
+- [Tenants](./admin-tenants.mdx)
+- [Licenses](./licenses.mdx)
+- [Feature flags](./feature-flags.mdx)
+- [The admin console](./admin-console.mdx)

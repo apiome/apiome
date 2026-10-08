@@ -71,6 +71,17 @@ jobs:
       - name: Check the site with the new images
         run: yarn docs:check
 
+      # Legacy entries (tagged in screens.json) show surfaces awaiting the Hive redesign (#5272);
+      # a change to one usually means the redesign landed, so the pull request calls them out.
+      - name: List changed legacy screens
+        id: legacy
+        run: |
+          {
+            echo 'report<<LEGACY_EOF'
+            git status --porcelain -- apiome-docs/static/img/screens | awk '{print $2}' | node apiome-docs/scripts/legacy-report.mjs
+            echo 'LEGACY_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Open a pull request when images changed
         uses: peter-evans/create-pull-request@v7
         with:
@@ -84,6 +95,8 @@ jobs:
             every entry in `apiome-docs/screens.json` from the golden-path stack, and some images
             changed. Review the image diffs: an unexpected change is a UI change the docs pages may
             need to describe.
+
+            ${{ steps.legacy.outputs.report }}
           labels: documentation
 
       - name: Dump stack logs on failure

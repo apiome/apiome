@@ -1,0 +1,106 @@
+---
+title: Feature flags
+description: Define feature flags and packages, switch them off, and grant them to one person.
+sidebar_position: 7
+tags: [admin, legacy, licensing]
+---
+
+<Route path="/admin/dashboard/feature-flags" />
+
+<Legacy />
+
+A **feature flag** names one application or feature — the Schema Designer, the AI Assistant, the
+type registry — so it can be granted by a [license](./licenses.mdx) or to a single person.
+**Sign in to the admin console and choose Feature Flags** in the sidebar: it opens the
+[Licenses](./licenses.mdx) screen on its **Feature Flags** tab.
+
+<Screenshot id="admin-feature-flags" alt="The Feature Flags tab: six flags with machine names, Preview badges, URL patterns, and one switched off" />
+
+## Who gets a flag
+
+For a person working in a tenant, Apiome decides each flag in this order and stops at the first
+answer:
+
+1. The flag is **switched off** (*disabled*) — off for everyone.
+2. A **per-user grant** for that person.
+3. A **per-tenant** setting for the tenant.
+4. Whether the person's **license** includes the flag.
+5. Otherwise, off.
+
+## The flags a new installation has
+
+| Flag | Machine name | Preview | On the plans |
+| --- | --- | --- | --- |
+| **Schema Designer** | `designer` | no | Free, Paid, Sponsor |
+| **API Paths** | `paths` | no | Paid, Sponsor |
+| **AI Assistant** | `ai_assistant` | yes | Paid, Sponsor |
+| **Repositories** | `repositories` | yes | Paid, Sponsor |
+| **Primitives Type Registry** | `primitives-registry` | yes | Paid, Sponsor |
+
+`designer` and `paths` are **commercial applications**: they decide which apps a person sees on the
+home page and in the top navigation. The type registry is only enforced when the REST API runs with
+`APIOME_PRIMITIVES_REGISTRY_GATING=true`; by default every tenant reaches it.
+
+## Create or edit a flag
+
+1. **Click “New Feature Flag”** (or a flag's **pencil**).
+2. Enter the **Machine Name** — lowercase letters, numbers and underscores, for example
+   `partner_sandbox`. It cannot be changed after creation.
+3. Enter the **Display Label**, for example *Partner sandbox*, and a **Description**.
+4. Optionally list **URL Patterns (one per line)** — the paths the flag covers, such as
+   `/ade/studio`. Apiome stores them with the flag as a record of what it gates; access is decided by
+   the order above, not by matching these paths.
+5. Switch on **Mark as Preview** to show a **Preview** badge wherever the flag is listed.
+6. **Click “Create Flag”** (or **“Save Changes”**).
+
+To grant the new flag, tick it in a plan under [Create or edit a plan](./licenses.mdx#create-or-edit-a-plan),
+or to one person below.
+
+## Switch a flag off
+
+**Click the toggle** on a flag's row (**Disable** / **Enable**). A switched-off flag reads *disabled*
+and is off for everyone, whatever their license or grants say — the quickest way to withdraw a
+feature from the whole installation.
+
+The **trash** icon deletes a flag after you confirm; it is removed from every license and every
+per-user grant that named it.
+
+## Flag packages
+
+A **flag package** bundles flags you often grant together, so they can be added to a person in one
+click. **Open the Flag packages tab**, **click “New flag package”**, enter a **Machine Name** and
+**Display Label**, tick the **Flags in this package**, and **click “Create Package”**.
+
+<Screenshot id="admin-flag-packages" alt="The Flag packages tab: Design tools with two flags and Preview features with three" />
+
+Deleting a package removes only the grouping: its flags stay, and grants already made from it are
+not changed.
+
+## Grant flags to one person
+
+1. **Open the Assignments tab** (on the [Licenses](./licenses.mdx) screen) and **click “Assign”** on
+   the person's row.
+2. **Click “Override feature flags…”**.
+3. In **Feature flags —** *name*:
+   - under **Feature packages**, **click “Add all”** (or **“Remove all”**) beside a package;
+   - or find a flag with **Search flags by label or name…** and **click its +** in **All flags — add**.
+     A green **license** tag marks a flag the person's plan already includes.
+4. Flags you granted are listed under **Granted for this user**; **click −** to remove a grant. Each
+   change saves at once.
+
+<Screenshot id="admin-feature-flag-overrides" alt="Feature flags for Elena Vasquez: AI Assistant and Partner sandbox granted, the other flags ready to add, Schema Designer tagged as on her license" />
+
+Removing a grant does not switch the flag off for that person — it hands the decision back to their
+tenant and license.
+
+## With the API
+
+Flags and packages are edited only here. A workspace member sees the features their tenant's plan
+turns on in `GET /v1/tenants/{tenant_slug}/license` — see the
+[API reference](../reference/api-reference.md).
+
+## Where next
+
+- [Licenses](./licenses.mdx)
+- [Users](./users.mdx)
+- [Operating Apiome](./operating-apiome.mdx)

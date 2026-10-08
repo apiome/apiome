@@ -1079,6 +1079,285 @@
       "route": "/ade/dashboard/help",
       "waitFor": "[data-testid=\"help-guide-results\"]",
       "data": "fixture:hive-a11y/help-search.html"
+    },
+    {
+      "id": "admin-sign-in",
+      "route": "/admin",
+      "waitFor": "#password",
+      "data": "fixture:hive-a11y/admin-sign-in.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-overview",
+      "route": "/admin/dashboard",
+      "waitFor": "[data-testid=\"admin-console\"]",
+      "data": "fixture:hive-a11y/admin-overview.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-users-signups",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"admin-console\"]",
+      "data": "fixture:hive-a11y/admin-users-signups.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-users",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"admin-console\"]",
+      "data": "fixture:hive-a11y/admin-users.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-users-menu",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"admin-console\"]",
+      "data": "fixture:hive-a11y/admin-users-menu.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-users-create-dialog",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"admin-console\"]",
+      "data": "fixture:hive-a11y/admin-users-create-dialog.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-users-delete-dialog",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[role=\"alertdialog\"]",
+      "data": "fixture:hive-a11y/admin-users-delete-dialog.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-tenants",
+      "route": "/admin/dashboard/tenants",
+      "waitFor": "#a11y-mount h2",
+      "data": "fixture:hive-a11y/admin-tenants.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-tenants-create",
+      "route": "/admin/dashboard/tenants",
+      "waitFor": "#a11y-mount .fixed.inset-0 form",
+      "data": "fixture:hive-a11y/admin-tenants-create.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-licenses",
+      "route": "/admin/dashboard/licenses",
+      "waitFor": "#a11y-mount [role=\"tablist\"]",
+      "data": "fixture:hive-a11y/admin-licenses.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-license-form",
+      "route": "/admin/dashboard/licenses",
+      "waitFor": "#a11y-mount [role=\"dialog\"]",
+      "data": "fixture:hive-a11y/admin-license-form.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-license-assignments",
+      "route": "/admin/dashboard/licenses",
+      "waitFor": "#a11y-mount table",
+      "data": "fixture:hive-a11y/admin-license-assignments.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-feature-flags",
+      "route": "/admin/dashboard/feature-flags",
+      "waitFor": "#a11y-mount [role=\"tablist\"]",
+      "data": "fixture:hive-a11y/admin-feature-flags.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-flag-packages",
+      "route": "/admin/dashboard/feature-flags",
+      "waitFor": "#a11y-mount [role=\"tablist\"]",
+      "data": "fixture:hive-a11y/admin-flag-packages.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-feature-flag-overrides",
+      "route": "/admin/dashboard/feature-flags",
+      "waitFor": "#a11y-mount [role=\"dialog\"]",
+      "data": "fixture:hive-a11y/admin-feature-flag-overrides.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-auth-providers",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[aria-label=\"GitHub provider configuration\"]",
+      "data": "fixture:hive-a11y/admin-auth-providers.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-auth-provider-remove",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[aria-label=\"Confirm removing Microsoft\"]",
+      "data": "fixture:hive-a11y/admin-auth-provider-remove.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-auth-provider-add",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/admin-auth-provider-add.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-auth-provider-configure",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/admin-auth-provider-configure.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-property-templates",
+      "route": "/admin/dashboard/templates",
+      "waitFor": "table",
+      "data": "fixture:hive-a11y/admin-property-templates.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-property-template-menu",
+      "route": "/admin/dashboard/templates",
+      "waitFor": "table",
+      "data": "fixture:hive-a11y/admin-property-template-menu.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-property-template-view",
+      "route": "/admin/dashboard/templates",
+      "waitFor": "table",
+      "data": "fixture:hive-a11y/admin-property-template-view.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "admin-property-template-create",
+      "route": "/admin/dashboard/templates",
+      "waitFor": "table",
+      "data": "fixture:hive-a11y/admin-property-template-create.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "data-browser",
+      "route": "/ade/database",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/data-browser.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "data-browser-deleted",
+      "route": "/ade/database",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/data-browser-deleted.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "data-browser-record",
+      "route": "/ade/database",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/data-browser-record.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "data-browser-insert",
+      "route": "/ade/database",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/data-browser-insert.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "data-browser-schema",
+      "route": "/ade/database",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/data-browser-schema.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "migrations",
+      "route": "/ade/migration",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/migrations.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "migrations-explorer",
+      "route": "/ade/migration",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/migrations-explorer.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
+      "id": "migrations-rule-dialog",
+      "route": "/ade/migration",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/migrations-rule-dialog.html",
+      "tags": [
+        "legacy"
+      ]
     }
   ]
 }

@@ -1,0 +1,76 @@
+---
+title: Operating Apiome
+description: "Runbooks, environment reference and the Docker Compose stack for operators."
+sidebar_position: 2
+tags: [admin, operations]
+---
+
+This page is the starting point for the people who **run** an Apiome installation rather than
+use it: how the services fit together, where each one is configured, and the runbooks for
+deploying, backing up and triaging. The screens operators use day to day — the admin console, the
+data browser and migrations — have their own pages in this group.
+
+## The stack
+
+`docker compose up` from the repository root runs the back end; the web app (`apiome-ui`) runs
+beside it (`yarn dev` in development, its own image in production).
+
+| Service | What it is | Host port (default) |
+| --- | --- | --- |
+| `postgres` | The database every service shares | `5432` (`POSTGRES_PUBLISH_PORT`) |
+| `migrate` | Applies the `apiome-db` migrations, then exits | — |
+| `seed` | Loads the development seed data, then exits (never in production) | — |
+| `rest` | `apiome-rest`, the REST API | `8000` (`APIOME_REST_HTTP_PORT`) |
+| `mcp` | `apiome-mcp`, the MCP server | `8765` (`APIOME_MCP_HTTP_PORT`) |
+| `mock` | `apiome-mock`, the mock runtime | `8775` (`APIOME_MOCK_HTTP_PORT`) |
+
+Production applies
+[`docker-compose.prod.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.prod.yml) on
+top of [`docker-compose.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.yml): it adds
+`caddy` (TLS from Let's Encrypt, the only service with host ports — `80` and `443`), `backup`
+(encrypted scheduled backups) and the Studio image, and keeps `seed` out of `up`.
+
+To try Apiome on one machine, follow [Run Apiome locally](../getting-started/run-locally.md).
+
+## Environment reference
+
+Every service reads its settings from environment variables. Each workspace ships an annotated
+`.env.example` — copy it to `.env` and change what you need:
+
+| File | Configures |
+| --- | --- |
+| [`docker-compose.env.example`](https://github.com/apiome/apiome/blob/main/docker-compose.env.example) | The Compose stack: database credentials, host ports, shared tokens |
+| [`docker-compose.prod.env.example`](https://github.com/apiome/apiome/blob/main/docker-compose.prod.env.example) | Production: domains, TLS, backup key, fail-closed secrets |
+| [`apiome-ui/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-ui/.env.example) | The web app: database, auth secret, sign-in providers, the admin console password |
+| [`apiome-rest/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-rest/.env.example) | The REST API |
+| [`apiome-mcp/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-mcp/.env.example) | The MCP server |
+| [`apiome-mock/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-mock/.env.example) | The mock runtime |
+| [`apiome-db/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-db/.env.example) | Migrations |
+| [`apiome-cli/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-cli/.env.example) | The command-line client |
+
+The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
+[The admin console](./admin-console.mdx).
+
+## Runbooks
+
+| Runbook | Use it to |
+| --- | --- |
+| [Production deployment](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md) | Promote the Compose stack to an HTTPS deployment with gated migrations and a rollback |
+| [Backup and disaster recovery](https://github.com/apiome/apiome/blob/main/docs/runbooks/BACKUP_AND_DR.md) | Take, verify and restore backups, and run DR drills |
+| [Private beta triage](https://github.com/apiome/apiome/blob/main/docs/runbooks/BETA_TRIAGE.md) | Triage feedback and incidents from beta and dogfood users |
+
+## The operator screens
+
+- [The admin console](./admin-console.mdx) — signing in, and the overview.
+- [Users](./users.mdx), [Tenants in the admin console](./admin-tenants.mdx), [Licenses](./licenses.mdx) and
+  [Feature flags](./feature-flags.mdx).
+- [Sign-in providers](./auth-providers.mdx) and [Property templates](./property-templates.mdx).
+- [Data browser](./data-browser.mdx) and [Migrations](./migrations.mdx).
+
+These screens predate the Hive redesign; each page says so, and the redesign is tracked in
+[#5272](https://github.com/apiome/apiome/issues/5272).
+
+## Where next
+
+- [Host the documentation site](./docs-image.mdx)
+- [The admin console](./admin-console.mdx)

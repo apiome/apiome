@@ -93,6 +93,7 @@ These are available in every `.mdx` page without an import:
 | `<Route path/>` | A badge naming the product route a page describes | `<Route path="/ade/dashboard/versions"/>` |
 | `<Kbd keys/>` | A key or chord; `Mod` reads “Ctrl / ⌘”, `Plus` is the + key | `<Kbd keys="Mod+K"/>` |
 | `<Flag name on?/>` | A badge marking a feature-flagged surface, naming the flag and whether shipped builds have it on | `<Flag name="FEATURE_GITLIKE"/>` |
+| `<Legacy/>` | The callout for a surface that predates the Hive redesign (scheduled under #5272). Required on any page that shows a `legacy`-tagged screenshot. | `<Legacy />` |
 
 ### Release notes
 
@@ -119,7 +120,9 @@ yarn docs:screenshots -- --start-ui --boot            # everything, from the gol
   the clock is fixed, and `mask` selectors are painted over, so reruns are byte-identical.
 - Set `DOCS_CHROMIUM_PATH` when Playwright's browser is not installed (`yarn playwright install chromium`).
 - `.github/workflows/apiome-docs-screenshots.yml` recaptures everything every Monday and opens a pull
-  request when an image changed.
+  request when an image changed. Entries tagged `legacy` (`"tags": ["legacy"]`, the admin console
+  and tools, which predate the Hive redesign) are listed in that pull request when their images
+  changed — a sign the redesign (#5272) has landed and the page needs rewriting.
 
 ## What the gate checks
 
@@ -132,6 +135,7 @@ yarn docs:screenshots -- --start-ui --boot            # everything, from the gol
 - `screens.json` is invalid, or an entry lacks the image for a theme it declares;
 - a page uses `<Screenshot id/>` with an id that is not in the manifest or lacks a light or dark
   image (examples in code blocks are ignored), or without `alt` text.
+- a page shows a screenshot tagged `legacy` in `screens.json` without the `<Legacy/>` callout.
 
 DOCS-1.13 (#5630) extends it with orphan-page checks.
 

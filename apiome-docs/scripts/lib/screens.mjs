@@ -29,6 +29,18 @@ export const SCREEN_DEFAULTS = Object.freeze({
  */
 export const APP_THEMES = Object.freeze(['light', 'dark', 'high-contrast', 'blueprint', 'whiteboard', 'solarized', 'nord', 'darcula']);
 
+/**
+ * Labels an entry may carry in `tags`.
+ *
+ * - `legacy` — the screen predates the Hive redesign and is scheduled under #5272 (HIVE-EPIC-9).
+ *   A page that shows one must carry the `<Legacy/>` callout, and the weekly refresh lists the
+ *   legacy images that changed, since a change there likely means the redesign has landed.
+ */
+export const SCREEN_TAGS = Object.freeze(['legacy']);
+
+/** The issue that schedules the redesign of every `legacy` screen. */
+export const LEGACY_ISSUE = 5272;
+
 /** Densities the app supports (`data-density`). */
 const DENSITIES = new Set(['comfortable', 'compact']);
 
@@ -64,6 +76,7 @@ export const SCREENS_DIR = 'img/screens';
  * @property {string} fontScale - `data-font-scale` pinned on `<html>`.
  * @property {string} [appTheme] - A product theme (one of {@link APP_THEMES}) pinned in every
  *   capture, whatever the site theme: both images then show that palette. For theme galleries.
+ * @property {string[]} tags - Labels from {@link SCREEN_TAGS}; empty when the entry sets none.
  * @property {ScreenData} data - Parsed `data` field.
  * @property {ScreenData} [fallback] - Fixture to use when the golden-path stack is not available.
  */
@@ -154,6 +167,15 @@ export function normalizeScreen(raw) {
     fail(`\`appTheme\` must be one of ${APP_THEMES.join(', ')}`);
   }
 
+  const tags = raw.tags ?? [];
+  if (
+    !Array.isArray(tags) ||
+    tags.some((tag) => !SCREEN_TAGS.includes(tag)) ||
+    new Set(tags).size !== tags.length
+  ) {
+    fail(`\`tags\` must list distinct values from ${SCREEN_TAGS.join(', ')}`);
+  }
+
   const mask = raw.mask ?? [];
   if (!Array.isArray(mask) || mask.some((selector) => typeof selector !== 'string' || selector.trim() === '')) {
     fail('`mask` must be a list of CSS selectors');
@@ -179,6 +201,7 @@ export function normalizeScreen(raw) {
       density,
       fontScale,
       ...(raw.appTheme ? {appTheme: raw.appTheme} : {}),
+      tags: [...tags],
       data,
       ...(fallback ? {fallback} : {}),
     },
@@ -312,8 +335,52 @@ export function checkScreenshots({screens, pages, staticDir}) {
         problems.push(`${page}: <Screenshot id="${id}"/> needs both a light and a dark image`);
       }
     }
+    const legacy = findScreenshotReferences(source).filter((id) => byId.get(id)?.tags.includes('legacy'));
+    if (legacy.length > 0 && !hasLegacyCallout(source)) {
+      problems.push(`${page}: shows legacy screenshot(s) ${legacy.join(', ')} but has no <Legacy/> callout`);
+    }
   }
   return problems;
+}
+
+/**
+ * Does a page render the `<Legacy/>` callout? Code blocks and inline code do not count.
+ *
+ * @param {string} source - Markdown / MDX source.
+ * @returns {boolean} `true` when the prose contains `<Legacy`.
+ */
+export function hasLegacyCallout(source) {
+  const prose = source.replace(/^(\s*)(```|~~~)[^\n]*\n[\s\S]*?^\1\2[^\n]*$/gm, '').replace(/`[^`\n]*`/g, '');
+  return /<Legacy\b/.test(prose);
+}
+
+/**
+ * The note the weekly refresh adds to its pull request: which `legacy` screens changed.
+ *
+ * A changed legacy image most likely means the Hive redesign of that surface (#5272) has landed,
+ * so its page needs rewriting — and its `legacy` tag and `<Legacy/>` callout removing.
+ *
+ * @param {object} options - Inputs.
+ * @param {Screen[]} options.screens - Valid manifest entries.
+ * @param {string[]} options.changedFiles - Paths that changed, as `git diff --name-only` prints
+ *   them (any prefix before `img/screens/` is ignored).
+ * @returns {string} Markdown; empty when no legacy image changed.
+ */
+export function legacyReport({screens, changedFiles}) {
+  const changed = new Set(
+    changedFiles.map((file) => /img\/screens\/([a-z0-9-]+)\.(?:light|dark)\.png$/.exec(file.trim())?.[1]).filter(Boolean),
+  );
+  const hits = screens.filter((screen) => screen.tags.includes('legacy') && changed.has(screen.id));
+  if (hits.length === 0) return '';
+  return [
+    `### Legacy screens changed`,
+    '',
+    `These entries are tagged \`legacy\`: they showed a surface that predates the Hive redesign ` +
+      `(#${LEGACY_ISSUE}). A change may mean the redesign has landed — rewrite the page, then drop ` +
+      `the \`legacy\` tag and the \`<Legacy/>\` callout.`,
+    '',
+    ...hits.map((screen) => `- \`${screen.id}\` (\`${screen.route}\`)`),
+  ].join('\n');
 }
 
 /**

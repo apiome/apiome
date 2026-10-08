@@ -1,7 +1,7 @@
 ---
 title: Contribute to the docs
 description: Write a page, add a screenshot, and pass the docs gate.
-sidebar_position: 3
+sidebar_position: 13
 tags: [docs, screenshots]
 ---
 
@@ -76,6 +76,7 @@ The result looks like this — switch the site theme to see the dark capture:
 | `density` | no | `comfortable` (default) or `compact` |
 | `fontScale` | no | `md` (default), or `xs`, `sm`, `lg`, `xl` |
 | `appTheme` | no | A product theme — `light`, `dark`, `high-contrast`, `blueprint`, `whiteboard`, `solarized`, `nord` or `darcula` — pinned in both captures, whatever the site theme. For theme galleries |
+| `tags` | no | `["legacy"]` marks a surface that predates the Hive redesign (#5272): a page showing it needs the `<Legacy/>` callout, and the weekly refresh lists it when its image changes |
 
 Next.js's development overlay is hidden in every capture. Every capture runs with the clock fixed at 15 June 2026, 09:30 UTC, and with motion off, so two runs
 produce the same pixels.
@@ -109,10 +110,12 @@ script exits with an error when any selected entry could not be captured.
 - a manifest entry is invalid, or is missing the image for a theme it declares;
 - a page uses `<Screenshot id/>` with an id that is not in the manifest, or that lacks a light or a
   dark image.
+- a page shows a screenshot tagged `legacy` without the `<Legacy/>` callout.
 
 The build itself fails when a `<Screenshot/>` has no `alt` text.
 
 ### The weekly refresh
 
 The **Apiome Docs Screenshots** workflow runs every Monday (and on demand). It brings up the
-golden-path stack, recaptures every entry, and opens a pull request when any image changed.
+golden-path stack, recaptures every entry, and opens a pull request when any image changed. The pull
+request lists any changed `legacy` screen, since that usually means its redesign has landed.
