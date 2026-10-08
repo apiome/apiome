@@ -53,6 +53,7 @@ jest.mock('@/app/components/ade/preferences/preferencesDrawerBus', () => ({
 import NotificationsClient from '../src/app/ade/dashboard/notifications/NotificationsClient';
 import { NOTIFICATION_TYPES, type NotificationRow } from '../lib/notifications';
 import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
+import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const TENANT_ID = '550e8400-e29b-41d4-a716-446655440000';
 const PROJECT_ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -420,5 +421,42 @@ describe('the empty states', () => {
       within(empty).getByRole('button', { name: /Open notification preferences/ })
     );
     expect(mockOpenPreferences).toHaveBeenCalledWith('notifications');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Notifications page (`apiome-docs/screens.json`, DOCS-1.9) is captured
+ * from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/notifications-page.test.tsx -t "docs fixtures"`.
+ * The same inbox inside the app shell is dumped by `tests/app-shell.test.tsx`.
+ */
+describe('the docs fixtures', () => {
+  test('renders the inbox, then narrowed to unread mentions', async () => {
+    const user = userEvent.setup();
+    const at = (day: number, hour: number) => new Date(2026, 8, day, hour, 0, 0).toISOString();
+    const payments = { project_slug: 'payments-api', project_name: 'Payments API', version_label: '2.4.0' };
+    inbox = [
+      row('n1', { actor_name: 'Priya Raman', type: 'review_requested', payload: { ...payments, review_id: 'rvw-24', round: 1 }, created_at: at(15, 14) }),
+      row('n2', { actor_name: 'Marcus Lee', payload: { ...payments, thread_id: THREAD_ID, excerpt: '@ada should refunds return 202 while the ledger settles?' }, created_at: at(15, 12) }),
+      row('n3', { actor_name: 'Elena Vasquez', payload: { ...payments, thread_id: THREAD_ID, excerpt: '@ada the Idempotency-Key header is missing on POST /refunds' }, created_at: at(15, 9) }),
+      row('n4', { actor_name: 'Sam Okafor', type: 'review_decision', payload: { project_slug: 'orders-service', project_name: 'Orders Service', version_label: '1.9.0', review_id: 'rvw-19', decision: 'approve' }, read_at: at(14, 17), created_at: at(14, 16) }),
+      row('n5', { actor_name: 'Priya Raman', type: 'version_published', payload: { project_slug: 'orders-service', project_name: 'Orders Service', version_label: '1.8.2' }, read_at: at(14, 12), created_at: at(14, 11) }),
+      row('n6', { actor_name: 'Tomas Berg', type: 'thread_resolved', payload: { project_slug: 'customer-profiles', project_name: 'Customer Profiles', version_label: '0.7.0', thread_id: THREAD_ID }, read_at: at(12, 10), created_at: at(12, 9) }),
+    ];
+    unread = { review_requested: 1, mention: 2 };
+    await renderPage();
+    const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+    writeA11yFixture('notifications', page().outerHTML);
+
+    await user.click(screen.getByTestId('notifications-filter-unread'));
+    await user.click(screen.getByTestId('notifications-filter-mention'));
+    await waitFor(() =>
+      expect(screen.queryByTestId('notification-n1')).not.toBeInTheDocument()
+    );
+    expect(screen.getByTestId('notification-n3')).toBeInTheDocument();
+    writeA11yFixture('notifications-filtered', page().outerHTML);
   });
 });

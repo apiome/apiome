@@ -324,8 +324,8 @@ route in light, dark and High contrast at WCAG 2.2 AA. To clear it, `--fg-subtle
 light `--accent` were darkened slightly, dark-based themes gained the dark theme's translucent
 status chips, and solid fills take dark ink in dark-based themes. Small controls keep their
 drawn size and gain an invisible 44 px hit area (`.hit-target`, 24 px in compact density).
-Keyboard paths per task: `apiome-docs/docs/reference/keyboard.md`; contract and checklist:
-`apiome-docs/docs/reference/accessibility.md`.
+Keyboard paths per task: `apiome-docs/docs/workspace/keyboard.md`; contract and checklist:
+`apiome-docs/docs/workspace/accessibility.md`.
 
 ---
 

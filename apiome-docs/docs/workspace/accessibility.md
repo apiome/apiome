@@ -1,7 +1,7 @@
 ---
 title: "Accessibility"
 description: "The WCAG 2.2 AA contract, the CI axe gate and screen-reader checklist."
-sidebar_position: 8
+sidebar_position: 11
 tags: [accessibility]
 ---
 

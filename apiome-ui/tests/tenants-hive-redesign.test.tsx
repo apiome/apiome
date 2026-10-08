@@ -101,6 +101,7 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
 }));
 
 import TenantsPage from '@/app/ade/dashboard/tenants/page';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** Two administered tenants and one the viewer is only a member of. */
 const TENANTS = [
@@ -461,6 +462,24 @@ describe('the five sections', () => {
 
     // Re-selecting a tab it has already seen is not a second load: the panel never unmounted.
     expect((global.fetch as jest.Mock).mock.calls.length).toBe(callsAfterFirstVisit);
+  });
+
+  it('hides a visited section once another tab is current, so only one shows', async () => {
+    await renderPage();
+    const drawer = await openDrawer('Acme Corp');
+
+    selectTab(drawer, /Policy history/i);
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    selectTab(drawer, /Members/i);
+
+    // Radix does not hide a force-mounted panel itself; the panel class does, by its state.
+    const panels = within(drawer).getAllByRole('tabpanel', { hidden: true });
+    const inactive = panels.filter((panel) => panel.getAttribute('data-state') === 'inactive');
+    expect(inactive.length).toBeGreaterThan(0);
+    for (const panel of inactive) expect(panel).toHaveClass('data-[state=inactive]:hidden');
+    const active = panels.filter((panel) => panel.getAttribute('data-state') === 'active');
+    expect(active).toHaveLength(1);
+    expect(active[0]).not.toHaveAttribute('hidden');
   });
 });
 
@@ -890,5 +909,190 @@ describe('accessibility', () => {
     await openDrawer('Acme Corp');
     // The drawer portals to the end of `<body>`, so the whole document is the subject.
     expect(await axe(document.body)).toHaveNoViolations();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Tenants page (`apiome-docs/screens.json`, DOCS-1.9) is captured from
+ * these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/tenants-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** A stamp shared by every tenant row; the list does not show it. */
+  const STAMP = '2026-03-02T09:00:00Z';
+
+  /** Priya administers Northwind and its sandbox, and is a member of a partner's workspace. */
+  const DOCS_TENANTS = [
+    ['t-northwind', 'Northwind', 'northwind', 'Payments, orders and partner APIs', true],
+    ['t-sandbox', 'Northwind Sandbox', 'northwind-sandbox', 'Experiments and pre-release specs', true],
+    ['t-globex', 'Globex Partners', 'globex-partners', 'Shared partner integration contracts', true],
+    ['t-archive', 'Northwind Archive', 'northwind-archive', 'Retired v1 APIs, read-only', false],
+  ].map(([id, name, slug, description, enabled]) => ({
+    id, name, slug, description, enabled, deleted_at: null, created_at: STAMP, updated_at: STAMP,
+  }));
+
+  /** Who administers what: Priya both Northwind workspaces, Marcus Northwind too. */
+  const DOCS_ADMIN_ROWS = [
+    ['ta-nw-priya', 't-northwind', 'u-priya', 'Priya Raman', 'priya.raman@northwind.io'],
+    ['ta-nw-marcus', 't-northwind', 'u-marcus', 'Marcus Lee', 'marcus.lee@northwind.io'],
+    ['ta-sb-priya', 't-sandbox', 'u-priya', 'Priya Raman', 'priya.raman@northwind.io'],
+  ].map(([id, tenantId, userId, name, email]) => ({ id, tenant_id: tenantId, user_id: userId, name, email }));
+
+  /** Northwind's people. */
+  const DOCS_MEMBERS: Record<string, unknown[]> = {
+    't-northwind': [
+      ['u-priya', 'Priya Raman', 'priya.raman@northwind.io'],
+      ['u-marcus', 'Marcus Lee', 'marcus.lee@northwind.io'],
+      ['u-sam', 'Sam Okafor', 'sam.okafor@northwind.io'],
+      ['u-elena', 'Elena Vasquez', 'elena.vasquez@northwind.io'],
+      ['u-tomas', 'Tomas Berg', 'tomas.berg@northwind.io'],
+    ].map(([userId, name, email]) => ({ id: `tu-nw-${userId}`, tenant_id: 't-northwind', user_id: userId, name, email })),
+    't-sandbox': [
+      { id: 'tu-sb-priya', tenant_id: 't-sandbox', user_id: 'u-priya', name: 'Priya Raman', email: 'priya.raman@northwind.io' },
+    ],
+  };
+
+  /** The MCP server's tools, grouped into the toolsets the policy works in. */
+  const DOCS_CATALOG = {
+    tools: [
+      ['ping', 'Health check', 'health'],
+      ['spec.list', 'List specs in the workspace', 'catalog'],
+      ['spec.list_my_specs', 'List specs you own', 'catalog'],
+      ['spec.search', 'Keyword search over specs', 'search'],
+      ['spec.search_semantic', 'Semantic search over specs', 'search'],
+      ['spec.get_openapi', 'Get a version as OpenAPI', 'document'],
+      ['spec.export_yaml', 'Export a version as YAML', 'document'],
+      ['spec.list_operations', 'List a version\u2019s operations', 'structure'],
+      ['spec.describe_operation', 'Describe one operation', 'structure'],
+    ].map(([id, description, toolset]) => ({ id, description, toolset })),
+  };
+
+  /** Ceiling: everything but semantic search and export; anonymous calls only reach ping. */
+  const DOCS_POLICY = {
+    default_mode: 'inherit_registry',
+    allow_anonymous_mcp: true,
+    tools: DOCS_CATALOG.tools.map(({ id }) => ({
+      tool_id: id,
+      in_ceiling: !['spec.search_semantic', 'spec.export_yaml'].includes(id),
+      default_enabled: !['spec.search_semantic', 'spec.export_yaml', 'spec.describe_operation'].includes(id),
+      anonymous_enabled: id === 'ping',
+    })),
+    updated_at: '2026-10-06T11:47:09Z',
+    updated_by: 'marcus.lee@northwind.io',
+  };
+
+  const DOCS_PRESETS = {
+    presets: [
+      { id: 'catalog_only', label: 'Catalog only', toolsets: ['health', 'catalog'] },
+      { id: 'search_catalog', label: 'Search + catalog', toolsets: ['health', 'catalog', 'search'] },
+      { id: 'full_read', label: 'Full read', toolsets: ['health', 'catalog', 'search', 'document', 'structure'] },
+    ],
+  };
+
+  /** Two MCP keys: a support copilot capped to catalog + search, and a CI agent on defaults. */
+  const DOCS_MCP_KEYS = {
+    keys: [
+      {
+        id: 'mk-copilot', prefix: 'mcp_7Qe2', label: 'Support copilot', scope_json: { tenants: [], projects: [] },
+        capability_mode: 'explicit', enabled_tools: ['ping', 'spec.list', 'spec.list_my_specs', 'spec.search'],
+        created_at: '2026-09-14T10:02:00Z', revoked_at: null,
+      },
+      {
+        id: 'mk-ci', prefix: 'mcp_c81a', label: 'CI docs agent', scope_json: { tenants: [], projects: [] },
+        capability_mode: 'inherit', enabled_tools: [], created_at: '2026-08-30T16:40:00Z', revoked_at: null,
+      },
+    ],
+  };
+
+  /** The last two policy saves. */
+  const DOCS_HISTORY = {
+    changes: [
+      {
+        id: 'ph-2', actor_user_id: 'u-marcus', actor_label: 'marcus.lee@northwind.io', created_at: '2026-10-06T11:47:09Z',
+        before_policy: { ...DOCS_POLICY, default_mode: 'all' },
+        after_policy: DOCS_POLICY,
+      },
+      {
+        id: 'ph-1', actor_user_id: 'u-priya', actor_label: 'priya.raman@northwind.io', created_at: '2026-09-22T08:15:30Z',
+        before_policy: { ...DOCS_POLICY, default_mode: 'all', allow_anonymous_mcp: false },
+        after_policy: { ...DOCS_POLICY, default_mode: 'all' },
+      },
+    ],
+  };
+
+  /** Everything rendered — the page, and the drawer portalled over it — without the `<body>`. */
+  const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
+
+  beforeEach(() => {
+    sessionState.current = { user: { user_id: 'u-priya', current_tenant_id: 't-northwind' } };
+    mockGetTenants.mockResolvedValue(JSON.stringify(DOCS_TENANTS));
+    mockGetAdminTenants.mockResolvedValue(JSON.stringify(DOCS_ADMIN_ROWS));
+    mockGetTenantUsers.mockImplementation(async (tenantId) => JSON.stringify(DOCS_MEMBERS[tenantId] ?? []));
+    const respond = (data: unknown) => ({ status: 200, ok: true, json: async () => ({ success: true, data }) });
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      if (url.includes('/api/tenants/license')) {
+        return respond({
+          plan: { name: 'Team', type: 'paid' },
+          seats: { used: 9, max: 10 },
+          quotas: { max_projects: 25, max_versions: -1, max_ai_requests: 5000 },
+          features: [
+            { name: 'designer', label: 'API Designer', description: 'Visual OpenAPI editing in Studio.', is_preview: false, enabled: true, source: 'license' },
+            { name: 'mcp-governance', label: 'MCP governance', description: 'Tenant MCP policy, per-key capabilities and history.', is_preview: false, enabled: true, source: 'license' },
+            { name: 'sdk-generation', label: 'SDK generation', description: 'Generate client SDKs on publish.', is_preview: true, enabled: true, source: 'tenant-override' },
+            { name: 'ai-assistant', label: 'AI assistant', description: null, is_preview: false, enabled: false, source: 'license' },
+          ],
+        });
+      }
+      if (url.includes('/api/tenants/mcp-policy/history')) return respond(DOCS_HISTORY);
+      if (url.includes('/api/tenants/mcp-policy')) return respond(DOCS_POLICY);
+      if (url.includes('/api/api-keys/mcp-tools')) return respond(DOCS_CATALOG);
+      if (url.includes('/api/api-keys/mcp-capability-presets')) return respond(DOCS_PRESETS);
+      if (url.includes('/capabilities/preview') && method === 'POST') {
+        const enabled = new Set(DOCS_MCP_KEYS.keys[0].enabled_tools);
+        return respond({
+          tools: DOCS_CATALOG.tools.map(({ id }) => ({
+            tool_id: id,
+            enabled: enabled.has(id),
+            deny_reason: enabled.has(id) ? null : 'not_in_key_enable_set',
+          })),
+        });
+      }
+      if (url.includes('/api/tenants/mcp-keys')) return respond(DOCS_MCP_KEYS);
+      return { status: 404, ok: false, json: async () => ({ success: false, error: `Unhandled ${method} ${url}` }) };
+    }) as unknown as typeof fetch;
+  });
+
+  it('renders the list and every section of the manage drawer', async () => {
+    render(<TenantsPage />);
+    expect(await screen.findByText('Northwind Sandbox')).toBeInTheDocument();
+    writeA11yFixture('tenants', liveMarkup(document.querySelector('.page') as HTMLElement));
+
+    const drawer = await openDrawer('Northwind');
+    await within(drawer).findByText('sam.okafor@northwind.io');
+    writeA11yFixture('tenants-drawer-members', bodyMarkup());
+
+    selectTab(drawer, /License & plan/);
+    await within(drawer).findByText('9 of 10 used');
+    writeA11yFixture('tenants-drawer-license', bodyMarkup());
+
+    selectTab(drawer, /MCP settings/);
+    await within(drawer).findByLabelText('Allow anonymous MCP calls');
+    await within(drawer).findByLabelText('structure toolset');
+    writeA11yFixture('tenants-drawer-mcp', bodyMarkup());
+
+    selectTab(drawer, /Per-key capabilities/);
+    await within(drawer).findByText(/tools enabled for calls/);
+    writeA11yFixture('tenants-drawer-keys', bodyMarkup());
+
+    selectTab(drawer, /Policy history/);
+    const [newest] = await within(drawer).findAllByRole('button', { name: /Toggle details for the change on/ });
+    fireEvent.click(newest);
+    await within(drawer).findByText('Settings changes');
+    writeA11yFixture('tenants-drawer-history', bodyMarkup());
   });
 });

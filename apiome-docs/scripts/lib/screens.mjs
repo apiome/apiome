@@ -22,6 +22,13 @@ export const SCREEN_DEFAULTS = Object.freeze({
   fontScale: 'md',
 });
 
+/**
+ * The product's palettes (`apiome-ui/src/app/config/themes.ts`), the values `appTheme` may hold.
+ * `system` is not one: it is a choice that resolves to `light` or `dark`, which is what an entry
+ * without `appTheme` already shows.
+ */
+export const APP_THEMES = Object.freeze(['light', 'dark', 'high-contrast', 'blueprint', 'whiteboard', 'solarized', 'nord', 'darcula']);
+
 /** Densities the app supports (`data-density`). */
 const DENSITIES = new Set(['comfortable', 'compact']);
 
@@ -55,6 +62,8 @@ export const SCREENS_DIR = 'img/screens';
  * @property {{width: number, height: number}} viewport - Browser viewport.
  * @property {'comfortable'|'compact'} density - `data-density` pinned on `<html>`.
  * @property {string} fontScale - `data-font-scale` pinned on `<html>`.
+ * @property {string} [appTheme] - A product theme (one of {@link APP_THEMES}) pinned in every
+ *   capture, whatever the site theme: both images then show that palette. For theme galleries.
  * @property {ScreenData} data - Parsed `data` field.
  * @property {ScreenData} [fallback] - Fixture to use when the golden-path stack is not available.
  */
@@ -141,6 +150,10 @@ export function normalizeScreen(raw) {
   const fontScale = raw.fontScale ?? SCREEN_DEFAULTS.fontScale;
   if (!FONT_SCALES.has(fontScale)) fail(`\`fontScale\` must be one of ${[...FONT_SCALES].join(', ')}`);
 
+  if (raw.appTheme !== undefined && !APP_THEMES.includes(raw.appTheme)) {
+    fail(`\`appTheme\` must be one of ${APP_THEMES.join(', ')}`);
+  }
+
   const mask = raw.mask ?? [];
   if (!Array.isArray(mask) || mask.some((selector) => typeof selector !== 'string' || selector.trim() === '')) {
     fail('`mask` must be a list of CSS selectors');
@@ -165,6 +178,7 @@ export function normalizeScreen(raw) {
       viewport: {width: viewport.width, height: viewport.height},
       density,
       fontScale,
+      ...(raw.appTheme ? {appTheme: raw.appTheme} : {}),
       data,
       ...(fallback ? {fallback} : {}),
     },

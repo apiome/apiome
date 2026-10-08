@@ -1,0 +1,87 @@
+---
+title: Help & shortcuts
+description: Search the guide, read what's new, contact support, and learn the keyboard shortcuts.
+sidebar_position: 9
+tags: [help, keyboard, shortcuts]
+---
+
+<Route path="/ade/dashboard/help" />
+
+**Help & docs** gathers the guides, the release notes, the keyboard shortcuts and the way to ask for
+help in one page. **Click Help & docs** at the foot of the sidebar to open it from any page.
+
+<Screenshot id="help" alt="Help & docs: the guide search, six help cards and the shortcuts at a glance" />
+
+## Search the guide
+
+**Type into “Search the guide…”** — a task works as well as a title: *publish a version*,
+*import RAML*, *MCP trust posture*. Results appear as you type, with a count (*8 guides match
+“publish”*). Each one shows its title, a one-line summary and its section — **How do I…?** for the
+steps a specification travels, **References & quick-starts** for everything else — and opens the
+page on this site in a new tab. Every word you type has to match, so adding a word narrows the list.
+
+<Screenshot id="help-search" alt="The guide search for publish: eight matching guides, each with its summary and section" />
+
+## The help cards
+
+| Card | Does |
+| --- | --- |
+| **Get started** | Reopens the getting-started checklist on Home — first project, first version, publish, browse — even if you dismissed it |
+| **User guide** | Opens this site |
+| **API & CLI reference** | Opens the [API reference](../reference/api-reference.md), the CLI and the CI diff-gate recipes |
+| **Video walkthroughs** | Opens the short screencasts on YouTube |
+| **Community** | Marked **Soon**; not available yet |
+| **Contact support** | Shows your **Tenant id** and the **Build** — **“Copy details”** copies both, **“Open an issue”** opens a new GitHub issue to paste them into |
+
+Include the tenant id and the build in any report: together they make a problem reproducible.
+
+## What's new
+
+**Click “What’s new”** at the top of the page to read the release notes for this build. The same
+notes open from **What's new** in your user menu and from the build string at its foot; a dot on
+your avatar means there are notes you have not read yet.
+
+## Keyboard shortcuts
+
+**Press <Kbd keys="?"/>** anywhere outside a text field, **click “Keyboard shortcuts”** on this page
+or **“Full sheet”** under **Shortcuts at a glance**, or choose **Keyboard shortcuts** in your user
+menu. The sheet lists only what works on the screen behind it — a list page has rows a detail page
+does not — grouped as **Global**, **Jump (press G, then…)**, **On a list**, **Dialogs and wizards**
+and **On this page**. **Click a row** to run it.
+
+<Screenshot id="shortcut-sheet" alt="The Keyboard shortcuts sheet: global shortcuts, jump sequences and list actions" />
+
+| Keys | Does |
+| --- | --- |
+| <Kbd keys="Mod+K"/> | Open the command palette |
+| <Kbd keys="Mod+,"/> | Open [Preferences](./preferences.mdx) |
+| <Kbd keys="Mod+\"/> | Collapse or expand the sidebar |
+| <Kbd keys="/"/> | Search or filter |
+| <Kbd keys="?"/> | Show the keyboard shortcuts |
+| <Kbd keys="Esc"/> | Close the pane, dialog or menu in front |
+| <Kbd keys="G"/> then <Kbd keys="H"/> · <Kbd keys="P"/> · <Kbd keys="C"/> · <Kbd keys="L"/> · <Kbd keys="M"/> | Go to Home, Projects, Catalog, Lint posture or Members |
+| <Kbd keys="N"/> · <Kbd keys="I"/> | On a list: new item, import |
+| <Kbd keys="↑"/> <Kbd keys="↓"/> · <Kbd keys="↵"/> · <Kbd keys="X"/> · <Kbd keys="."/> | On a list: move between rows, open, select, reach the row's actions |
+
+Single-key shortcuts never fire while you are typing in a field. On Windows and Linux, read ⌘ as
+Ctrl. The chips on buttons can be hidden with **Show keyboard hints** in
+[Preferences](./preferences.mdx#switches); the shortcuts keep working.
+
+[Keyboard](./keyboard.md) has the keyboard path for every task.
+
+## The command palette
+
+**Press <Kbd keys="Mod+K"/>** or **click “Search or jump to…”** at the top of the sidebar. Type to
+filter, <Kbd keys="↑"/> <Kbd keys="↓"/> to move, <Kbd keys="↵"/> to open. **Jump to** lists every
+destination; <Kbd keys="Tab"/> switches to **Actions** (such as *New project…*, *Import a spec…*,
+*Create API key…*, *Change theme…*), and typing <Kbd keys=">"/> first searches commands only.
+<Kbd keys="Esc"/> closes it and returns focus where it was.
+
+<Screenshot id="command-palette" alt="The command palette over the notifications page, listing Jump to destinations" />
+
+## Where next
+
+- [Keyboard](./keyboard.md)
+- [Accessibility](./accessibility.md)
+- [Preferences](./preferences.mdx)
+- [Notifications](./notifications.mdx)

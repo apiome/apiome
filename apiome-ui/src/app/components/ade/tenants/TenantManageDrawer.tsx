@@ -44,6 +44,13 @@ import {
 } from './tenantsModel';
 
 /**
+ * Class for each section panel. The panels are `forceMount`ed (see below), and Radix only sets
+ * `hidden` on a panel it does not mount — so an inactive, already-visited section would otherwise
+ * stay on screen under the current one.
+ */
+const PANEL_CLASS = 'mt-0 data-[state=inactive]:hidden';
+
+/**
  * The tenant manage drawer — HIVE-5.1 (#5304).
  *
  * Authority: `docs/mockups/workspace/tenants.html` `#manage-drawer`; DESIGN.md §5.4
@@ -272,7 +279,7 @@ export default function TenantManageDrawer({
             </TabsList>
 
             <div className="min-w-0">
-              <TabsContent value="members" forceMount className="mt-0">
+              <TabsContent value="members" forceMount className={PANEL_CLASS}>
                 {visited.has('members') && (
                   <TenantMembersSection
                     members={members}
@@ -287,7 +294,7 @@ export default function TenantManageDrawer({
                 )}
               </TabsContent>
 
-              <TabsContent value="license" forceMount className="mt-0">
+              <TabsContent value="license" forceMount className={PANEL_CLASS}>
                 {visited.has('license') &&
                   gated(
                     'license',
@@ -295,7 +302,7 @@ export default function TenantManageDrawer({
                   )}
               </TabsContent>
 
-              <TabsContent value="mcp" forceMount className="mt-0">
+              <TabsContent value="mcp" forceMount className={PANEL_CLASS}>
                 {visited.has('mcp') &&
                   gated(
                     'mcp',
@@ -309,7 +316,7 @@ export default function TenantManageDrawer({
                   )}
               </TabsContent>
 
-              <TabsContent value="keys" forceMount className="mt-0">
+              <TabsContent value="keys" forceMount className={PANEL_CLASS}>
                 {visited.has('keys') &&
                   gated(
                     'keys',
@@ -320,7 +327,7 @@ export default function TenantManageDrawer({
                   )}
               </TabsContent>
 
-              <TabsContent value="history" forceMount className="mt-0">
+              <TabsContent value="history" forceMount className={PANEL_CLASS}>
                 {visited.has('history') &&
                   gated('history', <TenantMcpPolicyHistory reloadToken={policyRevision} />)}
               </TabsContent>

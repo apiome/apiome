@@ -103,6 +103,7 @@ jest.mock('@/app/hooks/useShortcuts', () => ({
 import HelpPage from '@/app/ade/dashboard/help/page';
 import { FIRST_RUN_DISMISS_KEY } from '@/app/components/ade/dashboard/firstRunChecklist';
 import { WHATS_NEW_SEEN_STORAGE_KEY } from '@/app/components/shell/whatsNewSeen';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** A signed-in session with a workspace. */
 const TENANT_ID = 'ten_01HJ7F8HQ2ZK';
@@ -361,5 +362,40 @@ describe('accessibility', () => {
     const { container } = render(<HelpPage />);
     fireEvent.change(screen.getByTestId('help-guide-search'), { target: { value: 'publish' } });
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+/* -------------------------------------------------------------------------
+   The docs fixtures
+   ------------------------------------------------------------------------- */
+
+/**
+ * The documentation site's Help & shortcuts page (`apiome-docs/screens.json`, DOCS-1.9) is
+ * captured from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/help-page.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  const saved = activeShortcuts.current;
+
+  afterEach(() => {
+    activeShortcuts.current = saved;
+  });
+
+  it('renders the page, and a guide search', () => {
+    // What a dashboard route's shell has bound, rather than the trimmed list above.
+    (activeShortcuts as { current: unknown }).current = [
+      { id: 'palette', scope: 'global', description: 'Open the command palette', keys: ['⌘', 'K'] },
+      { id: 'preferences', scope: 'global', description: 'Open preferences', keys: ['⌘', ','] },
+      { id: 'rail', scope: 'global', description: 'Collapse or expand the sidebar', keys: ['⌘', '\\'] },
+      { id: 'search', scope: 'global', description: 'Search or filter', keys: ['/'] },
+      { id: 'shortcuts', scope: 'global', description: 'Show the keyboard shortcuts', keys: ['?'] },
+      { id: 'close-overlay', scope: 'global', description: 'Close the pane, dialog or menu in front', keys: ['Esc'] },
+    ];
+    render(<HelpPage />);
+    const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+    writeA11yFixture('help', liveMarkup(page()));
+
+    fireEvent.change(screen.getByTestId('help-guide-search'), { target: { value: 'publish' } });
+    expect(screen.getByTestId('help-guide-results')).toBeInTheDocument();
+    writeA11yFixture('help-search', liveMarkup(page()));
   });
 });

@@ -1,0 +1,129 @@
+---
+title: Profile & security
+description: Your name, password, two-factor authentication, backup codes and sign-in session.
+sidebar_position: 5
+tags: [account, profile, security, two-factor]
+---
+
+<Route path="/ade/dashboard/profile" />
+
+**Profile** is your own account: the name teammates see, your password, two-factor authentication,
+the ways you can sign in and your current session. **Open the user menu at the foot of the rail and
+choose Profile.** The tabs under the title switch between **Profile**, **Linked accounts** and
+**Preferences** (<Kbd keys="Mod+," />).
+
+<Screenshot id="profile" alt="Profile: Priya Raman's identity card with 2FA on, account details, sign-in methods and session" />
+
+Every signed-in user has this page; nothing on it needs a role.
+
+## Your identity
+
+The card at the top shows your name, email, the workspace you are in with your role, and **2FA on** or
+**2FA off**. **Account details** below it lists:
+
+| Tile | Shows |
+| --- | --- |
+| **Full name** | The name shown to teammates and in activity |
+| **Email** | Your sign-in address, marked **Verified** once confirmed |
+| **User ID** | Your account id, with a copy button |
+| **Current tenant** | The workspace you are working in and its id, with a copy button |
+| **Last login** | When you last signed in |
+
+### Change your name
+
+1. **Click “Edit name”** at the top of the page (or the pencil on the **Full name** tile).
+2. Type your **Full name**.
+3. **Click “Save”**. The rail's user menu changes at once.
+
+Your email cannot be changed here.
+
+## Change your password
+
+1. **Click “Change password”** at the foot of the **Security** card.
+2. Enter your **Current password**.
+3. Enter a **New password**. It needs at least 8 characters, one uppercase and one lowercase letter,
+   and one number or special character; the meter under the field reads *Weak*, *Fair* or *Strong*.
+4. Type it again in **Confirm new password**.
+5. **Click “Change password”**. *Password changed successfully.* appears above the page.
+
+<Screenshot id="profile-change-password" alt="The Change password dialog with its requirements, current password and new password filled in" />
+
+If you signed up with an identity provider and never set a password, sign in with that provider — see
+[Linked accounts](./linked-accounts.mdx).
+
+## Two-factor authentication
+
+Two-factor authentication (2FA) asks for a code from an authenticator app — Authy, Google
+Authenticator or any TOTP app — after your password. It is set up in the **Security** card.
+
+<Screenshot id="profile-security" alt="The Security card with two-factor enabled: sign-in methods, email code, backup codes, trusted device and recovery note" />
+
+### Turn it on
+
+1. **Click “Enable 2FA”** in the **Security** card.
+2. Enter your **Current password** and **click “Continue”**.
+3. Scan the QR code with your authenticator app. If you cannot scan it, copy the `otpauth://` link
+   under **Or enter this URI** into the app instead.
+4. Type the six-digit **Authentication code** the app shows and **click “Confirm and enable”**.
+5. Save your backup codes: **click “Copy codes”** or **“Download .txt”**, keep them somewhere safe,
+   then **click “Done”**.
+
+<Screenshot id="profile-2fa-scan" alt="Enable two-factor authentication, step 2: the QR code, the otpauth URI and a six-digit code entered" />
+
+<Screenshot id="profile-2fa-backup-codes" alt="Enable two-factor authentication, step 3: ten one-time backup codes with Copy codes and Download .txt" />
+
+The codes are shown once. Each one signs you in a single time when you do not have your
+authenticator. The next time you sign in, Apiome asks for a code — see
+[Pass the two-factor check](../getting-started/sign-in.mdx#pass-the-two-factor-check).
+
+### Once it is on
+
+The **Security** card then shows:
+
+- **Sign-in methods** — **Authenticator app (TOTP)**, and **Email OTP** when your deployment can send
+  email. An emailed code needs no set-up: you can ask for one at sign-in instead of using the app.
+- **Backup codes** — how many are left (*8 remaining*).
+- **Trusted device** — whether this browser is trusted, which skips 2FA when you sign in here for
+  about 30 days. **Click “Forget this device”** to be asked for a code in this browser again.
+- **Recovery** — if you lose your authenticator, use a backup code at sign-in or ask an admin, then
+  make a new set of codes.
+
+### Make new backup codes
+
+1. **Click “Regenerate backup codes”**.
+2. Enter your **Current password** and **click “Regenerate”**. Your old codes stop working at once.
+3. Copy or download the new codes and **click “Done”**.
+
+### Turn it off
+
+1. **Click “Disable 2FA”**.
+2. Enter your **Current password** and **click “Disable 2FA”**.
+
+Your backup codes and this browser's trusted-device mark are cleared too. You can turn 2FA on again
+at any time.
+
+## Sign-in methods
+
+The **Sign-in methods** card lists every way you can sign in: **Password** (when you have one) and each
+linked provider, such as GitHub. **Click “Manage linked accounts”** to add or remove providers on
+[Linked accounts](./linked-accounts.mdx).
+
+## Your session
+
+The **Session** card shows when your current sign-in expires, how much of its 30 days is left, and
+the browser and system you are using.
+
+**Click “Sign out everywhere”** to end every session on every device, including this one; you land
+on the sign-in page. Use it if you signed in on a shared computer or think someone else has your
+password.
+
+## With the API
+
+Profile, password and two-factor settings are only in the app; there is no REST endpoint or CLI
+command for them. To call Apiome from scripts, create an [API key](./api-keys.mdx).
+
+## Where next
+
+- [Linked accounts](./linked-accounts.mdx)
+- [Preferences](./preferences.mdx)
+- [Sign in](../getting-started/sign-in.mdx)

@@ -112,6 +112,7 @@ jest.mock('react-qr-code', () => ({
 }));
 
 import Profile from '@/app/ade/dashboard/profile/page';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** The session user every test starts from. */
 const USER = {
@@ -867,5 +868,75 @@ describe('accessibility', () => {
     sessionState.current = null;
     const { container } = render(<Profile />);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+/* -------------------------------------------------------------------------
+   The docs fixtures
+   ------------------------------------------------------------------------- */
+
+/**
+ * The documentation site's Profile & security page (`apiome-docs/screens.json`, DOCS-1.9) is
+ * captured from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/profile-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** `TwoFactorSettings`' status reads, mocked at the top of the file. */
+  const twoFactorActions = jest.requireMock('@lib/auth/two-factor-profile-actions') as Record<
+    string,
+    jest.Mock
+  >;
+
+  afterEach(() => {
+    twoFactorActions.getBackupCodeStatus.mockResolvedValue({ remaining: 6 });
+    twoFactorActions.getTrustedDeviceStatus.mockResolvedValue({ trusted: false });
+    twoFactorActions.getEmailOtpAvailability.mockResolvedValue({ available: false });
+  });
+
+  /** The page root — `.page` when the page chrome rendered one. */
+  const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders the profile with two-factor on, and the Change password dialog', async () => {
+    twoFactorActions.getBackupCodeStatus.mockResolvedValue({ remaining: 8 });
+    twoFactorActions.getTrustedDeviceStatus.mockResolvedValue({ trusted: true });
+    twoFactorActions.getEmailOtpAvailability.mockResolvedValue({ available: true });
+    sessionState.current = {
+      user: {
+        ...USER,
+        user_id: 'usr_5f2c81d0e7',
+        name: 'Priya Raman',
+        email: 'priya.raman@northwind.io',
+        current_tenant_id: 'ten_8b40c2',
+      },
+      expires: EXPIRES,
+    };
+    mockLinkedAccounts.mockResolvedValue(
+      JSON.stringify([
+        { provider: 'github', provider_username: 'priya-raman', provider_email: 'priya.raman@northwind.io' },
+      ])
+    );
+    mockMembershipContext.mockResolvedValue({
+      tenants: [{ id: 'ten_8b40c2', name: 'Northwind', role: 'admin', status: 'active' }],
+      adminTenantIds: ['ten_8b40c2'],
+      createTenant: null,
+    });
+
+    await renderProfile();
+    await waitFor(() =>
+      expect(screen.getByTestId('two-factor-trusted-status')).toHaveTextContent('This browser is trusted')
+    );
+    expect(screen.getByTestId('two-factor-backup-remaining')).toHaveTextContent('8 remaining');
+    writeA11yFixture('profile', liveMarkup(page()));
+    writeA11yFixture('profile-security', liveMarkup(screen.getByTestId('profile-security')));
+
+    fireEvent.click(screen.getByTestId('profile-change-password-open'));
+    const dialog = await screen.findByTestId('profile-password-dialog');
+    fireEvent.change(within(dialog).getByTestId('profile-current-password'), {
+      target: { value: 'old-password' },
+    });
+    fireEvent.change(within(dialog).getByTestId('profile-new-password'), {
+      target: { value: 'Correct-Horse-7' },
+    });
+    expect(dialog).toHaveTextContent('Password requirements');
+    writeA11yFixture('profile-change-password', liveMarkup(dialog));
   });
 });

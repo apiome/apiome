@@ -44,6 +44,6 @@ that old links keep working: find the page you were looking for in the map below
 | `mcp-quickstart.md` | [MCP quick-start](https://apiome.github.io/apiome/reference/mcp-quickstart) | [`apiome-docs/docs/reference/mcp-quickstart.md`](../../apiome-docs/docs/reference/mcp-quickstart.md) |
 | `ci-diff-gate.md` | [CI contract gate on GitHub](https://apiome.github.io/apiome/reference/ci-diff-gate) | [`apiome-docs/docs/reference/ci-diff-gate.md`](../../apiome-docs/docs/reference/ci-diff-gate.md) |
 | `ci-gitlab-bitbucket.md` | [CI contract gate on GitLab and Bitbucket](https://apiome.github.io/apiome/reference/ci-gitlab-bitbucket) | [`apiome-docs/docs/reference/ci-gitlab-bitbucket.md`](../../apiome-docs/docs/reference/ci-gitlab-bitbucket.md) |
-| `keyboard.md` | [Keyboard](https://apiome.github.io/apiome/reference/keyboard) | [`apiome-docs/docs/reference/keyboard.md`](../../apiome-docs/docs/reference/keyboard.md) |
-| `accessibility.md` | [Accessibility](https://apiome.github.io/apiome/reference/accessibility) | [`apiome-docs/docs/reference/accessibility.md`](../../apiome-docs/docs/reference/accessibility.md) |
+| `keyboard.md` | [Keyboard](https://apiome.github.io/apiome/workspace/keyboard) | [`apiome-docs/docs/workspace/keyboard.md`](../../apiome-docs/docs/workspace/keyboard.md) |
+| `accessibility.md` | [Accessibility](https://apiome.github.io/apiome/workspace/accessibility) | [`apiome-docs/docs/workspace/accessibility.md`](../../apiome-docs/docs/workspace/accessibility.md) |
 | `content-voice.md` | [Content and voice](https://apiome.github.io/apiome/reference/content-voice) | [`apiome-docs/docs/reference/content-voice.md`](../../apiome-docs/docs/reference/content-voice.md) |

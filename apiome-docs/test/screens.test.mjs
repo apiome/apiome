@@ -6,6 +6,7 @@ import {afterEach, beforeEach, describe, it} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
 import {
+  APP_THEMES,
   SCREEN_DEFAULTS,
   checkScreenshots,
   findScreenshotReferences,
@@ -75,6 +76,22 @@ describe('normalizeScreen', () => {
     assert.deepEqual(screen.theme, ['dark']);
     assert.deepEqual(screen.clip, {x: 0, y: 0, width: 400, height: 300});
     assert.deepEqual(screen.fallback, {kind: 'fixture', dir: 'hive-catalog', file: 'table.html'});
+  });
+  it('keeps an app theme pin, and leaves it out when unset', () => {
+    assert.equal(normalizeScreen(entry({appTheme: 'nord'})).screen.appTheme, 'nord');
+    assert.equal('appTheme' in normalizeScreen(entry()).screen, false);
+  });
+  it('rejects an app theme the product does not have, and `system`', () => {
+    for (const appTheme of ['sepia', 'system', 'Nord']) {
+      const {screen, problems} = normalizeScreen(entry({appTheme}));
+      assert.equal(screen, null);
+      assert.match(problems[0], /`appTheme` must be one of/);
+    }
+  });
+  it('lists the eight palettes of apiome-ui', () => {
+    const source = fs.readFileSync(path.join(SITE_DIR, '..', 'apiome-ui', 'src', 'app', 'config', 'themes.ts'), 'utf8');
+    const ids = [...source.matchAll(/^ {4}id: '([a-z-]+)',$/gm)].map((match) => match[1]).filter((id) => id !== 'system');
+    assert.deepEqual([...new Set(ids)].sort(), [...APP_THEMES].sort());
   });
   it('reports every bad field, named by id', () => {
     const {screen, problems} = normalizeScreen(

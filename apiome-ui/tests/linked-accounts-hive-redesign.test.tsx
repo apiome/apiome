@@ -98,6 +98,7 @@ jest.mock('@/app/components/ade/preferences/preferencesDrawerBus', () => ({
 
 import LinkedAccountsClient from '@/app/ade/dashboard/linked-accounts/LinkedAccountsClient';
 import type { ProviderSummary } from '@lib/auth/provider-registry';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** A deployment with GitHub and GitLab configured, plus one coming-soon teaser. */
 const PROVIDERS: ProviderSummary[] = [
@@ -894,5 +895,76 @@ describe('accessibility', () => {
     fireEvent.click(screen.getByTestId('provider-pat-edit-github'));
     await screen.findByTestId('pat-dialog');
     expect(await axe(baseElement)).toHaveNoViolations();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Linked accounts page (`apiome-docs/screens.json`, DOCS-1.9) is
+ * captured from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/linked-accounts-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** A deployment with four sign-in providers enabled and one teaser. */
+  const DOCS_PROVIDERS: ProviderSummary[] = [
+    { id: 'github', label: 'GitHub', status: 'available', enabled: true },
+    { id: 'gitlab', label: 'GitLab', status: 'available', enabled: true },
+    { id: 'azure', label: 'Microsoft', status: 'available', enabled: true },
+    { id: 'google', label: 'Google', status: 'available', enabled: true },
+    { id: 'atlassian', label: 'Atlassian', status: 'coming-soon', enabled: false },
+  ];
+
+  /** GitHub with a stored token, GitLab without one. */
+  const DOCS_ACCOUNTS = [
+    {
+      id: 'acct-gh-priya',
+      provider: 'github',
+      provider_user_id: 'gh-58213904',
+      provider_email: 'priya.raman@northwind.io',
+      provider_username: 'priya-raman',
+      access_token_suffix: '9f3k2q',
+      created_at: '2026-04-11T10:22:00.000Z',
+      last_login_at: '2026-10-06T08:41:00.000Z',
+    },
+    {
+      id: 'acct-gl-priya',
+      provider: 'gitlab',
+      provider_user_id: 'gl-1177302',
+      provider_email: 'priya.raman@northwind.io',
+      provider_username: 'praman',
+      access_token_suffix: null,
+      created_at: '2026-09-02T14:05:00.000Z',
+      last_login_at: null,
+    },
+  ];
+
+  /** The page root — `.page` when the page chrome rendered one. */
+  const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+
+  it('renders the list, the token dialog and the last-method guard', async () => {
+    sessionState.current = { user: { user_id: 'usr_5f2c81d0e7', name: 'Priya Raman' } };
+    mockLinkedAccounts.mockResolvedValue(JSON.stringify(DOCS_ACCOUNTS));
+    await mount(DOCS_PROVIDERS);
+    expect(screen.getByTestId('linked-accounts-count')).toHaveTextContent('2 linked accounts');
+    writeA11yFixture('linked-accounts', liveMarkup(page()));
+
+    fireEvent.click(screen.getByTestId('provider-pat-edit-gitlab'));
+    const dialog = await screen.findByTestId('pat-dialog');
+    fireEvent.change(within(dialog).getByLabelText('Token'), { target: { value: 'glpat-docs-example-token' } });
+    expect(dialog).toHaveTextContent('Required scopes');
+    writeA11yFixture('linked-accounts-pat', liveMarkup(dialog));
+  });
+
+  it('renders the guard on an only sign-in method', async () => {
+    sessionState.current = { user: { user_id: 'usr_5f2c81d0e7', name: 'Priya Raman' } };
+    mockLinkedAccounts.mockResolvedValue(JSON.stringify([DOCS_ACCOUNTS[0]]));
+    mockHasPassword.mockResolvedValue(JSON.stringify({ hasPassword: false }));
+    await mount(DOCS_PROVIDERS);
+    expect(screen.getByTestId('linked-unlink-github')).toBeDisabled();
+    const table = screen.getByTestId('linked-accounts-table');
+    writeA11yFixture('linked-accounts-last-method', liveMarkup(table));
   });
 });

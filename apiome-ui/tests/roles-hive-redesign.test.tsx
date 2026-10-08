@@ -25,6 +25,8 @@ import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
 import RolesClient from '../src/app/ade/dashboard/roles/RolesClient';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import { DOCS_MEMBERS, DOCS_ROLES } from './helpers/access-docs-data';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -717,5 +719,73 @@ describe('the native dialogs this screen used to reach for', () => {
 
     expect(nativeConfirm).not.toHaveBeenCalled();
     expect(nativePrompt).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Roles & permissions page (`apiome-docs/screens.json`, DOCS-1.9) is
+ * captured from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/roles-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** Answer the screen's reads with the docs workspace (`tests/helpers/access-docs-data.ts`). */
+  function mockDocsApi() {
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/access/permissions/me')) return ok(PERMS_ADMIN);
+      if (url.includes('/api/access/members')) return ok(DOCS_MEMBERS);
+      if (url.includes('/api/access/roles')) return ok(DOCS_ROLES);
+      return ok([]);
+    });
+  }
+
+  /** The page root. */
+  const page = () => document.querySelector('.page') as HTMLElement;
+
+  it('renders a custom role, a built-in role, a draft, the guard and the dialogs', async () => {
+    mockDocsApi();
+    const user = userEvent.setup();
+    render(<RolesClient />);
+    await screen.findByRole('button', { name: 'Projects View' });
+
+    await user.click(screen.getByTestId('role-item-release-manager'));
+    expect(screen.getByLabelText('Role name')).toHaveValue('Release manager');
+    writeA11yFixture('roles', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('role-item-editor'));
+    expect(screen.getByTestId('roles-lock-note')).toBeInTheDocument();
+    writeA11yFixture('roles-builtin', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('role-item-release-manager'));
+    await user.click(screen.getByRole('button', { name: 'Projects Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Versions Delete' }));
+    expect(screen.getByTestId('roles-save-bar')).toHaveTextContent('2 unsaved changes');
+    writeA11yFixture('roles-draft', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('role-item-viewer'));
+    const guard = await screen.findByTestId('roles-unsaved-dialog');
+    expect(guard).toHaveTextContent('Switching to Viewer resets the draft.');
+    writeA11yFixture('roles-unsaved-dialog', liveMarkup(guard));
+    await user.click(within(guard).getByRole('button', { name: 'Discard' }));
+    await waitFor(() => expect(screen.queryByTestId('roles-unsaved-dialog')).not.toBeInTheDocument());
+
+    await user.click(screen.getByTestId('roles-new'));
+    const create = await screen.findByRole('dialog');
+    await user.type(within(create).getByLabelText('Name'), 'Support engineer');
+    await user.selectOptions(within(create).getByLabelText('Copy permissions from'), 'role-viewer');
+    writeA11yFixture('roles-new-dialog', liveMarkup(create));
+    await user.click(within(create).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    await user.click(screen.getByTestId('role-item-release-manager'));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    const remove = await screen.findByRole('alertdialog');
+    expect(within(remove).getByTestId('roles-delete-impact')).toHaveTextContent('Sam Okafor');
+    writeA11yFixture('roles-delete-dialog', liveMarkup(remove));
   });
 });

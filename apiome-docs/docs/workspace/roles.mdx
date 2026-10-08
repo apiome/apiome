@@ -1,0 +1,124 @@
+---
+title: Roles & permissions
+description: Built-in and custom roles, and the permission matrix each one grants.
+sidebar_position: 2
+tags: [workspace, roles, permissions, access]
+---
+
+<Route path="/ade/dashboard/roles" />
+
+A **role** is a named set of permissions, and every member holds one. **Roles** shows them all on
+the left and the selected role's **permission matrix** on the right: which actions — **View**,
+**Create**, **Edit**, **Delete** and **Publish** — it grants on each resource. **Go to Workspace →
+Roles**, or **click “Roles”** on the Members page.
+
+<Screenshot id="roles" alt="Roles: built-in and custom roles on the left; the Release manager role's description and permission matrix on the right" />
+
+Anyone can browse the matrix. Changing roles needs `members:edit`, `members:create` or
+`members:delete` — roles are administered through the members permissions — and without them the
+editor says *You can still browse the matrix.* Creating and duplicating need `members:create`;
+deleting needs `members:delete`.
+
+## Built-in and custom roles
+
+The list is in two groups, each role with the number of members who hold it:
+
+| Group | Roles | What you can change |
+| --- | --- | --- |
+| **Built-in** | **Owner**, **Admin**, **Editor**, **Viewer** — created with the workspace | The description and the matrix. Not the name, and they cannot be deleted |
+| **Custom** | Roles your workspace created | Everything: name, description, matrix; delete |
+
+A built-in role keeps its name because seat licensing and identity-provider group mapping refer to
+it; the editor says so above the description.
+
+<Screenshot id="roles-builtin" alt="The built-in Editor role: a note that built-in roles keep their name, and its matrix" />
+
+**Filter roles…** narrows the list.
+
+## The permission matrix
+
+Rows are resources — **Projects**, **Versions**, **Classes**, **Properties**, **Paths**,
+**Primitives / Types**, **Imports**, **Members**, **API keys**, **Billing**, **Lint findings**,
+**Verification targets**, **Verification evidence** and **Consumer contracts** — each with the key
+the server checks under it (`projects`, `api_keys`, …). Columns are the five actions. Each cell is a
+`resource:action` permission (for example `versions:publish`), checked on every REST route.
+
+- **Click a cell** to grant or remove one permission.
+- **Click the box at the start of a row** to grant or remove the whole row. It shows a tick when the
+  row is fully granted, a dash when it is partly granted, and is empty when nothing is.
+- **“Grant view on all”** ticks **View** on every resource; **“Clear all”** empties the matrix.
+
+The line above the matrix counts what is on — *24 of 70 cells on*.
+
+## Edit a role
+
+1. **Select the role** on the left.
+2. Change its **name** (custom roles only), its **Description**, or the matrix.
+3. **Click “Save changes”** — in the role's header, or on the bar that appears under the matrix.
+
+While there are changes, the role shows an **Unsaved** badge, the list marks it with a dot, and the
+bar counts them — *2 unsaved changes* — with **Discard** to drop them.
+
+<Screenshot id="roles-draft" alt="The Release manager role with an Unsaved badge and two cells changed in the matrix" />
+
+Saving replaces the role's whole grid, and the change is recorded in the
+[Access audit](../govern/access-audit.mdx) with what was granted and revoked. Members holding the
+role get the new permissions straight away.
+
+### Leaving with unsaved changes
+
+Selecting another role, **New role** or **Duplicate** with unsaved changes asks first:
+
+- **Keep editing** — stay on the role, changes intact;
+- **Discard** — drop the changes and go;
+- **Save and switch** (or **Save and continue**) — save, then go.
+
+<Screenshot id="roles-unsaved-dialog" alt="Discard unsaved changes? You have 2 unsaved changes on Release manager. Switching to Viewer resets the draft." />
+
+Closing the browser tab with unsaved changes brings up the browser's own warning.
+
+## Create a role
+
+1. **Click “New role”** (or press <Kbd keys="N" />, or **“New custom role”** under the list).
+2. Give it a **Name** — it must be unique in the workspace.
+3. Under **Copy permissions from**, pick a role to start from, or **Empty matrix (no permissions)**.
+4. **Click “Create role”**. The new role is selected; adjust its matrix and save.
+
+<Screenshot id="roles-new-dialog" alt="The New role dialog: the name Support engineer, copying permissions from Viewer" />
+
+To start from the selected role instead, **click “Duplicate”**: it copies the description and the
+whole matrix into a new custom role named *… (copy)*, with no members.
+
+## Delete a role
+
+Only custom roles can be deleted.
+
+1. **Select the role** and **click “Delete”**.
+2. Read who holds it — members keep their accounts but lose every permission the role granted.
+3. **Click “Delete role”**. This cannot be undone.
+
+<Screenshot id="roles-delete-dialog" alt="Delete the role Release manager? Sam Okafor keeps their account but loses every permission this role granted." />
+
+Give those members another role on [Members & seats](./members.mdx).
+
+## With the API
+
+See the [API reference](../reference/api-reference.md):
+
+| Call | Does |
+| --- | --- |
+| `GET /v1/access/{tenant}/roles` | Every role with its permissions and member count |
+| `GET /v1/access/{tenant}/roles/{role_id}` | One role |
+| `POST /v1/access/{tenant}/roles` | Create a custom role (`name`, `description`, `permissions`) |
+| `PUT /v1/access/{tenant}/roles/{role_id}` | Replace a role's description, matrix and (custom only) name |
+| `POST /v1/access/{tenant}/roles/{role_id}/duplicate` | Duplicate a role |
+| `DELETE /v1/access/{tenant}/roles/{role_id}` | Delete a custom role |
+| `GET /v1/access/{tenant}/permissions/me` | The calling user's own effective permissions |
+
+There is no CLI command for roles.
+
+## Where next
+
+- [Members & seats](./members.mdx)
+- [API keys](./api-keys.mdx)
+- [Access audit](../govern/access-audit.mdx)

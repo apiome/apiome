@@ -3,7 +3,8 @@
  *
  * Reads `screens.json`, opens each entry's route in Chromium at its viewport (1440 × 900 by
  * default), pins the appearance the same way the accessibility gate does
- * (`apiome-ui/e2e/support/a11y.ts`: theme, density, font scale, frozen motion), fixes the clock,
+ * (`apiome-ui/e2e/support/a11y.ts`: theme — or the entry's `appTheme` — density, font scale,
+ * frozen motion), fixes the clock,
  * paints over the `mask` selectors, and writes `static/img/screens/<id>.<theme>.png`.
  *
  * Where a screen's content comes from (`data` in the manifest):
@@ -84,6 +85,7 @@ interface CaptureJob {
     viewport: {width: number; height: number};
     density: 'comfortable' | 'compact';
     fontScale: string;
+    appTheme?: string;
   };
   theme: 'light' | 'dark';
   source: {kind: 'golden-path'} | {kind: 'signed-out'} | {kind: 'fixture'; dir: string; file: string};
@@ -245,7 +247,8 @@ async function capture(
     const page = await context.newPage();
     await page.clock.setFixedTime(FIXED_TIME);
     await loadContent(page, job);
-    await pinAppearance(page, job.theme === 'dark' ? 'dark' : null, {
+    // An entry with `appTheme` shows that palette in both images; otherwise the site theme picks.
+    await pinAppearance(page, job.screen.appTheme ?? (job.theme === 'dark' ? 'dark' : null), {
       density: job.screen.density,
       fontScale: job.screen.fontScale,
     });

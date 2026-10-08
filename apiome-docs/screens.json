@@ -777,6 +777,308 @@
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-a11y/review-publish-gate.html"
+    },
+    {
+      "id": "profile",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"profile-identity\"]",
+      "data": "fixture:hive-a11y/profile.html"
+    },
+    {
+      "id": "profile-security",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"two-factor-settings\"]",
+      "data": "fixture:hive-a11y/profile-security.html",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 600
+      }
+    },
+    {
+      "id": "profile-change-password",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"profile-password-dialog\"]",
+      "data": "fixture:hive-a11y/profile-change-password.html"
+    },
+    {
+      "id": "profile-2fa-scan",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"two-factor-qr\"]",
+      "data": "fixture:hive-a11y/profile-2fa-scan.html"
+    },
+    {
+      "id": "profile-2fa-backup-codes",
+      "route": "/ade/dashboard/profile",
+      "waitFor": "[data-testid=\"two-factor-backup-codes\"]",
+      "data": "fixture:hive-a11y/profile-2fa-backup-codes.html"
+    },
+    {
+      "id": "linked-accounts",
+      "route": "/ade/dashboard/linked-accounts",
+      "waitFor": "[data-testid=\"linked-accounts-table\"]",
+      "data": "fixture:hive-a11y/linked-accounts.html"
+    },
+    {
+      "id": "linked-accounts-pat",
+      "route": "/ade/dashboard/linked-accounts",
+      "waitFor": "[data-testid=\"pat-dialog\"]",
+      "data": "fixture:hive-a11y/linked-accounts-pat.html"
+    },
+    {
+      "id": "linked-accounts-last-method",
+      "route": "/ade/dashboard/linked-accounts",
+      "waitFor": "[data-testid=\"linked-accounts-table\"]",
+      "data": "fixture:hive-a11y/linked-accounts-last-method.html",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 240
+      }
+    },
+    {
+      "id": "theme-system",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html"
+    },
+    {
+      "id": "theme-light",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "light"
+    },
+    {
+      "id": "theme-dark",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "dark"
+    },
+    {
+      "id": "theme-high-contrast",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "high-contrast"
+    },
+    {
+      "id": "theme-blueprint",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "blueprint"
+    },
+    {
+      "id": "theme-whiteboard",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "whiteboard"
+    },
+    {
+      "id": "theme-solarized",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "solarized"
+    },
+    {
+      "id": "theme-nord",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "nord"
+    },
+    {
+      "id": "theme-darcula",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"app-rail\"]",
+      "data": "fixture:hive-a11y/preferences-theme-sample.html",
+      "appTheme": "darcula"
+    },
+    {
+      "id": "notifications-menu",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"notifications-menu\"]",
+      "data": "fixture:hive-a11y/notifications-menu.html"
+    },
+    {
+      "id": "members",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"members-table\"]",
+      "data": "fixture:hive-a11y/members.html"
+    },
+    {
+      "id": "members-invite-dialog",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"members-invite-dialog\"]",
+      "data": "fixture:hive-a11y/members-invite-dialog.html"
+    },
+    {
+      "id": "members-drawer",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"member-drawer\"]",
+      "data": "fixture:hive-a11y/members-drawer.html"
+    },
+    {
+      "id": "members-suspend-dialog",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"member-suspend-dialog\"]",
+      "data": "fixture:hive-a11y/members-suspend-dialog.html"
+    },
+    {
+      "id": "members-offboard-dialog",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"member-offboard-dialog\"]",
+      "data": "fixture:hive-a11y/members-offboard-dialog.html"
+    },
+    {
+      "id": "roles",
+      "route": "/ade/dashboard/roles",
+      "waitFor": ".rol-matrix",
+      "data": "fixture:hive-a11y/roles.html"
+    },
+    {
+      "id": "roles-builtin",
+      "route": "/ade/dashboard/roles",
+      "waitFor": "[data-testid=\"roles-lock-note\"]",
+      "data": "fixture:hive-a11y/roles-builtin.html"
+    },
+    {
+      "id": "roles-draft",
+      "route": "/ade/dashboard/roles",
+      "waitFor": "[data-testid=\"roles-save-bar\"]",
+      "data": "fixture:hive-a11y/roles-draft.html"
+    },
+    {
+      "id": "roles-unsaved-dialog",
+      "route": "/ade/dashboard/roles",
+      "waitFor": "[data-testid=\"roles-unsaved-dialog\"]",
+      "data": "fixture:hive-a11y/roles-unsaved-dialog.html"
+    },
+    {
+      "id": "roles-new-dialog",
+      "route": "/ade/dashboard/roles",
+      "waitFor": "[role=\"dialog\"]",
+      "data": "fixture:hive-a11y/roles-new-dialog.html"
+    },
+    {
+      "id": "roles-delete-dialog",
+      "route": "/ade/dashboard/roles",
+      "waitFor": "[data-testid=\"roles-delete-impact\"]",
+      "data": "fixture:hive-a11y/roles-delete-dialog.html"
+    },
+    {
+      "id": "api-keys",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"api-keys-table\"]",
+      "data": "fixture:hive-a11y/api-keys.html"
+    },
+    {
+      "id": "api-keys-create-dialog",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"api-key-create-dialog\"]",
+      "data": "fixture:hive-a11y/api-keys-create-dialog.html"
+    },
+    {
+      "id": "api-keys-secret",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"api-key-secret-dialog\"]",
+      "data": "fixture:hive-a11y/api-keys-secret.html"
+    },
+    {
+      "id": "preferences-account",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"preferences-drawer\"]",
+      "data": "fixture:hive-a11y/preferences-account.html"
+    },
+    {
+      "id": "preferences-notifications",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"preferences-notifications\"]",
+      "data": "fixture:hive-a11y/preferences-notifications.html"
+    },
+    {
+      "id": "preferences-shortcuts",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"preferences-shortcuts\"]",
+      "data": "fixture:hive-a11y/preferences-shortcuts.html"
+    },
+    {
+      "id": "shortcut-sheet",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"shortcut-sheet\"]",
+      "data": "fixture:hive-a11y/shortcut-sheet.html"
+    },
+    {
+      "id": "command-palette",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"command-palette\"]",
+      "data": "fixture:hive-a11y/help-command-palette.html"
+    },
+    {
+      "id": "tenants",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "fixture:hive-a11y/tenants.html"
+    },
+    {
+      "id": "tenants-drawer-members",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "[data-testid=\"tenant-manage-drawer\"]",
+      "data": "fixture:hive-a11y/tenants-drawer-members.html"
+    },
+    {
+      "id": "tenants-drawer-license",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-license-heading",
+      "data": "fixture:hive-a11y/tenants-drawer-license.html"
+    },
+    {
+      "id": "tenants-drawer-mcp",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-mcp-heading",
+      "data": "fixture:hive-a11y/tenants-drawer-mcp.html"
+    },
+    {
+      "id": "tenants-drawer-keys",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-keys-heading",
+      "data": "fixture:hive-a11y/tenants-drawer-keys.html"
+    },
+    {
+      "id": "tenants-drawer-history",
+      "route": "/ade/dashboard/tenants",
+      "waitFor": "#tnt-history-heading",
+      "data": "fixture:hive-a11y/tenants-drawer-history.html"
+    },
+    {
+      "id": "notifications",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "fixture:hive-a11y/notifications.html"
+    },
+    {
+      "id": "notifications-filtered",
+      "route": "/ade/dashboard/notifications",
+      "waitFor": "[data-testid=\"notifications-filters\"]",
+      "data": "fixture:hive-a11y/notifications-filtered.html"
+    },
+    {
+      "id": "help",
+      "route": "/ade/dashboard/help",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "fixture:hive-a11y/help.html"
+    },
+    {
+      "id": "help-search",
+      "route": "/ade/dashboard/help",
+      "waitFor": "[data-testid=\"help-guide-results\"]",
+      "data": "fixture:hive-a11y/help-search.html"
     }
   ]
 }
