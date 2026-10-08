@@ -148,7 +148,7 @@ const config: Config = {
           items: [{label: 'GitHub', href: REPO_URL}],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Apiome.`,
+      copyright: `Copyright © 2021 - 2026 NobuData LLC`,
     },
     prism: {
       theme: prismThemes.github,
