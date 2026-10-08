@@ -22,3 +22,6 @@ yarn-error.log*
 # Playwright (yarn test:e2e)
 /test-results
 /playwright-report
+
+# The rolling release-notes post, regenerated before every build (scripts/gen-release-notes.ts)
+/release-notes/unreleased.md

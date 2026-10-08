@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/apiome/apiome",
+  "releases": [
+    {
+      "name": "RC4",
+      "milestone": 1,
+      "closed": "2026-08-20",
+      "restAfter": "1.212.0",
+      "restThrough": "1.263.0",
+      "whatsNewRef": "6d9f6679^"
+    }
+  ]
+}

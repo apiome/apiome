@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
   - The user guide is now a searchable documentation site, grouped by job; **Help & docs** links open it
   - Docs pages show product screenshots in light and dark, retaken from the product every week
   - A new Getting started guide walks from sign-in to a published, browsable spec
+  - **Full release notes** at the foot of this dialog opens a post per release on the documentation site, with every REST API change and links to the issues
 
 ## Bug Fixes
 

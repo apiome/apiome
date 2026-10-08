@@ -1081,6 +1081,12 @@
       "data": "fixture:hive-a11y/help-search.html"
     },
     {
+      "id": "whats-new",
+      "route": "/ade/dashboard/help",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/whats-new.html"
+    },
+    {
       "id": "admin-sign-in",
       "route": "/admin",
       "waitFor": "#password",

@@ -108,6 +108,20 @@ These are available in every `.mdx` page without an import:
 Add a post to `release-notes/` named `YYYY-MM-DD-<slug>.mdx` with `title`, `description` and
 `authors: [apiome]`, and put `{/* truncate */}` after the summary paragraph.
 
+The per-release posts are generated (DOCS-1.12, #5629) by `scripts/gen-release-notes.ts` at the
+repository root, which merges the REST changelog (`apiome-rest/CHANGELOG.md`) with the app's What's
+new (`apiome-ui/public/WHATS_NEW.md`) and links every `#1234` to its issue. Do not edit them by hand:
+
+| Post | How it is made |
+| --- | --- |
+| `release-notes/unreleased.md` — everything after the last closed RC | Regenerated before every `start`, `build` and `check` (`yarn workspace apiome-docs release-notes`); git-ignored, so the site always matches `main` |
+| `release-notes/rc<N>.md` — one per closed RC | Pushing a tag `RC<N>` runs `.github/workflows/apiome-release-notes.yml`, which calls `node scripts/gen-release-notes.ts --close RC<N>` and opens a pull request with the post |
+
+`release-notes/releases.json` records each closed RC: the REST versions it carries (`restAfter` <
+version ≤ `restThrough`), the git ref its What's new is read at (`whatsNewRef`) and its milestone.
+`--close` appends the entry; `node scripts/gen-release-notes.ts --release RC4` re-renders an existing
+post (it reads What's new from git, so it needs the full history).
+
 ## Screenshots
 
 Every product screenshot is an entry in `screens.json`, captured by `scripts/screenshots.ts`

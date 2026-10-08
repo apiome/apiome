@@ -17,7 +17,14 @@
     },
     "apiome-docs#build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "!.docusaurus/**", "!build/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.docusaurus/**",
+        "!build/**",
+        "$TURBO_ROOT$/apiome-rest/CHANGELOG.md",
+        "$TURBO_ROOT$/apiome-ui/public/WHATS_NEW.md",
+        "$TURBO_ROOT$/scripts/gen-release-notes.ts"
+      ],
       "outputs": ["build/**"]
     },
     "@suite/designer#build": {
