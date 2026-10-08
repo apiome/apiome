@@ -41,7 +41,7 @@ When user invokes **create-issues**, refer to `docs/<roadmap-file>.md` as the de
 - [ ] **Screenshots:** <`screens.json` ids to add or refresh; light + dark, 1440 × 900; referenced with `<Screenshot id/>`>
 - [ ] **Reference:** <OpenAPI version bump + API reference regen / CLI or MCP reference regen, or “n/a”>
 - [ ] **Release notes:** <changelog / release-notes / What’s new entry>
-- [ ] **Gate:** `yarn workspace apiome-docs build` and `yarn docs:check` pass; the PR body lists the pages and screenshot ids touched
+- [ ] **Gate:** `yarn workspace apiome-docs build` and `yarn docs:check` pass (broken links, orphan pages, missing or stale screenshots fail; CI runs it on every PR); the PR body lists the pages and screenshot ids touched
 ```
 - Mark issue number in ROADMAP for each issue created for reference
 - Use ASCII drawings or Mermaid diagrams to illustrate changes or work

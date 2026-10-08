@@ -1,0 +1,13 @@
+{
+  "screens": [
+    {
+      "id": "home",
+      "route": "/ade/dashboard",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "fixture:hive-a11y/home.html",
+      "sources": [
+        "app/home"
+      ]
+    }
+  ]
+}

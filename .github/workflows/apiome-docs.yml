@@ -1,8 +1,10 @@
 name: Apiome Docs
 
-# Builds the Docusaurus documentation site (apiome-docs/) on every PR that touches it or the
-# repository guides, and deploys it to GitHub Pages from `main`. The apiome-docs Docker image
-# (nginx serving the static build) is built on every run and pushed to the registry from `main`.
+# Runs the docs gate (`yarn docs:check`) on every pull request — documentation is part of the
+# definition of done (DOCS-1.13, #5630), and a change anywhere (an apiome-ui route, a REST endpoint)
+# can leave a page, a screenshot or a generated reference stale. Deploys the site to GitHub Pages
+# from `main`. The apiome-docs Docker image (nginx serving the static build) is built on pull
+# requests that touch its inputs and pushed to the registry from `main`.
 #
 # One-time repository setting: Settings → Pages → Build and deployment → Source: "GitHub Actions".
 
@@ -27,26 +29,9 @@ on:
       - 'apiome-rest/CHANGELOG.md'
       - 'apiome-ui/public/WHATS_NEW.md'
       - 'scripts/gen-release-notes.ts'
+  # Every pull request, whatever it touches: the gate is what keeps the docs current.
   pull_request:
     branches: [ main, develop ]
-    paths:
-      - 'apiome-docs/**'
-      - 'docs/**'
-      - 'package.json'
-      - 'yarn.lock'
-      - '.dockerignore'
-      - '.github/workflows/apiome-docs.yml'
-      # Sources of the generated reference (DOCS-1.11): a change here can leave a page stale.
-      - 'apiome-rest/openapi.yaml'
-      - 'apiome-rest/src/app/rest_reference_doc.py'
-      - 'apiome-cli/src/**'
-      - 'apiome-mcp/src/**'
-      - 'diff-action/README.md'
-      - 'mock-action/README.md'
-      # Sources of the release notes (DOCS-1.12): "Unreleased" is regenerated on every build.
-      - 'apiome-rest/CHANGELOG.md'
-      - 'apiome-ui/public/WHATS_NEW.md'
-      - 'scripts/gen-release-notes.ts'
   # Allow manual trigger (deploys when run on main)
   workflow_dispatch:
 
@@ -68,8 +53,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # Full history: the stale-screenshot rule compares each image's last commit with its route's.
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Enable Corepack and set Yarn to 4.12.0
         run: corepack enable && corepack prepare yarn@4.12.0 --activate
@@ -157,9 +145,38 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+  # The gate runs on every pull request, but the image only needs rebuilding when its inputs moved.
+  changes:
+    name: Did the image's inputs change
+    runs-on: self-hosted
+    outputs:
+      image: ${{ steps.diff.outputs.image }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compare with the base branch
+        id: diff
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "image=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if echo "$changed" | grep -qE '^(apiome-docs/|docs/|package\.json$|yarn\.lock$|\.dockerignore$|\.github/workflows/apiome-docs\.yml$|apiome-rest/CHANGELOG\.md$|apiome-ui/public/WHATS_NEW\.md$|scripts/(gen-release-notes\.ts|package\.json)$)'; then
+            echo "image=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=false" >> "$GITHUB_OUTPUT"
+          fi
+
   image:
     name: Build and push apiome-docs image
-    needs: build
+    needs: [build, changes]
+    if: needs.changes.outputs.image == 'true'
     runs-on: self-hosted
     env:
       # Falls back to a local name so the tags stay valid when secrets are absent (fork PRs).

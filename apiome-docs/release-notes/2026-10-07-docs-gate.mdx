@@ -1,0 +1,22 @@
+---
+slug: docs-gate
+title: The docs gate runs on every pull request
+description: docs:check now catches orphan pages, broken links and stale screenshots on every PR.
+authors: [apiome]
+---
+
+Documentation is now part of the definition of done. `yarn docs:check` runs on **every** pull
+request — not only those that touch the docs — so a change to a product screen or an endpoint
+cannot merge with its page, screenshot or reference behind it.
+([#5630](https://github.com/apiome/apiome/issues/5630))
+
+{/* truncate */}
+
+- **Orphan pages** — a page in no sidebar (outside every group, or hidden with `unlisted`) fails.
+- **Broken internal links** are named by page and link before the build starts.
+- **Stale screenshots** — an image captured before the last two releases, whose route's code has
+  changed since, fails with the command that recaptures it. A screen drawn by a dialog or a shared
+  panel names its component in the manifest's new `sources` field.
+- Each failure has a fixture site the tests run the gate over.
+- [Contribute to the docs](/admin/contribute-to-the-docs) adds how to regenerate the reference and a
+  pull request checklist that matches every issue's **Documentation (Docusaurus)** section.

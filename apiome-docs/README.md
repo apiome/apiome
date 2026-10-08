@@ -148,19 +148,31 @@ yarn docs:screenshots -- --start-ui --boot            # everything, from the gol
 
 ## What the gate checks
 
-`yarn docs:check` fails when:
+`yarn docs:check` runs `scripts/check-docs.mjs` (every rule in `scripts/lib/gate.mjs`), then the
+production build. It fails when:
 
 - a page has no `title` or `description`, or the description is over 14 words;
 - a folder under `docs/` has no `_category_.json` (with a `label`) or no `index.mdx`;
-- any internal link, Markdown link or anchor is broken (`onBrokenLinks`, `onBrokenAnchors` and
+- a page is an **orphan** — in no sidebar: directly in `docs/` outside every group folder, outside
+  every folder and id `sidebars.ts` lists, or hidden by `unlisted: true`, `draft: true` or
+  `displayed_sidebar: null`;
+- an **internal link** is broken: a relative link to a `.md` / `.mdx` file that does not exist, or a
+  site path (`/ship/export-a-spec`) that no page, category landing page, release-notes post or
+  `static/` file serves. The build then checks anchors too (`onBrokenLinks`, `onBrokenAnchors` and
   `onBrokenMarkdownLinks` are all `throw`);
 - `screens.json` is invalid, or an entry lacks the image for a theme it declares;
 - a page uses `<Screenshot id/>` with an id that is not in the manifest or lacks a light or dark
-  image (examples in code blocks are ignored), or without `alt` text.
-- a page shows a screenshot tagged `legacy` in `screens.json` without the `<Legacy/>` callout.
+  image (examples in code blocks are ignored), or without `alt` text;
+- a page shows a screenshot tagged `legacy` in `screens.json` without the `<Legacy/>` callout;
+- a screenshot is **stale**: its image was last committed before the last two closed releases
+  (`release-notes/releases.json`) and its route's source changed after it (`git log`). The source is
+  the route's folder under `apiome-ui/src/app/`, or the entry's `sources` list when the screen is
+  drawn somewhere else (a dialog, a shared component). The rule needs git history; without it (the
+  Docker build) it is skipped;
 - `docs/reference/rest/` was generated from an older `apiome-rest/openapi.yaml`.
 
-DOCS-1.13 (#5630) extends it with orphan-page checks.
+Each failure has a fixture site under `test/fixtures/gate/` that the tests run the gate over, so a
+rule that stops firing fails `yarn workspace apiome-docs test`.
 
 ## Theme
 
@@ -173,8 +185,8 @@ favicon. Dark mode follows the operating system and can be toggled from the navb
 
 ## Deploy
 
-`.github/workflows/apiome-docs.yml` runs the tests, type-check and `yarn docs:check` on every pull
-request that touches `apiome-docs/**` or `docs/**`, and deploys `apiome-docs/build` to GitHub Pages
+`.github/workflows/apiome-docs.yml` runs the tests, type-check and `yarn docs:check` on **every**
+pull request (DOCS-1.13), and deploys `apiome-docs/build` to GitHub Pages
 on every push to `main`. The repository's **Settings → Pages → Source** must be set to
 “GitHub Actions” once.
 
@@ -191,7 +203,8 @@ docker run --rm -p 3200:8080 apiome-docs   # http://localhost:3200/
 The image is built for `/` (`DOCS_BASE_URL=/`); pass `--build-arg DOCS_URL=https://docs.example.com`
 to set the public origin used in canonical links and the sitemap. `GET /healthz` answers `ok`.
 
-The `image` job in `apiome-docs.yml` builds and smoke-tests the image on every pull request, and on
+The `image` job in `apiome-docs.yml` builds and smoke-tests the image on pull requests that change its
+inputs (the site, the guides, the release-notes sources, the lockfile), and on
 `main` pushes it to `$DOCKER_REGISTRY/apiome-docs` tagged with the `package.json` version, `latest`
 and the commit SHA. Set the `DOCS_IMAGE_URL` repository variable to the image's public origin.
 

@@ -63,7 +63,7 @@ The docs site is the `apiome-docs/` workspace (Docusaurus; #67). Documentation c
 - **Screenshots:** for every UI change, add or update entries in `apiome-docs/screens.json` and regenerate with `yarn docs:screenshots -- --id <id>` (light + dark, 1440 × 900, comfortable density). Reference them with `<Screenshot id="…" alt="…"/>`. Never commit hand-captured images.
 - **Reference:** REST change → bump the OpenAPI version (AGENTS.md) and regenerate the API reference; CLI or MCP change → regenerate the command / tool reference pages.
 - **Release notes:** add an entry for the issue — `apiome-rest/CHANGELOG.md` for REST; the `release-notes/` post for anything user-visible; a What's new line for UI changes.
-- **Gate:** `yarn workspace apiome-docs build` and `yarn docs:check` must pass (broken links, orphan pages, missing or stale screenshots fail).
+- **Gate:** `yarn workspace apiome-docs build` and `yarn docs:check` must pass — CI runs it on every PR (front matter, orphan pages, broken internal links, screenshots missing a theme or image, stale screenshots, stale REST reference; rules and fixes on `apiome-docs/docs/admin/contribute-to-the-docs.mdx`). A stale screenshot is recaptured with `yarn docs:screenshots -- --id <id>`; a screen drawn outside its route folder (dialog, shared panel) names its component in the manifest entry's `sources`.
 - **If `apiome-docs/` does not exist yet on `main`:** write the same content under `docs/guide/` (one page per surface, same front matter) and list the files in the PR body under *Documentation* so #5619 migrates them. Do not skip the step.
 
 ## Phase 4: Internal Audit
@@ -134,7 +134,7 @@ gh pr create \
 
 - What was done and why
 - How to test
-- **Documentation:** the `apiome-docs` pages added or changed (paths), the screenshot ids regenerated, the reference pages regenerated, and the release-notes entry — or, if the site is not on `main` yet, the `docs/guide/` files written for migration
+- **Documentation:** the `apiome-docs` pages added or changed (paths), the screenshot ids regenerated, the reference pages regenerated, and the release-notes entry (the *Pull request checklist* on the Contribute to the docs page) — or, if the site is not on `main` yet, the `docs/guide/` files written for migration
 - Risk/notes
 - Issue link: `Closes #<number>` (or `Fixes #<number>`)
 - Notate: `Made with <agent name> using model <model name>`

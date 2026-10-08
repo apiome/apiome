@@ -77,6 +77,8 @@ export const SCREENS_DIR = 'img/screens';
  * @property {string} [appTheme] - A product theme (one of {@link APP_THEMES}) pinned in every
  *   capture, whatever the site theme: both images then show that palette. For theme galleries.
  * @property {string[]} tags - Labels from {@link SCREEN_TAGS}; empty when the entry sets none.
+ * @property {string[]} [sources] - Repository-relative paths whose changes make the image stale
+ *   (DOCS-1.13). Without it the route's own folder under `apiome-ui/src/app/` is used.
  * @property {ScreenData} data - Parsed `data` field.
  * @property {ScreenData} [fallback] - Fixture to use when the golden-path stack is not available.
  */
@@ -181,6 +183,16 @@ export function normalizeScreen(raw) {
     fail('`mask` must be a list of CSS selectors');
   }
 
+  const sources = raw.sources;
+  if (
+    sources !== undefined &&
+    (!Array.isArray(sources) ||
+      sources.length === 0 ||
+      sources.some((source) => typeof source !== 'string' || source.trim() === '' || source.startsWith('/')))
+  ) {
+    fail('`sources` must be a non-empty list of repository-relative paths');
+  }
+
   if (raw.clip !== undefined) {
     const {x, y, width, height} = raw.clip ?? {};
     if (![x, y].every((n) => Number.isInteger(n) && n >= 0) || !isPositiveInteger(width) || !isPositiveInteger(height)) {
@@ -202,6 +214,7 @@ export function normalizeScreen(raw) {
       fontScale,
       ...(raw.appTheme ? {appTheme: raw.appTheme} : {}),
       tags: [...tags],
+      ...(sources ? {sources: [...sources]} : {}),
       data,
       ...(fallback ? {fallback} : {}),
     },
