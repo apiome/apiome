@@ -1,0 +1,21 @@
+---
+slug: release-notes-per-rc
+title: A release-notes post for every RC
+description: Per-RC posts merging the REST changelog and What's new, plus a rolling Unreleased.
+authors: [apiome]
+---
+
+Release information used to live in three places that never met: the REST API's changelog, the
+app's **What's new** dialog and the GitHub milestones. The [release notes](/release-notes) now bring
+them together — one post per release candidate, starting with [RC4](/release-notes/rc4), and an
+[Unreleased](/release-notes/unreleased) post for what has landed since.
+([#5629](https://github.com/apiome/apiome/issues/5629))
+
+{/* truncate */}
+
+- **One post per RC** — the app's What's new for that release, then every REST API version it
+  carries, with each `#1234` linked to its issue and the milestone's issue list one click away.
+- **Unreleased regenerates on every build** of the site, so it always matches `main`.
+- **Written on tag** — tagging `RC6` opens a pull request with the RC6 post.
+- **"Full release notes"** at the foot of the in-app **What's new** dialog opens these pages. See
+  [Help & docs](/workspace/help#whats-new).

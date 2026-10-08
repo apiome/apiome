@@ -1,0 +1,79 @@
+name: Apiome Release Notes
+
+# When an RC is tagged (`RC6`), write its release-notes post for the documentation site and open
+# a pull request with it (DOCS-1.12, #5629). `scripts/gen-release-notes.ts --close` records the
+# RC in `apiome-docs/release-notes/releases.json` — its REST versions run from the previous RC to
+# the newest `apiome-rest/CHANGELOG.md` entry at the tag — and merges those changelog sections
+# with the app's What's new at the tag into `apiome-docs/release-notes/rc6.md`.
+#
+# The rolling "Unreleased" post needs no workflow: the docs build regenerates it from `main`.
+
+on:
+  push:
+    tags: [ 'RC*' ]
+  # Re-run for an existing tag, e.g. after a failed run.
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'RC tag to close, e.g. RC6'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  post:
+    name: Write the RC's release notes
+    runs-on: self-hosted
+    env:
+      RELEASE: ${{ inputs.release || github.ref_name }}
+
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.release || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # The milestone of the same name links "every issue in this release"; none is fine.
+      - name: Find the RC's milestone
+        id: milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number=$(gh api "repos/${{ github.repository }}/milestones?state=all&per_page=100" \
+            --jq ".[] | select(.title == \"${RELEASE}\") | .number" || true)
+          echo "number=${number}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate the post
+        id: post
+        env:
+          MILESTONE: ${{ steps.milestone.outputs.number }}
+        run: |
+          node scripts/gen-release-notes.ts --close "$RELEASE" --ref "$RELEASE" \
+            ${MILESTONE:+--milestone "$MILESTONE"}
+          # Named explicitly: the regenerated (git-ignored) unreleased.md must stay out of the PR.
+          echo "file=apiome-docs/release-notes/${RELEASE,,}.md" >> "$GITHUB_OUTPUT"
+
+      - name: Open a pull request with the post
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: main
+          branch: release-notes/${{ env.RELEASE }}
+          delete-branch: true
+          add-paths: |
+            apiome-docs/release-notes/releases.json
+            ${{ steps.post.outputs.file }}
+          commit-message: 'docs: release notes for ${{ env.RELEASE }}'
+          title: 'docs: release notes for ${{ env.RELEASE }}'
+          body: |
+            `${{ env.RELEASE }}` was tagged, so `.github/workflows/apiome-release-notes.yml` wrote its
+            release-notes post from `apiome-rest/CHANGELOG.md` and the app's What's new at the tag.
+            Review the REST range recorded in `releases.json`, then merge to publish it.
+          labels: documentation

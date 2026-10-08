@@ -1,15 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 import { Markdown } from '@/app/components/ui/Markdown';
 import { githubMarkdownComponents } from '@/app/components/ui/markdownGithubComponents';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/Dialog';
+import { Button } from '@/app/components/ui/Button';
+import { RELEASE_NOTES_URL } from '@/app/utils/docsLinks';
 import { APP_VERSION_BADGE } from '@lib/app-version';
 
 /**
@@ -25,6 +29,9 @@ import { APP_VERSION_BADGE } from '@lib/app-version';
  * restoration, because those are the things the primitive was introduced to stop every
  * overlay reimplementing. The behaviour a reader notices is unchanged: it is still a
  * centred, viewport-fixed sheet that closes on a click outside (#2531).
+ *
+ * The footer's *Full release notes* link (DOCS-1.12, #5629) opens the documentation site's
+ * release notes — every RC, with the REST API changes and issue links these notes leave out.
  */
 
 /** Props for {@link WhatsNewDialog}. */
@@ -80,8 +87,9 @@ const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ isOpen, onClose }) => {
       <DialogContent
         size="lg"
         data-testid="whats-new-dialog"
-        // The notes are long; the sheet scrolls its body rather than the page behind it.
-        className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)] overflow-hidden"
+        // The notes are long; the sheet scrolls its body rather than the page behind it, and
+        // the header and footer stay put.
+        className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>What&apos;s new</DialogTitle>
@@ -97,6 +105,21 @@ const WhatsNewDialog: React.FC<WhatsNewDialogProps> = ({ isOpen, onClose }) => {
             </Markdown>
           )}
         </div>
+
+        <DialogFooter>
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={RELEASE_NOTES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="whats-new-full-notes"
+            >
+              Full release notes
+              <ExternalLink className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

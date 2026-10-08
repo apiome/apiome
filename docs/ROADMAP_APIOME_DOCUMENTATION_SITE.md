@@ -383,7 +383,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.12] Release notes — per-RC pages fed from the REST changelog and the UI What’s new` — [#5629](https://github.com/apiome/apiome/issues/5629)
+### ✅ `apiome: [DOCS-1.12] Release notes — per-RC pages fed from the REST changelog and the UI What’s new` — [#5629](https://github.com/apiome/apiome/issues/5629) — **Complete**
 **Problem statement.** Release information lives in three places that never meet: the REST Keep-a-Changelog file, the UI’s What’s new dialog, and GitHub milestones.
 
 **Solution / scope.**
@@ -392,9 +392,9 @@ Milestone: **RC6** (epic and every issue).
 - The UI What’s new dialog gains a “Full release notes” link to the site.
 
 **Acceptance criteria.**
-- [ ] One post per RC with issue links; “Unreleased” regenerates on `main`
-- [ ] In-app link resolves
-- [ ] No broken links
+- [x] One post per RC with issue links; “Unreleased” regenerates on `main`
+- [x] In-app link resolves
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1.
 

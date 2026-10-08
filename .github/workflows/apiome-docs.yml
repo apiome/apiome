@@ -23,6 +23,10 @@ on:
       - 'apiome-mcp/src/**'
       - 'diff-action/README.md'
       - 'mock-action/README.md'
+      # Sources of the release notes (DOCS-1.12): "Unreleased" is regenerated on every build.
+      - 'apiome-rest/CHANGELOG.md'
+      - 'apiome-ui/public/WHATS_NEW.md'
+      - 'scripts/gen-release-notes.ts'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -39,6 +43,10 @@ on:
       - 'apiome-mcp/src/**'
       - 'diff-action/README.md'
       - 'mock-action/README.md'
+      # Sources of the release notes (DOCS-1.12): "Unreleased" is regenerated on every build.
+      - 'apiome-rest/CHANGELOG.md'
+      - 'apiome-ui/public/WHATS_NEW.md'
+      - 'scripts/gen-release-notes.ts'
   # Allow manual trigger (deploys when run on main)
   workflow_dispatch:
 

@@ -34,6 +34,11 @@ RUN --mount=type=cache,target=/root/.yarn/berry/cache \
     yarn workspaces focus apiome-docs
 
 COPY apiome-docs/ apiome-docs/
+# The rolling "Unreleased" release-notes post is generated at build time from the REST
+# changelog and the app's What's new (DOCS-1.12).
+COPY scripts/package.json scripts/gen-release-notes.ts scripts/
+COPY apiome-rest/CHANGELOG.md apiome-rest/
+COPY apiome-ui/public/WHATS_NEW.md apiome-ui/public/
 
 ARG DOCS_URL=http://localhost
 ARG DOCS_BASE_URL=/
