@@ -1,19 +1,20 @@
 ---
 title: Reference
-description: "REST, CLI and MCP reference, mock runtime and CI actions."
+description: "REST and MCP reference, the mock runtime and CI actions."
 sidebar_label: Reference
 sidebar_position: 1
 ---
 
 Reference holds the material generated from the source: the **REST API** (from the OpenAPI document),
-the **CLI** commands, the **MCP** tools, the **mock runtime** and the **CI actions**.
+the **MCP** tools, the **mock runtime** and the **CI actions**. The `apiome` command line has its own
+[CLI guide](./cli-quickstart.md) — the quick-start and a page per command.
 
 The three surface references are **generated from the code**, so they cannot drift from it:
 
 | Reference | Generated from | Regenerate with |
 | --- | --- | --- |
 | [REST API](./rest/index.mdx) — a page per tag | `apiome-rest/openapi.yaml` | `cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py` |
-| [CLI](./cli/index.mdx) — a page per command, plus exit codes | the `apiome` command tree | `cd apiome-cli && uv run python scripts/generate_cli_reference_docs.py` |
+| [CLI](./cli/index.mdx) — a page per command, plus exit codes (in the CLI guide) | the `apiome` command tree | `cd apiome-cli && uv run python scripts/generate_cli_reference_docs.py` |
 | [MCP](./mcp/index.mdx) — tools, resources and prompts | the MCP server's registry | `cd apiome-mcp && uv run python scripts/generate_mcp_reference_docs.py` |
 
 Each project's tests fail when its pages are stale, CI runs every generator with `--check`, and the
@@ -21,8 +22,7 @@ site build fails when `openapi.yaml` changed without regenerating the REST pages
 
 The [Mock runtime](/reference/mock-runtime) guides cover the bundle format, fixtures, callbacks,
 correlation, capture and attestation; [CI](/reference/ci) holds the GitHub Actions and the GitLab and
-Bitbucket recipes. To get going quickly, start with the [CLI quick-start](./cli-quickstart.md) or
-the [MCP quick-start](./mcp-quickstart.md).
+Bitbucket recipes. To get going quickly, start with the [MCP quick-start](./mcp-quickstart.md).
 
 import DocCardList from '@theme/DocCardList';
 

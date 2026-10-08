@@ -28,24 +28,28 @@ fails a pull request that adds a loose `.md` under `apiome-*/docs/` (README, CHA
 files, and the contributor references in `scripts/loose-docs-allowlist.txt`, are allowed).
 
 
-Pages live in `docs/`, one folder per sidebar group — the same jobs, in the same order, as the
-product's navigation rail:
+The site is **four guides**, each with its own sidebar and navbar entry, plus the release notes.
+Pages live in `docs/`, one folder per group; a guide is a set of folders (`sidebars.ts`):
 
-| Group | Folder | URL |
-| --- | --- | --- |
-| Getting started | `docs/getting-started/` | `/` |
-| Build | `docs/build/` | `/build` |
-| Bring in | `docs/bring-in/` | `/bring-in` |
-| Ship | `docs/ship/` | `/ship` |
-| Govern | `docs/govern/` | `/govern` |
-| Workspace & account | `docs/workspace/` | `/workspace` |
-| Admin & tools | `docs/admin/` | `/admin` |
-| Reference | `docs/reference/` | `/reference` |
-| Release notes | `release-notes/` (blog) | `/release-notes` |
+| Guide | Group | Folder | URL |
+| --- | --- | --- | --- |
+| **User guide** — using Apiome, in the order of the product's navigation rail | Getting started (the guide's home) | `docs/getting-started/` | `/` |
+| | Build | `docs/build/` | `/build` |
+| | Bring in | `docs/bring-in/` | `/bring-in` |
+| | Ship | `docs/ship/` | `/ship` |
+| | Govern | `docs/govern/` | `/govern` |
+| | Workspace & account | `docs/workspace/` | `/workspace` |
+| **Administration guide** — running an installation | Administration guide | `docs/admin/` | `/admin` |
+| **CLI** | Quick-start, then the generated command reference | `docs/reference/cli-quickstart.md`, `docs/reference/cli/` | `/reference/cli-quickstart`, `/reference/cli` |
+| **Reference** | REST and MCP reference, mock runtime, CI, content voice | `docs/reference/` (without the CLI pages) | `/reference` |
+| Release notes | — | `release-notes/` (blog) | `/release-notes` |
 
 Each group folder holds a `_category_.json` (label, position) and an `index.mdx` landing page that
-lists the group's pages (`<DocCardList />`). The sidebar is generated from the folders, so a new page
-shows up as soon as it is saved in one. A group can nest a sub-category the same way — `reference/mock-runtime/`
+lists the group's pages (`<DocCardList />`). Each guide's sidebar is generated from its folders, so a
+new page shows up as soon as it is saved in one; `sidebarItemsGenerator` in `docusaurus.config.ts`
+keeps every page in exactly one guide. Moving a page between guides means moving its file — and its
+URL — so put a page in the guide its reader is in: a workspace member's task is the user guide, an
+installation operator's is the administration guide. A group can nest a sub-category the same way — `reference/mock-runtime/`
 has a `_category_.json` with a generated index.
 
 The guides that used to live in `docs/guide/` were moved here (DOCS-1.2, #5619);
