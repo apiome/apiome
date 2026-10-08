@@ -70,6 +70,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # Product docs belong on the site: a new loose .md under apiome-*/docs/ fails, and the legacy
+      # docs inventory (docs/archive/INVENTORY.md) must match the tree (DOCS-1.14, #5631).
+      - name: Loose-docs lint
+        run: |
+          bash scripts/check-loose-docs.sh
+          python3 scripts/legacy_docs_inventory.py --check
+          python3 -m unittest scripts/tests/test_loose_docs.py
+
       - name: Run docs unit tests
         run: yarn workspace apiome-docs test
 

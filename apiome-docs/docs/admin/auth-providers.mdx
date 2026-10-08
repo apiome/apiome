@@ -55,6 +55,29 @@ the table — for example `https://apiome.example.com/api/auth/oauth2/callback/g
 application's **client ID** and **client secret**; issuer-based providers also give you an
 **issuer** URL, such as `https://acme.okta.com/oauth2/default`.
 
+### Settings on the provider's side
+
+Apiome requests the scopes it needs itself and trusts an email address only when the provider says
+it is verified — a missing claim counts as unverified. A few providers need more than the callback
+URI:
+
+| Provider | Where to register | What else to set |
+| --- | --- | --- |
+| GitHub | **Settings → Developer settings → OAuth Apps → New OAuth App** (or the organization's settings) | Nothing — copy the client secret straight away; GitHub shows it once |
+| GitLab | **Settings → Applications → Add new application** (user, group or instance) | Tick **Confidential** and the **`read_user`** scope. For a self-managed instance, set **Base URL** |
+| Microsoft | Entra admin center: **Identity → Applications → App registrations → New registration**, platform **Web** | Copy the secret's **Value**, not its ID. **Add the `xms_edov` optional claim** (Token configuration → ID token) — without it every Entra address counts as unverified and people must verify their email instead of joining their tenant. Single-tenant apps set **Tenant** |
+| Google | Cloud console: **APIs & Services → Credentials → OAuth client ID**, type **Web application** | Configure the consent screen first (**Internal** for one Workspace). **Workspace domain** rejects any account outside that domain — the check is on the returned token, not just the sign-in page |
+| Okta | **Applications → Create App Integration → OIDC → Web Application** | Assign who may sign in. Issuer: `https://<okta-domain>/oauth2/default`, or `/oauth2/<server-id>` for a custom authorization server |
+| AWS (Cognito) | User pool: **App integration → App clients**, a confidential client with the authorization-code grant | Configure a Cognito **domain** for the Hosted UI. Issuer: `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>` |
+| Keycloak | Realm: **Clients → Create client**, OpenID Connect with client authentication on | Map `email` and `email verified` onto the ID token. Issuer: `https://<host>/realms/<realm>` |
+| OIDC | A confidential client with the authorization-code grant | The issuer must serve `<issuer>/.well-known/openid-configuration` and emit `email` and `email_verified` |
+| Auth0 | **Applications → Create Application → Regular Web Applications** | Issuer: `https://<tenant>.auth0.com`, or your custom domain |
+
+The full per-provider guide — including LINE, VK and WeChat, the environment variable matrix, boot
+validation and secret encryption — is
+[`apiome-ui/docs/AUTH_PROVIDER_SETUP.md`](https://github.com/apiome/apiome/blob/main/apiome-ui/docs/AUTH_PROVIDER_SETUP.md)
+in the repository.
+
 ## Add a provider
 
 1. **Click “Add Provider”** at the top right.

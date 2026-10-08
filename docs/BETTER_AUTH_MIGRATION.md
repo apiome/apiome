@@ -538,6 +538,6 @@ ticket is assigned).
 - Better Auth — ["Auth.js is now part of Better Auth"](https://better-auth.com/blog/authjs-joins-better-auth)
 - Internal: `private-suite/docs/roadmaps/ROADMAP_BETTER_AUTH_MIGRATION.md`,
   `private-suite/docs/roadmaps/ROADMAP_BETTER_AUTH_ALIGNMENT.md`,
-  `apiome-ui/docs/AUTH_ERROR_CODES.md`, `apiome-ui/docs/AUTH_THREAT_MODEL_REVIEW.md`.
+  `apiome-ui/docs/AUTH_ERROR_CODES.md`, `docs/archive/apiome-ui/AUTH_THREAT_MODEL_REVIEW.md`.
 </content>
 </invoke>

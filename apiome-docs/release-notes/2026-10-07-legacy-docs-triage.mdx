@@ -1,0 +1,23 @@
+---
+slug: legacy-docs-triage
+title: Old implementation notes archived; product docs live only here
+description: 565 legacy notes archived with an inventory; a lint keeps new ones out.
+authors: [apiome]
+---
+
+Hundreds of implementation notes — fix summaries, feature write-ups, test journeys — used to sit
+beside the code with no index, most of them describing screens that have since changed. They are
+now archived, every one accounted for, and this site is the one place product documentation lives.
+([#5631](https://github.com/apiome/apiome/issues/5631))
+
+{/* truncate */}
+
+- **An inventory of all 821 files** outside the site and the mockups — 565 archived to
+  `docs/archive/`, 253 kept (package READMEs and changelogs, skills, test fixtures, runbooks, and the
+  contributor references code points at), 3 migrated — with the site page that now covers each
+  archived note's area.
+- **Provider-side settings for sign-in** — where to register each OAuth app and what else it needs,
+  such as Entra ID's `xms_edov` claim and GitLab's `read_user` scope — are now on
+  [Sign-in providers](/admin/auth-providers#settings-on-the-providers-side).
+- **A loose-docs lint** fails a pull request that adds a `.md` under `apiome-*/docs/`;
+  [Contribute to the docs](/admin/contribute-to-the-docs#where-docs-live) says where docs go instead.
