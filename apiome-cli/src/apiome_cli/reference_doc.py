@@ -545,7 +545,8 @@ def render_index(
         {
             "title": "CLI reference",
             "description": "Every apiome command, option and exit code, generated from the CLI.",
-            "sidebar_label": "CLI",
+            # The page sits in the docs site's CLI guide, after the quick-start.
+            "sidebar_label": "Command reference",
             "sidebar_position": 1,
             "tags": ["cli", "reference"],
             "generated": GENERATOR,
