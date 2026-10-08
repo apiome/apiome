@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
@@ -85,11 +85,15 @@ jest.mock('next-themes', () => ({
 import AdeAppShell from '../src/app/components/shell/AdeAppShell';
 import AppShell from '../src/app/components/shell/AppShell';
 import RailSearchTrigger from '../src/app/components/shell/RailSearchTrigger';
-import { isCommandPaletteMounted } from '../src/app/components/shell/commandPaletteBus';
+import { isCommandPaletteMounted, openCommandPalette } from '../src/app/components/shell/commandPaletteBus';
+import { openShortcutSheet } from '../src/app/components/shell/shortcutSheetBus';
 import { ThemeProvider } from '../src/app/providers/ThemeProvider';
 import { NAV_COLLAPSED_STORAGE_KEY } from '../src/app/components/shell/navGroupCollapse';
 import { RAIL_ICON_BREAKPOINT_PX } from '../src/app/components/shell/useIconRail';
-import { isPreferencesDrawerMounted } from '../src/app/components/ade/preferences/preferencesDrawerBus';
+import {
+  isPreferencesDrawerMounted,
+  openPreferences,
+} from '../src/app/components/ade/preferences/preferencesDrawerBus';
 import { RAIL_SHORTCUT, formatShortcutKeys, matchesShortcutChord } from '../lib/shortcuts';
 import {
   PLATFORM_NAV_GROUPS,
@@ -98,6 +102,9 @@ import {
   platformNavGatedReason,
   type PlatformNavItem,
 } from '../lib/platform-nav';
+import NotificationsClient from '../src/app/ade/dashboard/notifications/NotificationsClient';
+import { NOTIFICATION_TYPES, type NotificationRow } from '../lib/notifications';
+import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** Every rail destination the model describes, flattened. */
@@ -140,6 +147,8 @@ interface RenderShellOptions {
   pathname?: string;
   /** Whether the session carries a workspace. */
   tenant?: boolean;
+  /** What the shell frames; a placeholder line by default. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -147,7 +156,11 @@ interface RenderShellOptions {
  *
  * @param options See {@link RenderShellOptions}.
  */
-async function renderShell({ pathname = '/ade/dashboard', tenant = true }: RenderShellOptions = {}) {
+async function renderShell({
+  pathname = '/ade/dashboard',
+  tenant = true,
+  children = 'page content',
+}: RenderShellOptions = {}) {
   mockUsePathname.mockReturnValue(pathname);
   mockUseSession.mockReturnValue({
     data: {
@@ -164,7 +177,7 @@ async function renderShell({ pathname = '/ade/dashboard', tenant = true }: Rende
   // preferences pane the rail hosts reads it.
   const view = render(
     <ThemeProvider>
-      <AdeAppShell>page content</AdeAppShell>
+      <AdeAppShell>{children}</AdeAppShell>
     </ThemeProvider>
   );
   // Both effects resolve immediately; flushing them here keeps every test free of the
@@ -635,5 +648,165 @@ describe('AppShell — the a11y gate fixture (HIVE-10.2)', () => {
   it('renders the shell (and writes its fixture on request)', async () => {
     const { container } = await renderShell();
     writeA11yFixture('shell', container.innerHTML);
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Preferences theme gallery and Notifications page
+ * (`apiome-docs/screens.json`, DOCS-1.9) are captured from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/app-shell.test.tsx -t "docs fixtures"`.
+ *
+ * The gallery needs a screen with every kind of ink on it — the rail, a page header, filter
+ * chips, primary and secondary buttons, unread markers — so it is the shell framing the
+ * notification centre, the same markup captured once per theme.
+ */
+describe('the docs fixtures', () => {
+  const HOUR = 60 * 60 * 1000;
+
+  /** A week of a reviewer's inbox at Northwind, newest first, relative to now. */
+  function docsInbox(now: number): NotificationRow[] {
+    const base = {
+      tenant_id: 't-1',
+      user_id: 'u-1',
+      project_id: 'prj-payments',
+      version_id: 'ver-payments-2-4-0',
+    };
+    const rows: Array<[string, NotificationRow['type'], string, Record<string, unknown>, number, boolean]> = [
+      ['ntf-1', 'review_requested', 'Priya Raman', { project_name: 'Payments API', version_label: '2.4.0', review_id: 'rvw-24', round: 1 }, 1, false],
+      ['ntf-2', 'mention', 'Marcus Lee', { project_name: 'Payments API', version_label: '2.4.0', thread_id: 'thr-7', excerpt: '@ada should refunds return 202 while the ledger settles?' }, 3, false],
+      ['ntf-3', 'review_decision', 'Sam Okafor', { project_name: 'Orders Service', version_label: '1.9.0', review_id: 'rvw-19', decision: 'approve' }, 5, false],
+      ['ntf-4', 'thread_resolved', 'Elena Vasquez', { project_name: 'Payments API', version_label: '2.3.1', thread_id: 'thr-5' }, 27, true],
+      ['ntf-5', 'version_published', 'Priya Raman', { project_name: 'Orders Service', version_label: '1.8.2' }, 30, true],
+      ['ntf-6', 'review_decision', 'Tomas Berg', { project_name: 'Customer Profiles', version_label: '0.7.0', review_id: 'rvw-7', decision: 'request_changes' }, 74, true],
+    ];
+    return rows.map(([id, type, actor, payload, hoursAgo, read]) => ({
+      ...base,
+      id,
+      type,
+      actor_id: `u-${actor.split(' ')[0].toLowerCase()}`,
+      actor_name: actor,
+      payload,
+      read_at: read ? new Date(now - (hoursAgo - 1) * HOUR).toISOString() : null,
+      created_at: new Date(now - hoursAgo * HOUR).toISOString(),
+    }));
+  }
+
+  /**
+   * Answer the notification routes from {@link docsInbox}; everything else is a 404.
+   *
+   * @param inbox The rows the inbox holds.
+   */
+  function installInbox(inbox: NotificationRow[]): void {
+    const unread = inbox.filter((row) => row.read_at === null);
+    const byType = Object.fromEntries(
+      NOTIFICATION_TYPES.map((type) => [type, unread.filter((row) => row.type === type).length])
+    );
+    const reply = (body: unknown, status = 200) => ({
+      ok: status < 300,
+      status,
+      json: async () => body,
+    });
+    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String(input);
+      if (url.startsWith('/api/notifications/unread-count')) {
+        return reply({ success: true, unread: { total: unread.length, by_type: byType } });
+      }
+      if (url.startsWith('/api/notifications')) {
+        return reply({
+          success: true,
+          notifications: inbox,
+          count: inbox.length,
+          total: inbox.length,
+          limit: 50,
+          offset: 0,
+        });
+      }
+      return reply({ success: false, error: 'not routed' }, 404);
+    }) as unknown as typeof fetch;
+  }
+
+  it('renders the shell around the notification centre', async () => {
+    const now = Date.now();
+    installInbox(docsInbox(now));
+    const { container } = await renderShell({
+      pathname: '/ade/dashboard/notifications',
+      children: <NotificationsClient now={now} />,
+    });
+    await screen.findByText('Marcus Lee mentioned you in a comment');
+    await waitFor(() => expect(screen.getByTestId('rail-notifications-badge')).toHaveTextContent('3'));
+    writeA11yFixture('preferences-theme-sample', container.innerHTML);
+  });
+
+  it('renders the bell menu open over a folded rail', async () => {
+    const now = Date.now();
+    installInbox(docsInbox(now));
+    // Folded groups keep the rail inside a 900 px capture, so the footer — and the menu that
+    // opens above it — are on screen.
+    window.localStorage.setItem(
+      NAV_COLLAPSED_STORAGE_KEY,
+      JSON.stringify(PLATFORM_NAV_GROUPS.map((group) => group.id))
+    );
+    const { container } = await renderShell({
+      pathname: '/ade/dashboard/notifications',
+      children: <NotificationsClient now={now} />,
+    });
+    await screen.findByText('Marcus Lee mentioned you in a comment');
+    fireEvent.click(screen.getByTestId('rail-notifications'));
+    const menu = await screen.findByTestId('notifications-menu');
+    await within(menu).findByText('Priya Raman requested your review');
+    writeA11yFixture('notifications-menu', container.innerHTML);
+    window.localStorage.removeItem(NAV_COLLAPSED_STORAGE_KEY);
+  });
+
+  /**
+   * Mount the shell around the notification centre, open an overlay, and dump the whole body —
+   * the overlays portal out of the shell's container.
+   *
+   * @param open Opens the overlay.
+   * @param ready The overlay's test id, awaited before the dump.
+   * @param name The fixture's file stem.
+   */
+  async function dumpOverlay(open: () => void, ready: string, name: string): Promise<void> {
+    const now = Date.now();
+    installInbox(docsInbox(now));
+    await renderShell({
+      pathname: '/ade/dashboard/notifications',
+      children: <NotificationsClient now={now} />,
+    });
+    await screen.findByText('Marcus Lee mentioned you in a comment');
+    act(() => {
+      open();
+    });
+    await screen.findByTestId(ready);
+    writeA11yFixture(name, document.body.innerHTML);
+  }
+
+  it('renders the preferences pane on its Account, Notifications and Shortcuts tabs', async () => {
+    await dumpOverlay(() => openPreferences('account'), 'preferences-drawer', 'preferences-account');
+    cleanup();
+
+    // A reader who has muted publishes: the tab shows the switch off.
+    window.localStorage.setItem(NOTIFICATION_PREFERENCE_KEYS.version_published, 'off');
+    await dumpOverlay(
+      () => openPreferences('notifications'),
+      'preferences-notifications',
+      'preferences-notifications'
+    );
+    cleanup();
+    window.localStorage.removeItem(NOTIFICATION_PREFERENCE_KEYS.version_published);
+
+    await dumpOverlay(() => openPreferences('shortcuts'), 'open-shortcut-sheet', 'preferences-shortcuts');
+  });
+
+  it('renders the keyboard shortcut sheet', async () => {
+    await dumpOverlay(() => openShortcutSheet(), 'shortcut-sheet', 'shortcut-sheet');
+  });
+
+  it('renders the command palette', async () => {
+    await dumpOverlay(() => openCommandPalette(), 'command-palette', 'help-command-palette');
   });
 });

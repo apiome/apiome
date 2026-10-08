@@ -97,7 +97,9 @@ jest.mock('@lib/auth/tenant-membership-context', () => ({
   })),
 }));
 
+import { loadTenantMembershipContext } from '@lib/auth/tenant-membership-context';
 import ApiKeysClient from '../src/app/ade/dashboard/api-keys/ApiKeysClient';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -783,5 +785,90 @@ describe('the native dialogs this screen used to be able to reach', () => {
 
     expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's API keys page (`apiome-docs/screens.json`, DOCS-1.9) is captured
+ * from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/api-keys-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** The instant the dumps are rendered at, so statuses and the expiry banner never drift. */
+  const DOCS_NOW = new Date('2026-10-07T09:30:00Z');
+
+  /** A workspace's keys: two CI keys (one about to expire), a paused one and a full-access one. */
+  const DOCS_KEYS = [
+    ['k-gate', 'CI contract gate', 'GitHub Actions job that blocks merges on breaking diffs.', 'sk_9f31c2Qm...', ['diff:read'], '2026-10-07T06:12:00Z', '2027-01-05T10:14:00Z', true, '2026-07-07T10:14:00Z'],
+    ['k-terraform', 'Terraform plan checks', 'Contract and lint checks in the platform IaC pipeline.', 'sk_77e0a1Bb...', ['diff:read', 'lint:read'], '2026-10-06T22:40:00Z', '2026-10-15T16:22:00Z', true, '2026-07-17T16:22:00Z'],
+    ['k-lint', 'Nightly lint', 'Reads catalog and MCP lint gates every night at 02:00 UTC.', 'sk_2ab7e0Zz...', ['lint:read'], '2026-09-28T02:00:00Z', null, false, '2026-06-18T15:41:00Z'],
+    ['k-release', 'Release automation', 'Cuts and publishes versions from the release train.', 'sk_c41d88Aa...', ['*'], '2026-10-03T14:05:00Z', null, true, '2026-05-02T09:00:00Z'],
+  ].map(([id, name, description, prefix, scopes, lastUsed, expires, enabled, created]) => ({
+    id,
+    tenant_id: TENANT_ID,
+    name,
+    description,
+    key_prefix: prefix,
+    scopes,
+    last_used_at: lastUsed,
+    expires_at: expires,
+    enabled,
+    created_at: created,
+    updated_at: created,
+  }));
+
+  /** Everything rendered — the page, and any dialog portalled over it — without the `<body>`. */
+  const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
+
+  beforeEach(() => {
+    jest.useFakeTimers({
+      now: DOCS_NOW.getTime(),
+      doNotFake: [
+        'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate',
+        'queueMicrotask', 'nextTick', 'requestAnimationFrame', 'cancelAnimationFrame',
+        'requestIdleCallback', 'cancelIdleCallback', 'hrtime', 'performance',
+      ],
+    });
+    keysResponse = JSON.stringify(DOCS_KEYS);
+    createResponse = JSON.stringify({
+      success: true,
+      apiKey: 'sk_5d02e8Kp3VbN7qT1xM9cR4wL6zH0fJ2sY8gA',
+      id: 'k-new',
+      keyPrefix: 'sk_5d02e8Kp...',
+      scopes: ['diff:read'],
+    });
+    mockSessionUser = { user_id: 'u-priya', email: 'priya.raman@northwind.io', current_tenant_id: TENANT_ID };
+    (loadTenantMembershipContext as jest.Mock).mockImplementation(async () => ({
+      tenants: [{ id: TENANT_ID, name: 'Northwind', slug: 'northwind' }],
+      adminTenantIds: [TENANT_ID],
+      createTenant: null,
+    }));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('renders the list, the create dialog and the one-time reveal', async () => {
+    const user = userEvent.setup();
+    stubClipboard();
+    render(<ApiKeysClient />);
+    await screen.findByText('CI contract gate');
+    await screen.findByText('Northwind', { selector: 'strong' });
+    expect(screen.getByTestId('api-keys-expiry-banner')).toHaveTextContent('Terraform plan checks');
+    writeA11yFixture('api-keys', liveMarkup(document.querySelector('.page') as HTMLElement));
+
+    const dialog = await openCreateDialog(user, 'Payments contract gate');
+    await user.type(within(dialog).getByLabelText('Description'), 'Blocks merges on breaking changes to payments-api.');
+    await user.click(within(dialog).getByTestId('api-key-scope-diff'));
+    await user.type(within(dialog).getByLabelText('Expires in (days)'), '90');
+    writeA11yFixture('api-keys-create-dialog', bodyMarkup());
+
+    await user.click(within(dialog).getByRole('button', { name: 'Create API key' }));
+    await screen.findByTestId('api-key-secret-dialog');
+    writeA11yFixture('api-keys-secret', bodyMarkup());
   });
 });

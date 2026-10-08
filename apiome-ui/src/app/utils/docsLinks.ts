@@ -69,8 +69,8 @@ export const LEGACY_GUIDE_ROUTES: Readonly<Record<string, string>> = {
   'mcp-quickstart': 'reference/mcp-quickstart',
   'ci-diff-gate': 'reference/ci-diff-gate',
   'ci-gitlab-bitbucket': 'reference/ci-gitlab-bitbucket',
-  keyboard: 'reference/keyboard',
-  accessibility: 'reference/accessibility',
+  keyboard: 'workspace/keyboard',
+  accessibility: 'workspace/accessibility',
   'content-voice': 'reference/content-voice',
 };
 

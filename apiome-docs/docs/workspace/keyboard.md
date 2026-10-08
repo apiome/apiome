@@ -1,7 +1,7 @@
 ---
 title: "Keyboard"
 description: "The keyboard path for every primary task, and the shortcut reference."
-sidebar_position: 7
+sidebar_position: 10
 tags: [accessibility]
 ---
 

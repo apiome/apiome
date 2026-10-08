@@ -1,0 +1,174 @@
+---
+title: Preferences
+description: Theme, font size, density, motion and the other personal settings, with every theme shown.
+sidebar_position: 7
+tags: [preferences, themes, accessibility]
+---
+
+**Preferences** change how Apiome looks and behaves for you. They are personal and stored in this
+browser: they apply to every workspace you open on this device, and nobody else sees them.
+[Keyboard and preferences](../getting-started/keyboard-and-preferences.mdx) is the two-minute
+version; this page covers every setting.
+
+## Open Preferences
+
+- **Press <Kbd keys="Mod+,"/>** anywhere, or
+- **click Preferences** at the foot of the sidebar, or
+- **open your user menu and choose “Preferences”**.
+
+The pane opens on the right with four tabs — **Appearance**, **Account**, **Notifications** and
+**Shortcuts**. Every change applies and saves the moment you make it (*Saved automatically*);
+**click “Done”**, the close button or press <Kbd keys="Esc"/> to close it.
+
+<Screenshot id="preferences" alt="The Preferences pane on its Appearance tab: nine theme cards, the font size slider and its preview" />
+
+## Appearance
+
+### Theme
+
+Pick one of nine cards. A theme is a token swap — surfaces, ink and accent change; layout and type
+never do — so every screen works the same in all of them. **Follow system** is selected until you
+choose another, and its card says which theme it is using right now (*Currently: Light*).
+
+### Font size
+
+The slider scales the whole interface, not just body text, in six steps. The chip beside the title
+reads the current step (*Default · 16px*), and the **Preview** card under the slider is drawn at
+that size.
+
+| Step | Base size |
+| --- | --- |
+| **Small** | 14 px |
+| **Compact** | 15 px |
+| **Default** | 16 px |
+| **Large** | 17 px |
+| **Larger** | 18 px |
+| **Largest** | 20 px |
+
+### Density
+
+**Comfortable** (the default) gives rows, controls and page padding more room. **Compact** tightens
+them for large screens, so more rows fit. Arrow keys move between the two.
+
+### Switches
+
+| Switch | Off (default) | On |
+| --- | --- | --- |
+| **Reduce motion** | Menus, dialogs and the rail animate — unless your operating system asks for less | Transitions and animated progress are off |
+| **Collapse sidebar by default** | The sidebar opens with labels | The sidebar starts as an icon rail; hover to peek at labels |
+
+| Switch | On (default) | Off |
+| --- | --- | --- |
+| **Monospace for identifiers** | Ids, hashes and versions are set in JetBrains Mono | They use the body font |
+| **Show keyboard hints** | Shortcut chips appear on buttons and menus | The chips are hidden; the shortcuts still work |
+
+**Reduce motion** follows your operating system's *reduce motion* setting until you turn it on
+here. <Kbd keys="Mod+\"/> (or the handle on the sidebar's edge) flips **Collapse sidebar by
+default** too, so the sidebar stays the way you left it.
+
+## Account
+
+Account details live on their own pages, so there is one place to change each of them. The tab
+links to:
+
+- **Profile** — name, email, password and two-factor authentication ([Profile & security](./profile.mdx));
+- **Linked accounts** — the identity providers connected to your account ([Linked accounts](./linked-accounts.mdx)).
+
+<Screenshot id="preferences-account" alt="The Account tab: links to Profile and Linked accounts" />
+
+## Notifications
+
+**In-app notifications** has one switch per kind of notification — **Mentions**, **Review
+requests**, **Review decisions**, **Resolved threads** and **Publishes**. Turning a type off hides
+it from the bell's count and list and from the notifications page; nothing is discarded, so turning
+it back on brings its history back. The switches apply to this device only. Email digests and chat
+delivery are not available yet.
+
+<Screenshot id="preferences-notifications" alt="The Notifications tab with Publishes switched off and the other four types on" />
+
+See [Notifications](./notifications.mdx) for the bell and the notifications page.
+
+## Shortcuts
+
+**Everywhere** lists the shortcuts that work on every screen, and **“All keyboard shortcuts”**
+(<Kbd keys="?"/>) closes the pane and opens the full sheet for the screen behind it. See
+[Help & shortcuts](./help.mdx#keyboard-shortcuts).
+
+<Screenshot id="preferences-shortcuts" alt="The Shortcuts tab: six shortcuts that work everywhere and the All keyboard shortcuts button" />
+
+## Theme gallery
+
+The same screen — the notification centre — in each of the nine themes.
+
+### Follow system
+
+Matches your operating system's light or dark setting, and switches when it does. This image
+follows this site's theme: switch the site between light and dark to see both.
+
+<Screenshot id="theme-system" alt="Follow system: the notification centre in the light or dark theme, following the site" caption="Follow system — Light or Dark, whichever the operating system asks for." />
+
+### Light
+
+Warm paper, navy ink. The default when the system asks for light.
+
+<Screenshot id="theme-light" alt="The Light theme: warm off-white surfaces with navy ink" caption="Light — warm paper, navy ink." />
+
+### Dark
+
+Low-glare, warm blacks. The default when the system asks for dark.
+
+<Screenshot id="theme-dark" alt="The Dark theme: warm near-black surfaces with light ink" caption="Dark — low-glare, warm blacks." />
+
+### High contrast
+
+Pure black with white lines, meeting WCAG AAA contrast.
+
+<Screenshot id="theme-high-contrast" alt="The High contrast theme: pure black surfaces, white text and white outlines" caption="High contrast — pure black, white lines, WCAG AAA." />
+
+### Blueprint
+
+Drafting-table blues.
+
+<Screenshot id="theme-blueprint" alt="The Blueprint theme: deep navy surfaces with pale blue ink" caption="Blueprint — drafting-table blues." />
+
+### Whiteboard
+
+Neutral, cool light.
+
+<Screenshot id="theme-whiteboard" alt="The Whiteboard theme: cool white surfaces with near-black ink" caption="Whiteboard — neutral, cool light." />
+
+### Solarized
+
+Ethan Schoonover's palette.
+
+<Screenshot id="theme-solarized" alt="The Solarized theme: dark teal surfaces with cream ink" caption="Solarized — Ethan Schoonover’s palette." />
+
+### Nord
+
+Arctic, bluish tones.
+
+<Screenshot id="theme-nord" alt="The Nord theme: slate-blue surfaces with frosty ink" caption="Nord — arctic, bluish tones." />
+
+### Darcula
+
+IDE-familiar darkness.
+
+<Screenshot id="theme-darcula" alt="The Darcula theme: charcoal surfaces with grey-blue accents" caption="Darcula — IDE-familiar darkness." />
+
+## Where preferences are kept
+
+Preferences are saved in this browser's local storage (`hive.theme`, `hive.fontScale`,
+`hive.density`, `hive.motion`, `hive.rail`, `hive.monoIds`, `hive.kbdHints` and the
+`hive.notify.*` switches), so another browser or device starts from the defaults. Clearing site
+data resets them. There is no API for them.
+
+[Accessibility](./accessibility.md) covers what each theme and setting does for screen readers,
+low vision and motion sensitivity.
+
+## Where next
+
+- [Help & shortcuts](./help.mdx)
+- [Notifications](./notifications.mdx)
+- [Keyboard](./keyboard.md)
+- [Accessibility](./accessibility.md)
+- [Profile & security](./profile.mdx)

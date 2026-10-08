@@ -1,0 +1,79 @@
+---
+title: Linked accounts
+description: Sign in with GitHub, GitLab or Microsoft, and store repository access tokens.
+sidebar_position: 6
+tags: [account, sign-in, oauth, github, gitlab]
+---
+
+<Route path="/ade/dashboard/linked-accounts" />
+
+**Linked accounts** connects your Apiome account to identity providers such as GitHub, GitLab,
+Microsoft or Google. A linked provider is a way to sign in, and for GitHub and GitLab it is also how
+Apiome reaches your repositories. **Open the user menu at the foot of the rail and choose Linked
+accounts**, or **click “Manage linked accounts”** on your [Profile](./profile.mdx).
+
+<Screenshot id="linked-accounts" alt="Linked accounts: GitHub and GitLab linked, a stored GitHub token, and Microsoft, Google and Atlassian cards" />
+
+The page has two parts:
+
+- **Linked accounts** — the providers you can sign in with today: the account name at the provider,
+  when you linked it, and when you last signed in with it. **Password also set** shows when you can
+  also sign in with a password.
+- **Add a provider** — a card for each provider your deployment enables. Providers marked **Coming
+  soon** are not available yet. Which providers appear is set by your administrator.
+
+## Link a provider
+
+1. **Click “Link a provider”** at the top of the page, or scroll to **Add a provider**.
+2. **Click “Link”** on the provider's card.
+3. Sign in at the provider and approve access. You come back to this page with *Account linked
+   successfully!*
+
+Once linked you can sign in with any of your providers. A provider account can be linked to only
+one Apiome account; if it is already linked elsewhere, the page says so and nothing changes.
+
+## Unlink a provider
+
+1. Hover the provider's row and **click “Unlink”**.
+2. Read the confirmation — it names the other ways you can still sign in, and says when a stored
+   token is removed too — and **click “Unlink”**.
+
+You cannot remove your only way to sign in. When a provider is your only sign-in method and you have
+no password, its **Unlink** is disabled and the row says *Only sign-in method — set a password or
+link another provider to remove it.*
+
+<Screenshot id="linked-accounts-last-method" alt="A GitHub row whose Unlink is disabled, with the note that it is the only sign-in method" />
+
+## Repository access tokens
+
+Imports from a GitHub or GitLab [repository](../bring-in/repositories.mdx) use the access the
+provider granted when you linked it. For direct repository access — private repositories in an
+organisation, for example — you can store a **Personal Access Token** (PAT) on a linked GitHub or
+GitLab account.
+
+1. On the provider's card, **click “Add”** next to **Personal Access Token**.
+2. Create a token at the provider with the scopes the dialog lists under **Required scopes**:
+
+   | Provider | Scopes |
+   | --- | --- |
+   | GitHub | `repo` (or `public_repo`), `read:org`, `read:user`, `user:email` |
+   | GitLab | `read_api`, `read_repository`, `read_user` |
+
+3. Paste it into **Token** and **click “Add token”**.
+
+<Screenshot id="linked-accounts-pat" alt="The Add Personal Access Token dialog for GitLab, with a token pasted and the required scopes" />
+
+The card then shows **PAT ••••••** and the token's last six characters; the token itself is never
+shown again. **Click “Update”** to replace it, or **“Remove”** to delete it — imports that relied on
+it fall back to the provider's own grant. Unlinking the provider removes its token too.
+
+## With the API
+
+Linking and tokens are only in the app; there is no REST endpoint or CLI command for them. To call
+Apiome from scripts, create an [API key](./api-keys.mdx).
+
+## Where next
+
+- [Profile & security](./profile.mdx)
+- [Repositories](../bring-in/repositories.mdx)
+- [Members & seats](./members.mdx)

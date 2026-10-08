@@ -38,6 +38,14 @@ jest.mock('@lib/auth/session-client', () => ({
 }));
 
 import MembersClient from '../src/app/ade/dashboard/members/MembersClient';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
+import {
+  DOCS_AUDIT,
+  DOCS_MEMBERS,
+  DOCS_NOW,
+  DOCS_ROLES,
+  DOCS_SEATS,
+} from './helpers/access-docs-data';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -786,5 +794,80 @@ describe('native browser dialogs', () => {
 
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(promptSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// The docs fixtures
+// ---------------------------------------------------------------------------------------
+
+/**
+ * The documentation site's Members & seats page (`apiome-docs/screens.json`, DOCS-1.9) is
+ * captured from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/members-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** Answer the screen's reads with the docs workspace (`tests/helpers/access-docs-data.ts`). */
+  function mockDocsApi() {
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/tenants/license')) {
+        return ok({
+          plan: { name: 'Team', type: 'paid' },
+          seats: DOCS_SEATS,
+          quotas: { max_projects: 25, max_versions: 250, max_ai_requests: 0 },
+          features: [],
+        });
+      }
+      if (url.includes('/api/access/permissions/me')) return ok(PERMS_ADMIN);
+      if (url.includes('/api/access/roles')) return ok(DOCS_ROLES);
+      if (url.includes('/api/access/audit')) return ok(DOCS_AUDIT);
+      if (url.includes('/api/access/members')) return ok(DOCS_MEMBERS);
+      return ok([]);
+    });
+  }
+
+  /** The page root. */
+  const page = () => document.querySelector('.page') as HTMLElement;
+
+  it('renders the roster, the invite dialog, a member drawer and the lifecycle dialogs', async () => {
+    // Relative times ("2 hours ago") read against the docs capture clock, not today.
+    jest.spyOn(Date, 'now').mockReturnValue(DOCS_NOW);
+    mockDocsApi();
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Priya Raman');
+    expect(screen.getByText('9 members · 2 pending')).toBeInTheDocument();
+    writeA11yFixture('members', liveMarkup(page()));
+
+    await user.click(screen.getByTestId('members-invite'));
+    const invite = await screen.findByTestId('members-invite-dialog');
+    await user.type(within(invite).getByLabelText('Email address'), 'lena.fischer@northwind.io');
+    await user.selectOptions(within(invite).getByLabelText('Role'), 'role-editor');
+    expect(invite).toHaveTextContent('10 of 10');
+    writeA11yFixture('members-invite-dialog', liveMarkup(invite));
+    await user.click(within(invite).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByTestId('members-invite-dialog')).not.toBeInTheDocument());
+
+    await user.click(within(rowFor('sam.okafor@northwind.io')).getByText('Sam Okafor'));
+    const drawer = await screen.findByTestId('member-drawer');
+    await within(drawer).findByTestId('member-activity');
+    expect(drawer).toHaveTextContent('Release manager');
+    writeA11yFixture('members-drawer', liveMarkup(drawer));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('member-drawer')).not.toBeInTheDocument());
+
+    await user.click(within(rowFor('elena.vasquez@northwind.io')).getByRole('button', { name: /Suspend/ }));
+    const suspend = await screen.findByTestId('member-suspend-dialog');
+    expect(suspend).toHaveTextContent('Suspend Elena Vasquez?');
+    writeA11yFixture('members-suspend-dialog', liveMarkup(suspend));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('member-suspend-dialog')).not.toBeInTheDocument());
+
+    await user.click(within(rowFor('marcus.lee@northwind.io')).getByRole('button', { name: /Offboard/ }));
+    const offboard = await screen.findByTestId('member-offboard-dialog');
+    expect(within(offboard).getByTestId('member-offboard-admin-warning')).toBeInTheDocument();
+    writeA11yFixture('members-offboard-dialog', liveMarkup(offboard));
   });
 });

@@ -321,7 +321,7 @@ Milestone: **RC6** (epic and every issue).
 
 ---
 
-### `apiome: [DOCS-1.9] Workspace & account — Members, Roles, API keys, Tenants, Profile, Linked accounts, Preferences, Notifications, Help` — [#5626](https://github.com/apiome/apiome/issues/5626)
+### ✅ `apiome: [DOCS-1.9] Workspace & account — Members, Roles, API keys, Tenants, Profile, Linked accounts, Preferences, Notifications, Help` — [#5626](https://github.com/apiome/apiome/issues/5626) — **Complete**
 **Problem statement.** Tenant admin (seats, roles matrix, scoped keys, agent keys) and the personal surfaces (2FA, linked providers, preferences) have no user documentation; support questions go to the README.
 
 **Solution / scope.**
@@ -329,9 +329,9 @@ Milestone: **RC6** (epic and every issue).
 - Reuse `docs/guide/keyboard.md` and `accessibility.md` under this group.
 
 **Acceptance criteria.**
-- [ ] Every Workspace/account route has a page with a current screenshot
-- [ ] The theme gallery shows all nine themes
-- [ ] No broken links
+- [x] Every Workspace/account route has a page with a current screenshot
+- [x] The theme gallery shows all nine themes
+- [x] No broken links
 
 **Parallelism / dependencies.** Depends on DOCS-1.1, 1.3.
 

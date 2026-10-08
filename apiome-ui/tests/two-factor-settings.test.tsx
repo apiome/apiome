@@ -5,7 +5,9 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { TwoFactorSettings } from '@/app/ade/dashboard/profile/TwoFactorSettings';
+import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const mockEnable = jest.fn();
 const mockDisable = jest.fn();
@@ -214,5 +216,69 @@ describe('TwoFactorSettings', () => {
       expect(screen.getByTestId('two-factor-method-email-otp')).toBeInTheDocument();
       expect(screen.getByTestId('two-factor-email-otp-info')).toHaveTextContent(/email/i);
     });
+  });
+});
+
+/**
+ * The documentation site's Profile & security page (`apiome-docs/screens.json`, DOCS-1.9) shows
+ * the enrolment dialog from these dumps:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/two-factor-settings.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures', () => {
+  /** An obviously fake secret: the dump is a picture of the step, not a usable enrolment. */
+  const DOCS_URI = 'otpauth://totp/Apiome:priya.raman%40northwind.io?secret=DOCSEXAMPLEDOCSEXAMPLE&issuer=Apiome';
+
+  /** Ten codes in the shape the server issues, plainly made up. */
+  const DOCS_CODES = [
+    'k7Qm2-xP4vT', 'b9Lw3-Hn6sR', 'c2Fj8-Ty5dK', 'm4Zr7-Wq1eP', 'p6Vn2-Gs9hL',
+    't3Dk5-Ja8uX', 'w8Hc1-Re4mB', 'y5Ns6-Lf2gQ', 'e1Tp9-Mb7wC', 'r8Gx4-Kd3zV',
+  ];
+
+  /**
+   * The dialog's markup with the mocked QR swapped for the real one, so the picture shows a code.
+   *
+   * @param dialog The open enrolment dialog.
+   * @returns Its markup.
+   */
+  function withRealQr(dialog: HTMLElement): string {
+    const RealQr = (jest.requireActual('react-qr-code') as { default: React.ComponentType<{ value: string; size: number }> }).default;
+    const qr = renderToStaticMarkup(<RealQr value={DOCS_URI} size={180} />);
+    const holder = document.createElement('div');
+    holder.innerHTML = liveMarkup(dialog);
+    const mock = holder.querySelector('[data-testid="qr-mock"]');
+    if (mock) mock.outerHTML = qr;
+    return holder.innerHTML;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetBackupCodeStatus.mockResolvedValue({ remaining: null });
+    mockGetTrustedDeviceStatus.mockResolvedValue({ trusted: false });
+    mockGetEmailOtpAvailability.mockResolvedValue({ available: false });
+    mockUseAuthSession.mockReturnValue({
+      data: {
+        user: { user_id: 'usr_5f2c81d0e7', email: 'priya.raman@northwind.io', twoFactorEnabled: false },
+        expires: '',
+        twoFactorElevated: false,
+      },
+      update: mockUpdate,
+    });
+  });
+
+  it('renders the enrolment dialog at the QR step and at the backup codes', async () => {
+    mockEnable.mockResolvedValue({ data: { totpURI: DOCS_URI, backupCodes: DOCS_CODES }, error: null });
+    mockVerifyTotp.mockResolvedValue({ data: {}, error: null });
+
+    render(<TwoFactorSettings />);
+    fireEvent.click(screen.getByTestId('two-factor-enable-open'));
+    fireEvent.change(screen.getByTestId('two-factor-enroll-password'), { target: { value: 'secret' } });
+    fireEvent.click(screen.getByTestId('two-factor-enroll-continue'));
+    await screen.findByTestId('two-factor-qr');
+    fireEvent.change(screen.getByTestId('two-factor-enroll-code'), { target: { value: '482913' } });
+    writeA11yFixture('profile-2fa-scan', withRealQr(screen.getByRole('dialog')));
+
+    fireEvent.click(screen.getByTestId('two-factor-enroll-verify'));
+    await screen.findByTestId('two-factor-backup-codes');
+    writeA11yFixture('profile-2fa-backup-codes', liveMarkup(screen.getByRole('dialog')));
   });
 });
