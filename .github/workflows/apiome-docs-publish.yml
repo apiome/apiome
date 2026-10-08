@@ -1,0 +1,102 @@
+name: Apiome Docs Publish
+
+# Builds the apiome-docs image (nginx serving the static Docusaurus build, apiome-docs/Dockerfile)
+# and pushes it to the registry (secrets.DOCKER_REGISTRY — registry.apiome.dev) on every push to
+# `main` that changes the site or its inputs, like apiome-ui-publish.yml and apiome-browse.yml.
+# Tags: the apiome-docs package.json version, `latest` and the commit SHA.
+#
+# Pull requests only prove the image builds and serves — the `image` job in apiome-docs.yml.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-docs/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.dockerignore'
+      - '.github/workflows/apiome-docs-publish.yml'
+      # Inputs of the generated pages and the release notes baked into the image.
+      - 'apiome-rest/openapi.yaml'
+      - 'apiome-rest/CHANGELOG.md'
+      - 'apiome-ui/public/WHATS_NEW.md'
+      - 'scripts/gen-release-notes.ts'
+      - 'scripts/package.json'
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: apiome-docs
+
+jobs:
+  build-and-push:
+    name: Build and push apiome-docs image
+    runs-on: self-hosted
+    env:
+      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Read package version
+        id: meta
+        working-directory: apiome-docs
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        run: |
+          chmod +x .github/scripts/setup-buildx-self-hosted.sh
+          .github/scripts/setup-buildx-self-hosted.sh
+
+      - name: Log in to Docker registry
+        run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
+
+      # Build from the repository root: the docs workspace installs against the root lockfile, and
+      # the build reads the REST changelog and the app's What's new for the release notes.
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apiome-docs/Dockerfile
+          push: false
+          load: true
+          platforms: linux/amd64
+          provenance: false
+          sbom: false
+          # Set the DOCS_IMAGE_URL repository variable to the public origin the image is served
+          # from, so canonical links and the sitemap point there.
+          build-args: |
+            DOCS_URL=${{ vars.DOCS_IMAGE_URL || 'http://localhost' }}
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # Never push an image that does not serve the site.
+      - name: Smoke-test the image
+        run: |
+          set -euo pipefail
+          image="${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          cid=$(docker run -d --rm -p 127.0.0.1::8080 "$image")
+          trap 'docker stop "$cid" >/dev/null' EXIT
+          port=$(docker port "$cid" 8080/tcp | head -1 | sed 's/.*://')
+          for _ in $(seq 1 20); do
+            curl -fsS "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:${port}/" | grep -q '<title>'
+          curl -fsS "http://127.0.0.1:${port}/release-notes" | grep -q 'Release notes'
+
+      - name: Push Docker image
+        run: |
+          chmod +x .github/scripts/docker-push-with-retry.sh
+          .github/scripts/docker-push-with-retry.sh \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}" \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest" \
+            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"

@@ -12,13 +12,15 @@ The documentation site ships as a Docker image, so you can serve it next to your
 The image serves the site on port **8080** as a non-root user:
 
 ```bash
-docker run -d --name apiome-docs -p 3200:8080 <registry>/apiome-docs:latest
+docker run -d --name apiome-docs -p 3200:8080 registry.apiome.dev/apiome-docs:latest
 ```
 
 Open `http://localhost:3200/`. `GET /healthz` answers `ok`, and the image declares a Docker health
 check that uses it.
 
-Images are tagged with the docs version, `latest` and the commit they were built from.
+Every change to the site on `main` publishes a new image to `registry.apiome.dev` (sign in with
+`docker login registry.apiome.dev` first). Images are tagged with the docs version, `latest` and the
+commit they were built from.
 
 ## Build it yourself
 

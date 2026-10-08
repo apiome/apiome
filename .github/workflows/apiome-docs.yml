@@ -3,8 +3,9 @@ name: Apiome Docs
 # Runs the docs gate (`yarn docs:check`) on every pull request — documentation is part of the
 # definition of done (DOCS-1.13, #5630), and a change anywhere (an apiome-ui route, a REST endpoint)
 # can leave a page, a screenshot or a generated reference stale. Deploys the site to GitHub Pages
-# from `main`. The apiome-docs Docker image (nginx serving the static build) is built on pull
-# requests that touch its inputs and pushed to the registry from `main`.
+# from `main`. The apiome-docs Docker image (nginx serving the static build) is built and
+# smoke-tested on pull requests that touch its inputs; apiome-docs-publish.yml pushes it to the
+# registry from `main`.
 #
 # One-time repository setting: Settings → Pages → Build and deployment → Source: "GitHub Actions".
 
@@ -37,9 +38,6 @@ on:
 
 permissions:
   contents: read
-
-env:
-  IMAGE_NAME: apiome-docs
 
 # One Pages deployment at a time; a newer push supersedes a queued one but never cancels a
 # deployment already in progress.
@@ -154,8 +152,10 @@ jobs:
         uses: actions/deploy-pages@v4
 
   # The gate runs on every pull request, but the image only needs rebuilding when its inputs moved.
+  # (On `main`, apiome-docs-publish.yml decides that with its own path filter.)
   changes:
     name: Did the image's inputs change
+    if: github.event_name == 'pull_request'
     runs-on: self-hosted
     outputs:
       image: ${{ steps.diff.outputs.image }}
@@ -170,10 +170,6 @@ jobs:
         id: diff
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "image=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
           if echo "$changed" | grep -qE '^(apiome-docs/|docs/|package\.json$|yarn\.lock$|\.dockerignore$|\.github/workflows/apiome-docs\.yml$|apiome-rest/CHANGELOG\.md$|apiome-ui/public/WHATS_NEW\.md$|scripts/(gen-release-notes\.ts|package\.json)$)'; then
             echo "image=true" >> "$GITHUB_OUTPUT"
@@ -181,39 +177,24 @@ jobs:
             echo "image=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # Pull requests prove the image builds and serves the site; apiome-docs-publish.yml builds it
+  # again on `main` and pushes it to the registry.
   image:
-    name: Build and push apiome-docs image
+    name: Build and smoke-test apiome-docs image
     needs: [build, changes]
-    if: needs.changes.outputs.image == 'true'
+    if: github.event_name == 'pull_request' && needs.changes.outputs.image == 'true'
     runs-on: self-hosted
     env:
-      # Falls back to a local name so the tags stay valid when secrets are absent (fork PRs).
-      DOCKER_REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'apiome.local' }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      # Pull requests only prove the image builds; `main` publishes it.
-      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+      IMAGE_TAG: apiome-docs:pr-${{ github.sha }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Read package version
-        id: meta
-        working-directory: apiome-docs
-        run: |
-          set -euo pipefail
-          version=$(node -p "require('./package.json').version")
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-
       - name: Set up Docker Buildx
         run: |
           chmod +x .github/scripts/setup-buildx-self-hosted.sh
           .github/scripts/setup-buildx-self-hosted.sh
-
-      - name: Log in to Docker registry
-        if: env.PUBLISH == 'true'
-        run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
 
       # Build from the repository root: the docs workspace installs against the root lockfile.
       - name: Build Docker image
@@ -226,21 +207,13 @@ jobs:
           platforms: linux/amd64
           provenance: false
           sbom: false
-          # Set the DOCS_IMAGE_URL repository variable to the public origin the image is served
-          # from, so canonical links and the sitemap point there.
-          build-args: |
-            DOCS_URL=${{ vars.DOCS_IMAGE_URL || 'http://localhost' }}
-          tags: |
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}
 
       - name: Smoke-test the image
         run: |
           set -euo pipefail
-          image="${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          cid=$(docker run -d --rm -p 127.0.0.1::8080 "$image")
-          trap 'docker stop "$cid" >/dev/null' EXIT
+          cid=$(docker run -d --rm -p 127.0.0.1::8080 "$IMAGE_TAG")
+          trap 'docker stop "$cid" >/dev/null; docker image rm "$IMAGE_TAG" >/dev/null 2>&1 || true' EXIT
           port=$(docker port "$cid" 8080/tcp | head -1 | sed 's/.*://')
           for _ in $(seq 1 20); do
             curl -fsS "http://127.0.0.1:${port}/healthz" >/dev/null 2>&1 && break
@@ -248,12 +221,3 @@ jobs:
           done
           curl -fsS "http://127.0.0.1:${port}/" | grep -q '<title>'
           curl -fsS "http://127.0.0.1:${port}/release-notes" | grep -q 'Release notes'
-
-      - name: Push Docker image
-        if: env.PUBLISH == 'true'
-        run: |
-          chmod +x .github/scripts/docker-push-with-retry.sh
-          .github/scripts/docker-push-with-retry.sh \
-            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}" \
-            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest" \
-            "${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"

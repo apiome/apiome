@@ -210,9 +210,11 @@ The image is built for `/` (`DOCS_BASE_URL=/`); pass `--build-arg DOCS_URL=https
 to set the public origin used in canonical links and the sitemap. `GET /healthz` answers `ok`.
 
 The `image` job in `apiome-docs.yml` builds and smoke-tests the image on pull requests that change its
-inputs (the site, the guides, the release-notes sources, the lockfile), and on
-`main` pushes it to `$DOCKER_REGISTRY/apiome-docs` tagged with the `package.json` version, `latest`
-and the commit SHA. Set the `DOCS_IMAGE_URL` repository variable to the image's public origin.
+inputs (the site, the guides, the release-notes sources, the lockfile). On `main`,
+`.github/workflows/apiome-docs-publish.yml` — the same pattern as `apiome-ui-publish.yml` — builds
+it, smoke-tests it and pushes it to the registry (`secrets.DOCKER_REGISTRY`, `registry.apiome.dev`)
+as `registry.apiome.dev/apiome-docs`, tagged with the `package.json` version, `latest` and the
+commit SHA. Set the `DOCS_IMAGE_URL` repository variable to the image's public origin.
 
 ### Base URL and trailing slashes
 
