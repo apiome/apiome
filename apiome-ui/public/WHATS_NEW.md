@@ -52,6 +52,8 @@ We continue to improve the platform based on your feedback with improvements and
     - Visual indicator of the bulk import is now implemented properly
 - MCP:
   - Hardens tool array emit for LLM tool summary
+- Studio:
+  - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
 
 ---
 
