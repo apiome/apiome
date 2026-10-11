@@ -1,5 +1,8 @@
 # RC6 — Order of Execution
 
+> **Superseded (2026-10-10)** by [`docs/RC6_OOE.md`](../RC6_OOE.md), which adds the enterprise SSO
+> and agent authorization MVPs and splits the format lane into core and stretch.
+
 > **Purpose.** One page that answers *what do we pick up next, in what order, and when is RC6
 > done*. It is the ticket-level plan for the [`RC6` milestone](https://github.com/apiome/apiome/milestone/6).
 >
