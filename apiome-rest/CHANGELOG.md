@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.340.0] - 2026-10-11
+
+### Added
+- **Installation sign-up policy (#5653, SGN-1.4)**: who may create an account is now a
+  database-stored setting with `AUTH_SIGNUP_DISABLED` as the fallback, replacing the env flag as the
+  only control. `GET /v1/admin/signup-policy` returns the effective policy — `mode` (`open`,
+  `invite_only` or `closed`), `allowed_email_domains`, `source` (`db` or `env`) and `env_mode` —
+  and `PUT /v1/admin/signup-policy` stores it, or clears it with `"mode": null` so the installation
+  reverts to env. Both need the super-admin session (`401` without one, `403` with a bad one); an
+  unknown mode or a malformed domain is a structured `422` (`invalid_mode`,
+  `invalid_email_domain`). Every change writes an `apiome.signup_policy_audit` row in the same
+  transaction (migration V274). The policy is enforced by one gate
+  (`app.signup_policy.signup_rejection_code`) for the email form and every OAuth provider, and is
+  cached for `SIGNUP_POLICY_CACHE_TTL_SECONDS` (default 30), so a change needs no restart. Two auth
+  error codes join the contract: `signup-invite-only` and `signup-domain-not-allowed`. With no
+  stored policy, behaviour is unchanged. The OpenAPI version moves to 1.205.0.
+
 ## [1.339.1] - 2026-10-07
 
 ### Added

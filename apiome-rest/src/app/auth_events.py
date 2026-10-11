@@ -44,6 +44,12 @@ OUTCOME_SUCCESS = "success"
 #: The attempt was refused (carries a stable ``error_code``).
 OUTCOME_FAILURE = "failure"
 
+#: Rejection codes that mean "a new account was refused by the sign-up policy" (SGN-1.4) — these
+#: are recorded as failed sign-ups, not failed sign-ins.
+_SIGNUP_REFUSAL_CODES = frozenset(
+    {ar.SIGNUP_DISABLED, ar.SIGNUP_INVITE_ONLY, ar.SIGNUP_DOMAIN_NOT_ALLOWED}
+)
+
 #: Both outcomes, mirroring the ``auth_events_outcome_check`` DB constraint (V193).
 AUTH_EVENT_OUTCOMES: FrozenSet[str] = frozenset({OUTCOME_SUCCESS, OUTCOME_FAILURE})
 
@@ -176,7 +182,7 @@ def event_from_decision(
     if facts.link_to_user_id:
         event_type = EVENT_LINK
         user_id: Optional[str] = facts.link_to_user_id
-    elif decision.code == ar.SIGNUP_DISABLED:
+    elif decision.code in _SIGNUP_REFUSAL_CODES:
         event_type = EVENT_SIGN_UP
         user_id = None
     else:

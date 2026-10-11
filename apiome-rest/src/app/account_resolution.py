@@ -28,6 +28,14 @@ from dataclasses import dataclass, field
 from typing import Any, FrozenSet, Mapping, Optional
 
 from .database import normalize_email
+from .signup_policy import (
+    MODE_CLOSED,
+    SIGNUP_DISABLED,
+    SIGNUP_DOMAIN_NOT_ALLOWED,
+    SIGNUP_INVITE_ONLY,
+    SignupPolicy,
+    signup_rejection_code,
+)
 
 # --- Stable machine-readable auth error codes — the structured auth error contract ---
 # (OLO-1.5, #4190). These strings are a public contract shared with the TypeScript engine
@@ -58,8 +66,11 @@ LAST_SIGN_IN_METHOD = "last-sign-in-method"
 MEMBERSHIP_SUSPENDED = "membership-suspended"
 #: The requested sign-in provider is not configured/supported on this deployment.
 PROVIDER_NOT_CONFIGURED = "provider-not-configured"
-#: Self-signup is disabled on this deployment.
-SIGNUP_DISABLED = "signup-disabled"
+# The three sign-up policy codes (SGN-1.4, #5653) are defined beside the policy that emits them and
+# re-exported here so this module stays the one place the whole contract can be read from:
+#   ``SIGNUP_DISABLED`` — self-signup is disabled on this deployment (policy ``closed``).
+#   ``SIGNUP_INVITE_ONLY`` — sign-up is by invitation only and the address has no account.
+#   ``SIGNUP_DOMAIN_NOT_ALLOWED`` — sign-up is open, but not to the address's email domain.
 
 #: Every stable code of the contract, for consumers that validate or enumerate codes.
 AUTH_ERROR_CODES: FrozenSet[str] = frozenset(
@@ -75,6 +86,8 @@ AUTH_ERROR_CODES: FrozenSet[str] = frozenset(
         MEMBERSHIP_SUSPENDED,
         PROVIDER_NOT_CONFIGURED,
         SIGNUP_DISABLED,
+        SIGNUP_INVITE_ONLY,
+        SIGNUP_DOMAIN_NOT_ALLOWED,
     }
 )
 
@@ -149,7 +162,12 @@ class ResolutionInput:
         email_user: Existing user whose canonical email equals ``email``, if any.
         signup_disabled: True when this deployment refuses self-signup. A verified email with no
             existing account is then rejected with the stable ``signup-disabled`` code instead of
-            routed to onboarding.
+            routed to onboarding. Kept for callers that only know the env flag; ``signup_policy``
+            supersedes it when both are given.
+        signup_policy: The installation sign-up policy (SGN-1.4, see
+            :func:`app.signup_policy.get_effective_signup_policy`). It gates step (c) only — a
+            verified email with no existing account — and never an existing user's sign-in. None
+            means "no policy supplied": sign-up is open unless ``signup_disabled`` is set.
     """
 
     provider: str
@@ -160,6 +178,7 @@ class ResolutionInput:
     identity: ResolutionIdentity = field(default_factory=ResolutionIdentity)
     email_user: Optional[ResolutionUser] = None
     signup_disabled: bool = False
+    signup_policy: Optional[SignupPolicy] = None
 
 
 @dataclass(frozen=True)
@@ -365,7 +384,58 @@ def resolve_account_decision(facts: ResolutionInput) -> ResolutionDecision:
         return ResolutionDecision(action=ACTION_AUTO_LINK, user_id=facts.email_user.id)
 
     # (c) Verified email, no account → create user + identity (routed via onboarding/signup),
-    #     unless this deployment refuses self-signup.
-    if facts.signup_disabled:
-        return ResolutionDecision(action=ACTION_REJECT, code=SIGNUP_DISABLED)
+    #     unless the installation sign-up policy refuses it (SGN-1.4).
+    rejection = signup_rejection_for(facts, email)
+    if rejection:
+        return ResolutionDecision(action=ACTION_REJECT, code=rejection)
     return ResolutionDecision(action=ACTION_SIGNUP, email=email)
+
+
+def signup_rejection_for(facts: ResolutionInput, email: Optional[str]) -> Optional[str]:
+    """Apply the sign-up policy carried by the facts to a would-be new account.
+
+    Args:
+        facts: The resolution facts; ``signup_policy`` wins, else ``signup_disabled`` reads as a
+            ``closed`` policy, else sign-up is open.
+        email: The canonical address the account would be created with.
+
+    Returns:
+        The stable rejection code, or None when the account may be created.
+    """
+    policy = facts.signup_policy
+    if policy is None:
+        if not facts.signup_disabled:
+            return None
+        policy = SignupPolicy(mode=MODE_CLOSED)
+    return signup_rejection_code(policy, email)
+
+
+def resolve_email_signup_decision(
+    email: Optional[str], policy: SignupPolicy, email_user: Optional[ResolutionUser] = None
+) -> ResolutionDecision:
+    """Decide an **email** (credential) sign-up under the same policy as OAuth (SGN-1.4).
+
+    The email form has no provider identity, so only the last two steps of the policy apply: an
+    address that already has an account is never given a second one, and a new address is admitted
+    or refused by exactly the gate OAuth step (c) uses (:func:`app.signup_policy.signup_rejection_code`).
+
+    Args:
+        email: The address submitted on the sign-up form.
+        policy: The effective installation sign-up policy.
+        email_user: Existing user whose canonical email equals ``email``, if any.
+
+    Returns:
+        ``ACTION_SIGNUP`` with the canonical email when the account may be created;
+        ``ACTION_SIGN_IN`` naming the existing user when the address already has an account (the
+        caller decides how to respond without revealing that); otherwise ``ACTION_REJECT`` with the
+        stable code.
+    """
+    canonical = _canonical_email(email)
+    if not canonical:
+        return ResolutionDecision(action=ACTION_REJECT, code=EMAIL_REQUIRED)
+    if email_user is not None:
+        return ResolutionDecision(action=ACTION_SIGN_IN, user_id=email_user.id)
+    rejection = signup_rejection_code(policy, canonical)
+    if rejection:
+        return ResolutionDecision(action=ACTION_REJECT, code=rejection)
+    return ResolutionDecision(action=ACTION_SIGNUP, email=canonical)

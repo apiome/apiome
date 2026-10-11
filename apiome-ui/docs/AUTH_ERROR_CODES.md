@@ -32,7 +32,9 @@ auth failure.
 | `account-disabled` | The resolved user account is disabled (`users.enabled = false`), or the identity points at a deleted user. | Resolution engine, credentials sign-in |
 | `membership-suspended` | The user's tenant membership is suspended (`tenant_users.status = 'suspended'`). | Resolution engine gate, via `ResolutionUser.membershipSuspended` / `membership_suspended` — populated by tenant-scoped sign-in surfaces (invitation acceptance, tenant selection; OLO-3.x/5.x). The plain login flow has no tenant context and does not set it. |
 | `provider-not-configured` | The requested sign-in provider is not configured/supported on this deployment. | `signInForProvider` dispatch (`lib/auth/credentials.ts`) |
-| `signup-disabled` | Self-signup is disabled on this deployment (`AUTH_SIGNUP_DISABLED=true|1`); a verified email with no existing account is refused instead of routed to onboarding. | Resolution engine step (c) |
+| `signup-disabled` | Self-signup is disabled on this deployment — the sign-up policy is `closed` (SGN-1.4), or no policy is stored and `AUTH_SIGNUP_DISABLED=true|1`. A new address is refused instead of routed to onboarding. | Sign-up policy gate: resolution engine step (c), OAuth sign-up completion, email sign-up |
+| `signup-invite-only` | The sign-up policy is `invite_only` (SGN-1.4) and the address has no account. Invitations go to existing accounts, so an invited person signs in normally and never sees this. | Sign-up policy gate (same emitters as `signup-disabled`) |
+| `signup-domain-not-allowed` | The sign-up policy is `open` with an allowed-email-domain list (SGN-1.4) and the address's domain is not on it. | Sign-up policy gate (same emitters as `signup-disabled`) |
 | `account-not-verified` | The resolved account exists but has not completed its own email verification (`users.verified = false`). | Resolution engine, credentials sign-in |
 | `provider-already-linked` | The user already has a different identity linked for this provider (link flow). | `linkExternalAccount` (`lib/db/helper.ts`) |
 | `last-sign-in-method` | Unlink refused: the identity is the user's last remaining sign-in method — no other linked identity and no usable password (`users.password` empty) — so removing it would lock them out (OLO-2.4). | `unlinkExternalAccount` (`lib/db/helper.ts`) |
@@ -70,14 +72,16 @@ pointing back to a clean `/login` (error cleared, validated `callbackUrl` preser
 on codes the user can resolve outside Apiome and then retry (`unverified-email`,
 `account-not-verified`, `OAuthEmailRequired`, `OAuthProfileIncomplete`, `SignupSessionExpired`,
 and the generic fallback). Terminal states — `account-disabled`, `membership-suspended`,
-`signup-disabled`, `provider-not-configured`, link conflicts — deliberately offer none;
+`signup-disabled`, `signup-invite-only`, `signup-domain-not-allowed`, `provider-not-configured`,
+link conflicts — deliberately offer none;
 `CredentialsSignin` instead re-expands the credentials form (OLO-3.1).
 
 ## Configuration
 
 | Variable | Effect |
 |----------|--------|
-| `AUTH_SIGNUP_DISABLED` | `true` or `1` refuses self-signup with `signup-disabled`. Any other value (or unset) leaves signup open. Read by `isSignupDisabled()` at each OAuth sign-in. |
+| `AUTH_SIGNUP_DISABLED` | The **fallback** when no sign-up policy is stored (SGN-1.4): `true` or `1` reads as `closed`, any other value (or unset) as `open`. A policy saved on **System settings → Sign-up** wins over it. |
+| `SIGNUP_POLICY_CACHE_TTL_SECONDS` | How long each server instance caches the effective sign-up policy (default `30`, clamped to 1–300). A policy change applies at once on the instance that saved it and within this window elsewhere. Read by apiome-ui and apiome-rest. |
 
 ## Tests forcing each code
 

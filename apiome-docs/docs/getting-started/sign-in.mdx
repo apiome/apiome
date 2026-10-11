@@ -52,6 +52,20 @@ Address** and **Password** and **click “Create Account”**. This sends a sign
 says what happens next. Once you can sign in, Apiome takes you through
 [first-tenant onboarding](./onboarding.mdx) if you are not part of an organization yet.
 
+### When you cannot create an account
+
+Your administrator decides who may sign up. If the installation does not accept your sign-up,
+the page says why instead of creating an account:
+
+| Message | What it means | What to do |
+| --- | --- | --- |
+| *New account sign-ups are currently disabled on this server.* | Sign-up is closed | Ask your administrator for an account |
+| *New accounts on this server are by invitation only.* | Only invited people get in | Ask a workspace administrator to set up your account and invite you |
+| *New accounts on this server are limited to approved email domains…* | Your email domain is not on the list | Sign up with your work email address |
+
+None of this affects an account you already have — sign in as usual. Administrators set this on
+[System settings](../admin/auth-providers.mdx#sign-up-policy).
+
 ## Where next
 
 - [Set up your first organization](./onboarding.mdx)

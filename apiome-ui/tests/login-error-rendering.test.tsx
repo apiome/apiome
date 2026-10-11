@@ -138,6 +138,8 @@ describe('retry affordance (OLO-3.2)', () => {
     expect(terminal).toContain(AUTH_ERROR_CODES.ACCOUNT_DISABLED);
     expect(terminal).toContain(AUTH_ERROR_CODES.MEMBERSHIP_SUSPENDED);
     expect(terminal).toContain(AUTH_ERROR_CODES.SIGNUP_DISABLED);
+    expect(terminal).toContain(AUTH_ERROR_CODES.SIGNUP_INVITE_ONLY);
+    expect(terminal).toContain(AUTH_ERROR_CODES.SIGNUP_DOMAIN_NOT_ALLOWED);
     expect(terminal).toContain(AUTH_ERROR_CODES.PROVIDER_NOT_CONFIGURED);
   });
 

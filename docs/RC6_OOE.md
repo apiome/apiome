@@ -113,7 +113,7 @@ flowchart LR
 
 Start these on day one; none depends on another.
 
-1. [#5653](https://github.com/apiome/apiome/issues/5653) SGN-1.4 sign-up policy
+1. [#5653](https://github.com/apiome/apiome/issues/5653) SGN-1.4 sign-up policy ✅
 2. [#4960](https://github.com/apiome/apiome/issues/4960) encrypt OAuth tokens and PATs at rest (`sev:high`)
 3. [#5006](https://github.com/apiome/apiome/issues/5006) backup-code redemption at login
 4. [#5655](https://github.com/apiome/apiome/issues/5655) TFA-1.1 two-factor for OAuth-only accounts
@@ -132,7 +132,6 @@ do. Lane C rows are in pick-up order within their wave.
 
 | # | Wave | Lane | Issue | ID | Title | Depends on | Tier |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 1 | A | [#5653](https://github.com/apiome/apiome/issues/5653) | SGN-1.4 | Sign-up policy — open, invite-only or closed, with allowed email domains **MVP** | — | Core |
 | 2 | 1 | A | [#4960](https://github.com/apiome/apiome/issues/4960) | OLO-7.3 follow-up | Encrypt OAuth tokens & PATs at rest | — | Core |
 | 3 | 1 | A | [#4961](https://github.com/apiome/apiome/issues/4961) | OLO-7.3 follow-up | Public Suffix List for callback allowlist & cookie-domain derivation | — | Core |
 | 4 | 1 | A | [#4963](https://github.com/apiome/apiome/issues/4963) | OLO-7.3 follow-up | Auth hygiene: link-route CSRF, login tenant fail-closed, identity-proxy scoping | — | Core |

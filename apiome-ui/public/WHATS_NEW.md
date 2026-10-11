@@ -33,6 +33,8 @@ We continue to improve the platform based on your feedback with improvements and
       retention, column documentation, row identity, classification and declared quality checks
   - Added pills to supported format list to show the source and type that the API format provides
   - Every format now declares which versions it reads and writes, and which version an export produces by default
+- Sign-up:
+  - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Documentation:

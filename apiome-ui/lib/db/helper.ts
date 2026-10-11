@@ -16,7 +16,9 @@ import { getAuthSession } from '../auth/server-session';
 import { buildGroupMetadataForSync } from '../utils/group-metadata';
 import { sortGroupsParentsBeforeChildren } from '../utils/group-sort';
 import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
-import { AUTH_ERROR_CODES } from '../auth/account-resolution';
+import { AUTH_ERROR_CODES, resolveEmailSignupDecision } from '../auth/account-resolution';
+import { resolveSignupPolicy } from '../auth/signup-policy-resolver';
+import { getAuthErrorCopy } from '@/app/login/auth-error-copy';
 import { upsertCredentialAccountPassword } from './credential-account';
 
 const connectionPool = require('./db');
@@ -2827,8 +2829,32 @@ export async function updateClassPropertyRef(classPropertyId: string, targetClas
   }
 }
 
+/**
+ * File an email sign-up request for a super-admin to approve.
+ *
+ * Gated by the installation sign-up policy (SGN-1.4, #5653) — the same gate every OAuth provider
+ * goes through (`resolveEmailSignupDecision`), so `closed`, `invite_only` and an allowed-domain
+ * list refuse an email sign-up exactly as they refuse an OAuth one.
+ *
+ * @param name The requester's display name.
+ * @param email The address to create the account with.
+ * @param password The chosen password (stored hashed).
+ * @param signupSource Free-text "how did you hear about us".
+ * @returns A JSON string: `{ success: true, message }`, `{ success: false, duplicate: true,
+ *   message }` for a repeat request, or `{ success: false, code, error }` when the policy refuses
+ *   the sign-up (`code` is the stable auth error code).
+ */
 export async function createSignupRequest(name: string, email: string, password: string, signupSource: string) {
   try {
+    const decision = resolveEmailSignupDecision(email, await resolveSignupPolicy());
+    if (decision.action === 'reject') {
+      return JSON.stringify({
+        success: false,
+        code: decision.code,
+        error: getAuthErrorCopy(decision.code)?.text,
+      });
+    }
+
     // Check if email already exists in signup table
     const existingSignup = await connectionPool.query(
       'SELECT email_address FROM apiome.signup WHERE email_address = $1',
