@@ -9,10 +9,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # REST API Base URL. Also used by *server-side* calls (the login-time provider resolver
-      # below), so in a container the default localhost is this container — point it at the REST
-      # service on the shared network (e.g. http://rest:8000/v1) or a reachable public URL.
+      # REST API Base URL (browser-facing; inlined into the bundle at build time).
       - NEXT_PUBLIC_REST_API_BASE_URL=${NEXT_PUBLIC_REST_API_BASE_URL:-http://localhost:8000/v1}
+      # REST API Base URL for *server-side* calls (the login-time provider resolver below), read
+      # at runtime. In a container localhost is this container — point it at the REST service on
+      # the shared network (e.g. http://rest:8000/v1). Unset ⇒ falls back to the value above.
+      - REST_API_BASE_URL=${REST_API_BASE_URL:-}
       # Public mock runtime URL (published-versions dashboard mock links)
       - APIOME_MOCK_PUBLIC_BASE_URL=${APIOME_MOCK_PUBLIC_BASE_URL:-http://localhost:8775}
       # Public API browser (apiome-browse)

@@ -156,6 +156,19 @@ each extra setting. The client credentials are:
 `apiome-ui/.env.example` lists them all with their extra settings — see
 [Operating Apiome](./operating-apiome.mdx).
 
+## If a saved provider does not appear at sign-in
+
+Sign-in reads what you save here from the REST API each time, and falls back to `.env` when it
+cannot. The server log of the app (or Studio) says which case you are in:
+
+| Log line | Meaning | Fix |
+| --- | --- | --- |
+| `INTERNAL_SERVICE_TOKEN is not set` | That container has no service token, so it never asks | Set the same `INTERNAL_SERVICE_TOKEN` there as on the REST API |
+| `resolved endpoint fetch to <url> failed` | The REST API was not reached at `<url>` | Set `REST_API_BASE_URL` in that container to the REST API's address on its network, such as `http://rest:8000/v1` — `localhost` inside a container is the container itself |
+| `resolved endpoint returned <status>` | The REST API answered with an error | `503`: the REST API has no token. `403`: the two tokens differ |
+
+Studio serves its own sign-in routes, so it needs both variables as well.
+
 ## With the API
 
 The console calls the REST API's super-admin endpoints:

@@ -210,10 +210,15 @@ async function fetchResolvedProviderConfig(env: EnvMap): Promise<FetchOutcome> {
     return { value: null, source: 'env-only' };
   }
 
+  // Prefer the runtime REST_API_BASE_URL: Next inlines NEXT_PUBLIC_* into the server bundle at build
+  // time, so an image built without it carries the localhost default no matter what the container's
+  // environment says — and inside a container localhost is the container itself.
+  const runtimeBaseUrl = env.REST_API_BASE_URL?.trim().replace(/\/+$/, '');
+  const resolvedUrl = `${runtimeBaseUrl || REST_API_BASE_URL}/internal/auth-providers/resolved`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await fetch(`${REST_API_BASE_URL}/internal/auth-providers/resolved`, {
+    const response = await fetch(resolvedUrl, {
       method: 'GET',
       cache: 'no-store',
       headers: {
@@ -242,10 +247,15 @@ async function fetchResolvedProviderConfig(env: EnvMap): Promise<FetchOutcome> {
     return { value: data, source: 'db' };
   } catch (error) {
     // Network error / timeout / abort. Degrade to env; message only, never the (secret-bearing) body.
+    // Name the URL and the underlying cause (ECONNREFUSED, ENOTFOUND, …): fetch's bare `TypeError`
+    // does not say which address was unreachable, and that address is what is misconfigured.
+    // Neither carries a secret — the token travels in a header.
+    const cause = error instanceof Error ? (error.cause as { code?: unknown } | undefined) : undefined;
+    const code = typeof cause?.code === 'string' ? `: ${cause.code}` : '';
     console.warn(
-      `[provider-config-resolver] resolved endpoint fetch failed (${
+      `[provider-config-resolver] resolved endpoint fetch to ${resolvedUrl} failed (${
         error instanceof Error ? error.name : 'unknown'
-      }); using env config`
+      }${code}); using env config`
     );
     return { value: null, source: 'unavailable' };
   } finally {
