@@ -91,6 +91,33 @@ version that sealed them; re-seal them onto the active key with
 but credentials cannot be sealed (storing a secret fails closed) or unsealed (discovery runs
 unauthenticated).
 
+#### Linked-account token encryption-at-rest (#4960)
+
+The OAuth access / refresh tokens and personal access tokens of linked accounts
+(`apiome.external_auth_providers`) are stored as ciphertext only — the same envelope scheme as
+above, under its own key map. **apiome-ui seals them and apiome-rest opens them**, so both services
+need the same value:
+
+```env
+# JSON map of integer key-version -> base64-encoded 32-byte (AES-256) master key.
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='{"1": "<base64 key>"}'
+# Optional: which version new tokens are sealed under (defaults to the highest version present).
+APIOME_LINKED_ACCOUNT_TOKEN_ACTIVE_KEY_VERSION=1
+```
+
+A sealed column value reads `enc:v1:<key_version>:<base64>`; a value without that prefix is a
+plaintext token written before migration V275, which still reads. Seal those rows — and, after
+adding a higher key-version, re-seal rows on the old key — with:
+
+```bash
+PYTHONPATH=src python -m app.seal_linked_account_tokens --dry-run   # counts only
+PYTHONPATH=src python -m app.seal_linked_account_tokens
+```
+
+If no key is configured the server still starts and plaintext rows still read, but a sealed token
+reads as "no token" (scans, imports and SDK pushes of private repositories report it missing).
+The token is unsealed in one place, `Database.get_external_auth_provider_for_user`.
+
 #### MCP credential REST + redaction (MCAT-6.5)
 
 Tenants manage an endpoint's outbound credential over three tenant-scoped routes under

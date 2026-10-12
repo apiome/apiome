@@ -66,6 +66,7 @@ from .mcp_badge_routes import router as mcp_badge_router
 from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 from .mcp_catalog_routes import mcp_endpoints_router
 from .mcp_collection_routes import router as mcp_collection_router
+from .linked_account_token_crypto import validate_linked_account_token_keys
 from .mcp_credential_crypto import validate_credential_encryption_keys
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_feed_routes import router as mcp_feed_router
@@ -160,7 +161,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.205.0",
+    version="1.205.1",
 )
 
 
@@ -544,6 +545,7 @@ async def startup_event():
     validate_credential_encryption_keys()
     validate_registry_credential_keys()
     validate_upstream_credential_keys()
+    validate_linked_account_token_keys()
     validate_auth_config_encryption_keys()
 
     # Bundled-toolchain self-check (FMT-1.3, #5414). Resolves and actually invokes every

@@ -134,6 +134,14 @@ services:
       # master key is "add a higher version". The ACTIVE_KEY_VERSION override is deliberately not
       # passed through: an empty value would fail integer parsing at startup.
       APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
+      # ── Linked-account token encryption (#4960) ─────────────────────────────────────────────
+      # Master-key map that seals the OAuth tokens and personal access tokens of linked accounts
+      # (external_auth_providers). apiome-ui seals them when a user links an account or saves a
+      # PAT; this service opens them to scan and import repositories — so the value must match
+      # apiome-ui's byte for byte. Optional pass-through (empty ⇒ unset): without it rows written
+      # before the upgrade still read, but a sealed token reads as "no token". Production inherits
+      # it. The ACTIVE_KEY_VERSION override is not passed through, for the reason given above.
+      APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS: ${APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS:-}
     depends_on:
       postgres:
         condition: service_healthy

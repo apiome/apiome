@@ -677,6 +677,17 @@ The store is layered **over** env, field by field:
 The table is created empty and rows are written lazily on first save, so a fresh deployment
 behaves exactly as if the store did not exist.
 
+### Linked-account tokens (`APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS`)
+
+The tokens a provider issues at sign-in, and the personal access tokens users save on a linked
+account, are a different secret from the client secrets below and have their own key (#4960).
+apiome-ui seals them before they are written (`lib/auth/linked-account-token-crypto.ts`) and
+apiome-rest opens them, so `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` — a JSON map of
+key-version to base64 32-byte key — must be **identical in both services**. Unset, sign-in and
+linking still work but no provider token is stored and saving a personal access token is refused;
+a token is never written in plaintext. Upgrade and rotation steps are in
+[`docs/runbooks/PRODUCTION_DEPLOY.md`](../../docs/runbooks/PRODUCTION_DEPLOY.md) §7.1.
+
 ### Encryption at rest and key rotation (`AUTH_CONFIG_ENC_KEY`)
 
 A plaintext secret in Postgres is strictly worse than one in an env var, so stored client secrets

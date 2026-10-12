@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.341.0] - 2026-10-11
+
+### Security
+- **Linked-account tokens are encrypted at rest (#4960, OLO-7.3 follow-up)**: the OAuth access and
+  refresh tokens and the personal access tokens stored for linked accounts
+  (`apiome.external_auth_providers`) were plaintext, so a database read — a leaked backup, a
+  replica, an injection — yielded live credentials to users' repositories. They are now sealed with
+  AES-256-GCM envelope encryption (`app.linked_account_token_crypto`, the same scheme as the MCP,
+  SDK-registry and upstream-credential vaults, under its own magic) and stored as
+  `enc:v1:<key_version>:<base64>`. apiome-ui seals a token when it writes it; apiome-rest opens it
+  in one place (`Database.get_external_auth_provider_for_user`), so repository scans, imports,
+  webhook rotation and SDK delivery are unchanged. The staged OAuth sign-up token set
+  (`oauth_signup_pending.account_json`) is sealed the same way, and Better Auth now seals its own
+  copies in `apiome.account`. Migration V275 clears the plaintext copies nothing reads and
+  corrects the column comments.
+
+  **Operators must act.** Set `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` — a JSON map of
+  key-version to base64 32-byte key — to the **same value in apiome-rest and apiome-ui**, then seal
+  the rows written before the upgrade with `python -m app.seal_linked_account_tokens`
+  (`--dry-run` previews; it prints counts only and is safe to re-run). Until the key is set,
+  existing plaintext rows still read, sign-in and account linking still work, but no new provider
+  token is stored and saving a personal access token is refused — a token is never written in
+  plaintext. Rotate by adding a higher key-version to the map in both services and running the
+  command again. No endpoint changed shape; the OpenAPI version moves to 1.205.1.
+
 ## [1.340.0] - 2026-10-11
 
 ### Added

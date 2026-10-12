@@ -119,7 +119,12 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // path Better Auth's email-based auto-link to an existing user is safe, and restricting it to the
   // OAuth vocabulary (`LINKABLE_PROVIDERS`: github|gitlab|azure|google) with a required verified
   // email keeps a stray provider from ever linking on its own.
+  // `encryptOAuthTokens` (#4960): Better Auth seals the provider access / refresh / id tokens it
+  // writes to `apiome.account` (keyed on the Better Auth secret), so they are never at rest in
+  // plaintext. apiome reads provider tokens from `external_auth_providers`, sealed by
+  // `linked-account-token-crypto.ts`; the `account` copies are Better Auth's own.
   account: {
+    encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
       trustedProviders: [...LINKABLE_PROVIDERS],
