@@ -58,6 +58,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
+  - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours
 
 ---
 

@@ -41,7 +41,6 @@ carries `triage:deferred` and its original release label until the revisit targe
 
 | Issue | Severity | Reason | Revisit | Constraint |
 |---|---|---|---|---|
-| [#4961](https://github.com/apiome/apiome/issues/4961) Public Suffix List for callback allowlist & cookie domain | sev:medium | Latent: the naive last-two-labels `registrableDomain()` is only exploitable when the app is served under a multi-label public suffix. RC deployments are self-hosted behind Caddy on `DEPLOY_*_DOMAIN` hosts, and no platform-preview host appears in `deploy/`. The review itself tags it v2. | v2 | Do not deploy the RC under a multi-label public suffix (`*.vercel.app`, `*.pages.dev`, `*.co.uk`, `github.io`). |
 | [#4962](https://github.com/apiome/apiome/issues/4962) Account enumeration on legacy self-signup | sev:medium | The oracle is reachable in the RC (the login page always offers "Create one"), but it reveals membership of the waitlist `signup` table only, not of user accounts, and grants no access. The review tags it v2. | v2 | — |
 | [#4963](https://github.com/apiome/apiome/issues/4963) Auth hygiene: link-route CSRF, login tenant fail-closed, identity-proxy scoping | sev:medium | Per the review, none of the three items is independently exploitable for account takeover. The link-intent cookie's user is server-derived. The login fail-open needs a concurrent membership-store outage *and* a tampered cookie. The proxy item is a confirm-and-test task. The review tags it v2. | v2 | — |
 

@@ -51,6 +51,41 @@ Every service reads its settings from environment variables. Each workspace ship
 The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
 [The admin console](./admin-console.mdx).
 
+### Domains, sign-in redirects and the session cookie
+
+The web app and Studio share one sign-in. Two things follow from the hostnames you deploy them on:
+
+- **The session cookie** is scoped to the installation's *registrable domain* — the part of the
+  hostname you own. For `app.example.com` that is `.example.com`; for `app.example.co.uk` it is
+  `.example.co.uk`.
+- **After sign-in, a person can be sent** to any `https` host under that same domain, or to one of
+  the app URLs you configured (`BETTER_AUTH_URL`, `NEXT_PUBLIC_MAIN_APP_URL`,
+  `NEXT_PUBLIC_STUDIO_URL`). Any other address is replaced with the default landing page.
+
+Apiome finds the registrable domain with the [Public Suffix List](https://publicsuffix.org/), so a
+shared hosting domain is never mistaken for yours:
+
+| The app is served from | Cookie domain | Also trusted after sign-in |
+| --- | --- | --- |
+| `app.example.com` | `.example.com` | every `https` host under `example.com` |
+| `app.example.co.uk` | `.example.co.uk` | every `https` host under `example.co.uk` |
+| `apiome.vercel.app` | `.apiome.vercel.app` | hosts under `apiome.vercel.app` only — not other `*.vercel.app` sites |
+
+`BETTER_AUTH_COOKIE_DOMAIN` overrides the cookie domain. Set it only to a domain you own: a value
+that does not match the app URLs, or that is a public suffix such as `.co.uk` or `.vercel.app`, is
+ignored and the domain is worked out from the app URLs instead.
+
+Two consequences for how you lay out hosts:
+
+- **Put the web app and Studio under one domain you own** (`app.example.com` and
+  `studio.example.com`) to share a sign-in between them. On a hosting platform's shared domain
+  they are separate sites: the session cookie is not shared between them, and Studio is a trusted
+  destination only when `NEXT_PUBLIC_STUDIO_URL` names it.
+- **Every host under your domain is inside the sign-in boundary.** A forgotten DNS record that
+  points at a service you no longer run can be claimed by someone else, and would then receive the
+  session cookie. Remove DNS records when you retire a host, and review the records under the
+  domain from time to time.
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a
