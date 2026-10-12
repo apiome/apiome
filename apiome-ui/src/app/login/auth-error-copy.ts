@@ -63,6 +63,14 @@ export const AUTH_ERROR_COPY: Readonly<Record<string, AuthErrorCopy>> = {
     type: 'info',
     text: 'New account sign-ups are currently disabled on this server. Contact your administrator to request an account or an invitation.',
   },
+  'signup-invite-only': {
+    type: 'info',
+    text: 'New accounts on this server are by invitation only. Ask a workspace administrator to set up your account and invite you.',
+  },
+  'signup-domain-not-allowed': {
+    type: 'info',
+    text: 'New accounts on this server are limited to approved email domains, and yours is not one of them. Sign up with your work email address, or contact your administrator.',
+  },
   'sign-in-failed': {
     type: 'error',
     text: 'Something went wrong while signing you in. Please try again, or contact support if the issue persists.',

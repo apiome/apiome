@@ -23,6 +23,8 @@ from app.account_resolution import (
     PROVIDER_ALREADY_LINKED,
     PROVIDER_NOT_CONFIGURED,
     SIGNUP_DISABLED,
+    SIGNUP_DOMAIN_NOT_ALLOWED,
+    SIGNUP_INVITE_ONLY,
     UNVERIFIED_EMAIL,
     ResolutionIdentity,
     ResolutionInput,
@@ -63,6 +65,8 @@ def test_every_code_keeps_its_documented_value():
     assert MEMBERSHIP_SUSPENDED == "membership-suspended"
     assert PROVIDER_NOT_CONFIGURED == "provider-not-configured"
     assert SIGNUP_DISABLED == "signup-disabled"
+    assert SIGNUP_INVITE_ONLY == "signup-invite-only"
+    assert SIGNUP_DOMAIN_NOT_ALLOWED == "signup-domain-not-allowed"
 
 
 def test_the_enumeration_lists_exactly_the_contract():
@@ -79,6 +83,8 @@ def test_the_enumeration_lists_exactly_the_contract():
             "membership-suspended",
             "provider-not-configured",
             "signup-disabled",
+            "signup-invite-only",
+            "signup-domain-not-allowed",
         }
     )
 

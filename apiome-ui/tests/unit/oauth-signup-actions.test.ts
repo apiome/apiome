@@ -34,6 +34,12 @@ jest.mock('../../lib/db/oauth-signup', () => ({
   insertAuthOneTimeCode: (...args: unknown[]) => mockInsertOneTimeCode(...args),
 }));
 
+const mockResolveSignupPolicy = jest.fn<Promise<unknown>, []>();
+
+jest.mock('../../lib/auth/signup-policy-resolver', () => ({
+  resolveSignupPolicy: () => mockResolveSignupPolicy(),
+}));
+
 jest.mock('../../lib/auth/first-tenant-provisioning', () => ({
   provisionFirstTenantViaRest: (...args: unknown[]) => mockProvisionViaRest(...args),
 }));
@@ -56,6 +62,7 @@ const PENDING = {
 
 /** Puts every mock into the happy-path state for user `user-1` / tenant `t-1`. */
 const primeHappyPath = () => {
+  mockResolveSignupPolicy.mockResolvedValue({ mode: 'open', allowedEmailDomains: [], source: 'env' });
   mockGetPending.mockResolvedValue({ ...PENDING });
   mockCreateUser.mockResolvedValue(ok({ user: { id: 'user-1' } }));
   mockClearUserPassword.mockResolvedValue(ok({ id: 'user-1' }));
@@ -131,6 +138,24 @@ describe('completeOAuthSignup', () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
     expect(mockProvisionViaRest).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['closed', { mode: 'closed', allowedEmailDomains: [] }, /sign-ups are currently disabled/i],
+    ['invite_only', { mode: 'invite_only', allowedEmailDomains: [] }, /by invitation only/i],
+    ['open + other domain', { mode: 'open', allowedEmailDomains: ['corp.example'] }, /approved email domains/i],
+  ])(
+    're-checks the sign-up policy before creating the account (%s)',
+    async (_name, signupPolicy, message) => {
+      // The pending row was admitted earlier; the policy has been tightened since (SGN-1.4).
+      mockResolveSignupPolicy.mockResolvedValue({ ...signupPolicy, source: 'db' });
+
+      const result = await completeOAuthSignup('pending-1', 'Ada', 'Acme Corp', 'acme');
+
+      expect(result).toEqual({ success: false, error: expect.stringMatching(message) });
+      expect(mockCreateUser).not.toHaveBeenCalled();
+      expect(mockProvisionViaRest).not.toHaveBeenCalled();
+    }
+  );
 
   it('refuses when the pending signup session is gone', async () => {
     mockGetPending.mockResolvedValue(null);

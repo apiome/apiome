@@ -68,6 +68,8 @@ export const SCREENS_DIR = 'img/screens';
  * @property {string} id - Stable id; also the image file stem.
  * @property {string} route - The product route the screen shows, e.g. `/ade/dashboard/catalog`.
  * @property {string} waitFor - CSS selector that must be visible before the capture.
+ * @property {string} [scrollTo] - CSS selector scrolled into view before the capture, for a
+ *   subject that sits below the fold of a long page.
  * @property {{x: number, y: number, width: number, height: number}} [clip] - Region to capture.
  * @property {string[]} mask - CSS selectors whose elements are painted over (dates, ids, counts).
  * @property {string[]} theme - Themes to capture, a subset of {@link SCREEN_THEMES}.
@@ -193,6 +195,10 @@ export function normalizeScreen(raw) {
     fail('`sources` must be a non-empty list of repository-relative paths');
   }
 
+  if (raw.scrollTo !== undefined && (typeof raw.scrollTo !== 'string' || raw.scrollTo.trim() === '')) {
+    fail('`scrollTo` must be a CSS selector');
+  }
+
   if (raw.clip !== undefined) {
     const {x, y, width, height} = raw.clip ?? {};
     if (![x, y].every((n) => Number.isInteger(n) && n >= 0) || !isPositiveInteger(width) || !isPositiveInteger(height)) {
@@ -206,6 +212,7 @@ export function normalizeScreen(raw) {
       id: raw.id,
       route: raw.route,
       waitFor: raw.waitFor,
+      ...(raw.scrollTo ? {scrollTo: raw.scrollTo} : {}),
       ...(raw.clip ? {clip: raw.clip} : {}),
       mask,
       theme: [...theme],

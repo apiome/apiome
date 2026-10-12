@@ -1,25 +1,66 @@
 ---
 title: Sign-in providers
-description: Configure GitHub, Microsoft, Google, Okta and other OAuth sign-in from the admin console.
+description: Set who can sign up, and configure GitHub, Microsoft, Google, Okta and other sign-in.
 sidebar_position: 8
-tags: [admin, legacy, sign-in, oauth]
+tags: [admin, legacy, sign-in, sign-up, oauth]
 ---
 
 <Route path="/admin/dashboard/settings" />
 
 <Legacy />
 
-**System settings** holds the installation's **sign-in providers** — the OAuth and OpenID Connect
-identity providers people can use on the sign-in page and link on
-[Linked accounts](../workspace/linked-accounts.mdx). Each provider can be configured in the
-**database**, from this screen, or in **`.env`**; a value stored here overrides the environment, and a
-blank field falls back to it. **Sign in to the admin console and choose System settings** in the
-sidebar.
+**System settings** holds two things for the whole installation: the **sign-up policy** — who may
+create an account — and the **sign-in providers** — the OAuth and OpenID Connect identity providers
+people can use on the sign-in page and link on [Linked accounts](../workspace/linked-accounts.mdx).
+Both can be set in the **database**, from this screen, or in **`.env`**; a value stored here
+overrides the environment, and a blank field falls back to it. **Sign in to the admin console and
+choose System settings** in the sidebar.
 
-<Screenshot id="admin-auth-providers" alt="System settings: the GitHub card enabled from the database with its secret set and a successful Validate, and the Microsoft card below it" />
+<Screenshot id="admin-auth-providers" alt="System settings scrolled past the Sign-up card to the GitHub card: enabled from the database, its secret set, and a successful Validate" />
 
-The list shows only providers that are **configured** — anything stored in the database for them, or
-a row that once existed. A provider set up purely in `.env` does not appear until you add it.
+The **Sign-up** card comes first, then one card per provider. The list shows only providers that
+are **configured** — anything stored in the database for them, or a row that once existed. A
+provider set up purely in `.env` does not appear until you add it.
+
+## Sign-up policy
+
+The **Sign-up** card decides who can create an account. One policy covers every way in — the email
+form and each sign-in provider — so a mode can never apply to one and not another. It only gates
+**new** accounts: people who already have an account sign in under every mode.
+
+<Screenshot id="admin-signup-policy" alt="System settings: the Sign-up card with Open chosen and northwind.io and contoso.example as allowed email domains, above the GitHub provider card" />
+
+| Mode | Who can create an account | What a refused person sees |
+| --- | --- | --- |
+| **Open** | Anyone. With **Allowed email domains** filled in, only addresses at those domains | *New accounts on this server are limited to approved email domains…* |
+| **Invite only** | No one on their own. A workspace administrator [invites](../workspace/members.mdx) people who already have an account, and they sign in as usual | *New accounts on this server are by invitation only…* |
+| **Closed** | No one | *New account sign-ups are currently disabled on this server…* |
+
+To set the policy:
+
+1. Under **Who can create an account**, **choose “Open”, “Invite only” or “Closed”**.
+2. For **Open**, optionally fill in **Allowed email domains** — one domain per line, for example
+   `northwind.io`. Leave it empty to allow any domain. Domains match exactly, so list a subdomain
+   such as `mail.northwind.io` on its own line. The field is switched off for the other two modes.
+3. **Click “Save”**. A **Saved** note confirms it, and the footer reads *Last changed … by …*.
+
+An entry that is not a domain — an email address, a URL, a wildcard — is named under the field and
+**Save** stays switched off until it is fixed.
+
+**Until you save a policy, `.env` decides.** The card then carries an **Env-derived** chip and its
+footer reads *Not stored — .env gives Open* (or *Closed*): `AUTH_SIGNUP_DISABLED=true` in
+`apiome-ui/.env` closes sign-up, and anything else leaves it open. Saving stores the policy in the
+database, where it wins over the variable. **Click “Use .env”** to remove the stored policy and go
+back to the variable.
+
+A saved policy applies to the next sign-up — no restart. Other server instances pick it up when
+their policy cache expires, within 30 seconds by default (`SIGNUP_POLICY_CACHE_TTL_SECONDS`, 1–300
+seconds, read by both apiome-ui and apiome-rest). Tightening the policy also stops a sign-up that
+is part-way through. Every change is recorded in the `apiome.signup_policy_audit` table with the
+policy before and after it.
+
+If the database cannot be read, Apiome keeps using the last policy it read; with none to fall back
+on, it refuses new accounts until the database is back.
 
 ## The providers
 
@@ -162,10 +203,14 @@ The console calls the REST API's super-admin endpoints:
 
 - `GET /v1/admin/auth-providers` — every provider's configuration, with secrets masked;
 - `PUT /v1/admin/auth-providers/{provider_id}` — update the fields sent;
-- `DELETE /v1/admin/auth-providers/{provider_id}` — remove the stored row.
+- `DELETE /v1/admin/auth-providers/{provider_id}` — remove the stored row;
+- `GET /v1/admin/signup-policy` — the sign-up policy in effect, and whether it is stored or
+  comes from `.env`;
+- `PUT /v1/admin/signup-policy` — store the policy, or send `"mode": null` to remove the stored
+  one.
 
-See the [API reference](../reference/api-reference.md). There is no CLI command for sign-in
-providers.
+See the [API reference](../reference/api-reference.md). There is no CLI command for the sign-up
+policy or sign-in providers.
 
 ## Where next
 

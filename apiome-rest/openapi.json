@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.204.1",
+    "version": "1.205.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -85856,6 +85856,172 @@
         }
       }
     },
+    "/v1/admin/signup-policy": {
+      "get": {
+        "tags": [
+          "admin-signup-policy"
+        ],
+        "summary": "Get Signup Policy",
+        "description": "Read the installation sign-up policy (SGN-1.4).\n\nReads the stored row directly rather than the cached policy, so the admin console always shows\nwhat is actually stored.\n\nReturns:\n    The effective policy, with ``source`` telling a stored policy from the env fallback.",
+        "operationId": "get_signup_policy_v1_admin_signup_policy_get",
+        "parameters": [
+          {
+            "name": "X-Admin-Session",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Signup Policy Xadmin Session schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Signup Policy Xadmin Session schema."
+                }
+              ],
+              "title": "X-Admin-Session",
+              "description": "X-Admin-Session schema."
+            },
+            "description": "Header parameter: X Admin Session."
+          },
+          {
+            "name": "admin_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Signup Policyadminsession schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Signup Policyadminsession schema."
+                }
+              ],
+              "title": "Admin Session",
+              "description": "Admin Session schema."
+            },
+            "description": "Cookie parameter: admin session."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get signup policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupPolicyView",
+                  "description": "Response payload for get signup policyresponse200."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No super-admin session presented."
+          },
+          "403": {
+            "description": "Super-admin session invalid or expired."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get signup policyresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin-signup-policy"
+        ],
+        "summary": "Update Signup Policy",
+        "description": "Store, change or clear the installation sign-up policy (SGN-1.4).\n\nThe change is audited and applies to the next sign-up on this instance; other instances apply\nit within the policy cache lifetime. It gates creating an account only \u2014 existing users keep\nsigning in under every mode.\n\nArgs:\n    payload: The new policy, or ``mode: null`` to clear the stored one.\n\nReturns:\n    The effective policy after the write.\n\nRaises:\n    HTTPException: ``422`` with a structured body when the mode is not one of the three modes\n        (``invalid_mode``) or a domain entry is malformed (``invalid_email_domain``).",
+        "operationId": "update_signup_policy_v1_admin_signup_policy_put",
+        "parameters": [
+          {
+            "name": "X-Admin-Session",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Signup Policy Xadmin Session schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Signup Policy Xadmin Session schema."
+                }
+              ],
+              "title": "X-Admin-Session",
+              "description": "X-Admin-Session schema."
+            },
+            "description": "Header parameter: X Admin Session."
+          },
+          {
+            "name": "admin_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Signup Policyadminsession schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Signup Policyadminsession schema."
+                }
+              ],
+              "title": "Admin Session",
+              "description": "Admin Session schema."
+            },
+            "description": "Cookie parameter: admin session."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupPolicyUpdateRequest",
+                "description": "Request body for update signup policyrequest."
+              }
+            }
+          },
+          "description": "Request body for update signup policy."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update signup policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupPolicyView",
+                  "description": "Response payload for update signup policyresponse200."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No super-admin session presented."
+          },
+          "403": {
+            "description": "Super-admin session invalid or expired."
+          },
+          "422": {
+            "description": "Unknown mode, or an invalid or over-long email-domain list."
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -95637,7 +95803,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "completed_at": {
             "anyOf": [
@@ -97547,7 +97713,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "comment_count": {
             "type": "integer",
@@ -97775,7 +97941,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "comment_count": {
             "type": "integer",
@@ -98306,14 +98472,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -100338,7 +100504,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "b55d4d39-e235-4342-9de3-e518ae4cdc64"
+            "example": "173ce6ca-60f0-43f8-aff1-37d86c0c7519"
           },
           "method": {
             "type": "string",
@@ -102865,7 +103031,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -104601,7 +104767,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "browse_url": {
             "anyOf": [
@@ -144443,7 +144609,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           }
         },
         "additionalProperties": false,
@@ -150160,6 +150326,107 @@
         "title": "SharedResponseSchema",
         "description": "SharedResponseSchema schema."
       },
+      "SignupPolicyUpdateRequest": {
+        "properties": {
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for signup policy update."
+              },
+              {
+                "type": "null",
+                "description": "Request body for signup policy update."
+              }
+            ],
+            "title": "Mode",
+            "description": "'open', 'invite_only' or 'closed' to store the policy; null to clear the stored policy so the installation reverts to AUTH_SIGNUP_DISABLED."
+          },
+          "allowed_email_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Email Domains",
+            "description": "Email domains allowed to sign up while the mode is 'open' (e.g. 'example.com'). At most 200; matched exactly, so list subdomains separately. Ignored when mode is null.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "SignupPolicyUpdateRequest",
+        "description": "Body of ``PUT /v1/admin/signup-policy``.\n\nThe policy is replaced as a whole: send the mode and the full domain list every time."
+      },
+      "SignupPolicyView": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "Effective mode: 'open', 'invite_only' or 'closed'.",
+            "example": "example"
+          },
+          "allowed_email_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Email Domains",
+            "description": "Email domains allowed to sign up while the mode is 'open'. Empty means any domain.",
+            "maxItems": 1000
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "'db' when the policy is stored in the database; 'env' when none is stored and AUTH_SIGNUP_DISABLED governs.",
+            "example": "human"
+          },
+          "env_mode": {
+            "type": "string",
+            "title": "Env Mode",
+            "description": "The mode the env fallback gives ('closed' when AUTH_SIGNUP_DISABLED is true, else 'open') \u2014 what applies if the stored policy is cleared.",
+            "example": "example"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Signup Policy View schema."
+              },
+              {
+                "type": "null",
+                "description": "Signup Policy View schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "When the stored policy was last changed; null when none is stored."
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Signup Policy View schema."
+              },
+              {
+                "type": "null",
+                "description": "Signup Policy View schema."
+              }
+            ],
+            "title": "Updated By",
+            "description": "Who last changed the stored policy; null when none is stored."
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "source",
+          "env_mode"
+        ],
+        "title": "SignupPolicyView",
+        "description": "The installation sign-up policy \u2014 the shape both GET and PUT return."
+      },
       "SiteBody": {
         "properties": {
           "id": {
@@ -155664,7 +155931,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "detected_by": {
             "anyOf": [
@@ -162719,14 +162986,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-08T00:57:09Z"
+            "example": "2026-10-11T21:35:18Z"
           },
           "outcome": {
             "anyOf": [

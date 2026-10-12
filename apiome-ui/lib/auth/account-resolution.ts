@@ -25,6 +25,14 @@
  * `credentials.ts` for the production wiring).
  */
 
+import {
+  SIGNUP_REJECTION_CODES,
+  isSignupDisabledByEnv,
+  signupPolicyFromEnv,
+  signupRejectionCode,
+  type SignupPolicy,
+} from './signup-policy';
+
 /**
  * Stable machine-readable auth error codes — the structured auth error contract (OLO-1.5, #4190).
  *
@@ -63,8 +71,12 @@ export const AUTH_ERROR_CODES = {
   MEMBERSHIP_SUSPENDED: 'membership-suspended',
   /** The requested sign-in provider is not configured/supported on this deployment. */
   PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
-  /** Self-signup is disabled on this deployment (AUTH_SIGNUP_DISABLED). */
-  SIGNUP_DISABLED: 'signup-disabled',
+  /** Self-signup is disabled on this deployment (sign-up policy `closed`; SGN-1.4). */
+  SIGNUP_DISABLED: SIGNUP_REJECTION_CODES.SIGNUP_DISABLED,
+  /** Sign-up is by invitation only and the address has no account (policy `invite_only`). */
+  SIGNUP_INVITE_ONLY: SIGNUP_REJECTION_CODES.SIGNUP_INVITE_ONLY,
+  /** Sign-up is open, but not to the address's email domain (policy allowed-domain list). */
+  SIGNUP_DOMAIN_NOT_ALLOWED: SIGNUP_REJECTION_CODES.SIGNUP_DOMAIN_NOT_ALLOWED,
   /**
    * Generic sign-in failure with no user-actionable detail. Used by the NextAuth `signIn`
    * callback's defensive fallback when a provider yields no resolvable user, so the redirect
@@ -77,18 +89,16 @@ export const AUTH_ERROR_CODES = {
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
 
 /**
- * Whether self-signup is disabled for this deployment (`AUTH_SIGNUP_DISABLED=true|1`).
- * When disabled, a verified email with no existing account is rejected with the stable
- * `signup-disabled` code instead of being routed to onboarding.
+ * Whether the **env fallback** disables self-signup (`AUTH_SIGNUP_DISABLED=true|1`).
+ *
+ * Since SGN-1.4 the env flag is only the fallback for an installation with no stored sign-up
+ * policy; enforcement reads the effective policy (`signup-policy-resolver.ts`), not this.
  *
  * @param env Environment to read (injectable for tests; defaults to `process.env`).
  * @returns True when the flag is explicitly set to `true` or `1`.
  */
 export function isSignupDisabled(env: Record<string, string | undefined> = process.env): boolean {
-  const raw = env.AUTH_SIGNUP_DISABLED;
-  if (typeof raw !== 'string') return false;
-  const normalized = raw.trim().toLowerCase();
-  return normalized === 'true' || normalized === '1';
+  return isSignupDisabledByEnv(env);
 }
 
 /**
@@ -302,8 +312,15 @@ export interface ResolutionInput {
   /**
    * True when this deployment refuses self-signup (see `isSignupDisabled`). A verified email with
    * no existing account is then rejected with `signup-disabled` instead of routed to onboarding.
+   * Kept for callers that only know the env flag; `signupPolicy` supersedes it when both are given.
    */
   signupDisabled?: boolean;
+  /**
+   * The installation sign-up policy (SGN-1.4, see `signup-policy.ts`). It gates step (c) only — a
+   * verified email with no existing account — and never an existing user's sign-in. Absent means
+   * "no policy supplied": sign-up is open unless `signupDisabled` is set.
+   */
+  signupPolicy?: SignupPolicy | null;
 }
 
 /** What the engine decided; `executeResolutionDecision` turns this into effects. */
@@ -381,11 +398,48 @@ export function resolveAccountDecision(input: ResolutionInput): ResolutionDecisi
   }
 
   // (c) Verified email, no account → create user + identity (routed via onboarding/signup),
-  //     unless this deployment refuses self-signup.
-  if (input.signupDisabled) {
-    return { action: 'reject', code: AUTH_ERROR_CODES.SIGNUP_DISABLED };
+  //     unless the installation sign-up policy refuses it (SGN-1.4).
+  const policy =
+    input.signupPolicy ??
+    (input.signupDisabled ? signupPolicyFromEnv({ AUTH_SIGNUP_DISABLED: 'true' }) : null);
+  const rejection = policy ? signupRejectionCode(policy, email) : null;
+  if (rejection) {
+    return { action: 'reject', code: rejection };
   }
   return { action: 'signup', email };
+}
+
+/** What an email (credential) sign-up attempt resolves to — see `resolveEmailSignupDecision`. */
+export type EmailSignupDecision =
+  | { action: 'signup'; email: string }
+  | { action: 'sign-in'; user: ResolutionUser }
+  | { action: 'reject'; code: AuthErrorCode };
+
+/**
+ * Decide an **email** (credential) sign-up under the same policy as OAuth (SGN-1.4).
+ *
+ * The email form has no provider identity, so only the last two steps of the policy apply: an
+ * address that already has an account is never given a second one, and a new address is admitted
+ * or refused by exactly the gate OAuth step (c) uses (`signupRejectionCode`).
+ *
+ * @param email The address submitted on the sign-up form.
+ * @param policy The effective installation sign-up policy.
+ * @param emailUser Existing user whose canonical email equals `email`, if any.
+ * @returns `signup` with the canonical email when the account may be created; `sign-in` naming
+ *   the existing user when the address already has an account (the caller decides how to respond
+ *   without revealing that); otherwise `reject` with the stable code.
+ */
+export function resolveEmailSignupDecision(
+  email: unknown,
+  policy: SignupPolicy,
+  emailUser: ResolutionUser | null = null
+): EmailSignupDecision {
+  const canonical = canonicalizeEmail(email);
+  if (!canonical) return { action: 'reject', code: AUTH_ERROR_CODES.EMAIL_REQUIRED };
+  if (emailUser) return { action: 'sign-in', user: emailUser };
+  const rejection = signupRejectionCode(policy, canonical);
+  if (rejection) return { action: 'reject', code: rejection };
+  return { action: 'signup', email: canonical };
 }
 
 /** Result contract of a NextAuth signIn callback: `true` to admit, or a redirect path. */
@@ -419,6 +473,11 @@ export interface ResolutionStore {
   ): Promise<void>;
   /** Stamp users.last_login_at (best-effort; must not block sign-in). */
   recordUserLogin(userId: string): Promise<void>;
+  /**
+   * Read the effective installation sign-up policy (SGN-1.4). Optional so a store that does not
+   * provide it (older test doubles) keeps the env-fallback behaviour.
+   */
+  getSignupPolicy?(): Promise<SignupPolicy>;
   /** Persist a pending self-signup row and return its token for the onboarding redirect. */
   createPendingSignup(
     provider: string,
@@ -575,6 +634,11 @@ export async function resolveOAuthSignIn(
     }
   }
   const emailUser = email ? await store.getUserByEmail(email) : null;
+  // The sign-up policy only matters when no account exists yet, so it is read only then.
+  const needsSignupPolicy = !linkIntentUserId && !identity.found && !emailUser;
+  const signupPolicy = needsSignupPolicy
+    ? ((await store.getSignupPolicy?.()) ?? signupPolicyFromEnv())
+    : null;
 
   const decision = resolveAccountDecision({
     provider,
@@ -584,7 +648,7 @@ export async function resolveOAuthSignIn(
     linkToUserId: linkIntentUserId,
     identity,
     emailUser,
-    signupDisabled: isSignupDisabled(),
+    signupPolicy,
   });
 
   switch (decision.action) {

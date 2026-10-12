@@ -3239,6 +3239,116 @@ class Database:
             conn.rollback()
             raise e
 
+    # ------------------------------------------------------------------
+    # Installation sign-up policy (SGN-1.4, #5653) — apiome.signup_policy (V274)
+    # ------------------------------------------------------------------
+
+    #: Columns read back for the sign-up policy row.
+    SIGNUP_POLICY_READ_COLUMNS = ("mode", "allowed_email_domains", "updated_at", "updated_by")
+
+    def get_signup_policy(self) -> Optional[Dict[str, Any]]:
+        """Read the stored installation sign-up policy (SGN-1.4, #5653).
+
+        Returns:
+            The single ``apiome.signup_policy`` row, or ``None`` when no policy is stored — the
+            caller then falls back to env (``AUTH_SIGNUP_DISABLED``). A database that has not had
+            V274 applied yet also reads as ``None``: the table not existing is the same "nothing
+            stored" state, so env behaviour is unchanged until the migration runs.
+        """
+        select_cols = ", ".join(self.SIGNUP_POLICY_READ_COLUMNS)
+        query = f"SELECT {select_cols} FROM apiome.signup_policy WHERE singleton"
+        try:
+            results = self.execute_query(query)
+        except pg_errors.UndefinedTable:
+            return None
+        return results[0] if results else None
+
+    def set_signup_policy(
+        self,
+        mode: Optional[str],
+        allowed_email_domains: List[str],
+        updated_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store, change or clear the installation sign-up policy, with its audit row.
+
+        The change and its ``apiome.signup_policy_audit`` row are written in one transaction, so a
+        policy change is never stored without being audited (or audited without being stored). The
+        existing row is locked first so the recorded ``before_policy`` is the state actually
+        replaced.
+
+        Args:
+            mode: ``open`` | ``invite_only`` | ``closed`` to store the policy; ``None`` to clear the
+                stored policy so the installation reverts to env. Assumed already validated — the
+                V274 CHECK is the final backstop.
+            allowed_email_domains: Normalized lower-case domains (ignored when clearing).
+            updated_by: Identity of the super-admin making the change.
+
+        Returns:
+            The stored row after the write, or ``None`` when the policy was cleared.
+        """
+        select_cols = ", ".join(self.SIGNUP_POLICY_READ_COLUMNS)
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT mode, allowed_email_domains FROM apiome.signup_policy "
+                    "WHERE singleton FOR UPDATE"
+                )
+                existing = cursor.fetchone()
+                before = (
+                    {
+                        "mode": existing["mode"],
+                        "allowed_email_domains": list(existing["allowed_email_domains"] or []),
+                    }
+                    if existing
+                    else None
+                )
+
+                if mode is None:
+                    cursor.execute("DELETE FROM apiome.signup_policy WHERE singleton")
+                    result = None
+                    after = None
+                    action = "cleared"
+                else:
+                    cursor.execute(
+                        f"""
+                        INSERT INTO apiome.signup_policy
+                            (singleton, mode, allowed_email_domains, updated_by)
+                        VALUES (TRUE, %s, %s, %s)
+                        ON CONFLICT (singleton) DO UPDATE SET
+                            mode = EXCLUDED.mode,
+                            allowed_email_domains = EXCLUDED.allowed_email_domains,
+                            updated_by = EXCLUDED.updated_by
+                        RETURNING {select_cols}
+                        """,
+                        (mode, list(allowed_email_domains), updated_by),
+                    )
+                    result = cursor.fetchone()
+                    after = {"mode": mode, "allowed_email_domains": list(allowed_email_domains)}
+                    action = "updated"
+
+                # Nothing changed (clearing an already-absent policy, or re-saving identical
+                # values) ⇒ no ledger noise.
+                if before != after:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.signup_policy_audit
+                            (action, actor, before_policy, after_policy)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (
+                            action,
+                            updated_by,
+                            Json(before) if before is not None else None,
+                            Json(after) if after is not None else None,
+                        ),
+                    )
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     # ==================== Project CRUD Operations ====================
     # NOTE: queries below select `change_report_template_version_id`, which requires
     # migration 20260414-150000.sql. Ensure that migration is applied before deploying.

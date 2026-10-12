@@ -16,6 +16,7 @@
 import * as helper from '../db/helper';
 import { upsertOauthSignupPending } from '../db/oauth-signup';
 import type { ResolutionStore, ResolutionUser } from './account-resolution';
+import { resolveSignupPolicy } from './signup-policy-resolver';
 
 /**
  * Map a `users` row onto the account facts the resolution engine decides over.
@@ -80,6 +81,10 @@ export const resolutionStore: ResolutionStore = {
 
   async recordUserLogin(userId) {
     await helper.updateUserLastLoginAt(userId);
+  },
+
+  async getSignupPolicy() {
+    return resolveSignupPolicy();
   },
 
   async createPendingSignup(provider, providerUserId, email, account, profile) {

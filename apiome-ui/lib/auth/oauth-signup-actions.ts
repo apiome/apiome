@@ -4,6 +4,9 @@ import crypto from 'crypto';
 import { createUser, deleteUser, clearUserPassword } from '../db/admin-helper';
 import { linkExternalAccount, isTenantSlugTaken } from '../db/helper';
 import { resolveOAuthEmailVerified } from './account-resolution';
+import { signupRejectionCode } from './signup-policy';
+import { resolveSignupPolicy } from './signup-policy-resolver';
+import { getAuthErrorCopy } from '@/app/login/auth-error-copy';
 import {
   getOauthSignupPendingById,
   deleteOauthSignupPendingById,
@@ -91,6 +94,17 @@ export async function completeOAuthSignup(
   const email = pending.email?.trim().toLowerCase();
   if (!email) {
     return { success: false, error: 'No email is available from the OAuth provider.' };
+  }
+
+  // The sign-up policy admitted this address when the pending row was created, but that can be up
+  // to an hour ago. Re-check here, at the point the account is actually created, so tightening
+  // the policy (SGN-1.4) also stops sign-ups already in flight.
+  const policyRejection = signupRejectionCode(await resolveSignupPolicy(), email);
+  if (policyRejection) {
+    return {
+      success: false,
+      error: getAuthErrorCopy(policyRejection)?.text ?? 'Sign-up is not available on this server.',
+    };
   }
 
   const account = pending.account_json || {};

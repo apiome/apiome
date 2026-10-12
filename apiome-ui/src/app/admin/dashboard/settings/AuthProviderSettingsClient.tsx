@@ -52,6 +52,8 @@ import {
 } from '@lib/auth/admin-provider-config';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
+import SignupPolicyCard from './SignupPolicyCard';
+import { INPUT_CLASSES, SECONDARY_BUTTON_CLASSES } from './settingsStyles';
 
 /** The three admin-selectable enablement states (mirrors `enabled: true | false | null`). */
 type EnablementChoice = 'on' | 'off' | 'env';
@@ -112,14 +114,6 @@ function EnablementChip({ enabled }: { enabled: boolean | null }) {
     </span>
   );
 }
-
-/** Shared classes for the card text inputs. */
-const INPUT_CLASSES =
-  'w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600';
-
-/** Shared classes for secondary (outline) buttons. */
-const SECONDARY_BUTTON_CLASSES =
-  'inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 
 /** Shared classes for the destructive (remove) confirmation button. */
 const DANGER_BUTTON_CLASSES =
@@ -1256,7 +1250,7 @@ function ProviderCard({
   );
 }
 
-/** The System settings screen: header plus one card per configured provider. */
+/** The System settings screen: header, the Sign-up card, then one card per configured provider. */
 export default function AuthProviderSettingsClient() {
   const [providers, setProviders] = useState<AdminProviderConfigView[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -1327,7 +1321,8 @@ export default function AuthProviderSettingsClient() {
               System settings
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Sign-in providers — database values override .env; blank fields fall back to .env.
+              Sign-up policy and sign-in providers — database values override .env; blank
+              fields fall back to .env.
             </p>
           </div>
           <AddProviderModal
@@ -1340,6 +1335,8 @@ export default function AuthProviderSettingsClient() {
 
       <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
+          <SignupPolicyCard />
+
           {loading && (
             <div className="flex items-center gap-2 py-10 text-sm text-slate-500 dark:text-slate-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading provider configuration…

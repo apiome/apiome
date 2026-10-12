@@ -21,6 +21,7 @@ import '@testing-library/jest-dom';
 
 import AuthProviderSettingsClient from '../src/app/admin/dashboard/settings/AuthProviderSettingsClient';
 import type { AdminProviderConfigView } from '../lib/auth/admin-provider-config';
+import type { AdminSignupPolicyView } from '../lib/auth/admin-signup-policy';
 
 // `AdminSidebar` (the docs fixtures' frame) reads the App Router; the settings client does not.
 jest.mock('next/navigation', () => ({
@@ -135,6 +136,16 @@ const DEFAULT_LIST = {
   providers: [GITHUB, GITLAB, AZURE, GOOGLE, OKTA, AWS, KEYCLOAK, OIDC, AUTH0, LINE, VK, WECHAT, ATLASSIAN],
 };
 
+/** What `GET /api/admin/signup-policy` answers: nothing stored, so the card shows the env mode. */
+const signupPolicyBody: AdminSignupPolicyView = {
+  mode: 'open',
+  allowed_email_domains: [],
+  source: 'env',
+  env_mode: 'open',
+  updated_at: null,
+  updated_by: null,
+};
+
 /**
  * Install a fetch mock; `putHandler` decides PUT responses, `listBodies` queues GET bodies,
  * `deleteHandler` decides DELETE responses (removal — omit it to leave DELETE unhandled).
@@ -148,6 +159,10 @@ function mockFetch(
   const impl = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? 'GET';
+    // The Sign-up card (SGN-1.4) shares the screen and loads its own policy.
+    if (url === '/api/admin/signup-policy' && method === 'GET') {
+      return { ok: true, status: 200, json: async () => signupPolicyBody } as unknown as Response;
+    }
     if (method === 'GET') {
       const body = listBodies[Math.min(listCall, listBodies.length - 1)];
       listCall += 1;
@@ -257,7 +272,8 @@ describe('AuthProviderSettingsClient — rendering', () => {
 
     expect(await screen.findByText('No providers configured.')).toBeInTheDocument();
     expect(screen.getByText('Click Add to add a new provider.')).toBeInTheDocument();
-    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+    // The Sign-up card is the only card left on the screen.
+    expect(screen.queryByRole('region', { name: /provider configuration/ })).not.toBeInTheDocument();
   });
 
   it('offers unconfigured providers in the Add modal, coming-soon ones disabled', async () => {
@@ -377,8 +393,11 @@ describe('AuthProviderSettingsClient — rendering', () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('down')) as unknown as typeof fetch;
     render(<AuthProviderSettingsClient />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/could not be reached/);
-    expect(screen.getByRole('button', { name: /Retry/ })).toBeInTheDocument();
+    // Both cards on the screen failed to load; the provider list reports its own failure.
+    const alert = (
+      await screen.findByText('Could not load provider configuration: the server could not be reached.')
+    ).closest('[role="alert"]') as HTMLElement;
+    expect(within(alert).getByRole('button', { name: /Retry/ })).toBeInTheDocument();
   });
 });
 
