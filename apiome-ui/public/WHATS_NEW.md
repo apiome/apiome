@@ -56,6 +56,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Hardens tool array emit for LLM tool summary
 - Studio:
   - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
+- Security:
+  - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
 
 ---
 

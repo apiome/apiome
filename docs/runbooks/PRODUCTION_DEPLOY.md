@@ -77,7 +77,16 @@ Generate each secret with the commands documented inline in
 openssl rand -base64 24   # POSTGRES_PASSWORD, APIOME_MCP_INTERNAL_SECRET
 openssl rand -base64 32   # BETTER_AUTH_SECRET  (must match apiome-ui)
 openssl rand -hex 32      # APIOME_BACKUP_KEY → store in the secret manager, NOT on this host
+# APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS (must match apiome-ui) — the base64 key inside {"1": "…"}:
+python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
 ```
+
+`APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` seals the OAuth tokens and personal access tokens
+of linked accounts (#4960). apiome-ui encrypts them and apiome-rest decrypts them, so both must
+hold the **same** value. Without it nothing breaks loudly: sign-in works, but no provider token is
+stored, so private-repository scans and imports report a missing token and saving a personal
+access token is refused. Keep the key in your secret manager — if it is lost the stored tokens
+cannot be read and every user has to re-link their account.
 
 ### 3.1 Sign-in providers configured from the admin screen (optional)
 
@@ -255,6 +264,35 @@ dc ps                         # verify healthy
 
 Because the migration is a separate gated step, schema and code roll forward together but are
 reviewed independently. Always take the pre-migration backup — it is the §8 rollback point.
+
+### 7.1 Upgrading across the linked-account token encryption change (#4960, migration V275)
+
+Before V275, linked-account OAuth tokens and personal access tokens were stored in plaintext.
+Releases from V275 on encrypt every token they write, and still read the plaintext rows an older
+release left behind — but those rows stay plaintext until you seal them. Once, on the first upgrade
+past V275:
+
+1. Set `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` in `.env` **and** in apiome-ui's environment —
+   the same value in both (§3).
+2. Run the upgrade above, and redeploy apiome-ui at the same release.
+3. When no older apiome-ui instance is still serving traffic, seal the existing rows:
+
+   ```bash
+   dc exec rest python -m app.seal_linked_account_tokens --dry-run   # counts only
+   dc exec rest python -m app.seal_linked_account_tokens
+   ```
+
+   The command prints counts and never a token, and is safe to re-run. `tokens_unreadable` above
+   zero (exit status 1) means some rows were sealed under a key that is no longer configured;
+   restore that key-version to the map, or have those users re-link.
+
+V275 itself clears the provider tokens Better Auth kept in `apiome.account` (nothing reads them;
+they are rewritten, encrypted, at each account's next OAuth sign-in) and the plaintext tokens of
+any OAuth sign-up still in flight — that sign-up completes, without a stored provider token.
+
+**Rotating the key:** add a higher version to the map in both services
+(`{"1": "<old>", "2": "<new>"}`), redeploy, and run the same command — it re-seals every row under
+the newest version. Remove the old version only once it reports `tokens_resealed: 0`.
 
 ---
 

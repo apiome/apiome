@@ -30,6 +30,7 @@ from .draft_bindings import (
     STATUS_APPLIED as STATUS_BINDING_APPLIED,
 )
 from .jsonschema_generator import generate_class_jsonschema_spec
+from .linked_account_token_crypto import unseal_token
 from .lint_evidence import (
     SUBJECT_CATALOG_REVISION,
     SUBJECT_MCP_ENDPOINT_VERSION,
@@ -15775,6 +15776,20 @@ class Database:
         return str(v) if v is not None else None
 
     def get_external_auth_provider_for_user(self, linked_account_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Read one of a user's linked accounts, with its access token ready to use (#4960).
+
+        The token column holds ciphertext (``app.linked_account_token_crypto``); this is the one
+        place apiome-rest reads it, so every caller receives the plaintext token transparently.
+
+        Args:
+            linked_account_id: The ``external_auth_providers.id`` to read.
+            user_id: The owning user; a row belonging to anyone else is not returned.
+
+        Returns:
+            ``id``, ``user_id``, ``provider`` and ``access_token`` (the unsealed token, or ``None``
+            when the account holds none or its sealed token cannot be opened), or ``None`` when no
+            such linked account belongs to the user.
+        """
         q = """
             SELECT id, user_id, provider, access_token
             FROM apiome.external_auth_providers
@@ -15782,7 +15797,11 @@ class Database:
             LIMIT 1
         """
         rows = self.execute_query(q, (linked_account_id, user_id))
-        return dict(rows[0]) if rows else None
+        if not rows:
+            return None
+        row = dict(rows[0])
+        row["access_token"] = unseal_token(row.get("access_token"))
+        return row
 
     def list_tenant_repositories(self, tenant_id: str) -> List[Dict[str, Any]]:
         q = """

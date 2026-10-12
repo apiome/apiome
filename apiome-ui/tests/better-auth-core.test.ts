@@ -129,6 +129,8 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
     expect(config.account.accountLinking.enabled).toBe(true);
+    // Better Auth seals the provider tokens it writes to `apiome.account` (#4960) — never plaintext.
+    expect(config.account.encryptOAuthTokens).toBe(true);
     expect([...config.account.accountLinking.trustedProviders].sort()).toEqual([
       'auth0',
       'aws',

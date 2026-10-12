@@ -20,6 +20,13 @@ import { AUTH_ERROR_CODES, resolveEmailSignupDecision } from '../auth/account-re
 import { resolveSignupPolicy } from '../auth/signup-policy-resolver';
 import { getAuthErrorCopy } from '@/app/login/auth-error-copy';
 import { upsertCredentialAccountPassword } from './credential-account';
+import {
+  KEYS_SETTING as TOKEN_KEYS_SETTING,
+  sealToken,
+  sealTokenOrNull,
+  tokenEncryptionConfigured,
+  unsealToken,
+} from '../auth/linked-account-token-crypto';
 
 const connectionPool = require('./db');
 const bcrypt = require('bcrypt');
@@ -2919,6 +2926,42 @@ async function resolveOwnLinkedAccountUserId(userId: string): Promise<string | n
   return sessionUserId === userId ? sessionUserId : null;
 }
 
+/** How many trailing characters of a stored token the linked-accounts panel may show. */
+const ACCESS_TOKEN_SUFFIX_LENGTH = 6;
+
+/**
+ * Swap a linked-account row's stored token for the short suffix the panel shows (#4960).
+ *
+ * @param row A row carrying the raw (sealed or legacy plaintext) `access_token` column.
+ * @returns The row without `access_token`, plus `access_token_suffix`: the last six characters of
+ *   the token, or `null` when the account holds none or its sealed token cannot be opened.
+ */
+function withAccessTokenSuffix<T extends { access_token?: unknown }>(row: T) {
+  const { access_token: stored, ...rest } = row;
+  const token = unsealToken(stored);
+  return { ...rest, access_token_suffix: token ? token.slice(-ACCESS_TOKEN_SUFFIX_LENGTH) : null };
+}
+
+/**
+ * Replace a linked-account row's sealed token columns with the plaintext tokens (#4960).
+ *
+ * @param row A row carrying the raw `access_token` / `refresh_token` columns.
+ * @returns The same row with both tokens unsealed (`null` when absent or undecryptable), ready for
+ *   a server-side provider call.
+ */
+function withUnsealedTokens<T extends { access_token?: unknown; refresh_token?: unknown }>(row: T) {
+  return {
+    ...row,
+    access_token: unsealToken(row.access_token),
+    refresh_token: unsealToken(row.refresh_token),
+  };
+}
+
+/** The refusal returned when a personal access token cannot be sealed, so it is not stored (#4960). */
+const TOKEN_ENCRYPTION_UNAVAILABLE_ERROR =
+  `Personal access tokens cannot be saved because token encryption is not configured on this server. ` +
+  `Ask an administrator to set ${TOKEN_KEYS_SETTING}.`;
+
 export async function getLinkedAccountsForUser(userId: string) {
   try {
     const authedUserId = await resolveOwnLinkedAccountUserId(userId);
@@ -2928,7 +2971,7 @@ export async function getLinkedAccountsForUser(userId: string) {
     }
     const result = await connectionPool.query(
       `SELECT id, provider, provider_user_id, provider_email, email_verified, provider_username,
-              (CASE WHEN access_token IS NOT NULL THEN RIGHT(access_token, 6) ELSE NULL END) AS access_token_suffix,
+              access_token,
               created_at, last_login_at
        FROM apiome.external_auth_providers
        WHERE user_id = $1
@@ -2936,7 +2979,9 @@ export async function getLinkedAccountsForUser(userId: string) {
       [authedUserId]
     );
 
-    return JSON.stringify(result.rows);
+    // The column holds ciphertext (#4960), so the "PAT set" hint can no longer be cut in SQL: unseal
+    // here and hand the client only the last six characters — the token itself never leaves.
+    return JSON.stringify(result.rows.map(withAccessTokenSuffix));
   } catch (error: any) {
     console.error('Error fetching linked accounts:', error);
     return JSON.stringify([]);
@@ -2953,6 +2998,10 @@ export async function getLinkedAccountsForUser(userId: string) {
  *
  * @param emailVerified Whether the provider proved the address is verified. Stored on the identity
  *   so the account-resolution engine (1.3) can refuse to auto-link on an unverified email.
+ *
+ * The provider tokens are sealed before they are written (#4960). When token encryption is not
+ * configured the identity is still linked — sign-in does not need the token — but the tokens are
+ * left NULL rather than stored in plaintext.
  */
 export async function linkExternalAccount(
   userId: string,
@@ -3010,8 +3059,8 @@ export async function linkExternalAccount(
         providerEmail,
         emailVerified,
         providerUsername,
-        accessToken,
-        refreshToken,
+        sealTokenOrNull(accessToken),
+        sealTokenOrNull(refreshToken),
         tokenExpiresAt,
         profileData ? JSON.stringify(profileData) : null
       ]
@@ -3173,7 +3222,7 @@ export async function getLinkedAccountByProvider(provider: string, providerUserI
   try {
     const result = await connectionPool.query(
       `SELECT id, user_id, provider, provider_user_id, provider_email, email_verified, provider_username,
-              access_token, refresh_token, token_expires_at, profile_data,
+              token_expires_at, profile_data,
               created_at, last_login_at
        FROM apiome.external_auth_providers
        WHERE provider = $1 AND provider_user_id = $2`,
@@ -3206,7 +3255,7 @@ export async function getLinkedAccountByProviderForUser(userId: string, provider
       return JSON.stringify({ found: false });
     }
 
-    return JSON.stringify({ found: true, account: result.rows[0] });
+    return JSON.stringify({ found: true, account: withUnsealedTokens(result.rows[0]) });
   } catch (error: any) {
     console.error('Error fetching linked account by provider for user:', error);
     return JSON.stringify({ found: false, error: error.message });
@@ -3263,7 +3312,7 @@ export async function getLinkedAccountById(accountId: string, userId: string) {
       return JSON.stringify({ found: false, error: 'Account not found or does not belong to user' });
     }
 
-    return JSON.stringify({ found: true, account: result.rows[0] });
+    return JSON.stringify({ found: true, account: withUnsealedTokens(result.rows[0]) });
   } catch (error: any) {
     console.error('Error fetching linked account by ID:', error);
     return JSON.stringify({ found: false, error: error.message });
@@ -3271,6 +3320,10 @@ export async function getLinkedAccountById(accountId: string, userId: string) {
 }
 
 // Personal Access Token (PAT) Management Functions
+//
+// A PAT is sealed before it is written (#4960). Unlike an OAuth link, saving one is refused outright
+// when token encryption is not configured: the token is the whole point of the request, so there is
+// nothing useful to store without it, and it is never written in plaintext.
 
 export async function addPersonalAccessToken(
   userId: string,
@@ -3286,6 +3339,9 @@ export async function addPersonalAccessToken(
       });
     }
     userId = authedUserId;
+    if (!tokenEncryptionConfigured()) {
+      return JSON.stringify({ success: false, error: TOKEN_ENCRYPTION_UNAVAILABLE_ERROR });
+    }
     // Update the existing OAuth account with PAT
     // This adds the PAT to an already-linked account
     const result = await connectionPool.query(
@@ -3293,7 +3349,7 @@ export async function addPersonalAccessToken(
        SET access_token = $1, last_login_at = CURRENT_TIMESTAMP
        WHERE id = $2 AND user_id = $3
        RETURNING id, provider, provider_username, provider_email`,
-      [accessToken, accountId, userId]
+      [sealToken(accessToken), accountId, userId]
     );
 
     if (result.rowCount === 0) {
@@ -3327,13 +3383,16 @@ export async function updatePersonalAccessToken(
       });
     }
     userId = authedUserId;
+    if (!tokenEncryptionConfigured()) {
+      return JSON.stringify({ success: false, error: TOKEN_ENCRYPTION_UNAVAILABLE_ERROR });
+    }
     // Verify the account belongs to this user and update the token
     const result = await connectionPool.query(
       `UPDATE apiome.external_auth_providers 
        SET access_token = $1, last_login_at = CURRENT_TIMESTAMP
        WHERE id = $2 AND user_id = $3
        RETURNING id, provider`,
-      [accessToken, accountId, userId]
+      [sealToken(accessToken), accountId, userId]
     );
 
     if (result.rowCount === 0) {

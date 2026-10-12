@@ -51,6 +51,68 @@ Every service reads its settings from environment variables. Each workspace ship
 The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
 [The admin console](./admin-console.mdx).
 
+### Keys that encrypt stored secrets
+
+Some settings are encryption keys: they seal a secret before it is written to the database, so a
+copy of the database on its own does not reveal it. Each is optional at start-up, and each fails
+closed — without the key the secret is not stored, never stored unencrypted.
+
+| Variable | Set in | Encrypts |
+| --- | --- | --- |
+| `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` | `apiome-ui` **and** `apiome-rest` (identical) | The sign-in tokens and personal access tokens of [linked accounts](../workspace/linked-accounts.mdx) |
+| `AUTH_CONFIG_ENC_KEY` | `apiome-rest` | Client secrets saved on [Sign-in providers](./auth-providers.mdx) |
+| `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials for protected MCP servers |
+| `APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | npm and PyPI publish tokens |
+| `APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials a managed MCP toolset presents to your API |
+
+Each `…_ENCRYPTION_KEYS` value is a JSON object that maps a key version to a base64-encoded
+32-byte key. Single-quote it in a `.env` file:
+
+```bash
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='{"1": "<base64 key>"}'
+```
+
+Generate a key with:
+
+```bash
+python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+```
+
+Store these keys in your secret manager. A lost key cannot be recovered, and the secrets it sealed
+have to be entered again.
+
+#### Linked-account tokens
+
+The web app encrypts a linked account's tokens when it saves them, and the REST API decrypts them
+to read a repository, so both must hold the same `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS`.
+
+When the key is **not set**, people can still sign in and link providers, but:
+
+- no provider token is stored, so scans and imports of private repositories report a missing token;
+- saving a Personal Access Token is refused, with a message that names the variable.
+
+An account linked during that time has no stored token. After you set the key, its owner adds a
+Personal Access Token, or unlinks the provider and links it again.
+
+**Upgrading an installation that already has linked accounts.** Tokens saved before this
+encryption existed stay readable, and stay unencrypted until you seal them. After you set the key
+in both services and deploy, run this once in the `rest` service (`docker compose exec rest …`), or
+from `apiome-rest` in a source checkout:
+
+```bash
+python -m app.seal_linked_account_tokens --dry-run   # reports counts, changes nothing
+python -m app.seal_linked_account_tokens
+```
+
+The command prints counts only and is safe to run again. The
+[Production deployment](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md)
+runbook has the Compose form of these steps.
+
+**Rotating the key.** Add a higher version to the map in both services —
+`'{"1": "<old key>", "2": "<new key>"}'` — deploy, and run the same command. It re-encrypts every
+token under the newest version. Remove the old version once the command reports
+`"tokens_resealed": 0`.
+
 ## Runbooks
 
 | Runbook | Use it to |
