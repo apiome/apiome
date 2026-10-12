@@ -86,6 +86,17 @@ Two consequences for how you lay out hosts:
   session cookie. Remove DNS records when you retire a host, and review the records under the
   domain from time to time.
 
+### What sign-in does when the database is unreachable
+
+Each time a session is read, Apiome checks the person's active workspace against their memberships
+in the database. If that check cannot run — the database is down or unreachable — the session is
+given **no active workspace** rather than the one the browser remembers, because the remembered
+value comes from a cookie and cannot be trusted unchecked.
+
+People stay signed in, but pages that need a workspace cannot load until the database answers
+again. Nothing has to be reset afterwards: the next request restores the workspace. The web app's
+log records each failed check as `[post-login-routing] membership lookup failed`.
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a

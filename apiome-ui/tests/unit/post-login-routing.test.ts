@@ -172,10 +172,29 @@ describe('resolveActiveTenantForLogin', () => {
     await expect(resolveActiveTenantForLogin('user-1', 'stale')).resolves.toBeNull();
   });
 
-  it('fails open to the candidate when the membership lookup throws', async () => {
+  // #4963: on a fresh sign-in the candidate is the browser-controlled last-active-tenant cookie.
+  // If the memberships cannot be read it must be dropped, not trusted.
+  it('fails closed — drops the candidate — when the membership lookup throws', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
-    await expect(resolveActiveTenantForLogin('user-1', 't9')).resolves.toBe('t9');
+    await expect(resolveActiveTenantForLogin('user-1', 't9')).resolves.toBeNull();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('fails closed with no candidate at all when the membership lookup throws', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
+    await expect(resolveActiveTenantForLogin('user-1')).resolves.toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('recovers on the next read once the membership store answers again', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockGetTenantMembershipsForUser.mockRejectedValueOnce(new Error('db down'));
+    await expect(resolveActiveTenantForLogin('user-1', 't1')).resolves.toBeNull();
+    mockGetTenantMembershipsForUser.mockResolvedValueOnce(tenantRows({ id: 't1', name: 'Acme' }));
+    await expect(resolveActiveTenantForLogin('user-1', 't1')).resolves.toBe('t1');
     consoleError.mockRestore();
   });
 });

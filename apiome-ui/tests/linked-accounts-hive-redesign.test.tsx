@@ -516,7 +516,7 @@ describe('the provider cards', () => {
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith('/api/auth/link/gitlab', {
-        method: 'GET',
+        method: 'POST',
         credentials: 'include',
       })
     );

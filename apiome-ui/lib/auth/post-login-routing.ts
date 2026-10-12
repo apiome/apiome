@@ -165,13 +165,19 @@ export async function validateTenantSwitch(
  * Resolve the tenant to activate for a fresh sign-in (used by the NextAuth JWT
  * callback to seed `current_tenant_id`).
  *
- * Fails open: a membership-store error yields the unvalidated candidate rather
- * than blocking the login.
+ * Fails closed (#4963): when the membership store cannot be read the candidate is
+ * dropped, not trusted. On a fresh sign-in the candidate is the `last-active-tenant`
+ * cookie, which the browser controls and which is only checked for UUID shape — so
+ * returning it unvalidated would let a tampered cookie choose the session's tenant
+ * for as long as the store is down. The cost is deliberate: during such an outage a
+ * session has no active tenant until the store answers again, the same rule the
+ * tenant-switch path follows ({@link validateTenantSwitch}).
  *
  * @param userId The authenticated user's id.
  * @param candidateTenantId Preferred tenant (e.g. `pending_tenant_id` from the
  *   signup one-time code, or a previous session's tenant), if any.
- * @returns The validated active tenant id, or `null` for tenant-less users.
+ * @returns The validated active tenant id; `null` for tenant-less users and when
+ *   the memberships could not be read.
  */
 export async function resolveActiveTenantForLogin(
   userId: string,
@@ -181,8 +187,8 @@ export async function resolveActiveTenantForLogin(
     const memberships = await getMembershipTenantIdsForUser(userId);
     return pickActiveTenantId(memberships, candidateTenantId);
   } catch (error) {
-    console.error('[post-login-routing] membership lookup failed; using candidate tenant:', error);
-    return candidateTenantId ?? null;
+    console.error('[post-login-routing] membership lookup failed; no active tenant set:', error);
+    return null;
   }
 }
 
