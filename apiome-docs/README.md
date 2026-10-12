@@ -29,11 +29,13 @@ files, and the contributor references in `scripts/loose-docs-allowlist.txt`, are
 
 
 The site is **four guides**, each with its own sidebar and navbar entry, plus the release notes.
+The site root (`/`) is the landing page, `src/pages/index.tsx`: a card per guide and one for the
+release notes (`src/components/SectionCards`).
 Pages live in `docs/`, one folder per group; a guide is a set of folders (`sidebars.ts`):
 
 | Guide | Group | Folder | URL |
 | --- | --- | --- | --- |
-| **User guide** — using Apiome, in the order of the product's navigation rail | Getting started (the guide's home) | `docs/getting-started/` | `/` |
+| **User guide** — using Apiome, in the order of the product's navigation rail | Getting started (the guide's home) | `docs/getting-started/` | `/getting-started` |
 | | Build | `docs/build/` | `/build` |
 | | Bring in | `docs/bring-in/` | `/bring-in` |
 | | Ship | `docs/ship/` | `/ship` |

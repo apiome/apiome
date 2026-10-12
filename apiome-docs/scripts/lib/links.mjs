@@ -109,20 +109,49 @@ export function categorySlugs(docsDir) {
 }
 
 /**
- * Every route the site serves from its sources: doc pages, category landing pages, release-notes
- * posts, and the release-notes index with its `archive` and `authors` listings.
+ * The routes of the standalone pages under `src/pages/`: each `.tsx` / `.jsx` / `.md` / `.mdx`
+ * file, with a trailing `index` dropped (`index.tsx` → `/`). Files and folders starting with `_`
+ * are not pages.
+ *
+ * @param {string} [pagesDir] - Absolute path of `src/pages/`.
+ * @returns {string[]} The routes, with a leading slash.
+ */
+export function standalonePageRoutes(pagesDir) {
+  if (!pagesDir || !fs.existsSync(pagesDir)) return [];
+  const routes = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+      if (entry.name.startsWith('_')) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(tsx|jsx|mdx?)$/.test(entry.name)) {
+        const route = path.relative(pagesDir, full).split(path.sep).join('/');
+        routes.push(`/${route.replace(/\.(tsx|jsx|mdx?)$/, '').replace(/(^|\/)index$/, '')}`);
+      }
+    }
+  };
+  walk(pagesDir);
+  return routes;
+}
+
+/**
+ * Every route the site serves from its sources: doc pages, category landing pages, the standalone
+ * pages under `src/pages/` (the landing page at `/`), release-notes posts, and the release-notes
+ * index with its `archive` and `authors` listings.
  *
  * @param {object} options - Inputs.
  * @param {string} options.docsDir - Absolute path of `docs/`.
  * @param {string} [options.releaseNotesDir] - Absolute path of `release-notes/`, when there is one.
+ * @param {string} [options.pagesDir] - Absolute path of `src/pages/`, when there is one.
  * @returns {Set<string>} Routes with a leading slash and no trailing slash (`/` for the root).
  */
-export function collectRoutes({docsDir, releaseNotesDir}) {
+export function collectRoutes({docsDir, releaseNotesDir, pagesDir}) {
   const routes = new Set();
   for (const page of listPages(docsDir)) {
     routes.add(docRoute(path.relative(docsDir, page), fs.readFileSync(page, 'utf8')));
   }
   for (const slug of categorySlugs(docsDir)) routes.add(slug);
+  for (const route of standalonePageRoutes(pagesDir)) routes.add(route);
   if (releaseNotesDir && fs.existsSync(releaseNotesDir)) {
     for (const route of ['/release-notes', '/release-notes/archive', '/release-notes/authors']) routes.add(route);
     for (const post of listPages(releaseNotesDir)) {
@@ -147,7 +176,7 @@ export function collectRoutes({docsDir, releaseNotesDir}) {
 export function checkInternalLinks({siteDir, docsDir}) {
   const releaseNotesDir = path.join(siteDir, 'release-notes');
   const staticDir = path.join(siteDir, 'static');
-  const routes = collectRoutes({docsDir, releaseNotesDir});
+  const routes = collectRoutes({docsDir, releaseNotesDir, pagesDir: path.join(siteDir, 'src', 'pages')});
   const pages = [docsDir, releaseNotesDir].filter((dir) => fs.existsSync(dir)).flatMap((dir) => listPages(dir));
 
   const problems = [];

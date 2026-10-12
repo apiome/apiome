@@ -5,7 +5,7 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
  *
  * - **User guide** (`userGuide`) — using Apiome, grouped by the job the reader is doing, in the same
  *   order as the product's navigation rail: Getting started · Build · Bring in · Ship · Govern ·
- *   Workspace & account. Its home is the site root (`getting-started/index.mdx`, slug `/`).
+ *   Workspace & account. Its home is `getting-started/index.mdx` (`/getting-started`).
  * - **Administration guide** (`adminGuide`) — running an installation: the admin console, the
  *   tools, operating and hosting (`admin/`).
  * - **CLI** (`cli`) — the quick-start and the generated command reference (`reference/cli/`).
@@ -13,6 +13,9 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
  *   content voice (`reference/`, without the CLI pages).
  *
  * Release notes is the blog instance (`release-notes/`), linked from the navbar.
+ *
+ * The site root (`/`) is the landing page, `src/pages/index.tsx`: a card per guide and one for the
+ * release notes.
  *
  * The folders and their URLs are unchanged — the guides only decide which sidebar a page shows in.
  * Entries are written out literally (no helper): `yarn docs:check`'s orphan-page rule reads the
@@ -26,8 +29,8 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   userGuide: [
     {type: 'doc', id: 'getting-started/index', label: 'User guide'},
-    // The getting-started landing page is the User guide's home (the site root), so this group has
-    // no link of its own.
+    // The getting-started landing page is the User guide's home, so this group has no link of its
+    // own.
     {
       type: 'category',
       label: 'Getting started',
