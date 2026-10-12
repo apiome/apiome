@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isProviderEnabled } from '../../../../../lib/auth/provider-registry';
 import { resolveProviderEnv } from '../../../../../lib/auth/provider-config-resolver';
 import { resolveClientIp } from '../../../../../lib/auth/client-ip';
+import { isSameOriginRequest } from '../../../../../lib/auth/same-origin';
 import {
   AUTH_RATE_LIMITED_CODE,
   checkRequestBudget,
@@ -33,17 +34,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate Origin to prevent cross-site requests
-  const origin = request.headers.get('origin');
-  const host = request.headers.get('host');
-  if (!origin || !host) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  try {
-    const originHost = new URL(origin).host;
-    if (originHost !== host) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-  } catch {
+  if (!isSameOriginRequest(request.headers)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -7,6 +7,7 @@ import {
 import { isProviderEnabled } from '../../../../../../lib/auth/provider-registry';
 import { resolveProviderEnv } from '../../../../../../lib/auth/provider-config-resolver';
 import { resolveClientIp } from '../../../../../../lib/auth/client-ip';
+import { isSameOriginRequest } from '../../../../../../lib/auth/same-origin';
 import {
   AUTH_RATE_LIMITED_CODE,
   checkRequestBudget,
@@ -52,14 +53,24 @@ async function isProviderLinkable(provider: string): Promise<boolean> {
  * budget runs before the session lookup so floods stay cheap; the account
  * budget runs once the caller is known. Over-budget calls get a structured 429
  * (`auth-rate-limited`) with `Retry-After`.
+ *
+ * POST only, and only from this app's own pages (#4963) — the same rule as the sibling
+ * `signup-intent` route. As a GET, a cross-site top-level navigation carried the victim's
+ * `SameSite=lax` session and primed a link intent for them. A cross-site request is now refused
+ * with 403 before the session is read, and a GET is not routed at all (405).
  */
-export async function GET(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const ipBudget = checkRequestBudget(`link:ip:${resolveClientIp(request.headers)}`);
   if (!ipBudget.allowed) {
     return rateLimitedResponse(ipBudget.retryAfterMs);
+  }
+
+  // Validate Origin to prevent cross-site requests
+  if (!isSameOriginRequest(request.headers)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const session = await getAuthSession();
