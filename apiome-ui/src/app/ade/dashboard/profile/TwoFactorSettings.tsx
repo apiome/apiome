@@ -51,12 +51,14 @@ import {
   X,
 } from 'lucide-react';
 import { authClient } from '@lib/auth/auth-client';
-import { useAuthSession } from '@lib/auth/session-client';
+import { signIn, useAuthSession } from '@lib/auth/session-client';
 import {
   getBackupCodeStatus,
   getEmailOtpAvailability,
   getTrustedDeviceStatus,
+  getTwoFactorReauthStatus,
   revokeThisTrustedDevice,
+  type TwoFactorReauthStatus,
 } from '@lib/auth/two-factor-profile-actions';
 import {
   Dialog,
@@ -75,7 +77,11 @@ import { Card } from '@/app/components/ui/Card';
 import { Stepper } from '@/app/components/ui/Stepper';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 import { BackupCodes } from '@/app/components/ade/account/BackupCodes';
-import { TRUST_DEVICE_DAYS } from '@lib/auth/two-factor-policy';
+import {
+  REAUTH_REQUIRED_CODE,
+  REAUTH_WINDOW_MINUTES,
+  TRUST_DEVICE_DAYS,
+} from '@lib/auth/two-factor-policy';
 import { cn } from '@lib/utils';
 
 type EnrollStep = 'password' | 'qr' | 'backup';
@@ -96,6 +102,15 @@ const REGEN_STEPS = [
 
 /** How long the "Copied" confirmation on the otpauth URI stays up, in milliseconds. */
 const COPIED_RESET_MS = 2000;
+
+/**
+ * Relabel a wizard's first step for an account that has no password to confirm (TFA-1.1 #5655).
+ *
+ * @param steps A wizard's steps, the first of which is `password`.
+ * @returns The same steps with the first one named for what the reader actually does.
+ */
+const withIdentityStep = <T extends { id: string; label: string }>(steps: readonly T[]): T[] =>
+  steps.map((step) => (step.id === 'password' ? { ...step, label: "Confirm it's you" } : step));
 
 interface TwoFactorSettingsProps {
   /** Optional class for the outer status block. */
@@ -129,6 +144,55 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   const [trusted, setTrusted] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [emailOtpAvailable, setEmailOtpAvailable] = useState(false);
+  /**
+   * How this account confirms it is them (TFA-1.1 #5655). `null` until the server answers, and
+   * for an account with a password — both of which mean "ask for the password", as before.
+   */
+  const [reauth, setReauth] = useState<TwoFactorReauthStatus | null>(null);
+  /** An account that signs in only through a provider: there is no password to ask for. */
+  const passwordless = reauth !== null && !reauth.hasPassword;
+  /** Passwordless and signed in too long ago: the change is refused until they sign in again. */
+  const needsReauth = passwordless && !reauth.fresh;
+
+  useEffect(() => {
+    let cancelled = false;
+    void getTwoFactorReauthStatus()
+      .then((status) => {
+        if (!cancelled) setReauth(status.hasPassword ? null : status);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /**
+   * Show a refused change, and switch the open dialog to "sign in again" when the server says
+   * the session has gone stale since the page loaded.
+   *
+   * @param refusal The `error` the client call answered with.
+   * @param fallback The sentence for a refusal the server did not explain.
+   */
+  const showRefusal = (
+    refusal: { code?: string | null; message?: string | null },
+    fallback: string
+  ) => {
+    if (refusal.code === REAUTH_REQUIRED_CODE) {
+      setReauth((current) => (current ? { ...current, fresh: false } : current));
+      setError('');
+      return;
+    }
+    setError(refusal.message || fallback);
+  };
+
+  /**
+   * Send the reader through their provider again and bring them back to this page.
+   *
+   * @param providerId The linked provider to sign in with.
+   */
+  const handleReauth = (providerId: string) => {
+    void signIn(providerId, { callbackUrl: window.location.pathname });
+  };
 
   const refreshManagementStatus = useCallback(async () => {
     if (!enabled) {
@@ -203,16 +267,16 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   };
 
   const handleEnablePassword = async () => {
-    if (!password) {
+    if (!passwordless && !password) {
       setError('Enter your current password to enable two-factor authentication.');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const res = await authClient.twoFactor.enable({ password });
+      const res = await authClient.twoFactor.enable(passwordless ? {} : { password });
       if (res?.error) {
-        setError(res.error.message || 'Could not start enrollment. Check your password and try again.');
+        showRefusal(res.error, 'Could not start enrollment. Check your password and try again.');
         setBusy(false);
         return;
       }
@@ -257,16 +321,16 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   };
 
   const handleDisable = async () => {
-    if (!password) {
+    if (!passwordless && !password) {
       setError('Enter your current password to disable two-factor authentication.');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const res = await authClient.twoFactor.disable({ password });
+      const res = await authClient.twoFactor.disable(passwordless ? {} : { password });
       if (res?.error) {
-        setError(res.error.message || 'Could not disable 2FA. Check your password and try again.');
+        showRefusal(res.error, 'Could not disable 2FA. Check your password and try again.');
         setBusy(false);
         return;
       }
@@ -283,16 +347,16 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
   };
 
   const handleRegenerate = async () => {
-    if (!password) {
+    if (!passwordless && !password) {
       setError('Enter your current password to regenerate backup codes.');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const res = await authClient.twoFactor.generateBackupCodes({ password });
+      const res = await authClient.twoFactor.generateBackupCodes(passwordless ? {} : { password });
       if (res?.error) {
-        setError(res.error.message || 'Could not regenerate codes. Check your password and try again.');
+        showRefusal(res.error, 'Could not regenerate codes. Check your password and try again.');
         setBusy(false);
         return;
       }
@@ -312,6 +376,45 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       setBusy(false);
     }
   };
+
+  /**
+   * The first step for an account without a password, in place of the password box.
+   *
+   * Recently signed in: one line saying why nothing is asked. Otherwise: why the change is on
+   * hold, and a button per linked provider to sign in again.
+   *
+   * @returns The notice.
+   */
+  const renderReauthNotice = () =>
+    needsReauth ? (
+      <div className="acct-field" data-testid="two-factor-reauth-required">
+        <Alert variant="warn">
+          This account has no password, so confirm it is you by signing in again. You can change
+          two-factor settings for {REAUTH_WINDOW_MINUTES} minutes after you sign in.
+        </Alert>
+        {reauth.providers.length > 0 ? (
+          reauth.providers.map((provider) => (
+            <Button
+              key={provider.id}
+              variant="outline"
+              onClick={() => handleReauth(provider.id)}
+              disabled={busy}
+              data-testid={`two-factor-reauth-${provider.id}`}
+            >
+              <KeyRound aria-hidden />
+              Sign in again with {provider.label}
+            </Button>
+          ))
+        ) : (
+          <p className="acct-hint">Sign out, then sign in again and come back to this page.</p>
+        )}
+      </div>
+    ) : (
+      <p className="acct-hint" data-testid="two-factor-reauth-fresh">
+        This account has no password. You signed in a moment ago, so nothing more is needed to
+        confirm it is you.
+      </p>
+    );
 
   const handleForgetDevice = async () => {
     setBusy(true);
@@ -354,7 +457,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
             </Badge>
           </div>
           <p className="acct-row__desc">
-            Require a code from Authy or Google Authenticator after your password when signing in.
+            Require a code from Authy or Google Authenticator each time you sign in.
           </p>
         </div>
         {enabled && (
@@ -396,7 +499,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                   Email one-time code
                 </div>
                 <p className="acct-mfa__desc">
-                  After your password, you can request a code emailed to your account address
+                  When you sign in, you can request a code emailed to your account address
                   instead of (or in addition to) using your authenticator app.
                 </p>
               </div>
@@ -495,7 +598,9 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                 <DialogTitle>Enable two-factor authentication</DialogTitle>
                 <DialogDescription>
                   {step === 'password' &&
-                    'Confirm your password to start enrollment. You will scan a QR code next.'}
+                    (passwordless
+                      ? 'Confirm it is you to start enrollment. You will scan a QR code next.'
+                      : 'Confirm your password to start enrollment. You will scan a QR code next.')}
                   {step === 'qr' &&
                     'Scan this QR with Authy or Google Authenticator, then enter the 6-digit code.'}
                   {step === 'backup' &&
@@ -504,7 +609,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
               </div>
             </div>
             <Stepper
-              steps={ENROLL_STEPS}
+              steps={passwordless ? withIdentityStep(ENROLL_STEPS) : ENROLL_STEPS}
               current={step}
               fill
               aria-label="Enrollment progress"
@@ -515,7 +620,8 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
           <div className="acct-dialog__body">
             {error && <Alert variant="error">{error}</Alert>}
 
-            {step === 'password' && (
+            {step === 'password' && passwordless && renderReauthNotice()}
+            {step === 'password' && !passwordless && (
               <div className="acct-field">
                 <Label htmlFor="tfa-enroll-password">Current password</Label>
                 <Input
@@ -598,7 +704,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
               <Button
                 variant="primary"
                 onClick={handleEnablePassword}
-                disabled={busy}
+                disabled={busy || needsReauth}
                 data-testid="two-factor-enroll-continue"
               >
                 {busy ? 'Working…' : 'Continue'}
@@ -652,13 +758,15 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                 </DialogTitle>
                 <DialogDescription>
                   {regenStep === 'password'
-                    ? 'Enter your password. This replaces your existing backup codes immediately.'
+                    ? passwordless
+                      ? 'Confirm it is you. This replaces your existing backup codes immediately.'
+                      : 'Enter your password. This replaces your existing backup codes immediately.'
                     : 'Copy these codes now. The previous set is no longer valid.'}
                 </DialogDescription>
               </div>
             </div>
             <Stepper
-              steps={REGEN_STEPS}
+              steps={passwordless ? withIdentityStep(REGEN_STEPS) : REGEN_STEPS}
               current={regenStep}
               fill
               aria-label="Regeneration progress"
@@ -670,20 +778,24 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
             {error && <Alert variant="error">{error}</Alert>}
             {regenStep === 'password' && (
               <>
-                <div className="acct-field">
-                  <Label htmlFor="tfa-regen-password">Current password</Label>
-                  <Input
-                    id="tfa-regen-password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={busy}
-                    autoFocus
-                    data-testid="two-factor-regen-password"
-                    onKeyDown={(e) => e.key === 'Enter' && !busy && handleRegenerate()}
-                  />
-                </div>
+                {passwordless ? (
+                  renderReauthNotice()
+                ) : (
+                  <div className="acct-field">
+                    <Label htmlFor="tfa-regen-password">Current password</Label>
+                    <Input
+                      id="tfa-regen-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={busy}
+                      autoFocus
+                      data-testid="two-factor-regen-password"
+                      onKeyDown={(e) => e.key === 'Enter' && !busy && handleRegenerate()}
+                    />
+                  </div>
+                )}
                 {remaining !== null && (
                   <Alert variant="warn">
                     Your {remaining} remaining codes stop working the moment new ones are issued.
@@ -703,7 +815,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                 <Button
                   variant="primary"
                   onClick={handleRegenerate}
-                  disabled={busy}
+                  disabled={busy || needsReauth}
                   data-testid="two-factor-regen-confirm"
                 >
                   {busy ? 'Working…' : 'Regenerate'}
@@ -746,26 +858,32 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
             <div className="acct-dialog__heading">
               <DialogTitle>Disable two-factor authentication</DialogTitle>
               <DialogDescription>
-                Enter your password to turn off authenticator codes on this account.
+                {passwordless
+                  ? 'Confirm it is you to turn off authenticator codes on this account.'
+                  : 'Enter your password to turn off authenticator codes on this account.'}
               </DialogDescription>
             </div>
           </DialogHeader>
           <div className="acct-dialog__body">
             {error && <Alert variant="error">{error}</Alert>}
-            <div className="acct-field">
-              <Label htmlFor="tfa-disable-password">Current password</Label>
-              <Input
-                id="tfa-disable-password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={busy}
-                autoFocus
-                data-testid="two-factor-disable-password"
-                onKeyDown={(e) => e.key === 'Enter' && !busy && handleDisable()}
-              />
-            </div>
+            {passwordless ? (
+              renderReauthNotice()
+            ) : (
+              <div className="acct-field">
+                <Label htmlFor="tfa-disable-password">Current password</Label>
+                <Input
+                  id="tfa-disable-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={busy}
+                  autoFocus
+                  data-testid="two-factor-disable-password"
+                  onKeyDown={(e) => e.key === 'Enter' && !busy && handleDisable()}
+                />
+              </div>
+            )}
             <p className="acct-hint">
               Backup codes and the trusted-device cookie are cleared too. You can re-enable 2FA any
               time.
@@ -778,7 +896,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
             <Button
               variant="danger"
               onClick={handleDisable}
-              disabled={busy}
+              disabled={busy || needsReauth}
               data-testid="two-factor-disable-confirm"
             >
               {busy ? 'Disabling…' : 'Disable 2FA'}

@@ -169,7 +169,7 @@ const PROFILE_MARKUP = `
                 <span class="acct-glyph acct-glyph--ok" aria-hidden="true"></span>
                 <div class="acct-row__body">
                   <div class="acct-row__title">Authenticator app (TOTP)<span class="inline-flex items-center rounded-full bg-ok-soft px-[0.4375rem] text-2xs font-semibold text-ok-fg h-5">Enabled</span></div>
-                  <p class="acct-row__desc">Require a code from Authy or Google Authenticator after your password when signing in.</p>
+                  <p class="acct-row__desc">Require a code from Authy or Google Authenticator each time you sign in.</p>
                 </div>
                 <button type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-surface px-2.5 text-xs font-medium text-fg shadow-control h-[var(--control-h-sm)]">Disable 2FA</button>
               </div>
@@ -183,7 +183,7 @@ const PROFILE_MARKUP = `
               <div class="acct-mfa">
                 <div class="acct-mfa__box">
                   <div class="acct-mfa__title">Email one-time code</div>
-                  <p class="acct-mfa__desc">After your password, you can request a code emailed to your account address instead of (or in addition to) using your authenticator app.</p>
+                  <p class="acct-mfa__desc">When you sign in, you can request a code emailed to your account address instead of (or in addition to) using your authenticator app.</p>
                 </div>
                 <div class="acct-mfa__box">
                   <div class="acct-mfa__title">Backup codes</div>

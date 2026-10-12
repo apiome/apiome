@@ -119,3 +119,38 @@ export function describeTwoFactorRefusal(
   const known = error?.code ? REFUSALS[error.code] : undefined;
   return known ?? { text: error?.message || fallback, terminal: false };
 }
+
+/**
+ * How recently an account with no password must have signed in before it may turn two-factor on
+ * or off, or make new backup codes, in minutes (TFA-1.1, #5655).
+ *
+ * An account with a password proves itself by typing it. An account that only signs in through a
+ * provider has nothing to type, so the proof is a sign-in that just happened: the session must be
+ * younger than this, or the change is refused until the reader signs in with the provider again.
+ */
+export const REAUTH_WINDOW_MINUTES = 10;
+
+/** {@link REAUTH_WINDOW_MINUTES} in milliseconds. */
+export const REAUTH_WINDOW_MS = REAUTH_WINDOW_MINUTES * 60 * 1000;
+
+/** The stable code of the refusal a stale passwordless session gets. */
+export const REAUTH_REQUIRED_CODE = 'REAUTH_REQUIRED';
+
+/**
+ * Whether a session is recent enough to stand in for a password.
+ *
+ * @param createdAt When the session was created.
+ * @param now The current time in milliseconds; injectable for tests.
+ * @returns `true` when the session is younger than {@link REAUTH_WINDOW_MINUTES}. An unreadable
+ *   or future-dated timestamp is not fresh — refuse when unsure.
+ */
+export function isSessionFresh(
+  createdAt: Date | string | number | null | undefined,
+  now: number = Date.now()
+): boolean {
+  if (createdAt === null || createdAt === undefined) return false;
+  const created = new Date(createdAt).getTime();
+  if (Number.isNaN(created)) return false;
+  const age = now - created;
+  return age >= 0 && age < REAUTH_WINDOW_MS;
+}

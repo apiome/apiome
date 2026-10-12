@@ -175,6 +175,27 @@ export async function getTwoFactorState(email: string): Promise<{ enabled: boole
 }
 
 /**
+ * Back-date every session of the user owning this email (TFA-1.1 #5655).
+ *
+ * An account without a password may change its two-factor settings only while its session is
+ * recent. A journey cannot wait ten minutes for a session to age, so it moves `createdAt` instead.
+ *
+ * @param email The user's email address.
+ * @param minutes How long ago the sessions should appear to have been created.
+ * @returns How many sessions were back-dated.
+ */
+export async function ageSessions(email: string, minutes: number): Promise<number> {
+  const result = await getPool().query(
+    `UPDATE apiome.session s
+        SET "createdAt" = CURRENT_TIMESTAMP - make_interval(mins => $2)
+       FROM apiome.users u
+      WHERE s."userId" = u.id AND LOWER(u.email) = $1`,
+    [email.toLowerCase(), minutes]
+  );
+  return result.rowCount ?? 0;
+}
+
+/**
  * The provider slugs linked to the user owning this email, sorted.
  *
  * @param email The user's email address.

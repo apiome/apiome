@@ -185,3 +185,71 @@ export async function revokeThisTrustedDevice(): Promise<{ ok: boolean }> {
 export async function getEmailOtpAvailability(): Promise<{ available: boolean }> {
   return { available: isTwoFactorEmailOtpConfigured() };
 }
+
+/** A provider the reader can sign in with again to confirm it is them. */
+export interface ReauthProvider {
+  /** The provider id `signIn()` takes, e.g. `github`. */
+  id: string;
+  /** The provider's display name, e.g. `GitHub`. */
+  label: string;
+}
+
+/** How this account proves itself before a two-factor change (TFA-1.1 #5655). */
+export interface TwoFactorReauthStatus {
+  /** Whether the account has a password; if so the dialogs ask for it, as before. */
+  hasPassword: boolean;
+  /**
+   * For an account without a password: whether its session is recent enough to stand in for one
+   * (`isSessionFresh`). Always `false` when the session cannot be read.
+   */
+  fresh: boolean;
+  /** The linked, enabled providers the reader can sign in with again. */
+  providers: ReauthProvider[];
+}
+
+/**
+ * Report how the signed-in account can confirm it is them before changing two-factor settings.
+ *
+ * The answer mirrors what `twoFactorReauthHandler` enforces — it reads the same Better Auth
+ * accounts and the same session timestamp — so the Profile page can draw the right first step
+ * instead of discovering the refusal after a click. It is advisory: the server decides.
+ *
+ * Fails toward the existing behaviour: when anything cannot be read the account is reported as
+ * having a password, so the dialogs keep asking for one and the server gives the real answer.
+ *
+ * @returns The account's re-authentication status.
+ */
+export async function getTwoFactorReauthStatus(): Promise<TwoFactorReauthStatus> {
+  const unknown: TwoFactorReauthStatus = { hasPassword: true, fresh: false, providers: [] };
+  try {
+    const { auth } = await import('./auth');
+    const current = await auth.api.getSession({ headers: await headers() });
+    const userId = current?.user?.id;
+    if (!userId) return unknown;
+
+    const context = await auth.$context;
+    const accounts = (await context.internalAdapter.findAccounts(userId)) ?? [];
+    const { hasCredentialPassword } = await import('./two-factor-reauth');
+    if (hasCredentialPassword(accounts)) return unknown;
+
+    const { isSessionFresh } = await import('./two-factor-policy');
+    const { providerSummaries } = await import('./provider-registry');
+    const { resolveProviderEnv } = await import('./provider-config-resolver');
+    const linked = new Set(accounts.map((account) => account.providerId));
+    const providers = providerSummaries(await resolveProviderEnv())
+      .filter((provider) => provider.enabled && linked.has(provider.id))
+      .map((provider) => ({ id: provider.id, label: provider.label }));
+
+    return {
+      hasPassword: false,
+      fresh: isSessionFresh(current.session?.createdAt),
+      providers,
+    };
+  } catch (error) {
+    console.warn(
+      '[auth] two-factor re-auth status failed:',
+      error instanceof Error ? error.name : 'unknown'
+    );
+    return unknown;
+  }
+}
