@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.342.0] - 2026-10-12
+
+### Added
+- **Admin reset of a user's two-factor (#5656, TFA-1.2)**: a user who has lost their authenticator
+  and their backup codes can now be let back in.
+  - `POST /v1/admin/users/{user_id}/two-factor/reset` — the installation's super-admin, for any
+    user (`401` without a super-admin session, `403` with a bad one, `404` for an unknown user).
+  - `POST /v1/access/{tenant_slug}/members/{user_id}/two-factor/reset` — a workspace **owner**, for
+    an active member who belongs to **no other workspace**. `403 owner_required` for anyone else
+    and `403 session_required` for an API key; `404 member_not_found` for a user who is not an
+    active member; `409 multi_tenant_member` when the member also belongs elsewhere (two-factor
+    protects the whole account, so that case is the super-admin's); `409 self_reset` for the
+    caller's own account.
+
+  Both take `{ "reason", "confirm" }`: a reason of 10–500 characters, and the target's email
+  address typed out (`422 invalid_reason` / `confirmation_mismatch`). The reset deletes the user's
+  `two_factor` row, clears `"twoFactorEnabled"`, removes their trusted-device records and any
+  second-factor challenge in flight, and deletes every one of their sessions — and appends the
+  audit rows **in the same transaction**: an `auth_events` row of the new type `two_factor_reset`
+  (actor, target, reason), plus `member.two_factor_reset` on the workspace's access audit when an
+  owner did it. The response says what was cleared; emailing the user is done by the web app.
+  Migration V276 adds `users.two_factor_reset_at`, which the app reads to prompt the user to enrol
+  again. The OpenAPI version moves to 1.206.0.
+
+### Changed
+- `Database.write_auth_event` and `Database.write_access_audit` now share their chain-and-insert
+  step with cursor-level helpers (`_append_auth_event`, `_append_access_audit`), so a caller can
+  append an audit row inside its own transaction. Their behaviour is unchanged.
+
 ## [1.341.0] - 2026-10-11
 
 ### Security

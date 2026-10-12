@@ -132,7 +132,6 @@ do. Lane C rows are in pick-up order within their wave.
 
 | # | Wave | Lane | Issue | ID | Title | Depends on | Tier |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 7 | 1 | B | [#5656](https://github.com/apiome/apiome/issues/5656) | TFA-1.2 | Admin reset of a user's two-factor, with audit **MVP** | — | Core |
 | 8 | 1 | C1 | [#5460](https://github.com/apiome/apiome/issues/5460) | FMT-7.6 | Shared GatewayConfigDocument middle for the whole family | — | Core |
 | 9 | 1 | D | [#5500](https://github.com/apiome/apiome/issues/5500) | CLI | `get.apiome.dev` install script **MVP** | — | Core |
 | 10 | 1 | E | [#5597](https://github.com/apiome/apiome/issues/5597) | HIVE-11.1 | StatusStrip component — one row of status chips, one open detail **MVP** | — | Core |

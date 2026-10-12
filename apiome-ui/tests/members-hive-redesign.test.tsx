@@ -871,3 +871,98 @@ describe('the docs fixtures', () => {
     writeA11yFixture('members-offboard-dialog', liveMarkup(offboard));
   });
 });
+
+/* -------------------------------------------------------------------------
+   Reset a member's two-factor (TFA-1.2, #5656)
+   ------------------------------------------------------------------------- */
+
+describe('resetting a member’s two-factor', () => {
+  /** Linus, with two-factor on for the length of one test. */
+  const linus = MEMBERS.find((entry) => entry.user_id === 'u-linus')!;
+
+  beforeEach(() => {
+    linus.two_factor_enabled = true;
+  });
+
+  afterEach(() => {
+    linus.two_factor_enabled = false;
+  });
+
+  /** Open Linus's drawer. */
+  async function openLinus(options: MockOptions = {}) {
+    const rendered = await renderMembers(options);
+    await rendered.user.click(within(rowFor('linus@acme.io')).getByText('Linus Torvalds'));
+    return { ...rendered, drawer: await screen.findByTestId('member-drawer') };
+  }
+
+  it('is offered to an owner for a member who has two-factor on', async () => {
+    const { drawer } = await openLinus();
+    expect(within(drawer).getByRole('button', { name: 'Reset two-factor' })).toBeInTheDocument();
+  });
+
+  it('is not offered when the member has no two-factor', async () => {
+    linus.two_factor_enabled = false;
+    const { drawer } = await openLinus();
+    expect(within(drawer).queryByTestId('member-reset-two-factor')).not.toBeInTheDocument();
+  });
+
+  it('is not offered to someone who is not an owner', async () => {
+    const { drawer } = await openLinus({
+      perms: { is_admin: false, permissions: ['members:view', 'members:edit', 'members:delete'] },
+    });
+    expect(within(drawer).queryByTestId('member-reset-two-factor')).not.toBeInTheDocument();
+  });
+
+  it('is not offered on the owner’s own row', async () => {
+    const { user } = await renderMembers();
+    await user.click(within(rowFor('ada@acme.io')).getByText('Ada Lovelace'));
+    const drawer = await screen.findByTestId('member-drawer');
+    expect(within(drawer).queryByTestId('member-reset-two-factor')).not.toBeInTheDocument();
+  });
+
+  it('asks for a reason and the member’s email, then resets through the workspace route', async () => {
+    const { user, calls, drawer } = await openLinus();
+    await user.click(within(drawer).getByTestId('member-reset-two-factor'));
+
+    const dialog = await screen.findByTestId('reset-two-factor-dialog');
+    expect(within(dialog).getByText('Reset two-factor for Linus Torvalds?')).toBeInTheDocument();
+    const submit = within(dialog).getByTestId('reset-two-factor-submit');
+    expect(submit).toBeDisabled();
+
+    await user.type(within(dialog).getByTestId('reset-two-factor-reason'), 'Lost his phone and codes.');
+    await user.type(within(dialog).getByTestId('reset-two-factor-confirm'), 'linus@acme.io');
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    await waitFor(() =>
+      expect(calls).toContainEqual({
+        url: '/api/access/members/u-linus/two-factor/reset',
+        method: 'POST',
+        body: { reason: 'Lost his phone and codes.', confirm: 'linus@acme.io' },
+      })
+    );
+  });
+
+  it('shows the workspace-boundary refusal in the dialog', async () => {
+    const { user, drawer } = await openLinus({
+      failWrite: {
+        match: '/two-factor/reset',
+        status: 409,
+        body: {
+          error:
+            'This member also belongs to another workspace, so their two-factor can only be reset by an administrator of this Apiome installation.',
+          code: 'multi_tenant_member',
+        },
+      },
+    });
+    await user.click(within(drawer).getByTestId('member-reset-two-factor'));
+    const dialog = await screen.findByTestId('reset-two-factor-dialog');
+    await user.type(within(dialog).getByTestId('reset-two-factor-reason'), 'Lost his phone and codes.');
+    await user.type(within(dialog).getByTestId('reset-two-factor-confirm'), 'linus@acme.io');
+    await user.click(within(dialog).getByTestId('reset-two-factor-submit'));
+
+    expect(
+      await within(dialog).findByText(/can only be reset by an administrator of this Apiome installation/)
+    ).toBeInTheDocument();
+  });
+});

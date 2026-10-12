@@ -20,6 +20,8 @@ from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
 from .signup_policy_routes import router as signup_policy_router
+from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
+from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
@@ -161,7 +163,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.205.1",
+    version="1.206.0",
 )
 
 
@@ -498,6 +500,8 @@ app.include_router(auth_provider_resolved_router)
 # Super-admin installation sign-up policy (SGN-1.4, #5653): GET/PUT /v1/admin/signup-policy —
 # open / invite_only / closed + allowed email domains, DB-first with AUTH_SIGNUP_DISABLED fallback.
 app.include_router(signup_policy_router)
+app.include_router(two_factor_reset_admin_router)
+app.include_router(two_factor_reset_member_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None

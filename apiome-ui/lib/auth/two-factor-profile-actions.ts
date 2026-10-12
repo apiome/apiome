@@ -253,3 +253,84 @@ export async function getTwoFactorReauthStatus(): Promise<TwoFactorReauthStatus>
     return unknown;
   }
 }
+
+/** Whether the signed-in user's two-factor was reset by an administrator and not yet set up again. */
+export interface TwoFactorResetNoticeStatus {
+  /** When the reset happened (ISO 8601), or `null` when there is nothing to tell the user. */
+  resetAt: string | null;
+}
+
+/**
+ * Read the signed-in user's own id, or `null` when there is no session.
+ *
+ * @returns The session user's id.
+ */
+async function currentUserId(): Promise<string | null> {
+  const { getAuthSession } = await import('./server-session');
+  const session = await getAuthSession();
+  const userId = (session?.user as { user_id?: string } | undefined)?.user_id;
+  return typeof userId === 'string' && userId ? userId : null;
+}
+
+/**
+ * Whether to tell the signed-in user that an administrator reset their two-factor (TFA-1.2 #5656).
+ *
+ * apiome-rest stamps `users.two_factor_reset_at` when it resets a user's two-factor. The stamp
+ * stands until the user sets two-factor up again or dismisses the notice. Session-bound: it reads
+ * the caller's own row and takes no argument, so it cannot be asked about anyone else.
+ *
+ * @returns `{ resetAt }` — `null` when unauthenticated, when there is no outstanding reset, when
+ *   the user has since enrolled again, or when the row cannot be read (the notice is advisory).
+ */
+export async function getTwoFactorResetNotice(): Promise<TwoFactorResetNoticeStatus> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return { resetAt: null };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pool = require('../db/db');
+    const result = await pool.query(
+      `SELECT two_factor_reset_at
+         FROM apiome.users
+        WHERE id = $1 AND deleted_at IS NULL AND COALESCE("twoFactorEnabled", false) = false`,
+      [userId]
+    );
+    const stamp = result.rows[0]?.two_factor_reset_at;
+    return { resetAt: stamp ? new Date(stamp).toISOString() : null };
+  } catch (error) {
+    console.warn(
+      '[auth] two-factor reset notice read failed:',
+      error instanceof Error ? error.name : 'unknown'
+    );
+    return { resetAt: null };
+  }
+}
+
+/**
+ * Clear the signed-in user's "two-factor was reset" notice (TFA-1.2 #5656).
+ *
+ * Called when the user dismisses the notice and when they finish setting two-factor up again.
+ * Session-bound, like {@link getTwoFactorResetNotice}: it clears the caller's own stamp only.
+ *
+ * @returns `{ ok: true }` once cleared (or when there was nothing to clear); `{ ok: false }` when
+ *   unauthenticated or the write failed.
+ */
+export async function dismissTwoFactorResetNotice(): Promise<{ ok: boolean }> {
+  try {
+    const userId = await currentUserId();
+    if (!userId) return { ok: false };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pool = require('../db/db');
+    await pool.query(
+      `UPDATE apiome.users SET two_factor_reset_at = NULL
+        WHERE id = $1 AND two_factor_reset_at IS NOT NULL`,
+      [userId]
+    );
+    return { ok: true };
+  } catch (error) {
+    console.warn(
+      '[auth] two-factor reset notice dismiss failed:',
+      error instanceof Error ? error.name : 'unknown'
+    );
+    return { ok: false };
+  }
+}

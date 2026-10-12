@@ -1399,6 +1399,7 @@ export async function getAllUsersWithLicenses() {
     const result = await connectionPool.query(
       `SELECT
          u.id, u.name, u.email, u.enabled, u.verified,
+         COALESCE(u."twoFactorEnabled", false) AS two_factor_enabled,
          ue.license_id,
          l.name        AS license_name,
          l.license_type,

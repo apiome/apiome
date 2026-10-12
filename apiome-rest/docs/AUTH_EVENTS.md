@@ -13,7 +13,7 @@ block the authentication it records.
 
 | Column            | Meaning |
 |-------------------|---------|
-| `event_type`      | `sign_in`, `sign_up`, `link`, `unlink` |
+| `event_type`      | `sign_in`, `sign_up`, `link`, `unlink`, `two_factor_reset` (an administrator cleared the user's second factor, #5656 — `user_id` is the target; `detail` carries `actor_kind`, `actor_id`, `tenant_id` and `reason`) |
 | `outcome`         | `success` or `failure` (DB-constrained) |
 | `user_id`         | Resolved user, or `NULL` for failed sign-ins and pre-account sign-up attempts |
 | `user_label`      | Canonical email, retained independent of the `users` row so history survives account deletion |

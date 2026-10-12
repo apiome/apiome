@@ -34,9 +34,14 @@ EVENT_LINK = "link"
 #: A provider identity was detached from a user.
 EVENT_UNLINK = "unlink"
 
+#: An administrator cleared a user's second factor (TFA-1.2, #5656). Unlike the four above this is
+#: not an authentication attempt by the user: ``user_id`` is the *target*, and ``detail`` carries
+#: who did it (``actor_kind`` / ``actor_id``) and why (``reason``).
+EVENT_TWO_FACTOR_RESET = "two_factor_reset"
+
 #: Every event type, for consumers that validate or enumerate them.
 AUTH_EVENT_TYPES: FrozenSet[str] = frozenset(
-    {EVENT_SIGN_IN, EVENT_SIGN_UP, EVENT_LINK, EVENT_UNLINK}
+    {EVENT_SIGN_IN, EVENT_SIGN_UP, EVENT_LINK, EVENT_UNLINK, EVENT_TWO_FACTOR_RESET}
 )
 
 #: The attempt admitted the actor.

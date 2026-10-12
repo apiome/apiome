@@ -1153,6 +1153,19 @@
       ]
     },
     {
+      "id": "admin-users-reset-two-factor",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"reset-two-factor-dialog\"]",
+      "data": "fixture:hive-a11y/admin-users-reset-two-factor.html",
+      "sources": [
+        "apiome-ui/src/app/admin/dashboard/users",
+        "apiome-ui/src/app/components/ade/account/ResetTwoFactorDialog.tsx"
+      ],
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
       "id": "admin-tenants",
       "route": "/admin/dashboard/tenants",
       "waitFor": "#a11y-mount h2",

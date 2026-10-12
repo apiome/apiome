@@ -1,7 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { ArrowUpRight, Power, RotateCcw, Send, Shield, ShieldCheck, UserMinus } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Power,
+  RotateCcw,
+  Send,
+  Shield,
+  ShieldCheck,
+  ShieldOff,
+  UserMinus,
+} from 'lucide-react';
 
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
@@ -84,6 +93,8 @@ export interface MemberDetailDrawerProps {
   onOffboard: (member: MemberRecord) => void;
   /** Re-issue an outstanding invitation. */
   onResendInvite: (member: MemberRecord) => void;
+  /** Reset the member's two-factor (TFA-1.2, #5656); offered to owners only. */
+  onResetTwoFactor?: (member: MemberRecord) => void;
   /** Where the Roles page lives, for the permissions section's link. */
   rolesHref: string;
   /** Where the access audit lives, for the activity section's link. */
@@ -142,6 +153,7 @@ export default function MemberDetailDrawer({
   onToggleStatus,
   onOffboard,
   onResendInvite,
+  onResetTwoFactor,
   rolesHref,
   auditHref,
 }: MemberDetailDrawerProps) {
@@ -312,6 +324,17 @@ export default function MemberDetailDrawer({
                 <Button variant="outline" disabled={busy} onClick={() => onResendInvite(member)}>
                   <Send aria-hidden />
                   Resend
+                </Button>
+              )}
+              {actions?.canResetTwoFactor && onResetTwoFactor && (
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => onResetTwoFactor(member)}
+                  data-testid="member-reset-two-factor"
+                >
+                  <ShieldOff aria-hidden />
+                  Reset two-factor
                 </Button>
               )}
               {actions?.canChangeStatus && (
