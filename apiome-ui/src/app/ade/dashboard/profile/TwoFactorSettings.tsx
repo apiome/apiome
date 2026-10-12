@@ -53,6 +53,7 @@ import {
 import { authClient } from '@lib/auth/auth-client';
 import { signIn, useAuthSession } from '@lib/auth/session-client';
 import {
+  dismissTwoFactorResetNotice,
   getBackupCodeStatus,
   getEmailOtpAvailability,
   getTrustedDeviceStatus,
@@ -312,6 +313,9 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
         return;
       }
       await refreshSessionFlag();
+      // Enrolling again answers an administrator's reset (TFA-1.2 #5656): the "set two-factor up
+      // again" notice has done its job. Best-effort — the notice also hides itself once enrolled.
+      void dismissTwoFactorResetNotice().catch(() => undefined);
       setStep('backup');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed.');

@@ -3549,6 +3549,83 @@ button.auth-link:disabled {
   opacity: 0.6;
 }
 
+/* ---- "Your two-factor was reset" (TFA-1.2, #5656) ------------------------
+   The prompt to enrol again after an administrator's reset. It floats over the
+   bottom corner instead of taking a row of the layout: the signed-in shell is a
+   fixed-height box each route fills, so a banner inside it would shorten every
+   page. Above the rail and page chrome (`z-index: 20`), below dialogs. The
+   close button is an element selector for the reason given at `button.auth-link`. */
+.tfa-reset-notice {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: min(26rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  color: var(--fg);
+  box-shadow: var(--shadow-lg);
+}
+
+.tfa-reset-notice__icon {
+  flex: none;
+  color: var(--warn-fg);
+}
+
+.tfa-reset-notice__icon > svg {
+  width: var(--icon-button);
+  height: var(--icon-button);
+}
+
+.tfa-reset-notice__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.tfa-reset-notice__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.tfa-reset-notice__text {
+  margin-top: var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.tfa-reset-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+button.tfa-reset-notice__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+button.tfa-reset-notice__close:hover {
+  color: var(--fg);
+}
+
+button.tfa-reset-notice__close > svg {
+  width: var(--icon-button);
+  height: var(--icon-button);
+}
+
 /* ---- The organization URL slug (mockup `.input--mono` + `.slug-preview`) --
    The slug is an identifier that ends up in a URL, not prose, so it is set in
    the mono face — the same promise `.mono` makes everywhere else in the app.

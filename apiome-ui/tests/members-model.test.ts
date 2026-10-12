@@ -181,6 +181,7 @@ describe('what the viewer may do', () => {
       canInvite: true,
       canEdit: true,
       canDelete: true,
+      canResetTwoFactor: true,
     });
   });
 
@@ -189,6 +190,7 @@ describe('what the viewer may do', () => {
       canInvite: false,
       canEdit: true,
       canDelete: false,
+      canResetTwoFactor: false,
     });
   });
 
@@ -200,6 +202,7 @@ describe('what the viewer may do', () => {
         canInvite: false,
         canEdit: false,
         canDelete: false,
+        canResetTwoFactor: false,
       });
     }
   });
@@ -223,6 +226,38 @@ describe('what one row offers', () => {
     expect(own.canChangeStatus).toBe(false);
     expect(own.canOffboard).toBe(false);
     expect(own.disabledReason).toBe(OWN_ROW_REASON);
+  });
+
+  // TFA-1.2 (#5656): resetting a member's two-factor reaches into their account, so it is an
+  // owner's action, not a `members:*` grant, and only where there is a factor to reset.
+  describe('reset two-factor', () => {
+    const resettable = { user_id: 'u-them', status: 'active' as const, two_factor_enabled: true };
+    const offered = (overrides: Partial<MemberRecord>, perms = { is_admin: true, permissions: [] as string[] }) =>
+      memberRowActions(member({ ...resettable, ...overrides }), {
+        capabilities: memberCapabilities(perms),
+        viewerId: 'u-me',
+      }).canResetTwoFactor;
+
+    it('is offered to an owner for an active member with two-factor on', () => {
+      expect(offered({})).toBe(true);
+    });
+
+    it('is not offered on the owner’s own row', () => {
+      expect(offered({ user_id: 'u-me' })).toBe(false);
+    });
+
+    it.each([false, null, undefined])('is not offered when two-factor is %p', (flag) => {
+      expect(offered({ two_factor_enabled: flag })).toBe(false);
+    });
+
+    it.each(['pending', 'suspended'] as const)('is not offered for a %s member', (status) => {
+      expect(offered({ status })).toBe(false);
+    });
+
+    it('is not offered to a non-owner, whatever members:* grants they hold', () => {
+      const perms = { is_admin: false, permissions: ['members:create', 'members:edit', 'members:delete'] };
+      expect(offered({}, perms)).toBe(false);
+    });
   });
 
   it('opens them on everybody else', () => {

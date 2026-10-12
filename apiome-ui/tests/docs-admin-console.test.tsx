@@ -309,4 +309,77 @@ describe('Users', () => {
     writeA11yFixture('admin-users-delete-dialog', bodyMarkup());
     expect(helper.deleteUser).not.toHaveBeenCalled();
   });
+
+  // TFA-1.2 (#5656): a locked-out user's second factor can be cleared from their row.
+  describe('resetting a user’s two-factor', () => {
+    /** The docs roster, with two-factor on for Priya only. */
+    const withPriyaEnrolled = () =>
+      helper.getAllUsersWithLicenses.mockImplementation(async () =>
+        JSON.stringify({
+          success: true,
+          users: DOCS_USERS.map((entry) => ({ ...entry, two_factor_enabled: entry.id === 'u-priya' })),
+        }),
+      );
+
+    /** Open the Active Users tab and one user's actions menu. */
+    async function openMenuFor(email: string) {
+      const user = userEvent.setup();
+      renderConsole('/admin/dashboard/users', <UserManagementClient />);
+      await screen.findByText('aiko.tanaka@harbor-labs.com');
+      await user.click(screen.getByRole('tab', { name: 'Active Users' }));
+      const row = screen.getByText(email).closest('tr') as HTMLElement;
+      await user.click(within(row).getAllByRole('button').at(-1) as HTMLElement);
+      return user;
+    }
+
+    it('offers the action only for a user who has two-factor on', async () => {
+      withPriyaEnrolled();
+      await openMenuFor('marcus.lee@northwind.io');
+      expect(screen.queryByRole('button', { name: 'Reset two-factor…' })).not.toBeInTheDocument();
+    });
+
+    it('asks for a reason and the email, resets through the admin route, and says the user was emailed', async () => {
+      withPriyaEnrolled();
+      const fetchMock = jest.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: { userId: 'u-priya', hadTwoFactor: true, sessionsRevoked: 2, trustedDevicesRevoked: 1, emailSent: true },
+        }),
+      }));
+      global.fetch = fetchMock as unknown as typeof fetch;
+
+      const user = await openMenuFor('priya.raman@northwind.io');
+      await user.click(screen.getByRole('button', { name: 'Reset two-factor…' }));
+
+      const dialog = await screen.findByTestId('reset-two-factor-dialog');
+      expect(dialog).toHaveTextContent('Reset two-factor for Priya Raman?');
+      const submit = within(dialog).getByRole('button', { name: 'Reset two-factor' });
+      expect(submit).toBeDisabled();
+
+      await user.type(within(dialog).getByLabelText('Reason'), 'Lost her phone and her backup codes.');
+      await user.type(within(dialog).getByLabelText(/to confirm/), 'priya.raman@northwind.io');
+      expect(submit).toBeEnabled();
+      writeA11yFixture('admin-users-reset-two-factor', bodyMarkup());
+
+      await user.click(submit);
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith('/api/admin/users/u-priya/two-factor/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reason: 'Lost her phone and her backup codes.',
+            confirm: 'priya.raman@northwind.io',
+          }),
+        }),
+      );
+      expect(await within(dialog).findByTestId('reset-two-factor-result')).toHaveTextContent(
+        'They have been emailed.',
+      );
+      // The roster is read again, so the action leaves the menu of a user with no factor left.
+      await waitFor(() => expect(helper.getAllUsersWithLicenses).toHaveBeenCalledTimes(2));
+    });
+  });
 });

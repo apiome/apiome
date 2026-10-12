@@ -61,6 +61,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Trust a device for 30 days to skip the second step there
   - Two-factor sign-in now locks for 15 minutes after 10 wrong codes in a row, and says so
   - Accounts that sign in with GitHub, GitLab, Microsoft or Google can now turn two-factor on, and are asked for their code after signing in with the provider
+  - A locked-out user's two-factor can be reset by an administrator, or by a workspace owner for a member of their workspace only; the reset is audited and the user is prompted to set it up again
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

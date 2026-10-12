@@ -1,6 +1,6 @@
 ---
 title: "Access"
-description: "REST endpoints tagged access: 14 operations."
+description: "REST endpoints tagged access: 15 operations."
 sidebar_position: 2
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.205.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.206.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `access` · 14 operations
+Tag: `access` · 15 operations
 
 ## `GET /v1/access/{tenant_slug}/audit` {#list-audit-v1-access-tenant-slug-audit-get}
 
@@ -229,6 +229,54 @@ Operation id: `resend_member_invite_v1_access__tenant_slug__members__user_id__re
 | --- | --- | --- |
 | 200 | Successful response for resend member invite. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/access/{tenant_slug}/members/{user_id}/two-factor/reset` {#member-reset-two-factor-v1-access-tenant-slug-members-user-id-two-factor-reset-post}
+
+**Member Reset Two Factor**
+
+Reset a member's two-factor, as an owner of the workspace.
+
+Allowed only for an **owner**, only for an **active member** of this workspace, and only when
+that member belongs to **no other workspace** — two-factor protects the whole account, so a
+member shared with another workspace is left to the installation's super-admin. An owner
+cannot reset their own two-factor here; they manage it on their Profile page.
+
+Recorded in the authentication ledger and in this workspace's access audit, with the reason.
+
+Args:
+    tenant_slug: The workspace the caller is acting in.
+    user_id: The member to reset.
+    payload: The reason, and the member's email typed out as confirmation.
+
+Returns:
+    What was cleared.
+
+Operation id: `member_reset_two_factor_v1_access__tenant_slug__members__user_id__two_factor_reset_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `user_id` | path | string | yes | Path parameter identifying the user id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for member reset two factor.
+
+- `application/json` — [`TwoFactorResetRequest`](#schema-twofactorresetrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for member reset two factor. | `application/json` [`TwoFactorResetResult`](#schema-twofactorresetresult) |
+| 403 | The caller is not an owner of this workspace (owner_required), or called with an API key (session_required). | — |
+| 404 | The user is not an active member of this workspace. | — |
+| 409 | The member belongs to another workspace as well (multi_tenant_member), or the caller tried to reset their own two-factor (self_reset). | — |
+| 422 | Reason missing or out of range, or the confirmation does not match. | — |
 
 ## `GET /v1/access/{tenant_slug}/permissions/me` {#get-my-permissions-v1-access-tenant-slug-permissions-me-get}
 
@@ -463,3 +511,25 @@ Create/update payload for a role (name, description, full permission grid).
 | `name` | string | yes | Human-readable name. |
 | `description` | string or null | no | Free-text description. |
 | `permissions` | array of `PermissionCell` | no | Permissions. |
+
+### `TwoFactorResetRequest` {#schema-twofactorresetrequest}
+
+Why the factor is being reset, and proof the caller means this user.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `reason` | string | yes | Why the two-factor is being reset (10–500 characters). Stored in the audit trail. |
+| `confirm` | string | yes | The target user's email address, typed out to confirm the reset. |
+
+### `TwoFactorResetResult` {#schema-twofactorresetresult}
+
+What a reset cleared.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `user_id` | string | yes | The user whose two-factor was reset. |
+| `email` | string or null | no | That user's email address. |
+| `name` | string or null | no | That user's display name. |
+| `had_two_factor` | boolean | yes | Whether the user had two-factor on before the reset. |
+| `sessions_revoked` | integer | yes | How many of the user's sessions were ended. |
+| `trusted_devices_revoked` | integer | yes | How many trusted-device records were removed. |

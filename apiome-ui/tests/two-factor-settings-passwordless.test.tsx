@@ -42,6 +42,7 @@ jest.mock('@lib/auth/two-factor-profile-actions', () => ({
   revokeThisTrustedDevice: jest.fn(async () => ({ ok: true })),
   getEmailOtpAvailability: jest.fn(async () => ({ available: false })),
   getTwoFactorReauthStatus: (...args: unknown[]) => mockGetTwoFactorReauthStatus(...args),
+  dismissTwoFactorResetNotice: jest.fn(async () => ({ ok: true })),
 }));
 
 jest.mock('react-qr-code', () => ({

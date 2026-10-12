@@ -106,6 +106,7 @@ jest.mock('@lib/auth/two-factor-profile-actions', () => ({
   revokeThisTrustedDevice: jest.fn(async () => ({ ok: true })),
   // An account with a password: the dialogs ask for it (TFA-1.1 #5655 leaves this path as it was).
   getTwoFactorReauthStatus: jest.fn(async () => ({ hasPassword: true, fresh: false, providers: [] })),
+  dismissTwoFactorResetNotice: jest.fn(async () => ({ ok: true })),
 }));
 
 jest.mock('react-qr-code', () => ({

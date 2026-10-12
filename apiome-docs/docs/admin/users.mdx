@@ -63,6 +63,7 @@ request leaves the queue; nobody is emailed, and the address can sign up again.
 | **Disable User** / **Enable User** | A disabled account cannot sign in. Nothing is deleted. |
 | **Assign License…** | Opens the list of enabled licenses; **click one** to assign it, replacing any license the user had. **Remove License** appears when the user has one. See [Licenses](./licenses.mdx). |
 | **Manage Feature Flags…** | Opens **Feature Flags** for this user — the flags their license grants, and per-user overrides. **Click “Done”** to close it. See [Feature flags](./feature-flags.mdx). |
+| **Reset two-factor…** | Shown for a user who has two-factor on. Clears it so they can sign in again — see [Reset a user's two-factor](#reset-a-users-two-factor). |
 | **Delete User** | Deletes the account — see below. |
 
 ## Create an account
@@ -80,6 +81,40 @@ To add someone who has not signed up:
 
 The email is stored in lower case. The page switches to **Active Users**, where the new account
 appears.
+
+## Reset a user's two-factor
+
+Someone who has lost their authenticator **and** their backup codes cannot get past the two-factor
+step. Resetting their two-factor lets them sign in again with their password or provider alone.
+
+Confirm who you are dealing with before you do this — a reset is exactly what an impostor would ask
+for.
+
+1. On **Active Users**, **click the ⋮ button** on the user's row, then **“Reset two-factor…”**. The
+   action appears only for users who have two-factor on.
+2. Enter a **Reason** of at least 10 characters. It is kept in the audit trail; the user does not
+   see it.
+3. **Type the user's email address** in the confirmation field. **Reset two-factor** stays off until
+   it matches.
+4. **Click “Reset two-factor”.**
+
+<Screenshot id="admin-users-reset-two-factor" alt="Reset two-factor for Priya Raman: a reason entered and her email typed to confirm" />
+
+The reset:
+
+- removes the user's authenticator and backup codes, and turns two-factor off for the account;
+- forgets every device they marked as trusted;
+- signs them out everywhere;
+- is recorded in the authentication ledger with the user, the reason and that the super-admin did
+  it.
+
+The dialog then says whether the user was emailed. If it says **no email was sent**, your
+installation has no email sender configured — tell the user yourself. The next time they sign in
+they are not asked for a code, and Apiome shows them a notice to
+[set two-factor up again](../workspace/profile.mdx#turn-it-on).
+
+A workspace owner can do the same for a member who belongs only to their workspace — see
+[Reset a member's two-factor](../workspace/members.mdx#reset-a-members-two-factor).
 
 ## Delete an account
 
