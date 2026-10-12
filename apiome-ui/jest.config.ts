@@ -45,6 +45,9 @@ const config: Config = {
     // entrypoints. Server-side better-auth tests still `jest.mock` these, which takes precedence.
     '^better-auth/react$': '<rootDir>/tests/__mocks__/better-auth-react.ts',
     '^better-auth/client/plugins$': '<rootDir>/tests/__mocks__/better-auth-client-plugins.ts',
+    // The server instance reaches these two through the OAuth second-factor hook (TFA-1.1 #5655).
+    '^better-auth/cookies$': '<rootDir>/tests/__mocks__/better-auth-cookies.ts',
+    '^better-auth/crypto$': '<rootDir>/tests/__mocks__/better-auth-crypto.ts',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(react-markdown|remark-gfm|unified|bail|is-plain-obj|trough|vfile|unist-.*|unified|remark-.*|mdast-.*|micromark.*|decode-named-character-reference|character-entities|property-information|hast-util-whitespace|space-separated-tokens|comma-separated-tokens|pretty-bytes|@seriousme/openapi-schema-validator|uuid)/)',

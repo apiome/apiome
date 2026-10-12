@@ -25,6 +25,12 @@
  *  10. **2FA login with a TOTP code** — password sign-in is withheld pending the second factor,
  *      which a generated TOTP code satisfies.
  *  11. **2FA login with a backup code** — a backup code satisfies the second factor.
+ *  12. **2FA for an account with no password** (TFA-1.1 #5655) — an OAuth-only user enrols with no
+ *      password, on the strength of having just signed in.
+ *  13. **Provider sign-in is challenged** — that user signs in with the provider again and must
+ *      enter a code at `/login/2fa` before any session exists.
+ *  14. **A stale session cannot change the second factor** — the same account, signed in "too long
+ *      ago", is refused with `REAUTH_REQUIRED`.
  *
  * Stack contract: REST + Postgres must already be up (`docker compose up --wait`), with the V201
  * `two_factor` migration applied; the mock provider server and the dedicated UI dev server are
@@ -33,6 +39,7 @@
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
 import { setMockPersona, type MockPersona } from './support/mock-oauth';
 import {
+  ageSessions,
   closeDb,
   countUsersByEmail,
   getTwoFactorState,
@@ -84,10 +91,19 @@ const CRED_PASSWORD = 'Journey-Passw0rd!';
 let tfaSecret = '';
 let tfaBackupCodes: string[] = [];
 
+/** TOTP secret of the OAuth-only user (Riley), captured in test 12 and reused by tests 13–14. */
+let oauthTfaSecret = '';
+
+/** Riley as GitHub asserts them — the persona tests 1 and 6 sign in with. */
+const rileyOnGithub = () =>
+  persona({ idOffset: 1, email: RILEY_EMAIL, name: 'Riley Journey', login: `riley-${RUN}` });
+
 /** Better Auth API endpoints the 2FA legs drive directly (no 2FA UX exists yet — foundation only). */
 const AUTH_API = {
   signInEmail: '/api/auth/sign-in/email',
+  getSession: '/api/auth/get-session',
   twoFactorEnable: '/api/auth/two-factor/enable',
+  twoFactorDisable: '/api/auth/two-factor/disable',
   twoFactorVerifyTotp: '/api/auth/two-factor/verify-totp',
   twoFactorVerifyBackupCode: '/api/auth/two-factor/verify-backup-code',
 } as const;
@@ -494,5 +510,78 @@ test.describe('OLO journey — login, invariants, onboarding, license, switcher'
 
     await page.goto('/ade');
     await expect(page.getByTestId('first-tenant-onboarding-wizard')).toBeVisible();
+  });
+
+  test('12. an OAuth-only user enrols in 2FA with no password, having just signed in', async ({
+    page,
+  }) => {
+    // Riley signed up with GitHub (test 1) and has never had a password.
+    await page.context().clearCookies();
+    await setMockPersona(rileyOnGithub());
+    await startLogin(page, 'github');
+    await page.waitForURL(/\/ade/, { timeout: 60_000 });
+
+    // No `password` in the body: the session is seconds old, which is the proof (TFA-1.1). The
+    // request context shares the browser context's cookies, so it carries the provider sign-in.
+    const enableResponse = await postAuthApi(page, AUTH_API.twoFactorEnable, {});
+    await expectAuthOk(enableResponse, 'two-factor/enable (passwordless)');
+    const enrollment = (await enableResponse.json()) as { totpURI: string; backupCodes: string[] };
+    oauthTfaSecret = parseTotpSecret(enrollment.totpURI);
+
+    const verifyResponse = await postAuthApi(page, AUTH_API.twoFactorVerifyTotp, {
+      code: generateTotp(oauthTfaSecret),
+    });
+    await expectAuthOk(verifyResponse, 'two-factor/verify-totp (passwordless enroll)');
+
+    const state = await getTwoFactorState(RILEY_EMAIL);
+    expect(state.enabled).toBe(true);
+    expect(state.rows).toBe(1);
+  });
+
+  test('13. a provider sign-in is withheld until a code is entered at /login/2fa', async ({ page }) => {
+    await page.context().clearCookies();
+    await setMockPersona(rileyOnGithub());
+    await startLogin(page, 'github');
+
+    // The callback issued a session and took it back: the browser is on the second step instead.
+    await page.waitForURL(/\/login\/2fa/, { timeout: 60_000 });
+    const sessionBefore = await page.request.get(AUTH_API.getSession);
+    expect(await sessionBefore.json()).toBeNull();
+    // Nothing behind the sign-in is reachable yet.
+    await page.goto('/ade/dashboard');
+    await page.waitForURL(/\/login/);
+
+    // Start the sign-in again (a challenge is spent by leaving it) and pass the second step.
+    await startLogin(page, 'github');
+    await page.waitForURL(/\/login\/2fa/, { timeout: 60_000 });
+    await page.getByTestId('two-factor-totp-code').fill(generateTotp(oauthTfaSecret));
+    await page.getByTestId('two-factor-submit').click();
+
+    await page.waitForURL(/\/ade/, { timeout: 60_000 });
+    await gotoDashboard(page);
+    await expect(switcherButton(page)).toBeVisible();
+  });
+
+  test('14. a stale session of a passwordless account cannot turn 2FA off', async ({ page }) => {
+    // Riley is signed in from test 13. Make that sign-in look half an hour old.
+    expect(await ageSessions(RILEY_EMAIL, 30)).toBeGreaterThan(0);
+
+    const refused = await postAuthApi(page, AUTH_API.twoFactorDisable, {});
+    expect(refused.status()).toBe(403);
+    expect(((await refused.json()) as { code?: string }).code).toBe('REAUTH_REQUIRED');
+    expect((await getTwoFactorState(RILEY_EMAIL)).enabled).toBe(true);
+
+    // Signing in with the provider again — and passing the second step — makes the session fresh.
+    await page.context().clearCookies();
+    await setMockPersona(rileyOnGithub());
+    await startLogin(page, 'github');
+    await page.waitForURL(/\/login\/2fa/, { timeout: 60_000 });
+    await page.getByTestId('two-factor-totp-code').fill(generateTotp(oauthTfaSecret));
+    await page.getByTestId('two-factor-submit').click();
+    await page.waitForURL(/\/ade/, { timeout: 60_000 });
+
+    const allowed = await postAuthApi(page, AUTH_API.twoFactorDisable, {});
+    await expectAuthOk(allowed, 'two-factor/disable (fresh passwordless session)');
+    expect((await getTwoFactorState(RILEY_EMAIL)).enabled).toBe(false);
   });
 });

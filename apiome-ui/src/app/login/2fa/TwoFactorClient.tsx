@@ -112,6 +112,12 @@ interface TwoFactorClientProps {
   /** Validated by the page (resolveCallbackUrl) before being passed in. */
   callbackUrl?: string;
   error?: string;
+  /**
+   * The methods this challenge offers, when the server named them in the URL — the provider
+   * sign-in path (TFA-1.1 #5655). Already reduced to the known methods by the page. Absent after
+   * a password sign-in, which stores them in `sessionStorage` instead.
+   */
+  methods?: TwoFactorMethod[];
 }
 
 /**
@@ -141,8 +147,14 @@ interface TwoFactorClientProps {
 const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
   callbackUrl = TWO_FACTOR_DEFAULT_CALLBACK,
   error,
+  methods: offeredMethods,
 }) => {
-  const methods = useMemo(() => peekTwoFactorMethods(), []);
+  // What the server named for this challenge wins over what an earlier, abandoned sign-in may
+  // have left in `sessionStorage`.
+  const methods = useMemo(
+    () => (offeredMethods && offeredMethods.length > 0 ? offeredMethods : peekTwoFactorMethods()),
+    [offeredMethods]
+  );
   const [activeMethod, setActiveMethod] = useState<TwoFactorMethod>(() =>
     methods.includes('totp') ? 'totp' : methods[0] ?? 'totp'
   );

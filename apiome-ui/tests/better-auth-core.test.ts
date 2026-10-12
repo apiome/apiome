@@ -211,6 +211,23 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(typeof config.hooks.after).toBe('function');
   });
 
+  it('composes the two-factor hooks beside them (TFA-1.1 #5655)', async () => {
+    process.env.BETTER_AUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+    const config = mockBetterAuth.mock.calls[0][0];
+
+    // Both are path-gated, so a request neither owns passes straight through each.
+    const unrelated = { path: '/get-session', context: { newSession: null } };
+    await expect(config.hooks.before(unrelated)).resolves.toBeUndefined();
+    await expect(config.hooks.after(unrelated)).resolves.toBeUndefined();
+
+    // after: an OAuth callback that issued no session is not challenged.
+    await expect(
+      config.hooks.after({ path: '/oauth2/callback/github', context: { newSession: null } })
+    ).resolves.toBeUndefined();
+  });
+
   it('registers the twoFactor plugin with the app name as issuer and the two_factor table (OLO-10.10)', async () => {
     process.env.BETTER_AUTH_SECRET = 'test-secret';
 
@@ -226,6 +243,9 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
       issuer: 'apiome',
       twoFactorTable: 'two_factor',
       trustDeviceMaxAge: 30 * 24 * 60 * 60,
+      // Accounts without a password can manage 2FA (TFA-1.1 #5655); the plugin still demands the
+      // password where one exists, and the re-auth hook covers the rest.
+      allowPasswordless: true,
       accountLockout: { enabled: true, maxFailedAttempts: 10, durationSeconds: 15 * 60 },
     });
 

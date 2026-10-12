@@ -54,14 +54,16 @@ If you signed up with an identity provider and never set a password, sign in wit
 ## Two-factor authentication
 
 Two-factor authentication (2FA) asks for a code from an authenticator app — Authy, Google
-Authenticator or any TOTP app — after your password. It is set up in the **Security** card.
+Authenticator or any TOTP app — each time you sign in, whether you sign in with a password or with
+a provider such as GitHub or Google. It is set up in the **Security** card.
 
 <Screenshot id="profile-security" alt="The Security card with two-factor enabled: sign-in methods, email code, backup codes, trusted device and recovery note" />
 
 ### Turn it on
 
 1. **Click “Enable 2FA”** in the **Security** card.
-2. Enter your **Current password** and **click “Continue”**.
+2. Enter your **Current password** and **click “Continue”**. If your account has no password, see
+   [Without a password](#without-a-password).
 3. Scan the QR code with your authenticator app. If you cannot scan it, copy the `otpauth://` link
    under **Or enter this URI** into the app instead.
 4. Type the six-digit **Authentication code** the app shows and **click “Confirm and enable”**.
@@ -75,6 +77,21 @@ Authenticator or any TOTP app — after your password. It is set up in the **Sec
 The codes are shown once. Each one signs you in a single time when you do not have your
 authenticator. The next time you sign in, Apiome asks for a code — see
 [Pass the two-factor check](../getting-started/sign-in.mdx#pass-the-two-factor-check).
+
+### Without a password
+
+An account that signs in only through a provider — GitHub, GitLab, Microsoft or Google — has no
+password to enter. Apiome asks you to confirm it is you by a recent sign-in instead, when you turn
+2FA on or off or make new backup codes:
+
+- **If you signed in within the last 10 minutes**, the dialog says so and asks for nothing more.
+  **Click “Continue”** (or **“Regenerate”**, or **“Disable 2FA”**).
+- **Otherwise** the dialog holds the change and shows **“Sign in again with GitHub”** — or whichever
+  provider you have linked. **Click it**, sign in at the provider, and you come back to this page.
+  Then start again; you have 10 minutes.
+
+When 2FA is already on, signing in again asks for your code as well — unless this browser is a
+[trusted device](#once-it-is-on).
 
 ### Once it is on
 
@@ -94,13 +111,15 @@ The **Security** card then shows:
 ### Make new backup codes
 
 1. **Click “Regenerate backup codes”**.
-2. Enter your **Current password** and **click “Regenerate”**. Your old codes stop working at once.
+2. Enter your **Current password** — or [confirm it is you](#without-a-password) — and
+   **click “Regenerate”**. Your old codes stop working at once.
 3. Copy or download the new codes and **click “Done”**.
 
 ### Turn it off
 
 1. **Click “Disable 2FA”**.
-2. Enter your **Current password** and **click “Disable 2FA”**.
+2. Enter your **Current password** — or [confirm it is you](#without-a-password) — and
+   **click “Disable 2FA”**.
 
 Your backup codes and this browser's trusted-device mark are cleared too. You can turn 2FA on again
 at any time.

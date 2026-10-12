@@ -301,6 +301,41 @@ describe('lockout', () => {
   });
 });
 
+describe('methods named by the server (provider sign-in, TFA-1.1 #5655)', () => {
+  it('offers the methods from the URL when nothing was stored', () => {
+    render(<TwoFactorClient callbackUrl="/ade" methods={['totp', 'otp']} />);
+    expect(screen.getByTestId('two-factor-method-switcher')).toBeInTheDocument();
+  });
+
+  it('draws the email form alone when that is the only method', () => {
+    render(<TwoFactorClient callbackUrl="/ade" methods={['otp']} />);
+    expect(screen.getByTestId('two-factor-send-otp')).toBeInTheDocument();
+    expect(screen.queryByTestId('two-factor-totp-code')).not.toBeInTheDocument();
+  });
+
+  it("prefers the server's methods over ones an earlier, abandoned sign-in left behind", () => {
+    window.sessionStorage.setItem(TWO_FACTOR_METHODS_STORAGE_KEY, JSON.stringify(['totp', 'otp']));
+    render(<TwoFactorClient callbackUrl="/ade" methods={['totp']} />);
+    expect(screen.queryByTestId('two-factor-method-switcher')).not.toBeInTheDocument();
+    expect(screen.getByTestId('two-factor-totp-code')).toBeInTheDocument();
+  });
+
+  it('falls back to the stored methods when the URL names none', () => {
+    window.sessionStorage.setItem(TWO_FACTOR_METHODS_STORAGE_KEY, JSON.stringify(['totp', 'otp']));
+    render(<TwoFactorClient callbackUrl="/ade" methods={[]} />);
+    expect(screen.getByTestId('two-factor-method-switcher')).toBeInTheDocument();
+  });
+
+  it('verifies a code after a provider sign-in and leaves for the destination', async () => {
+    mockVerifyTotp.mockResolvedValue(OK);
+    render(<TwoFactorClient callbackUrl="/ade/dashboard/projects" methods={['totp']} />);
+
+    submitTotp();
+
+    await waitFor(() => expect(mockBrowserNavigate).toHaveBeenCalledWith('/ade/dashboard/projects'));
+  });
+});
+
 describe('accessibility', () => {
   it('has no axe violations on the backup-code form', async () => {
     const user = userEvent.setup();

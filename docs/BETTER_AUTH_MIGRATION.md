@@ -262,7 +262,20 @@ Plus `user.twoFactorEnabled boolean` (§2.1). Registered via `twoFactor()` on th
 > **✅ TOTP UX implemented (OLO-9.13 #5014).** Password-gated enroll/disable on Profile Security,
 > `/login/2fa` after `twoFactorRedirect`, and `AppSession.twoFactorElevated` /
 > `user.twoFactorEnabled` for downstream consumers. Better Auth's stock after-hook only challenges
-> `/sign-in/email|username|phone-number` — OAuth/SSO second-factor is deferred.
+> `/sign-in/email|username|phone-number` — OAuth/SSO second-factor was deferred to TFA-1.1 (below).
+>
+> **✅ Two-factor for accounts without a password implemented (TFA-1.1 #5655).** The plugin's
+> after-hook still does not watch `/oauth2/callback/:providerId`, so `two-factor-oauth-challenge.ts`
+> (composed into `hooks.after`) recreates its challenge there: honour-and-rotate a trusted device,
+> otherwise delete the session the callback issued, write the `two_factor` cookie and its
+> `2fa-<id>` / `2fa-attempts-<id>` verification records, and redirect to
+> `/login/2fa?callbackUrl=…&methods=…`. **This mirrors plugin internals** — the module header lists
+> them and `tests/two-factor-oauth-challenge.test.ts` pins each against `node_modules`; re-check on
+> every Better Auth upgrade, and delete the module if the plugin starts challenging OAuth itself.
+> Enrolment for an account with no password uses the plugin's `allowPasswordless`, gated by
+> `two-factor-reauth.ts` (`hooks.before`): `/two-factor/enable|disable|generate-backup-codes` need
+> a session created within the last 10 minutes (read authoritatively, not from the cookie cache),
+> else `403 REAUTH_REQUIRED`; the Profile page then offers "Sign in again with <provider>".
 >
 > **✅ Profile self-service implemented (OLO-9.15 #5015).** Remaining backup-code count (server-only
 > `viewBackupCodes`), password-gated regenerate, forget-this-browser (trust-device cookie), and
