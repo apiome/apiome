@@ -267,7 +267,16 @@ Plus `user.twoFactorEnabled boolean` (§2.1). Registered via `twoFactor()` on th
 > **✅ Profile self-service implemented (OLO-9.15 #5015).** Remaining backup-code count (server-only
 > `viewBackupCodes`), password-gated regenerate, forget-this-browser (trust-device cookie), and
 > recovery guidance on Profile Security. Better Auth has no multi-device trust list — revoke is
-> per-browser. Backup-code login, trust-on-verify checkbox, and lockout UX remain OLO-9.14 (#5006).
+> per-browser.
+>
+> **✅ Backup-code sign-in, trusted devices and lockout implemented (OLO-9.14 #5006).** `/login/2fa`
+> redeems a single-use backup code (`verifyBackupCode`) from a recovery form beside the challenge's
+> methods; a "Trust this device for 30 days" box passes `trustDevice` to every verify call; and the
+> plugin's refusals (`ACCOUNT_TEMPORARILY_LOCKED`, `TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE`,
+> `INVALID_TWO_FACTOR_COOKIE`) are worded on the screen and close the form. The policy is stated in
+> `lib/auth/two-factor-policy.ts` and passed to the plugin rather than left to its defaults:
+> `trustDeviceMaxAge` 30 days; `accountLockout` 10 consecutive failures → 15 minutes, counted in
+> `two_factor."failedVerificationCount"` / `"lockedUntil"` across challenges and methods.
 >
 > **✅ Email OTP implemented (OLO-9.50 #5070).** When `SENDGRID_API_KEY` + `EMAIL_FROM` are set,
 > `twoFactor({ otpOptions: { sendOTP } })` is registered. Better Auth then includes `"otp"` in
