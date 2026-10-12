@@ -220,7 +220,14 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     // `two_factor` (the plugin keeps its native camelCase field names — design §2.5).
     // Without SendGrid, otpOptions is omitted so deployments stay TOTP-only (OLO-9.50).
     expect(mockTwoFactor).toHaveBeenCalledTimes(1);
-    expect(mockTwoFactor).toHaveBeenCalledWith({ issuer: 'apiome', twoFactorTable: 'two_factor' });
+    // The sign-in policy is stated, not left to the plugin's defaults (OLO-9.14 #5006): a trusted
+    // browser skips the second step for 30 days; ten consecutive wrong codes lock it for 15 minutes.
+    expect(mockTwoFactor).toHaveBeenCalledWith({
+      issuer: 'apiome',
+      twoFactorTable: 'two_factor',
+      trustDeviceMaxAge: 30 * 24 * 60 * 60,
+      accountLockout: { enabled: true, maxFailedAttempts: 10, durationSeconds: 15 * 60 },
+    });
 
     // The twoFactor plugin sits AFTER genericOAuth and BEFORE nextCookies (which must stay last).
     const config = mockBetterAuth.mock.calls[0][0];

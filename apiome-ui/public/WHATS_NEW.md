@@ -56,6 +56,10 @@ We continue to improve the platform based on your feedback with improvements and
   - Hardens tool array emit for LLM tool summary
 - Studio:
   - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
+- Two-factor sign-in:
+  - Sign in with a backup code when you cannot reach your authenticator
+  - Trust a device for 30 days to skip the second step there
+  - Two-factor sign-in now locks for 15 minutes after 10 wrong codes in a row, and says so
 - Security:
   - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
   - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours

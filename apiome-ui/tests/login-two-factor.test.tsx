@@ -66,7 +66,7 @@ describe('TwoFactorClient', () => {
     fireEvent.click(screen.getByTestId('two-factor-submit'));
 
     await waitFor(() => {
-      expect(mockVerifyTotp).toHaveBeenCalledWith({ code: '123456' });
+      expect(mockVerifyTotp).toHaveBeenCalledWith({ code: '123456', trustDevice: false });
       expect(mockBrowserNavigate).toHaveBeenCalledWith('/ade/dashboard');
     });
   });
@@ -105,7 +105,7 @@ describe('TwoFactorClient', () => {
     fireEvent.click(screen.getByTestId('two-factor-otp-submit'));
 
     await waitFor(() => {
-      expect(mockVerifyOtp).toHaveBeenCalledWith({ code: '654321' });
+      expect(mockVerifyOtp).toHaveBeenCalledWith({ code: '654321', trustDevice: false });
       expect(mockBrowserNavigate).toHaveBeenCalledWith('/ade');
     });
   });

@@ -192,7 +192,7 @@ const PROFILE_MARKUP = `
                 </div>
                 <div class="acct-mfa__box">
                   <div class="acct-mfa__title">Trusted device</div>
-                  <p class="acct-mfa__desc">This browser is trusted (skips 2FA for ~30 days when signing in).</p>
+                  <p class="acct-mfa__desc">This browser is trusted (skips 2FA for 30 days when signing in).</p>
                   <button type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-surface px-2.5 text-xs font-medium text-fg shadow-control h-[var(--control-h-sm)]">Forget this device</button>
                 </div>
               </div>

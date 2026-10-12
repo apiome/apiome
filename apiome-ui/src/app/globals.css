@@ -3502,6 +3502,53 @@ button.auth-divider:disabled {
   letter-spacing: 0.42em;
 }
 
+/* ---- The second step's recovery path and trust box (OLO-9.14, #5006) ----
+   A backup code is an identifier the reader copies character by character, so
+   it is set in the mono face like the slug below — but not at the display size
+   of `.auth-code`: ten characters and a hyphen have to fit the card at 320 px. */
+.auth-backup-code .input-wrap > input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+/* "Trust this device": the box and its two-line label. The whole row is the
+   label, so the sentence is as clickable as the 16 px square. `--fg-muted` for
+   the second line for the reason given at `.auth-slug-preview`. */
+.auth-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.auth-check > button {
+  margin-top: 0.15em;
+}
+
+.auth-check__hint {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+/* The link-styled button that swaps the card between a verification code and a
+   backup code. It changes the card and goes nowhere, so it is a button; it is
+   drawn as `.auth-link` because that is what the reader takes it for. The
+   element selector is what beats the unlayered button reset. */
+button.auth-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button.auth-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* ---- The organization URL slug (mockup `.input--mono` + `.slug-preview`) --
    The slug is an identifier that ends up in a URL, not prose, so it is set in
    the mono face — the same promise `.mono` makes everywhere else in the app.

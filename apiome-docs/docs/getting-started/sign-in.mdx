@@ -37,6 +37,37 @@ If your account has two-factor authentication, Apiome asks for a code before it 
 
 **“Back to sign in”** returns to the first page without signing you in.
 
+### Skip this step on a device you trust
+
+Tick **Trust this device for 30 days** before you verify. Apiome then stops asking for a code when
+you sign in from this browser, for 30 days. Leave it unticked on a shared computer. To undo it,
+**click “Forget this device”** on your [profile](../workspace/profile.mdx#once-it-is-on).
+
+### Sign in without your device
+
+If you have lost your phone or cannot reach your authenticator, use one of the backup codes you
+saved when you turned two-factor on.
+
+1. **Click “Lost your device? Use a backup code”** under the form.
+2. Enter a code in **Backup code** — ten letters and digits, like `ab12c-de34f`. Capitals matter.
+3. **Click “Verify and continue”.**
+
+Each backup code works once. After you are in,
+[make a new set](../workspace/profile.mdx#make-new-backup-codes) so the old ones stop working.
+**“Use a verification code instead”** returns to the code form.
+
+If you have no backup codes left, ask an administrator of your Apiome installation for help.
+
+### Too many wrong codes
+
+After 10 wrong codes in a row — from the authenticator, email or a backup code — two-factor
+sign-in is locked for 15 minutes and the page says *Two-factor sign-in is locked for 15 minutes.*
+A correct code is refused too until the lock ends. Wait, then **click “Back to sign in”** and sign
+in again. A correct code resets the count.
+
+Each sign-in also allows only a few attempts. When the page says *Too many incorrect codes for
+this sign-in* or *This sign-in step has expired*, **click “Back to sign in”** and start again.
+
 ## Create an account
 
 **With a provider.** Click your provider's button on the sign-in page. The first time, Apiome asks

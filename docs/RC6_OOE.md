@@ -115,7 +115,7 @@ Start these on day one; none depends on another.
 
 1. [#5653](https://github.com/apiome/apiome/issues/5653) SGN-1.4 sign-up policy ✅
 2. [#4960](https://github.com/apiome/apiome/issues/4960) encrypt OAuth tokens and PATs at rest (`sev:high`) ✅
-3. [#5006](https://github.com/apiome/apiome/issues/5006) backup-code redemption at login
+3. [#5006](https://github.com/apiome/apiome/issues/5006) backup-code redemption at login ✅
 4. [#5655](https://github.com/apiome/apiome/issues/5655) TFA-1.1 two-factor for OAuth-only accounts
 5. [#5460](https://github.com/apiome/apiome/issues/5460) FMT-7.6 shared gateway middle
 6. [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip
@@ -132,7 +132,6 @@ do. Lane C rows are in pick-up order within their wave.
 
 | # | Wave | Lane | Issue | ID | Title | Depends on | Tier |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 5 | 1 | B | [#5006](https://github.com/apiome/apiome/issues/5006) | OLO-9.14 | 2FA — backup codes, trusted devices, lockout | — | Core |
 | 6 | 1 | B | [#5655](https://github.com/apiome/apiome/issues/5655) | TFA-1.1 | Two-factor for accounts without a password (OAuth-only users) **MVP** | — | Core |
 | 7 | 1 | B | [#5656](https://github.com/apiome/apiome/issues/5656) | TFA-1.2 | Admin reset of a user's two-factor, with audit **MVP** | — | Core |
 | 8 | 1 | C1 | [#5460](https://github.com/apiome/apiome/issues/5460) | FMT-7.6 | Shared GatewayConfigDocument middle for the whole family | — | Core |

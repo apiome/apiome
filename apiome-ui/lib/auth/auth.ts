@@ -31,6 +31,11 @@ import {
   isTwoFactorEmailOtpConfigured,
   sendTwoFactorEmailOtp,
 } from './send-two-factor-email-otp';
+import {
+  LOCKOUT_DURATION_SECONDS,
+  LOCKOUT_MAX_FAILED_ATTEMPTS,
+  TRUST_DEVICE_MAX_AGE_SECONDS,
+} from './two-factor-policy';
 import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
@@ -174,6 +179,18 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
     twoFactor({
       issuer: APP_NAME,
       twoFactorTable: TWO_FACTOR_TABLE,
+      // The sign-in policy (OLO-9.14 #5006), stated rather than left to the plugin's defaults so a
+      // dependency upgrade cannot move it and the screens that quote it read the same constants
+      // (`two-factor-policy.ts`): a trusted browser skips the second step for 30 days, and ten
+      // consecutive wrong codes — across challenges and across authenticator / email / backup
+      // codes — lock the factor for 15 minutes (`two_factor."failedVerificationCount"` /
+      // `"lockedUntil"`, V201). Backup codes are single-use and stored encrypted by the plugin.
+      trustDeviceMaxAge: TRUST_DEVICE_MAX_AGE_SECONDS,
+      accountLockout: {
+        enabled: true,
+        maxFailedAttempts: LOCKOUT_MAX_FAILED_ATTEMPTS,
+        durationSeconds: LOCKOUT_DURATION_SECONDS,
+      },
       ...(isTwoFactorEmailOtpConfigured()
         ? {
             otpOptions: {

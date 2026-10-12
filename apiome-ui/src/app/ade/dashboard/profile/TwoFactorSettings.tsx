@@ -75,6 +75,7 @@ import { Card } from '@/app/components/ui/Card';
 import { Stepper } from '@/app/components/ui/Stepper';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 import { BackupCodes } from '@/app/components/ade/account/BackupCodes';
+import { TRUST_DEVICE_DAYS } from '@lib/auth/two-factor-policy';
 import { cn } from '@lib/utils';
 
 type EnrollStep = 'password' | 'qr' | 'backup';
@@ -433,7 +434,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
                 {statusLoading
                   ? 'Checking this browser…'
                   : trusted
-                    ? 'This browser is trusted (skips 2FA for ~30 days when signing in).'
+                    ? `This browser is trusted (skips 2FA for ${TRUST_DEVICE_DAYS} days when signing in).`
                     : 'This browser is not marked as trusted.'}
               </p>
               {trusted && (
@@ -453,8 +454,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
 
           <Alert variant="info" data-testid="two-factor-recovery-guidance">
             <span className="font-semibold">Recovery.</span> Store backup codes somewhere safe. If
-            you lose your authenticator, use a backup code at sign-in (when available) or contact
-            an admin. After recovery, regenerate codes so old ones cannot be reused.
+            you lose your authenticator, use a backup code at sign-in or contact an admin. After recovery, regenerate codes so old ones cannot be reused.
           </Alert>
 
           {error && !disableOpen && !regenOpen && !enrollOpen && (
