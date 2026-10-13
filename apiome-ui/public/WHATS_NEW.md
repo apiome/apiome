@@ -33,6 +33,8 @@ We continue to improve the platform based on your feedback with improvements and
       retention, column documentation, row identity, classification and declared quality checks
   - Added pills to supported format list to show the source and type that the API format provides
   - Every format now declares which versions it reads and writes, and which version an export produces by default
+- Sign-up:
+  - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Documentation:
@@ -54,6 +56,18 @@ We continue to improve the platform based on your feedback with improvements and
   - Hardens tool array emit for LLM tool summary
 - Sign-in providers:
   - Providers saved on the admin screen now reach sign-in in containers: the app and Studio read the REST address from `REST_API_BASE_URL` at runtime, and the log names the address when it cannot be reached
+- Studio:
+  - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
+- Two-factor sign-in:
+  - Sign in with a backup code when you cannot reach your authenticator
+  - Trust a device for 30 days to skip the second step there
+  - Two-factor sign-in now locks for 15 minutes after 10 wrong codes in a row, and says so
+  - Accounts that sign in with GitHub, GitLab, Microsoft or Google can now turn two-factor on, and are asked for their code after signing in with the provider
+  - A locked-out user's two-factor can be reset by an administrator, or by a workspace owner for a member of their workspace only; the reset is audited and the user is prompted to set it up again
+- Security:
+  - Linked-account sign-in tokens and personal access tokens are now encrypted at rest
+  - Sign-in redirects and the session cookie now follow the Public Suffix List, so an installation on a shared hosting domain (such as `*.vercel.app` or `*.co.uk`) no longer trusts its neighbours
+  - Linking a sign-in provider and linking related APIs can now only be started from Apiome's own pages, and a sign-in during a database outage no longer trusts the remembered workspace
 
 ---
 

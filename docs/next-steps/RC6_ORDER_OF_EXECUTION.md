@@ -102,15 +102,15 @@ onboards into their own workspace with no admin involved — and `closed` stops 
 
 **Today:** TOTP works. Profile → Security → Two-factor enrols Authy / Google Authenticator by
 QR, and `/login/2fa` verifies the code. Email OTP is the second method when SendGrid is configured.
-**Gaps:** backup codes are generated but cannot be redeemed at login. OAuth-only users have no
-password, so they cannot enrol, and the OAuth sign-in path skips the second factor. No admin can
-reset a locked-out user, and no tenant can require 2FA.
+**Gaps:** ~~backup codes are generated but cannot be redeemed at login~~ (done, #5006). ~~OAuth-only users have no
+password, so they cannot enrol, and the OAuth sign-in path skips the second factor~~ (done, #5655). ~~No admin can
+reset a locked-out user~~ (done, #5656), and no tenant can require 2FA.
 
 | # | Ticket | Depends on | Notes |
 | --- | --- | --- | --- |
-| B1 | [#5006 Backup codes, trusted devices, lockout](https://github.com/apiome/apiome/issues/5006) | — | Redeeming a backup code at `/login/2fa` is the recovery path — do it first |
-| B1 ∥ | [TFA-1.1 2FA for OAuth-only accounts #5655](https://github.com/apiome/apiome/issues/5655) | — | Re-auth instead of password; second factor after OAuth sign-in |
-| B1 ∥ | [TFA-1.2 Admin reset of a user's 2FA #5656](https://github.com/apiome/apiome/issues/5656) | — | Server-side admin check, audit, session revoke |
+| B1 ✅ | [#5006 Backup codes, trusted devices, lockout](https://github.com/apiome/apiome/issues/5006) | — | Redeeming a backup code at `/login/2fa` is the recovery path — do it first |
+| B1 ∥ ✅ | [TFA-1.1 2FA for OAuth-only accounts #5655](https://github.com/apiome/apiome/issues/5655) | — | Re-auth instead of password; second factor after OAuth sign-in |
+| B1 ∥ ✅ | [TFA-1.2 Admin reset of a user's 2FA #5656](https://github.com/apiome/apiome/issues/5656) | — | Server-side admin check, audit, session revoke |
 | B2 | [TFA-1.4 Offer Authy at onboarding, skippable #5658](https://github.com/apiome/apiome/issues/5658) | A2, TFA-1.1 | #2553's original ask: optional, re-enable from the profile |
 | B3 | [TFA-1.3 Tenant policy — require 2FA #5657](https://github.com/apiome/apiome/issues/5657) | TFA-1.1 | Grace period, compliance on the members list. Fast-follow inside RC6 |
 

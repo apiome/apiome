@@ -124,6 +124,86 @@ describe('cookie-options', () => {
     });
   });
 
+  // Public Suffix List (OLO-7.3 follow-up, #4961): the deployment boundary is the registrable
+  // domain, not "the last two labels". On a multi-label public suffix — a platform preview host or
+  // a country-code second level — the last two labels are the suffix itself, shared with strangers.
+  describe.each([
+    ['a platform preview host (vercel.app)', 'apiome.vercel.app', 'attacker.vercel.app', '.apiome.vercel.app'],
+    ['a platform preview host (pages.dev)', 'apiome.pages.dev', 'attacker.pages.dev', '.apiome.pages.dev'],
+    ['a platform preview host (github.io)', 'apiome.github.io', 'attacker.github.io', '.apiome.github.io'],
+    ['a multi-label country suffix (co.uk)', 'app.example.co.uk', 'attacker.co.uk', '.example.co.uk'],
+  ])('deployed on %s', (_name, appHost, attackerHost, cookieDomain) => {
+    beforeEach(() => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.BETTER_AUTH_COOKIE_DOMAIN;
+      delete process.env.NEXT_PUBLIC_STUDIO_URL;
+      delete process.env.NEXT_PUBLIC_MAIN_APP_URL;
+      process.env.BETTER_AUTH_URL = `https://${appHost}`;
+    });
+
+    it('rejects a callback to another tenant of the same public suffix', () => {
+      const callback = `https://${attackerHost}/phish`;
+      expect(isAllowedCallbackUrl(callback, process.env.BETTER_AUTH_URL)).toBe(false);
+      expect(resolveCallbackUrl(callback)).toBe('/ade');
+      expect(canonicalizeCrossAppCallback(callback)).toBe(callback);
+    });
+
+    it('scopes the session cookie to the registrable domain, not the suffix', () => {
+      expect(getSharedCookieDomain()).toBe(cookieDomain);
+    });
+
+    it('still allows the app itself and its own subdomains', () => {
+      expect(resolveCallbackUrl(`https://${appHost}/ade`)).toBe(`https://${appHost}/ade`);
+      const own = `https://preview.${cookieDomain.slice(1)}/editor`;
+      expect(resolveCallbackUrl(own)).toBe(own);
+    });
+
+    it('ignores a configured cookie domain that is the public suffix itself', () => {
+      process.env.BETTER_AUTH_COOKIE_DOMAIN = `.${attackerHost.split('.').slice(1).join('.')}`;
+      expect(getSharedCookieDomain()).toBe(cookieDomain);
+      expect(resolveCallbackUrl(`https://${attackerHost}/phish`)).toBe('/ade');
+    });
+  });
+
+  it('does not trust a sibling app on the same platform suffix unless it is configured', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.BETTER_AUTH_COOKIE_DOMAIN;
+    delete process.env.NEXT_PUBLIC_MAIN_APP_URL;
+    process.env.BETTER_AUTH_URL = 'https://apiome.vercel.app';
+    delete process.env.NEXT_PUBLIC_STUDIO_URL;
+
+    const studio = 'https://apiome-studio.vercel.app/editor';
+    expect(resolveCallbackUrl(studio)).toBe('/ade');
+
+    // Naming the studio origin explicitly is what trusts it — exact origin, nothing wider.
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://apiome-studio.vercel.app';
+    expect(resolveCallbackUrl(studio)).toBe(studio);
+    expect(resolveCallbackUrl('https://apiome-studio2.vercel.app/editor')).toBe('/ade');
+  });
+
+  it('applies no shared cookie domain when the only configured domain is a public suffix', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.BETTER_AUTH_COOKIE_DOMAIN = '.co.uk';
+    delete process.env.BETTER_AUTH_URL;
+    delete process.env.NEXT_PUBLIC_STUDIO_URL;
+    delete process.env.NEXT_PUBLIC_MAIN_APP_URL;
+
+    expect(getSharedCookieDomain()).toBeUndefined();
+    expect(isAllowedCallbackUrl('https://attacker.co.uk/phish')).toBe(false);
+  });
+
+  it('keeps an internal deployment on an unlisted suffix working', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.BETTER_AUTH_COOKIE_DOMAIN;
+    delete process.env.NEXT_PUBLIC_STUDIO_URL;
+    delete process.env.NEXT_PUBLIC_MAIN_APP_URL;
+    process.env.BETTER_AUTH_URL = 'https://app.apiome.corp';
+
+    expect(getSharedCookieDomain()).toBe('.apiome.corp');
+    expect(resolveCallbackUrl('https://studio.apiome.corp/editor')).toBe('https://studio.apiome.corp/editor');
+    expect(resolveCallbackUrl('https://app.other.corp/')).toBe('/ade');
+  });
+
   it('does not apply a production cookie domain on localhost', () => {
     process.env.NODE_ENV = 'development';
     process.env.BETTER_AUTH_COOKIE_DOMAIN = '.apiome.dev';

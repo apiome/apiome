@@ -143,8 +143,12 @@ describe('internal links', () => {
   });
 
   it('collects the real site’s routes, category landing pages and posts included', () => {
-    const routes = collectRoutes({docsDir: path.join(SITE, 'docs'), releaseNotesDir: path.join(SITE, 'release-notes')});
-    for (const route of ['/', '/ship', '/reference/mock-runtime', '/release-notes', '/release-notes/rc4']) {
+    const routes = collectRoutes({
+      docsDir: path.join(SITE, 'docs'),
+      releaseNotesDir: path.join(SITE, 'release-notes'),
+      pagesDir: path.join(SITE, 'src', 'pages'),
+    });
+    for (const route of ['/', '/getting-started', '/ship', '/reference/mock-runtime', '/release-notes', '/release-notes/rc4']) {
       assert.ok(routes.has(route), route);
     }
   });

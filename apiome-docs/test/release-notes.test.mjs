@@ -297,6 +297,6 @@ test('the committed manifest is contiguous and every closed RC has its post', ()
 
 test('the site routes cover the real docs tree', () => {
   const routes = collectSiteRoutes(path.join(siteDir, '..'), 'apiome-docs/docs');
-  assert.equal(routes.get('apiome-docs/docs/getting-started/index.mdx'), '/');
+  assert.equal(routes.get('apiome-docs/docs/getting-started/index.mdx'), '/getting-started');
   assert.equal(routes.get('apiome-docs/docs/build/axis-score.md'), '/build/axis-score');
 });

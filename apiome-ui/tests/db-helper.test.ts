@@ -31,6 +31,18 @@ jest.mock('crypto', () => ({
   randomBytes: jest.fn(() => Buffer.from('test-api-key-data')),
 }));
 
+// This suite mocks `crypto` above, so the real token sealing (#4960) cannot run here: stand in a
+// transparent codec. Sealing itself is covered by linked-account-token-crypto.test.ts and the
+// helper's use of it by linked-account-token-storage.test.ts.
+jest.mock('../lib/auth/linked-account-token-crypto', () => ({
+  KEYS_SETTING: 'APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS',
+  sealToken: (token: string) => `sealed(${token})`,
+  sealTokenOrNull: (token: string | null) => (token ? `sealed(${token})` : null),
+  tokenEncryptionConfigured: () => true,
+  unsealToken: (value: unknown) =>
+    typeof value === 'string' && value ? value.replace(/^sealed\((.*)\)$/, '$1') : null,
+}));
+
 // createProject/createVersion enforce session + plan limits; keep unit tests isolated from entitlements DB queries
 jest.mock('../lib/db/plan-entitlements', () => ({
   getPlanBlockMessageForNewProject: jest.fn(async () => null),

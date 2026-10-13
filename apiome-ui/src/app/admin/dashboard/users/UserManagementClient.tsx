@@ -17,6 +17,7 @@ import {
   Award,
   Flag,
   Plus,
+  ShieldOff,
   X,
 } from 'lucide-react';
 import {
@@ -38,6 +39,7 @@ import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { ResetTwoFactorDialog } from '@/app/components/ade/account/ResetTwoFactorDialog';
 
 interface User {
   id: string;
@@ -50,6 +52,8 @@ interface User {
   license_id: string | null;
   license_name: string | null;
   license_type: string | null;
+  /** Whether the user has two-factor on (`users."twoFactorEnabled"`). */
+  two_factor_enabled?: boolean | null;
 }
 
 interface Signup {
@@ -88,6 +92,15 @@ const LICENSE_TYPE_COLORS: Record<string, string> = {
   sponsor: 'bg-amber-700 text-amber-100',
 };
 
+/**
+ * The route the super-admin resets a user's two-factor through (TFA-1.2, #5656).
+ *
+ * @param userId The user's id.
+ * @returns The URL to POST to.
+ */
+const adminTwoFactorResetEndpoint = (userId: string) =>
+  `/api/admin/users/${encodeURIComponent(userId)}/two-factor/reset`;
+
 export default function UserManagementClient() {
   const { confirm } = useDialog();
   const [users, setUsers] = useState<User[]>([]);
@@ -104,6 +117,8 @@ export default function UserManagementClient() {
   const [userDropdownPos, setUserDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const [licenseSubMenu, setLicenseSubMenu] = useState<string | null>(null);
   const [flagsUser, setFlagsUser] = useState<User | null>(null);
+  /** The user whose two-factor reset dialog is open (TFA-1.2, #5656). */
+  const [resetTwoFactorUser, setResetTwoFactorUser] = useState<User | null>(null);
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -845,6 +860,23 @@ export default function UserManagementClient() {
                                     </button>
                                   </div>
 
+                                  {/* Only where there is a second factor to reset (TFA-1.2, #5656). */}
+                                  {user.two_factor_enabled && (
+                                    <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
+                                      <button
+                                        onClick={() => {
+                                          setOpenUserDropdown(null);
+                                          setResetTwoFactorUser(user);
+                                        }}
+                                        data-testid={`admin-reset-two-factor-${user.id}`}
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-amber-400 hover:text-amber-300 transition-colors"
+                                      >
+                                        <ShieldOff className="w-4 h-4" />
+                                        Reset two-factor…
+                                      </button>
+                                    </div>
+                                  )}
+
                                   <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
                                     <button
                                       onClick={() => {
@@ -1022,6 +1054,24 @@ export default function UserManagementClient() {
           </div>
         </div>
       )}
+
+      {/* Reset a user's two-factor (TFA-1.2, #5656). The dialog makes the call and shows the
+          result, including whether the user was emailed; the list reloads so the menu item goes. */}
+      <ResetTwoFactorDialog
+        open={resetTwoFactorUser !== null}
+        onOpenChange={(open) => !open && setResetTwoFactorUser(null)}
+        target={
+          resetTwoFactorUser
+            ? {
+                userId: resetTwoFactorUser.id,
+                email: resetTwoFactorUser.email,
+                name: resetTwoFactorUser.name,
+              }
+            : null
+        }
+        endpoint={adminTwoFactorResetEndpoint}
+        onReset={() => void loadData()}
+      />
     </>
   );
 }

@@ -1,3 +1,5 @@
+import { registrableDomain } from './registrable-domain';
+
 /** Where a login lands when no (valid) callbackUrl was requested. */
 export const DEFAULT_LOGIN_LANDING = '/ade';
 
@@ -6,15 +8,6 @@ const TRUSTED_URL_ENVS = [
   'NEXT_PUBLIC_STUDIO_URL',
   'NEXT_PUBLIC_MAIN_APP_URL',
 ] as const;
-
-function registrableDomain(hostname: string): string | null {
-  if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
-    return null;
-  }
-  const parts = hostname.split('.').filter(Boolean);
-  if (parts.length < 2) return null;
-  return parts.slice(-2).join('.');
-}
 
 function normalizeCookieDomain(domain: string): string {
   const trimmed = domain.trim();
@@ -71,7 +64,18 @@ function inferCookieDomain(): string | undefined {
   return undefined;
 }
 
-/** Parent domain for shared session cookies, or undefined on localhost / dev. */
+/**
+ * Parent domain for shared session cookies, or undefined on localhost / dev.
+ *
+ * The domain is the deployment's registrable domain (eTLD+1, from the Public Suffix List — #4961),
+ * so it never widens to a suffix other people can register under: an app on `apiome.vercel.app`
+ * scopes its cookie to `.apiome.vercel.app`, not `.vercel.app`. A configured
+ * `BETTER_AUTH_COOKIE_DOMAIN` that is itself a public suffix (`.co.uk`, `.vercel.app`) is ignored
+ * for the same reason — browsers refuse such a cookie, and it would put every host under that
+ * suffix inside the callback allowlist.
+ *
+ * @returns The cookie `Domain` with a leading dot, or `undefined` when cookies stay host-only.
+ */
 export function getSharedCookieDomain(): string | undefined {
   if (process.env.NODE_ENV !== 'production') return undefined;
 
@@ -80,6 +84,9 @@ export function getSharedCookieDomain(): string | undefined {
 
   if (configured) {
     const normalized = normalizeCookieDomain(configured);
+    if (!registrableDomain(normalized.slice(1))) {
+      return inferred;
+    }
     // A stale .apiome.dev cookie domain on an apiome.dev deploy is ignored by
     // browsers and breaks both session sharing and callback validation.
     if (inferred && normalized.slice(1) !== inferred.slice(1)) {
@@ -114,6 +121,15 @@ function hostnameMatchesCookieDomain(hostname: string, cookieDomain: string): bo
   return hostname === bare || hostname.endsWith(suffix);
 }
 
+/**
+ * Whether a host shares its registrable domain (eTLD+1) with a configured app URL.
+ *
+ * Compared on the Public Suffix List boundary (#4961), so a host that only shares a platform
+ * suffix with the deployment — `attacker.vercel.app` beside `apiome.vercel.app` — does not match.
+ *
+ * @param hostname The callback target's hostname.
+ * @returns `true` when the host sits under the same registrable domain as a trusted app URL.
+ */
 function hostnameMatchesTrustedDeployment(hostname: string): boolean {
   const targetDomain = registrableDomain(hostname);
   if (!targetDomain) return false;

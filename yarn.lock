@@ -10310,6 +10310,7 @@ __metadata:
     tailwind-merge: "npm:^3.5.0"
     tailwindcss: "npm:^4.2.2"
     tailwindcss-animate: "npm:^1.0.7"
+    tldts: "npm:^6.1.86"
     ts-jest: "npm:^29.4.9"
     ts-node: "npm:^10.9.2"
     tsx: "npm:^4.21.0"
@@ -23545,7 +23546,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts@npm:^6.1.32":
+"tldts@npm:^6.1.32, tldts@npm:^6.1.86":
   version: 6.1.86
   resolution: "tldts@npm:6.1.86"
   dependencies:

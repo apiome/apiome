@@ -30,6 +30,7 @@ from .draft_bindings import (
     STATUS_APPLIED as STATUS_BINDING_APPLIED,
 )
 from .jsonschema_generator import generate_class_jsonschema_spec
+from .linked_account_token_crypto import unseal_token
 from .lint_evidence import (
     SUBJECT_CATALOG_REVISION,
     SUBJECT_MCP_ENDPOINT_VERSION,
@@ -3235,6 +3236,116 @@ class Database:
                 deleted = cursor.fetchone()
                 conn.commit()
                 return deleted is not None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    # ------------------------------------------------------------------
+    # Installation sign-up policy (SGN-1.4, #5653) — apiome.signup_policy (V274)
+    # ------------------------------------------------------------------
+
+    #: Columns read back for the sign-up policy row.
+    SIGNUP_POLICY_READ_COLUMNS = ("mode", "allowed_email_domains", "updated_at", "updated_by")
+
+    def get_signup_policy(self) -> Optional[Dict[str, Any]]:
+        """Read the stored installation sign-up policy (SGN-1.4, #5653).
+
+        Returns:
+            The single ``apiome.signup_policy`` row, or ``None`` when no policy is stored — the
+            caller then falls back to env (``AUTH_SIGNUP_DISABLED``). A database that has not had
+            V274 applied yet also reads as ``None``: the table not existing is the same "nothing
+            stored" state, so env behaviour is unchanged until the migration runs.
+        """
+        select_cols = ", ".join(self.SIGNUP_POLICY_READ_COLUMNS)
+        query = f"SELECT {select_cols} FROM apiome.signup_policy WHERE singleton"
+        try:
+            results = self.execute_query(query)
+        except pg_errors.UndefinedTable:
+            return None
+        return results[0] if results else None
+
+    def set_signup_policy(
+        self,
+        mode: Optional[str],
+        allowed_email_domains: List[str],
+        updated_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store, change or clear the installation sign-up policy, with its audit row.
+
+        The change and its ``apiome.signup_policy_audit`` row are written in one transaction, so a
+        policy change is never stored without being audited (or audited without being stored). The
+        existing row is locked first so the recorded ``before_policy`` is the state actually
+        replaced.
+
+        Args:
+            mode: ``open`` | ``invite_only`` | ``closed`` to store the policy; ``None`` to clear the
+                stored policy so the installation reverts to env. Assumed already validated — the
+                V274 CHECK is the final backstop.
+            allowed_email_domains: Normalized lower-case domains (ignored when clearing).
+            updated_by: Identity of the super-admin making the change.
+
+        Returns:
+            The stored row after the write, or ``None`` when the policy was cleared.
+        """
+        select_cols = ", ".join(self.SIGNUP_POLICY_READ_COLUMNS)
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT mode, allowed_email_domains FROM apiome.signup_policy "
+                    "WHERE singleton FOR UPDATE"
+                )
+                existing = cursor.fetchone()
+                before = (
+                    {
+                        "mode": existing["mode"],
+                        "allowed_email_domains": list(existing["allowed_email_domains"] or []),
+                    }
+                    if existing
+                    else None
+                )
+
+                if mode is None:
+                    cursor.execute("DELETE FROM apiome.signup_policy WHERE singleton")
+                    result = None
+                    after = None
+                    action = "cleared"
+                else:
+                    cursor.execute(
+                        f"""
+                        INSERT INTO apiome.signup_policy
+                            (singleton, mode, allowed_email_domains, updated_by)
+                        VALUES (TRUE, %s, %s, %s)
+                        ON CONFLICT (singleton) DO UPDATE SET
+                            mode = EXCLUDED.mode,
+                            allowed_email_domains = EXCLUDED.allowed_email_domains,
+                            updated_by = EXCLUDED.updated_by
+                        RETURNING {select_cols}
+                        """,
+                        (mode, list(allowed_email_domains), updated_by),
+                    )
+                    result = cursor.fetchone()
+                    after = {"mode": mode, "allowed_email_domains": list(allowed_email_domains)}
+                    action = "updated"
+
+                # Nothing changed (clearing an already-absent policy, or re-saving identical
+                # values) ⇒ no ledger noise.
+                if before != after:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.signup_policy_audit
+                            (action, actor, before_policy, after_policy)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (
+                            action,
+                            updated_by,
+                            Json(before) if before is not None else None,
+                            Json(after) if after is not None else None,
+                        ),
+                    )
+                conn.commit()
+                return result
         except Exception as e:
             conn.rollback()
             raise e
@@ -9525,6 +9636,187 @@ class Database:
         )
         return {f"{r['resource']}:{r['action']}" for r in editor_rows}
 
+    # ---------------------------------------------------------------------------------------
+    # Two-factor admin reset (TFA-1.2, #5656)
+    # ---------------------------------------------------------------------------------------
+
+    def get_two_factor_reset_target(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Read what a two-factor reset needs to know about its target.
+
+        Args:
+            user_id: The user whose second factor is to be reset.
+
+        Returns:
+            ``id``, ``email``, ``name``, ``two_factor_enabled`` and ``tenant_count`` (how many
+            tenants the user belongs to, as a member or an administrator), or ``None`` when no
+            live user has that id.
+        """
+        if not user_id or not is_uuid_string(str(user_id)):
+            return None
+        rows = self.execute_query(
+            """
+            SELECT u.id::text AS id, u.email, u.name,
+                   COALESCE(u."twoFactorEnabled", false) AS two_factor_enabled,
+                   (
+                       SELECT COUNT(*)::int FROM (
+                           SELECT tenant_id FROM apiome.tenant_users WHERE user_id = u.id
+                           UNION
+                           SELECT tenant_id FROM apiome.tenant_administrators WHERE user_id = u.id
+                       ) memberships
+                   ) AS tenant_count
+            FROM apiome.users u
+            WHERE u.id = %s::uuid AND u.deleted_at IS NULL
+            """,
+            (user_id,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def reset_user_two_factor(
+        self,
+        *,
+        user_id: str,
+        reason: str,
+        actor_kind: str,
+        actor_id: Optional[str] = None,
+        actor_label: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Clear a user's second factor on an administrator's behalf, with its audit trail.
+
+        Everything happens in one transaction, so the factor is never cleared without the audit
+        rows that say who did it and why — and never audited without being cleared:
+
+        1. the user row is locked (two resets of one user serialize);
+        2. the ``two_factor`` row is deleted and ``"twoFactorEnabled"`` cleared, so the next
+           sign-in needs the first factor only, and ``two_factor_reset_at`` is stamped so the app
+           can tell the user to enrol again;
+        3. trusted-device records and any second-factor challenge in flight are deleted — these
+           are the Better Auth plugin's verification rows, ``trust-device-<id>`` and ``2fa-<id>``
+           with the user id as their value;
+        4. every session of the user is deleted, so nobody stays signed in on the strength of the
+           factor that was just removed;
+        5. an ``auth_events`` row (``two_factor_reset``) is appended, and — when a tenant owner
+           did it — an ``access_audit`` row (``member.two_factor_reset``) on that tenant's chain.
+
+        Resetting a user who has no second factor is allowed and still audited: it revokes their
+        sessions and trusted devices, which is what an administrator answering "I am locked out"
+        wants either way.
+
+        Args:
+            user_id: The user whose second factor is cleared (the audit *target*).
+            reason: Why, as the administrator wrote it. Stored in both audit rows.
+            actor_kind: ``super_admin`` or ``tenant_owner``.
+            actor_id: The acting user's id; ``None`` for the super-admin, who is not a user row.
+            actor_label: Display label for the actor (email, or ``super-admin``).
+            tenant_id: The tenant an owner acted in; ``None`` for the super-admin.
+
+        Returns:
+            ``user_id``, ``email``, ``name``, ``had_two_factor``, ``sessions_revoked`` and
+            ``trusted_devices_revoked``; or ``None`` when no live user has that id (nothing is
+            written).
+        """
+        if not user_id or not is_uuid_string(str(user_id)):
+            return None
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id::text AS id, email, name,
+                           COALESCE("twoFactorEnabled", false) AS two_factor_enabled
+                    FROM apiome.users
+                    WHERE id = %s::uuid AND deleted_at IS NULL
+                    FOR UPDATE
+                    """,
+                    (user_id,),
+                )
+                user = cursor.fetchone()
+                if not user:
+                    conn.rollback()
+                    return None
+
+                cursor.execute(
+                    'DELETE FROM apiome.two_factor WHERE "userId" = %s::uuid',
+                    (user_id,),
+                )
+                had_two_factor = bool(user["two_factor_enabled"]) or cursor.rowcount > 0
+                cursor.execute(
+                    """
+                    UPDATE apiome.users
+                    SET "twoFactorEnabled" = false,
+                        two_factor_reset_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (user_id,),
+                )
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.verification
+                    WHERE "value" = %s AND "identifier" LIKE 'trust-device-%%'
+                    """,
+                    (str(user_id),),
+                )
+                trusted_devices_revoked = cursor.rowcount
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.verification
+                    WHERE "value" = %s AND "identifier" LIKE '2fa-%%'
+                    """,
+                    (str(user_id),),
+                )
+                cursor.execute(
+                    'DELETE FROM apiome.session WHERE "userId" = %s::uuid',
+                    (user_id,),
+                )
+                sessions_revoked = cursor.rowcount
+
+                detail: Dict[str, Any] = {
+                    "actor_kind": actor_kind,
+                    "actor_id": actor_id,
+                    "actor_label": actor_label,
+                    "tenant_id": tenant_id,
+                    "reason": reason,
+                    "had_two_factor": had_two_factor,
+                    "sessions_revoked": sessions_revoked,
+                    "trusted_devices_revoked": trusted_devices_revoked,
+                }
+                self._append_auth_event(
+                    cursor,
+                    event_type="two_factor_reset",
+                    outcome="success",
+                    user_id=user_id,
+                    user_label=normalize_email(user["email"]) if user["email"] else None,
+                    detail=detail,
+                )
+                if tenant_id:
+                    self._append_access_audit(
+                        cursor,
+                        tenant_id=tenant_id,
+                        action="member.two_factor_reset",
+                        actor_id=actor_id,
+                        actor_label=actor_label,
+                        target=user_id,
+                        detail={
+                            "user_id": user_id,
+                            "reason": reason,
+                            "had_two_factor": had_two_factor,
+                            "sessions_revoked": sessions_revoked,
+                        },
+                    )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        return {
+            "user_id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "had_two_factor": had_two_factor,
+            "sessions_revoked": sessions_revoked,
+            "trusted_devices_revoked": trusted_devices_revoked,
+        }
+
     def write_access_audit(
         self,
         *,
@@ -9540,54 +9832,92 @@ class Database:
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT entry_hash FROM apiome.access_audit
-                    WHERE tenant_id IS NOT DISTINCT FROM %s::uuid
-                    ORDER BY created_at DESC, id DESC LIMIT 1
-                    """,
-                    (tenant_id,),
-                )
-                prev_row = cursor.fetchone()
-                prev_hash = prev_row["entry_hash"] if prev_row else None
-                detail_json = (
-                    json.dumps(detail, sort_keys=True, default=str)
-                    if detail is not None
-                    else None
-                )
-                payload = "|".join(
-                    [
-                        prev_hash or "",
-                        str(tenant_id or ""),
-                        str(actor_id or actor_label or ""),
-                        action,
-                        str(target or ""),
-                        detail_json or "",
-                    ]
-                )
-                entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.access_audit
-                        (tenant_id, actor_id, actor_label, action, target, source, detail, prev_hash, entry_hash)
-                    VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb, %s, %s)
-                    """,
-                    (
-                        tenant_id,
-                        actor_id,
-                        actor_label,
-                        action,
-                        target,
-                        source,
-                        detail_json,
-                        prev_hash,
-                        entry_hash,
-                    ),
+                self._append_access_audit(
+                    cursor,
+                    tenant_id=tenant_id,
+                    action=action,
+                    actor_id=actor_id,
+                    actor_label=actor_label,
+                    target=target,
+                    source=source,
+                    detail=detail,
                 )
             conn.commit()
         except Exception:
             conn.rollback()
             raise
+
+    @staticmethod
+    def _append_access_audit(
+        cursor: Any,
+        *,
+        tenant_id: Optional[str],
+        action: str,
+        actor_id: Optional[str] = None,
+        actor_label: Optional[str] = None,
+        target: Optional[str] = None,
+        source: str = "web",
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append one hash-chained ``apiome.access_audit`` row on an open cursor.
+
+        The chain link is read and the row inserted on ``cursor``, so the row belongs to whatever
+        transaction the caller holds: :meth:`write_access_audit` commits it on its own, while a
+        caller that must not act without an audit trail (the two-factor reset, #5656) appends it
+        inside the transaction that makes the change. Never commits or rolls back.
+
+        Args:
+            cursor: An open cursor on the transaction the row should join.
+            tenant_id: Tenant whose chain the row extends (``None`` for the tenant-less chain).
+            action: Stable action name, e.g. ``member.two_factor_reset``.
+            actor_id: The acting user's id, when known.
+            actor_label: Display label for the actor (email or name).
+            target: What the action was applied to.
+            source: ``web`` or ``api_key``.
+            detail: Structured JSON context.
+        """
+        cursor.execute(
+            """
+            SELECT entry_hash FROM apiome.access_audit
+            WHERE tenant_id IS NOT DISTINCT FROM %s::uuid
+            ORDER BY created_at DESC, id DESC LIMIT 1
+            """,
+            (tenant_id,),
+        )
+        prev_row = cursor.fetchone()
+        prev_hash = prev_row["entry_hash"] if prev_row else None
+        detail_json = (
+            json.dumps(detail, sort_keys=True, default=str) if detail is not None else None
+        )
+        payload = "|".join(
+            [
+                prev_hash or "",
+                str(tenant_id or ""),
+                str(actor_id or actor_label or ""),
+                action,
+                str(target or ""),
+                detail_json or "",
+            ]
+        )
+        entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        cursor.execute(
+            """
+            INSERT INTO apiome.access_audit
+                (tenant_id, actor_id, actor_label, action, target, source, detail, prev_hash, entry_hash)
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            """,
+            (
+                tenant_id,
+                actor_id,
+                actor_label,
+                action,
+                target,
+                source,
+                detail_json,
+                prev_hash,
+                entry_hash,
+            ),
+        )
 
     def list_access_audit(
         self,
@@ -9659,7 +9989,7 @@ class Database:
         whole table.
 
         Args:
-            event_type: One of ``app.auth_events.AUTH_EVENT_TYPES`` (sign_in/sign_up/link/unlink).
+            event_type: One of ``app.auth_events.AUTH_EVENT_TYPES``.
             outcome: ``success`` or ``failure`` (matches the ``auth_events_outcome_check`` constraint).
             provider: OAuth provider slug, or None when unknown.
             user_id: Resolved user id, or None for failures / pre-account sign-ups.
@@ -9672,59 +10002,104 @@ class Database:
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT entry_hash FROM apiome.auth_events
-                    ORDER BY created_at DESC, id DESC LIMIT 1
-                    """
-                )
-                prev_row = cursor.fetchone()
-                prev_hash = prev_row["entry_hash"] if prev_row else None
-                detail_json = (
-                    json.dumps(detail, sort_keys=True, default=str)
-                    if detail is not None
-                    else None
-                )
-                payload = "|".join(
-                    [
-                        prev_hash or "",
-                        event_type,
-                        outcome,
-                        provider or "",
-                        str(user_id or ""),
-                        user_label or "",
-                        error_code or "",
-                        ip_hash or "",
-                        user_agent_hash or "",
-                        detail_json or "",
-                    ]
-                )
-                entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.auth_events
-                        (event_type, user_id, user_label, provider, outcome, error_code,
-                         ip_hash, user_agent_hash, detail, prev_hash, entry_hash)
-                    VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
-                    """,
-                    (
-                        event_type,
-                        user_id,
-                        user_label,
-                        provider,
-                        outcome,
-                        error_code,
-                        ip_hash,
-                        user_agent_hash,
-                        detail_json,
-                        prev_hash,
-                        entry_hash,
-                    ),
+                self._append_auth_event(
+                    cursor,
+                    event_type=event_type,
+                    outcome=outcome,
+                    provider=provider,
+                    user_id=user_id,
+                    user_label=user_label,
+                    error_code=error_code,
+                    ip_hash=ip_hash,
+                    user_agent_hash=user_agent_hash,
+                    detail=detail,
                 )
             conn.commit()
         except Exception as e:
             conn.rollback()
             _logger.warning("write_auth_event failed: %s", e)
+
+    @staticmethod
+    def _append_auth_event(
+        cursor: Any,
+        *,
+        event_type: str,
+        outcome: str,
+        provider: Optional[str] = None,
+        user_id: Optional[str] = None,
+        user_label: Optional[str] = None,
+        error_code: Optional[str] = None,
+        ip_hash: Optional[str] = None,
+        user_agent_hash: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append one hash-chained ``apiome.auth_events`` row on an open cursor.
+
+        The cursor-level half of :meth:`write_auth_event`: the chain link is read and the row
+        inserted on ``cursor``, so the row joins the caller's transaction. Never commits, rolls
+        back or swallows — :meth:`write_auth_event` adds the best-effort wrapper, while the
+        two-factor reset (#5656) calls this directly so the change and its audit row succeed or
+        fail together.
+
+        Args:
+            cursor: An open cursor on the transaction the row should join.
+            event_type: One of ``app.auth_events.AUTH_EVENT_TYPES``.
+            outcome: ``success`` or ``failure``.
+            provider: OAuth provider slug, or None.
+            user_id: The user the event is about, or None.
+            user_label: Canonical email retained independent of the users row.
+            error_code: Stable auth error code on failure.
+            ip_hash: Salted SHA-256 of the client IP.
+            user_agent_hash: Salted SHA-256 of the client User-Agent.
+            detail: Structured JSON context.
+        """
+        cursor.execute(
+            """
+            SELECT entry_hash FROM apiome.auth_events
+            ORDER BY created_at DESC, id DESC LIMIT 1
+            """
+        )
+        prev_row = cursor.fetchone()
+        prev_hash = prev_row["entry_hash"] if prev_row else None
+        detail_json = (
+            json.dumps(detail, sort_keys=True, default=str) if detail is not None else None
+        )
+        payload = "|".join(
+            [
+                prev_hash or "",
+                event_type,
+                outcome,
+                provider or "",
+                str(user_id or ""),
+                user_label or "",
+                error_code or "",
+                ip_hash or "",
+                user_agent_hash or "",
+                detail_json or "",
+            ]
+        )
+        entry_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        cursor.execute(
+            """
+            INSERT INTO apiome.auth_events
+                (event_type, user_id, user_label, provider, outcome, error_code,
+                 ip_hash, user_agent_hash, detail, prev_hash, entry_hash)
+            VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            """,
+            (
+                event_type,
+                user_id,
+                user_label,
+                provider,
+                outcome,
+                error_code,
+                ip_hash,
+                user_agent_hash,
+                detail_json,
+                prev_hash,
+                entry_hash,
+            ),
+        )
 
     def log_auth_event(
         self,
@@ -15665,6 +16040,20 @@ class Database:
         return str(v) if v is not None else None
 
     def get_external_auth_provider_for_user(self, linked_account_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Read one of a user's linked accounts, with its access token ready to use (#4960).
+
+        The token column holds ciphertext (``app.linked_account_token_crypto``); this is the one
+        place apiome-rest reads it, so every caller receives the plaintext token transparently.
+
+        Args:
+            linked_account_id: The ``external_auth_providers.id`` to read.
+            user_id: The owning user; a row belonging to anyone else is not returned.
+
+        Returns:
+            ``id``, ``user_id``, ``provider`` and ``access_token`` (the unsealed token, or ``None``
+            when the account holds none or its sealed token cannot be opened), or ``None`` when no
+            such linked account belongs to the user.
+        """
         q = """
             SELECT id, user_id, provider, access_token
             FROM apiome.external_auth_providers
@@ -15672,7 +16061,11 @@ class Database:
             LIMIT 1
         """
         rows = self.execute_query(q, (linked_account_id, user_id))
-        return dict(rows[0]) if rows else None
+        if not rows:
+            return None
+        row = dict(rows[0])
+        row["access_token"] = unseal_token(row.get("access_token"))
+        return row
 
     def list_tenant_repositories(self, tenant_id: str) -> List[Dict[str, Any]]:
         q = """

@@ -27,7 +27,7 @@ const CLI_DOC_IDS = new Set(['reference/cli-quickstart', 'reference/cli/index'])
  * Generate a sidebar group from its folder, so that every page sits in exactly one guide.
  *
  * - A folder's own `index` page is the group's link (or, for `getting-started`, the User guide's
- *   home), so it is dropped from the generated list. The CLI reference's index is the exception: it
+ *   home at `/getting-started`), so it is dropped from the generated list. The CLI reference's index is the exception: it
  *   has no group link to live in, so the CLI guide lists it after the quick-start. (A page's own
  *   `sidebar_label` always wins over a label set here — rename pages in their front matter.)
  * - Reference leaves out the CLI quick-start and the `reference/cli/` category: they form the CLI
@@ -94,7 +94,8 @@ const config: Config = {
       'classic',
       {
         docs: {
-          // The guide is the site: docs are served from the root.
+          // The guide is the site: docs are served from the root. The root itself is the landing
+          // page (`src/pages/index.tsx`), which links to each guide.
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           sidebarItemsGenerator: guideSidebarItems,
@@ -168,7 +169,7 @@ const config: Config = {
         {
           title: 'User guide',
           items: [
-            {label: 'Getting started', to: '/'},
+            {label: 'Getting started', to: '/getting-started'},
             {label: 'Build', to: '/build'},
             {label: 'Ship', to: '/ship'},
             {label: 'Govern', to: '/govern'},

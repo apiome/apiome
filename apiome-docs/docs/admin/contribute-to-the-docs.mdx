@@ -116,6 +116,7 @@ The result looks like this — switch the site theme to see the dark capture:
 | `data` | yes | `"golden-path"` (the real route, signed in to the seeded stack), `"signed-out"` (the real route with no session, such as `/login` — needs only apiome-ui) or `"fixture:<dir>/<file>.html"` (a dump from `apiome-ui/e2e/fixtures/`) |
 | `fallback` | no | For a golden-path entry: the fixture to use when the stack is not running |
 | `mask` | no | CSS selectors painted over before the capture — dates, ids and counts that change between runs |
+| `scrollTo` | no | CSS selector scrolled into view before the capture — for a subject below the fold of a long page, such as a card further down **System settings** |
 | `clip` | no | `{"x", "y", "width", "height"}` to capture one region instead of the viewport |
 | `theme` | no | `["light", "dark"]` (default); a page can only show an entry that has both |
 | `viewport` | no | Default `{"width": 1440, "height": 900}` |

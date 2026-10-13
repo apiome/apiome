@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   REST_API_BASE_URL,
   handleIdentityRestResponse,
+  refuseCrossSiteWrite,
   resolveIdentityProxyContext,
 } from '../_proxy';
 
+/**
+ * Link two projects into one cross-format identity group, for the session's active tenant.
+ *
+ * Same-origin only (#4963). The body's `projectId` / `relatedProjectId` are forwarded as sent;
+ * apiome-rest refuses (404) any id that is not a project of the session's tenant.
+ */
+
 export async function POST(request: NextRequest) {
   try {
+    const refusal = refuseCrossSiteWrite(request.headers);
+    if (refusal) {
+      return NextResponse.json({ success: false, error: refusal.error }, { status: refusal.status });
+    }
     const ctx = await resolveIdentityProxyContext();
     if ('error' in ctx) {
       return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });
@@ -28,8 +40,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Remove a project from its identity group, for the session's active tenant.
+ *
+ * Same-origin only (#4963); the body's ids are scoped to the tenant by apiome-rest, as for POST.
+ */
 export async function DELETE(request: NextRequest) {
   try {
+    const refusal = refuseCrossSiteWrite(request.headers);
+    if (refusal) {
+      return NextResponse.json({ success: false, error: refusal.error }, { status: refusal.status });
+    }
     const ctx = await resolveIdentityProxyContext();
     if ('error' in ctx) {
       return NextResponse.json({ success: false, error: ctx.error }, { status: ctx.status });

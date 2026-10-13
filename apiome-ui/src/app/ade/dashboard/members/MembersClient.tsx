@@ -39,6 +39,7 @@ import {
   type MyPermissions,
   type RoleRecord,
 } from '@/app/components/ade/members';
+import { ResetTwoFactorDialog } from '@/app/components/ade/account/ResetTwoFactorDialog';
 import { fetchTenantLicense } from '../tenants/licenseApi';
 import { describeLicenseError } from '../tenants/licenseErrors';
 import type { TenantLicensePlan, TenantLicenseSeats } from '../tenants/licenseApi';
@@ -86,7 +87,16 @@ const ROLES_ROUTE = '/ade/dashboard/roles';
 const AUDIT_ROUTE = '/ade/dashboard/audit';
 
 /** Which overlay, if any, is open over the page. */
-type MemberOverlay = 'none' | 'invite' | 'suspend' | 'offboard';
+/**
+ * The route a workspace owner resets a member's two-factor through (TFA-1.2, #5656).
+ *
+ * @param userId The member's user id.
+ * @returns The URL to POST to.
+ */
+const memberTwoFactorResetEndpoint = (userId: string) =>
+  `/api/access/members/${encodeURIComponent(userId)}/two-factor/reset`;
+
+type MemberOverlay = 'none' | 'invite' | 'suspend' | 'offboard' | 'reset-two-factor';
 
 /**
  * The page's own `N`.
@@ -450,6 +460,7 @@ export default function MembersClient() {
         onToggleStatus={(member) => openOverlayFor('suspend', member.user_id)}
         onOffboard={(member) => openOverlayFor('offboard', member.user_id)}
         onResendInvite={(member) => void handleResendInvite(member)}
+        onResetTwoFactor={(member) => openOverlayFor('reset-two-factor', member.user_id)}
         rolesHref={ROLES_ROUTE}
         auditHref={AUDIT_ROUTE}
       />
@@ -478,6 +489,21 @@ export default function MembersClient() {
         members={members}
         tenantName="this workspace"
         onConfirm={handleOffboard}
+      />
+
+      {/* Reset a member's two-factor (TFA-1.2, #5656). The dialog makes the call itself — it is
+          shared with the admin console — so the page only reloads the roster afterwards, which
+          is what turns the member's "2FA on" off. */}
+      <ResetTwoFactorDialog
+        open={overlay === 'reset-two-factor'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        target={
+          overlayMember
+            ? { userId: overlayMember.user_id, email: overlayMember.email, name: overlayMember.name }
+            : null
+        }
+        endpoint={memberTwoFactorResetEndpoint}
+        onReset={() => void loadData()}
       />
     </Page>
   );

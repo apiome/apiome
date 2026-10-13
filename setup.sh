@@ -500,6 +500,13 @@ else
   done
 fi
 
+# Linked-account token encryption (#4960): the key map that seals the OAuth tokens and personal
+# access tokens of linked accounts. Always generated — there is nothing to choose, and without it
+# sign-in still works but no provider token is stored. Written single-quoted because the value is
+# JSON: every loader of these files (bash, dotenv, python-dotenv, Compose) reads that form verbatim.
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS="{\"1\": \"$(generate_base64_secret 32)\"}"
+ok "  generated APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS (shared by apiome-rest and apiome-ui)"
+
 printf '\n'
 info "REST API (apiome-rest)"
 prompt REST_HOST "REST API bind host" "0.0.0.0"
@@ -649,6 +656,11 @@ AUTH_CONFIG_ENC_KEY=$(format_env_value "$AUTH_CONFIG_ENC_KEY")
 # apiome-ui merges over env. Must match apiome-ui INTERNAL_SERVICE_TOKEN byte for byte.
 INTERNAL_SERVICE_TOKEN=$(format_env_value "$INTERNAL_SERVICE_TOKEN")
 
+# Linked-account token encryption-at-rest (#4960): key map sealing the OAuth tokens and personal
+# access tokens in external_auth_providers. apiome-ui seals them and this service opens them, so
+# the value must MATCH apiome-ui byte for byte. Keep it: losing it makes stored tokens unreadable.
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='$APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS'
+
 # Public mock runtime URL (must match apiome-ui and apiome-browse)
 APIOME_MOCK_PUBLIC_BASE_URL=$(format_env_value "$APIOME_MOCK_PUBLIC_BASE_URL")
 EOF
@@ -681,6 +693,11 @@ BETTER_AUTH_SECRET=$(format_env_value "$BETTER_AUTH_SECRET")
 # apiome-rest INTERNAL_SERVICE_TOKEN (which holds the decryption key) byte for byte.
 # AUTH_CONFIG_ENC_KEY is deliberately absent here: only apiome-rest seals/opens those secrets.
 INTERNAL_SERVICE_TOKEN=$(format_env_value "$INTERNAL_SERVICE_TOKEN")
+
+# Linked-account token encryption-at-rest (#4960): key map sealing the OAuth tokens and personal
+# access tokens of linked accounts before they are stored. Must MATCH apiome-rest byte for byte.
+# Unset, sign-in still works but no provider token is stored and saving a PAT is refused.
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='$APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS'
 
 # Beta Mode - Set to any value to enable beta indicator on login screen
 NEXT_PUBLIC_BETA_MODE=$(format_env_value "$NEXT_PUBLIC_BETA_MODE")
@@ -821,6 +838,10 @@ ADMIN_SESSION_SECRET=$(format_env_value "$ADMIN_SESSION_SECRET")
 # rest service; they must match the values in apiome-rest/.env and apiome-ui/.env.
 AUTH_CONFIG_ENC_KEY=$(format_env_value "$AUTH_CONFIG_ENC_KEY")
 INTERNAL_SERVICE_TOKEN=$(format_env_value "$INTERNAL_SERVICE_TOKEN")
+
+# Linked-account token encryption (#4960), passed through to the rest service by
+# docker-compose.yml. Must match the value in apiome-rest/.env and apiome-ui/.env.
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='$APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS'
 
 APIOME_MCP_HTTP_PORT=$(format_env_value "$APIOME_MCP_HTTP_PORT")
 APIOME_MCP_INTERNAL_SECRET=$(format_env_value "$APIOME_MCP_INTERNAL_SECRET")

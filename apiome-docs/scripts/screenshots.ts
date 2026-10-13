@@ -80,6 +80,7 @@ interface CaptureJob {
     id: string;
     route: string;
     waitFor: string;
+    scrollTo?: string;
     clip?: {x: number; y: number; width: number; height: number};
     mask: string[];
     viewport: {width: number; height: number};
@@ -255,6 +256,10 @@ async function capture(
     await page.addStyleTag({content: HIDE_DEV_TOOLING});
     await page.locator(job.screen.waitFor).first().waitFor({state: 'visible', timeout: READY_TIMEOUT_MS});
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    // A subject below the fold of a long page is brought into view once the layout has settled.
+    if (job.screen.scrollTo) {
+      await page.locator(job.screen.scrollTo).first().scrollIntoViewIfNeeded({timeout: READY_TIMEOUT_MS});
+    }
 
     const file = path.join(SITE_DIR, 'static', job.output);
     fs.mkdirSync(path.dirname(file), {recursive: true});

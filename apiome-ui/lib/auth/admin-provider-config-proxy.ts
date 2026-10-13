@@ -49,24 +49,28 @@ function unreachableResult(): AdminProviderProxyResult {
 }
 
 /**
- * Forward one request to the REST admin auth-provider surface.
+ * Forward one request to a REST super-admin surface (`${REST_API_BASE_URL}/admin/…`).
  *
- * @param path Path under `${REST_API_BASE_URL}/admin/auth-providers` (e.g. `''` or `'/github'`).
+ * Shared by every admin settings proxy (sign-in providers here, the sign-up policy in
+ * `admin-signup-policy-proxy.ts`) so they present the session, bound the call and shape transport
+ * failures identically.
+ *
+ * @param adminPath Path under `${REST_API_BASE_URL}/admin` (e.g. `'/auth-providers/github'`).
  * @param init Fetch options (method/body); auth + content-type headers are added here.
  * @param adminSessionToken The verified signed admin-session token to present upstream.
  * @param fetchImpl Fetch implementation (injectable for tests; defaults to global `fetch`).
  * @returns The upstream status and parsed body, or a `502` transport-failure result.
  */
-async function forwardToRest(
-  path: string,
+export async function forwardToAdminRest(
+  adminPath: string,
   init: { method: string; body?: string },
   adminSessionToken: string,
-  fetchImpl: typeof fetch
+  fetchImpl: typeof fetch = fetch
 ): Promise<AdminProviderProxyResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
   try {
-    const response = await fetchImpl(`${REST_API_BASE_URL}/admin/auth-providers${path}`, {
+    const response = await fetchImpl(`${REST_API_BASE_URL}/admin${adminPath}`, {
       method: init.method,
       body: init.body,
       cache: 'no-store',
@@ -98,6 +102,24 @@ async function forwardToRest(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Forward one request to the REST admin auth-provider surface.
+ *
+ * @param path Path under `${REST_API_BASE_URL}/admin/auth-providers` (e.g. `''` or `'/github'`).
+ * @param init Fetch options (method/body).
+ * @param adminSessionToken The verified signed admin-session token to present upstream.
+ * @param fetchImpl Fetch implementation (injectable for tests).
+ * @returns The upstream status and parsed body, or a `502` transport-failure result.
+ */
+function forwardToRest(
+  path: string,
+  init: { method: string; body?: string },
+  adminSessionToken: string,
+  fetchImpl: typeof fetch
+): Promise<AdminProviderProxyResult> {
+  return forwardToAdminRest(`/auth-providers${path}`, init, adminSessionToken, fetchImpl);
 }
 
 /**

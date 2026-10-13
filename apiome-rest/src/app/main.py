@@ -19,6 +19,9 @@ from .agent_usage_routes import router as agent_usage_router
 from .arazzo_generator import generate_arazzo_spec, generate_class_arazzo_spec
 from .auth_provider_config_routes import router as auth_provider_config_router
 from .auth_provider_resolved_routes import router as auth_provider_resolved_router
+from .signup_policy_routes import router as signup_policy_router
+from .two_factor_reset_routes import admin_router as two_factor_reset_admin_router
+from .two_factor_reset_routes import member_router as two_factor_reset_member_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
@@ -65,6 +68,7 @@ from .mcp_badge_routes import router as mcp_badge_router
 from .mcp_catalog_digest_routes import router as mcp_catalog_digest_router
 from .mcp_catalog_routes import mcp_endpoints_router
 from .mcp_collection_routes import router as mcp_collection_router
+from .linked_account_token_crypto import validate_linked_account_token_keys
 from .mcp_credential_crypto import validate_credential_encryption_keys
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
 from .mcp_feed_routes import router as mcp_feed_router
@@ -159,7 +163,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.204.1",
+    version="1.206.0",
 )
 
 
@@ -493,6 +497,11 @@ app.include_router(auth_provider_config_router)
 # Internal resolved provider config (OLO-8.5, #4971): GET /v1/internal/auth-providers/resolved,
 # service-token-gated, returns DECRYPTED secrets for the login-time DB-over-env merge resolver.
 app.include_router(auth_provider_resolved_router)
+# Super-admin installation sign-up policy (SGN-1.4, #5653): GET/PUT /v1/admin/signup-policy —
+# open / invite_only / closed + allowed email domains, DB-first with AUTH_SIGNUP_DISABLED fallback.
+app.include_router(signup_policy_router)
+app.include_router(two_factor_reset_admin_router)
+app.include_router(two_factor_reset_member_router)
 
 
 _webhook_delivery_task: asyncio.Task | None = None
@@ -540,6 +549,7 @@ async def startup_event():
     validate_credential_encryption_keys()
     validate_registry_credential_keys()
     validate_upstream_credential_keys()
+    validate_linked_account_token_keys()
     validate_auth_config_encryption_keys()
 
     # Bundled-toolchain self-check (FMT-1.3, #5414). Resolves and actually invokes every

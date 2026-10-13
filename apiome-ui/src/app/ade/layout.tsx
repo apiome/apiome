@@ -4,6 +4,7 @@ import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
 import AuthenticatedLayout from "@/app/components/auth/AuthenticatedLayout";
 import FirstTenantOnboardingGuard from "@/app/components/auth/FirstTenantOnboardingGuard";
+import { TwoFactorResetNotice } from "@/app/components/auth/TwoFactorResetNotice";
 import { PushConflictBannerProvider } from '@/app/providers/PushConflictBannerProvider';
 import { ThemeProvider } from '@/app/providers/ThemeProvider';
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -55,6 +56,10 @@ export default function RootLayout({
                         first-tenant onboarding prompt in place of any /ade route. */}
                     <FirstTenantOnboardingGuard>{children}</FirstTenantOnboardingGuard>
                   </div>
+                  {/* The prompt to enrol again after an administrator reset this user's
+                      two-factor (TFA-1.2, #5656). Fixed-position, so it sits outside the
+                      viewport box rather than taking a row of it; renders nothing otherwise. */}
+                  <TwoFactorResetNotice />
                 </AuthenticatedLayout>
               </PushConflictBannerProvider>
             </SessionWrapper>

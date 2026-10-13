@@ -7,9 +7,10 @@ resolution action, the failure-path event-type recovery, and the privacy-preserv
 
 import hashlib
 
+import pytest
+
 from app import account_resolution as ar
 from app import auth_events as ae
-
 
 # --- hash_client_value -------------------------------------------------------------------------
 
@@ -116,14 +117,16 @@ def test_reject_while_linking_is_link_failure_attributed_to_session_user():
     assert ev.error_code == ar.IDENTITY_LINKED_ELSEWHERE
 
 
-def test_reject_signup_disabled_is_sign_up_failure():
+@pytest.mark.parametrize(
+    "code", [ar.SIGNUP_DISABLED, ar.SIGNUP_INVITE_ONLY, ar.SIGNUP_DOMAIN_NOT_ALLOWED]
+)
+def test_reject_by_signup_policy_is_sign_up_failure(code):
+    """Every sign-up policy refusal (SGN-1.4) is a failed sign-up, not a failed sign-in."""
     facts = _facts()
-    ev = ae.event_from_decision(
-        ar.ResolutionDecision(action=ar.ACTION_REJECT, code=ar.SIGNUP_DISABLED), facts
-    )
+    ev = ae.event_from_decision(ar.ResolutionDecision(action=ar.ACTION_REJECT, code=code), facts)
     assert ev.event_type == ae.EVENT_SIGN_UP
     assert ev.outcome == ae.OUTCOME_FAILURE
-    assert ev.error_code == ar.SIGNUP_DISABLED
+    assert ev.error_code == code
     assert ev.user_id is None
 
 

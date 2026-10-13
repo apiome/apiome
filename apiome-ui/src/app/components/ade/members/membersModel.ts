@@ -130,6 +130,12 @@ export interface MemberCapabilities {
   canEdit: boolean;
   /** Offboard a member or cancel an invitation. */
   canDelete: boolean;
+  /**
+   * Reset a member's two-factor (TFA-1.2, #5656). Owners only — `is_admin` on `permissions/me`,
+   * which is the owner-equivalent flag — and not a `members:*` grant: it reaches past the
+   * workspace into the member's own account. apiome-rest enforces the same rule.
+   */
+  canResetTwoFactor: boolean;
 }
 
 /** No permissions at all — what the screen assumes until `permissions/me` answers. */
@@ -137,6 +143,7 @@ const NO_CAPABILITIES: MemberCapabilities = {
   canInvite: false,
   canEdit: false,
   canDelete: false,
+  canResetTwoFactor: false,
 };
 
 /**
@@ -156,6 +163,7 @@ export function memberCapabilities(perms: MyPermissions | null | undefined): Mem
     canInvite: has('members:create'),
     canEdit: has('members:edit'),
     canDelete: has('members:delete'),
+    canResetTwoFactor: perms.is_admin,
   };
 }
 
@@ -183,6 +191,13 @@ export interface MemberRowActions {
   canOffboard: boolean;
   /** Re-issue the invitation is offered — pending rows only. */
   canResendInvite: boolean;
+  /**
+   * Reset two-factor is offered: an owner, looking at somebody else who is an active member with
+   * two-factor on. Whether the member also belongs to another workspace — which is what makes
+   * apiome-rest refuse — is not something this screen can know, so that refusal is shown when it
+   * comes back.
+   */
+  canResetTwoFactor: boolean;
   /** Why the row's controls are inert, for a `title`; `null` when they are live. */
   disabledReason: string | null;
 }
@@ -209,8 +224,10 @@ export function memberRowActions(
   options: { capabilities: MemberCapabilities; viewerId: string | null | undefined }
 ): MemberRowActions {
   const own = isSelf(member, options.viewerId);
-  const { canEdit, canDelete, canInvite } = options.capabilities;
+  const { canEdit, canDelete, canInvite, canResetTwoFactor } = options.capabilities;
   return {
+    canResetTwoFactor:
+      canResetTwoFactor && !own && member.status === 'active' && Boolean(member.two_factor_enabled),
     canChangeRole: canEdit && !own,
     canChangeStatus: canEdit && !own,
     canOffboard: canDelete && !own,

@@ -19,6 +19,14 @@ const mockGetBackupCodeStatus = jest.fn(async () => ({ remaining: null as number
 const mockGetTrustedDeviceStatus = jest.fn(async () => ({ trusted: false }));
 const mockRevokeThisTrustedDevice = jest.fn(async () => ({ ok: true }));
 const mockGetEmailOtpAvailability = jest.fn(async () => ({ available: false }));
+const mockDismissTwoFactorResetNotice = jest.fn(async () => ({ ok: true }));
+// An account with a password — the dialogs ask for it, as they always have. The passwordless
+// paths (TFA-1.1 #5655) are covered by two-factor-settings-passwordless.test.tsx.
+const mockGetTwoFactorReauthStatus = jest.fn(async () => ({
+  hasPassword: true,
+  fresh: false,
+  providers: [] as { id: string; label: string }[],
+}));
 
 jest.mock('@lib/auth/auth-client', () => ({
   authClient: {
@@ -33,6 +41,7 @@ jest.mock('@lib/auth/auth-client', () => ({
 
 jest.mock('@lib/auth/session-client', () => ({
   useAuthSession: () => mockUseAuthSession(),
+  signIn: jest.fn(),
 }));
 
 jest.mock('@lib/auth/two-factor-profile-actions', () => ({
@@ -40,6 +49,8 @@ jest.mock('@lib/auth/two-factor-profile-actions', () => ({
   getTrustedDeviceStatus: (...args: unknown[]) => mockGetTrustedDeviceStatus(...args),
   revokeThisTrustedDevice: (...args: unknown[]) => mockRevokeThisTrustedDevice(...args),
   getEmailOtpAvailability: (...args: unknown[]) => mockGetEmailOtpAvailability(...args),
+  getTwoFactorReauthStatus: (...args: unknown[]) => mockGetTwoFactorReauthStatus(...args),
+  dismissTwoFactorResetNotice: (...args: unknown[]) => mockDismissTwoFactorResetNotice(...args),
 }));
 
 jest.mock('react-qr-code', () => ({
@@ -108,6 +119,8 @@ describe('TwoFactorSettings', () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(screen.getByTestId('two-factor-backup-codes')).toHaveTextContent('AAAA-AAAA');
     });
+    // Enrolling answers an administrator's reset: the "set it up again" notice is cleared (#5656).
+    expect(mockDismissTwoFactorResetNotice).toHaveBeenCalledTimes(1);
   });
 
   it('disables 2FA with a password when already enabled', async () => {

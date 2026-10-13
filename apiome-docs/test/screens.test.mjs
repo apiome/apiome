@@ -83,6 +83,17 @@ describe('normalizeScreen', () => {
     assert.equal(normalizeScreen(entry({appTheme: 'nord'})).screen.appTheme, 'nord');
     assert.equal('appTheme' in normalizeScreen(entry()).screen, false);
   });
+  it('keeps a scroll target, and leaves it out when unset', () => {
+    assert.equal(normalizeScreen(entry({scrollTo: '[role="alert"]'})).screen.scrollTo, '[role="alert"]');
+    assert.equal('scrollTo' in normalizeScreen(entry()).screen, false);
+  });
+  it('rejects a scroll target that is not a selector', () => {
+    for (const scrollTo of ['', '   ', 40, null]) {
+      const {screen, problems} = normalizeScreen(entry({scrollTo}));
+      assert.equal(screen, null);
+      assert.match(problems[0], /`scrollTo` must be a CSS selector/);
+    }
+  });
   it('rejects an app theme the product does not have, and `system`', () => {
     for (const appTheme of ['sepia', 'system', 'Nord']) {
       const {screen, problems} = normalizeScreen(entry({appTheme}));

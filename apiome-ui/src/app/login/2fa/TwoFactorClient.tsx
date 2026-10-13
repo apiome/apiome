@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { ArrowLeft, KeyRound, Mail, RefreshCw, Send, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, KeyRound, LifeBuoy, Mail, RefreshCw, Send, ShieldCheck } from 'lucide-react';
 import { authClient } from '@lib/auth/auth-client';
 import {
   peekTwoFactorMethods,
@@ -13,6 +13,12 @@ import {
   type TwoFactorMethod,
 } from '@lib/auth/two-factor-callback';
 import { browserNavigate } from '@lib/auth/browser-navigate';
+import {
+  TRUST_DEVICE_DAYS,
+  describeTwoFactorRefusal,
+  isCompleteBackupCode,
+  normalizeBackupCode,
+} from '@lib/auth/two-factor-policy';
 import { BrandMark } from '../../components/brand';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthField } from '../../components/auth/AuthField';
@@ -21,6 +27,7 @@ import { getAuthErrorCopy } from '../auth-error-copy';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { Spinner } from '../../components/ui/Spinner';
 import { ICON_SIZE } from '@/app/components/ui/iconSizes';
 
@@ -79,6 +86,21 @@ const METHOD_COPY: Readonly<Record<TwoFactorMethod, MethodCopy>> = {
   },
 };
 
+/**
+ * The recovery path's copy (OLO-9.14 #5006). A backup code is not one of the challenge's
+ * methods — every enrolled account has a set — so it is not a tab in the switcher but a
+ * second face of the card, reached from a link under the form.
+ */
+const BACKUP_COPY = {
+  heading: 'Use a backup code',
+  description:
+    'Enter one of the backup codes you saved when you turned on two-factor. Each code works once.',
+  fieldId: 'backup-code',
+  fieldLabel: 'Backup code',
+  incomplete: 'Enter a whole backup code — ten characters, like ab12c-de34f.',
+  rejected: 'That backup code was not accepted. Each code works once — check it and try another.',
+} as const;
+
 /** The description under the heading — the only line that also depends on progress. */
 const TOTP_DESCRIPTION =
   'Enter the 6-digit code from Authy, Google Authenticator, or another TOTP app.';
@@ -90,6 +112,12 @@ interface TwoFactorClientProps {
   /** Validated by the page (resolveCallbackUrl) before being passed in. */
   callbackUrl?: string;
   error?: string;
+  /**
+   * The methods this challenge offers, when the server named them in the URL — the provider
+   * sign-in path (TFA-1.1 #5655). Already reduced to the known methods by the page. Absent after
+   * a password sign-in, which stores them in `sessionStorage` instead.
+   */
+  methods?: TwoFactorMethod[];
 }
 
 /**
@@ -119,8 +147,14 @@ interface TwoFactorClientProps {
 const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
   callbackUrl = TWO_FACTOR_DEFAULT_CALLBACK,
   error,
+  methods: offeredMethods,
 }) => {
-  const methods = useMemo(() => peekTwoFactorMethods(), []);
+  // What the server named for this challenge wins over what an earlier, abandoned sign-in may
+  // have left in `sessionStorage`.
+  const methods = useMemo(
+    () => (offeredMethods && offeredMethods.length > 0 ? offeredMethods : peekTwoFactorMethods()),
+    [offeredMethods]
+  );
   const [activeMethod, setActiveMethod] = useState<TwoFactorMethod>(() =>
     methods.includes('totp') ? 'totp' : methods[0] ?? 'totp'
   );
@@ -138,6 +172,16 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
    * strand the reader in the field they were trying to move past.
    */
   const [autoFocusCode, setAutoFocusCode] = useState(true);
+  /** Whether the card is showing the backup-code form instead of the challenge's methods. */
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [backupCode, setBackupCode] = useState('');
+  /** Whether a successful verification should also mark this browser as trusted. */
+  const [trustDevice, setTrustDevice] = useState(false);
+  /**
+   * Set once no code can succeed here — the factor is locked, or the challenge is spent or
+   * expired. The form is disabled so the reader is not invited to keep feeding a counter.
+   */
+  const [blocked, setBlocked] = useState(false);
 
   const queryError = getAuthErrorCopy(error);
   const showMethodSwitcher = methods.includes('totp') && methods.includes('otp');
@@ -149,6 +193,67 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
     takeTwoFactorMethods();
     const destination = takeTwoFactorCallbackUrl(callbackUrl);
     browserNavigate(destination);
+  };
+
+  /**
+   * Show a refused verification, and close the form when nothing further can succeed.
+   *
+   * @param refusal The `error` the client call answered with.
+   * @param fallback The sentence for a refusal the server did not explain.
+   */
+  const showRefusal = (
+    refusal: { code?: string | null; message?: string | null } | null | undefined,
+    fallback: string
+  ) => {
+    const described = describeTwoFactorRefusal(refusal, fallback);
+    setLocalError(described.text);
+    if (described.terminal) setBlocked(true);
+    setIsSubmitting(false);
+  };
+
+  /**
+   * Redeem a backup code in place of the second factor (OLO-9.14 #5006).
+   *
+   * The server consumes the code on success, so it cannot be used again, and counts a wrong
+   * one toward the same lockout as a wrong authenticator code.
+   *
+   * @param e The form's submit event.
+   */
+  const handleBackupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalized = normalizeBackupCode(backupCode);
+    if (!isCompleteBackupCode(normalized)) {
+      setLocalError(BACKUP_COPY.incomplete);
+      return;
+    }
+    setIsSubmitting(true);
+    setLocalError(null);
+    try {
+      const res = await authClient.twoFactor.verifyBackupCode({ code: normalized, trustDevice });
+      if (res?.error) {
+        showRefusal(res.error, BACKUP_COPY.rejected);
+        return;
+      }
+      finishSuccess();
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Verification failed. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * Move between the challenge's methods and the backup-code form.
+   *
+   * Whatever was typed and whatever was wrong belongs to the form being left, so both go.
+   *
+   * @param next `true` to show the backup-code form.
+   */
+  const toggleBackupCode = (next: boolean) => {
+    setUseBackupCode(next);
+    setCode('');
+    setBackupCode('');
+    setLocalError(null);
+    setAutoFocusCode(true);
   };
 
   /**
@@ -172,11 +277,10 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
     try {
       const res =
         activeMethod === 'otp'
-          ? await authClient.twoFactor.verifyOtp({ code: trimmed })
-          : await authClient.twoFactor.verifyTotp({ code: trimmed });
+          ? await authClient.twoFactor.verifyOtp({ code: trimmed, trustDevice })
+          : await authClient.twoFactor.verifyTotp({ code: trimmed, trustDevice });
       if (res?.error) {
-        setLocalError(res.error.message || copy.rejected);
-        setIsSubmitting(false);
+        showRefusal(res.error, copy.rejected);
         return;
       }
       finishSuccess();
@@ -221,12 +325,81 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
     setAutoFocusCode(false);
   };
 
-  const description =
-    activeMethod === 'otp'
+  const description = useBackupCode
+    ? BACKUP_COPY.description
+    : activeMethod === 'otp'
       ? otpSent
         ? OTP_DESCRIPTION_AFTER_SEND
         : OTP_DESCRIPTION_BEFORE_SEND
       : TOTP_DESCRIPTION;
+
+  /**
+   * The "Trust this device" tick box, shared by every form on the card (OLO-9.14 #5006).
+   *
+   * Unticked by default: trusting a browser is the reader's decision, and the wrong default on
+   * a shared computer would skip the second factor for whoever sits down next.
+   *
+   * @returns The labelled tick box.
+   */
+  const renderTrustDevice = () => (
+    <label className="auth-check" htmlFor="two-factor-trust-device">
+      <Checkbox
+        id="two-factor-trust-device"
+        checked={trustDevice}
+        onCheckedChange={(checked) => setTrustDevice(checked === true)}
+        disabled={isSubmitting || blocked}
+        data-testid="two-factor-trust-device"
+      />
+      <span>
+        Trust this device for {TRUST_DEVICE_DAYS} days
+        <span className="auth-check__hint">Skip this step when you sign in from this browser.</span>
+      </span>
+    </label>
+  );
+
+  /**
+   * The card body for the recovery path: one backup-code box, the tick box, and submit.
+   *
+   * @returns The form.
+   */
+  const renderBackupForm = () => (
+    <form onSubmit={handleBackupSubmit} className="mt-5 flex flex-col gap-4" noValidate>
+      <AuthField
+        className="auth-backup-code"
+        id={BACKUP_COPY.fieldId}
+        label={BACKUP_COPY.fieldLabel}
+        icon={<LifeBuoy size={ICON_SIZE.dense} aria-hidden="true" />}
+        hint="Ten letters and digits · capitals matter"
+        name="backupCode"
+        type="text"
+        autoComplete="off"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        autoFocus={autoFocusCode}
+        placeholder="xxxxx-xxxxx"
+        value={backupCode}
+        onChange={(e) => setBackupCode(normalizeBackupCode(e.target.value))}
+        disabled={isSubmitting || blocked}
+        invalid={Boolean(localError)}
+        data-testid="two-factor-backup-code"
+      />
+
+      {renderTrustDevice()}
+
+      <Button
+        type="submit"
+        variant="primary"
+        size="lg"
+        className="w-full"
+        disabled={isSubmitting || blocked || !isCompleteBackupCode(backupCode)}
+        data-testid="two-factor-backup-submit"
+      >
+        {isSubmitting && <Spinner size="sm" tone="light" aria-hidden="true" />}
+        {isSubmitting ? 'Verifying…' : 'Verify and continue'}
+      </Button>
+    </form>
+  );
 
   /**
    * The card body for one method: the send button (email only), the code box, and submit.
@@ -251,7 +424,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
             size="lg"
             className="w-full"
             onClick={handleSendOtp}
-            disabled={isSendingOtp || isSubmitting}
+            disabled={isSendingOtp || isSubmitting || blocked}
             data-testid="two-factor-send-otp"
           >
             {isSendingOtp ? (
@@ -287,17 +460,19 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
           placeholder="000000"
           value={code}
           onChange={(e) => setCode(sanitizeCode(e.target.value))}
-          disabled={isSubmitting}
+          disabled={isSubmitting || blocked}
           invalid={Boolean(localError)}
           data-testid={method === 'otp' ? 'two-factor-otp-code' : 'two-factor-totp-code'}
         />
+
+        {renderTrustDevice()}
 
         <Button
           type="submit"
           variant="primary"
           size="lg"
           className="w-full"
-          disabled={isSubmitting || !isComplete}
+          disabled={isSubmitting || blocked || !isComplete}
           data-testid={method === 'otp' ? 'two-factor-otp-submit' : 'two-factor-submit'}
         >
           {isSubmitting && <Spinner size="sm" tone="light" aria-hidden="true" />}
@@ -318,9 +493,9 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
 
       <Card data-testid="two-factor-card" className="auth-card">
         <span className="auth-icon" aria-hidden="true">
-          {activeMethod === 'otp' ? <Mail /> : <ShieldCheck />}
+          {useBackupCode ? <LifeBuoy /> : activeMethod === 'otp' ? <Mail /> : <ShieldCheck />}
         </span>
-        <h1 className="auth-title mt-4">{copy.heading}</h1>
+        <h1 className="auth-title mt-4">{useBackupCode ? BACKUP_COPY.heading : copy.heading}</h1>
         <p className="auth-sub mt-1">{description}</p>
 
         {/* One banner for both sources: the local "that is not six digits" sentence and the
@@ -339,7 +514,7 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
 
         {/* The email code has been sent, which nothing else on the card announces: the
             description changes, and a changed paragraph is not read out. */}
-        {activeMethod === 'otp' && otpSent && !bannerText && (
+        {!useBackupCode && activeMethod === 'otp' && otpSent && !bannerText && (
           <Alert
             variant="ok"
             role="status"
@@ -351,7 +526,9 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
           </Alert>
         )}
 
-        {showMethodSwitcher ? (
+        {useBackupCode ? (
+          renderBackupForm()
+        ) : showMethodSwitcher ? (
           <TabsPrimitive.Root value={activeMethod} onValueChange={selectMethod}>
             <TabsPrimitive.List
               className="auth-methods mt-5"
@@ -379,6 +556,22 @@ const TwoFactorClient: React.FC<TwoFactorClientProps> = ({
           </TabsPrimitive.Root>
         ) : (
           renderForm(activeMethod)
+        )}
+
+        {/* The recovery path. A button, not a link: it changes what the card shows and goes
+            nowhere. Hidden once the screen is closed — a backup code would be refused too. */}
+        {!blocked && (
+          <div className="auth-sub mt-5 text-center">
+            <button
+              type="button"
+              className="auth-link font-medium"
+              onClick={() => toggleBackupCode(!useBackupCode)}
+              disabled={isSubmitting}
+              data-testid="two-factor-toggle-backup"
+            >
+              {useBackupCode ? 'Use a verification code instead' : 'Lost your device? Use a backup code'}
+            </button>
+          </div>
         )}
 
         <div className="auth-sub mt-6 text-center">

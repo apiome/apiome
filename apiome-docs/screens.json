@@ -1153,6 +1153,19 @@
       ]
     },
     {
+      "id": "admin-users-reset-two-factor",
+      "route": "/admin/dashboard/users",
+      "waitFor": "[data-testid=\"reset-two-factor-dialog\"]",
+      "data": "fixture:hive-a11y/admin-users-reset-two-factor.html",
+      "sources": [
+        "apiome-ui/src/app/admin/dashboard/users",
+        "apiome-ui/src/app/components/ade/account/ResetTwoFactorDialog.tsx"
+      ],
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
       "id": "admin-tenants",
       "route": "/admin/dashboard/tenants",
       "waitFor": "#a11y-mount h2",
@@ -1225,9 +1238,19 @@
       ]
     },
     {
+      "id": "admin-signup-policy",
+      "route": "/admin/dashboard/settings",
+      "waitFor": "[aria-label=\"Sign-up policy\"]",
+      "data": "fixture:hive-a11y/admin-signup-policy.html",
+      "tags": [
+        "legacy"
+      ]
+    },
+    {
       "id": "admin-auth-providers",
       "route": "/admin/dashboard/settings",
       "waitFor": "[aria-label=\"GitHub provider configuration\"]",
+      "scrollTo": "[aria-label=\"GitHub provider configuration\"]",
       "data": "fixture:hive-a11y/admin-auth-providers.html",
       "tags": [
         "legacy"
@@ -1237,6 +1260,7 @@
       "id": "admin-auth-provider-remove",
       "route": "/admin/dashboard/settings",
       "waitFor": "[aria-label=\"Confirm removing Microsoft\"]",
+      "scrollTo": "[aria-label=\"Confirm removing Microsoft\"]",
       "data": "fixture:hive-a11y/admin-auth-provider-remove.html",
       "tags": [
         "legacy"

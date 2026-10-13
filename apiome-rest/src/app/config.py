@@ -275,6 +275,29 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for linked-account tokens (OLO-7.3 follow-up, #4960). The OAuth
+    # access / refresh tokens and personal access tokens in apiome.external_auth_providers, and the
+    # token set staged in apiome.oauth_signup_pending. Same shape and rotation story as the key maps
+    # above, sealed under its own magic. apiome-ui seals these values and apiome-rest unseals them,
+    # so BOTH services must be given the same value. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    linked_account_token_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS",
+            "linked_account_token_encryption_keys",
+        ),
+    )
+    # Which key-version new linked-account tokens are sealed under. Defaults to the highest version
+    # present in linked_account_token_encryption_keys when unset. Must match apiome-ui's value.
+    linked_account_token_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_LINKED_ACCOUNT_TOKEN_ACTIVE_KEY_VERSION",
+            "linked_account_token_active_key_version",
+        ),
+    )
+
     # Envelope encryption-at-rest for tenant package-registry credentials (SDK-4.1, #4495).
     # The npm / PyPI publish tokens stored in apiome.sdk_registry_credentials (V256). Same shape
     # and same rotation story as the MCP credential keys above, but a separate key map on purpose:

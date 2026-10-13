@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.204.1
+  version: 1.206.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -63597,6 +63597,277 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get resolved auth providersresponse422.
+  /v1/admin/signup-policy:
+    get:
+      tags:
+      - admin-signup-policy
+      summary: Get Signup Policy
+      description: "Read the installation sign-up policy (SGN-1.4).\n\nReads the stored\
+        \ row directly rather than the cached policy, so the admin console always\
+        \ shows\nwhat is actually stored.\n\nReturns:\n    The effective policy, with\
+        \ ``source`` telling a stored policy from the env fallback."
+      operationId: get_signup_policy_v1_admin_signup_policy_get
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Signup Policy Xadmin Session schema.
+          - type: 'null'
+            description: Get Signup Policy Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Signup Policyadminsession schema.
+          - type: 'null'
+            description: Get Signup Policyadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      responses:
+        '200':
+          description: Successful response for get signup policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupPolicyView'
+                description: Response payload for get signup policyresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get signup policyresponse422.
+    put:
+      tags:
+      - admin-signup-policy
+      summary: Update Signup Policy
+      description: "Store, change or clear the installation sign-up policy (SGN-1.4).\n\
+        \nThe change is audited and applies to the next sign-up on this instance;\
+        \ other instances apply\nit within the policy cache lifetime. It gates creating\
+        \ an account only — existing users keep\nsigning in under every mode.\n\n\
+        Args:\n    payload: The new policy, or ``mode: null`` to clear the stored\
+        \ one.\n\nReturns:\n    The effective policy after the write.\n\nRaises:\n\
+        \    HTTPException: ``422`` with a structured body when the mode is not one\
+        \ of the three modes\n        (``invalid_mode``) or a domain entry is malformed\
+        \ (``invalid_email_domain``)."
+      operationId: update_signup_policy_v1_admin_signup_policy_put
+      parameters:
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update Signup Policy Xadmin Session schema.
+          - type: 'null'
+            description: Update Signup Policy Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Update Signup Policyadminsession schema.
+          - type: 'null'
+            description: Update Signup Policyadminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupPolicyUpdateRequest'
+              description: Request body for update signup policyrequest.
+        description: Request body for update signup policy.
+      responses:
+        '200':
+          description: Successful response for update signup policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupPolicyView'
+                description: Response payload for update signup policyresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '422':
+          description: Unknown mode, or an invalid or over-long email-domain list.
+  /v1/admin/users/{user_id}/two-factor/reset:
+    post:
+      tags:
+      - admin-users
+      summary: Admin Reset Two Factor
+      description: "Reset any user's two-factor, as the installation's super-admin.\n\
+        \nClears the user's authenticator and backup codes, forgets their trusted\
+        \ devices and ends\nevery one of their sessions. Their next sign-in needs\
+        \ the first factor only. The reset is\nrecorded in the authentication ledger\
+        \ with the reason given.\n\nArgs:\n    user_id: The user to reset.\n    payload:\
+        \ The reason, and the user's email typed out as confirmation.\n\nReturns:\n\
+        \    What was cleared."
+      operationId: admin_reset_two_factor_v1_admin_users__user_id__two_factor_reset_post
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: User Id
+          description: User Id schema.
+        description: Path parameter identifying the user id segment.
+      - name: X-Admin-Session
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Reset Two Factor Xadmin Session schema.
+          - type: 'null'
+            description: Admin Reset Two Factor Xadmin Session schema.
+          title: X-Admin-Session
+          description: X-Admin-Session schema.
+        description: 'Header parameter: X Admin Session.'
+      - name: admin_session
+        in: cookie
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Admin Reset Two Factoradminsession schema.
+          - type: 'null'
+            description: Admin Reset Two Factoradminsession schema.
+          title: Admin Session
+          description: Admin Session schema.
+        description: 'Cookie parameter: admin session.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorResetRequest'
+              description: Request body for admin reset two factorrequest.
+        description: Request body for admin reset two factor.
+      responses:
+        '200':
+          description: Successful response for admin reset two factor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorResetResult'
+                description: Response payload for admin reset two factorresponse200.
+        '401':
+          description: No super-admin session presented.
+        '403':
+          description: Super-admin session invalid or expired.
+        '404':
+          description: No user has that id.
+        '422':
+          description: Reason missing or out of range, or the confirmation does not
+            match.
+  /v1/access/{tenant_slug}/members/{user_id}/two-factor/reset:
+    post:
+      tags:
+      - access
+      summary: Member Reset Two Factor
+      description: "Reset a member's two-factor, as an owner of the workspace.\n\n\
+        Allowed only for an **owner**, only for an **active member** of this workspace,\
+        \ and only when\nthat member belongs to **no other workspace** — two-factor\
+        \ protects the whole account, so a\nmember shared with another workspace is\
+        \ left to the installation's super-admin. An owner\ncannot reset their own\
+        \ two-factor here; they manage it on their Profile page.\n\nRecorded in the\
+        \ authentication ledger and in this workspace's access audit, with the reason.\n\
+        \nArgs:\n    tenant_slug: The workspace the caller is acting in.\n    user_id:\
+        \ The member to reset.\n    payload: The reason, and the member's email typed\
+        \ out as confirmation.\n\nReturns:\n    What was cleared."
+      operationId: member_reset_two_factor_v1_access__tenant_slug__members__user_id__two_factor_reset_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: User Id
+          description: User Id schema.
+        description: Path parameter identifying the user id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Member Reset Two Factorauthorization schema.
+          - type: 'null'
+            description: Member Reset Two Factorauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Member Reset Two Factor Xapikey schema.
+          - type: 'null'
+            description: Member Reset Two Factor Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorResetRequest'
+              description: Request body for member reset two factorrequest.
+        description: Request body for member reset two factor.
+      responses:
+        '200':
+          description: Successful response for member reset two factor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorResetResult'
+                description: Response payload for member reset two factorresponse200.
+        '403':
+          description: The caller is not an owner of this workspace (owner_required),
+            or called with an API key (session_required).
+        '404':
+          description: The user is not an active member of this workspace.
+        '409':
+          description: The member belongs to another workspace as well (multi_tenant_member),
+            or the caller tried to reset their own two-factor (self_reset).
+        '422':
+          description: Reason missing or out of range, or the confirmation does not
+            match.
   /:
     get:
       summary: Root
@@ -71272,7 +71543,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         completed_at:
           anyOf:
           - type: string
@@ -72726,7 +72997,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -72899,7 +73170,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73340,13 +73611,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -74915,7 +75186,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: b55d4d39-e235-4342-9de3-e518ae4cdc64
+          example: 7932ac89-556f-466e-9a5d-21fe5a2e88c6
         method:
           type: string
           title: Method
@@ -77058,7 +77329,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         envelope:
           additionalProperties: true
           type: object
@@ -78438,7 +78709,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         browse_url:
           anyOf:
           - type: string
@@ -109886,7 +110157,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
       additionalProperties: false
       type: object
       required:
@@ -114352,6 +114623,87 @@ components:
       - status_code
       title: SharedResponseSchema
       description: SharedResponseSchema schema.
+    SignupPolicyUpdateRequest:
+      properties:
+        mode:
+          anyOf:
+          - type: string
+            description: Request body for signup policy update.
+          - type: 'null'
+            description: Request body for signup policy update.
+          title: Mode
+          description: '''open'', ''invite_only'' or ''closed'' to store the policy;
+            null to clear the stored policy so the installation reverts to AUTH_SIGNUP_DISABLED.'
+        allowed_email_domains:
+          items:
+            type: string
+          type: array
+          title: Allowed Email Domains
+          description: Email domains allowed to sign up while the mode is 'open' (e.g.
+            'example.com'). At most 200; matched exactly, so list subdomains separately.
+            Ignored when mode is null.
+          maxItems: 1000
+      type: object
+      required:
+      - mode
+      title: SignupPolicyUpdateRequest
+      description: 'Body of ``PUT /v1/admin/signup-policy``.
+
+
+        The policy is replaced as a whole: send the mode and the full domain list
+        every time.'
+    SignupPolicyView:
+      properties:
+        mode:
+          type: string
+          title: Mode
+          description: 'Effective mode: ''open'', ''invite_only'' or ''closed''.'
+          example: example
+        allowed_email_domains:
+          items:
+            type: string
+          type: array
+          title: Allowed Email Domains
+          description: Email domains allowed to sign up while the mode is 'open'.
+            Empty means any domain.
+          maxItems: 1000
+        source:
+          type: string
+          title: Source
+          description: '''db'' when the policy is stored in the database; ''env''
+            when none is stored and AUTH_SIGNUP_DISABLED governs.'
+          example: human
+        env_mode:
+          type: string
+          title: Env Mode
+          description: The mode the env fallback gives ('closed' when AUTH_SIGNUP_DISABLED
+            is true, else 'open') — what applies if the stored policy is cleared.
+          example: example
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Signup Policy View schema.
+          - type: 'null'
+            description: Signup Policy View schema.
+          title: Updated At
+          description: When the stored policy was last changed; null when none is
+            stored.
+        updated_by:
+          anyOf:
+          - type: string
+            description: Signup Policy View schema.
+          - type: 'null'
+            description: Signup Policy View schema.
+          title: Updated By
+          description: Who last changed the stored policy; null when none is stored.
+      type: object
+      required:
+      - mode
+      - source
+      - env_mode
+      title: SignupPolicyView
+      description: The installation sign-up policy — the shape both GET and PUT return.
     SiteBody:
       properties:
         id:
@@ -118685,7 +119037,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         detected_by:
           anyOf:
           - type: string
@@ -121767,6 +122119,72 @@ components:
         from safest to worst — ``clean`` needs no attention, ``severe`` needs an explicit
 
         confirmation before the export runs.'
+    TwoFactorResetRequest:
+      properties:
+        reason:
+          type: string
+          title: Reason
+          description: Why the two-factor is being reset (10–500 characters). Stored
+            in the audit trail.
+          example: example
+        confirm:
+          type: string
+          title: Confirm
+          description: The target user's email address, typed out to confirm the reset.
+          example: example
+      type: object
+      required:
+      - reason
+      - confirm
+      title: TwoFactorResetRequest
+      description: Why the factor is being reset, and proof the caller means this
+        user.
+    TwoFactorResetResult:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+          description: The user whose two-factor was reset.
+          example: user_01h2xcejqtf3fz5y5j0v8k9m2p
+        email:
+          anyOf:
+          - type: string
+            description: Two Factor Reset schema.
+          - type: 'null'
+            description: Two Factor Reset schema.
+          title: Email
+          description: That user's email address.
+        name:
+          anyOf:
+          - type: string
+            description: Two Factor Reset schema.
+          - type: 'null'
+            description: Two Factor Reset schema.
+          title: Name
+          description: That user's display name.
+        had_two_factor:
+          type: boolean
+          title: Had Two Factor
+          description: Whether the user had two-factor on before the reset.
+          example: false
+        sessions_revoked:
+          type: integer
+          title: Sessions Revoked
+          description: How many of the user's sessions were ended.
+          example: 1
+        trusted_devices_revoked:
+          type: integer
+          title: Trusted Devices Revoked
+          description: How many trusted-device records were removed.
+          example: 1
+      type: object
+      required:
+      - user_id
+      - had_two_factor
+      - sessions_revoked
+      - trusted_devices_revoked
+      title: TwoFactorResetResult
+      description: What a reset cleared.
     TypeNamespaceCreateRequest:
       properties:
         namespace:
@@ -124142,13 +124560,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-08T00:57:09Z'
+          example: '2026-10-12T02:57:37Z'
         outcome:
           anyOf:
           - type: string

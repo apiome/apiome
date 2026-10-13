@@ -31,6 +31,13 @@ import {
   isTwoFactorEmailOtpConfigured,
   sendTwoFactorEmailOtp,
 } from './send-two-factor-email-otp';
+import {
+  LOCKOUT_DURATION_SECONDS,
+  LOCKOUT_MAX_FAILED_ATTEMPTS,
+  TRUST_DEVICE_MAX_AGE_SECONDS,
+} from './two-factor-policy';
+import { oauthTwoFactorChallengeHandler } from './two-factor-oauth-challenge';
+import { twoFactorReauthHandler } from './two-factor-reauth';
 import type { GenericOAuthConfig } from 'better-auth/plugins/generic-oauth';
 
 // The Better Auth server instance shares the same Postgres pool the rest of apiome-ui uses, so a
@@ -119,7 +126,12 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // path Better Auth's email-based auto-link to an existing user is safe, and restricting it to the
   // OAuth vocabulary (`LINKABLE_PROVIDERS`: github|gitlab|azure|google) with a required verified
   // email keeps a stray provider from ever linking on its own.
+  // `encryptOAuthTokens` (#4960): Better Auth seals the provider access / refresh / id tokens it
+  // writes to `apiome.account` (keyed on the Better Auth secret), so they are never at rest in
+  // plaintext. apiome reads provider tokens from `external_auth_providers`, sealed by
+  // `linked-account-token-crypto.ts`; the `account` copies are Better Auth's own.
   account: {
+    encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
       trustedProviders: [...LINKABLE_PROVIDERS],
@@ -169,6 +181,23 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
     twoFactor({
       issuer: APP_NAME,
       twoFactorTable: TWO_FACTOR_TABLE,
+      // The sign-in policy (OLO-9.14 #5006), stated rather than left to the plugin's defaults so a
+      // dependency upgrade cannot move it and the screens that quote it read the same constants
+      // (`two-factor-policy.ts`): a trusted browser skips the second step for 30 days, and ten
+      // consecutive wrong codes — across challenges and across authenticator / email / backup
+      // codes — lock the factor for 15 minutes (`two_factor."failedVerificationCount"` /
+      // `"lockedUntil"`, V201). Backup codes are single-use and stored encrypted by the plugin.
+      trustDeviceMaxAge: TRUST_DEVICE_MAX_AGE_SECONDS,
+      // Accounts that sign in only through a provider have no password to gate enrolment on
+      // (TFA-1.1 #5655). The plugin still demands the password whenever a credential account
+      // exists; for the rest, `twoFactorReauthHandler` (hooks.before, below) requires a sign-in
+      // within the last ten minutes instead.
+      allowPasswordless: true,
+      accountLockout: {
+        enabled: true,
+        maxFailedAttempts: LOCKOUT_MAX_FAILED_ATTEMPTS,
+        durationSeconds: LOCKOUT_DURATION_SECONDS,
+      },
       ...(isTwoFactorEmailOtpConfigured()
         ? {
             otpOptions: {
@@ -189,6 +218,9 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
   // `/sign-in/email` attempt before any password work; the `after` handler records the outcome. Both
   // are path-gated and no-op for requests they do not own.
   //
+  // Two-factor (TFA-1.1 #5655): `twoFactorReauthHandler` (before) and `oauthTwoFactorChallengeHandler`
+  // (after) are path-gated the same way — see `two-factor-reauth.ts` / `two-factor-oauth-challenge.ts`.
+  //
   // OAuth account-resolution / nOAuth (OLO-10.6/10.7): the 10.6 `oauthResolutionHandler` reads a
   // `ctx.oauth` payload that would only exist *after* the code exchange, which a `before` hook runs
   // ahead of — so it stays a no-op here. 10.7 finalizes the placement by running the same engine
@@ -200,9 +232,13 @@ function buildBetterAuthConfig(oauthConfigs: GenericOAuthConfig[]) {
     before: createAuthMiddleware(async (ctx) => {
       await credentialRateLimitBeforeHandler(ctx);
       await oauthResolutionHandler(ctx);
+      await twoFactorReauthHandler(ctx);
     }),
     after: createAuthMiddleware(async (ctx) => {
       await credentialRateLimitAfterHandler(ctx);
+      // Second factor after a provider sign-in (TFA-1.1 #5655): the plugin only challenges password
+      // sign-ins, so the OAuth callback is challenged here. Throws the redirect to `/login/2fa`.
+      await oauthTwoFactorChallengeHandler(ctx);
     }),
   },
   };

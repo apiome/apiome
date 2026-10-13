@@ -1,0 +1,31 @@
+{
+  "description": "Cross-language vectors for linked-account token encryption (#4960). The same file is checked in as apiome-rest/tests/fixtures/linked_account_token_vectors.json and apiome-ui/tests/fixtures/linked-account-token-vectors.json: each side must open the values the other side sealed. The keys are test-only (SHA-256 of the label \"apiome-test-vector-key-<version>\") and protect nothing.",
+  "keys": {
+    "1": "j1dpRMKBqcoPAU5QLA08xLTburJChlH6pq9IWnusP5U=",
+    "2": "I7bvXhZYhAtFwY60LJAdPETubMWrt2SVNyZh9TPBEtY="
+  },
+  "python": [
+    {
+      "key_version": 1,
+      "token": "gho_python_sealed_vector_v1",
+      "sealed": "enc:v1:1:T0xBVAGNNog7gwUcz9oGBWvHiVE9tjlBNKI3YCvVg59iLSdOc5tUEK1KM7GgrbTRVojuYv9pKpwFLaG3OE5JoR5dLQ0LdOiAgTxwd03wJTbscbO++ohhRRpgH3C1FS9IkTdkGMwfZf4vHy9as6idqrdZl0uj5E3NvIhPGUcMXpZ7Z5Oz"
+    },
+    {
+      "key_version": 2,
+      "token": "ghp_python_sealed_vector_v2_ünïcode",
+      "sealed": "enc:v1:2:T0xBVAFKc7zt6pxfvQK7GxKw+LxjieH2uNnZvZ5JQ4JCi+lKNWG6efwJRVOXxyZbkf0tSV3AVhcW+vgavBc3qrwwNdh+bVOYpmIL9ECA7YighLd/a49WttGRXDvkspqJl6r8UlIfjX1h+d48IUyeSK4Q04IXo06oWF9QHCrhSpL3gPRJgRO0bO5oV2DV594bVGeb+rc5"
+    }
+  ],
+  "typescript": [
+    {
+      "key_version": 1,
+      "token": "gho_typescript_sealed_vector_v1",
+      "sealed": "enc:v1:1:T0xBVAHTyDIr+EEzVAx/KyPhdJJQXpsq2YV/UEZgCG464c+sES7nHT8irlzGZ1UX/GyAoxZJ9QY+Du8Dy5CjFo3OhZmkS3PZ/+xu2c1kmXeD3Jan38fmjPUH2OsBZZpMM1OuoPimcVtdL/3mKHuiYRj9ykM10xyojpLH0cOwYQHsH5e9uKc83g=="
+    },
+    {
+      "key_version": 2,
+      "token": "glpat-typescript_sealed_vector_v2_ünïcode",
+      "sealed": "enc:v1:2:T0xBVAHCRYBrE9Ui2RzTZLYCC2mdhXzql/wuGS/1JMmgNCRnDGY6Y01N5WCSG29cxcTtdVMx50XCGMbWWlCZN18rPAEjF6FDa/dZvDzMkhaBBDxBS7BEGTRv3FGIE0GyRbhbn5tuzIseBm9mGk/Uk37cGF56saEHk/U9Q0MiRxgg3M6pfoEal2Ir20gq4IgqE7K4Ow=="
+    }
+  ]
+}

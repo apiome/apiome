@@ -67,6 +67,18 @@ The card then shows **PAT ••••••** and the token's last six characte
 shown again. **Click “Update”** to replace it, or **“Remove”** to delete it — imports that relied on
 it fall back to the provider's own grant. Unlinking the provider removes its token too.
 
+### How tokens are stored
+
+Apiome encrypts a token before it stores it — both the access a provider grants when you link it
+and any Personal Access Token you add. The encryption key is held by the installation, outside the
+database, so a copy of the database does not reveal your tokens.
+
+If the dialog answers *Personal access tokens cannot be saved because token encryption is not
+configured on this server*, the installation has no encryption key yet, and Apiome will not store
+a token unencrypted. Ask whoever runs it to set the key described under
+[Keys that encrypt stored secrets](../admin/operating-apiome.mdx#keys-that-encrypt-stored-secrets);
+you do not need to link the provider again, only to add the token once the key is in place.
+
 ## With the API
 
 Linking and tokens are only in the app; there is no REST endpoint or CLI command for them. To call

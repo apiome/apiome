@@ -53,6 +53,8 @@ describe('AUTH_ERROR_CODES — value stability', () => {
       MEMBERSHIP_SUSPENDED: 'membership-suspended',
       PROVIDER_NOT_CONFIGURED: 'provider-not-configured',
       SIGNUP_DISABLED: 'signup-disabled',
+      SIGNUP_INVITE_ONLY: 'signup-invite-only',
+      SIGNUP_DOMAIN_NOT_ALLOWED: 'signup-domain-not-allowed',
       SIGN_IN_FAILED: 'sign-in-failed',
     });
   });

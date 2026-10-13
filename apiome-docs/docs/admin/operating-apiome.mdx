@@ -51,6 +51,114 @@ Every service reads its settings from environment variables. Each workspace ship
 The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
 [The admin console](./admin-console.mdx).
 
+### Domains, sign-in redirects and the session cookie
+
+The web app and Studio share one sign-in. Two things follow from the hostnames you deploy them on:
+
+- **The session cookie** is scoped to the installation's *registrable domain* — the part of the
+  hostname you own. For `app.example.com` that is `.example.com`; for `app.example.co.uk` it is
+  `.example.co.uk`.
+- **After sign-in, a person can be sent** to any `https` host under that same domain, or to one of
+  the app URLs you configured (`BETTER_AUTH_URL`, `NEXT_PUBLIC_MAIN_APP_URL`,
+  `NEXT_PUBLIC_STUDIO_URL`). Any other address is replaced with the default landing page.
+
+Apiome finds the registrable domain with the [Public Suffix List](https://publicsuffix.org/), so a
+shared hosting domain is never mistaken for yours:
+
+| The app is served from | Cookie domain | Also trusted after sign-in |
+| --- | --- | --- |
+| `app.example.com` | `.example.com` | every `https` host under `example.com` |
+| `app.example.co.uk` | `.example.co.uk` | every `https` host under `example.co.uk` |
+| `apiome.vercel.app` | `.apiome.vercel.app` | hosts under `apiome.vercel.app` only — not other `*.vercel.app` sites |
+
+`BETTER_AUTH_COOKIE_DOMAIN` overrides the cookie domain. Set it only to a domain you own: a value
+that does not match the app URLs, or that is a public suffix such as `.co.uk` or `.vercel.app`, is
+ignored and the domain is worked out from the app URLs instead.
+
+Two consequences for how you lay out hosts:
+
+- **Put the web app and Studio under one domain you own** (`app.example.com` and
+  `studio.example.com`) to share a sign-in between them. On a hosting platform's shared domain
+  they are separate sites: the session cookie is not shared between them, and Studio is a trusted
+  destination only when `NEXT_PUBLIC_STUDIO_URL` names it.
+- **Every host under your domain is inside the sign-in boundary.** A forgotten DNS record that
+  points at a service you no longer run can be claimed by someone else, and would then receive the
+  session cookie. Remove DNS records when you retire a host, and review the records under the
+  domain from time to time.
+
+### What sign-in does when the database is unreachable
+
+Each time a session is read, Apiome checks the person's active workspace against their memberships
+in the database. If that check cannot run — the database is down or unreachable — the session is
+given **no active workspace** rather than the one the browser remembers, because the remembered
+value comes from a cookie and cannot be trusted unchecked.
+
+People stay signed in, but pages that need a workspace cannot load until the database answers
+again. Nothing has to be reset afterwards: the next request restores the workspace. The web app's
+log records each failed check as `[post-login-routing] membership lookup failed`.
+
+### Keys that encrypt stored secrets
+
+Some settings are encryption keys: they seal a secret before it is written to the database, so a
+copy of the database on its own does not reveal it. Each is optional at start-up, and each fails
+closed — without the key the secret is not stored, never stored unencrypted.
+
+| Variable | Set in | Encrypts |
+| --- | --- | --- |
+| `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` | `apiome-ui` **and** `apiome-rest` (identical) | The sign-in tokens and personal access tokens of [linked accounts](../workspace/linked-accounts.mdx) |
+| `AUTH_CONFIG_ENC_KEY` | `apiome-rest` | Client secrets saved on [Sign-in providers](./auth-providers.mdx) |
+| `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials for protected MCP servers |
+| `APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | npm and PyPI publish tokens |
+| `APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials a managed MCP toolset presents to your API |
+
+Each `…_ENCRYPTION_KEYS` value is a JSON object that maps a key version to a base64-encoded
+32-byte key. Single-quote it in a `.env` file:
+
+```bash
+APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS='{"1": "<base64 key>"}'
+```
+
+Generate a key with:
+
+```bash
+python3 -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+```
+
+Store these keys in your secret manager. A lost key cannot be recovered, and the secrets it sealed
+have to be entered again.
+
+#### Linked-account tokens
+
+The web app encrypts a linked account's tokens when it saves them, and the REST API decrypts them
+to read a repository, so both must hold the same `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS`.
+
+When the key is **not set**, people can still sign in and link providers, but:
+
+- no provider token is stored, so scans and imports of private repositories report a missing token;
+- saving a Personal Access Token is refused, with a message that names the variable.
+
+An account linked during that time has no stored token. After you set the key, its owner adds a
+Personal Access Token, or unlinks the provider and links it again.
+
+**Upgrading an installation that already has linked accounts.** Tokens saved before this
+encryption existed stay readable, and stay unencrypted until you seal them. After you set the key
+in both services and deploy, run this once in the `rest` service (`docker compose exec rest …`), or
+from `apiome-rest` in a source checkout:
+
+```bash
+python -m app.seal_linked_account_tokens --dry-run   # reports counts, changes nothing
+python -m app.seal_linked_account_tokens
+```
+
+The command prints counts only and is safe to run again. The
+[Production deployment](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md)
+runbook has the Compose form of these steps.
+
+**Rotating the key.** Add a higher version to the map in both services —
+`'{"1": "<old key>", "2": "<new key>"}'` — deploy, and run the same command. It re-encrypts every
+token under the newest version. Remove the old version once the command reports
+`"tokens_resealed": 0`.
+
 ## Runbooks
 
 | Runbook | Use it to |

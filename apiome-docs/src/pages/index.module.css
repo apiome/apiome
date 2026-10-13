@@ -1,0 +1,85 @@
+/* The home page: one centred column, as wide as a docs page, that narrows with the window. */
+.page {
+  width: 100%;
+  max-width: var(--ifm-container-width);
+  margin: 0 auto;
+  padding: 3rem var(--ifm-spacing-horizontal) 4rem;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid var(--hive-border-strong);
+}
+
+.logo {
+  width: 6rem;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  margin-bottom: 0.5rem;
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin-bottom: 1.5rem;
+  color: var(--hive-accent-fg);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.lead {
+  max-width: 42rem;
+  margin: 0;
+  color: var(--hive-fg-muted);
+  font-size: 1.0625rem;
+}
+
+.section {
+  margin-top: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+}
+
+.quickLinks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quickLink {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  height: 100%;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--hive-border-strong);
+  border-radius: var(--hive-radius-sm);
+  background: var(--hive-bg-inset);
+}
+
+.quickLink:hover {
+  border-left-color: var(--hive-accent);
+  text-decoration: none;
+}
+
+.quickLinkLabel {
+  color: var(--hive-accent-fg);
+  font-weight: 600;
+}
+
+.quickLinkDescription {
+  color: var(--hive-fg-muted);
+  font-size: 0.9375rem;
+}

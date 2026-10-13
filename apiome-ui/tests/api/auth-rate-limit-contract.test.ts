@@ -23,12 +23,14 @@ function read(file: string): string {
   return fs.readFileSync(file, 'utf8');
 }
 
-describe('link route (GET /api/auth/link/[provider])', () => {
+describe('link route (POST /api/auth/link/[provider])', () => {
   const src = read(LINK_ROUTE);
 
   it('enforces a per-IP request budget before the session lookup', () => {
     expect(src).toMatch(/checkRequestBudget\(`link:ip:\$\{resolveClientIp\(request\.headers\)\}`\)/);
     expect(src.indexOf('link:ip:')).toBeLessThan(src.indexOf('getAuthSession()'));
+    // ...and ahead of the Origin/CSRF validation (#4963), as on the signup-intent route.
+    expect(src.indexOf('link:ip:')).toBeLessThan(src.indexOf('isSameOriginRequest(request.headers)'));
   });
 
   it('enforces a per-account request budget once the caller is known', () => {
@@ -49,7 +51,10 @@ describe('signup-intent route (POST /api/auth/signup-intent)', () => {
   it('enforces a per-IP request budget before any other work', () => {
     expect(src).toMatch(/checkRequestBudget\(`signup-intent:ip:\$\{resolveClientIp\(request\.headers\)\}`\)/);
     // The budget must run ahead of the Origin/CSRF validation.
-    expect(src.indexOf('signup-intent:ip:')).toBeLessThan(src.indexOf("headers.get('origin')"));
+    expect(src.indexOf('signup-intent:ip:')).toBeLessThan(
+      src.indexOf('isSameOriginRequest(request.headers)')
+    );
+    expect(src).toContain('isSameOriginRequest(request.headers)');
   });
 
   it('answers over-budget calls with a structured 429 and Retry-After', () => {

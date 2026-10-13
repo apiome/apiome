@@ -1,5 +1,7 @@
 'use server';
 
+import { sealTokenOrNull, unsealToken } from '../auth/linked-account-token-crypto';
+
 const crypto = require('crypto');
 const connectionPool = require('./db');
 
@@ -21,6 +23,40 @@ function parseJsonObject(value: unknown): Record<string, unknown> {
   return {};
 }
 
+/** The provider credentials inside a staged `account_json` that are sealed at rest (#4960). */
+const PENDING_TOKEN_FIELDS = ['access_token', 'refresh_token', 'id_token'] as const;
+
+/**
+ * Seal the provider tokens of a staged OAuth account before it is written (#4960).
+ *
+ * @param account The provider account payload from the OAuth callback.
+ * @returns A copy whose token fields hold ciphertext. A token that cannot be sealed (encryption not
+ *   configured) is dropped rather than staged in plaintext; sign-up still completes without it.
+ */
+function sealPendingAccount(account: Record<string, unknown>): Record<string, unknown> {
+  const sealed: Record<string, unknown> = { ...account };
+  for (const field of PENDING_TOKEN_FIELDS) {
+    if (!(field in sealed)) continue;
+    const value = sealed[field];
+    sealed[field] = typeof value === 'string' ? sealTokenOrNull(value) : null;
+  }
+  return sealed;
+}
+
+/**
+ * Restore the plaintext provider tokens of a staged OAuth account after it is read (#4960).
+ *
+ * @param account The stored `account_json` object.
+ * @returns A copy whose token fields hold the plaintext tokens (`null` when absent or undecryptable).
+ */
+function unsealPendingAccount(account: Record<string, unknown>): Record<string, unknown> {
+  const unsealed: Record<string, unknown> = { ...account };
+  for (const field of PENDING_TOKEN_FIELDS) {
+    if (field in unsealed) unsealed[field] = unsealToken(unsealed[field]);
+  }
+  return unsealed;
+}
+
 export async function upsertOauthSignupPending(
   provider: string,
   providerAccountId: string,
@@ -39,7 +75,7 @@ export async function upsertOauthSignupPending(
        profile_json = EXCLUDED.profile_json,
        expires_at = EXCLUDED.expires_at
      RETURNING id`,
-    [provider, providerAccountId, email, JSON.stringify(account), JSON.stringify(profile), expiresAt]
+    [provider, providerAccountId, email, JSON.stringify(sealPendingAccount(account)), JSON.stringify(profile), expiresAt]
   );
   return { id: result.rows[0].id };
 }
@@ -58,7 +94,7 @@ export async function getOauthSignupPendingById(id: string): Promise<OauthSignup
     provider: row.provider,
     provider_account_id: row.provider_account_id,
     email: row.email,
-    account_json: parseJsonObject(row.account_json),
+    account_json: unsealPendingAccount(parseJsonObject(row.account_json)),
     profile_json: parseJsonObject(row.profile_json),
     expires_at: row.expires_at,
   };

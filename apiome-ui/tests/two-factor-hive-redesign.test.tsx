@@ -281,7 +281,7 @@ describe('two-factor screen — the code box', () => {
     fireEvent.click(screen.getByTestId('two-factor-submit'));
 
     await screen.findByText('Verifying…');
-    expect(mockVerifyTotp).toHaveBeenCalledWith({ code: '123456' });
+    expect(mockVerifyTotp).toHaveBeenCalledWith({ code: '123456', trustDevice: false });
   });
 
   it('reddens the box rather than printing the banner twice', async () => {

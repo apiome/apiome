@@ -262,12 +262,34 @@ Plus `user.twoFactorEnabled boolean` (§2.1). Registered via `twoFactor()` on th
 > **✅ TOTP UX implemented (OLO-9.13 #5014).** Password-gated enroll/disable on Profile Security,
 > `/login/2fa` after `twoFactorRedirect`, and `AppSession.twoFactorElevated` /
 > `user.twoFactorEnabled` for downstream consumers. Better Auth's stock after-hook only challenges
-> `/sign-in/email|username|phone-number` — OAuth/SSO second-factor is deferred.
+> `/sign-in/email|username|phone-number` — OAuth/SSO second-factor was deferred to TFA-1.1 (below).
+>
+> **✅ Two-factor for accounts without a password implemented (TFA-1.1 #5655).** The plugin's
+> after-hook still does not watch `/oauth2/callback/:providerId`, so `two-factor-oauth-challenge.ts`
+> (composed into `hooks.after`) recreates its challenge there: honour-and-rotate a trusted device,
+> otherwise delete the session the callback issued, write the `two_factor` cookie and its
+> `2fa-<id>` / `2fa-attempts-<id>` verification records, and redirect to
+> `/login/2fa?callbackUrl=…&methods=…`. **This mirrors plugin internals** — the module header lists
+> them and `tests/two-factor-oauth-challenge.test.ts` pins each against `node_modules`; re-check on
+> every Better Auth upgrade, and delete the module if the plugin starts challenging OAuth itself.
+> Enrolment for an account with no password uses the plugin's `allowPasswordless`, gated by
+> `two-factor-reauth.ts` (`hooks.before`): `/two-factor/enable|disable|generate-backup-codes` need
+> a session created within the last 10 minutes (read authoritatively, not from the cookie cache),
+> else `403 REAUTH_REQUIRED`; the Profile page then offers "Sign in again with <provider>".
 >
 > **✅ Profile self-service implemented (OLO-9.15 #5015).** Remaining backup-code count (server-only
 > `viewBackupCodes`), password-gated regenerate, forget-this-browser (trust-device cookie), and
 > recovery guidance on Profile Security. Better Auth has no multi-device trust list — revoke is
-> per-browser. Backup-code login, trust-on-verify checkbox, and lockout UX remain OLO-9.14 (#5006).
+> per-browser.
+>
+> **✅ Backup-code sign-in, trusted devices and lockout implemented (OLO-9.14 #5006).** `/login/2fa`
+> redeems a single-use backup code (`verifyBackupCode`) from a recovery form beside the challenge's
+> methods; a "Trust this device for 30 days" box passes `trustDevice` to every verify call; and the
+> plugin's refusals (`ACCOUNT_TEMPORARILY_LOCKED`, `TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE`,
+> `INVALID_TWO_FACTOR_COOKIE`) are worded on the screen and close the form. The policy is stated in
+> `lib/auth/two-factor-policy.ts` and passed to the plugin rather than left to its defaults:
+> `trustDeviceMaxAge` 30 days; `accountLockout` 10 consecutive failures → 15 minutes, counted in
+> `two_factor."failedVerificationCount"` / `"lockedUntil"` across challenges and methods.
 >
 > **✅ Email OTP implemented (OLO-9.50 #5070).** When `SENDGRID_API_KEY` + `EMAIL_FROM` are set,
 > `twoFactor({ otpOptions: { sendOTP } })` is registered. Better Auth then includes `"otp"` in

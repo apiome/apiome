@@ -5,6 +5,77 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.342.0] - 2026-10-12
+
+### Added
+- **Admin reset of a user's two-factor (#5656, TFA-1.2)**: a user who has lost their authenticator
+  and their backup codes can now be let back in.
+  - `POST /v1/admin/users/{user_id}/two-factor/reset` — the installation's super-admin, for any
+    user (`401` without a super-admin session, `403` with a bad one, `404` for an unknown user).
+  - `POST /v1/access/{tenant_slug}/members/{user_id}/two-factor/reset` — a workspace **owner**, for
+    an active member who belongs to **no other workspace**. `403 owner_required` for anyone else
+    and `403 session_required` for an API key; `404 member_not_found` for a user who is not an
+    active member; `409 multi_tenant_member` when the member also belongs elsewhere (two-factor
+    protects the whole account, so that case is the super-admin's); `409 self_reset` for the
+    caller's own account.
+
+  Both take `{ "reason", "confirm" }`: a reason of 10–500 characters, and the target's email
+  address typed out (`422 invalid_reason` / `confirmation_mismatch`). The reset deletes the user's
+  `two_factor` row, clears `"twoFactorEnabled"`, removes their trusted-device records and any
+  second-factor challenge in flight, and deletes every one of their sessions — and appends the
+  audit rows **in the same transaction**: an `auth_events` row of the new type `two_factor_reset`
+  (actor, target, reason), plus `member.two_factor_reset` on the workspace's access audit when an
+  owner did it. The response says what was cleared; emailing the user is done by the web app.
+  Migration V276 adds `users.two_factor_reset_at`, which the app reads to prompt the user to enrol
+  again. The OpenAPI version moves to 1.206.0.
+
+### Changed
+- `Database.write_auth_event` and `Database.write_access_audit` now share their chain-and-insert
+  step with cursor-level helpers (`_append_auth_event`, `_append_access_audit`), so a caller can
+  append an audit row inside its own transaction. Their behaviour is unchanged.
+
+## [1.341.0] - 2026-10-11
+
+### Security
+- **Linked-account tokens are encrypted at rest (#4960, OLO-7.3 follow-up)**: the OAuth access and
+  refresh tokens and the personal access tokens stored for linked accounts
+  (`apiome.external_auth_providers`) were plaintext, so a database read — a leaked backup, a
+  replica, an injection — yielded live credentials to users' repositories. They are now sealed with
+  AES-256-GCM envelope encryption (`app.linked_account_token_crypto`, the same scheme as the MCP,
+  SDK-registry and upstream-credential vaults, under its own magic) and stored as
+  `enc:v1:<key_version>:<base64>`. apiome-ui seals a token when it writes it; apiome-rest opens it
+  in one place (`Database.get_external_auth_provider_for_user`), so repository scans, imports,
+  webhook rotation and SDK delivery are unchanged. The staged OAuth sign-up token set
+  (`oauth_signup_pending.account_json`) is sealed the same way, and Better Auth now seals its own
+  copies in `apiome.account`. Migration V275 clears the plaintext copies nothing reads and
+  corrects the column comments.
+
+  **Operators must act.** Set `APIOME_LINKED_ACCOUNT_TOKEN_ENCRYPTION_KEYS` — a JSON map of
+  key-version to base64 32-byte key — to the **same value in apiome-rest and apiome-ui**, then seal
+  the rows written before the upgrade with `python -m app.seal_linked_account_tokens`
+  (`--dry-run` previews; it prints counts only and is safe to re-run). Until the key is set,
+  existing plaintext rows still read, sign-in and account linking still work, but no new provider
+  token is stored and saving a personal access token is refused — a token is never written in
+  plaintext. Rotate by adding a higher key-version to the map in both services and running the
+  command again. No endpoint changed shape; the OpenAPI version moves to 1.205.1.
+
+## [1.340.0] - 2026-10-11
+
+### Added
+- **Installation sign-up policy (#5653, SGN-1.4)**: who may create an account is now a
+  database-stored setting with `AUTH_SIGNUP_DISABLED` as the fallback, replacing the env flag as the
+  only control. `GET /v1/admin/signup-policy` returns the effective policy — `mode` (`open`,
+  `invite_only` or `closed`), `allowed_email_domains`, `source` (`db` or `env`) and `env_mode` —
+  and `PUT /v1/admin/signup-policy` stores it, or clears it with `"mode": null` so the installation
+  reverts to env. Both need the super-admin session (`401` without one, `403` with a bad one); an
+  unknown mode or a malformed domain is a structured `422` (`invalid_mode`,
+  `invalid_email_domain`). Every change writes an `apiome.signup_policy_audit` row in the same
+  transaction (migration V274). The policy is enforced by one gate
+  (`app.signup_policy.signup_rejection_code`) for the email form and every OAuth provider, and is
+  cached for `SIGNUP_POLICY_CACHE_TTL_SECONDS` (default 30), so a change needs no restart. Two auth
+  error codes join the contract: `signup-invite-only` and `signup-domain-not-allowed`. With no
+  stored policy, behaviour is unchanged. The OpenAPI version moves to 1.205.0.
+
 ## [1.339.1] - 2026-10-07
 
 ### Added

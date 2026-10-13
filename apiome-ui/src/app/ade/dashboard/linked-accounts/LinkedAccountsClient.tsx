@@ -207,7 +207,7 @@ const LinkedAccountsClient = ({ providers }: LinkedAccountsClientProps) => {
         // The pre-flight is the server's chance to refuse a link this account cannot have
         // (already linked, bound elsewhere) *before* the reader is bounced to the provider.
         const response = await fetch(`/api/auth/link/${providerId}`, {
-          method: 'GET',
+          method: 'POST',
           credentials: 'include',
         });
         if (!response.ok) {

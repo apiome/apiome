@@ -129,6 +129,8 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     // The four OAuth providers are trusted for Better Auth's own account-linking, reached only after
     // the resolution engine has already admitted a verified sign-in (OLO-10.7).
     expect(config.account.accountLinking.enabled).toBe(true);
+    // Better Auth seals the provider tokens it writes to `apiome.account` (#4960) — never plaintext.
+    expect(config.account.encryptOAuthTokens).toBe(true);
     expect([...config.account.accountLinking.trustedProviders].sort()).toEqual([
       'auth0',
       'aws',
@@ -209,6 +211,23 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     expect(typeof config.hooks.after).toBe('function');
   });
 
+  it('composes the two-factor hooks beside them (TFA-1.1 #5655)', async () => {
+    process.env.BETTER_AUTH_SECRET = 'test-secret';
+
+    await import('@lib/auth/auth');
+    const config = mockBetterAuth.mock.calls[0][0];
+
+    // Both are path-gated, so a request neither owns passes straight through each.
+    const unrelated = { path: '/get-session', context: { newSession: null } };
+    await expect(config.hooks.before(unrelated)).resolves.toBeUndefined();
+    await expect(config.hooks.after(unrelated)).resolves.toBeUndefined();
+
+    // after: an OAuth callback that issued no session is not challenged.
+    await expect(
+      config.hooks.after({ path: '/oauth2/callback/github', context: { newSession: null } })
+    ).resolves.toBeUndefined();
+  });
+
   it('registers the twoFactor plugin with the app name as issuer and the two_factor table (OLO-10.10)', async () => {
     process.env.BETTER_AUTH_SECRET = 'test-secret';
 
@@ -218,7 +237,17 @@ describe('lib/auth/auth.ts (Better Auth server instance)', () => {
     // `two_factor` (the plugin keeps its native camelCase field names — design §2.5).
     // Without SendGrid, otpOptions is omitted so deployments stay TOTP-only (OLO-9.50).
     expect(mockTwoFactor).toHaveBeenCalledTimes(1);
-    expect(mockTwoFactor).toHaveBeenCalledWith({ issuer: 'apiome', twoFactorTable: 'two_factor' });
+    // The sign-in policy is stated, not left to the plugin's defaults (OLO-9.14 #5006): a trusted
+    // browser skips the second step for 30 days; ten consecutive wrong codes lock it for 15 minutes.
+    expect(mockTwoFactor).toHaveBeenCalledWith({
+      issuer: 'apiome',
+      twoFactorTable: 'two_factor',
+      trustDeviceMaxAge: 30 * 24 * 60 * 60,
+      // Accounts without a password can manage 2FA (TFA-1.1 #5655); the plugin still demands the
+      // password where one exists, and the re-auth hook covers the rest.
+      allowPasswordless: true,
+      accountLockout: { enabled: true, maxFailedAttempts: 10, durationSeconds: 15 * 60 },
+    });
 
     // The twoFactor plugin sits AFTER genericOAuth and BEFORE nextCookies (which must stay last).
     const config = mockBetterAuth.mock.calls[0][0];
