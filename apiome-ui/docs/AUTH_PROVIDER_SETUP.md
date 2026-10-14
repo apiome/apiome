@@ -57,6 +57,7 @@ gated by a shared service token:
 |---|---|---|
 | `INTERNAL_SERVICE_TOKEN` | apiome-ui **and** apiome-rest (identical value) | authorises `GET /v1/internal/auth-providers/resolved`, the login-time read path |
 | `AUTH_CONFIG_ENC_KEY` | apiome-rest only | the KEK that seals/unseals stored client secrets — see [Encryption at rest](#encryption-at-rest-and-key-rotation-auth_config_enc_key) |
+| `REST_API_BASE_URL` | apiome-ui (and Studio) | where the resolver reaches apiome-rest, read at **runtime** — set it in a container (e.g. `http://rest:8000/v1`), where `localhost` is the container itself. Unset ⇒ `NEXT_PUBLIC_REST_API_BASE_URL`, which is fixed when the image is built |
 | `AUTH_PROVIDER_CONFIG_CACHE_TTL_MS` | apiome-ui | optional TTL (ms) of the in-process resolved-config cache; clamped to `[5000, 60000]`, default `30000` |
 
 **Unset `INTERNAL_SERVICE_TOKEN` ⇒ the database layer is switched off entirely**: providers come

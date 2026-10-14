@@ -153,6 +153,10 @@ services:
       NEXT_PUBLIC_REST_API_BASE_URL: http://rest:8000/v1
       # Server-side BFF reads this at runtime (not baked at build time).
       REST_API_BASE_URL: http://rest:8000/v1
+      # Studio mounts apiome-ui's sign-in handler, so it runs the same login-time provider
+      # resolver: without the token, providers saved on the admin screen are ignored for sign-in
+      # on the Studio origin. Must match the `rest` service's value; optional, like there.
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}@postgres:5432/${POSTGRES_DB:-apiome}
       PGHOST: postgres
       PGPORT: "5432"

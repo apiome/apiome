@@ -107,9 +107,12 @@ openssl rand -base64 48   # ADMIN_SESSION_SECRET, INTERNAL_SERVICE_TOKEN
 python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"  # AUTH_CONFIG_ENC_KEY
 ```
 
-apiome-ui must also be able to reach REST **server-side**: its
-`NEXT_PUBLIC_REST_API_BASE_URL` is used by the login-time resolver, so inside a container it
-must point at the REST service (e.g. `http://rest:8000/v1`), not `localhost`.
+apiome-ui and Studio must also be able to reach REST **server-side**: the login-time resolver
+calls it from inside the container, where `localhost` is the container itself. Set
+`REST_API_BASE_URL` to the REST service (e.g. `http://rest:8000/v1`) in the container's runtime
+environment — the resolver prefers it. `NEXT_PUBLIC_REST_API_BASE_URL` is only the fallback, and
+it is inlined into the server bundle when the image is **built**, so setting it on a running
+container does not change an image that was built without it.
 
 > The `.env` file holds live secrets and is git-ignored — never commit it. Only the
 > `*.env.example` templates are tracked.
@@ -185,9 +188,11 @@ dc exec rest python -c "import os,urllib.request;r=urllib.request.Request('http:
 ```
 
 Then load the sign-in page and confirm the provider button appears. If it does not, check the
-apiome-ui logs for `[provider-config-resolver] resolved endpoint returned …` — and note that
-**no** such line means apiome-ui itself has no `INTERNAL_SERVICE_TOKEN` (that case returns
-without logging).
+apiome-ui (or Studio) logs for `[provider-config-resolver] resolved endpoint returned …` (REST
+answered with an error status) or `resolved endpoint fetch to <url> failed (TypeError:
+ECONNREFUSED)` (REST was never reached — the line names the address tried, so a `localhost` URL
+there means `REST_API_BASE_URL` is unset in that container). A one-time `INTERNAL_SERVICE_TOKEN
+is not set` line means that container has no token.
 
 Set `APIOME_CORS_ALLOWED_ORIGINS` to include both the main app and Studio origins (e.g.
 `https://app.apiome.dev,https://studio.apiome.dev`). The default regex also allows

@@ -54,6 +54,8 @@ We continue to improve the platform based on your feedback with improvements and
     - Visual indicator of the bulk import is now implemented properly
 - MCP:
   - Hardens tool array emit for LLM tool summary
+- Sign-in providers:
+  - Providers saved on the admin screen now reach sign-in in containers: the app and Studio read the REST address from `REST_API_BASE_URL` at runtime, and the log names the address when it cannot be reached
 - Studio:
   - Fixed the Studio container failing to cache optimized images (`EACCES` on `.next/cache`)
 - Two-factor sign-in:

@@ -358,3 +358,34 @@ describe('applyResolvedOverlay (pure)', () => {
     expect(base.OKTA_ISSUER).toBe('https://env.okta.com'); // base untouched
   });
 });
+
+describe('REST base URL (runtime over build-time)', () => {
+  const realFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = realFetch;
+    invalidateProviderConfigCache();
+    jest.restoreAllMocks();
+  });
+
+  it('prefers the runtime REST_API_BASE_URL over the build-time constant', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ providers: {} }) });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await resolveProviderEnvWithSource({
+      INTERNAL_SERVICE_TOKEN: 'tok',
+      REST_API_BASE_URL: 'http://rest:8000/v1/',
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe('http://rest:8000/v1/internal/auth-providers/resolved');
+  });
+
+  it('names the URL and the underlying cause when the fetch fails', async () => {
+    const error = new TypeError('fetch failed', { cause: { code: 'ECONNREFUSED' } });
+    global.fetch = jest.fn().mockRejectedValue(error) as unknown as typeof fetch;
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await resolveProviderEnvWithSource({ INTERNAL_SERVICE_TOKEN: 'tok' });
+    expect(warn).toHaveBeenCalledWith(
+      '[provider-config-resolver] resolved endpoint fetch to ' +
+        'http://rest.test/v1/internal/auth-providers/resolved failed (TypeError: ECONNREFUSED); ' +
+        'using env config'
+    );
+  });
+});
