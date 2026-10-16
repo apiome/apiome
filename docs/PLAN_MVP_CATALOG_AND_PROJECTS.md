@@ -24,8 +24,8 @@ held-back feature is released.
 ### 0.1 How the gate works (`mvp/catalog-projects-focus`)
 
 - **One list:** `apiome-ui/lib/feature-release.ts` → `UNRELEASED_FEATURE_IDS`.
-- **Navigation:** `getPlatformNavGroups()` resolves those items as disabled with the reason
-  “*X* is not available yet.” — the rail, the command palette and the `G`-jumps all read it.
+- **Navigation:** `getPlatformNavGroups()` leaves those items out, so the rail, the command
+  palette and the `G`-jumps (which all read it) do not list them at all.
 - **Direct URLs:** each held-back route has a `layout.tsx` wrapping it in `UnreleasedFeatureGate`,
   which renders a locked “Not available yet” page with **Go to Projects**.
 - **Cross-links from released pages:** removed while gated — the Home “Register an MCP server”
@@ -109,7 +109,7 @@ account for it being gated.
 
 | Phase | Work | Depends on | Exit check |
 | --- | --- | --- | --- |
-| **0. Gate** | Hold back the six features in nav, routes, cross-links and docs (this branch) | — | Rail shows six disabled rows; gated URLs show “Not available yet”; `yarn docs:check` passes |
+| **0. Gate** | Hold back the six features in nav, routes, cross-links and docs (this branch) | — | Rail omits the six; gated URLs show “Not available yet”; `yarn docs:check` passes |
 | **A. Shared primitives** | #5597, #5601 | — | Components in the design-system gallery with tests |
 | **B. Projects / Versions** | #5598 → #5599 → #5600 | A (#5597) | Versions page has one status strip, one header menu, one toolbar |
 | **C. Catalog** | #5602, then #4122, #4124, #4121, #4093 in parallel | A (#5601) | Close #4116 and #4078 |
