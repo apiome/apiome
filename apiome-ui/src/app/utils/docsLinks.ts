@@ -66,7 +66,6 @@ export const LEGACY_GUIDE_ROUTES: Readonly<Record<string, string>> = {
   'mock-proxy-capture': 'reference/mock-runtime/mock-proxy-capture',
   'serverless-mock-adapter': 'reference/mock-runtime/serverless-mock-adapter',
   'mock-release-attestation': 'reference/mock-runtime/mock-release-attestation',
-  'style-guide-revisions': 'govern/style-guide-revisions',
   'mcp-conformance-rules': 'govern/mcp-conformance-rules',
   'mcp-surface-lint-rules': 'govern/mcp-surface-lint-rules',
   'mcp-trust-posture-rules': 'govern/mcp-trust-posture-rules',

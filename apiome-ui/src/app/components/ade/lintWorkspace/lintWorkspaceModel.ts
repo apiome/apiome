@@ -17,6 +17,7 @@
  * is everything that turns those facts into words and tones on a screen.
  */
 
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   LINT_DECISION_STATES,
   LINT_DECISION_STATE_LABEL,
@@ -614,7 +615,8 @@ export function findingSubjectHref(finding: LintWorkspaceFinding): string | null
     const project = finding.projectId ? encodeURIComponent(finding.projectId) : '';
     return `/ade/dashboard/versions${project ? `?projectId=${project}` : ''}`;
   }
-  if (finding.mcpVersionId) return '/ade/dashboard/mcp';
+  // MCP servers is unreleased (`lib/feature-release.ts`): no link rather than a locked page.
+  if (finding.mcpVersionId) return isFeatureReleased('mcp') ? '/ade/dashboard/mcp' : null;
   return null;
 }
 

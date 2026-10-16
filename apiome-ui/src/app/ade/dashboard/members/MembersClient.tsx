@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Shield, UserPlus } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
 
@@ -462,7 +463,7 @@ export default function MembersClient() {
         onResendInvite={(member) => void handleResendInvite(member)}
         onResetTwoFactor={(member) => openOverlayFor('reset-two-factor', member.user_id)}
         rolesHref={ROLES_ROUTE}
-        auditHref={AUDIT_ROUTE}
+        auditHref={isFeatureReleased('audit') ? AUDIT_ROUTE : undefined}
       />
 
       <InviteMemberDialog

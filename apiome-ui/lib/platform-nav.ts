@@ -1,5 +1,6 @@
 import { getMainAppUrl, normalizeAppOrigin } from './app-urls';
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
+import { isFeatureReleased, unreleasedFeatureReason } from './feature-release';
 import { getSuiteTriggerIsActive } from './suite-contract';
 import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
@@ -508,7 +509,11 @@ export function platformNavGatedReason(label: string): string {
 }
 
 /**
- * Apply session gating to one destination.
+ * Apply release and session gating to one destination.
+ *
+ * An unreleased destination (`lib/feature-release.ts`) is disabled whatever the
+ * session, and says so — choosing a workspace would not open it, so the
+ * workspace reason would send the reader the wrong way.
  *
  * @param item - A modelled destination.
  * @param currentTenantId - `current_tenant_id` from the session, if any.
@@ -518,6 +523,9 @@ function resolveItem(
   item: PlatformNavItem,
   currentTenantId: string | null | undefined
 ): ResolvedPlatformNavItem {
+  if (!isFeatureReleased(item.id)) {
+    return { ...item, disabled: true, disabledReason: unreleasedFeatureReason(item.label) };
+  }
   const disabled = Boolean(item.requiresTenant) && !currentTenantId;
   return disabled
     ? { ...item, disabled, disabledReason: platformNavGatedReason(item.label) }

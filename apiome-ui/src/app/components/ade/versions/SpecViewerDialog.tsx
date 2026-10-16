@@ -28,6 +28,7 @@ import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
 import { useHiveMonacoTheme } from '@/app/components/ui/code/monacoHiveTheme';
 import VersionExportPanel from '@/app/components/ade/dashboard/export/VersionExportPanel';
+import { isFeatureReleased } from '@lib/feature-release';
 
 import { VersionDialogHead } from './VersionDialogChrome';
 import { versionLabel, type Version } from './versionsModel';
@@ -146,8 +147,9 @@ export default function SpecViewerDialog({
 
           {/* Version-scoped export entry point (MFX-6.5, #3859): the fidelity pre-summary
               (best-fidelity vs lossy targets for this source) + this version's recent exports,
-              rendered on the version view before the ExportDialog opens. */}
-          {version ? (
+              rendered on the version view before the ExportDialog opens. Every target in it
+              deep-links into the Export studio, so it waits for the studio's release. */}
+          {version && isFeatureReleased('export-studio') ? (
             <VersionExportPanel
               artifact={version.project_id}
               version={version.id}

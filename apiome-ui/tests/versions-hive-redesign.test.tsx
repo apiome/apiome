@@ -573,7 +573,8 @@ describe('the banners and the overview', () => {
     expect(facts).toHaveTextContent('v2.3.1');
     expect(facts).toHaveTextContent('Yes (not a catalog item)');
     expect(within(facts).getByRole('link', { name: 'Published surface' })).toHaveAttribute('href', '/ade/dashboard/published');
-    expect(within(facts).getByRole('link', { name: 'Export studio' })).toHaveAttribute('href', '/ade/dashboard/export/studio');
+    // The Export studio link waits for the studio's release (`lib/feature-release.ts`).
+    expect(within(facts).queryByRole('link', { name: 'Export studio' })).not.toBeInTheDocument();
   });
 });
 
@@ -765,14 +766,15 @@ describe('the row menu', () => {
     expect(within(menu).getAllByTestId('gitlike-flag')).toHaveLength(8);
   });
 
-  it('opens the spec viewer from the version link, with the export cards, and copies the spec', async () => {
+  it('opens the spec viewer from the version link, and copies the spec', async () => {
     await renderVersions();
     fireEvent.click(within(screen.getByTestId(`versions-cell-${V231_ID}`)).getByRole('button', { name: 'v2.3.1' }));
     const dialog = await screen.findByTestId('spec-viewer-dialog');
     expect(within(dialog).getByRole('heading', { name: 'OpenAPI 3.1.0 specification' })).toBeInTheDocument();
     expect(dialog).toHaveTextContent('Payments API — v2.3.1');
     await within(dialog).findByTestId('mock-monaco');
-    expect(within(dialog).getByTestId('version-export-panel')).toBeInTheDocument();
+    // The export cards deep-link into the Export studio, so they wait for its release.
+    expect(within(dialog).queryByTestId('version-export-panel')).not.toBeInTheDocument();
     expect(within(dialog).getByTestId('spec-viewer-download')).toHaveTextContent('payments-api-2-3-1-openapi.json');
     fireEvent.click(within(dialog).getByTestId('spec-format-tab-yaml'));
     await waitFor(() => expect(within(dialog).getByTestId('spec-viewer-download')).toHaveTextContent('payments-api-2-3-1-openapi.yaml'));

@@ -60,7 +60,7 @@ out); the seat is returned to the licence.
 ## Change a role
 
 **Choose a role from the row's Role menu.** The change is saved at once and recorded in the
-[Access audit](../govern/access-audit.mdx). If it fails, a banner above the roster says why.
+workspace's [access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get). If it fails, a banner above the roster says why.
 
 ## Read a member
 
@@ -93,8 +93,8 @@ Confirm who you are dealing with before you do this.
 3. **Type the member's email address** to confirm, and **click “Reset two-factor”**.
 
 The member's authenticator and backup codes stop working, their trusted devices are forgotten and
-they are signed out everywhere. The dialog says whether they were emailed. The reset is recorded in
-[Access audit](../govern/access-audit.mdx) with you, the member and your reason.
+they are signed out everywhere. The dialog says whether they were emailed. The reset is recorded in the
+[access audit](../reference/rest/access.md#list-audit-v1-access-tenant-slug-audit-get) with you, the member and your reason.
 
 **A member who also belongs to another workspace cannot be reset here.** Two-factor protects their
 whole account, not only their place in your workspace, so the dialog answers *This member also
@@ -155,5 +155,4 @@ There is no CLI command for members.
 ## Where next
 
 - [Roles & permissions](./roles.mdx)
-- [Access audit](../govern/access-audit.mdx)
 - [Tenants](./tenants.mdx)

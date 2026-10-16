@@ -111,6 +111,7 @@ describe('CatalogItemDetailClient', () => {
     jest.restoreAllMocks();
     mockPush.mockReset();
     mockSearch = '';
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
   it('renders the header with name, format/protocol/source pills', async () => {
@@ -448,7 +449,20 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
   });
 
+  it('exports in place while the Export Studio is unreleased, without navigating or touching Convert', async () => {
+    mockFetchItem(RICH_ITEM);
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+
+    fireEvent.click(await screen.findByTestId('catalog-detail-export'));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('export-dialog-body')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open in Export Studio/ })).not.toBeInTheDocument();
+    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
+  });
+
   it('opens the Export Studio from the Export CTA without touching Convert (MFX-41.2, #4349)', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 

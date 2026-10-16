@@ -16,6 +16,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Globe, PackageOpen } from 'lucide-react';
 
+import { isFeatureReleased } from '@lib/feature-release';
+
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 
@@ -83,12 +85,14 @@ export default function ProjectFactsCard({
             Published surface
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={EXPORT_STUDIO_ROUTE}>
-            <PackageOpen aria-hidden />
-            Export studio
-          </Link>
-        </Button>
+        {isFeatureReleased('export-studio') ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={EXPORT_STUDIO_ROUTE}>
+              <PackageOpen aria-hidden />
+              Export studio
+            </Link>
+          </Button>
+        ) : null}
       </div>
     </Card>
   );

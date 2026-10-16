@@ -102,6 +102,7 @@ import {
   platformNavGatedReason,
   type PlatformNavItem,
 } from '../lib/platform-nav';
+import { isFeatureReleased, unreleasedFeatureReason } from '../lib/feature-release';
 import NotificationsClient from '../src/app/ade/dashboard/notifications/NotificationsClient';
 import { NOTIFICATION_TYPES, type NotificationRow } from '../lib/notifications';
 import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
@@ -109,6 +110,10 @@ import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 /** Every rail destination the model describes, flattened. */
 const MODEL_ITEMS: PlatformNavItem[] = PLATFORM_NAV_GROUPS.flatMap((group) => group.items);
+
+/** Destinations open in this build, and those held back by the release gate. */
+const RELEASED_ITEMS = MODEL_ITEMS.filter((item) => isFeatureReleased(item.id));
+const UNRELEASED_ITEMS = MODEL_ITEMS.filter((item) => !isFeatureReleased(item.id));
 
 /** The headings the model asks for, in model order. */
 const GROUP_LABELS = PLATFORM_NAV_GROUPS.map((group) => group.label).filter(
@@ -243,16 +248,30 @@ describe('AppShell — one chrome', () => {
 });
 
 describe('AppShell — navigation from the model', () => {
-  it('renders every modelled destination once, with its href', async () => {
+  it('renders every released destination once, with its href', async () => {
     await renderShell();
 
     const nav = screen.getByRole('navigation', { name: 'Primary' });
-    for (const item of MODEL_ITEMS) {
+    for (const item of RELEASED_ITEMS) {
       const row = within(nav).getByTestId(`rail-nav-${item.id}`);
       expect(row).toHaveTextContent(item.label);
       expect(row).toHaveAttribute('href', item.href);
     }
-    expect(within(nav).getAllByRole('link')).toHaveLength(MODEL_ITEMS.length);
+    expect(within(nav).getAllByRole('link')).toHaveLength(RELEASED_ITEMS.length);
+  });
+
+  it('renders an unreleased destination as a disabled row that says it is not available yet', async () => {
+    expect(UNRELEASED_ITEMS.length).toBeGreaterThan(0);
+    await renderShell({ tenant: true });
+
+    const nav = screen.getByRole('navigation', { name: 'Primary' });
+    for (const item of UNRELEASED_ITEMS) {
+      const row = within(nav).getByTestId(`rail-nav-${item.id}`);
+      expect(row).toHaveTextContent(item.label);
+      expect(row).not.toHaveAttribute('href');
+      expect(row).toHaveAttribute('aria-disabled', 'true');
+      expect(row).toHaveAccessibleDescription(unreleasedFeatureReason(item.label));
+    }
   });
 
   it('renders a heading for every labelled group, and none for the leading run', async () => {
@@ -262,7 +281,10 @@ describe('AppShell — navigation from the model', () => {
     for (const label of GROUP_LABELS) {
       expect(within(nav).getByRole('button', { name: new RegExp(label, 'i') })).toBeInTheDocument();
     }
-    expect(within(nav).getAllByRole('button')).toHaveLength(GROUP_LABELS.length);
+    // Group headings, plus the disabled rows the release gate renders as buttons.
+    expect(within(nav).getAllByRole('button')).toHaveLength(
+      GROUP_LABELS.length + UNRELEASED_ITEMS.length
+    );
   });
 
   it('keeps account destinations out of the rail — they belong to the user menu', async () => {
@@ -328,10 +350,10 @@ describe('AppShell — workspace gating', () => {
     }
   });
 
-  it('leaves every destination reachable once a workspace is selected', async () => {
+  it('leaves every released destination reachable once a workspace is selected', async () => {
     await renderShell({ tenant: true });
 
-    for (const item of MODEL_ITEMS) {
+    for (const item of RELEASED_ITEMS) {
       expect(screen.getByTestId(`rail-nav-${item.id}`)).not.toHaveAttribute('aria-disabled');
     }
   });

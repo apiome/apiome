@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { isFeatureReleased } from '@lib/feature-release';
 import { cn } from '@lib/utils';
 import {
   CheckCircle2,
@@ -535,7 +536,7 @@ export function ExportDialog({
             <Button variant="outline" onClick={handleClose} disabled={exporting}>
               {emitted ? 'Close' : 'Cancel'}
             </Button>
-            {!emitted && (
+            {!emitted && isFeatureReleased('export-studio') && (
               <Button
                 variant="ghost"
                 onClick={openInStudio}

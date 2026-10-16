@@ -113,8 +113,8 @@ An approver — anyone with the `lint_findings:publish` permission — then:
 To reject a request, the approver selects it and **clicks “Reopen / reject”**. Every step lands in
 the finding's remediation history.
 
-Waivers that let a blocked *import or export* through are different — they come from the [Import &
-export policy](./style-guides.mdx#import--export-policy) on Style guides.
+Waivers that let a blocked *import or export* through are different — they come from the tenant's
+import & export quality policy, set over the [REST API](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put).
 
 ### Assign an owner
 
@@ -151,5 +151,5 @@ request also needs `lint_findings:publish`. Every applied action is recorded and
 
 ## Where next
 
-- [Style guides](./style-guides.mdx)
-- [Access audit](./access-audit.mdx)
+- [Reviews and the approval gate](./reviews.mdx)
+- [Lint and check quality](../build/lint-and-quality.md)

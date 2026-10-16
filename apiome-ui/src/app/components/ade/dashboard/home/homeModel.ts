@@ -38,6 +38,7 @@ import {
 
 import { OPEN_ACTIONS, openActionHref } from '@/app/components/shell/openActions';
 import type { AttentionKind, PulseWeek } from '@lib/db/dashboard-home-model';
+import { isFeatureReleased } from '@lib/feature-release';
 
 /* -------------------------------------------------------------------------
    The six stats
@@ -333,6 +334,8 @@ export interface QuickAction {
   kbd?: string;
   /** True when the action is meaningless without a selected workspace. */
   requiresTenant: boolean;
+  /** Rail item id of the feature the action opens, when that feature may be unreleased. */
+  feature?: string;
 }
 
 /**
@@ -379,6 +382,7 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     icon: Network,
     href: '/ade/dashboard/mcp',
     requiresTenant: true,
+    feature: 'mcp',
   },
 ];
 
@@ -392,7 +396,10 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
  * @returns The actions to draw.
  */
 export function quickActionsFor(hasTenant: boolean): QuickAction[] {
-  return QUICK_ACTIONS.filter((action) => hasTenant || !action.requiresTenant);
+  return QUICK_ACTIONS.filter(
+    (action) =>
+      (hasTenant || !action.requiresTenant) && (!action.feature || isFeatureReleased(action.feature))
+  );
 }
 
 /* -------------------------------------------------------------------------

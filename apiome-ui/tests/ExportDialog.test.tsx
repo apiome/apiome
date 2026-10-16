@@ -884,6 +884,15 @@ describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => 
 });
 
 describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
+  // The escalation is offered only once the Studio is released (`lib/feature-release.ts`);
+  // these cases pin its behaviour for that day, with the build-time override set.
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+  });
+  afterAll(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+
   beforeEach(() => {
     routerPush.mockClear();
     (URL as unknown as { createObjectURL: unknown }).createObjectURL = jest.fn(() => 'blob:mock');

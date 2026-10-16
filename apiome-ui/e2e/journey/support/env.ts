@@ -103,6 +103,8 @@ export function journeyServerEnv(): Record<string, string> {
       process.env.BETTER_AUTH_SECRET || dotEnvValues().BETTER_AUTH_SECRET || 'olo-journey-secret',
     DATABASE_URL: databaseUrl(),
     NEXT_PUBLIC_REST_API_BASE_URL: restApiBaseUrl(),
+    // The journeys still cover features held back from the MVP (`lib/feature-release.ts`).
+    NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: 'all',
     // Every MVP provider is enabled with mock credentials; the URL overrides (OLO-7.4)
     // point each one at the local mock server. Strict boot validation stays on so a
     // partially-wired provider fails the suite loudly.

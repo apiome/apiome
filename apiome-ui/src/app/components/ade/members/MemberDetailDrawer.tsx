@@ -97,8 +97,8 @@ export interface MemberDetailDrawerProps {
   onResetTwoFactor?: (member: MemberRecord) => void;
   /** Where the Roles page lives, for the permissions section's link. */
   rolesHref: string;
-  /** Where the access audit lives, for the activity section's link. */
-  auditHref: string;
+  /** Where the access audit lives, for the activity section's link; omitted while it is unreleased. */
+  auditHref?: string;
 }
 
 /**
@@ -343,13 +343,15 @@ export default function MemberDetailDrawer({
                   {suspended ? 'Reinstate' : 'Suspend'}
                 </Button>
               )}
-              <a
-                className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-accent-fg transition-colors hover:text-accent"
-                href={auditHref}
-              >
-                Audit trail
-                <ArrowUpRight className="size-[var(--icon-button)] shrink-0" aria-hidden />
-              </a>
+              {auditHref ? (
+                <a
+                  className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-accent-fg transition-colors hover:text-accent"
+                  href={auditHref}
+                >
+                  Audit trail
+                  <ArrowUpRight className="size-[var(--icon-button)] shrink-0" aria-hidden />
+                </a>
+              ) : null}
             </DrawerFooter>
           </>
         )}

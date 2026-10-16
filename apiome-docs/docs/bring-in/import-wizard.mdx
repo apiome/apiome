@@ -11,9 +11,6 @@ Apiome has two import wizards, and which one you get depends on where you start:
 | --- | --- | --- | --- |
 | **Import specification** | **Import** on Projects or Versions, **Import a spec** on Home (<Kbd keys="I"/>) | File Upload, URL Import, Clipboard Paste, Git Repository, SwaggerHub, Design with AI | A new [project](../build/projects.mdx) |
 | **Import to catalog** | **Import to catalog** on the [Catalog](./catalog.mdx) | File, URL, clipboard, Git repository | A catalog item, in its original format |
-| **Add MCP server** | **Add MCP server** on [MCP servers](./mcp-servers.mdx) | Every source, with MCP Server selected | A cataloged MCP endpoint |
-
-**Postman Collection** and **MCP Server** are offered only in the **Add MCP server** dialog.
 
 The sample files below are in the Apiome repository under `apiome-ui/examples/`. Avoid the
 `negative/` and `adversarial/` folders — those files are broken on purpose.
@@ -22,7 +19,7 @@ The sample files below are in the Apiome repository under `apiome-ui/examples/`.
 
 Steps: **Source → Analyze → Preview → Import → Done**.
 
-<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with every source card" caption="As Add MCP server opens it, with every source. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
+<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step, with every source card" caption="The Source step. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
 
 1. **Source** — choose a card and fill in its intake (below). The forward button is **“Analyze →”**
    (**“Next →”** for a URL).
@@ -93,17 +90,6 @@ instead.
 
 **Design with AI** drafts a specification from a description; **“Import This Spec”** loads the
 draft into the wizard as if you had pasted it. It is also on **New project → Design with AI**.
-
-### Postman Collection
-
-In **Add MCP server**, **click “Postman Collection”**, choose a collection file (`.json`) — try
-`apiome-ui/examples/postman/01-tasks-collection.postman_collection.json` — or paste its JSON, and
-**click “Convert to OpenAPI & Continue”**. Apiome converts it to OpenAPI 3.1 (**Converted to OpenAPI
-3.1**) and carries on as a file import.
-
-### MCP Server
-
-See [Add an MCP server](./mcp-servers.mdx#add-an-mcp-server).
 
 ## Import to catalog
 

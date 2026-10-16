@@ -45,16 +45,6 @@
       "data": "fixture:hive-versions/publish-ready.html"
     },
     {
-      "id": "export-studio",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "[data-testid=\"export-studio\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-export-studio/target-ready.html"
-    },
-    {
       "id": "preferences",
       "route": "/ade/dashboard",
       "waitFor": "[data-testid=\"preferences-drawer\"]",
@@ -89,26 +79,6 @@
       ],
       "data": "golden-path",
       "fallback": "fixture:hive-published/table.html"
-    },
-    {
-      "id": "primitives",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-primitives/registry.html"
-    },
-    {
-      "id": "mcp-servers",
-      "route": "/ade/dashboard/mcp",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-catalog/catalog-list.html"
     },
     {
       "id": "sunset-timeline",
@@ -205,48 +175,6 @@
       "data": "fixture:hive-version-dialogs/merge-conflicts.html"
     },
     {
-      "id": "primitives-namespaces",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitives/namespaces.html"
-    },
-    {
-      "id": "primitives-resolver",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitives/resolver.html"
-    },
-    {
-      "id": "primitives-settings",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitives/settings.html"
-    },
-    {
-      "id": "primitives-import",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitives/import.html"
-    },
-    {
-      "id": "primitives-editor",
-      "route": "/ade/dashboard/primitives",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitives/editor.html"
-    },
-    {
-      "id": "primitive-detail",
-      "route": "/ade/dashboard/primitives/[id]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitive-detail/detail.html"
-    },
-    {
-      "id": "primitive-testing",
-      "route": "/ade/dashboard/primitives/[id]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-primitive-detail/detail-testing.html"
-    },
-    {
       "id": "projects",
       "route": "/ade/dashboard/projects",
       "waitFor": "[data-testid=\"page-header\"]",
@@ -309,12 +237,6 @@
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-import-wizard/intake.html"
-    },
-    {
-      "id": "import-wizard-mcp",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/mcp.html"
     },
     {
       "id": "import-wizard-running",
@@ -433,66 +355,6 @@
       "fallback": "fixture:hive-repository-bring-in/allowlist.html"
     },
     {
-      "id": "mcp-servers-grid",
-      "route": "/ade/dashboard/mcp",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-catalog/catalog-grid.html"
-    },
-    {
-      "id": "mcp-endpoint-versions",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/versions.html"
-    },
-    {
-      "id": "mcp-endpoint-capabilities",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/capabilities.html"
-    },
-    {
-      "id": "mcp-endpoint-lint",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/lint.html"
-    },
-    {
-      "id": "mcp-endpoint-settings",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/settings.html"
-    },
-    {
-      "id": "mcp-analytics",
-      "route": "/ade/dashboard/mcp/analytics",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/dashboard.html"
-    },
-    {
-      "id": "mcp-capabilities",
-      "route": "/ade/dashboard/mcp/capabilities",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/capabilities.html"
-    },
-    {
-      "id": "mcp-compare",
-      "route": "/ade/dashboard/mcp/compare",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/compare.html"
-    },
-    {
       "id": "catalog-item-source",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",
@@ -529,28 +391,6 @@
       "data": "fixture:hive-catalog-item/tab-versions.html"
     },
     {
-      "id": "agent-access",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-a11y/agent-access-toolsets.html"
-    },
-    {
-      "id": "agent-access-keys",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/agent-access-keys.html"
-    },
-    {
-      "id": "agent-access-usage",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/agent-access-usage.html"
-    },
-    {
       "id": "published-api-key-dialog",
       "route": "/ade/dashboard/published",
       "waitFor": "#a11y-mount > *",
@@ -573,108 +413,6 @@
       "route": "/ade/dashboard/published",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-mock-correlation/correlation-dialog.html"
-    },
-    {
-      "id": "export-studio-source",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-export-studio/source-ready.html"
-    },
-    {
-      "id": "export-verify",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/export-verify.html"
-    },
-    {
-      "id": "export-studio-job",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-export-studio/job.html"
-    },
-    {
-      "id": "export-studio-failure",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-export-studio/failure.html"
-    },
-    {
-      "id": "export-studio-gate",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-export-studio/gate.html"
-    },
-    {
-      "id": "mock-test-drive",
-      "route": "/ade/dashboard/export/studio",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/mock-test-drive.html"
-    },
-    {
-      "id": "sdk-settings",
-      "route": "/ade/dashboard/sdk-settings",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/sdk-settings.html"
-    },
-    {
-      "id": "style-guides",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides.html"
-    },
-    {
-      "id": "style-guides-readonly",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides-readonly.html"
-    },
-    {
-      "id": "style-guides-create-dialog",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides-create-dialog.html"
-    },
-    {
-      "id": "style-guides-assign-dialog",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides-assign-dialog.html"
-    },
-    {
-      "id": "style-guide-builtin",
-      "route": "/ade/dashboard/style-guides/[guideId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guide-builtin.html"
-    },
-    {
-      "id": "style-guide-rules",
-      "route": "/ade/dashboard/style-guides/[guideId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guide-rules.html"
-    },
-    {
-      "id": "style-guide-custom-rule",
-      "route": "/ade/dashboard/style-guides/[guideId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guide-custom-rule.html"
-    },
-    {
-      "id": "style-guide-policy",
-      "route": "/ade/dashboard/style-guides/[guideId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guide-policy.html"
-    },
-    {
-      "id": "style-guides-policies",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides-policies.html"
-    },
-    {
-      "id": "style-guides-verification-policy",
-      "route": "/ade/dashboard/style-guides",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/style-guides-verification-policy.html"
     },
     {
       "id": "lint-posture",
@@ -735,30 +473,6 @@
       "route": "/ade/dashboard/lint-workspace",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-a11y/lint-posture-ranks.html"
-    },
-    {
-      "id": "audit",
-      "route": "/ade/dashboard/audit",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/audit.html"
-    },
-    {
-      "id": "audit-filtered",
-      "route": "/ade/dashboard/audit",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/audit-filtered.html"
-    },
-    {
-      "id": "audit-drawer",
-      "route": "/ade/dashboard/audit",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/audit-drawer.html"
-    },
-    {
-      "id": "audit-chain",
-      "route": "/ade/dashboard/audit",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/audit-chain.html"
     },
     {
       "id": "review",
