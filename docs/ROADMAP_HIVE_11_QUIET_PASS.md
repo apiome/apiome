@@ -147,7 +147,7 @@ Milestone: **RC6** (all epics and issues).
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 11.1 | #5597 | `StatusStrip` component — one row of status chips, one open detail ✅ | New `components/ui/StatusStrip` (chips · one detail open · severity-first · session persistence) + design-system specimen | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/StatusStrip.tsx (new)`, `src/app/design-system/galleries/*`, `tests/status-strip.test.tsx (new)` |
-| 11.2 | #5598 | Versions — status strip replaces the three stacked banners | Compatible · What’s new · Deprecated (· gitlike Server ahead) become one `StatusStrip`; first revision row rises ≈ 200 px | `ui`, `versions`, `redesign`, `mvp` | N | Y | M | `src/app/components/ade/versions/VersionsBanners.tsx`, `src/app/ade/dashboard/versions/*`, `e2e/fixtures/hive-versions/*`, `tests/versions-hive-redesign.test.tsx` |
+| 11.2 | #5598 | Versions — status strip replaces the three stacked banners ✅ | Compatible · What’s new · Deprecated (· gitlike Server ahead) become one `StatusStrip`; first revision row rises ≈ 200 px | `ui`, `versions`, `redesign`, `mvp` | N | Y | M | `src/app/components/ade/versions/VersionsBanners.tsx`, `src/app/ade/dashboard/versions/*`, `e2e/fixtures/hive-versions/*`, `tests/versions-hive-redesign.test.tsx` |
 | 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
 | 11.4 | #5600 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | Merge the “Timeline” filter bar and the lifecycle toolbar into the table’s own toolbar; dates become an “Any time” popover | `ui`, `versions`, `redesign` | Y | N | M | `src/app/components/ade/versions/VersionsTimelineFilters.tsx`, `src/app/components/ade/versions/VersionsTable.tsx`, `src/app/components/ui/DataTable.tsx` |
 | 11.5 | #5601 | `FactsLine` and `DismissibleCallout` primitives (+ `hive.seen.*` persistence) ✅ | The stat strip folded into one tabular line with “Show stats”; a first-visit callout with Got it / Learn more that persists per device | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/FactsLine.tsx (new)`, `src/app/components/ui/DismissibleCallout.tsx (new)`, `src/lib/seen.ts (new)`, `src/app/design-system/galleries/*` |
@@ -182,7 +182,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-11.2] Versions — status strip replaces the three stacked banners` — [#5598](https://github.com/apiome/apiome/issues/5598)
+### `apiome: [HIVE-11.2] Versions — status strip replaces the three stacked banners` ✅ — [#5598](https://github.com/apiome/apiome/issues/5598)
 **Problem statement.** Measured on the shipped page at 1440 × 900: the compatibility, what’s-new and deprecation banners stack above the content and the first revision row lands ≈ 870 px down — below the fold — on every visit, including visits where nothing has changed.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/versions-status-strip.html` (callouts 3); rationale: `docs/mockups/PROPOSALS.md`.
@@ -194,7 +194,7 @@ Milestone: **RC6** (all epics and issues).
 **Acceptance criteria.**
 - [ ] With all three statuses present the strip is ≤ 110 px tall with one detail open and ≤ 48 px collapsed (comfortable density)
 - [ ] First revision row at 1440 × 900 is ≤ 700 px from the top with the strip open (today ≈ 870 px)
-- [ ] Every action from the old banners is reachable from the strip; copy unchanged
+- [x] Every action from the old banners is reachable from the strip; copy unchanged
 - [ ] Parity harness passes against `proposals/versions-status-strip.html` once promoted (HIVE-13.4); a11y gate green in the three gate themes
 
 **Parallelism / dependencies.** Depends on HIVE-11.1. Can land in the same PR as HIVE-11.3 / HIVE-11.4 or separately.

@@ -18,6 +18,7 @@ import {
   compatibilityBanner,
   deleteVersionConfirm,
   deprecationBanner,
+  formatSunsetDay,
   formatSunsetUtc,
   formatVersionDate,
   formatVersionStamp,
@@ -222,6 +223,8 @@ describe('stamps', () => {
   it('prints a sunset in UTC, the way the timeline does', () => {
     expect(formatSunsetUtc('2026-09-30T00:00:00.000Z')).toBe('30 Sep 2026 00:00 UTC');
     expect(formatSunsetUtc('garbage')).toBe('garbage');
+    expect(formatSunsetDay('2026-09-30T23:30:00.000Z')).toBe('30 Sep 2026');
+    expect(formatSunsetDay('garbage')).toBe('garbage');
   });
 });
 
@@ -355,6 +358,7 @@ describe('the banners', () => {
       versionId: DEPRECATED_220.id,
       versionLabel: 'v2.2.0',
       sunsetLabel: '30 Sep 2026 00:00 UTC',
+      sunsetDayLabel: '30 Sep 2026',
       successorLabel: 'v2.3.1',
       message: 'Migrate to /payment-intents before sunset.',
     });
@@ -402,6 +406,7 @@ describe('the banners', () => {
       tone: 'ok',
       title: 'Compatible.',
       body: 'v2.3.0 → v2.3.1 has 2 non-breaking · 1 docs-only and no breaking changes.',
+      pairLabel: 'v2.3.0 → v2.3.1',
       publishedRevisionId: PUBLISHED_231.id,
     });
   });
@@ -415,6 +420,9 @@ describe('the banners', () => {
       tone: 'neutral',
       title: 'Initial publication.',
     });
+    // The chip's pair label drops the baseline when there is none, and is absent with no label.
+    expect(compatibilityBanner(summary({ baselineVersionLabel: null }))?.pairLabel).toBe('v2.3.1');
+    expect(compatibilityBanner(summary({ versionLabel: null as unknown as string }))?.pairLabel).toBeNull();
     expect(compatibilityBanner(summary({ status: null }))).toMatchObject({
       tone: 'neutral',
       title: 'Classification pending.',

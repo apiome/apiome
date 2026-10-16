@@ -82,6 +82,9 @@ export interface UncoveredMockup {
  */
 export const PARITY_ROUTES: readonly ParityRoute[] = [
   {
+    // HIVE-11.2 (#5598) re-dumped `timeline.html` with the status strip in place of the three
+    // banners. The pairing stays on `build/versions.html` until HIVE-11.3/11.4 land the rest of
+    // `proposals/versions-status-strip.html` and HIVE-13.4 promotes it.
     id: 'versions',
     mockup: 'build/versions.html',
     route: '/ade/dashboard/versions',

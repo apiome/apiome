@@ -243,6 +243,20 @@ describe('StatusStrip — session persistence', () => {
     expect(details(container)[0]).not.toBeVisible();
   });
 
+  it('writes and reads under a caller-owned prefix when one is given', async () => {
+    const user = userEvent.setup();
+    writeStoredStatus('p1', 'compat', 'hive.versions.status.');
+    expect(window.sessionStorage.getItem('hive.versions.status.p1')).toBe('"compat"');
+    expect(readStoredStatus('p1', 'hive.versions.status.')).toBe('compat');
+    expect(readStoredStatus('p1')).toBeUndefined();
+
+    render(<StatusStrip aria-label="Status" items={ITEMS} storageKey="p1" storagePrefix="hive.versions.status." />);
+    expect(chip(/Compatible/)).toHaveAttribute('aria-expanded', 'true');
+    await user.click(screen.getByRole('button', { name: /Collapse/ }));
+    expect(window.sessionStorage.getItem('hive.versions.status.p1')).toBe('null');
+    expect(window.sessionStorage.getItem(statusStripStorageKey('p1'))).toBeNull();
+  });
+
   it('keeps each key separate', () => {
     writeStoredStatus('versions:p1', 'compat');
     render(<StatusStrip aria-label="Status" items={ITEMS} storageKey="versions:p2" />);
