@@ -8,6 +8,7 @@ import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { isFeatureReleased } from '@lib/feature-release';
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { deleteProject, permanentDeleteProject, restoreProject } from '@lib/db/helper';
 
@@ -39,6 +40,7 @@ import { useDialog } from '@/app/components/providers/DialogProvider';
 import { ProjectQualityHistoryDialog } from '@/app/components/ade/dashboard/ProjectQualityHistoryDialog';
 import { CatalogLintReportDialog } from '@/app/components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { ConversionPreviewDialog } from '@/app/components/ade/dashboard/catalog/ConversionPreviewDialog';
+import ExportDialog from '@/app/components/ade/dashboard/export/ExportDialog';
 import {
   CatalogImportDialog,
   type JsonSchemaHandoffPayload,
@@ -346,6 +348,8 @@ export default function CatalogClient() {
   const [qualityFor, setQualityFor] = React.useState<CatalogItem | null>(null);
   const [lintFor, setLintFor] = React.useState<CatalogItem | null>(null);
   const [convertFor, setConvertFor] = React.useState<CatalogItem | null>(null);
+  /** The item the in-place export dialog is open for, while the Export studio is unreleased. */
+  const [exportFor, setExportFor] = React.useState<CatalogItem | null>(null);
   const [importOpen, setImportOpen] = React.useState(false);
   const [primitiveSource, setPrimitiveSource] =
     React.useState<PrimitiveImportInitialSource | null>(null);
@@ -375,9 +379,15 @@ export default function CatalogClient() {
    * "Export to another format…" (MFX-41.2) — opens the Export Studio scoped to the item's
    * latest revision. Unlike Convert this emits a document and never mutates the item, which is
    * why both verbs are offered and why the menu row carries the sentence that tells them apart.
+   * While the Studio is unreleased (`lib/feature-release.ts`) the same verb opens the in-place
+   * export dialog instead, so a catalog item can still be exported.
    */
   const openExport = React.useCallback(
     (item: CatalogItem) => {
+      if (!isFeatureReleased('export-studio')) {
+        setExportFor(item);
+        return;
+      }
       router.push(
         exportStudioHref({
           artifact: item.id,
@@ -973,6 +983,18 @@ export default function CatalogClient() {
         }}
         onConverted={handleConverted}
       />
+
+      {exportFor ? (
+        <ExportDialog
+          key={exportFor.id}
+          open
+          onClose={() => setExportFor(null)}
+          artifact={exportFor.id}
+          artifactLabel={exportFor.name}
+          sourceFormat={exportFor.sourceFormat ?? null}
+          studioOrigin="catalog"
+        />
+      ) : null}
 
       {/* The catalog importer (MFI-23.12): store-raw intake — the source is kept in its
           original format and converted only when the user is ready, not at import time. */}

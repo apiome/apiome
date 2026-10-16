@@ -561,7 +561,7 @@ def render_index_page(registry: McpRegistry) -> str:
             f"| [Prompts](./prompts.md) | {len(registry.prompts)} |",
             "",
             f"Agent toolsets on `{AGENT_HTTP_PATH}` are compiled per toolset from a project's API, so their "
-            "tools are not listed here — see [Agent access](../../bring-in/agent-access.mdx).",
+            "tools are not listed here. The Agent access screen that manages them is not yet available.",
             "",
             "## Rule catalogs",
             "",

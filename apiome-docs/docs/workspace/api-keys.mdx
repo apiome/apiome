@@ -104,12 +104,10 @@ expired key cannot be re-enabled. To rotate:
 
 API keys are for REST. Keys for AI agents calling Apiome's MCP server are separate:
 
-- **Agent keys** are issued per toolset under **MCP servers → Agent access**, limited to the tools
-  you tick, with their own expiry, revocation and usage charts — see [Agent
-  access](../bring-in/agent-access.mdx).
+- **Agent keys** are issued per toolset, limited to the tools you choose, with their own expiry and
+  revocation. The Agent access screen is not yet available, so issue them over the REST API (below).
 - **MCP API keys** and what each may call are managed per workspace in the tenant's manage drawer —
-  see [Per-key capabilities](./tenants.mdx#per-key-capabilities). The create dialog's footer points
-  there too: *MCP presets live under MCP servers → Capabilities.*
+  see [Per-key capabilities](./tenants.mdx#per-key-capabilities).
 
 ## With the API
 
@@ -121,5 +119,4 @@ Agent keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/agent-keys`, 
 
 - [Roles](./roles.mdx) — who may create and delete keys
 - [Tenants](./tenants.mdx) — MCP policy and per-key capabilities
-- [Agent access](../bring-in/agent-access.mdx)
 - [CLI quick-start](../reference/cli-quickstart.md)

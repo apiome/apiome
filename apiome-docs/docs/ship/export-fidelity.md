@@ -66,14 +66,13 @@ report's `ranking_fingerprint` is a stable hash of it — and the pre-flight emi
 no job, no artifact. The fidelity numbers it shows are the same ones the eventual job
 attaches to its result.
 
-Quality floors and waivers are configured per tenant in **Governance → Style guides →
-Quality policy**; see [Import a specification](../bring-in/import-a-spec.md) for how the same policy gates
-intake.
+Quality floors and waivers are configured per tenant in the import & export quality policy, set
+over the [REST API](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put);
+see [Import a specification](../bring-in/import-a-spec.md) for how the same policy gates intake.
 
 ## The projection map (graph + table)
 
-The quick **Export** dialog (Fidelity step) and **Export Studio → Verify**
-(`/ade/dashboard/export/studio`) both render a **Projection map**: a three-column
+The **Export** dialog's Fidelity step renders a **Projection map**: a three-column
 diagram from **source/native construct → canonical model → destination location**,
 banded into *in-destination*, *omitted*, and *unavailable* lanes, with a synchronized
 table underneath. Graph and table are rendered from the same server evidence, so their
@@ -291,7 +290,6 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 
 ## Related
 
-- [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference

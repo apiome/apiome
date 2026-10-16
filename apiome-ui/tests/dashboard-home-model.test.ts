@@ -11,6 +11,7 @@
  * are the parts about *time*, and none of them need a database or a DOM to be exercised.
  */
 
+import { isFeatureReleased } from '../lib/feature-release';
 import {
   ATTENTION_HREF,
   ATTENTION_LIMIT,
@@ -657,8 +658,15 @@ describe('statusWord', () => {
 });
 
 describe('quickActionsFor', () => {
-  it('offers every action to a reader in a workspace', () => {
-    expect(quickActionsFor(true)).toHaveLength(QUICK_ACTIONS.length);
+  it('offers every released action to a reader in a workspace', () => {
+    const released = QUICK_ACTIONS.filter(
+      (action) => !action.feature || isFeatureReleased(action.feature)
+    );
+    expect(quickActionsFor(true)).toEqual(released);
+  });
+
+  it('withholds an action whose feature is unreleased', () => {
+    expect(quickActionsFor(true).map((action) => action.id)).not.toContain('register-mcp');
   });
 
   it('withholds the workspace-scoped actions from a reader with none', () => {

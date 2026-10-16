@@ -35,6 +35,8 @@ function visualServerEnv(): Record<string, string> {
       process.env.BETTER_AUTH_SECRET || dotEnvValues().BETTER_AUTH_SECRET || 'hive-visual-secret',
     // The beta background is decorative and animated; off, so nothing moves under a screenshot.
     NEXT_PUBLIC_BETA_MODE: '',
+    // Parity is measured for every route, including features held back from the MVP.
+    NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: 'all',
   };
 }
 export default defineConfig({

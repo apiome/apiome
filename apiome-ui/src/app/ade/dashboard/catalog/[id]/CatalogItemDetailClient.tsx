@@ -61,6 +61,7 @@ import {
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
 import { useAuthSession } from '@lib/auth/session-client';
+import { isFeatureReleased } from '@lib/feature-release';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -78,6 +79,7 @@ import { SuiteRegressionBadge } from '@/app/components/ade/dashboard/SuiteRegres
 import { ProjectQualityHistoryDialog } from '@/app/components/ade/dashboard/ProjectQualityHistoryDialog';
 import { CatalogLintReportDialog } from '@/app/components/ade/dashboard/catalog/CatalogLintReportDialog';
 import { ConversionPreviewDialog } from '@/app/components/ade/dashboard/catalog/ConversionPreviewDialog';
+import ExportDialog from '@/app/components/ade/dashboard/export/ExportDialog';
 import { CatalogConversionHistoryPanel } from '@/app/components/ade/dashboard/catalog/CatalogConversionHistoryPanel';
 import { CatalogFormatDetailPanel } from '@/app/components/ade/dashboard/catalog/CatalogFormatDetailPanel';
 import { CatalogLintPanel } from '@/app/components/ade/dashboard/catalog/CatalogLintPanel';
@@ -258,6 +260,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [qualityOpen, setQualityOpen] = useState(false);
   const [lintOpen, setLintOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
+  /** The in-place export dialog, used while the Export studio is unreleased. */
+  const [exportOpen, setExportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<CatalogDetailTabId>('overview');
   // The counts the three counted panes report once they have loaded (MFI-25.1 tab chips).
   const [tabCounts, setTabCounts] = useState<{
@@ -383,10 +387,15 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
    * path where the item is emitted in another format with the full verify-then-generate flow.
    * Carries the launch origin (so the Studio's back link returns to Catalog) and the source
    * format (so the redundant same-format target is hidden). Unlike Convert, this never mints a
-   * Project and never mutates the item.
+   * Project and never mutates the item. While the Studio is unreleased (`lib/feature-release.ts`)
+   * the button opens the in-place export dialog instead.
    */
   const handleExport = useCallback(() => {
     if (!item) return;
+    if (!isFeatureReleased('export-studio')) {
+      setExportOpen(true);
+      return;
+    }
     router.push(
       exportStudioHref({
         artifact: item.id,
@@ -774,6 +783,17 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         onOpenChange={setConvertOpen}
         onConverted={handleConverted}
       />
+
+      {exportOpen ? (
+        <ExportDialog
+          open
+          onClose={() => setExportOpen(false)}
+          artifact={item.id}
+          artifactLabel={item.name}
+          sourceFormat={item.sourceFormat ?? null}
+          studioOrigin="catalog"
+        />
+      ) : null}
     </Page>
   );
 }

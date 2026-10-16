@@ -15,14 +15,21 @@ enough approvals.
 
 ## Turn on the approval gate
 
-The gate is part of a [style guide's Policy](./style-guides.mdx#policy), so it applies to every project
-scored by that guide.
+The gate is part of a style guide's policy, so it applies to every project scored by that guide. The
+Style guides screen is not yet available, so set the gate over the REST API with
+[`PUT /v1/style-guides/{tenant}/{guide}/policy`](../reference/rest/style-guides.md#put-style-guide-policy-settings-v1-style-guides-tenant-slug-guide-id-policy-put):
 
-1. **Go to Govern → Style guides**, open the guide and **choose the Policy tab**.
-2. Under **Review approvals**, set **Required approvals** — for example `2`. Zero turns the gate off.
-3. Optionally choose a **Required reviewer role**, for example **Release Manager**: at least one
-   approval must come from it. Workspace administrators count as Owner.
-4. **Click “Save”.**
+```http
+PUT /v1/style-guides/{tenant}/{guide}/policy
+X-API-Key: <your-api-key>
+
+{ "requiredApprovals": 2, "requiredReviewerRole": "<role-slug>" }
+```
+
+- **`requiredApprovals`** — how many approvals a draft needs, for example `2`. Zero turns the gate
+  off.
+- **`requiredReviewerRole`** — optional: a role slug at least one approval must come from. Send
+  `null` for any approver. Workspace administrators count as Owner.
 
 ## Request a review
 
@@ -105,5 +112,5 @@ audit, `GET /v1/tenants/{tenant}/workflow-audit?version_id=…`. See the
 
 ## Where next
 
-- [Style guides](./style-guides.mdx#policy)
+- [Lint posture](./lint-posture.mdx)
 - [Publish a version](../ship/publish-a-version.md)

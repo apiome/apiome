@@ -62,6 +62,22 @@ references under [Reference](/reference), the CI action pages, the supported-for
 lint-rule catalogs. Change the code they come from and rerun the generator named on
 [Reference](/reference) — a hand edit is overwritten, and CI fails until the page matches its source.
 
+### Withdraw a page for an unreleased feature
+
+When a feature is held back — its rail item shows *coming soon* — its pages leave the site but are
+kept. `draft: true` and `unlisted: true` fail the gate, so move them out of `docs/` instead:
+
+1. `git mv` each page to `apiome-docs/unreleased/docs/<same path>`.
+2. Move its screenshot entries from `screens.json` to `unreleased/screens.json`, and its images to
+   `unreleased/static/img/screens/` — only the ones no remaining page uses.
+3. Fix every page that linked to it or sent the reader there; say plainly when something is not yet
+   available.
+4. Add the page to the table in `apiome-docs/unreleased/README.md`, which also lists the steps to
+   restore it.
+
+Nothing in the build, the gate or the screenshot run reads `unreleased/`. Generated pages stay in
+`docs/` while their generator writes them there.
+
 ## Regenerate the reference
 
 The [Reference](/reference) pages for the REST API, the CLI and the MCP server are generated from

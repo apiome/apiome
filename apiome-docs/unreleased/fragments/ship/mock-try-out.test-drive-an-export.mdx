@@ -1,0 +1,25 @@
+## Test-drive an export
+
+<Route path="/ade/dashboard/export/studio" />
+
+After you generate an **OpenAPI** file in the [Export studio](./export-studio.mdx), the **Review &
+Generate** step offers **Mock server test drive** — proof that the file behaves like an API, not just
+that it parses.
+
+<Screenshot id="mock-test-drive" alt="Mock server test drive: a live base URL, a countdown, operations to send, a 200 response and the request log" />
+
+1. **Click “Start mock”.** The file is served as a live API for **30 minutes** (the server default).
+   Its base URL appears with **“Copy URL”**, a countdown — *Expires in 30:00* — how many
+   operations it has and how many requests it has served.
+2. Under **Try an operation**, choose a **Scenario** if the file declares any, fill in path
+   parameters (for example `1` for `{widgetId}`) and **click “Send”**. The response shows its status,
+   time and body; a body that does not match the file's own response schema is called out.
+3. The **Request log** states each request's outcome in words: **Schema-shaped response**,
+   **Matched**, **Body did not match the schema** or **No operation matched**. Requests you send from
+   your own client with `curl` appear here too.
+4. **“Restart”** gives you a fresh mock; **“Stop mock”** ends it early. When time is up the panel
+   says **Expired** — start another to keep testing.
+
+The panel is hidden for targets the mock engine cannot serve, and **Start mock** is disabled, with
+the reason, on a server without mock infrastructure.
+

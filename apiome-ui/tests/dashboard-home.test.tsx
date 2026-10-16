@@ -373,11 +373,12 @@ describe('Home — what fills the half that used to be empty', () => {
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
   });
 
-  it('offers the five quick actions, all pointing at routes that exist', async () => {
+  it('offers the four released quick actions, all pointing at routes that exist', async () => {
     await renderLoaded();
     const panel = screen.getByRole('group', { name: 'Quick actions' });
     const links = within(panel).getAllByRole('link');
-    expect(links).toHaveLength(5);
+    // The fifth, "Register an MCP server", waits for MCP servers to be released.
+    expect(links).toHaveLength(4);
     for (const link of links) {
       expect(link.getAttribute('href')).toMatch(/^\/ade\/dashboard\//);
     }

@@ -181,8 +181,9 @@ pre-flight still runs, and the step still stops whenever the verdict blocks or c
 ### Set the tenant quality policy
 
 By default nothing is blocked: a fresh tenant scores every import and reports the result without
-refusing anything. To make the gate real, open **Governance → Style Guides** and edit **Import &
-export quality policy**:
+refusing anything. To make the gate real, set the **import & export quality policy**. The
+Style guides screen where it is edited is not yet available, so set it over the REST API with
+[`PUT /v1/tenants/{tenant_slug}/governance/quality-policy`](../reference/rest/governance.md#put-quality-policy-v1-tenants-tenant-slug-governance-quality-policy-put):
 
 - **Minimum grade / minimum score / refuse findings at** — the three floors. Leave one blank to
   not use it; a scope with no floor can never block.
@@ -194,8 +195,8 @@ export quality policy**:
   *format override → tenant → default*, and the pre-flight verdict names the tier that won
   (`policy.source`).
 
-Saving appends an immutable version, listed underneath with its fingerprint and author, and writes
-an audit entry. Every verdict names the `policyVersionId` it applied.
+Each save appends an immutable version with its fingerprint and author
+(`GET …/governance/quality-policy/versions` lists them) and writes an audit entry. Every verdict names the `policyVersionId` it applied.
 
 The policy is enforced **on the server**, at `POST /v1/tenants/{tenant_slug}/imports` — not only in
 the wizard. An import that policy refuses comes back as **409** with
@@ -208,7 +209,7 @@ job is created. A dry run is never gated (it writes nothing).
 an expiry taken from the policy's waiver lifetime. It is matched on the candidate's content hash
 and the format it was granted for, so the same bytes commit through the gate until it expires — at
 which point the shared waiver-expiry sweep has already warned the tenant (`lint.waiver.expiring`,
-`kind: quality:import`). Active waivers are listed under the policy in Governance:
+`kind: quality:import`). Grant one over the REST API:
 
 ```bash
 curl -X POST "$APIOME_API/v1/tenants/$TENANT/governance/quality-waivers" \

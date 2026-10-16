@@ -33,6 +33,7 @@ import {
   getPlatformNavGroups,
   platformNavGatedReason,
 } from '../lib/platform-nav';
+import { isFeatureReleased, unreleasedFeatureReason } from '../lib/feature-release';
 import { PLATFORM_NAV_ICONS } from '../lib/platform-nav-icons';
 import type { CommandPaletteRecent } from '../src/app/components/shell/commandPaletteRecents';
 
@@ -108,7 +109,12 @@ describe('Jump to — the navigation model, and only it', () => {
     for (const item of gated) {
       const command = commands.find((entry) => entry.label === item.label)!;
       expect(command.disabled).toBe(true);
-      expect(command.disabledReason).toBe(platformNavGatedReason(item.label));
+      // An unreleased destination says so instead: a workspace would not open it.
+      expect(command.disabledReason).toBe(
+        isFeatureReleased(item.id)
+          ? platformNavGatedReason(item.label)
+          : unreleasedFeatureReason(item.label)
+      );
       // The reason takes the meta line's place, so it is read rather than hidden in a title.
       expect(command.meta).toBe(command.disabledReason);
     }

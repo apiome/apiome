@@ -29,6 +29,12 @@ import {
   type PlatformNavItem,
 } from '../../lib/platform-nav';
 import { PLATFORM_NAV_ICONS, resolvePlatformNavIcon } from '../../lib/platform-nav-icons';
+import {
+  UNRELEASED_FEATURE_IDS,
+  isFeatureReleased,
+  parsePreviewFeatures,
+  unreleasedFeatureReason,
+} from '../../lib/feature-release';
 
 /** Every modelled destination — rail groups plus the user menu. */
 const ALL_ITEMS: PlatformNavItem[] = [
@@ -293,10 +299,11 @@ describe('platform-nav model — workspace gating', () => {
     ).toBe(true);
   });
 
-  it('enables everything once a workspace is selected', () => {
+  it('enables everything released once a workspace is selected', () => {
     const groups = getPlatformNavGroups({ currentTenantId: TENANT });
     for (const group of groups) {
       for (const navItem of group.items) {
+        if (!isFeatureReleased(navItem.id)) continue;
         expect(navItem.disabled).toBe(false);
         expect(navItem.disabledReason).toBeUndefined();
       }
@@ -394,5 +401,74 @@ describe('platform-nav model — runtime injection', () => {
         group.items.map((navItem) => navItem.id)
       )
     ).toEqual(PLATFORM_NAV_GROUPS.flatMap((group) => group.items.map((navItem) => navItem.id)));
+  });
+});
+
+describe('platform-nav model — release gate (MVP focus on Catalog and Projects)', () => {
+  const ORIGINAL = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+
+  afterEach(() => {
+    if (ORIGINAL === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ORIGINAL;
+  });
+
+  /** Ids disabled for a session that has a workspace — only the release gate can explain them. */
+  function disabledWithTenant(): string[] {
+    return getPlatformNavGroups({ currentTenantId: TENANT })
+      .flatMap((group) => group.items)
+      .filter((navItem) => navItem.disabled)
+      .map((navItem) => navItem.id);
+  }
+
+  it('holds back exactly the unreleased features, and every one of them is a rail destination', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
+      'audit',
+      'export-studio',
+      'mcp',
+      'primitives',
+      'sdk-settings',
+      'style-guides',
+    ]);
+    for (const id of UNRELEASED_FEATURE_IDS) expect(findPlatformNavItem(id)).toBeDefined();
+    expect(disabledWithTenant().sort()).toEqual([...UNRELEASED_FEATURE_IDS].sort());
+  });
+
+  it('keeps Catalog and Projects open', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    expect(isFeatureReleased('catalog')).toBe(true);
+    expect(isFeatureReleased('projects')).toBe(true);
+  });
+
+  it('explains an unreleased destination as not available yet, even without a workspace', () => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    for (const tenant of [TENANT, null]) {
+      const mcp = getPlatformNavGroups({ currentTenantId: tenant })
+        .flatMap((group) => group.items)
+        .find((navItem) => navItem.id === 'mcp');
+      expect(mcp?.disabled).toBe(true);
+      expect(mcp?.disabledReason).toBe(unreleasedFeatureReason('MCP servers'));
+    }
+    expect(unreleasedFeatureReason('Style guides')).toBe('Style guides is not available yet.');
+  });
+
+  it('re-opens listed features, or all of them, through the preview override', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' mcp , audit ';
+    expect(disabledWithTenant().sort()).toEqual(['export-studio', 'primitives', 'sdk-settings', 'style-guides']);
+
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'ALL';
+    expect(disabledWithTenant()).toEqual([]);
+  });
+
+  it('parses the override, dropping blanks', () => {
+    expect(parsePreviewFeatures(undefined)).toEqual(new Set());
+    expect(parsePreviewFeatures('  ')).toEqual(new Set());
+    expect(parsePreviewFeatures('all')).toBe('all');
+    expect(parsePreviewFeatures('mcp,,audit,')).toEqual(new Set(['mcp', 'audit']));
+  });
+
+  it('never gates an id it does not list, whatever the override says', () => {
+    expect(isFeatureReleased('members', '')).toBe(true);
+    expect(isFeatureReleased('some-commercial-item', null)).toBe(true);
   });
 });

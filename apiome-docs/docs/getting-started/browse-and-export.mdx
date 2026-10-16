@@ -28,25 +28,14 @@ published specs](../ship/browse-published-specs.md) for the REST endpoints.
 
 ## Export another format
 
-<Route path="/ade/dashboard/export/studio" />
+On the project's **Versions** page, **open a version's Actions menu** and **choose “Export to
+another format…”**. Pick a target format — AsyncAPI, GraphQL, Protocol Buffers, Avro and more — and
+read its fidelity, what the conversion keeps, before you **click “Export”** (or **“Export anyway”**
+when the fidelity check warns).
 
-The **Export studio** turns a version into another format — AsyncAPI, GraphQL, Protocol Buffers,
-Avro and more — and tells you what the conversion keeps before it runs.
+<Screenshot id="version-export-panel" alt="The export panel: convert to any format, best-fidelity and lossy targets, and recent exports" />
 
-1. On the project's **Versions** page, **open a version's Actions menu** and **choose “Export to
-   another format…”**, then **click “Open in Export Studio”**.
-2. **Source** shows the version you are exporting. **Click “Choose target”.**
-3. **Target** — pick a format. Each card has a fidelity badge for *this* source; **Download
-   original** gets the file you imported, unchanged.
-
-   <Screenshot id="export-studio" alt="The Export studio on its Target step: the original source card and target formats grouped by family with fidelity badges" />
-
-4. **Options**, then **Verify** — read what will be kept, changed or lost. **Click “Continue to
-   review”.**
-5. **Review & Generate** — **click “Generate”**, then **“Download .zip”** (or the single file)
-   when the job finishes. Recent jobs are listed under **Recent export jobs**.
-
-[Understand export fidelity](../ship/export-fidelity.md) explains the verify step in depth.
+[Understand export fidelity](../ship/export-fidelity.md) explains the fidelity check in depth.
 
 ## With the CLI
 

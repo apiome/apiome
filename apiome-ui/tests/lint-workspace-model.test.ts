@@ -289,11 +289,19 @@ describe('queue rows', () => {
     expect(findingRemediation(finding({ remediation: null }))).toBeNull();
   });
 
-  it('links a revision to versions and an MCP finding to the MCP page', () => {
+  it('links a revision to versions, and an MCP finding to the MCP page once it is released', () => {
     expect(findingSubjectHref(finding())).toBe('/ade/dashboard/versions?projectId=p1');
     expect(
       findingSubjectHref(finding({ versionRecordId: null, mcpVersionId: 'mcp-1' }))
-    ).toBe('/ade/dashboard/mcp');
+    ).toBeNull();
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'mcp';
+    try {
+      expect(
+        findingSubjectHref(finding({ versionRecordId: null, mcpVersionId: 'mcp-1' }))
+      ).toBe('/ade/dashboard/mcp');
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
     expect(
       findingSubjectHref(finding({ versionRecordId: null, mcpVersionId: null }))
     ).toBeNull();

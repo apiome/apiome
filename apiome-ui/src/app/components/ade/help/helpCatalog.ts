@@ -320,15 +320,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['.sch', 'xml', 'peppol', 'ubl', 'assert', 'xpath', 'governance', 'iso 19757'],
   },
   {
-    id: 'style-guide-revisions',
-    title: 'Style-guide revisions & governance audit',
-    summary:
-      'Every edit appends an immutable revision, so a lint score always names what the guide contained at the time.',
-    page: 'apiome-docs/docs/govern/style-guide-revisions.md',
-    section: 'reference',
-    keywords: ['history', 'immutable', 'compliance', 'pinned', 'trail'],
-  },
-  {
     id: 'mcp-conformance-rules',
     title: 'MCP conformance rules',
     summary: 'The conformance catalog, each rule citing the MCP specification reference it enforces.',
@@ -536,14 +527,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['new version', 'sunset', 'compare', 'export', 'gitlike', 'merge', 'fork', 'tag'],
   },
   {
-    id: 'primitives-and-types',
-    title: 'Primitives and types',
-    summary: 'The JSON Schema type registry: create and import types, namespaces, the $ref resolver and settings.',
-    page: 'apiome-docs/docs/build/primitives-and-types.mdx',
-    section: 'reference',
-    keywords: ['json schema', 'registry', 'namespace', 'resolver', '$ref', 'import'],
-  },
-  {
     id: 'studio',
     title: 'Studio',
     summary: 'Where classes, paths and code are edited — the Designer app, and the /ade/studio routes.',
@@ -576,22 +559,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['github', 'gitlab', 'bitbucket', 'discovered specs', 'webhook', 'quota', 'bulk import'],
   },
   {
-    id: 'mcp-servers',
-    title: 'MCP servers',
-    summary: 'Catalog MCP servers, discover their tools, grade them, and compare them.',
-    page: 'apiome-docs/docs/bring-in/mcp-servers.mdx',
-    section: 'reference',
-    keywords: ['model context protocol', 'add mcp server', 'endpoint', 'capability directory', 'analytics'],
-  },
-  {
-    id: 'agent-access',
-    title: 'Agent access',
-    summary: 'Expose published operations to AI agents as MCP tools, issue agent keys, and watch usage.',
-    page: 'apiome-docs/docs/bring-in/agent-access.mdx',
-    section: 'reference',
-    keywords: ['toolset', 'agent key', 'ai', 'claude', 'tools'],
-  },
-  {
     id: 'published',
     title: 'Published',
     summary: 'Published versions: visibility, access URLs, private keys, and the hosted mock with scenarios.',
@@ -608,22 +575,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['deprecation', 'end of life', 'eol', 'successor', 'csv'],
   },
   {
-    id: 'export-studio',
-    title: 'Export studio',
-    summary: 'Source, target, options, verify, generate — convert a version and see what survives.',
-    page: 'apiome-docs/docs/ship/export-studio.mdx',
-    section: 'reference',
-    keywords: ['convert', 'fidelity', 'lossy', 'types-only', 'verify', 'export job'],
-  },
-  {
-    id: 'sdk-settings',
-    title: 'SDK settings',
-    summary: 'Name and brand generated SDK packages, and offer a public Get SDK download.',
-    page: 'apiome-docs/docs/ship/sdk-settings.mdx',
-    section: 'reference',
-    keywords: ['npm', 'pypi', 'go module', 'licence header', 'user agent', 'get sdk'],
-  },
-  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',
@@ -632,28 +583,12 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['try it', 'preview', 'test drive', 'x-mock-scenario'],
   },
   {
-    id: 'style-guides',
-    title: 'Style guides',
-    summary: 'Choose the rules specs are scored against, assign guides, and set quality and verification policies.',
-    page: 'apiome-docs/docs/govern/style-guides.mdx',
-    section: 'reference',
-    keywords: ['rule catalog', 'custom rules', 'tenant default', 'assign', 'quality policy', 'severity'],
-  },
-  {
     id: 'lint-posture',
     title: 'Lint posture',
     summary: 'Triage lint findings across the workspace: filter, acknowledge, request and approve waivers, assign owners.',
     page: 'apiome-docs/docs/govern/lint-posture.mdx',
     section: 'reference',
     keywords: ['findings', 'waiver', 'acknowledge', 'false positive', 'saved view', 'owner', 'trends'],
-  },
-  {
-    id: 'access-audit',
-    title: 'Access audit',
-    summary: 'The append-only ledger of access and permission changes, its hash chain, and the CSV export.',
-    page: 'apiome-docs/docs/govern/access-audit.mdx',
-    section: 'reference',
-    keywords: ['ledger', 'hash chain', 'csv', 'role changes', 'permissions', 'soc 2'],
   },
   {
     id: 'reviews',
@@ -851,6 +786,81 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contents', 'overview', 'all guides', 'documentation', 'spine'],
   },
 ] as const;
+
+/**
+ * Guides for features held back from the MVP (`lib/feature-release.ts`), kept here rather than
+ * deleted so releasing a feature is moving its entry back into {@link GUIDE_ENTRIES}.
+ *
+ * Their pages are backed up under `apiome-docs/unreleased/` and are not on the docs site, so
+ * nothing searches or links to these entries.
+ */
+export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
+  {
+    id: 'style-guide-revisions',
+    title: 'Style-guide revisions & governance audit',
+    summary:
+      'Every edit appends an immutable revision, so a lint score always names what the guide contained at the time.',
+    page: 'apiome-docs/unreleased/docs/govern/style-guide-revisions.md',
+    section: 'reference',
+    keywords: ['history', 'immutable', 'compliance', 'pinned', 'trail'],
+  },
+  {
+    id: 'primitives-and-types',
+    title: 'Primitives and types',
+    summary: 'The JSON Schema type registry: create and import types, namespaces, the $ref resolver and settings.',
+    page: 'apiome-docs/unreleased/docs/build/primitives-and-types.mdx',
+    section: 'reference',
+    keywords: ['json schema', 'registry', 'namespace', 'resolver', '$ref', 'import'],
+  },
+  {
+    id: 'mcp-servers',
+    title: 'MCP servers',
+    summary: 'Catalog MCP servers, discover their tools, grade them, and compare them.',
+    page: 'apiome-docs/unreleased/docs/bring-in/mcp-servers.mdx',
+    section: 'reference',
+    keywords: ['model context protocol', 'add mcp server', 'endpoint', 'capability directory', 'analytics'],
+  },
+  {
+    id: 'agent-access',
+    title: 'Agent access',
+    summary: 'Expose published operations to AI agents as MCP tools, issue agent keys, and watch usage.',
+    page: 'apiome-docs/unreleased/docs/bring-in/agent-access.mdx',
+    section: 'reference',
+    keywords: ['toolset', 'agent key', 'ai', 'claude', 'tools'],
+  },
+  {
+    id: 'export-studio',
+    title: 'Export studio',
+    summary: 'Source, target, options, verify, generate — convert a version and see what survives.',
+    page: 'apiome-docs/unreleased/docs/ship/export-studio.mdx',
+    section: 'reference',
+    keywords: ['convert', 'fidelity', 'lossy', 'types-only', 'verify', 'export job'],
+  },
+  {
+    id: 'sdk-settings',
+    title: 'SDK settings',
+    summary: 'Name and brand generated SDK packages, and offer a public Get SDK download.',
+    page: 'apiome-docs/unreleased/docs/ship/sdk-settings.mdx',
+    section: 'reference',
+    keywords: ['npm', 'pypi', 'go module', 'licence header', 'user agent', 'get sdk'],
+  },
+  {
+    id: 'style-guides',
+    title: 'Style guides',
+    summary: 'Choose the rules specs are scored against, assign guides, and set quality and verification policies.',
+    page: 'apiome-docs/unreleased/docs/govern/style-guides.mdx',
+    section: 'reference',
+    keywords: ['rule catalog', 'custom rules', 'tenant default', 'assign', 'quality policy', 'severity'],
+  },
+  {
+    id: 'access-audit',
+    title: 'Access audit',
+    summary: 'The append-only ledger of access and permission changes, its hash chain, and the CSV export.',
+    page: 'apiome-docs/unreleased/docs/govern/access-audit.mdx',
+    section: 'reference',
+    keywords: ['ledger', 'hash chain', 'csv', 'role changes', 'permissions', 'soc 2'],
+  },
+];
 
 /** How many results the search shows at once. */
 export const GUIDE_RESULT_LIMIT = 8;
