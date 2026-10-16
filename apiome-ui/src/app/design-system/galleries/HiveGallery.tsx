@@ -121,6 +121,7 @@ import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
+import { StatusStripShowcase } from './StatusStripShowcase';
 import { TablesShowcase } from './TablesShowcase';
 
 /**
@@ -849,6 +850,14 @@ export function HiveGallery() {
               </Alert>
             ))}
           </div>
+        </Section>
+
+        <Section
+          id="status-strip"
+          title="Status strip"
+          description="Several statuses about one object in one row of chips, with at most one detail open. The most severe chip opens first (danger › warn › accent › ok); clicking the open chip, Collapse or Escape hides the detail. A page never stacks more than one banner."
+        >
+          <StatusStripShowcase />
         </Section>
 
         <Section

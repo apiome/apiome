@@ -2972,6 +2972,210 @@ p {
 }
 
 /* ==========================================================================
+   STATUS STRIP (HIVE-11.1, #5597)
+   --------------------------------------------------------------------------
+   Authority: `docs/mockups/proposals/versions-status-strip.html` (annotation
+   3) — `.status-strip`, `.status-strip__row`, `.status-chip`,
+   `.status-strip__detail`.
+
+   Several statuses about one object, as one row of chips with at most one
+   open detail row, instead of a stack of full-width banners.
+   `components/ui/StatusStrip.tsx` is the React half.
+
+   Deviations from the mockup, all deliberate:
+
+   1. A `danger` tone, which the mockup's three statuses never needed.
+   2. The chip's muted detail is set apart by weight, not by the mockup's
+      `--fg-faint`, which does not clear WCAG AA at `--fs-sm`.
+   3. Chip height, padding and icon size are tokens (`--control-h-sm`,
+      `--space-*`), so the chip follows density and font scale.
+   ========================================================================== */
+.status-strip {
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.status-strip__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* `--fg-muted` rather than the quieter caps step, for the same AA reason as
+   `.step`. */
+.status-strip__caption {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.status-strip__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.status-strip__collapse {
+  margin-left: auto;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--control-h-sm);
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--fg-muted);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.status-chip:hover {
+  background: var(--bg-subtle);
+  color: var(--fg);
+}
+
+/* The app-wide `*:focus-visible` ring replaces `box-shadow`, so the hairline is
+   restated beside it. */
+.status-chip:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--border), var(--shadow-focus);
+}
+
+.status-chip > svg {
+  flex: none;
+}
+
+.status-chip__detail {
+  font-weight: 400;
+}
+
+.status-chip.is-open {
+  box-shadow: none;
+}
+
+.status-chip.is-open:focus-visible {
+  box-shadow: var(--shadow-focus);
+}
+
+/* A closed chip carries its tone in the glyph only; an open one takes the
+   status vocabulary's soft fill and `-fg` ink (`STATUS_TONE_SOFT_CLASS`).
+   Glyphs are marks (SC 1.4.11, 3:1), so the saturated hue is set as their
+   `stroke` — which outranks lucide's `stroke="currentColor"` attribute — and
+   never as `color`, which the mark-text ratchet reserves for text. */
+.status-chip--ok > svg {
+  stroke: var(--ok);
+}
+
+.status-chip--ok.is-open {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+
+.status-chip--accent > svg {
+  stroke: var(--accent);
+}
+
+.status-chip--accent.is-open {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.status-chip--warn > svg {
+  stroke: var(--warn);
+}
+
+.status-chip--warn.is-open {
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+}
+
+.status-chip--danger > svg {
+  stroke: var(--danger);
+}
+
+.status-chip--danger.is-open {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+/* An open chip's glyph takes the chip's ink, so it reads on the tint. */
+.status-chip.is-open > svg {
+  stroke: currentColor;
+}
+
+.status-strip__skeleton-chip {
+  width: calc(var(--fs-sm) * 10);
+  height: var(--control-h-sm);
+  border-radius: var(--r-full);
+}
+
+.status-strip__detail {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* `display: flex` above outranks the user-agent `[hidden]` rule. */
+.status-strip__detail[hidden] {
+  display: none;
+}
+
+.status-strip__detail-icon {
+  flex: none;
+  margin-top: 0.125em;
+}
+
+.status-strip__detail[data-tone='ok'] .status-strip__detail-icon {
+  stroke: var(--ok);
+}
+
+.status-strip__detail[data-tone='accent'] .status-strip__detail-icon {
+  stroke: var(--accent);
+}
+
+.status-strip__detail[data-tone='warn'] .status-strip__detail-icon {
+  stroke: var(--warn);
+}
+
+.status-strip__detail[data-tone='danger'] .status-strip__detail-icon {
+  stroke: var(--danger);
+}
+
+.status-strip__detail-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.status-strip__detail-title {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.status-strip__detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex: none;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
    AUTH SURFACES (HIVE-4.1, #5295)
    --------------------------------------------------------------------------
    Authority: `docs/mockups/auth/login.html` (the split layout its four auth

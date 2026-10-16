@@ -40,6 +40,10 @@ export * from './Kbd';
 // first-tenant onboarding wizard is the first surface in production to need it.
 export * from './Stepper';
 
+// Several statuses about one object, one row (HIVE-11.1, #5597) — the overlay-free
+// replacement for a stack of full-width banners.
+export * from './StatusStrip';
+
 // The list surface (HIVE-2.3, #5282): one composable table — toolbar, sticky sortable
 // header, selection with a bulk bar, foot with count and pager, and the loading / empty /
 // error states — plus the codec that keeps its filters, sort and page in the address bar.

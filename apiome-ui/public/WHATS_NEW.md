@@ -37,6 +37,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
+- Design system:
+  - New status strip: several statuses about one object in one row of chips, with one detail open at a time, instead of a stack of banners
 - Documentation:
   - The user guide is now a searchable documentation site, grouped by job; **Help & docs** links open it
   - Docs pages show product screenshots in light and dark, retaken from the product every week

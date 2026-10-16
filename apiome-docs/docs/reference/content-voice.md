@@ -35,6 +35,29 @@ and handle the live regions, so a screen only has to supply the words.
 - **Gated**: `GatedState` when the page needs something first, such as a workspace or a
   linked account.
 
+## Several statuses on one page
+
+A page shows at most one `Alert` under its header. When it has more than one thing to say
+about the same object (compatible, what's new, deprecated, server is ahead), use
+`StatusStrip` instead of stacking banners. The strip shows one row of chips and one detail row
+underneath.
+
+| Part | How it reads |
+| --- | --- |
+| Chip | Icon, a short label ("Compatible", "v2.2.0 deprecated"), then a muted detail ("v2.3.0 → v2.3.1"). |
+| Detail row | A title sentence, a body, and at most two small actions ("View report", "Sunset timeline"). |
+| Tone | `ok`, `accent`, `warn` or `danger`, from the status vocabulary. |
+
+- The most severe chip opens first: **danger**, then **warn**, **accent**, **ok**.
+- Clicking the open chip, pressing **Collapse**, or pressing Escape hides the detail row.
+- The strip remembers which chip was open for the browser session, per `storageKey` (for example
+  `versions:<projectId>`). It never uses `localStorage`.
+- With one status, its chip starts open and there is no **Collapse** button. With no statuses
+  the strip renders nothing. Pass `loading` to show one placeholder chip.
+- Leave out any chip that has nothing to say.
+
+The **Status strip** section of `/design-system` shows every state.
+
 ## What enforces it
 
 **At runtime**, every shared error surface makes sure a failure names a next action
