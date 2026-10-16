@@ -58,7 +58,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 
 #### Phase B — Projects / Versions
 
-- [ ] [#5598](https://github.com/apiome/apiome/issues/5598) HIVE-11.2 Versions — status strip replaces the three banners — `mvp` · Projects
+- [x] [#5598](https://github.com/apiome/apiome/issues/5598) HIVE-11.2 Versions — status strip replaces the three banners — `mvp` · Projects
 - [ ] [#5599](https://github.com/apiome/apiome/issues/5599) HIVE-11.3 Versions header — overflow menu and project switcher — `mvp` · Projects
 - [ ] [#5600](https://github.com/apiome/apiome/issues/5600) HIVE-11.4 Versions — one table toolbar — Projects
 

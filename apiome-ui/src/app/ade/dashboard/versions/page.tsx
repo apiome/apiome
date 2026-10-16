@@ -104,7 +104,7 @@ import {
   VERSION_SORT_OPTIONS,
   VersionDialogHead,
   VersionGitlikePanels,
-  VersionsBanners,
+  VersionsStatusStrip,
   VersionsTable,
   VersionsTimelineFilters,
   compatibilityBanner,
@@ -178,7 +178,6 @@ import { DEFAULT_HISTORY_WINDOW } from './version-history-dag';
 import { toast } from '../../../components/ui/toast';
 import { localDatetimeLocalToUtcIso, utcIsoToDatetimeLocalValue } from '../../../utils/revision-deprecation';
 import { usePushConflictBanner } from '@/app/providers/PushConflictBannerProvider';
-import ServerAheadPushBanner from '@/app/components/ade/ServerAheadPushBanner';
 import { parseStaleHeadFromVersionsPostJson } from '@/app/utils/push-conflict';
 import { formatVersionWithPrefix } from '@/app/utils/version-display';
 import { isProjectPublishable } from '@/app/utils/catalog-publishable';
@@ -3518,18 +3517,30 @@ const Versions = () => {
         tabs={headerTabs}
       />
 
-      {FEATURE_GITLIKE && conflict && conflict.projectId === selectedProjectId && selectedProjectId ? (
-        <ServerAheadPushBanner
-          bar
-          flagged={GITLIKE.marked}
-          detail={conflict.message}
-          pullLoading={versionsPullBannerLoading}
-          onPull={handleVersionsPullReconcile}
-          onOpenMerge={handleVersionsOpenMerge}
-        />
-      ) : null}
-
       <PageBody>
+        {/* The status strip (HIVE-11.2, #5598): the timeline's three statuses and the git-like
+            "server is ahead" chip in one row. The server-ahead chip stays on every tab, as its
+            banner did; the other three belong to the timeline. */}
+        <VersionsStatusStrip
+          projectId={selectedProjectId || null}
+          compatibility={effectiveMainTab === 'timeline' ? compatBanner : null}
+          whatsNew={effectiveMainTab === 'timeline' ? whatsNew : null}
+          deprecation={effectiveMainTab === 'timeline' ? deprecation : null}
+          serverAhead={
+            FEATURE_GITLIKE && conflict && conflict.projectId === selectedProjectId && selectedProjectId
+              ? {
+                  flagged: GITLIKE.marked,
+                  detail: conflict.message,
+                  pullLoading: versionsPullBannerLoading,
+                  onPull: handleVersionsPullReconcile,
+                  onOpenMerge: handleVersionsOpenMerge,
+                }
+              : null
+          }
+          changesAvailable={showChangesTab}
+          onOpenChanges={() => setVersionsMainTab('changes')}
+        />
+
         {showConversionTab && effectiveMainTab === 'conversion' ? (
           /* Conversion provenance history (CPDO-3.3, #4803): where this project's revisions came
              from. Evidence replay lives on the catalog item's Conversions tab. */
@@ -3611,14 +3622,6 @@ const Versions = () => {
 
         {effectiveMainTab === 'timeline' ? (
           <>
-            <VersionsBanners
-              compatibility={compatBanner}
-              whatsNew={whatsNew}
-              deprecation={deprecation}
-              changesAvailable={showChangesTab}
-              onOpenChanges={() => setVersionsMainTab('changes')}
-            />
-
             {selectedProjectId ? (
               <div className="ver-overview">
                 <ProjectRelatedArtifactsSection projectId={selectedProjectId} />

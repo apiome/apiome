@@ -12958,31 +12958,10 @@ button.tfa-reset-notice__close > svg {
   padding: var(--card-pad);
 }
 
-/* ---- Banners ------------------------------------------------------------ */
-.ver-banners {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.ver-banner__glyph {
-  margin-block-start: 0.0625rem;
-  inline-size: var(--icon-dense);
-  block-size: var(--icon-dense);
-  flex-shrink: 0;
-}
-
-.ver-banner__title {
-  font-weight: 600;
-}
-
-/* Full ink, not the mockup's `opacity:.9`: this is the sentence the banner is
-   for, and a wash on a tinted ground is what pushes it under AA. */
-.ver-banner__body {
-  color: inherit;
-}
-
-.ver-banner__detail {
+/* ---- Status strip (HIVE-11.2) ------------------------------------------
+   The strip itself is `StatusStrip`'s (`STATUS STRIP`); this only sets the
+   server-ahead API detail on its own line under the detail row's sentence. */
+.ver-status__detail {
   display: block;
   margin-block-start: var(--space-1);
   font-size: var(--fs-xs);

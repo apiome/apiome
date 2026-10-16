@@ -15,7 +15,7 @@
  * Everything here is pure and React-free. There is no colour and no class name in this
  * file: a tone is looked up from `ui/statusVocabulary` by the component that paints it.
  *
- * @see `./VersionsTable.tsx`, `./VersionRowMenu.tsx`, `./VersionsBanners.tsx` — the
+ * @see `./VersionsTable.tsx`, `./VersionRowMenu.tsx`, `./VersionsStatusStrip.tsx` — the
  *   components these rules serve.
  * @see `@/app/utils/versions-dashboard-sort` — the comparators, which predate this ticket and
  *   are unchanged; this module only bridges them to `DataTable`'s sort state.
@@ -318,6 +318,23 @@ export function formatSunsetUtc(iso: string): string {
   return `${day} ${month} ${year} ${hours}:${minutes} UTC`;
 }
 
+/**
+ * A sunset instant as the status strip's chip prints it — `30 Sep 2026` (HIVE-11.2, #5598).
+ *
+ * The day of {@link formatSunsetUtc} without the time: the chip is a summary, and the open
+ * detail row still states the full instant.
+ *
+ * @param iso The stored `sunsetAt`.
+ * @returns The UTC day, or the raw string when it will not parse.
+ */
+export function formatSunsetDay(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  return `${day} ${month} ${date.getUTCFullYear()}`;
+}
+
 // ---------------------------------------------------------------------------------------
 // The quick chips
 // ---------------------------------------------------------------------------------------
@@ -614,6 +631,8 @@ export interface DeprecationBanner {
   versionLabel: string;
   /** `30 Sep 2026 00:00 UTC`, or `null` with no sunset. */
   sunsetLabel: string | null;
+  /** `30 Sep 2026` — the sunset day for the status chip, or `null` with no sunset. */
+  sunsetDayLabel: string | null;
   /** The successor's label, or `null`. */
   successorLabel: string | null;
   /** The deprecation message, or `null`. */
@@ -669,6 +688,7 @@ export function deprecationBanner(versions: readonly Version[]): DeprecationBann
       versionId: version.id,
       versionLabel: versionLabel(version),
       sunsetLabel: meta.sunsetAt ? formatSunsetUtc(meta.sunsetAt) : null,
+      sunsetDayLabel: meta.sunsetAt ? formatSunsetDay(meta.sunsetAt) : null,
       successorLabel: successor ? versionLabel(successor) : null,
       message: meta.message,
     };
@@ -732,6 +752,11 @@ export interface CompatibilityBanner {
   title: string;
   /** The sentence under it. */
   body: string;
+  /**
+   * `v2.3.0 → v2.3.1`, or just `v2.3.1` with no baseline — the status chip's muted detail.
+   * `null` when the summary carries no version label.
+   */
+  pairLabel: string | null;
   /** The published revision the classification is for. */
   publishedRevisionId: string;
 }
@@ -753,11 +778,14 @@ export function compatibilityBanner(
   const to = formatVersionWithPrefix(summary.versionLabel) || 'the newest published revision';
   const from = formatVersionWithPrefix(summary.baselineVersionLabel);
   const pair = from ? `${from} → ${to}` : to;
+  const toLabel = formatVersionWithPrefix(summary.versionLabel);
+  const pairLabel = toLabel ? (from ? `${from} → ${toLabel}` : toLabel) : null;
   if (summary.status === 'initial') {
     return {
       tone: 'neutral',
       title: 'Initial publication.',
       body: `${to} is the first published revision on this line — there is no baseline to compare against.`,
+      pairLabel,
       publishedRevisionId: summary.publishedRevisionId,
     };
   }
@@ -766,6 +794,7 @@ export function compatibilityBanner(
       tone: 'warn',
       title: 'Classification failed.',
       body: `The stored change classification for ${pair} could not be produced. Open the Changes tab to retry.`,
+      pairLabel,
       publishedRevisionId: summary.publishedRevisionId,
     };
   }
@@ -774,6 +803,7 @@ export function compatibilityBanner(
       tone: 'neutral',
       title: 'Classification pending.',
       body: `${pair} has not been classified yet — classification runs right after publish.`,
+      pairLabel,
       publishedRevisionId: summary.publishedRevisionId,
     };
   }
@@ -784,6 +814,7 @@ export function compatibilityBanner(
       tone: 'danger',
       title: 'Breaking changes.',
       body: `${pair} has ${counts ?? `${breaking} breaking change${breaking === 1 ? '' : 's'}`}.`,
+      pairLabel,
       publishedRevisionId: summary.publishedRevisionId,
     };
   }
@@ -793,6 +824,7 @@ export function compatibilityBanner(
     body: counts
       ? `${pair} has ${counts} and no breaking changes.`
       : `${pair} has no recorded changes.`,
+    pairLabel,
     publishedRevisionId: summary.publishedRevisionId,
   };
 }

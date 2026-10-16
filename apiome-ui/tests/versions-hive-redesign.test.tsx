@@ -22,7 +22,7 @@
  *      tests; here the non-production rule is checked: git-like items are drawn, marked and
  *      inert rather than absent.
  *
- * Plus the three banners, the project facts, the related artifacts panel and the four empty
+ * Plus the status strip (HIVE-11.2), the project facts, the related artifacts panel and the four empty
  * states.
  */
 
@@ -435,6 +435,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   installFetch();
+  // The status strip remembers its open chip per project for the session.
+  window.sessionStorage.clear();
   mockConfirm.mockClear();
   mockAlert.mockClear();
   mockDeleteVersion.mockClear();
@@ -537,26 +539,71 @@ describe('the header', () => {
 });
 
 // ---------------------------------------------------------------------------------------
-// The banners, the overview and the facts
+// The status strip, the overview and the facts
 // ---------------------------------------------------------------------------------------
 
-describe('the banners and the overview', () => {
-  it('derives the compatibility, what’s-new and deprecation banners from what it holds', async () => {
+/** The status strip's chip group. */
+const statusChips = () => screen.findByRole('group', { name: 'Project status' });
+
+/** The strip's one detail row. */
+const statusDetail = () => document.querySelector('.status-strip__detail') as HTMLElement;
+
+describe('the status strip and the overview', () => {
+  it('folds the compatibility, what’s-new and deprecation statuses into one strip, the most severe open', async () => {
     await renderVersions();
-    const compat = await screen.findByTestId('versions-banner-compat');
-    expect(compat).toHaveTextContent('Compatible.');
+    const chips = await statusChips();
+    const compat = within(chips).getByRole('button', { name: /Compatible/ });
     expect(compat).toHaveTextContent('v2.3.0 → v2.3.1');
-    expect(screen.getByTestId('versions-banner-whats-new')).toHaveTextContent('What’s new in v2.4.0 (draft).');
-    const deprecation = screen.getByTestId('versions-banner-deprecation');
-    expect(deprecation).toHaveTextContent('v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.');
-    expect(deprecation).toHaveTextContent('Successor v2.3.1');
-    expect(within(deprecation).getByRole('link', { name: 'Sunset timeline' })).toHaveAttribute(
+    const whatsNew = within(chips).getByRole('button', { name: /What’s new/ });
+    expect(whatsNew).toHaveTextContent('v2.4.0 draft');
+    const deprecated = within(chips).getByRole('button', { name: /v2\.2\.0 deprecated/ });
+    expect(deprecated).toHaveTextContent('· sunset 30 Sep 2026');
+    // No stacked banners any more.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    // `warn` outranks `accent` and `ok`, so the deprecation detail is open on first paint.
+    expect(deprecated).toHaveAttribute('aria-expanded', 'true');
+    expect(compat).toHaveAttribute('aria-expanded', 'false');
+    const detail = statusDetail();
+    expect(detail).toBeVisible();
+    expect(detail).toHaveTextContent('v2.2.0 is deprecated — sunset 30 Sep 2026 00:00 UTC.');
+    expect(detail).toHaveTextContent('Successor v2.3.1');
+    expect(detail).toHaveTextContent('Consumers see the same warning on compatibility checks (#507).');
+    expect(within(detail).getByRole('link', { name: 'Sunset timeline' })).toHaveAttribute(
       'href',
       '/ade/dashboard/versions/sunset-timeline'
     );
-    // "View report" opens the Changes tab.
-    fireEvent.click(within(compat).getByRole('button', { name: 'View report' }));
+    expect(within(detail).getByRole('link', { name: 'Migration guide' })).toHaveAttribute('target', '_blank');
+  });
+
+  it('keeps every banner action — “View report” and “Open changes” open the Changes tab', async () => {
+    await renderVersions();
+    const chips = await statusChips();
+    fireEvent.click(within(chips).getByRole('button', { name: /Compatible/ }));
+    expect(statusDetail()).toHaveTextContent('Compatible.');
+    expect(statusDetail()).toHaveTextContent('v2.3.0 → v2.3.1 has');
+    fireEvent.click(within(statusDetail()).getByRole('button', { name: 'View report' }));
     await waitFor(() => expect(screen.getByTestId('versions-tab-changes')).toHaveAttribute('aria-selected', 'true'));
+    // The timeline's three statuses stay with the timeline.
+    expect(screen.queryByRole('group', { name: 'Project status' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('versions-tab-timeline'));
+    fireEvent.click(within(await statusChips()).getByRole('button', { name: /What’s new/ }));
+    expect(statusDetail()).toHaveTextContent('What’s new in v2.4.0 (draft).');
+    fireEvent.click(within(statusDetail()).getByRole('button', { name: 'Open changes' }));
+    await waitFor(() => expect(screen.getByTestId('versions-tab-changes')).toHaveAttribute('aria-selected', 'true'));
+  });
+
+  it('remembers the open chip per project for the session, and collapses', async () => {
+    await renderVersions();
+    const chips = await statusChips();
+    fireEvent.click(within(chips).getByRole('button', { name: /Compatible/ }));
+    expect(window.sessionStorage.getItem(`hive.versions.status.${PROJECT_ID}`)).toBe('"compat"');
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse/ }));
+    expect(statusDetail()).not.toBeVisible();
+    expect(window.sessionStorage.getItem(`hive.versions.status.${PROJECT_ID}`)).toBe('null');
+    for (const chip of within(chips).getAllByRole('button')) expect(chip).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('draws the related artifacts panel and the project facts', async () => {
@@ -977,7 +1024,7 @@ describe('the browser fixtures', () => {
 
   it('renders every surface the browser spec mounts (and writes the fixtures on request)', async () => {
     await renderVersions();
-    await screen.findByTestId('versions-banner-compat');
+    await statusChips();
     await screen.findByTestId('catalog-detail-related-artifacts');
     write('timeline', (document.querySelector('.page') as HTMLElement).outerHTML);
 

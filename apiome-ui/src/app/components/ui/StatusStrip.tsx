@@ -113,6 +113,12 @@ export interface StatusStripProps {
    * a choice.
    */
   storageKey?: string;
+  /**
+   * The namespace `storageKey` is written under. Defaults to
+   * {@link STATUS_STRIP_STORAGE_PREFIX}; a page that owns a documented key of its own (Versions
+   * writes `hive.versions.status.<projectId>`) passes its prefix here.
+   */
+  storagePrefix?: string;
   /** Draws one skeleton chip instead of `items`. */
   loading?: boolean;
   /** The small caps caption at the start of the row. Defaults to `Status`. */
@@ -139,22 +145,27 @@ export function severestStatusId(items: readonly Pick<StatusStripItem, 'id' | 't
  * The `sessionStorage` key for one strip.
  *
  * @param storageKey The caller's key.
+ * @param prefix The namespace; defaults to {@link STATUS_STRIP_STORAGE_PREFIX}.
  * @returns The namespaced key.
  */
-export function statusStripStorageKey(storageKey: string): string {
-  return `${STATUS_STRIP_STORAGE_PREFIX}${storageKey}`;
+export function statusStripStorageKey(storageKey: string, prefix: string = STATUS_STRIP_STORAGE_PREFIX): string {
+  return `${prefix}${storageKey}`;
 }
 
 /**
  * What the reader last chose for a strip this session.
  *
  * @param storageKey The caller's key.
+ * @param prefix The namespace; defaults to {@link STATUS_STRIP_STORAGE_PREFIX}.
  * @returns `undefined` when nothing is stored (or storage is unavailable), `null` when the
  *   reader collapsed the strip, otherwise the open item's id.
  */
-export function readStoredStatus(storageKey: string): string | null | undefined {
+export function readStoredStatus(
+  storageKey: string,
+  prefix: string = STATUS_STRIP_STORAGE_PREFIX
+): string | null | undefined {
   try {
-    const raw = window.sessionStorage.getItem(statusStripStorageKey(storageKey));
+    const raw = window.sessionStorage.getItem(statusStripStorageKey(storageKey, prefix));
     if (raw === null) return undefined;
     const value: unknown = JSON.parse(raw);
     if (value === null || typeof value === 'string') return value;
@@ -169,10 +180,15 @@ export function readStoredStatus(storageKey: string): string | null | undefined 
  *
  * @param storageKey The caller's key.
  * @param open The open item's id, or `null` when collapsed.
+ * @param prefix The namespace; defaults to {@link STATUS_STRIP_STORAGE_PREFIX}.
  */
-export function writeStoredStatus(storageKey: string, open: string | null): void {
+export function writeStoredStatus(
+  storageKey: string,
+  open: string | null,
+  prefix: string = STATUS_STRIP_STORAGE_PREFIX
+): void {
   try {
-    window.sessionStorage.setItem(statusStripStorageKey(storageKey), JSON.stringify(open));
+    window.sessionStorage.setItem(statusStripStorageKey(storageKey, prefix), JSON.stringify(open));
   } catch {
     // Private windows and blocked storage: the strip still works, it just forgets.
   }
@@ -207,6 +223,7 @@ export function StatusStrip({
   items,
   'aria-label': ariaLabel,
   storageKey,
+  storagePrefix = STATUS_STRIP_STORAGE_PREFIX,
   loading = false,
   caption = 'Status',
   className,
@@ -218,8 +235,8 @@ export function StatusStrip({
   const chipRefs = React.useRef(new Map<string, HTMLButtonElement>());
 
   React.useEffect(() => {
-    if (storageKey) setChoice(readStoredStatus(storageKey));
-  }, [storageKey]);
+    if (storageKey) setChoice(readStoredStatus(storageKey, storagePrefix));
+  }, [storageKey, storagePrefix]);
 
   const open = resolveOpenStatus(items, choice);
 
@@ -230,7 +247,7 @@ export function StatusStrip({
    */
   const choose = (next: string | null) => {
     setChoice(next);
-    if (storageKey) writeStoredStatus(storageKey, next);
+    if (storageKey) writeStoredStatus(storageKey, next, storagePrefix);
   };
 
   /**

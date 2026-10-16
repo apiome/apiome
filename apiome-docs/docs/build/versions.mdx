@@ -16,13 +16,18 @@ open are on [Version dialogs](./version-dialogs.mdx).
 
 ## Timeline
 
-<Screenshot id="versions" alt="The Versions page, Timeline tab: compatibility and deprecation banners, the Project facts card, filters and the version list" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
+<Screenshot id="versions" alt="The Versions page, Timeline tab: the Status strip with the deprecation detail open, the Project facts card, filters and the version list" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
 
 From top to bottom:
 
-1. **Banners** — whether the latest change is compatible (**“View report”**), *What's new* in the
-   draft (**“Open changes”**), and any version nearing its sunset (**“Sunset timeline”**,
-   **“Migration guide”**).
+1. **Status** — one row of chips, one per thing worth knowing: whether the latest change is
+   **Compatible** (or has **Breaking changes**), **What’s new** in the draft, and any version that
+   is **deprecated**. **Click a chip** to open its detail underneath; only one detail is open at a
+   time, and the most urgent one opens on its own. Each detail keeps its actions: **“View
+   report”**, **“Open changes”**, **“Sunset timeline”** and **“Migration guide”**. **Click the
+   open chip** (or **“Collapse”**, or press <kbd>Esc</kbd>) to hide the detail; the page remembers
+   your choice for this project until you close the tab. With nothing to report, the row is not
+   drawn.
 2. **Project** — id, slug, head version, last publish, and a link to **Published surface**.
 3. **Filters** — search the message and changelog, pick an author, a date range, a lifecycle
    (**Stable**, **Beta**, **Deprecated**, **Archived**), and **All** / **Drafts** / **Published**.
@@ -53,7 +58,9 @@ The row's quick buttons are **Publish** (or **Unpublish**) and **Edit** or **Sch
 
 Git-like actions (branch, fork, tag, freeze, lock, delete) also live here when <Flag
 name="FEATURE_GITLIKE"/> is on — it is off in every shipped build. See [Git-like
-features](./version-dialogs.mdx#git-like-features).
+features](./version-dialogs.mdx#git-like-features). With the flag on, a **Server ahead** chip joins
+the status row — on every tab — when someone pushed after you; its detail offers **“Pull”** and
+**“Open merge”**.
 
 ## Changes
 

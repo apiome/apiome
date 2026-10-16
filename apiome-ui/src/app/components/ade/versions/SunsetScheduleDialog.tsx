@@ -23,7 +23,7 @@ import { Input } from '@/app/components/ui/Input';
 import { Textarea } from '@/app/components/ui/Textarea';
 
 import { LifecycleSelect, SuccessorRevisionField, VersionDialogHead } from './VersionDialogChrome';
-import { SUNSET_TIMELINE_ROUTE } from './VersionsBanners';
+import { SUNSET_TIMELINE_ROUTE } from './VersionsStatusStrip';
 import { versionLabel, type Version } from './versionsModel';
 
 export interface SunsetScheduleDialogProps {

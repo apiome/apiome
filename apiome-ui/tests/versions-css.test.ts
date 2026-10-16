@@ -83,11 +83,7 @@ const VERSION_PRELUDES = [
   '.ver-tab-glyph',
   '.ver-header__gitlike',
   '.ver-panel',
-  '.ver-banners',
-  '.ver-banner__glyph',
-  '.ver-banner__title',
-  '.ver-banner__body',
-  '.ver-banner__detail',
+  '.ver-status__detail',
   '.ver-overview',
   '.rart',
   '.rart__header',
@@ -477,7 +473,6 @@ describe('density and font-scale independence', () => {
 
   it('sizes every glyph from the shared icon metrics or from a rem', () => {
     expect(declaration('.ver-tab-glyph', 'inline-size')).toBe('var(--icon-dense)');
-    expect(declaration('.ver-banner__glyph', 'inline-size')).toBe('var(--icon-dense)');
     expect(declaration('.ver-graph-card__head > svg', 'inline-size')).toBe('var(--icon-dense)');
     expect(declaration('.ver-gate__toggle > svg', 'inline-size')).toBe('var(--icon-dense)');
     expect(declaration('.rart__title > svg', 'inline-size')).toBe('var(--icon-button)');
@@ -488,7 +483,7 @@ describe('density and font-scale independence', () => {
 
   it('spends spacing tokens rather than literal gaps, so Compact is genuinely compact', () => {
     for (const [prelude, property] of [
-      ['.ver-banners', 'gap'],
+      ['.ver-status__detail', 'margin-block-start'],
       ['.ver-overview', 'gap'],
       ['.rart__row', 'padding'],
       ['.rart__footer', 'padding'],
