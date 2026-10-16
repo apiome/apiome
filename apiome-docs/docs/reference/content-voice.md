@@ -58,6 +58,32 @@ underneath.
 
 The **Status strip** section of `/design-system` shows every state.
 
+## Stats and explainers on list pages
+
+List pages put the first row of data above the fold. Two components keep the same
+information on the page without taking a fixed block of space.
+
+**`FactsLine`** shows a stat strip as one line, such as *3 items · 3 formats · avg quality B · 83*.
+
+- Each fact is a number in full ink plus a few words. Put the label first when it reads better
+  (*avg quality B · 83*). Mark an aside such as *1 deleted · 1 disabled* as `muted`.
+- Pass the page's existing `StatGrid` as `stats` and a **Show stats** button appears at the end
+  of the line. It opens the grid in place, and the button then reads **Hide stats**.
+- The choice is remembered on this device, per page, under `hive.<page>.stats`.
+- An empty list reads *0 items* (or `emptyLabel`) and has no button. Pass `loading` to show a
+  placeholder line.
+
+**`DismissibleCallout`** shows an explainer on a reader's first visit only.
+
+- It has a body, an optional **Learn more** button and **Got it**. **Got it** hides it on this
+  device for good (`hive.seen.<id>`). Clearing site data shows it again.
+- Dismissing must never hide information. Set `reopenFrom` to the header link or dialog that
+  still holds the content, such as *How the catalog works*. The copy check below fails when it
+  is missing.
+- It is tinted `accent` by default; `neutral` and `honey` are also available.
+
+The **Facts line & callout** section of `/design-system` shows every state.
+
 ## What enforces it
 
 **At runtime**, every shared error surface makes sure a failure names a next action
@@ -83,6 +109,7 @@ TypeScript compiler and fails when:
 - any JSX text is "No records found"-class copy;
 - an admin navigation title is not a noun;
 - a component imports `toast` from `sonner` instead of `components/ui/toast`.
+- a `DismissibleCallout` has no literal `reopenFrom`.
 
 The runtime behaviour is pinned in `tests/copy-voice-surfaces.test.tsx`.
 

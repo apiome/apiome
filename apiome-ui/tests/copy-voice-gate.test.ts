@@ -339,6 +339,23 @@ describe('the source passes the §10 voice check', () => {
     expect(offenders(titles, isBannedPageTitle)).toEqual([]);
   });
 
+  it('says where every dismissible callout lives once it is dismissed (HIVE-11.5)', () => {
+    // Dismissing an explainer must never hide information: each `DismissibleCallout` names,
+    // as a literal `reopenFrom`, the header link or dialog that keeps its content.
+    const callouts: Copy[] = [];
+    walk((node, rel, file) => {
+      if (!ts.isJsxOpeningElement(node) && !ts.isJsxSelfClosingElement(node)) return;
+      if (node.tagName.getText(file) !== 'DismissibleCallout') return;
+      const attribute = node.attributes.properties.find(
+        (property) => ts.isJsxAttribute(property) && property.name.getText(file) === 'reopenFrom'
+      );
+      const text = attribute && ts.isJsxAttribute(attribute) ? literalOf(attribute.initializer) : null;
+      callouts.push({ where: at(rel, file, node), text: text ?? '' });
+    });
+    expect(callouts.length).toBeGreaterThan(0);
+    expect(offenders(callouts, (text) => text.trim().length === 0)).toEqual([]);
+  });
+
   it('raises every toast through the voiced wrapper, never sonner directly', () => {
     const direct = parsed
       .filter(({ rel }) => !SONNER_ALLOWED.has(rel))

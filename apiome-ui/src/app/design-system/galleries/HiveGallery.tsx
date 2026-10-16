@@ -121,6 +121,7 @@ import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
+import { QuietListShowcase } from './QuietListShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
 import { TablesShowcase } from './TablesShowcase';
 
@@ -1044,6 +1045,14 @@ export function HiveGallery() {
             <Progress value={38} label="Exporting bundle" tone="honey" striped />
             <Progress value={100} label="Publish complete" tone="ok" thin />
           </Demo>
+        </Section>
+
+        <Section
+          id="quiet-list"
+          title="Facts line &amp; callout"
+          description="A list page's stats in one tabular line, with Show stats revealing the grid in place, and an explainer that shows once, then lives one click away."
+        >
+          <QuietListShowcase />
         </Section>
       </div>
     </TooltipProvider>

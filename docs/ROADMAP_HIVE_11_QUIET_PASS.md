@@ -150,7 +150,7 @@ Milestone: **RC6** (all epics and issues).
 | 11.2 | #5598 | Versions — status strip replaces the three stacked banners | Compatible · What’s new · Deprecated (· gitlike Server ahead) become one `StatusStrip`; first revision row rises ≈ 200 px | `ui`, `versions`, `redesign`, `mvp` | N | Y | M | `src/app/components/ade/versions/VersionsBanners.tsx`, `src/app/ade/dashboard/versions/*`, `e2e/fixtures/hive-versions/*`, `tests/versions-hive-redesign.test.tsx` |
 | 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
 | 11.4 | #5600 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | Merge the “Timeline” filter bar and the lifecycle toolbar into the table’s own toolbar; dates become an “Any time” popover | `ui`, `versions`, `redesign` | Y | N | M | `src/app/components/ade/versions/VersionsTimelineFilters.tsx`, `src/app/components/ade/versions/VersionsTable.tsx`, `src/app/components/ui/DataTable.tsx` |
-| 11.5 | #5601 | `FactsLine` and `DismissibleCallout` primitives (+ `hive.seen.*` persistence) | The stat strip folded into one tabular line with “Show stats”; a first-visit callout with Got it / Learn more that persists per device | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/FactsLine.tsx (new)`, `src/app/components/ui/DismissibleCallout.tsx (new)`, `src/lib/seen.ts (new)`, `src/app/design-system/galleries/*` |
+| 11.5 | #5601 | `FactsLine` and `DismissibleCallout` primitives (+ `hive.seen.*` persistence) ✅ | The stat strip folded into one tabular line with “Show stats”; a first-visit callout with Got it / Learn more that persists per device | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/FactsLine.tsx (new)`, `src/app/components/ui/DismissibleCallout.tsx (new)`, `src/lib/seen.ts (new)`, `src/app/design-system/galleries/*` |
 | 11.6 | #5602 | Catalog — quiet list page | Explainer → first-visit callout + “How the catalog works” dialog; stat strip → facts line; one card owns toolbar, chips and table; formats list moves into the dialog and Import step 1 | `ui`, `catalog`, `redesign`, `mvp` | N | Y | M | `src/app/ade/dashboard/catalog/*`, `src/app/components/ui/catalog/*`, `e2e/fixtures/hive-catalog/*`, `tests/catalog-*.test.tsx` |
 | 11.7 | #5603 | Repositories and repository detail — facts line, activity chip | Both 5-stat strips fold into facts lines; the Refresh activity panel becomes a “1 stale · 1 failed” chip that opens it | `ui`, `repository`, `redesign` | Y | N | M | `src/app/ade/dashboard/repositories/*`, `e2e/fixtures/hive-repositories/*`, `e2e/fixtures/hive-repository-detail/*` |
 | 11.8 | #5604 | Primitives & types — facts line over the registry | The 5-stat strip (core · tenant · imported · bound · unresolved) becomes a facts line; unresolved `$ref` stays a danger chip linking to the resolver | `ui`, `redesign` | Y | N | S | `src/app/ade/dashboard/primitives/*`, `e2e/fixtures/hive-primitives/*` |
@@ -243,7 +243,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-11.5] FactsLine and DismissibleCallout primitives (+ hive.seen.* persistence)` — [#5601](https://github.com/apiome/apiome/issues/5601)
+### `apiome: [HIVE-11.5] FactsLine and DismissibleCallout primitives (+ hive.seen.* persistence)` ✅ — [#5601](https://github.com/apiome/apiome/issues/5601)
 **Problem statement.** Seven list pages open with a 4–6 tile `Stat` strip (≈ 125 px) and several with a standing explanatory `Alert` (≈ 75 px) that teaches once and costs forever. There is no primitive for “the same numbers, in one line” or for “show this once, keep it one click away”.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/catalog-quiet.html` (callouts 2, 4); rationale: `docs/mockups/PROPOSALS.md`.
@@ -252,10 +252,10 @@ Milestone: **RC6** (all epics and issues).
 - Specimens on `/design-system`; unit tests for persistence and for the empty (“0 items”) facts line.
 
 **Acceptance criteria.**
-- [ ] Both components have gallery specimens and the gallery test passes
-- [ ] `FactsLine` renders ≤ 32 px tall in comfortable density and wraps without horizontal scroll at 1280 px with eight segments
-- [ ] Dismissal survives reload; a cleared storage shows the callout again; storage failures never throw
-- [ ] axe clean in the three gate themes; the toggle has `aria-expanded` + `aria-controls`
+- [x] Both components have gallery specimens and the gallery test passes
+- [x] `FactsLine` renders ≤ 32 px tall in comfortable density and wraps without horizontal scroll at 1280 px with eight segments
+- [x] Dismissal survives reload; a cleared storage shows the callout again; storage failures never throw
+- [x] axe clean in the three gate themes; the toggle has `aria-expanded` + `aria-controls`
 
 **Parallelism / dependencies.** Blocks HIVE-11.6 → 11.10 and the Members change in 11.9. Independent of Epic 11’s Versions issues.
 

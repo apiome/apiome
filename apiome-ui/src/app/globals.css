@@ -3176,6 +3176,101 @@ p {
 }
 
 /* ==========================================================================
+   FACTS LINE (HIVE-11.5, #5601)
+   --------------------------------------------------------------------------
+   Authority: `docs/mockups/proposals/catalog-quiet.html` (annotation 2) —
+   `.facts`, `.facts .sep`, `.facts .fmt`, `.facts-toggle`.
+
+   A stat strip folded into one tabular line, with a ghost "Show stats"
+   toggle that reveals the page's `StatGrid` in place.
+   `components/ui/FactsLine.tsx` is the React half.
+
+   Deviations from the mockup, all deliberate:
+
+   1. Facts are a `<ul>` and the dot between them is a `::before` on every
+      fact but the first, so a screen reader hears a list rather than a run of
+      separator spans.
+   2. The dot is `--fg-subtle`, not `--fg-faint`: it is a mark that has to
+      clear the 3:1 non-text floor.
+   3. A muted aside is `--fg-muted`, not the mockup's `t-subtle`, for AA.
+   4. The line's height is `--control-h-sm`, the toggle's own, so it stays
+      ≤ 32 px in comfortable density and shrinks with compact.
+   ========================================================================== */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: var(--control-h-sm);
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts__item {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.facts__item + .facts__item::before {
+  content: '';
+  flex: none;
+  width: 0.1875rem;
+  height: 0.1875rem;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--fg-subtle);
+}
+
+.facts__item b {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.facts__item--muted,
+.facts__item--muted b {
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+/* Smaller than a standalone pill so it sits on the line's x-height. */
+.facts__pill {
+  height: calc(var(--fs-2xs) * 1.65);
+}
+
+.facts__toggle {
+  margin-left: auto;
+}
+
+.facts__skeleton {
+  width: calc(var(--fs-sm) * 24);
+  max-width: 100%;
+  height: var(--fs-sm);
+}
+
+.facts-line__stats {
+  margin-top: var(--space-3);
+}
+
+.facts-line__stats[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
    AUTH SURFACES (HIVE-4.1, #5295)
    --------------------------------------------------------------------------
    Authority: `docs/mockups/auth/login.html` (the split layout its four auth
