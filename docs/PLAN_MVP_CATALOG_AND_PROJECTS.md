@@ -47,61 +47,214 @@ screenshots and help-catalog entries (`apiome-docs/unreleased/README.md`), and a
 
 ## 1. Outstanding tickets — Catalog and Projects
 
+Every ticket is a checkbox: tick it when the issue closes. Flags and area follow the dash.
+
 ### 1.1 Must finish (MVP hardening)
 
-| Phase | Issue | Title | Flags | Area |
-| --- | --- | --- | --- | --- |
-| A | [#5597](https://github.com/apiome/apiome/issues/5597) | HIVE-11.1 StatusStrip component | mvp | Shared (Versions) |
-| A | [#5601](https://github.com/apiome/apiome/issues/5601) | HIVE-11.5 FactsLine and DismissibleCallout primitives | mvp | Shared (Catalog) |
-| B | [#5598](https://github.com/apiome/apiome/issues/5598) | HIVE-11.2 Versions — status strip replaces the three banners | mvp | Projects |
-| B | [#5599](https://github.com/apiome/apiome/issues/5599) | HIVE-11.3 Versions header — overflow menu and project switcher | mvp | Projects |
-| B | [#5600](https://github.com/apiome/apiome/issues/5600) | HIVE-11.4 Versions — one table toolbar | — | Projects |
-| C | [#5602](https://github.com/apiome/apiome/issues/5602) | HIVE-11.6 Catalog — quiet list page | mvp | Catalog |
-| C | [#4122](https://github.com/apiome/apiome/issues/4122) | MFI-28.6 Skeleton loading states for catalog list & detail | — | Catalog |
-| C | [#4124](https://github.com/apiome/apiome/issues/4124) | MFI-28.8 URL-synced detail tabs & accessibility pass | — | Catalog |
-| C | [#4121](https://github.com/apiome/apiome/issues/4121) | MFI-28.5 Bulk actions on the catalog list | — | Catalog |
-| C | [#4093](https://github.com/apiome/apiome/issues/4093) | MFI-25.8 Provenance tab enrichment | — | Catalog |
-| D | [#4009](https://github.com/apiome/apiome/issues/4009) | MFI-22.8 Per-format conversion packs + fixtures | XL | Catalog → Project conversion |
-| D | [#3755](https://github.com/apiome/apiome/issues/3755) | MFI-6.3 Catalog categorization | S | Catalog |
+#### Phase A — Shared primitives
 
-Epics these close: [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 (after #4121,
-#4122, #4124), [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 (after #4093),
-[#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 (after #4009).
-[#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 has one child left, #4021 (below).
+- [ ] [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip component — `mvp` · Shared (Versions)
+- [ ] [#5601](https://github.com/apiome/apiome/issues/5601) HIVE-11.5 FactsLine and DismissibleCallout primitives — `mvp` · Shared (Catalog)
+
+#### Phase B — Projects / Versions
+
+- [ ] [#5598](https://github.com/apiome/apiome/issues/5598) HIVE-11.2 Versions — status strip replaces the three banners — `mvp` · Projects
+- [ ] [#5599](https://github.com/apiome/apiome/issues/5599) HIVE-11.3 Versions header — overflow menu and project switcher — `mvp` · Projects
+- [ ] [#5600](https://github.com/apiome/apiome/issues/5600) HIVE-11.4 Versions — one table toolbar — Projects
+
+#### Phase C — Catalog
+
+- [ ] [#5602](https://github.com/apiome/apiome/issues/5602) HIVE-11.6 Catalog — quiet list page — `mvp` · Catalog
+- [ ] [#4122](https://github.com/apiome/apiome/issues/4122) MFI-28.6 Skeleton loading states for catalog list & detail — Catalog
+- [ ] [#4124](https://github.com/apiome/apiome/issues/4124) MFI-28.8 URL-synced detail tabs & accessibility pass — Catalog
+- [ ] [#4121](https://github.com/apiome/apiome/issues/4121) MFI-28.5 Bulk actions on the catalog list — Catalog
+- [ ] [#4093](https://github.com/apiome/apiome/issues/4093) MFI-25.8 Provenance tab enrichment — Catalog
+
+#### Phase D — Conversion
+
+- [ ] [#4009](https://github.com/apiome/apiome/issues/4009) MFI-22.8 Per-format conversion packs + fixtures — XL · Catalog → Project conversion
+- [ ] [#3755](https://github.com/apiome/apiome/issues/3755) MFI-6.3 Catalog categorization — S · Catalog
+
+#### Epics these close
+
+- [ ] [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 Catalog UX & Look-and-Feel Improvements — after #4121, #4122, #4124
+- [ ] [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 Catalog Detail View Parity — after #4093
+- [ ] [#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 Catalog → OpenAPI Conversion & Fidelity Preview — after #4009
+- [ ] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — one child left, #4021 (deferred, §1.3)
 
 ### 1.2 Should finish (Projects CLI parity)
 
 The CLI is how CI drives Projects and Versions, so its gaps count against “finished”.
 
-| Phase | Issues | Scope |
-| --- | --- | --- |
-| E | [#3205](https://github.com/apiome/apiome/issues/3205), [#3206](https://github.com/apiome/apiome/issues/3206), [#3207](https://github.com/apiome/apiome/issues/3207) | `projects update / delete / export` — closes [#3176](https://github.com/apiome/apiome/issues/3176) |
-| E | [#3211](https://github.com/apiome/apiome/issues/3211), [#3213](https://github.com/apiome/apiome/issues/3213)–[#3216](https://github.com/apiome/apiome/issues/3216) | `versions fork / unpublish / freeze / compatibility / delete` |
-| E | [#3263](https://github.com/apiome/apiome/issues/3263)–[#3266](https://github.com/apiome/apiome/issues/3266) | `tags list / create / update / delete` |
-| E (optional) | [#3223](https://github.com/apiome/apiome/issues/3223)–[#3228](https://github.com/apiome/apiome/issues/3228), [#3229](https://github.com/apiome/apiome/issues/3229), [#3231](https://github.com/apiome/apiome/issues/3231), [#3249](https://github.com/apiome/apiome/issues/3249)–[#3252](https://github.com/apiome/apiome/issues/3252) | `properties`, `classes`, `schema arazzo/json/diff`, `browse open` |
+#### Phase E — `projects update / delete / export`
+
+- [ ] [#3205](https://github.com/apiome/apiome/issues/3205) CLI 3.4 — `apiome projects update <slug-or-id> (partial flags)`
+- [ ] [#3206](https://github.com/apiome/apiome/issues/3206) CLI 3.5 — `apiome projects delete <slug-or-id> (typed-confirmation)`
+- [ ] [#3207](https://github.com/apiome/apiome/issues/3207) CLI 3.6 — `apiome projects export <slug-or-id> (full project JSON dump)`
+
+#### Phase E — `versions fork / unpublish / freeze / compatibility / delete`
+
+- [ ] [#3211](https://github.com/apiome/apiome/issues/3211) CLI 4.4 — `apiome versions fork <project> <source-version> --to <new-version>`
+- [ ] [#3213](https://github.com/apiome/apiome/issues/3213) CLI 4.6 — `apiome versions unpublish <project> <version>`
+- [ ] [#3214](https://github.com/apiome/apiome/issues/3214) CLI 4.7 — `apiome versions freeze <project> <version> (immutable schema snapshot)`
+- [ ] [#3215](https://github.com/apiome/apiome/issues/3215) CLI 4.8 — `apiome versions compatibility <project> --base v1 --head v2 (CI exit-code)`
+- [ ] [#3216](https://github.com/apiome/apiome/issues/3216) CLI 4.9 — `apiome versions delete <project> <version> (with confirmation)`
+
+#### Phase E — `tags list / create / update / delete`
+
+- [ ] [#3263](https://github.com/apiome/apiome/issues/3263) CLI 11.4 — `apiome tags list <project> and tags show <project> <tag>`
+- [ ] [#3264](https://github.com/apiome/apiome/issues/3264) CLI 11.5 — `apiome tags create <project> <tag> --version <version>`
+- [ ] [#3265](https://github.com/apiome/apiome/issues/3265) CLI 11.6 — `apiome tags update <project> <tag> --version <new-version> (move tag)`
+- [ ] [#3266](https://github.com/apiome/apiome/issues/3266) CLI 11.7 — `apiome tags delete <project> <tag>`
+
+#### Phase E (optional) — `properties`
+
+- [ ] [#3223](https://github.com/apiome/apiome/issues/3223) CLI 6.1 — `apiome properties list <project> (filter, search)`
+- [ ] [#3224](https://github.com/apiome/apiome/issues/3224) CLI 6.2 — `apiome properties show <project> <name-or-id>`
+- [ ] [#3225](https://github.com/apiome/apiome/issues/3225) CLI 6.3 — `apiome properties create <project> (interactive + --from-file)`
+- [ ] [#3226](https://github.com/apiome/apiome/issues/3226) CLI 6.4 — `apiome properties update <project> <name-or-id>`
+- [ ] [#3227](https://github.com/apiome/apiome/issues/3227) CLI 6.5 — `apiome properties delete <project> <name-or-id> (with usage check)`
+- [ ] [#3228](https://github.com/apiome/apiome/issues/3228) CLI 6.6 — `apiome properties copy <src-project> <name> --to <dst-project>`
+
+#### Phase E (optional) — `classes`
+
+- [ ] [#3229](https://github.com/apiome/apiome/issues/3229) CLI 7.1 — `apiome classes list <project> <version> (--with-properties flag)`
+- [ ] [#3231](https://github.com/apiome/apiome/issues/3231) CLI 7.3 — `apiome classes create <project> <version> (interactive + --from-file)`
+
+#### Phase E (optional) — `schema arazzo / json / diff`, `browse open`
+
+- [ ] [#3249](https://github.com/apiome/apiome/issues/3249) CLI 9.6 — `apiome schema arazzo <tenant>/<project>/<version> [--class X]`
+- [ ] [#3250](https://github.com/apiome/apiome/issues/3250) CLI 9.7 — `apiome schema json <tenant>/<project>/<version> [--class X] (JSON Schema)`
+- [ ] [#3251](https://github.com/apiome/apiome/issues/3251) CLI 9.8 — `apiome schema diff <tenant>/<project>/<v1> <v2> (text + machine-readable diff)`
+- [ ] [#3252](https://github.com/apiome/apiome/issues/3252) CLI 9.9 — `apiome browse open <tenant>/<project>/<version> (open browse URL in default browser)`
+
+#### Epic this closes
+
+- [ ] [#3176](https://github.com/apiome/apiome/issues/3176) Projects (CLI) — after #3205, #3206, #3207
 
 ### 1.3 Catalog/Projects-related but deferred (new capability, not hardening)
 
 These mention Catalog or Projects but add new features rather than finish existing ones.
-Recommendation: leave them out of the MVP and **drop the `mvp` label** from those that carry it.
+Recommendation: leave them out of the MVP. None of them carries the `mvp` label any more (checked 2026-10-16).
 
-| Group | Issues | Note |
-| --- | --- | --- |
-| Catalog Discovery Graph (CDG) | [#5950](https://github.com/apiome/apiome/issues/5950)–[#5983](https://github.com/apiome/apiome/issues/5983) (34) | Gateway connectors, ownership, dependency graph, registries. 13 carry `mvp` — re-flag. |
-| Security posture on catalog | [#5921](https://github.com/apiome/apiome/issues/5921) ASP-1.3 (`mvp`) | Security score for catalog revisions — re-flag |
-| Designer view of catalog items | [#4021](https://github.com/apiome/apiome/issues/4021) MFI-23.12 | Designer is a commercial surface; non-MVP per its own body |
-| Project / batch export | [#4334](https://github.com/apiome/apiome/issues/4334) MFX-39.2 | Depends on the Export studio |
-| Repository → project mapping | [#2749](https://github.com/apiome/apiome/issues/2749) (`mvp`), [#2792](https://github.com/apiome/apiome/issues/2792), [#2793](https://github.com/apiome/apiome/issues/2793), [#2806](https://github.com/apiome/apiome/issues/2806) | Multi-repo merge and PR-back sync |
-| Agent / registry cataloging | [#3970](https://github.com/apiome/apiome/issues/3970), [#3978](https://github.com/apiome/apiome/issues/3978), [#3980](https://github.com/apiome/apiome/issues/3980) | roadmap candidates |
-| MCP catalog | [#3637](https://github.com/apiome/apiome/issues/3637), [#3714](https://github.com/apiome/apiome/issues/3714), [#5724](https://github.com/apiome/apiome/issues/5724) | MCP is held back |
-| Format-expansion catalog epics | [#5406](https://github.com/apiome/apiome/issues/5406)–[#5411](https://github.com/apiome/apiome/issues/5411), [#5447](https://github.com/apiome/apiome/issues/5447), [#5477](https://github.com/apiome/apiome/issues/5477), [#5484](https://github.com/apiome/apiome/issues/5484) | More import formats |
-| Legacy v2 project ideas | [#510](https://github.com/apiome/apiome/issues/510), [#513](https://github.com/apiome/apiome/issues/513), [#542](https://github.com/apiome/apiome/issues/542), [#544](https://github.com/apiome/apiome/issues/544), [#560](https://github.com/apiome/apiome/issues/560), [#771](https://github.com/apiome/apiome/issues/771), [#1023](https://github.com/apiome/apiome/issues/1023), [#1048](https://github.com/apiome/apiome/issues/1048), [#2594](https://github.com/apiome/apiome/issues/2594) | Favourites, time tracking, heatmaps, archaeology |
+#### Catalog Discovery Graph (CDG) — 34 tickets
 
-Held-back features’ own tickets — e.g. [#5604](https://github.com/apiome/apiome/issues/5604)
-(Primitives facts line), [#5606](https://github.com/apiome/apiome/issues/5606) (Style guides notes),
-the SDK, MFX, AGX and governance roadmaps — wait until their feature is next in line.
-[#5609](https://github.com/apiome/apiome/issues/5609) (HIVE-12.2) re-homes SDK settings and should
-account for it being gated.
+Gateway connectors, ownership, dependency graph, registries.
+
+- [ ] [#5950](https://github.com/apiome/apiome/issues/5950) CDG Roadmap — Catalog Discovery Graph
+- [ ] [#5951](https://github.com/apiome/apiome/issues/5951) CDG-EPIC-1 Gateway and cloud connectors (absorbs RAR-EPIC-6 #3511)
+- [ ] [#5952](https://github.com/apiome/apiome/issues/5952) CDG-1.1 Refresh-source protocol and connector registry
+- [ ] [#5953](https://github.com/apiome/apiome/issues/5953) CDG-1.2 Kong connector (Konnect control planes and Admin API)
+- [ ] [#5954](https://github.com/apiome/apiome/issues/5954) CDG-1.3 AWS API Gateway connector
+- [ ] [#5955](https://github.com/apiome/apiome/issues/5955) CDG-1.4 Azure API Management connector
+- [ ] [#5956](https://github.com/apiome/apiome/issues/5956) CDG-1.5 Apigee connector
+- [ ] [#5957](https://github.com/apiome/apiome/issues/5957) CDG-1.6 Shadow-API report
+- [ ] [#5958](https://github.com/apiome/apiome/issues/5958) CDG-1.7 Connectors UI and CLI
+- [ ] [#5959](https://github.com/apiome/apiome/issues/5959) CDG-EPIC-2 Ownership and routing
+- [ ] [#5960](https://github.com/apiome/apiome/issues/5960) CDG-2.1 Teams model and RBAC resource
+- [ ] [#5961](https://github.com/apiome/apiome/issues/5961) CDG-2.2 Ownership on catalog entities
+- [ ] [#5962](https://github.com/apiome/apiome/issues/5962) CDG-2.3 Owner routing of findings
+- [ ] [#5963](https://github.com/apiome/apiome/issues/5963) CDG-2.4 Ownership surfaces
+- [ ] [#5964](https://github.com/apiome/apiome/issues/5964) CDG-2.5 Unowned-entity policy and ownership drift
+- [ ] [#5965](https://github.com/apiome/apiome/issues/5965) CDG-EPIC-3 Dependency and supply-chain graph
+- [ ] [#5966](https://github.com/apiome/apiome/issues/5966) CDG-3.1 Graph edge store and materializer
+- [ ] [#5967](https://github.com/apiome/apiome/issues/5967) CDG-3.2 Declared dependencies
+- [ ] [#5968](https://github.com/apiome/apiome/issues/5968) CDG-3.3 Blast-radius query
+- [ ] [#5969](https://github.com/apiome/apiome/issues/5969) CDG-3.4 Dependency graph UI
+- [ ] [#5970](https://github.com/apiome/apiome/issues/5970) CDG-3.5 Runtime-derived edges
+- [ ] [#5971](https://github.com/apiome/apiome/issues/5971) CDG-3.6 Graph export and diff-gate annotation
+- [ ] [#5972](https://github.com/apiome/apiome/issues/5972) CDG-EPIC-4 Registry endpoints
+- [ ] [#5973](https://github.com/apiome/apiome/issues/5973) CDG-4.1 MCP Registry API over the MCP server catalog
+- [ ] [#5974](https://github.com/apiome/apiome/issues/5974) CDG-4.2 Schema subject model
+- [ ] [#5975](https://github.com/apiome/apiome/issues/5975) CDG-4.3 Confluent-compatible subject REST API
+- [ ] [#5976](https://github.com/apiome/apiome/issues/5976) CDG-4.4 Upstream MCP registry connector
+- [ ] [#5977](https://github.com/apiome/apiome/issues/5977) CDG-4.5 Registry UI and CLI
+- [ ] [#5978](https://github.com/apiome/apiome/issues/5978) CDG-EPIC-5 Catalog entity kinds and scorecards
+- [ ] [#5979](https://github.com/apiome/apiome/issues/5979) CDG-5.1 Entity-kind registry and unified entity list
+- [ ] [#5980](https://github.com/apiome/apiome/issues/5980) CDG-5.2 Agent and model entities
+- [ ] [#5981](https://github.com/apiome/apiome/issues/5981) CDG-5.3 Gateway configs as entities
+- [ ] [#5982](https://github.com/apiome/apiome/issues/5982) CDG-5.4 Catalog facts for per-kind scorecards
+- [ ] [#5983](https://github.com/apiome/apiome/issues/5983) CDG-5.5 Backstage and Compass import
+
+#### Security posture on catalog
+
+Security score for catalog revisions.
+
+- [ ] [#5921](https://github.com/apiome/apiome/issues/5921) ASP-1.3 Security axis and 0–100 security score for catalog revisions
+
+#### Designer view of catalog items
+
+Designer is a commercial surface; non-MVP per its own body.
+
+- [ ] [#4021](https://github.com/apiome/apiome/issues/4021) MFI-23.12 Read-only Designer/Studio view of catalog items
+
+#### Project / batch export
+
+Depends on the Export studio.
+
+- [ ] [#4334](https://github.com/apiome/apiome/issues/4334) MFX-39.2 Project / batch export
+
+#### Repository → project mapping
+
+Multi-repo merge and PR-back sync.
+
+- [ ] [#2749](https://github.com/apiome/apiome/issues/2749) REPO-EPIC-5 Sync Pipeline & Project Mapping
+- [ ] [#2792](https://github.com/apiome/apiome/issues/2792) REPO-5.7 Multi-repo merge into single API surface
+- [ ] [#2793](https://github.com/apiome/apiome/issues/2793) REPO-5.8 PR-back sync (Apiome → repository)
+- [ ] [#2806](https://github.com/apiome/apiome/issues/2806) V2-REPO-8.2 Multi-repo federation (single project from N repos)
+
+#### Agent / registry cataloging
+
+Roadmap candidates.
+
+- [ ] [#3970](https://github.com/apiome/apiome/issues/3970) MFI-EPIC-18 Agent Descriptor Cataloging (A2A / ACP / agentic-web)
+- [ ] [#3978](https://github.com/apiome/apiome/issues/3978) MFI-18.5 Registry-as-source ingestion mode (crawl a catalog, not a doc)
+- [ ] [#3980](https://github.com/apiome/apiome/issues/3980) MFI-19.2 CloudEvents + xRegistry (CNCF event catalog)
+
+#### MCP catalog
+
+MCP is held back.
+
+- [ ] [#3637](https://github.com/apiome/apiome/issues/3637) V2-MCP External MCP Catalog (consume third-party MCP servers)
+- [ ] [#3714](https://github.com/apiome/apiome/issues/3714) V2-MCP-27.4 Catalog analytics dashboard
+- [ ] [#5724](https://github.com/apiome/apiome/issues/5724) AAU-5.3 MCP Registry API endpoint over the MCP server catalog
+
+#### Format-expansion catalog epics
+
+More import formats.
+
+- [ ] [#5406](https://github.com/apiome/apiome/issues/5406) FMT-EPIC-6 B2B / EDI / vertical depth
+- [ ] [#5407](https://github.com/apiome/apiome/issues/5407) FMT-EPIC-7 Gateway & infrastructure route sources
+- [ ] [#5408](https://github.com/apiome/apiome/issues/5408) FMT-EPIC-8 Code-first & type-system sources
+- [ ] [#5409](https://github.com/apiome/apiome/issues/5409) FMT-EPIC-9 Industrial, IoT & semantic web
+- [ ] [#5410](https://github.com/apiome/apiome/issues/5410) FMT-EPIC-10 Client workspace long tail
+- [ ] [#5411](https://github.com/apiome/apiome/issues/5411) FMT-EPIC-11 Mainframe long tail
+- [ ] [#5447](https://github.com/apiome/apiome/issues/5447) FMT-6.3 SWIFT MT import with MT↔MX projection notes
+- [ ] [#5477](https://github.com/apiome/apiome/issues/5477) FMT-10.3 SoapUI / ReadyAPI project import
+- [ ] [#5484](https://github.com/apiome/apiome/issues/5484) FMT-11.3 VSAM catalog and CICS BMS map import
+
+#### Legacy v2 project ideas
+
+Favourites, time tracking, heatmaps, archaeology.
+
+- [ ] [#510](https://github.com/apiome/apiome/issues/510) Recently viewed projects
+- [ ] [#513](https://github.com/apiome/apiome/issues/513) Pin favorite projects to the dashboard
+- [ ] [#542](https://github.com/apiome/apiome/issues/542) Add favorite projects / quick access list
+- [ ] [#544](https://github.com/apiome/apiome/issues/544) Add time spent per project breakdown
+- [ ] [#560](https://github.com/apiome/apiome/issues/560) Heatmap visualization in versions screen
+- [ ] [#771](https://github.com/apiome/apiome/issues/771) When copying versions, offer options to copy paths
+- [ ] [#1023](https://github.com/apiome/apiome/issues/1023) Version Archaeology & Cross-Project Comparison
+- [ ] [#1048](https://github.com/apiome/apiome/issues/1048) Service Catalog & Internal Marketplace
+- [ ] [#2594](https://github.com/apiome/apiome/issues/2594) Project activity timeline correlated with schema revisions
+
+#### Held-back features’ own tickets
+
+These wait until their feature is next in line, along with the SDK, MFX, AGX and governance
+roadmaps. #5609 re-homes SDK settings and should account for it being gated.
+
+- [ ] [#5604](https://github.com/apiome/apiome/issues/5604) HIVE-11.8 Primitives & types — facts line over the registry
+- [ ] [#5606](https://github.com/apiome/apiome/issues/5606) HIVE-11.10 Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts
+- [ ] [#5609](https://github.com/apiome/apiome/issues/5609) HIVE-12.2 Re-home Tenants, Data browser · Migrations and SDK settings
 
 ---
 
