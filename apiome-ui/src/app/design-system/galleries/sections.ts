@@ -26,6 +26,7 @@ export const HIVE_GALLERY_SECTIONS: readonly GallerySection[] = [
   { id: 'avatars', label: 'Avatars' },
   { id: 'tables', label: 'Tables' },
   { id: 'overlays', label: 'Overlays & banners' },
+  { id: 'status-strip', label: 'Status strip' },
   { id: 'dialogs', label: 'Confirms & prompts' },
   { id: 'feedback', label: 'Feedback' },
   { id: 'metrics', label: 'Metrics' },

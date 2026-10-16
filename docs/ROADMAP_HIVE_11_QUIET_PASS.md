@@ -146,7 +146,7 @@ Milestone: **RC6** (all epics and issues).
 
 | # | GitHub | Title | Summary | Labels | Parallel | MVP | Complexity | Affected modules |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 11.1 | #5597 | `StatusStrip` component — one row of status chips, one open detail | New `components/ui/StatusStrip` (chips · one detail open · severity-first · session persistence) + design-system specimen | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/StatusStrip.tsx (new)`, `src/app/design-system/galleries/*`, `tests/status-strip.test.tsx (new)` |
+| 11.1 | #5597 | `StatusStrip` component — one row of status chips, one open detail ✅ | New `components/ui/StatusStrip` (chips · one detail open · severity-first · session persistence) + design-system specimen | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/StatusStrip.tsx (new)`, `src/app/design-system/galleries/*`, `tests/status-strip.test.tsx (new)` |
 | 11.2 | #5598 | Versions — status strip replaces the three stacked banners | Compatible · What’s new · Deprecated (· gitlike Server ahead) become one `StatusStrip`; first revision row rises ≈ 200 px | `ui`, `versions`, `redesign`, `mvp` | N | Y | M | `src/app/components/ade/versions/VersionsBanners.tsx`, `src/app/ade/dashboard/versions/*`, `e2e/fixtures/hive-versions/*`, `tests/versions-hive-redesign.test.tsx` |
 | 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
 | 11.4 | #5600 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | Merge the “Timeline” filter bar and the lifecycle toolbar into the table’s own toolbar; dates become an “Any time” popover | `ui`, `versions`, `redesign` | Y | N | M | `src/app/components/ade/versions/VersionsTimelineFilters.tsx`, `src/app/components/ade/versions/VersionsTable.tsx`, `src/app/components/ui/DataTable.tsx` |
@@ -158,7 +158,7 @@ Milestone: **RC6** (all epics and issues).
 | 11.10 | #5606 | Style guides, Sunset timeline, Lint posture — standing notes → links; lint stat rows → facts | “Read-only for members” and “Rows include the same structured warnings…” become header links; Lint posture’s two stat rows fold into a facts line + grade chips | `ui`, `governance`, `linting`, `redesign` | Y | N | M | `src/app/ade/dashboard/style-guides/*`, `src/app/ade/dashboard/versions/sunset-timeline/*`, `src/app/ade/dashboard/lint-workspace/*`, `e2e/fixtures/hive-sunset-timeline/*` |
 | 11.11 | #5607 | Small chrome fixes — Export studio header, Import wizard height, profile hero | Standard header on Export studio; Import dialog height follows content and “Next →” becomes “Continue”; profile hero gradient → subtle surface | `ui`, `redesign` | Y | N | S | `src/app/ade/dashboard/export/studio/*`, `src/app/components/ade/dashboard/ImportDialog*`, `src/app/ade/dashboard/profile/*` |
 
-### `apiome: [HIVE-11.1] StatusStrip component — one row of status chips, one open detail` — [#5597](https://github.com/apiome/apiome/issues/5597)
+### `apiome: [HIVE-11.1] StatusStrip component — one row of status chips, one open detail` ✅ — [#5597](https://github.com/apiome/apiome/issues/5597)
 **Problem statement.** Pages that have several things to say about an object (compatibility, what’s new, deprecation, a gitlike “server is ahead”) stack one full-width `Alert` per statement. On Versions that is three banners and ≈ 200 px before the first card. DESIGN.md §5.4 has no overlay-free pattern for “several statuses, one page”, so each page invents its own stack.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/versions-status-strip.html` (callouts 3); rationale: `docs/mockups/PROPOSALS.md`.
@@ -170,11 +170,11 @@ Milestone: **RC6** (all epics and issues).
 - Specimen on `/design-system` (tests/design-system-gallery.test.ts requires it) showing 1, 3 and loading states in every tone.
 
 **Acceptance criteria.**
-- [ ] Specimen renders on `/design-system` with the gallery test passing
-- [ ] Exactly one `.status-strip__detail` is visible at any time; severity order is covered by a unit test
-- [ ] Keyboard: Tab reaches every chip, Enter/Space toggles, Escape collapses; axe reports no serious/critical violations in light, dark and high contrast
-- [ ] Session persistence covered by a test; no `localStorage` writes
-- [ ] No raw hex, no `px` type; works in all nine themes and both densities
+- [x] Specimen renders on `/design-system` with the gallery test passing
+- [x] Exactly one `.status-strip__detail` is visible at any time; severity order is covered by a unit test
+- [x] Keyboard: Tab reaches every chip, Enter/Space toggles, Escape collapses; axe reports no serious/critical violations in light, dark and high contrast
+- [x] Session persistence covered by a test; no `localStorage` writes
+- [x] No raw hex, no `px` type; works in all nine themes and both densities
 
 **Parallelism / dependencies.** Blocks HIVE-11.2. Independent of everything else — start here.
 

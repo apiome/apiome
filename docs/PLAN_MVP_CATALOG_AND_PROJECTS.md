@@ -53,7 +53,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 
 #### Phase A — Shared primitives
 
-- [ ] [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip component — `mvp` · Shared (Versions)
+- [x] [#5597](https://github.com/apiome/apiome/issues/5597) HIVE-11.1 StatusStrip component — `mvp` · Shared (Versions)
 - [ ] [#5601](https://github.com/apiome/apiome/issues/5601) HIVE-11.5 FactsLine and DismissibleCallout primitives — `mvp` · Shared (Catalog)
 
 #### Phase B — Projects / Versions
