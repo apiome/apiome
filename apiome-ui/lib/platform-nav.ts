@@ -1,6 +1,6 @@
 import { getMainAppUrl, normalizeAppOrigin } from './app-urls';
 import { getCommercialNavItems, type ExternalNavItem } from './external-links';
-import { isFeatureReleased, unreleasedFeatureReason } from './feature-release';
+import { isFeatureReleased } from './feature-release';
 import { getSuiteTriggerIsActive } from './suite-contract';
 import { STUDIO_APP_ROUTES, UI_STUDIO_ROUTES } from './studio-routes';
 
@@ -509,11 +509,10 @@ export function platformNavGatedReason(label: string): string {
 }
 
 /**
- * Apply release and session gating to one destination.
+ * Apply session gating to one released destination.
  *
- * An unreleased destination (`lib/feature-release.ts`) is disabled whatever the
- * session, and says so — choosing a workspace would not open it, so the
- * workspace reason would send the reader the wrong way.
+ * Unreleased destinations (`lib/feature-release.ts`) never reach this: the
+ * accessors below drop them, so they are absent rather than disabled.
  *
  * @param item - A modelled destination.
  * @param currentTenantId - `current_tenant_id` from the session, if any.
@@ -523,9 +522,6 @@ function resolveItem(
   item: PlatformNavItem,
   currentTenantId: string | null | undefined
 ): ResolvedPlatformNavItem {
-  if (!isFeatureReleased(item.id)) {
-    return { ...item, disabled: true, disabledReason: unreleasedFeatureReason(item.label) };
-  }
   const disabled = Boolean(item.requiresTenant) && !currentTenantId;
   return disabled
     ? { ...item, disabled, disabledReason: platformNavGatedReason(item.label) }
@@ -537,7 +533,8 @@ function resolveItem(
  *
  * Contributed destinations are appended to the group their host asked for;
  * a contribution naming an unknown group is dropped rather than guessed at.
- * Groups that end up empty are omitted, so a host can also contribute nothing.
+ * Unreleased destinations are left out. Groups that end up empty are omitted,
+ * so a host can also contribute nothing.
  *
  * @param options - Session tenant and any runtime-injected destinations.
  * @returns Groups whose every item carries a resolved `disabled` flag.
@@ -554,7 +551,9 @@ export function getPlatformNavGroups(
 
     return {
       ...group,
-      items: [...group.items, ...contributed].map((item) => resolveItem(item, currentTenantId)),
+      items: [...group.items, ...contributed]
+        .filter((item) => isFeatureReleased(item.id))
+        .map((item) => resolveItem(item, currentTenantId)),
     };
   }).filter((group) => group.items.length > 0);
 }
@@ -569,7 +568,9 @@ export function getPlatformNavGroups(
 export function getPlatformUserMenuItems(
   options: Pick<PlatformNavOptions, 'currentTenantId'> = {}
 ): ResolvedPlatformNavItem[] {
-  return PLATFORM_USER_MENU_ITEMS.map((item) => resolveItem(item, options.currentTenantId));
+  return PLATFORM_USER_MENU_ITEMS.filter((item) => isFeatureReleased(item.id)).map((item) =>
+    resolveItem(item, options.currentTenantId)
+  );
 }
 
 /**

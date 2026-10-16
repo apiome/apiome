@@ -33,7 +33,6 @@ import {
   UNRELEASED_FEATURE_IDS,
   isFeatureReleased,
   parsePreviewFeatures,
-  unreleasedFeatureReason,
 } from '../../lib/feature-release';
 
 /** Every modelled destination — rail groups plus the user menu. */
@@ -284,7 +283,7 @@ describe('platform-nav model — workspace gating', () => {
       .filter((navItem) => navItem.disabled)
       .map((navItem) => navItem.id);
 
-    expect(disabled.sort()).toEqual([...GATED].sort());
+    expect(disabled.sort()).toEqual(GATED.filter((id) => isFeatureReleased(id)).sort());
   });
 
   it('leaves Home, Tenants and the account destinations reachable without a tenant', () => {
@@ -351,11 +350,9 @@ describe('platform-nav model — runtime injection', () => {
       (group) => group.id === 'build'
     );
 
-    expect(build?.items.map((navItem) => navItem.id)).toEqual([
-      'projects',
-      'primitives',
-      'suite-designer',
-    ]);
+    expect(build?.items.map((navItem) => navItem.id)).toEqual(
+      ['projects', 'primitives', 'suite-designer'].filter((id) => isFeatureReleased(id))
+    );
     expect(build?.items.at(-1)).toMatchObject({
       href: contributed.href,
       external: true,
@@ -400,7 +397,11 @@ describe('platform-nav model — runtime injection', () => {
       getPlatformNavGroups({ currentTenantId: TENANT }).flatMap((group) =>
         group.items.map((navItem) => navItem.id)
       )
-    ).toEqual(PLATFORM_NAV_GROUPS.flatMap((group) => group.items.map((navItem) => navItem.id)));
+    ).toEqual(
+      PLATFORM_NAV_GROUPS.flatMap((group) => group.items.map((navItem) => navItem.id)).filter(
+        (id) => isFeatureReleased(id)
+      )
+    );
   });
 });
 
@@ -412,12 +413,16 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
     else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ORIGINAL;
   });
 
-  /** Ids disabled for a session that has a workspace — only the release gate can explain them. */
-  function disabledWithTenant(): string[] {
-    return getPlatformNavGroups({ currentTenantId: TENANT })
-      .flatMap((group) => group.items)
-      .filter((navItem) => navItem.disabled)
-      .map((navItem) => navItem.id);
+  /** Modelled rail ids the session's rail leaves out — only the release gate drops any. */
+  function hiddenWithTenant(): string[] {
+    const shown = new Set(
+      getPlatformNavGroups({ currentTenantId: TENANT })
+        .flatMap((group) => group.items)
+        .map((navItem) => navItem.id)
+    );
+    return PLATFORM_NAV_GROUPS.flatMap((group) => group.items)
+      .map((navItem) => navItem.id)
+      .filter((id) => !shown.has(id));
   }
 
   it('holds back exactly the unreleased features, and every one of them is a rail destination', () => {
@@ -431,7 +436,7 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       'style-guides',
     ]);
     for (const id of UNRELEASED_FEATURE_IDS) expect(findPlatformNavItem(id)).toBeDefined();
-    expect(disabledWithTenant().sort()).toEqual([...UNRELEASED_FEATURE_IDS].sort());
+    expect(hiddenWithTenant().sort()).toEqual([...UNRELEASED_FEATURE_IDS].sort());
   });
 
   it('keeps Catalog and Projects open', () => {
@@ -440,24 +445,22 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
     expect(isFeatureReleased('projects')).toBe(true);
   });
 
-  it('explains an unreleased destination as not available yet, even without a workspace', () => {
+  it('leaves an unreleased destination out rather than disabling it, with or without a workspace', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     for (const tenant of [TENANT, null]) {
-      const mcp = getPlatformNavGroups({ currentTenantId: tenant })
+      const ids = getPlatformNavGroups({ currentTenantId: tenant })
         .flatMap((group) => group.items)
-        .find((navItem) => navItem.id === 'mcp');
-      expect(mcp?.disabled).toBe(true);
-      expect(mcp?.disabledReason).toBe(unreleasedFeatureReason('MCP servers'));
+        .map((navItem) => navItem.id);
+      expect(ids).not.toContain('mcp');
     }
-    expect(unreleasedFeatureReason('Style guides')).toBe('Style guides is not available yet.');
   });
 
   it('re-opens listed features, or all of them, through the preview override', () => {
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' mcp , audit ';
-    expect(disabledWithTenant().sort()).toEqual(['export-studio', 'primitives', 'sdk-settings', 'style-guides']);
+    expect(hiddenWithTenant().sort()).toEqual(['export-studio', 'primitives', 'sdk-settings', 'style-guides']);
 
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'ALL';
-    expect(disabledWithTenant()).toEqual([]);
+    expect(hiddenWithTenant()).toEqual([]);
   });
 
   it('parses the override, dropping blanks', () => {

@@ -102,7 +102,7 @@ import {
   platformNavGatedReason,
   type PlatformNavItem,
 } from '../lib/platform-nav';
-import { isFeatureReleased, unreleasedFeatureReason } from '../lib/feature-release';
+import { isFeatureReleased } from '../lib/feature-release';
 import NotificationsClient from '../src/app/ade/dashboard/notifications/NotificationsClient';
 import { NOTIFICATION_TYPES, type NotificationRow } from '../lib/notifications';
 import { NOTIFICATION_PREFERENCE_KEYS } from '../lib/notification-preferences';
@@ -120,8 +120,8 @@ const GROUP_LABELS = PLATFORM_NAV_GROUPS.map((group) => group.label).filter(
   (label): label is string => Boolean(label)
 );
 
-/** A workspace-scoped destination, taken from the model rather than named. */
-const GATED_ITEM = MODEL_ITEMS.find((item) => item.requiresTenant)!;
+/** A released workspace-scoped destination, taken from the model rather than named. */
+const GATED_ITEM = RELEASED_ITEMS.find((item) => item.requiresTenant)!;
 
 /** Viewport width the mocked `matchMedia` answers against. */
 let viewportWidth = 1440;
@@ -260,17 +260,14 @@ describe('AppShell — navigation from the model', () => {
     expect(within(nav).getAllByRole('link')).toHaveLength(RELEASED_ITEMS.length);
   });
 
-  it('renders an unreleased destination as a disabled row that says it is not available yet', async () => {
+  it('leaves an unreleased destination out of the rail entirely', async () => {
     expect(UNRELEASED_ITEMS.length).toBeGreaterThan(0);
     await renderShell({ tenant: true });
 
     const nav = screen.getByRole('navigation', { name: 'Primary' });
     for (const item of UNRELEASED_ITEMS) {
-      const row = within(nav).getByTestId(`rail-nav-${item.id}`);
-      expect(row).toHaveTextContent(item.label);
-      expect(row).not.toHaveAttribute('href');
-      expect(row).toHaveAttribute('aria-disabled', 'true');
-      expect(row).toHaveAccessibleDescription(unreleasedFeatureReason(item.label));
+      expect(within(nav).queryByTestId(`rail-nav-${item.id}`)).not.toBeInTheDocument();
+      expect(within(nav).queryByText(item.label)).not.toBeInTheDocument();
     }
   });
 
@@ -281,10 +278,7 @@ describe('AppShell — navigation from the model', () => {
     for (const label of GROUP_LABELS) {
       expect(within(nav).getByRole('button', { name: new RegExp(label, 'i') })).toBeInTheDocument();
     }
-    // Group headings, plus the disabled rows the release gate renders as buttons.
-    expect(within(nav).getAllByRole('button')).toHaveLength(
-      GROUP_LABELS.length + UNRELEASED_ITEMS.length
-    );
+    expect(within(nav).getAllByRole('button')).toHaveLength(GROUP_LABELS.length);
   });
 
   it('keeps account destinations out of the rail — they belong to the user menu', async () => {
@@ -344,7 +338,7 @@ describe('AppShell — workspace gating', () => {
       .filter((item) => item.disabled)
       .map((item) => item.id);
 
-    for (const item of MODEL_ITEMS) {
+    for (const item of RELEASED_ITEMS) {
       const row = screen.getByTestId(`rail-nav-${item.id}`);
       expect(row.getAttribute('aria-disabled')).toBe(expected.includes(item.id) ? 'true' : null);
     }

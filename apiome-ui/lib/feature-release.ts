@@ -3,7 +3,7 @@
    --------------------------------------------------------------------------
    Until Catalog and Projects are hardened for the MVP, the destinations below
    stay in the code but out of reach: the rail, the command palette and the
-   `G`-jumps show them disabled (through `getPlatformNavGroups()`), and their
+   `G`-jumps leave them out (through `getPlatformNavGroups()`), and their
    routes render a "not available yet" page instead of the feature
    (`UnreleasedFeatureGate`).
 
@@ -70,14 +70,4 @@ export function isFeatureReleased(
   if (!UNRELEASED.has(id)) return true;
   const preview = parsePreviewFeatures(previewFeatures);
   return preview === 'all' || preview.has(id);
-}
-
-/**
- * Why an unreleased destination is unavailable — tooltip and palette copy.
- *
- * @param label - The destination's label.
- * @returns One sentence naming the destination.
- */
-export function unreleasedFeatureReason(label: string): string {
-  return `${label} is not available yet.`;
 }

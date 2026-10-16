@@ -47,6 +47,7 @@ import {
   findPlatformNavItem,
   platformNavGatedReason,
 } from '../lib/platform-nav';
+import { isFeatureReleased } from '../lib/feature-release';
 
 /** A workspace-scoped destination, taken from the model rather than named. */
 const GATED_ITEM = PLATFORM_NAV_GROUPS.flatMap((group) => group.items).find(
@@ -178,7 +179,8 @@ describe('what it offers', () => {
     const dialog = await openWithChord(user);
 
     const jump = within(dialog).getByTestId('palette-group-jump');
-    for (const item of PLATFORM_NAV_GROUPS.flatMap((group) => group.items)) {
+    const items = PLATFORM_NAV_GROUPS.flatMap((group) => group.items);
+    for (const item of items.filter((entry) => isFeatureReleased(entry.id))) {
       // By id, not by text: "Home" is both a destination and a section name, and a
       // by-text lookup would be ambiguous for exactly the row that proves the point.
       expect(within(jump).getByTestId(`palette-item-jump-${item.id}`)).toHaveTextContent(
@@ -253,9 +255,9 @@ describe('typing', () => {
 
     await user.keyboard('govern');
 
-    // Every destination in the Govern group, and nothing from Build.
+    // Every released destination in the Govern group, and nothing from Build.
     const govern = PLATFORM_NAV_GROUPS.find((group) => group.label === 'Govern')!;
-    for (const item of govern.items) {
+    for (const item of govern.items.filter((entry) => isFeatureReleased(entry.id))) {
       expect(within(dialog).getByTestId(`palette-item-jump-${item.id}`)).toBeInTheDocument();
     }
     expect(within(dialog).queryByTestId('palette-item-jump-projects')).not.toBeInTheDocument();
