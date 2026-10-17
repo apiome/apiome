@@ -118,6 +118,10 @@ const LEDGER = {
   protocol: 'graph',
   formatMetadata: { inputKind: 'file', fileName: 'ledger.graphql' },
   conversion: { projectId: 'p-ledger', projectName: 'Ledger Graph (OpenAPI)' },
+  // MFI-6.3: a categorized item.
+  paradigm: 'graph',
+  domain: 'finance',
+  tags: ['accounting', 'internal', 'ledger', 'public'],
 };
 
 const ORDERS = {
@@ -133,6 +137,9 @@ const ORDERS = {
   protocol: 'rpc',
   formatMetadata: { inputKind: 'url', sourceUrl: 'https://acme.io/orders.proto' },
   conversion: null,
+  paradigm: 'rpc',
+  domain: null,
+  tags: ['public'],
 };
 
 const EVENTS = {
@@ -149,6 +156,9 @@ const EVENTS = {
   protocol: 'event',
   formatMetadata: { inputKind: 'paste' },
   conversion: null,
+  paradigm: 'event',
+  domain: null,
+  tags: [],
 };
 
 const RETIRED = {
@@ -162,6 +172,8 @@ const RETIRED = {
   qualityScore: 58,
   qualityGrade: 'D',
   conversion: null,
+  domain: null,
+  tags: [],
 };
 
 const ALL_ROWS = [LEDGER, ORDERS, EVENTS, RETIRED];
@@ -764,6 +776,69 @@ describe('bulk actions (MFI-28.5)', () => {
 });
 
 // ---------------------------------------------------------------------------------------
+// Categories (MFI-6.3)
+// ---------------------------------------------------------------------------------------
+
+/** Pick an option from one of the toolbar's quick-filter selects. */
+async function pickQuickFilter(testId: string, option: string) {
+  fireEvent.click(screen.getByTestId(testId));
+  fireEvent.click(await screen.findByRole('option', { name: option }));
+}
+
+describe('categories (MFI-6.3)', () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = jest.fn();
+  });
+
+  it('draws the domain and up to three tags on the card', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card')).find(
+      (el) => el.getAttribute('data-catalog-id') === LEDGER.id
+    ) as HTMLElement;
+    const line = within(card).getByTestId('catalog-card-categories');
+    expect(within(line).getByTestId('catalog-card-domain')).toHaveTextContent(/finance/i);
+    expect(line).toHaveTextContent('accounting');
+    expect(line).toHaveTextContent('+1');
+    // An uncategorized card draws no line at all.
+    const events = (await screen.findAllByTestId('catalog-card')).find(
+      (el) => el.getAttribute('data-catalog-id') === EVENTS.id
+    ) as HTMLElement;
+    expect(within(events).queryByTestId('catalog-card-categories')).not.toBeInTheDocument();
+  });
+
+  it('filters the list by domain', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    expect(screen.getByTestId('catalog-filter-domain')).toHaveTextContent('All domains');
+    await pickQuickFilter('catalog-filter-domain', 'No domain');
+    await waitFor(() => expect(screen.queryByText('Ledger Graph')).not.toBeInTheDocument());
+    expect(screen.getByText('Orders RPC')).toBeInTheDocument();
+    expect(screen.getByTestId('catalog-filter-domain')).toHaveAttribute('data-active');
+  });
+
+  it('filters the list by tag, listing only the tags in use', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    fireEvent.click(screen.getByTestId('catalog-filter-tag'));
+    const names = (await screen.findAllByRole('option')).map((option) => option.textContent);
+    expect(names).toEqual(['All tags', 'accounting', 'internal', 'ledger', 'public', 'No tags']);
+    fireEvent.click(screen.getByRole('option', { name: 'ledger' }));
+    await waitFor(() => expect(screen.queryByText('Orders RPC')).not.toBeInTheDocument());
+    expect(screen.getByText('Ledger Graph')).toBeInTheDocument();
+  });
+
+  it('offers Categorize… in the row menu and opens the dialog on that item', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    fireEvent.click(await screen.findByTestId('catalog-action-categorize'));
+    const dialog = await screen.findByTestId('catalog-categories-dialog');
+    expect(dialog).toHaveTextContent('Categorize Ledger Graph');
+    expect(within(dialog).getByTestId('catalog-categories-tags')).toHaveTextContent('ledger');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
 // Keyboard and axe (MFI-28.8)
 // ---------------------------------------------------------------------------------------
 
@@ -961,6 +1036,16 @@ describe('the browser fixtures', () => {
     const dialog = await screen.findByTestId('catalog-bulk-convert-dialog');
     await waitFor(() => expect(within(dialog).queryAllByText('Previewing…')).toHaveLength(0));
     write('bulk-convert', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
+  });
+
+  it('writes the Categorize dialog (MFI-6.3)', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    fireEvent.click(within(screen.getByRole('note')).getByRole('button', { name: 'Got it' }));
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    fireEvent.click(await screen.findByTestId('catalog-action-categorize'));
+    const dialog = await screen.findByTestId('catalog-categories-dialog');
+    write('categorize', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
   it('writes the empty state', async () => {

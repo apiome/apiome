@@ -30,6 +30,16 @@ from .analysis_telemetry import (
 )
 from .api_identity_service import build_related_artifact_refs
 from .auth import get_authenticated_user_id, validate_authentication
+from .catalog_categories import (
+    CatalogCategoryError,
+    CatalogFacetFilters,
+    catalog_facet_counts,
+    filter_catalog_items,
+    item_domain,
+    item_paradigm,
+    normalize_domain,
+    normalize_tags,
+)
 from .catalog_conversion import build_conversion_source
 from .catalog_detail import (
     derive_catalog_source,
@@ -58,6 +68,9 @@ from .conversion_projection import (
 from .database import db
 from .lint_routes import build_lint_report
 from .models import (
+    CatalogCategoriesResponse,
+    CatalogCategoriesUpdate,
+    CatalogFacetsResponse,
     CatalogConversionHistoryResponse,
     CatalogConversionRef,
     CatalogItemDetailSchema,
@@ -157,6 +170,42 @@ def _build_related_artifacts(
     return build_related_artifact_refs(rows)
 
 
+def _category_fields(item: Dict[str, Any], tags: List[str]) -> Dict[str, Any]:
+    """The categorization fields every catalog item carries (MFI-6.3, #3755)."""
+    return {"paradigm": item_paradigm(item), "domain": item_domain(item), "tags": list(tags)}
+
+
+def _facet_filters(
+    protocol: Optional[List[str]],
+    format_: Optional[List[str]],
+    domain: Optional[List[str]],
+    tag: Optional[List[str]],
+) -> CatalogFacetFilters:
+    """The facet selection of a list/facets request (repeatable query parameters)."""
+    return CatalogFacetFilters.from_query(
+        protocols=protocol, formats=format_, domains=domain, tags=tag
+    )
+
+
+#: Repeatable facet query parameters shared by the list and the facet counts (MFI-6.3).
+_PROTOCOL_QUERY = Query(
+    None,
+    description="Paradigm facet, repeatable (rest, rpc, event, graph, data_schema, agent, or "
+    "'uncategorized'). Values OR together; facets AND.",
+)
+_FORMAT_QUERY = Query(
+    None,
+    alias="format",
+    description="Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3).",
+)
+_DOMAIN_QUERY = Query(
+    None,
+    description="Domain facet, repeatable (a domain id from GET /v1/projects/domains, or "
+    "'uncategorized').",
+)
+_TAG_QUERY = Query(None, description="Tag facet, repeatable ('uncategorized' = untagged items).")
+
+
 @router.get("/{tenant_slug}")
 async def list_catalog_items(
     tenant_slug: str,
@@ -169,6 +218,10 @@ async def list_catalog_items(
         alias="identityGroupId",
         description="When set, return only catalog items in this cross-format identity group (MFI-6.4).",
     ),
+    protocol: Optional[List[str]] = _PROTOCOL_QUERY,
+    format_: Optional[List[str]] = _FORMAT_QUERY,
+    domain: Optional[List[str]] = _DOMAIN_QUERY,
+    tag: Optional[List[str]] = _TAG_QUERY,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[CatalogItemSchema]:
     """
@@ -176,7 +229,13 @@ async def list_catalog_items(
 
     Returns the same envelope as ``GET /v1/projects/{tenant_slug}`` (so the Catalog screen can be
     cloned from the Projects dashboard) restricted to the non-publishable slice, with each item
-    also carrying the latest revision's format/protocol/source provenance.
+    also carrying the latest revision's format/protocol/source provenance and its categorization
+    (MFI-6.3): the auto-derived ``paradigm``, the manual ``domain`` and the free-form ``tags``.
+
+    The four categorization facets — ``protocol`` (paradigm), ``format``, ``domain`` and ``tag`` —
+    are repeatable: values within one facet OR together, facets AND, an unknown value narrows to
+    nothing, and ``uncategorized`` selects the items with no value. Their counts are
+    ``GET /v1/catalog/{tenant_slug}/facets``.
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -185,25 +244,142 @@ async def list_catalog_items(
     Args:
         tenant_slug: The tenant slug.
         include_deleted: Include rows with deleted_at set (for trash / restore flows).
+        identity_group_id: Restrict to one cross-format identity group (MFI-6.4).
+        protocol: Paradigm facet values.
+        format_: Source-format facet values.
+        domain: Domain facet values.
+        tag: Tag facet values.
         auth_data: Authentication data (injected by dependency).
 
     Returns:
         List of catalog items for the tenant (active first when include_deleted is set).
     """
+    tenant_id = auth_data["tenant_id"]
     items = db.get_catalog_items_for_tenant(
-        auth_data['tenant_id'],
+        tenant_id,
         include_deleted=include_deleted,
         identity_group_id=identity_group_id,
     )
-
-    tenant_id = auth_data["tenant_id"]
+    tags_by_item = db.get_artifact_tags_for_projects(
+        tenant_id, [str(item["id"]) for item in items]
+    )
+    kept = filter_catalog_items(items, tags_by_item, _facet_filters(protocol, format_, domain, tag))
     return [
         CatalogItemSchema(
             **item,
             conversion=_build_conversion_ref(item),
+            **_category_fields(item, tags_by_item.get(str(item["id"]), [])),
         )
-        for item in items
+        for item in kept
     ]
+
+
+@router.get("/{tenant_slug}/facets", response_model=CatalogFacetsResponse)
+async def get_catalog_facets(
+    tenant_slug: str,
+    include_deleted: bool = Query(False, description="Count soft-deleted items too."),
+    identity_group_id: Optional[str] = Query(
+        None, alias="identityGroupId", description="Count only this identity group (MFI-6.4)."
+    ),
+    protocol: Optional[List[str]] = _PROTOCOL_QUERY,
+    format_: Optional[List[str]] = _FORMAT_QUERY,
+    domain: Optional[List[str]] = _DOMAIN_QUERY,
+    tag: Optional[List[str]] = _TAG_QUERY,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CatalogFacetsResponse:
+    """
+    Facet counts for the catalog browse (MFI-6.3, #3755).
+
+    Takes the same filters as the list. Each facet's counts are computed over the items every
+    *other* facet leaves, so a count says how many items ticking that value would show; a
+    selected value is always listed (at 0 when nothing matches it). ``uncategorized`` buckets
+    count the items with no paradigm, format, domain or tags.
+
+    Args:
+        tenant_slug: The tenant slug.
+        include_deleted: Count soft-deleted items too.
+        identity_group_id: Restrict to one cross-format identity group.
+        protocol: Paradigm facet values.
+        format_: Source-format facet values.
+        domain: Domain facet values.
+        tag: Tag facet values.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The total, the number the selection keeps, and the four facets' buckets.
+    """
+    tenant_id = auth_data["tenant_id"]
+    items = db.get_catalog_items_for_tenant(
+        tenant_id, include_deleted=include_deleted, identity_group_id=identity_group_id
+    )
+    tags_by_item = db.get_artifact_tags_for_projects(
+        tenant_id, [str(item["id"]) for item in items]
+    )
+    filters = _facet_filters(protocol, format_, domain, tag)
+    return CatalogFacetsResponse(
+        total=len(items),
+        matched=len(filter_catalog_items(items, tags_by_item, filters)),
+        facets=catalog_facet_counts(items, tags_by_item, filters),
+    )
+
+
+@router.put("/{tenant_slug}/{item_id}/categories", response_model=CatalogCategoriesResponse)
+async def set_catalog_item_categories(
+    tenant_slug: str,
+    item_id: str,
+    body: CatalogCategoriesUpdate,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> CatalogCategoriesResponse:
+    """
+    Set a catalog item's manual categories — its domain and its tags (MFI-6.3, #3755).
+
+    Both are replaced outright: ``domain`` null (or ``"none"``) clears it, and ``tags`` becomes
+    the item's whole tag set (lower-cased, de-duplicated, at most 20, each 1-64 characters). The
+    paradigm is not settable: it is derived from the item's latest revision.
+
+    Requires ``projects:edit`` — a catalog item is a (non-publishable) project.
+
+    Args:
+        tenant_slug: The tenant slug.
+        item_id: The catalog item id.
+        body: The new domain and tags.
+        auth_data: Authentication data (injected by dependency).
+
+    Returns:
+        The item's paradigm, domain and tags after the write.
+
+    Raises:
+        HTTPException: 404 when the id is not a live catalog item in the tenant; 422 for an
+            unknown domain or an invalid tag.
+    """
+    tenant_id = auth_data["tenant_id"]
+    item = db.get_catalog_item_by_id(item_id, tenant_id)
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
+
+    enforce_permission(
+        db, auth_data, Resource.PROJECTS, Action.EDIT, target=f"catalog:{item_id}:categories"
+    )
+
+    try:
+        domain = normalize_domain(body.domain)
+        tags = normalize_tags(body.tags)
+    except CatalogCategoryError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    written = db.set_catalog_item_categories(
+        tenant_id=tenant_id,
+        project_id=item_id,
+        domain=domain,
+        tags=tags,
+        user_id=get_authenticated_user_id(auth_data),
+    )
+    if not written:
+        raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
+
+    return CatalogCategoriesResponse(
+        paradigm=item_paradigm(item), domain=domain, tags=sorted(tags)
+    )
 
 
 @router.get("/{tenant_slug}/{item_id}")
@@ -245,9 +421,12 @@ async def get_catalog_item(
     parsed = derive_catalog_parsed_model(item)
     tenant_id = auth_data["tenant_id"]
 
+    tags = db.get_artifact_tags_for_projects(tenant_id, [item_id]).get(item_id, [])
+
     return CatalogItemDetailSchema(
         **item,
         conversion=_build_conversion_ref(item),
+        **_category_fields(item, tags),
         related_artifacts=_build_related_artifacts(tenant_id, item_id),
         summary=CatalogNormalizedSummary(**summary),
         source=CatalogSourceDescriptor(**source),

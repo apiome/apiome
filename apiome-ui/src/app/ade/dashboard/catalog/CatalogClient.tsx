@@ -73,6 +73,7 @@ import {
   CATALOG_SOURCE_OPTIONS,
   CatalogAboutDialog,
   CatalogBulkConvertDialog,
+  CatalogCategoriesDialog,
   CatalogBulkFailureList,
   CatalogCard,
   CatalogCardGridSkeleton,
@@ -82,6 +83,8 @@ import {
   CatalogTable,
   EMPTY_CATALOG_FILTERS,
   catalogBulkFailureTitle,
+  catalogDomainOptions,
+  catalogTagOptions,
   catalogBulkPlan,
   catalogBulkResultMessage,
   catalogFacetCounts,
@@ -383,6 +386,8 @@ export default function CatalogClient() {
   const [qualityFor, setQualityFor] = React.useState<CatalogItem | null>(null);
   const [lintFor, setLintFor] = React.useState<CatalogItem | null>(null);
   const [convertFor, setConvertFor] = React.useState<CatalogItem | null>(null);
+  /** The item whose domain and tags are being edited (MFI-6.3), while its dialog is open. */
+  const [categorizeFor, setCategorizeFor] = React.useState<CatalogItem | null>(null);
   /** The items the bulk bar's Convert… is reviewing (MFI-28.5), while its dialog is open. */
   const [bulkConvertItems, setBulkConvertItems] = React.useState<CatalogItem[] | null>(null);
   /** Bumped per bulk-convert opening, so each one mounts a fresh review. */
@@ -648,6 +653,7 @@ export default function CatalogClient() {
     onDelete: (item: CatalogItem) => void handleDelete(item),
     onRestore: (item: CatalogItem) => void handleRestore(item),
     onPermanentDelete: (item: CatalogItem) => void handlePermanentDelete(item),
+    onCategorize: (item: CatalogItem) => setCategorizeFor(item),
   };
 
   const toolbar = (
@@ -687,6 +693,21 @@ export default function CatalogClient() {
           value={filters.grade}
           options={CATALOG_GRADE_OPTIONS}
           onChange={(grade) => setFilters((current) => ({ ...current, grade }))}
+        />
+        {/* MFI-6.3: the manual categories. Their menus list only what the catalog uses. */}
+        <CatalogQuickFilter
+          label="Domain"
+          testId="catalog-filter-domain"
+          value={filters.domain}
+          options={catalogDomainOptions(items, filters.domain)}
+          onChange={(domain) => setFilters((current) => ({ ...current, domain }))}
+        />
+        <CatalogQuickFilter
+          label="Tag"
+          testId="catalog-filter-tag"
+          value={filters.tag}
+          options={catalogTagOptions(items, filters.tag)}
+          onChange={(tag) => setFilters((current) => ({ ...current, tag }))}
         />
 
         {/* The view switch closes the filter row, as the quiet-pass mockup draws it. */}
@@ -1125,6 +1146,34 @@ export default function CatalogClient() {
         }}
         onConverted={handleConverted}
       />
+
+      {categorizeFor ? (
+        <CatalogCategoriesDialog
+          key={categorizeFor.id}
+          open
+          item={{
+            id: categorizeFor.id,
+            name: categorizeFor.name,
+            paradigm: categorizeFor.paradigm ?? null,
+            domain: categorizeFor.domain ?? null,
+            tags: [...(categorizeFor.tags ?? [])],
+          }}
+          onOpenChange={(open) => {
+            if (!open) setCategorizeFor(null);
+          }}
+          onSaved={(saved) => {
+            // Update the one row in place — the list, its filters and their menus follow.
+            setItems((current) =>
+              current.map((row) =>
+                row.id === categorizeFor.id
+                  ? { ...row, domain: saved.domain, tags: [...saved.tags].sort() }
+                  : row
+              )
+            );
+            toast.success(`Categorized "${categorizeFor.name}".`);
+          }}
+        />
+      ) : null}
 
       {bulkConvertItems ? (
         <CatalogBulkConvertDialog

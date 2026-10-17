@@ -39,9 +39,11 @@ list on [Supported formats](./supported-formats.md).
 
 ## Find an item
 
-- **Filter** by text (<Kbd keys="/"/>), **Formats**, protocol (**REST**, **RPC**, **Event**,
-  **Graph**, **Data Schema**, **Agent**), source (**Uploaded file**, **Source URL**, **Pasted
-  content**, **Live discovery**) and grade.
+- **Filter** by text (<Kbd keys="/"/>, which also matches tags), **Formats**, protocol
+  (**REST**, **RPC**, **Event**, **Graph**, **Data Schema**, **Agent**), source (**Uploaded
+  file**, **Source URL**, **Pasted content**, **Live discovery**), grade, **domain** and
+  **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
+  **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
@@ -49,6 +51,29 @@ list on [Supported formats](./supported-formats.md).
   choices are remembered in this browser.
 
 <Screenshot id="catalog-cards" alt="The Catalog in Cards view, grouped by protocol" />
+
+## Categorize an item
+
+Every catalog item is categorized three ways, and each is a filter on the list:
+
+| Category | Set by | Where it comes from |
+| --- | --- | --- |
+| **Paradigm** | Apiome | The imported source — REST, RPC, Event, Graph, Data Schema or Agent (the **protocol** filter). It cannot be changed. |
+| **Domain** | You | One of the same domains Projects use (Finance, Healthcare, IoT, …), or none. |
+| **Tags** | You | Any short labels you like — `payments`, `public`, `team-orders`. |
+
+1. **Click ⋯ → “Categorize…”** on a card or table row — or, on an item's page, **click
+   “Categorize…”** (**“Edit categories”** once it has some) under the title.
+2. **Choose a Domain**, or **No domain**.
+3. **Type a tag and press Enter** (or a comma) to add it; **click its ×** to remove it.
+   Tags are stored in lower case; an item can carry up to 20, each up to 64 characters.
+4. **Click “Save”.** The card shows the domain and the first three tags; the **domain** and
+   **tag** filters list the new values straight away.
+
+<Screenshot id="catalog-categorize" alt="The Categorize dialog: the derived paradigm, a Domain menu and four tags" />
+
+Changing an item's categories needs permission to edit projects. The same categories are
+available to the API — see [With the CLI or the API](#with-the-cli-or-the-api).
 
 ## Add an item
 
@@ -180,7 +205,10 @@ Every control on the list and on an item's page works from the keyboard.
 
 - CLI: `apiome import graphql ./01-simple-user.graphql`, `apiome convert <item-id> --to openapi
   --dry-run`, `apiome formats` — see the [CLI quick-start](../reference/cli-quickstart.md).
-- REST: `GET /v1/catalog/{tenant}`, `GET /v1/catalog/{tenant}/{item}`,
+- REST: `GET /v1/catalog/{tenant}` (filter with repeatable `protocol`, `format`, `domain` and
+  `tag`; `uncategorized` selects items without a value), `GET /v1/catalog/{tenant}/facets`
+  (the count per value), `PUT /v1/catalog/{tenant}/{item}/categories` (`{ "domain", "tags" }`),
+  `GET /v1/catalog/{tenant}/{item}`,
   `GET …/{item}/analysis|lint|source`, `POST …/{item}/convert`, `GET …/{item}/conversions` — see the
   [API reference](../reference/api-reference.md).
 

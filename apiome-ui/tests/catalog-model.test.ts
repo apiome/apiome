@@ -25,6 +25,12 @@ import {
   DEFAULT_CATALOG_SORT,
   EMPTY_CATALOG_FILTERS,
   catalogBulkFailureTitle,
+  catalogDomainLabel,
+  catalogDomainOptions,
+  catalogTagOptions,
+  CATALOG_MAX_TAG_LENGTH,
+  CATALOG_UNCATEGORIZED,
+  normalizeCatalogTag,
   catalogBulkPlan,
   catalogBulkResultMessage,
   CATALOG_FACT_FORMAT_PILLS,
@@ -213,6 +219,8 @@ describe('quick filters', () => {
       protocol: CATALOG_FILTER_ANY,
       source: CATALOG_FILTER_ANY,
       grade: CATALOG_FILTER_ANY,
+      domain: CATALOG_FILTER_ANY,
+      tag: CATALOG_FILTER_ANY,
     });
     for (const row of ALL) expect(matchesCatalogFilters(row, EMPTY_CATALOG_FILTERS)).toBe(true);
   });
@@ -606,5 +614,81 @@ describe('bulk selection', () => {
     expect(catalogBulkResultMessage('Deleted', 3, 5, 'Forbidden')).toBe(
       'Deleted 3 of 5 catalog items · 2 refused — Forbidden'
     );
+  });
+});
+
+
+/* -------------------------------------------------------------------------
+   Categories — domain + tags (MFI-6.3)
+   ------------------------------------------------------------------------- */
+
+describe('categories (MFI-6.3)', () => {
+  const PAY = item({ id: 'pay', name: 'Payments', domain: 'finance', tags: ['checkout', 'public'] });
+  const FEED = item({ id: 'feed', name: 'Feed', domain: 'social', tags: ['public'] });
+  const BARE = item({ id: 'bare', name: 'Bare', domain: null, tags: [] });
+  const ROWS = [PAY, FEED, BARE];
+  const filters = (patch: Partial<typeof EMPTY_CATALOG_FILTERS>) => ({
+    ...EMPTY_CATALOG_FILTERS,
+    ...patch,
+  });
+  const kept = (patch: Partial<typeof EMPTY_CATALOG_FILTERS>) =>
+    ROWS.filter((row) => matchesCatalogFilters(row, filters(patch))).map((row) => row.id);
+
+  it('filters by domain, and "uncategorized" keeps the items without one', () => {
+    expect(kept({ domain: 'finance' })).toEqual(['pay']);
+    expect(kept({ domain: CATALOG_UNCATEGORIZED })).toEqual(['bare']);
+  });
+
+  it('filters by tag, and "uncategorized" keeps the untagged items', () => {
+    expect(kept({ tag: 'public' })).toEqual(['pay', 'feed']);
+    expect(kept({ tag: CATALOG_UNCATEGORIZED })).toEqual(['bare']);
+  });
+
+  it('combines domain and tag with the other axes', () => {
+    expect(kept({ domain: 'social', tag: 'public' })).toEqual(['feed']);
+    expect(kept({ domain: 'social', tag: 'checkout' })).toEqual([]);
+  });
+
+  it('counts as narrowing, and tolerates a saved state from before the two axes', () => {
+    expect(isCatalogNarrowed('', 'all', filters({ tag: 'public' }))).toBe(true);
+    const legacy = { formats: [], protocol: 'any', source: 'any', grade: 'any' } as never;
+    expect(matchesCatalogFilters(PAY, legacy)).toBe(true);
+    expect(isCatalogNarrowed('', 'all', legacy)).toBe(false);
+  });
+
+  it('lists only the domains and tags in use, the current choice, then the "none" bucket', () => {
+    expect(catalogDomainOptions(ROWS).map((o) => o.value)).toEqual([
+      CATALOG_FILTER_ANY,
+      // In label order: "Finance" before "Social media entities".
+      'finance',
+      'social',
+      CATALOG_UNCATEGORIZED,
+    ]);
+    expect(catalogDomainOptions(ROWS, 'iot').map((o) => o.value)).toContain('iot');
+    expect(catalogTagOptions(ROWS).map((o) => o.label)).toEqual([
+      'All tags',
+      'checkout',
+      'public',
+      'No tags',
+    ]);
+    expect(catalogTagOptions(ROWS, 'gone').map((o) => o.value)).toContain('gone');
+  });
+
+  it('labels domains as the Projects pickers do', () => {
+    expect(catalogDomainLabel('finance')).toBe('Finance');
+    expect(catalogDomainLabel('iot')).toBe('IoT device schemas');
+    expect(catalogDomainLabel('free text')).toBe('free text');
+  });
+
+  it('finds an item by its tag in the search box', () => {
+    expect(searchCatalog(ROWS, 'checkout').map((row) => row.id)).toEqual(['pay']);
+  });
+
+  it('holds a typed tag to the REST rule', () => {
+    expect(normalizeCatalogTag('  Payments   Core ')).toEqual({ tag: 'payments core' });
+    expect(normalizeCatalogTag('   ')).toEqual({ error: 'A tag cannot be empty.' });
+    expect('error' in normalizeCatalogTag('x'.repeat(CATALOG_MAX_TAG_LENGTH + 1))).toBe(true);
+    expect('error' in normalizeCatalogTag('Uncategorized')).toBe(true);
+    expect('error' in normalizeCatalogTag('bell\u0007')).toBe(true);
   });
 });

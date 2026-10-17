@@ -1,6 +1,6 @@
 ---
 title: "Catalog"
-description: "REST endpoints tagged catalog: 10 operations."
+description: "REST endpoints tagged catalog: 12 operations."
 sidebar_position: 11
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.208.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.209.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `catalog` · 10 operations
+Tag: `catalog` · 12 operations
 
 ## `GET /v1/catalog/{tenant_slug}` {#list-catalog-items-v1-catalog-tenant-slug-get}
 
@@ -21,7 +21,13 @@ List all catalog items for a tenant.
 
 Returns the same envelope as ``GET /v1/projects/{tenant_slug}`` (so the Catalog screen can be
 cloned from the Projects dashboard) restricted to the non-publishable slice, with each item
-also carrying the latest revision's format/protocol/source provenance.
+also carrying the latest revision's format/protocol/source provenance and its categorization
+(MFI-6.3): the auto-derived ``paradigm``, the manual ``domain`` and the free-form ``tags``.
+
+The four categorization facets — ``protocol`` (paradigm), ``format``, ``domain`` and ``tag`` —
+are repeatable: values within one facet OR together, facets AND, an unknown value narrows to
+nothing, and ``uncategorized`` selects the items with no value. Their counts are
+``GET /v1/catalog/{tenant_slug}/facets``.
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -30,6 +36,11 @@ Supports authentication via:
 Args:
     tenant_slug: The tenant slug.
     include_deleted: Include rows with deleted_at set (for trash / restore flows).
+    identity_group_id: Restrict to one cross-format identity group (MFI-6.4).
+    protocol: Paradigm facet values.
+    format_: Source-format facet values.
+    domain: Domain facet values.
+    tag: Tag facet values.
     auth_data: Authentication data (injected by dependency).
 
 Returns:
@@ -44,6 +55,10 @@ Operation id: `list_catalog_items_v1_catalog__tenant_slug__get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `include_deleted` | query | boolean | no | When true, include soft-deleted catalog items (active items listed first). |
 | `identityGroupId` | query | string or null | no | When set, return only catalog items in this cross-format identity group (MFI-6.4). |
+| `protocol` | query | array of string or null | no | Paradigm facet, repeatable (rest, rpc, event, graph, data_schema, agent, or 'uncategorized'). Values OR together; facets AND. |
+| `format` | query | array of string or null | no | Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3). |
+| `domain` | query | array of string or null | no | Domain facet, repeatable (a domain id from GET /v1/projects/domains, or 'uncategorized'). |
+| `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -81,6 +96,53 @@ Request body for record a privacy-safe catalog analysis metric.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for record a privacy-safe catalog analysis metric. | `application/json` [`CatalogAnalysisMetricResponse`](#schema-cataloganalysismetricresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/catalog/{tenant_slug}/facets` {#get-catalog-facets-v1-catalog-tenant-slug-facets-get}
+
+**Get Catalog Facets**
+
+Facet counts for the catalog browse (MFI-6.3, #3755).
+
+Takes the same filters as the list. Each facet's counts are computed over the items every
+*other* facet leaves, so a count says how many items ticking that value would show; a
+selected value is always listed (at 0 when nothing matches it). ``uncategorized`` buckets
+count the items with no paradigm, format, domain or tags.
+
+Args:
+    tenant_slug: The tenant slug.
+    include_deleted: Count soft-deleted items too.
+    identity_group_id: Restrict to one cross-format identity group.
+    protocol: Paradigm facet values.
+    format_: Source-format facet values.
+    domain: Domain facet values.
+    tag: Tag facet values.
+    auth_data: Authentication data (injected by dependency).
+
+Returns:
+    The total, the number the selection keeps, and the four facets' buckets.
+
+Operation id: `get_catalog_facets_v1_catalog__tenant_slug__facets_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `include_deleted` | query | boolean | no | Count soft-deleted items too. |
+| `identityGroupId` | query | string or null | no | Count only this identity group (MFI-6.4). |
+| `protocol` | query | array of string or null | no | Paradigm facet, repeatable (rest, rpc, event, graph, data_schema, agent, or 'uncategorized'). Values OR together; facets AND. |
+| `format` | query | array of string or null | no | Source-format facet, repeatable (e.g. protobuf, graphql, asyncapi-3). |
+| `domain` | query | array of string or null | no | Domain facet, repeatable (a domain id from GET /v1/projects/domains, or 'uncategorized'). |
+| `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get catalog facets. | `application/json` [`CatalogFacetsResponse`](#schema-catalogfacetsresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/catalog/{tenant_slug}/{item_id}` {#get-catalog-item-v1-catalog-tenant-slug-item-id-get}
@@ -180,6 +242,55 @@ Operation id: `get_catalog_item_analysis_v1_catalog__tenant_slug___item_id__anal
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get catalog item analysis. | `application/json` [`PayloadAnalysisRecord`](#schema-payloadanalysisrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/catalog/{tenant_slug}/{item_id}/categories` {#set-catalog-item-categories-v1-catalog-tenant-slug-item-id-categories-put}
+
+**Set Catalog Item Categories**
+
+Set a catalog item's manual categories — its domain and its tags (MFI-6.3, #3755).
+
+Both are replaced outright: ``domain`` null (or ``"none"``) clears it, and ``tags`` becomes
+the item's whole tag set (lower-cased, de-duplicated, at most 20, each 1-64 characters). The
+paradigm is not settable: it is derived from the item's latest revision.
+
+Requires ``projects:edit`` — a catalog item is a (non-publishable) project.
+
+Args:
+    tenant_slug: The tenant slug.
+    item_id: The catalog item id.
+    body: The new domain and tags.
+    auth_data: Authentication data (injected by dependency).
+
+Returns:
+    The item's paradigm, domain and tags after the write.
+
+Raises:
+    HTTPException: 404 when the id is not a live catalog item in the tenant; 422 for an
+        unknown domain or an invalid tag.
+
+Operation id: `set_catalog_item_categories_v1_catalog__tenant_slug___item_id__categories_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `item_id` | path | string | yes | Catalog item identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for set catalog item categories.
+
+- `application/json` — [`CatalogCategoriesUpdate`](#schema-catalogcategoriesupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for set catalog item categories. | `application/json` [`CatalogCategoriesResponse`](#schema-catalogcategoriesresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/catalog/{tenant_slug}/{item_id}/conversions` {#get-catalog-conversion-history-v1-catalog-tenant-slug-item-id-conversions-get}
@@ -521,6 +632,28 @@ Acknowledgement that a privacy-safe metric was recorded.
 | `recorded` | boolean | no | Recorded. |
 | `kind` | string | yes | Kind. |
 
+### `CatalogCategoriesResponse` {#schema-catalogcategoriesresponse}
+
+The item's categorization after a write (MFI-6.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `paradigm` | string or null | no | Paradigm. |
+| `domain` | string or null | no | Domain. |
+| `tags` | array of string | no | Associated tag labels. |
+
+### `CatalogCategoriesUpdate` {#schema-catalogcategoriesupdate}
+
+``PUT /v1/catalog/{tenant}/{item}/categories`` (MFI-6.3): set an item's manual categories.
+
+Both fields are replaced outright: ``domain`` null (or ``"none"``) clears the domain, and
+``tags`` is the item's whole tag set.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `domain` | string or null | no | A domain id from GET /v1/projects/domains, or null/'none' to clear it. |
+| `tags` | array of string | no | The item's tags (at most 20, each 1-64 characters); stored lower-cased. |
+
 ### `CatalogConversionHistoryResponse` {#schema-catalogconversionhistoryresponse}
 
 ``GET /v1/catalog/{tenant_slug}/{item_id}/conversions`` — a catalog item's conversion
@@ -535,6 +668,16 @@ when no source is captured or the digest could not be computed.
 | `itemId` | string | yes | The catalog item id. |
 | `currentSourceHash` | string or null | no | Digest of the item's currently captured source text, or null. |
 | `conversions` | array of `ConversionProvenanceEntry` | no | Provenance rows, newest first. |
+
+### `CatalogFacetsResponse` {#schema-catalogfacetsresponse}
+
+``GET /v1/catalog/{tenant}/facets`` (MFI-6.3): facet counts for the catalog browse.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `total` | integer | yes | Catalog items before any facet is applied. |
+| `matched` | integer | yes | Catalog items the selected facets keep. |
+| `facets` | `CatalogFacets` | yes | Facets. |
 
 ### `CatalogItemDetailSchema` {#schema-catalogitemdetailschema}
 
@@ -579,6 +722,9 @@ analysed reports a declared ``unavailable`` status with a reason code, never a f
 | `conversion` | `CatalogConversionRef` or null | no | Conversion. |
 | `identityGroupId` | string or null | no | Identity Group ID. |
 | `relatedArtifacts` | array of `RelatedArtifactRef` | no | Related Artifacts. |
+| `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
+| `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
+| `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
 | `summary` | `CatalogNormalizedSummary` | no | Short summary suitable for navigation and reference docs. |
 | `source` | `CatalogSourceDescriptor` | no | Provenance source for the record (for example human or imported). |
 | `parsed` | array of `CatalogParsedGroup` | no | Parsed. |
@@ -622,6 +768,9 @@ latest revision (MFI-7.1/7.2): ``sourceFormat``, ``protocol``, ``formatMetadata`
 | `conversion` | `CatalogConversionRef` or null | no | Conversion. |
 | `identityGroupId` | string or null | no | Identity Group ID. |
 | `relatedArtifacts` | array of `RelatedArtifactRef` | no | Related Artifacts. |
+| `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
+| `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
+| `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
 
 ### `CatalogProjectionRequest` {#schema-catalogprojectionrequest}
 

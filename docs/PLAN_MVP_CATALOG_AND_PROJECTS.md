@@ -73,7 +73,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 #### Phase D — Conversion
 
 - [x] [#4009](https://github.com/apiome/apiome/issues/4009) MFI-22.8 Per-format conversion packs + fixtures — XL · Catalog → Project conversion
-- [ ] [#3755](https://github.com/apiome/apiome/issues/3755) MFI-6.3 Catalog categorization — S · Catalog
+- [x] [#3755](https://github.com/apiome/apiome/issues/3755) MFI-6.3 Catalog categorization — S · Catalog
 
 #### Epics these close
 

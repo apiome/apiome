@@ -15,7 +15,7 @@
 
 export * from './catalogModel';
 
-export { default as CatalogCard, CatalogRowMenu } from './CatalogCard';
+export { default as CatalogCard, CatalogCategoryRow, CatalogRowMenu } from './CatalogCard';
 export type { CatalogCardProps, CatalogItemHandlers, CatalogRowMenuProps } from './CatalogCard';
 
 export { default as CatalogTable, catalogTableStamp } from './CatalogTable';
@@ -58,3 +58,5 @@ export { CatalogBulkConvertDialog } from './CatalogBulkConvertDialog';
 export type { CatalogBulkConvertDialogProps } from './CatalogBulkConvertDialog';
 export { CatalogBulkFailureList } from './CatalogBulkFailureList';
 export type { CatalogBulkFailureListProps } from './CatalogBulkFailureList';
+export { CatalogCategoriesDialog } from './CatalogCategoriesDialog';
+export type { CatalogCategories, CatalogCategoriesDialogProps } from './CatalogCategoriesDialog';

@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.345.0] - 2026-10-16
+
+### Added
+- **Catalog categorization (#3755, MFI-6.3)**: catalog items are categorized by **paradigm**
+  (auto-derived — the latest revision's protocol), **domain** (manual — the project
+  `metadata.domainCategory` allow-list) and free-form **tags** (manual — new V277
+  `apiome.artifact_tags`, generic over artifact kind so MCP endpoints can use it for MCAT-9.3).
+  - `GET /v1/catalog/{tenant}` items carry `paradigm`, `domain` and `tags`, and the list takes
+    repeatable `protocol`, `format`, `domain` and `tag` filters: values within a facet OR, facets
+    AND, an unknown value narrows to nothing, and `uncategorized` selects items with no value.
+    The detail (`GET …/{item}`) carries the same three fields.
+  - `GET /v1/catalog/{tenant}/facets` returns `{ total, matched, facets: { protocols, formats,
+    domains, tags } }`, each bucket `{ value, label, count, selected }` counted over the items
+    the *other* facets leave.
+  - `PUT /v1/catalog/{tenant}/{item}/categories` with `{ "domain", "tags" }` replaces the item's
+    domain (null/`"none"` clears it) and tag set (lower-cased, de-duplicated, at most 20 of 1–64
+    characters; `uncategorized` is reserved). Requires `projects:edit`; `422` for an unknown
+    domain or an invalid tag, `404` for an id that is not a live catalog item.
+
+The OpenAPI version moves to 1.209.0.
+
 ## [1.344.0] - 2026-10-16
 
 ### Added

@@ -30,7 +30,17 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowLeftRight, Ellipsis, Eye, FileOutput, PanelsTopLeft, ScanLine, Trash2, Undo2 } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Ellipsis,
+  Eye,
+  FileOutput,
+  PanelsTopLeft,
+  ScanLine,
+  Tags,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Avatar } from '@/app/components/ui/Avatar';
@@ -53,6 +63,7 @@ import {
   catalogShortId,
   catalogSummaryText,
   catalogVersionsLabel,
+  catalogDomainLabel,
   type CatalogItem,
 } from './catalogModel';
 
@@ -77,6 +88,8 @@ export interface CatalogItemHandlers {
   onRestore: (item: CatalogItem) => void;
   /** Destroy it, after the type-to-confirm gate. */
   onPermanentDelete: (item: CatalogItem) => void;
+  /** Set its domain and tags (MFI-6.3). Absent, the menu offers no Categorize… verb. */
+  onCategorize?: (item: CatalogItem) => void;
 }
 
 export interface CatalogCardProps extends CatalogItemHandlers {
@@ -114,6 +127,7 @@ export default function CatalogCard({
   onDelete,
   onRestore,
   onPermanentDelete,
+  onCategorize,
   busy = false,
   selected = false,
   onSelectedChange,
@@ -172,6 +186,8 @@ export default function CatalogCard({
         <div className="cat-card__formats" data-testid="catalog-card-formats">
           <CatalogFormatRow item={item} />
         </div>
+
+        <CatalogCategoryRow item={item} />
 
         <div className="cat-card__meter">
           <div className="cat-card__scores cat-card__above">
@@ -259,6 +275,7 @@ export default function CatalogCard({
             onDelete={onDelete}
             onRestore={onRestore}
             onPermanentDelete={onPermanentDelete}
+            onCategorize={onCategorize}
           />
         </div>
       )}
@@ -359,6 +376,7 @@ export function CatalogRowMenu({
   onDelete,
   onRestore,
   onPermanentDelete,
+  onCategorize,
 }: CatalogRowMenuProps) {
   const actions = catalogRowActions(item);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
@@ -446,6 +464,16 @@ export function CatalogRowMenu({
               {convertActionLabel(item.conversion, item.sourceFormat)}
             </DropdownMenu.Item>
           ) : null}
+          {onCategorize && !item.deleted_at ? (
+            <DropdownMenu.Item
+              className={MENU_ITEM_CLASS}
+              data-testid="catalog-action-categorize"
+              onSelect={queue(() => onCategorize(item))}
+            >
+              <Tags aria-hidden />
+              Categorize…
+            </DropdownMenu.Item>
+          ) : null}
           {actions.undelete ? (
             <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onRestore(item))}>
               <Undo2 aria-hidden />
@@ -476,5 +504,47 @@ export function CatalogRowMenu({
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+  );
+}
+
+/** How many tags a card shows before folding the rest into "+n". */
+const CARD_TAG_LIMIT = 3;
+
+/**
+ * The card's categorization line (MFI-6.3): the domain, then up to three tags and a "+n" for
+ * the rest. Absent entirely when the item has neither, so an uncategorized card is unchanged.
+ *
+ * Shared by the card and the item page's header, so the two cannot describe an item differently.
+ *
+ * @param props.item The row (only its `domain` and `tags` are read).
+ * @returns The line, or `null`.
+ */
+export function CatalogCategoryRow({
+  item,
+}: {
+  item: Pick<CatalogItem, 'domain' | 'tags'>;
+}) {
+  const tags = item.tags ?? [];
+  if (!item.domain && tags.length === 0) return null;
+  const shown = tags.slice(0, CARD_TAG_LIMIT);
+  const hidden = tags.length - shown.length;
+  return (
+    <div className="cat-card__categories" data-testid="catalog-card-categories">
+      {item.domain ? (
+        <Badge variant="neutral" data-testid="catalog-card-domain">
+          {catalogDomainLabel(item.domain)}
+        </Badge>
+      ) : null}
+      {shown.map((tag) => (
+        <Badge key={tag} variant="outline" className="cat-tag">
+          {tag}
+        </Badge>
+      ))}
+      {hidden > 0 ? (
+        <span className="cat-card__tag-more" title={tags.slice(CARD_TAG_LIMIT).join(', ')}>
+          +{hidden}
+        </span>
+      ) : null}
+    </div>
   );
 }
