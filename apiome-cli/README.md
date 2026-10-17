@@ -1299,6 +1299,23 @@ A project with published versions is refused with exit **6** unless you pass `--
 (`--archive` included). A permanent delete is refused when the project's versions have audit
 history — archive it instead.
 
+### Export a project
+
+`apiome projects export <slug-or-id>` writes the whole project — versions, classes with their
+properties, paths with their operations, the property library, tags and migration plans — as one
+document ([format](https://github.com/apiome/apiome/blob/main/apiome-docs/docs/reference/cli-export-format.md)):
+
+```bash
+apiome projects export payments-api --output ./backups/payments-api.json
+apiome projects export payments-api --format yaml --gzip > backup.yaml.gz
+apiome projects export payments-api --versions v2.0.0,v2.1.0 --exclude migrations
+```
+
+The output is deterministic by default (sorted keys, no timestamp): the same project state gives
+the same bytes, and the SHA-256 printed on stderr identifies it. Counts go to stderr, so stdout
+stays clean for pipes. JSON is written one version at a time; YAML is built in memory. `data` is
+not exportable yet (the API cannot list data records).
+
 ### List resources
 
 Human-readable tables (default):

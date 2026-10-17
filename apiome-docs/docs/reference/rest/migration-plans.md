@@ -1,6 +1,6 @@
 ---
 title: "Migration plans"
-description: "REST endpoints tagged migration-plans: 3 operations."
+description: "REST endpoints tagged migration-plans: 4 operations."
 sidebar_position: 41
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.211.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.212.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `migration-plans` · 3 operations
+Tag: `migration-plans` · 4 operations
 
 ## `GET /v1/migration-plans/{tenant_slug}` {#get-migration-plan-rules-v1-migration-plans-tenant-slug-get}
 
@@ -96,6 +96,39 @@ Operation id: `get_migration_plan_rule_counts_v1_migration_plans__tenant_slug__c
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get migration plan rule counts. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/migration-plans/{tenant_slug}/projects/{project_id}` {#list-project-migration-plans-v1-migration-plans-tenant-slug-projects-project-id-get}
+
+**List Project Migration Plans**
+
+Every migration plan of a project, with all of its rules (CLI 3.6, #3207).
+
+One call for a whole-project export (``apiome projects export``) rather than probing each
+version pair. Plans are ordered by ``(from_version_id, to_version_id)`` and rules by
+``(class_name, source_property)``; each rule is returned as stored. Requires
+``projects:view``.
+
+Returns:
+    ``{"plans": [{id, from_version_id, to_version_id, created_at, updated_at, rules:
+    [{class_name, source_property, rule}]}]}`` — empty when the project has none.
+
+Operation id: `list_project_migration_plans_v1_migration_plans__tenant_slug__projects__project_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list project migration plans. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
