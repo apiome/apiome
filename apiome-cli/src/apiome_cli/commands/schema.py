@@ -5,6 +5,9 @@
 :func:`_download_published`; the shared ref/format/checksum logic is in
 :mod:`apiome_cli.published_spec`.
 
+``apiome schema diff <tenant>/<project> <v1> <v2>`` (CLI 9.8, #3251) compares two published
+versions client-side; the differ and its four renderings are in :mod:`apiome_cli.schema_diff`.
+
 ``apiome schema test`` runs CI schema testing over the IXH-5.1/5.2 services.
 
 The command runs the same server-side validation the Schema Test Bench uses, against the
@@ -28,23 +31,28 @@ this module owns only the flags and the HTTP calls.
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Optional
 
 import typer
 
+from apiome_cli import __version__
+from apiome_cli import schema_diff as schema_diff_core
 from apiome_cli.cli_context import insecure_from_context, settings_from_context, timeout_from_context
 from apiome_cli.client import api_paths
 from apiome_cli.client.http import RestClient
 from apiome_cli.client.spec_download import SpecFormat
 from apiome_cli.client.version_scope import tenant_scoped_client
-from apiome_cli.exit_codes import EXIT_CHECKSUM_MISMATCH, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_CHECKSUM_MISMATCH, EXIT_DIFFERENCES, EXIT_ERROR, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.published_spec import (
     fetch_published_document,
+    fetch_published_openapi,
     normalize_expected_sha256,
+    parse_project_ref,
     parse_published_ref,
     parse_serialization,
     published_document_path,
@@ -69,7 +77,7 @@ from apiome_cli.schema_test import (
 
 app = typer.Typer(
     name="schema",
-    help="Download published specs and test payloads against schemas.",
+    help="Download and diff published specs; test payloads against schemas.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -257,6 +265,95 @@ def _download_published(
         checksum=f"sha256:{actual}",
     )
     emit_download_metadata(metadata, json_mode=json_mode_from_context(ctx))
+
+
+@app.command("diff")
+def schema_diff(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(
+        ..., metavar="TENANT/PROJECT", help="Project by slugs, e.g. acme-corp/payments-api."
+    ),
+    base_version: str = typer.Argument(..., metavar="V1", help="Base (older) published version, e.g. 2.0.0."),
+    head_version: str = typer.Argument(..., metavar="V2", help="Head (newer) published version, e.g. 2.1.0."),
+    output_format: str = typer.Option(
+        "summary", "--format", help="summary (default), unified, sarif or json. Global --json means json."
+    ),
+    scope: str = typer.Option("all", "--scope", help="Compare paths, schemas or all (default)."),
+    ignore: Optional[list[str]] = typer.Option(
+        None, "--ignore", help="Drop a kind of change (repeatable): description-only."
+    ),
+    exit_code: bool = typer.Option(
+        False, "--exit-code", help="Git-like: exit 1 if there are differences, 0 if identical."
+    ),
+    output: str = typer.Option("-", "--output", "-o", help="File to write, or - for stdout (default)."),
+) -> None:
+    """Compare two published versions: paths, classes and properties.
+
+    Both sides are fetched from the public GET /v1/schema/{tenant}/{project}/{version} (no login;
+    APIOME_API_KEY is sent for private versions) and compared in the CLI. A version typed as
+    v2.1.0 that is not found is retried as 2.1.0. This lists what changed; to grade changes as
+    breaking, use apiome versions compatibility.
+
+    Exit codes: 0 done (with --exit-code: identical); 1 with --exit-code, differences found;
+    2 bad usage, or a version is unknown, unpublished or private without a key. Without
+    --exit-code a transport or server error exits 1; with it, 2, so 1 always means "differs".
+    """
+    fmt = "json" if json_mode_from_context(ctx) else output_format.strip().lower()
+    try:
+        tenant, project = parse_project_ref(project_ref)
+        if fmt not in schema_diff_core.FORMATS:
+            raise ValueError(f"--format must be one of {', '.join(schema_diff_core.FORMATS)}, got {output_format!r}")
+        scope_value = scope.strip().lower()
+        if scope_value not in schema_diff_core.SCOPES:
+            raise ValueError(f"--scope must be one of {', '.join(schema_diff_core.SCOPES)}, got {scope!r}")
+        ignored = schema_diff_core.normalize_ignore(ignore or [])
+        base_ref = parse_published_ref(f"{tenant}/{project}/{base_version}")
+        head_ref = parse_published_ref(f"{tenant}/{project}/{head_version}")
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    output = output.strip()
+    if not output:
+        typer.echo("--output cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    settings = settings_from_context(ctx)
+    client = RestClient(settings, timeout=timeout_from_context(ctx), verify=not insecure_from_context(ctx))
+    try:
+        base_ref, base_doc = fetch_published_openapi(client, base_ref)
+        head_ref, head_doc = fetch_published_openapi(client, head_ref)
+    except typer.Exit as exc:
+        # With --exit-code, 1 must only ever mean "differences": remap transport/5xx to 2.
+        if exit_code and exc.exit_code == EXIT_ERROR:
+            raise typer.Exit(EXIT_USAGE) from exc
+        raise
+
+    changes = schema_diff_core.apply_ignore(
+        schema_diff_core.diff_specs(base_doc, head_doc, scope=scope_value), ignored
+    )
+    sides = {
+        "base": {"label": base_ref.label(), "url": published_document_path("schema", base_ref)},
+        "head": {"label": head_ref.label(), "url": published_document_path("schema", head_ref)},
+    }
+    if fmt == "summary":
+        text = schema_diff_core.render_summary(changes, base_label=base_ref.version, head_label=head_ref.version) + "\n"
+    elif fmt == "unified":
+        text = schema_diff_core.render_unified(
+            base_doc, head_doc, base_label=base_ref.label(), head_label=head_ref.label(), scope=scope_value, ignore=ignored
+        )
+    elif fmt == "json":
+        payload = schema_diff_core.to_json(changes, **sides, scope=scope_value, ignore=ignored)
+        text = json.dumps(payload, indent=2) + "\n"
+    else:
+        payload = schema_diff_core.to_sarif(
+            changes, artifact_uri=sides["head"]["url"], tool_version=__version__, **sides
+        )
+        text = json.dumps(payload, indent=2) + "\n"
+    write_document_bytes(text.encode("utf-8"), output)
+    if output != "-":
+        typer.echo(f"Wrote {fmt} diff ({len(changes)} changes) to {output}", err=True)
+    if exit_code and changes:
+        raise typer.Exit(EXIT_DIFFERENCES)
 
 
 @app.command("test")

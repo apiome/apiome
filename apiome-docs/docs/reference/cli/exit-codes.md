@@ -18,6 +18,7 @@ Failed import/export **jobs** reuse codes 1–3 via `apiome_cli.taxonomy_exit` (
 | --- | --- | --- |
 | `0` | `EXIT_SUCCESS` | The command did what was asked. |
 | `1` | `EXIT_ERROR` | Transport failure, server error (5xx), or an unexpected client-side failure. |
+| `1` | `EXIT_DIFFERENCES` | `apiome schema diff --exit-code` (CLI 9.8): git-like — the two versions **differ** (after `--scope` and `--ignore`). Deliberately the value of `EXIT_ERROR`, like `git diff --exit-code`; under `--exit-code` the command remaps transport/5xx errors to `EXIT_USAGE` so 1 is unambiguous. Without `--exit-code` it is never used. |
 | `2` | `EXIT_USAGE` | Bad invocation, or a rejected request (any 4xx — including authentication). |
 | `3` | `EXIT_POLICY_BLOCKED` | The tenant's import/export quality policy (IXH-2.3) **blocks** this payload. The report was produced successfully; the answer is "policy refuses this". A waiver that covers the shortfall downgrades the verdict server-side, so a waived payload does not exit with this code — it is reported as waived and passes. |
 | `4` | `EXIT_QUALITY_GATE` | A `--min-grade` or `--fail-on` threshold supplied on the command line was not met. Distinct from `EXIT_POLICY_BLOCKED`: the tenant policy allowed the payload and the caller's own, stricter CI threshold rejected it. |
