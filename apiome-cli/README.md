@@ -1453,6 +1453,22 @@ apiome --json properties list payments-api --all
 Properties have no tags, so there is no tag column or `--tag` filter. The older
 `apiome properties list --project-id <uuid>` still works.
 
+### Show one property
+
+`apiome properties show <project> <property>` shows one property in a single pane: type,
+required, constraints (`minimum`, `multipleOf`, `pattern`, `enum` …), examples, description and
+every class attribute that uses it, marked required or optional
+(`GET /v1/properties/{tenant}/{project}/{id}`, which reports `usage` from apiome-rest 1.354.0).
+
+```bash
+apiome properties show payments-api amount
+apiome properties show payments-api 5f0c9a8e-1b7d-4c3e-9a51-2d6f8e4b7c10
+apiome --json properties show payments-api amount   # the property plus usage[]
+```
+
+The name is matched exactly, then ignoring case; a miss exits **2** with "Did you mean: …?".
+`--json` prints the full property with `usage` — `[{class_name, attribute_name, required}]`.
+
 ### List resources
 
 Human-readable tables (default):

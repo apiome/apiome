@@ -83,6 +83,41 @@ apiome properties list payments-api
 With `--json` it prints `{ "total": …, "items": [...] }`, each item with `used_by` and
 `used_by_count`. The older form `apiome properties list --project-id <uuid>` still works.
 
+### Show one property
+
+`apiome properties show <project> <property>` shows one property in a single pane, so you can see
+what governs it and who depends on it before you change it. Name the property by its name or its
+UUID.
+
+```bash
+apiome properties show payments-api amount
+# amount  (5f0c9a8e-1b7d-4c3e-9a51-2d6f8e4b7c10)
+# ──────────────────────────────────────────────
+# Type:         number
+# Required:     yes
+# Constraints:  minimum=0, multipleOf=0.01
+# Examples:     19.99, 1000.0, 0.5
+# Description:  Monetary amount in the smallest unit for the currency.
+# Enabled:      yes
+# Used by:      Charge.amount         (required)
+#               Payout.amount         (required)
+#               Refund.refund_amount  (optional)
+```
+
+- **Type** works the same way as in `properties list`. **Constraints** lists the JSON Schema
+  limits the property sets (`minimum`, `maxLength`, `pattern`, `enum` and similar). **Examples**
+  comes from its `examples` or `example`.
+- **Used by** lists every class attribute, in any version of the project, that uses the property.
+  Each one shows whether that class marks it required.
+- A **Primitive** row appears only when the property's schema is a `$ref`. Properties have no tags,
+  so there is no tags row.
+- The name is matched exactly first, then ignoring case. If nothing matches, the command exits
+  with code 2 and suggests the closest names, such as `Did you mean: amount?`.
+
+With `--json` it prints the whole property plus a `usage` array of
+`{ "class_name": …, "attribute_name": …, "required": … }`. **Used by** needs apiome-rest 1.354.0 or
+later. An older server shows it as not reported, and `usage` is `null`.
+
 ## Verify
 
 - **UI:** the class shows its new description; properties reflect their edits.

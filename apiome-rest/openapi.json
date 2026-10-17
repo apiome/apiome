@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.217.0",
+    "version": "1.218.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22648,7 +22648,7 @@
                 }
               }
             },
-            "description": "Unprocessable Content"
+            "description": "Unprocessable Entity"
           },
           "502": {
             "content": {
@@ -37029,7 +37029,7 @@
           "properties"
         ],
         "summary": "Get Property",
-        "description": "Get a specific property by ID.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    property_id: The property ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The property details",
+        "description": "Get a specific property by ID, with ``usage`` \u2014 every class attribute that uses it, across the\nproject's live versions (#3224).\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    property_id: The property ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The property details",
         "operationId": "get_property_v1_properties__tenant_slug___project_id___property_id__get",
         "parameters": [
           {
@@ -97160,7 +97160,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "completed_at": {
             "anyOf": [
@@ -99070,7 +99070,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99298,7 +99298,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99829,14 +99829,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101861,7 +101861,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "1e4e97fc-688b-40ec-a689-82d6aa5202b0"
+            "example": "d95fec82-15d3-463a-8d6a-7b8c5fa5e5b5"
           },
           "method": {
             "type": "string",
@@ -104388,7 +104388,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -106124,7 +106124,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "browse_url": {
             "anyOf": [
@@ -137737,6 +137737,23 @@
             ],
             "title": "Used By Count",
             "description": "Number of class properties (across live versions) that reference this property; list responses only."
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProjectPropertyUsage"
+                },
+                "type": "array",
+                "description": "A property on a project class, including nested structure and optional primitive binding."
+              },
+              {
+                "type": "null",
+                "description": "A property on a project class, including nested structure and optional primitive binding."
+              }
+            ],
+            "title": "Usage",
+            "description": "Every class attribute (in any live version of the project) that uses this property, one entry per distinct class name, attribute name and required flag, sorted; single-property GET only (#3224)."
           }
         },
         "type": "object",
@@ -137812,6 +137829,36 @@
         "type": "object",
         "title": "ProjectPropertyUpdateRequest",
         "description": "Partial update payload for a class property."
+      },
+      "ProjectPropertyUsage": {
+        "properties": {
+          "class_name": {
+            "type": "string",
+            "title": "Class Name",
+            "description": "Name of the class that uses the property.",
+            "example": "Example"
+          },
+          "attribute_name": {
+            "type": "string",
+            "title": "Attribute Name",
+            "description": "Name the property has inside that class.",
+            "example": "Example"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "description": "Whether the class marks this attribute required (its data has `\"required\": true`).",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "class_name",
+          "attribute_name"
+        ],
+        "title": "ProjectPropertyUsage",
+        "description": "One class attribute that uses a library property (#3224, CLI 6.2)."
       },
       "ProjectSchema": {
         "properties": {
@@ -140004,9 +140051,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Request body for push webhook subscription create."
               },
@@ -140058,9 +140105,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Response payload for push webhook subscription."
               },
@@ -140163,9 +140210,9 @@
               {
                 "type": "string",
                 "enum": [
-                  "breaking",
+                  "docs-only",
                   "non-breaking",
-                  "docs-only"
+                  "breaking"
                 ],
                 "description": "Request body for push webhook subscription update."
               },
@@ -146173,7 +146220,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           }
         },
         "additionalProperties": false,
@@ -157495,7 +157542,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164712,14 +164759,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T16:31:50Z"
+            "example": "2026-10-17T17:10:24Z"
           },
           "outcome": {
             "anyOf": [

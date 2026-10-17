@@ -72,7 +72,8 @@ async def get_property(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ProjectPropertySchema:
     """
-    Get a specific property by ID.
+    Get a specific property by ID, with ``usage`` — every class attribute that uses it, across the
+    project's live versions (#3224).
 
     Supports authentication via JWT token or API key.
 
@@ -109,6 +110,7 @@ async def get_property(
         except:
             property_data['data'] = {}
 
+    property_data['usage'] = db.get_property_usage(property_id)
     return ProjectPropertySchema(**property_data)
 
 

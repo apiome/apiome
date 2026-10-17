@@ -1,0 +1,11 @@
+amount  (bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb)
+──────────────────────────────────────────────
+Type:         number
+Required:     yes
+Constraints:  minimum=0, multipleOf=0.01
+Examples:     19.99, 1000.0, 0.5
+Description:  Monetary amount in the smallest unit for the currency.
+Enabled:      yes
+Used by:      Charge.amount         (required)
+              Payout.amount         (required)
+              Refund.refund_amount  (optional)

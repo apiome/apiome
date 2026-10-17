@@ -11846,6 +11846,29 @@ class Database:
         results = self.execute_query(query, (property_id, project_id))
         return results[0] if results else None
 
+    def get_property_usage(self, property_id: str) -> List[Dict[str, Any]]:
+        """Where a property is used: the class attributes that reference it (#3224, CLI 6.2).
+
+        Args:
+            property_id: The library property.
+
+        Returns:
+            Rows of ``class_name``, ``attribute_name`` and ``required`` (the class property's
+            ``data`` has ``"required": true``), distinct across the project's live versions and
+            sorted by class then attribute. Soft-deleted classes and versions do not count.
+        """
+        query = """
+            SELECT DISTINCT c.name::text AS class_name,
+                   cp.name::text AS attribute_name,
+                   COALESCE(cp.data->>'required' = 'true', false) AS required
+            FROM apiome.class_properties cp
+            JOIN apiome.classes c ON c.id = cp.class_id AND c.deleted_at IS NULL
+            JOIN apiome.versions v ON v.id = c.version_id AND v.deleted_at IS NULL
+            WHERE cp.property_id = %s
+            ORDER BY class_name, attribute_name, required
+        """
+        return self.execute_query(query, (property_id,))
+
     def create_property(self, project_id: str, name: str, description: Optional[str], data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new property for a project."""
         query = """

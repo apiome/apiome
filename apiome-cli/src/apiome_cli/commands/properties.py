@@ -1,4 +1,4 @@
-"""Properties list and get commands (read-only)."""
+"""Properties list, show and get commands (read-only)."""
 
 from __future__ import annotations
 
@@ -21,11 +21,12 @@ from apiome_cli.output import (
     emit_record_response,
     json_mode_from_context,
 )
+from apiome_cli.property_show import PropertyNotFound, find_property, render_show
 from apiome_cli.property_view import UsageUnavailable, filter_properties, render_table
 
 app = typer.Typer(
     name="properties",
-    help="List and fetch project properties.",
+    help="List, show and fetch project properties.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -106,6 +107,32 @@ def list_properties(
     typer.echo(
         render_table(shown, matched=len(matched), project=str(project_ref or project_id), total=len(items))
     )
+
+
+@app.command("show")
+def show_property(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    property_ref: str = typer.Argument(..., metavar="PROPERTY", help="Property name or UUID."),
+) -> None:
+    """Show one property: its type, constraints, examples, description and the classes that use it.
+
+    The name is matched exactly, then ignoring case; a miss suggests the closest names (exit 2).
+    ``--json`` prints the full property with ``usage[]`` of ``{class_name, attribute_name, required}``.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    pid = resolve_project_uuid(client, tenant_slug, project_ref)
+    items, _total = fetch_list(client, api_paths.properties(tenant_slug, pid))
+    try:
+        match = find_property(items, property_ref, project=project_ref)
+    except PropertyNotFound as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    prop = client.get(api_paths.property_record(tenant_slug, pid, str(match["id"]))).json()
+    if json_mode_from_context(ctx):
+        emit_json(prop)
+        return
+    typer.echo(render_show(prop))
 
 
 @app.command("get")
