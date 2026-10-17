@@ -186,7 +186,7 @@ Security score for catalog revisions.
 
 Designer is a commercial surface; non-MVP per its own body.
 
-- [ ] [#4021](https://github.com/apiome/apiome/issues/4021) MFI-23.12 Read-only Designer/Studio view of catalog items
+- [x] [#4021](https://github.com/apiome/apiome/issues/4021) MFI-23.12 Read-only Designer/Studio view of catalog items
 
 #### Project / batch export
 

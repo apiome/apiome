@@ -84,6 +84,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
   const suiteHref = resolveStudioRootHref();
   const editorHref = resolveStudioEditorHref();
   const workspaceHref = resolveStudioWorkspaceHref();
+  const catalogHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.catalog);
   const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
 
   return [
@@ -97,6 +98,7 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
       href: suiteHref,
       editorHref,
       workspaceHref,
+      catalogHref,
       icon: 'Layers',
       accent: 'from-violet-500 to-fuchsia-600',
       glow: 'group-hover:shadow-fuchsia-500/20',

@@ -1,5 +1,6 @@
 import { Palette } from 'lucide-react';
 import {
+  buildDesignerCatalogPreviewHref,
   buildDesignerEditorHref,
   getCommercialHomeCards,
   getCommercialNavItems,
@@ -116,6 +117,23 @@ describe('external-links (commercial products)', () => {
     expect(buildDesignerEditorHref('proj-1', 'ver-2', flags)).toBe(
       'https://studio.example.com/editor?projectId=proj-1&versionId=ver-2'
     );
+  });
+
+  it('builds the read-only catalog preview link only when the suite is entitled (MFI-23.12)', () => {
+    process.env.NEXT_PUBLIC_STUDIO_URL = 'https://studio.example.com';
+    expect(buildDesignerCatalogPreviewHref('item 1', new Set(['designer']))).toBe(
+      'https://studio.example.com/catalog/item%201'
+    );
+    expect(buildDesignerCatalogPreviewHref('item-1', new Set(['paths']))).toBe(
+      'https://studio.example.com/catalog/item-1'
+    );
+    expect(buildDesignerCatalogPreviewHref('item-1', new Set())).toBeNull();
+    expect(buildDesignerCatalogPreviewHref('item-1', new Set(['scribe']))).toBeNull();
+  });
+
+  it('keeps the catalog preview link relative on the studio surface', () => {
+    process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+    expect(buildDesignerCatalogPreviewHref('item-1', new Set(['designer']))).toBe('/catalog/item-1');
   });
 
   it('resolves the Studio workspace route comment deep links target (COL-1.3)', () => {

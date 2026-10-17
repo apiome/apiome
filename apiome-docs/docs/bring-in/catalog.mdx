@@ -85,7 +85,9 @@ wizard](./import-wizard.mdx#import-to-catalog).
 <Route path="/ade/dashboard/catalog/[id]" />
 
 **Click an item** to open it. The header shows its status, **Quality** and **Lint** scores, and
-**“Convert to OpenAPI Project”**, **“Export”** and **“View code”**. Eight tabs follow:
+**“Convert to OpenAPI Project”**, **“Export”** and **“View code”** — plus **“Open in Designer”**
+when your workspace has the Designer suite (see [View an item in Designer](#view-an-item-in-designer)).
+Eight tabs follow:
 
 | Tab | Shows |
 | --- | --- |
@@ -129,6 +131,23 @@ marked *Derived from the format*.
 <Screenshot id="catalog-item-test-bench" alt="The Test bench tab: a schema picker, a payload editor and test suites" />
 
 <Screenshot id="catalog-item-versions" alt="The Versions tab of a catalog item with a single revision" />
+
+## View an item in Designer
+
+When your workspace has the **Designer** suite, **click “Open in Designer”** on an item's page to
+open it in [Studio](../build/studio.mdx) — **read-only**. A catalog item is incomplete and cannot
+be published, so Designer shows it without any way to change it:
+
+- the header carries a **Catalog item · read-only** badge, and a banner says why nothing can be
+  edited, saved or published;
+- **Normalized model** shows the same API surface and parsed entities as the **Overview** tab here;
+- **Raw source** shows the imported source, read-only, as on the **Source & code** tab.
+
+To edit the item, convert it: **click “Open in Catalog”** in Designer to come back here, then
+**“Convert to OpenAPI Project”**. The converted project opens in Designer like any other project.
+
+The button is hidden for a deleted item, and for a workspace without Designer. Designer's address
+is `/catalog/{id}`; `?tab=source` opens it on **Raw source**.
 
 ## Convert to OpenAPI
 
