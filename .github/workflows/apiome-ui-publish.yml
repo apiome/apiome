@@ -5,6 +5,12 @@ on:
     branches: [ main ]
     paths:
       - 'apiome-ui/**'
+      # Not part of the built app: the jest and Playwright suites, their configs, the notes.
+      - '!apiome-ui/tests/**'
+      - '!apiome-ui/e2e/**'
+      - '!apiome-ui/playwright*.config.ts'
+      - '!apiome-ui/docs/**'
+      - '.github/workflows/apiome-ui-publish.yml'
   workflow_dispatch:
 
 env:

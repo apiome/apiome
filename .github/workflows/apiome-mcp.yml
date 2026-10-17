@@ -6,10 +6,19 @@ on:
     paths:
       - '.github/workflows/apiome-mcp.yml'
       - 'apiome-mcp/**'
-      - 'apiome-rest/**'
+      # apiome-rest is an editable dependency: its code and packaging, not its tests or docs.
+      - 'apiome-rest/src/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/README.md'
+      # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser).
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/scripts/install_dev_toolchain.sh'
+      # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.
+      - 'apiome-rest/tests/corpus_*.py'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'apiome-db/**'
+      # test_agent_quotas.py pins the SQL of migration V272.
+      - 'apiome-db/scripts/**'
       # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
       # corpus, so a fixture or manifest edit alone must re-run the drift gate.
       - 'apiome-ui/examples/**'
@@ -18,10 +27,19 @@ on:
     paths:
       - '.github/workflows/apiome-mcp.yml'
       - 'apiome-mcp/**'
-      - 'apiome-rest/**'
+      # apiome-rest is an editable dependency: its code and packaging, not its tests or docs.
+      - 'apiome-rest/src/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/README.md'
+      # The corpus toolchain this job installs into apiome-rest/.tools (buf, asyncapi-parser).
+      - 'apiome-rest/toolchain/**'
+      - 'apiome-rest/scripts/install_dev_toolchain.sh'
+      # tests/toolset_corpus.py imports apiome-rest's corpus loader and adapter helpers.
+      - 'apiome-rest/tests/corpus_*.py'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'apiome-db/**'
+      # test_agent_quotas.py pins the SQL of migration V272.
+      - 'apiome-db/scripts/**'
       # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
       # corpus, so a fixture or manifest edit alone must re-run the drift gate.
       - 'apiome-ui/examples/**'

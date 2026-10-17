@@ -3,8 +3,17 @@ name: Apiome REST
 on:
   push:
     branches: [ main ]
+    # What goes into the image (see apiome-rest/Dockerfile): the app, its requirements and bundled
+    # toolchain, and the workspace manifests the tsx worker's install resolves. Tests, docs, the
+    # changelog and the OpenAPI document are not in it.
     paths:
-      - 'apiome-rest/**'
+      - 'apiome-rest/src/**'
+      - 'apiome-rest/Dockerfile'
+      - 'apiome-rest/requirements.txt'
+      - 'apiome-rest/toolchain/**'
+      - 'yarn.lock'
+      - '.dockerignore'
+      - '.github/workflows/apiome-rest.yml'
   workflow_dispatch:
 
 env:
