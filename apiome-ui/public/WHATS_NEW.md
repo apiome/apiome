@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome projects delete <slug-or-id>` shows what will be removed, then deletes the project permanently once you type its slug — or archives it restorably with `--archive`; a project with published versions is refused unless `--force` (exit 6)
   - `apiome projects export <slug-or-id>` writes a whole project — versions, classes, paths, tags and migration plans — as one deterministic JSON or YAML document (`--gzip`, `--versions`, `--include`/`--exclude`) for backups, environment diffs and migrations
   - `apiome versions fork <project> <version> --into <project> --to <x.y.z>` forks a version into another project with its lineage recorded — `--dry-run` shows the classes and properties it would copy
+  - `apiome versions unpublish <project> <version> --reason '…'` takes a release back: it previews what will happen, asks you to type the version, moves tags such as `latest` back to the previous published version, notifies webhook subscribers and records the reason (shown by `versions get`); the only published version is refused unless `--force` (exit 6)
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

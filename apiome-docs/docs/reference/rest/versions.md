@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.212.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.213.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 52 operations
 
@@ -1780,18 +1780,32 @@ Request body for review source changes.
 
 **Unpublish Version**
 
-Unpublish a version.
+Unpublish a version: return it to draft, record why, move its tags, notify subscribers.
 
-Only the version creator or a tenant administrator can unpublish a version.
+Only the version creator or a tenant administrator can unpublish a version (#3213):
+
+* ``reason`` is stored as ``unpublishReason`` (with ``unpublishedAt`` / ``unpublishedBy``)
+  and sent in the ``version.unpublished`` webhook.
+* Unless ``keepTags``, every version tag on the revision moves to the project's
+  next-most-recent published revision, in the same transaction. Immutable tags, protected
+  tags (for a non-administrator) and tags with nowhere to go stay, listed in ``tagsKept``.
+* A ``version.unpublished`` push-webhook event goes to every active subscription unless
+  ``silent`` — which only a tenant administrator may ask for (403 ``silent_requires_admin``).
+* ``dryRun`` returns the same plan without writing anything.
+
+An empty body behaves as before #3213, plus the tag move and the webhook.
 
 Args:
     tenant_slug: The tenant slug
     project_id: The project ID
     version_record_id: The version record ID
+    background_tasks: Runs the webhook fan-out after the response
+    body: Optional reason / silent / keepTags / dryRun
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    The unpublished version
+    The unpublished version, with ``tagsMoved``, ``tagsKept``, ``notify`` and
+    ``webhookSubscribers``
 
 Operation id: `unpublish_version_v1_versions__tenant_slug___project_id___version_record_id__unpublish_post`
 
@@ -1805,11 +1819,17 @@ Operation id: `unpublish_version_v1_versions__tenant_slug___project_id___version
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
+**Request body** (optional)
+
+Request body for unpublish version.
+
+- `application/json` — [`VersionUnpublishRequest`](#schema-versionunpublishrequest) or null
+
 **Responses**
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for unpublish version. | `application/json` [`VersionSchema`](#schema-versionschema) |
+| 200 | Successful response for unpublish version. | `application/json` [`VersionUnpublishResponse`](#schema-versionunpublishresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
@@ -2357,12 +2377,86 @@ Schema revision: shortMessage = commit-style note; changelog = release notes (ma
 | `lifecycle` | string | no | Governance lifecycle tag: stable \| beta \| deprecated \| archived (#739); aligns with metadata.lifecycle and #507 deprecation when unset. |
 | `qualityScore` | integer or null | no | Stored 0-100 quality score for this revision (#5259); null when the revision has not been linted yet. Open GET .../lint to compute and store it. |
 | `qualityGrade` | string or null | no | Stored A-F grade matching qualityScore; null when unscored. |
+| `unpublishReason` | string or null | no | Reason recorded with the most recent unpublish (#3213); null when never unpublished or no reason was given. |
+| `unpublishedAt` | string (date-time) or string or null | no | When the revision was most recently unpublished (#3213). |
+| `unpublishedBy` | string or null | no | User id that most recently unpublished the revision (#3213). |
 | `creator_name` | string or null | no | Creator Name. |
 | `creator_email` | string or null | no | Creator Email. |
 | `project_name` | string or null | no | Project Name. |
 | `project_slug` | string or null | no | Project Slug. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
+
+### `VersionUnpublishRequest` {#schema-versionunpublishrequest}
+
+Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/unpublish`` (#3213).
+
+An empty body keeps the original behaviour: unpublish, move the revision's tags to the
+previous published revision, and notify webhook subscribers.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `reason` | string or null | no | Why the revision is unpublished; stored as unpublishReason and sent in the webhook. |
+| `silent` | boolean | no | Skip the version.unpublished webhook. Tenant administrators only (403 silent_requires_admin). |
+| `keepTags` | boolean | no | Leave version tags on the unpublished revision instead of moving them to the previous published revision. |
+| `dryRun` | boolean | no | Return the plan (tag moves, webhook subscribers) without unpublishing anything. |
+
+### `VersionUnpublishResponse` {#schema-versionunpublishresponse}
+
+The unpublished revision plus what the unpublish did (#3213).
+
+On a dry run, the revision is returned as it is now (still published) and nothing is written.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `project_id` | string | yes | Project identifier the resource belongs to. |
+| `creator_id` | string or null | no | Creator ID. |
+| `version_id` | string | yes | Project version identifier or semantic version label, depending on context. |
+| `shortMessage` | string or null | no | Human-readable revision note (stored as description in DB). |
+| `changelog` | string or null | no | Markdown changelog / release notes (stored as change_log in DB). |
+| `author` | string or null | no | Optional commit author string (audit / CI identity; stored as commit_author). |
+| `message` | string or null | no | Optional full commit message body (stored as commit_message). |
+| `externalRef` | string or null | no | External work item id or URL (Jira, Linear, etc.). |
+| `visibility` | string | no | Visibility. |
+| `published` | boolean | no | Published. |
+| `published_at` | string (date-time) or string or null | no | Published At timestamp (ISO 8601). |
+| `publishedImmutable` | boolean | no | When published: if true, git-like writes require tenant-admin override (#2586). |
+| `mockEnabled` | boolean | no | When true, apiome-mock serves this revision (#4422). Draft mocks require a tenant API key (#4446). |
+| `mockPrivate` | boolean | no | When true, the mock is key-gated for an unpublished draft (#4446, SIM-2.5). |
+| `mockBaseUrl` | string or null | no | Stable mock URL when mockEnabled is true (computed by REST). |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `parent_version_id` | string or null | no | Parent Version ID. |
+| `merge_parent_version_id` | string or null | no | Merge Parent Version ID. |
+| `sourceCommitSha` | string or null | no | Repository source commit SHA that triggered this revision (RAR-4.2 refresh provenance); NULL for hand-authored revisions. |
+| `sourceCommittedAt` | string (date-time) or string or null | no | Commit timestamp of source_commit_sha (RAR-4.2 refresh provenance). |
+| `forkedFromRevisionId` | string or null | no | Source revision (versions.id) if this row is a fork. |
+| `upstreamProjectId` | string or null | no | Upstream project for merge/sync (optional). |
+| `forkSourceVersionLabel` | string or null | no | Fork Source Version Label. |
+| `forkSourceProjectName` | string or null | no | Fork Source Project Name. |
+| `upstreamProjectName` | string or null | no | Upstream Project Name. |
+| `revisionLocked` | boolean | no | Tenant-admin lock: revision cannot be soft-deleted by non-admins. |
+| `metadata` | object or null | no | Revision-level JSON (deprecation, sunset, successor revision id, lifecycle tag, etc.). |
+| `lifecycle` | string | no | Governance lifecycle tag: stable \| beta \| deprecated \| archived (#739); aligns with metadata.lifecycle and #507 deprecation when unset. |
+| `qualityScore` | integer or null | no | Stored 0-100 quality score for this revision (#5259); null when the revision has not been linted yet. Open GET .../lint to compute and store it. |
+| `qualityGrade` | string or null | no | Stored A-F grade matching qualityScore; null when unscored. |
+| `unpublishReason` | string or null | no | Reason recorded with the most recent unpublish (#3213); null when never unpublished or no reason was given. |
+| `unpublishedAt` | string (date-time) or string or null | no | When the revision was most recently unpublished (#3213). |
+| `unpublishedBy` | string or null | no | User id that most recently unpublished the revision (#3213). |
+| `creator_name` | string or null | no | Creator Name. |
+| `creator_email` | string or null | no | Creator Email. |
+| `project_name` | string or null | no | Project Name. |
+| `project_slug` | string or null | no | Project Slug. |
+| `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
+| `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
+| `dryRun` | boolean | no | Dry Run. |
+| `tagsMoved` | array of `UnpublishTagMove` | no | Tags Moved. |
+| `tagsKept` | array of `UnpublishTagKept` | no | Tags Kept. |
+| `previousPublishedVersionId` | string or null | no | Revision the tags move to: the project's next-most-recent published revision. |
+| `previousPublishedVersionLabel` | string or null | no | Previous Published Version Label. |
+| `publishedVersionsRemaining` | integer | no | Published revisions the project has once this one is unpublished. |
+| `notify` | boolean | no | Whether a version.unpublished webhook is (or would be) sent. |
+| `webhookSubscribers` | integer or null | no | Active push-webhook subscriptions notified; null when the count could not be read. |
 
 ### `VersionUpdateRequest` {#schema-versionupdaterequest}
 

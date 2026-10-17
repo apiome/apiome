@@ -1,4 +1,4 @@
-"""Tests for ``versions publish`` and ``versions unpublish`` commands."""
+"""Tests for the ``versions publish`` command (``versions unpublish``: test_versions_unpublish.py)."""
 
 from __future__ import annotations
 
@@ -53,28 +53,9 @@ def _published(visibility: str = "public") -> dict[str, object]:
     }
 
 
-def _draft() -> dict[str, object]:
-    return {
-        "id": _VERSION_ID,
-        "project_id": _PROJECT_ID,
-        "version": "1.0.0",
-        "slug": "1.0.0",
-        "source": "import",
-        "data": {},
-        "enabled": True,
-        "publish_visibility": "draft",
-        "published_on": None,
-    }
-
-
 _PUBLISH_URL = (
     f"http://localhost:8000/v1/versions/acme-corp/{_PROJECT_ID}/{_VERSION_ID}/publish"
 )
-_UNPUBLISH_URL = (
-    f"http://localhost:8000/v1/versions/acme-corp/{_PROJECT_ID}/{_VERSION_ID}/unpublish"
-)
-
-
 def test_publish_by_uuid_defaults_to_public(httpx_mock: object) -> None:
     """publish posts visibility=public by default and echoes the API JSON."""
     httpx_mock.add_response(
@@ -195,43 +176,6 @@ def test_publish_slug_without_project_is_usage_error() -> None:
         env=_API_KEY_ENV,
     )
     assert result.exit_code == EXIT_USAGE
-
-
-def test_unpublish_by_uuid_returns_draft(httpx_mock: object) -> None:
-    """unpublish posts to the unpublish route with no body and shows draft state."""
-    httpx_mock.add_response(
-        method="POST",
-        url=_UNPUBLISH_URL,
-        json=_draft(),
-    )
-    result = runner.invoke(
-        app,
-        ["versions", "unpublish", _VERSION_ID, "--project", _PROJECT_ID],
-        env=_API_KEY_ENV,
-    )
-    assert result.exit_code == EXIT_SUCCESS
-    assert "draft" in result.stdout
-    request = httpx_mock.get_requests()[0]
-    assert request.url.path == (
-        f"/v1/versions/acme-corp/{_PROJECT_ID}/{_VERSION_ID}/unpublish"
-    )
-    assert not request.content
-
-
-def test_unpublish_json_mode(httpx_mock: object) -> None:
-    """--json unpublish echoes the raw API JSON."""
-    httpx_mock.add_response(
-        method="POST",
-        url=_UNPUBLISH_URL,
-        json=_draft(),
-    )
-    result = runner.invoke(
-        app,
-        ["--json", "versions", "unpublish", _VERSION_ID, "--project", _PROJECT_ID],
-        env=_API_KEY_ENV,
-    )
-    assert result.exit_code == EXIT_SUCCESS
-    assert json.loads(result.stdout.strip()) == _draft()
 
 
 def test_publish_requires_api_key() -> None:

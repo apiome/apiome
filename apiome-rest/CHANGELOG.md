@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.349.0] - 2026-10-16
+
+### Added
+- **Unpublish with a reason, tag moves and a webhook (#3213, CLI 4.6)**: `POST /v1/versions/{tenant}/{project}/{version_record_id}/unpublish`
+  takes an optional body `{ reason, keepTags, silent, dryRun }`.
+  - `reason` (up to 2000 characters) is stored with `unpublishedAt` / `unpublishedBy` (V278) and
+    returned on the version (`unpublishReason`, `unpublishedAt`, `unpublishedBy`; `publish` pull section).
+  - Unless `keepTags`, the version tags on the revision move to the project's next-most-recent
+    published revision in the same transaction. Immutable tags, protected tags (for a non-administrator)
+    and tags with nowhere to go stay; the response lists `tagsMoved` and `tagsKept`.
+  - A `version.unpublished` push-webhook event goes to every active subscription unless `silent`, which
+    only a tenant administrator may ask for (`403` `silent_requires_admin`).
+  - `dryRun: true` returns the plan (`tagsMoved`, `tagsKept`, `previousPublishedVersionLabel`,
+    `publishedVersionsRemaining`, `webhookSubscribers`) without writing anything.
+  - An empty body still works; it now also moves the tags and sends the webhook.
+
+The OpenAPI version moves to 1.213.0.
+
 ## [1.348.1] - 2026-10-16
 
 ### Fixed

@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List, fetch, publish and fork project versions."
+description: "List, fetch, publish, unpublish and fork project versions."
 sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,7 +12,7 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List, fetch, publish and fork project versions.
+List, fetch, publish, unpublish and fork project versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
@@ -106,20 +106,28 @@ apiome versions publish [OPTIONS] VERSION
 
 ## apiome versions unpublish {#versions-unpublish}
 
-Return a published version to draft (POST …/{version_record_id}/unpublish).
+Unpublish a version: return it to draft and move its tags back (POST …/{version_record_id}/unpublish).
+
+Shows what will happen — the spec endpoints it disappears from, the version tags that move to the next-most-recent published version, the webhook subscribers notified — then asks you to type the version to confirm. The reason is stored and shown by `versions get`.
 
 ```text
-apiome versions unpublish [OPTIONS] VERSION
+apiome versions unpublish [OPTIONS] PROJECT [VERSION]
 ```
 
 **Arguments**
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `VERSION` | text | yes | Version UUID, or a slug/label when --project is supplied. |
+| `FIRST` | text | yes | Project slug or UUID (or the version, when --project is passed). |
+| `SECOND` | text |  | Version label (2.1.0 or v2.1.0) or revision UUID. |
 
 **Options**
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
-| `--project` | text |  | yes | Project UUID or slug. |
+| `--project` | text |  |  | Project UUID or slug; the older form `unpublish <version> --project <project>`. |
+| `--reason` | text |  |  | Why it is unpublished; recorded for audit. Required unless --silent. |
+| `--keep-tags` | flag |  |  | Leave version tags on it instead of moving them to the previous published version. |
+| `--silent` | flag |  |  | Do not notify webhook subscribers (tenant administrators only). |
+| `--force` | flag |  |  | Unpublish even when it is the project's only published version. |
+| `--yes`, `-y` | flag |  |  | Skip the typed confirmation. |

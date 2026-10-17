@@ -1333,6 +1333,24 @@ The source is a version label (`2.1.0` or `v2.1.0`), a revision UUID or a versio
 be `MAJOR.MINOR.PATCH` and greater than the source unless `--allow-lesser`. A label the target
 already has exits **6**. A fork always targets a different project; within one project, branch.
 
+### Unpublish a version
+
+`apiome versions unpublish <project> <version> --reason <text>` returns a published version to
+draft (`POST /v1/versions/{tenant}/{project}/{id}/unpublish`). It first asks the server for a dry
+run and prints what will happen — the spec endpoints the version disappears from, the version tags
+that move back to the previous published version, the webhook subscribers notified — then asks you
+to type the version.
+
+```bash
+apiome versions unpublish payments-api v2.1.0 --reason 'Security regression'
+apiome versions unpublish payments-api 2.1.0 --reason 'Wrong workspace' --keep-tags --yes
+apiome --json versions unpublish payments-api 2.1.0 --silent --yes   # tenant administrators only
+```
+
+`--reason` is required unless `--silent`, and is stored — `versions get` shows it. Unpublishing
+the project's only published version exits **6** unless `--force`. The older form
+`apiome versions unpublish <version> --project <project>` still works.
+
 ### List resources
 
 Human-readable tables (default):

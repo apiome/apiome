@@ -3398,6 +3398,25 @@ class VersionSchema(BaseModel):
         serialization_alias="qualityGrade",
         description="Stored A-F grade matching qualityScore; null when unscored.",
     )
+    # Unpublish audit (#3213): the most recent unpublish, kept when the revision is re-published.
+    unpublish_reason: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("unpublishReason", "unpublish_reason"),
+        serialization_alias="unpublishReason",
+        description="Reason recorded with the most recent unpublish (#3213); null when never unpublished or no reason was given.",
+    )
+    unpublished_at: Optional[Union[datetime, str]] = Field(
+        default=None,
+        validation_alias=AliasChoices("unpublishedAt", "unpublished_at"),
+        serialization_alias="unpublishedAt",
+        description="When the revision was most recently unpublished (#3213).",
+    )
+    unpublished_by: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("unpublishedBy", "unpublished_by"),
+        serialization_alias="unpublishedBy",
+        description="User id that most recently unpublished the revision (#3213).",
+    )
     creator_name: Optional[str] = None
     creator_email: Optional[str] = None
     project_name: Optional[str] = None
@@ -3413,6 +3432,89 @@ class VersionSchema(BaseModel):
         from .revision_lifecycle import effective_lifecycle
 
         return {**data, "lifecycle": effective_lifecycle(data.get("metadata"))}
+
+
+class VersionUnpublishRequest(BaseModel):
+    """Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/unpublish`` (#3213).
+
+    An empty body keeps the original behaviour: unpublish, move the revision's tags to the
+    previous published revision, and notify webhook subscribers.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=2000,
+        description="Why the revision is unpublished; stored as unpublishReason and sent in the webhook.",
+    )
+    silent: bool = Field(
+        default=False,
+        description="Skip the version.unpublished webhook. Tenant administrators only (403 silent_requires_admin).",
+    )
+    keep_tags: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("keepTags", "keep_tags"),
+        serialization_alias="keepTags",
+        description="Leave version tags on the unpublished revision instead of moving them to the previous published revision.",
+    )
+    dry_run: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("dryRun", "dry_run"),
+        serialization_alias="dryRun",
+        description="Return the plan (tag moves, webhook subscribers) without unpublishing anything.",
+    )
+
+
+class UnpublishTagMove(BaseModel):
+    """A version tag an unpublish moves to the previous published revision."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    name: str
+    to_version_id: str = Field(serialization_alias="toVersionId", validation_alias=AliasChoices("toVersionId", "to_version_id"))
+    to_version_label: Optional[str] = Field(
+        default=None, serialization_alias="toVersionLabel", validation_alias=AliasChoices("toVersionLabel", "to_version_label")
+    )
+
+
+class UnpublishTagKept(BaseModel):
+    """A version tag that stays on the unpublished revision, and why."""
+
+    id: str
+    name: str
+    reason: str = Field(description="keep-tags | immutable | protected | no-published-version")
+
+
+class VersionUnpublishResponse(VersionSchema):
+    """The unpublished revision plus what the unpublish did (#3213).
+
+    On a dry run, the revision is returned as it is now (still published) and nothing is written.
+    """
+
+    dry_run: bool = Field(default=False, serialization_alias="dryRun")
+    tags_moved: List[UnpublishTagMove] = Field(default_factory=list, serialization_alias="tagsMoved")
+    tags_kept: List[UnpublishTagKept] = Field(default_factory=list, serialization_alias="tagsKept")
+    previous_published_version_id: Optional[str] = Field(
+        default=None,
+        serialization_alias="previousPublishedVersionId",
+        description="Revision the tags move to: the project's next-most-recent published revision.",
+    )
+    previous_published_version_label: Optional[str] = Field(
+        default=None, serialization_alias="previousPublishedVersionLabel"
+    )
+    published_versions_remaining: int = Field(
+        default=0,
+        serialization_alias="publishedVersionsRemaining",
+        description="Published revisions the project has once this one is unpublished.",
+    )
+    notify: bool = Field(default=True, description="Whether a version.unpublished webhook is (or would be) sent.")
+    webhook_subscribers: Optional[int] = Field(
+        default=None,
+        serialization_alias="webhookSubscribers",
+        description="Active push-webhook subscriptions notified; null when the count could not be read.",
+    )
 
 
 class VersionCreateRequest(BaseModel):
