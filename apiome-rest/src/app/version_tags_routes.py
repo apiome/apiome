@@ -109,7 +109,7 @@ async def patch_version_tag(
     body: VersionTagUpdateRequest,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> VersionTagSchema:
-    """Move a tag to another revision and/or set immutable lock / protection policy."""
+    """Move a tag to another revision, set its immutable lock / protection policy, and/or its message."""
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     tenant_id = _tenant_id(auth_data)
     project = db.get_project_by_id(project_id, tenant_id)
@@ -128,6 +128,10 @@ async def patch_version_tag(
     if "protected" in body.model_fields_set:
         set_protected = body.protected
 
+    message_kwargs: Dict[str, Any] = {}
+    if "message" in body.model_fields_set:
+        message_kwargs["set_message"] = body.message
+
     is_admin = bool(uid and db.is_user_tenant_admin(tenant_id, uid))
     try:
         row = db.update_version_tag(
@@ -139,6 +143,7 @@ async def patch_version_tag(
             new_vid,
             set_immutable,
             set_protected,
+            **message_kwargs,
         )
     except PermissionError as e:
         code = str(e)

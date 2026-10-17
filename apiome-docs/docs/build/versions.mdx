@@ -212,6 +212,33 @@ apiome tags create payments-api prod-eu --version v2.0.0 \
   **immutable** tag can never be moved or deleted, so the command asks first — pass `--yes` to skip.
 - With `--json` it prints the created tag.
 
+### Move a version tag from the CLI
+
+`apiome tags update <project> <tag> --version <version>` moves a tag — the usual "promote 2.1.0 to
+stable".
+
+```bash
+apiome tags update payments-api stable --version v2.1.0
+# Moving 'stable' from 2.0.0 → 2.1.0.
+# Affected consumers of 2.0.0 (best effort):
+#   Mock requests, last 7 days: 23
+#   Frozen-snapshot downloads:  4
+#   Other tags on 2.0.0:        prod
+# Continue? [y/N]: y
+# ✔ Tag 'stable' now points to 2.1.0.
+```
+
+1. **Run** the command. It shows where the tag points now and, as a guide to who may be affected,
+   what Apiome knows about that version: mock requests in the last 7 days, downloads of its frozen
+   snapshot, and the other tags on it. Apiome does not count spec downloads per version, and a figure
+   it cannot read shows as *unavailable* — it never stops the move.
+2. **Answer `y`** to move it, or pass `--yes` in a script. `--dry-run` shows the same summary and
+   changes nothing.
+
+`--description '…'` sets the tag's description at the same time (`--description ''` clears it); with
+`--version` set to where the tag already points, only the description changes. An **immutable** tag
+can never be moved — the command exits `6`. With `--json` it prints the updated tag.
+
 ### Delete a version from the CLI
 
 `apiome versions delete <project> <version>` removes a version you no longer need — a typo in the

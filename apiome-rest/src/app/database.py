@@ -369,6 +369,10 @@ def _same_instant(stored: Any, expected: datetime) -> bool:
     return stored == expected
 
 
+
+#: ``Database.update_version_tag`` default: keep the tag's message unchanged (#3265).
+_UNSET_TAG_MESSAGE: Any = object()
+
 class Database:
     """Database connection and query manager."""
 
@@ -13007,7 +13011,13 @@ class Database:
         new_version_row_id: Optional[str],
         set_immutable: bool,
         set_protected: Optional[bool],
+        set_message: Any = _UNSET_TAG_MESSAGE,
     ) -> Optional[Dict[str, Any]]:
+        """Move a tag, lock it, change its protection and/or its message.
+
+        ``set_message`` (#3265, CLI 11.6): leave it out to keep the message; pass ``None`` (or an
+        empty string) to clear it, or the new text.
+        """
         existing = self.get_version_tag_by_id(tag_id, project_id, tenant_id)
         if not existing:
             return None
@@ -13036,12 +13046,14 @@ class Database:
             new_version_row_id, project_id, tenant_id
         ):
             raise ValueError("Target version not found in this project")
+        change_message = set_message is not _UNSET_TAG_MESSAGE
         if (
             not new_version_row_id
             and not set_immutable
             and set_protected is None
+            and not change_message
         ):
-            raise ValueError("Provide new revision id, immutable lock, and/or protected policy")
+            raise ValueError("Provide new revision id, immutable lock, protected policy and/or message")
 
         sets = ["updated_at = CURRENT_TIMESTAMP"]
         params: List[Any] = []
@@ -13053,6 +13065,9 @@ class Database:
         if set_protected is not None:
             sets.append("protected = %s")
             params.append(set_protected)
+        if change_message:
+            sets.append("message = %s")
+            params.append((str(set_message).strip() or None) if set_message is not None else None)
         params.extend([tag_id, project_id])
         q = f"""
             UPDATE apiome.version_tags SET {", ".join(sets)}

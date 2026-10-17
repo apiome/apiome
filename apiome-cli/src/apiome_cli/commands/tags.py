@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlencode
 
 import typer
 
@@ -13,17 +14,27 @@ from apiome_cli.client.pagination import DEFAULT_PAGE_LIMIT
 from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.project_version_resolve import list_versions, resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
-from apiome_cli.exit_codes import EXIT_TAG_EXISTS, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_TAG_EXISTS, EXIT_TAG_LOCKED, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.tag_create import TagCreateError, merge_request, needs_confirmation, request_body
+from apiome_cli.tag_update import (
+    MOCK_WINDOW_DAYS,
+    BlastRadius,
+    TagLocked,
+    check_movable,
+    dry_run_json,
+    other_tags_on,
+    render_plan,
+    sum_mock_requests,
+)
 from apiome_cli.tag_view import TagNotFound, find_tag, render_tag_list, render_tag_show, sort_tags
 from apiome_cli.terminal import confirm_action
 from apiome_cli.version_fork import ForkError, find_source_version
 
 app = typer.Typer(
     name="tags",
-    help="List, inspect and create version tags (named pointers to versions).",
+    help="List, inspect, create and move version tags (named pointers to versions).",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -167,3 +178,125 @@ def create_tag(
         emit_json(created)
         return
     typer.echo(f"✔ Tag '{created.get('name', request.name)}' created → {label}.")
+
+
+def _best_effort_json(client: Any, path: str) -> Any:
+    """GET ``path`` and return its JSON, or ``None`` on any failure (the blast radius never blocks)."""
+    try:
+        response = client.get_raw(path)
+    except (typer.Exit, Exception):  # noqa: BLE001 - a missing figure must not stop the move
+        return None
+    if not response.is_success:
+        return None
+    try:
+        return response.json()
+    except ValueError:
+        return None
+
+
+def _blast_radius(
+    client: Any, tenant_slug: str, project_id: Any, tag: dict[str, Any], tags: list[dict[str, Any]]
+) -> BlastRadius:
+    """What moving ``tag`` may affect, read from the version it points at now."""
+    from_id = str(tag.get("version_id"))
+    project = _best_effort_json(client, api_paths.project(tenant_slug, project_id))
+    slug = project.get("slug") if isinstance(project, dict) else None
+    mocks = None
+    if slug and tag.get("target_version_string"):
+        query = urlencode(
+            {"days": MOCK_WINDOW_DAYS, "project_slug": slug, "version_label": tag["target_version_string"]}
+        )
+        mocks = sum_mock_requests(_best_effort_json(client, f"{api_paths.mock_usage(tenant_slug)}?{query}"))
+    freeze = _best_effort_json(client, api_paths.version_freeze(tenant_slug, project_id, from_id))
+    if isinstance(freeze, dict) and "frozen" in freeze:
+        downloads: Optional[int] = int(freeze.get("downloadCount") or 0) if freeze.get("frozen") else -1
+    else:
+        downloads = None
+    return BlastRadius(
+        mock_requests=mocks,
+        snapshot_downloads=downloads,
+        other_tags=other_tags_on(tags, from_id, besides=str(tag.get("id"))),
+    )
+
+
+@app.command("update")
+def update_tag(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    tag_ref: str = typer.Argument(..., metavar="TAG", help="Tag name (exact) or tag UUID."),
+    version: str = typer.Option(
+        ..., "--version", help="Version to move the tag to: label (2.1.0 or v2.1.0) or revision UUID."
+    ),
+    description: Optional[str] = typer.Option(
+        None, "--description", help="New description (the tag's message); pass '' to clear it."
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show the move and its blast radius; change nothing."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation."),
+) -> None:
+    """Move a version tag to another version (PATCH /v1/version-tags/{tenant}/{project}/{tag_id}).
+
+    Shows where the tag points now and, best-effort, who may be affected — mock requests in the last
+    7 days, frozen-snapshot downloads and other tags on the current version — then asks to continue.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    payload = client.get(api_paths.version_tags(tenant_slug, project_id)).json()
+    tags = payload if isinstance(payload, list) else []
+    try:
+        tag = dict(find_tag(tags, tag_ref))
+    except TagNotFound as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    try:
+        check_movable(tag)
+    except TagLocked as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_TAG_LOCKED) from exc
+    try:
+        target = find_source_version(list_versions(client, tenant_slug, project_id), tags, version).version
+    except ForkError as exc:
+        typer.echo(f"No version or version tag {version!r} in this project.", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    moves = str(target["id"]) != str(tag.get("version_id"))
+    message_changes = description is not None
+    message = ((description or "").strip() or None) if message_changes else None
+    if not moves and not message_changes:
+        typer.echo(f"Tag '{tag.get('name')}' already points to {target.get('version_id')}; nothing to change.")
+        return
+    radius = _blast_radius(client, tenant_slug, project_id, tag, tags) if moves else None
+    plan = render_plan(
+        name=str(tag.get("name")),
+        from_label=tag.get("target_version_string"),
+        to_label=target.get("version_id"),
+        moves=moves,
+        message=message,
+        message_changes=message_changes,
+        radius=radius,
+    )
+    json_mode = json_mode_from_context(ctx)
+    if dry_run:
+        if json_mode:
+            emit_json(dry_run_json(tag=tag, to_version=target, message=message, message_changes=message_changes, radius=radius))
+        else:
+            typer.echo(plan)
+            typer.echo("(dry run; nothing was changed)")
+        return
+    typer.echo(plan, err=True)
+    confirm_action("Continue?", skip=yes)
+    body: dict[str, Any] = {"version_id": str(target["id"])} if moves else {}
+    if message_changes:
+        body["message"] = message
+    response = client.patch_raw(api_paths.version_tag_record(tenant_slug, project_id, str(tag["id"])), json=body)
+    if response.status_code == 409:
+        typer.echo(f"Tag '{tag.get('name')}' is immutable: it can never be moved.", err=True)
+        raise typer.Exit(EXIT_TAG_LOCKED)
+    exit_on_api_error(response)
+    updated = response.json()
+    if json_mode:
+        emit_json(updated)
+        return
+    if moves:
+        typer.echo(f"✔ Tag '{updated.get('name', tag.get('name'))}' now points to {target.get('version_id')}.")
+    else:
+        typer.echo(f"✔ Tag '{updated.get('name', tag.get('name'))}' description updated.")
