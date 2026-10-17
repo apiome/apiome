@@ -80,6 +80,11 @@ EXIT_BREAKING_CHANGES = 6
 #: ``--force`` was passed; nothing was changed. Another per-command use of 6.
 EXIT_DELETE_REFUSED = 6
 
+#: ``apiome tags create`` (CLI 11.5): the project **already has** a version tag with that name
+#: (checked first, and the server's ``409 TAG_NAME_CONFLICT``); nothing was created. Move the
+#: existing tag with ``tags update`` instead. Another per-command use of 6.
+EXIT_TAG_EXISTS = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

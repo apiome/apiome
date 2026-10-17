@@ -190,6 +190,28 @@ apiome tags show payments-api stable
 Apiome keeps only a tag's current pointer — it records who created a tag, not who moved it — so
 there is no move history to show.
 
+### Create a version tag from the CLI
+
+`apiome tags create <project> <tag> --version <version>` points a new tag at a version.
+
+```bash
+apiome tags create payments-api stable --version v2.1.0
+# ✔ Tag 'stable' created → 2.1.0.
+
+apiome tags create payments-api prod-eu --version v2.0.0 \
+  --description 'Production EU release pinned for compliance review'
+```
+
+- Tag names are **lower-cased** and must be 2–41 characters: a letter, then letters, digits or
+  hyphens (`stable`, `prod-eu`). Names such as `latest`, `stable` and `next` are conventions, not
+  reserved.
+- If the project already has a tag with that name, nothing is created and the command exits `6` —
+  move the existing tag instead.
+- `--from-file tag.json` reads a JSON tag object (an edited `apiome --json tags show` works);
+  flags on the command line win over the file. A file can also set `channel` and `immutable`. An
+  **immutable** tag can never be moved or deleted, so the command asks first — pass `--yes` to skip.
+- With `--json` it prints the created tag.
+
 ### Delete a version from the CLI
 
 `apiome versions delete <project> <version>` removes a version you no longer need — a typo in the

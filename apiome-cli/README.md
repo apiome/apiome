@@ -1412,6 +1412,16 @@ apiome tags show payments-api stable
 apiome --json tags list payments-api --all  # {total, items: [...]}
 ```
 
+`apiome tags create <project> <tag> --version <version>` points a new tag at a version
+(`POST /v1/version-tags/{tenant}/{project}`). Names are lower-cased and must match
+`^[a-z][a-z0-9-]{1,40}$`; a name the project already uses exits **6** (move that tag instead).
+
+```bash
+apiome tags create payments-api stable --version v2.1.0
+apiome tags create payments-api prod-eu --version v2.0.0 --description 'Pinned for compliance review'
+apiome tags create payments-api --from-file tag.json        # flags win over the file
+```
+
 ### List resources
 
 Human-readable tables (default):
