@@ -32,6 +32,11 @@ EXIT_POLICY_BLOCKED = 3
 #: the caller's own, stricter CI threshold rejected it.
 EXIT_QUALITY_GATE = 4
 
+#: ``apiome properties copy`` (CLI 6.6): ``--to <tenant>/<project>`` names **another tenant**;
+#: properties are copied within one tenant only, so nothing was copied. Another per-command use
+#: of 4.
+EXIT_CROSS_TENANT = 4
+
 #: The pre-flight completed but its subject is unusable: an import candidate that cannot
 #: be parsed at all (``ok: false``), or an export whose every ranked target is blocked or
 #: unavailable. Nothing the caller can grade — there is no artifact to gate.
@@ -110,6 +115,11 @@ EXIT_CHECK_FAILED = 7
 #: problem such as an unknown primitive or an example its schema rejects; one line per field on
 #: stderr, nothing was created. Another per-command use of 7.
 EXIT_PROPERTY_INVALID = 7
+
+#: ``apiome properties copy`` (CLI 6.6): a property to copy has a ``$ref`` to a **primitive the
+#: tenant does not have**; each property and reference is listed and nothing was copied. Import the
+#: primitives first. Another per-command use of 7.
+EXIT_PRIMITIVE_MISSING = 7
 
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the suite has **no verdict yet** — a
 #: required component is waiting on evidence (a contract run of this draft), or the commit is ahead

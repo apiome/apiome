@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List, show, fetch, create, update and delete project properties."
+description: "List, show, fetch, create, update, delete and copy project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,46 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List, show, fetch, create, update and delete project properties.
+List, show, fetch, create, update, delete and copy project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#properties-create), [`delete`](#properties-delete), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show), [`update`](#properties-update).
+Subcommands: [`copy`](#properties-copy), [`create`](#properties-create), [`delete`](#properties-delete), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show), [`update`](#properties-update).
+
+## apiome properties copy {#properties-copy}
+
+Copy properties to another project of the same tenant (GET, then POST / PUT per property).
+
+A name the destination already has is skipped, unless --update.
+
+Nothing is written if a property refers to a primitive the tenant lacks (exit 7).
+
+--to &lt;tenant&gt;/&lt;project&gt; naming another tenant exits 4. Properties have no tags.
+
+```text
+apiome properties copy [OPTIONS] SRC_PROJECT [NAMES]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Source project slug or UUID. |
+| `NAMES_ARG` | text |  | Property name(s) to copy, comma-separated (or pass --all). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--to` | text |  | yes | Destination project: &lt;project&gt;, or &lt;tenant&gt;/&lt;project&gt; (same tenant). |
+| `--all` | flag |  |  | Copy every property of the source project. |
+| `--rename` | text |  |  | Name in the destination (one property only). |
+| `--update` | flag |  |  | Overwrite a destination property with the same name. |
+| `--skip-conflicts` | flag |  |  | Leave a destination property with the same name alone (the default). |
+| `--dry-run` | flag |  |  | Show what would be copied, and the conflicts, without writing. |
+| `--yes`, `-y` | flag |  |  | Skip the question --update asks before overwriting. |
 
 ## apiome properties create {#properties-create}
 
