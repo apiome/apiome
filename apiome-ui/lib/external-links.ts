@@ -35,6 +35,8 @@ export type ExternalLinkEntry = {
   editorHref?: string;
   /** The Studio's unified workspace route, which comment-thread deep links target (COL-1.3). */
   workspaceHref?: string;
+  /** The Studio's read-only catalog-item preview route base (MFI-23.12): `{catalogHref}/{itemId}`. */
+  catalogHref?: string;
   icon: string;
   /**
    * @deprecated Pre-Hive Tailwind gradient pair for the home card. The launcher draws a
@@ -382,6 +384,32 @@ export function getStudioWorkspaceRoute(entitledFlags?: Set<string>): string | n
     return null;
   }
   return getExternalLinkById('suite')?.workspaceHref || null;
+}
+
+/**
+ * The Designer's read-only preview of one catalog item (MFI-23.12, #4021).
+ *
+ * Catalog items are incomplete and non-publishable, so the Studio shows them without any edit,
+ * save or publish control; the Catalog detail offers this link as "Open in Designer".
+ *
+ * @param itemId - The catalog item id.
+ * @param entitledFlags - The tenant's entitled feature flags; without the suite entitlement there
+ *   is no Studio to open.
+ * @returns The preview URL (absolute unless this app is the studio surface), or null when the
+ *   suite is not entitled or not configured.
+ */
+export function buildDesignerCatalogPreviewHref(
+  itemId: string,
+  entitledFlags?: Set<string>
+): string | null {
+  if (!hasSuiteEntitlement(entitledFlags)) {
+    return null;
+  }
+  const base = getExternalLinkById('suite')?.catalogHref;
+  if (!base) {
+    return null;
+  }
+  return `${base.replace(/\/+$/, '')}/${encodeURIComponent(itemId)}`;
 }
 
 /** Deep link into a commercial studio editor after import completes. */

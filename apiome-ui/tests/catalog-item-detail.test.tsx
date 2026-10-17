@@ -815,3 +815,39 @@ describe('CatalogItemDetailClient', () => {
     expect(screen.queryByTestId('catalog-detail-parsed-group')).not.toBeInTheDocument();
   });
 });
+
+describe('CatalogItemDetailClient — Open in Designer (MFI-23.12)', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('offers the read-only Designer preview when the suite is entitled', async () => {
+    mockFetchItem(RICH_ITEM);
+    render(
+      <CatalogItemDetailClient
+        itemId={RICH_ITEM.id}
+        designerPreviewHref="https://studio.example.com/catalog/11111111-2222-3333-4444-555555555555"
+      />
+    );
+    const link = await screen.findByTestId('catalog-detail-open-designer');
+    expect(link).toHaveAttribute(
+      'href',
+      'https://studio.example.com/catalog/11111111-2222-3333-4444-555555555555'
+    );
+    expect(link).toHaveTextContent('Open in Designer');
+  });
+
+  it('does not offer it without the entitlement (no href)', async () => {
+    mockFetchItem(RICH_ITEM);
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
+    await screen.findByTestId('catalog-detail-view-code');
+    expect(screen.queryByTestId('catalog-detail-open-designer')).not.toBeInTheDocument();
+  });
+
+  it('does not offer it for a deleted item', async () => {
+    mockFetchItem({ ...RICH_ITEM, deleted_at: '2026-10-01T00:00:00.000Z' });
+    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} designerPreviewHref="https://studio.example.com/catalog/x" />);
+    await screen.findByTestId('catalog-detail-view-code');
+    expect(screen.queryByTestId('catalog-detail-open-designer')).not.toBeInTheDocument();
+  });
+});

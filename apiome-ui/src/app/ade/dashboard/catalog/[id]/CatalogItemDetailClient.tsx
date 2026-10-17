@@ -59,6 +59,7 @@ import {
   FlaskConical,
   GitBranch,
   GitMerge,
+  Layers,
   LayoutDashboard,
   Route,
   ShieldCheck,
@@ -257,7 +258,17 @@ function HeaderOrb({
   );
 }
 
-export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
+export function CatalogItemDetailClient({
+  itemId,
+  designerPreviewHref = null,
+}: {
+  itemId: string;
+  /**
+   * The Designer's read-only preview of this item (MFI-23.12, #4021), or `null` when the tenant is
+   * not entitled to the Designer suite — then the header does not offer it.
+   */
+  designerPreviewHref?: string | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   // The Test bench scopes its saved payloads to the current tenant (IXH-5.3).
@@ -603,6 +614,18 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
               <Code2 aria-hidden />
               View code
             </Button>
+            {designerPreviewHref && !item.deleted_at ? (
+              <Button variant="outline" asChild>
+                <a
+                  href={designerPreviewHref}
+                  title="View this item in the Designer, read-only"
+                  data-testid="catalog-detail-open-designer"
+                >
+                  <Layers aria-hidden />
+                  Open in Designer
+                </a>
+              </Button>
+            ) : null}
           </>
         }
         tabs={

@@ -21,6 +21,11 @@ Links into Studio from the Control Panel use these routes, which open the same p
 | `/ade/studio/paths` | The paths and operations editor |
 | `/ade/studio/code` | The code view |
 
+**Catalog items open read-only.** An item in the [Catalog](../bring-in/catalog.mdx) is not a
+project yet, so its **“Open in Designer”** button opens Designer's `/catalog/{id}` page: the item's
+normalized model and raw source, with no edit, save or publish. Convert it in the Catalog to edit it
+— see [View an item in Designer](../bring-in/catalog.mdx#view-an-item-in-designer).
+
 Designer's address comes from `NEXT_PUBLIC_STUDIO_URL` (default `https://suite.apiome.dev`).
 Because Designer is not part of this installation, this site has no screenshots of it.
 
