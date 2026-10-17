@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any, Optional
 from uuid import UUID
 
 import typer
@@ -17,7 +19,9 @@ from apiome_cli.client.project_version_resolve import (
 )
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.config import require_api_key
-from apiome_cli.exit_codes import EXIT_USAGE
+from apiome_cli.client.errors import exit_on_api_error
+from apiome_cli.client.list_response import fetch_list
+from apiome_cli.exit_codes import EXIT_USAGE, EXIT_VERSION_EXISTS
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.import_.publish import normalize_cli_import_visibility
 from apiome_cli.output import (
@@ -28,10 +32,19 @@ from apiome_cli.output import (
     emit_record_response,
     json_mode_from_context,
 )
+from apiome_cli.version_fork import (
+    ForkError,
+    check_new_version,
+    copy_counts,
+    find_source_version,
+    label_exists,
+    render_summary,
+    tags_to_copy,
+)
 
 app = typer.Typer(
     name="versions",
-    help="List and fetch project versions.",
+    help="List, fetch, publish and fork project versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -273,4 +286,170 @@ def unpublish_version(
         response.json(),
         _VERSION_PUBLISH_RECORD_FIELDS,
         json_mode=json_mode_from_context(ctx),
+    )
+
+
+def _version_exists_conflict(response: Any) -> bool:
+    """Whether a fork response is the server's ``409 version_exists``."""
+    if response.status_code != 409:
+        return False
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        return False
+    return isinstance(detail, dict) and detail.get("code") == "version_exists"
+
+
+@app.command("fork")
+def fork_version(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., help="Source project slug or UUID."),
+    source_ref: str = typer.Argument(
+        ..., help="Source version: label (2.1.0 or v2.1.0), revision UUID, or version tag."
+    ),
+    into: str = typer.Option(
+        ..., "--into", help="Target project (slug or UUID) the fork is created in."
+    ),
+    to: str = typer.Option(..., "--to", help="New version label in the target, e.g. 3.0.0."),
+    notes: Optional[str] = typer.Option(None, "--notes", help="Short revision note."),
+    notes_file: Optional[Path] = typer.Option(
+        None, "--notes-file", help="Markdown file used as the new version's changelog."
+    ),
+    include_tags: bool = typer.Option(
+        False, "--include-tags", help="Also create the source's version tags on the fork."
+    ),
+    allow_lesser: bool = typer.Option(
+        False, "--allow-lesser", help="Allow --to to be lower than or equal to the source."
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Show what would be copied without forking."
+    ),
+) -> None:
+    """Fork a version into another project, keeping its lineage (POST /v1/versions/{tenant}/{target}/fork).
+
+    Copies the source version's classes and their properties into a new draft version of the
+    target project, recorded as a fork so it can merge back later. Paths are not copied.
+    Within one project, use a branch instead: the server refuses a same-project fork.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    source_project = resolve_project_uuid(client, tenant_slug, project_ref)
+    target_project = resolve_project_uuid(client, tenant_slug, into)
+    if source_project == target_project:
+        typer.echo(
+            "A fork goes into a different project (--into). To start a new version in the "
+            "same project, branch it instead.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+
+    source_versions = list_versions(client, tenant_slug, source_project)
+    source_tags = client.get(api_paths.version_tags(tenant_slug, source_project)).json() or []
+    try:
+        match = find_source_version(source_versions, source_tags, source_ref)
+        source = match.version
+        new_label = check_new_version(to, source.get("version_id"), allow_lesser=allow_lesser)
+    except ForkError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    changelog: Optional[str] = None
+    if notes_file is not None:
+        try:
+            changelog = notes_file.read_text(encoding="utf-8")
+        except OSError as exc:
+            typer.echo(f"Cannot read {notes_file}: {exc.strerror or exc}.", err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+
+    target_versions = list_versions(client, tenant_slug, target_project)
+    if label_exists(target_versions, new_label):
+        typer.echo(
+            f"Version {new_label} already exists in {into!r}; choose another --to.", err=True
+        )
+        raise typer.Exit(EXIT_VERSION_EXISTS)
+
+    source_id = str(source["id"])
+    classes = client.get(
+        api_paths.classes_with_properties_tags(tenant_slug, source_id)
+    ).json() or []
+    class_count, property_count = copy_counts(classes)
+    source_paths, _total = fetch_list(client, api_paths.paths(tenant_slug, source_id))
+    tags = tags_to_copy(source_tags, source_id) if include_tags else []
+
+    source_text = f"{project_ref}@{source.get('version_id')}"
+    target_text = f"{into}@{new_label}"
+    json_mode = json_mode_from_context(ctx)
+
+    if dry_run:
+        if json_mode:
+            emit_json(
+                {
+                    "dryRun": True,
+                    "source": {"projectId": str(source_project), "version": source},
+                    "target": {"projectId": str(target_project), "versionId": new_label},
+                    "classes": class_count,
+                    "properties": property_count,
+                    "sourcePaths": len(source_paths),
+                    "pathsCopied": 0,
+                    "tags": [tag.get("name") for tag in tags],
+                }
+            )
+        else:
+            typer.echo(
+                render_summary(
+                    dry_run=True,
+                    source=source_text,
+                    target=target_text,
+                    classes=class_count,
+                    properties=property_count,
+                    source_paths=len(source_paths),
+                    tags_copied=[str(tag.get("name")) for tag in tags],
+                    include_tags=include_tags,
+                )
+            )
+        return
+
+    body: dict[str, Any] = {"sourceRevisionId": source_id, "versionId": new_label}
+    if notes:
+        body["shortMessage"] = notes
+    if changelog:
+        body["changelog"] = changelog
+    response = client.post_raw(api_paths.version_fork(tenant_slug, target_project), json=body)
+    if _version_exists_conflict(response):
+        typer.echo(
+            f"Version {new_label} already exists in {into!r}; choose another --to.", err=True
+        )
+        raise typer.Exit(EXIT_VERSION_EXISTS)
+    exit_on_api_error(response)
+    forked = response.json()
+
+    copied: list[str] = []
+    skipped: list[str] = []
+    for tag in tags:
+        tag_response = client.post_raw(
+            api_paths.version_tags(tenant_slug, target_project),
+            json={
+                "version_id": forked["id"],
+                "name": tag.get("name"),
+                "message": tag.get("message"),
+                "channel": tag.get("channel"),
+            },
+        )
+        (copied if tag_response.is_success else skipped).append(str(tag.get("name")))
+
+    if json_mode:
+        emit_json(forked)
+        return
+    typer.echo(
+        render_summary(
+            dry_run=False,
+            source=source_text,
+            target=target_text,
+            classes=class_count,
+            properties=property_count,
+            source_paths=len(source_paths),
+            new_id=str(forked.get("id")),
+            tags_copied=copied,
+            tags_skipped=skipped,
+            include_tags=include_tags,
+        )
     )

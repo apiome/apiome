@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List and fetch project versions."
+description: "List, fetch, publish and fork project versions."
 sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,42 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List and fetch project versions.
+List, fetch, publish and fork project versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+Subcommands: [`fork`](#versions-fork), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+
+## apiome versions fork {#versions-fork}
+
+Fork a version into another project, keeping its lineage (POST /v1/versions/{tenant}/{target}/fork).
+
+Copies the source version's classes and their properties into a new draft version of the target project, recorded as a fork so it can merge back later. Paths are not copied. Within one project, use a branch instead: the server refuses a same-project fork.
+
+```text
+apiome versions fork [OPTIONS] PROJECT_REF SOURCE_REF
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Source project slug or UUID. |
+| `SOURCE_REF` | text | yes | Source version: label (2.1.0 or v2.1.0), revision UUID, or version tag. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--into` | text |  | yes | Target project (slug or UUID) the fork is created in. |
+| `--to` | text |  | yes | New version label in the target, e.g. 3.0.0. |
+| `--notes` | text |  |  | Short revision note. |
+| `--notes-file` | path |  |  | Markdown file used as the new version's changelog. |
+| `--include-tags` | flag |  |  | Also create the source's version tags on the fork. |
+| `--allow-lesser` | flag |  |  | Allow --to to be lower than or equal to the source. |
+| `--dry-run` | flag |  |  | Show what would be copied without forking. |
 
 ## apiome versions get {#versions-get}
 

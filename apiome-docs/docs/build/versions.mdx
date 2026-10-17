@@ -138,11 +138,32 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
 
 ## With the CLI or the API
 
-- CLI: `apiome versions list|get|publish|unpublish`, `apiome mock status|enable|disable` — see the
-  [CLI quick-start](../reference/cli-quickstart.md).
+- CLI: `apiome versions list|get|publish|unpublish|fork`, `apiome mock status|enable|disable` — see
+  the [`versions` command reference](../reference/cli/versions.md) and the [CLI
+  quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
-  `…/publish`, `…/unpublish`, `PUT …/mock`, `GET /v1/versions/{tenant}/sunset-timeline` — see the
-  [API reference](../reference/api-reference.md).
+  `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
+  `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).
+
+### Fork a version into another project from the CLI
+
+A **fork** copies one version of a project into **another** project as a new draft version, and
+records where it came from so it can be merged back later. (To start a new version inside the same
+project, branch it instead.) The CLI can fork whether or not the Git-like features are switched on
+in the web app.
+
+1. **Preview** what would be copied:
+   `apiome versions fork payments-api v2.1.0 --into payments-sandbox --to 3.0.0 --dry-run`.
+   The source can be a version label (`2.1.0` or `v2.1.0`), a revision id, or a version tag.
+2. **Fork** it by running the same command without `--dry-run`. Add `--notes '…'` for a short note,
+   `--notes-file CHANGELOG.md` for release notes, and `--include-tags` to recreate the tags that
+   point at the source version.
+3. The fork copies the version's **classes and their properties**. **Paths are not copied** — the
+   summary says how many the source has.
+
+`--to` must be a plain release version (`3.0.0`, not `3.0.0-rc.1`) and greater than the source's
+— pass `--allow-lesser` to go lower. If the target project already has that version, nothing is
+forked and the command exits `6`. With `--json` it prints the new version.
 
 ## Where next
 

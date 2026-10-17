@@ -1316,6 +1316,23 @@ the same bytes, and the SHA-256 printed on stderr identifies it. Counts go to st
 stays clean for pipes. JSON is written one version at a time; YAML is built in memory. `data` is
 not exportable yet (the API cannot list data records).
 
+### Fork a version into another project
+
+`apiome versions fork <project> <source-version> --into <target-project> --to <new-version>` copies
+a version's classes and their properties into another project as a new draft version, with its
+lineage recorded for merge-back (`POST /v1/versions/{tenant}/{target}/fork`). Paths are not copied.
+
+```bash
+apiome versions fork payments-api v2.1.0 --into payments-sandbox --to 3.0.0 --dry-run
+apiome versions fork payments-api stable --into payments-sandbox --to 3.0.0 \
+  --notes 'Major: removes legacy /charges' --include-tags
+apiome --json versions fork payments-api 2.1.0 --into payments-sandbox --to 3.0.0
+```
+
+The source is a version label (`2.1.0` or `v2.1.0`), a revision UUID or a version tag. `--to` must
+be `MAJOR.MINOR.PATCH` and greater than the source unless `--allow-lesser`. A label the target
+already has exits **6**. A fork always targets a different project; within one project, branch.
+
 ### List resources
 
 Human-readable tables (default):

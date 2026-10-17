@@ -56,6 +56,10 @@ EXIT_UPDATE_CONFLICT = 6
 #: archived. Unpublish them first, or pass ``--force``. Another per-command use of 6.
 EXIT_PUBLISHED_VERSIONS = 6
 
+#: ``apiome versions fork`` (CLI 4.4): the target project **already has** the ``--to`` version
+#: label, so nothing was forked. Choose another ``--to``. Another per-command use of 6.
+EXIT_VERSION_EXISTS = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can
