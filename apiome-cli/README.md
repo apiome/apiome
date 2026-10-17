@@ -1433,6 +1433,9 @@ apiome tags update payments-api stable --version 2.1.0 --dry-run
 apiome tags update payments-api stable --version 2.1.0 --description 'Promoted for GA' --yes
 ```
 
+`apiome tags delete <project> <tag>` deletes a tag after you type its name (`--yes` skips). Only
+the tag goes, never the version; an immutable tag exits **6**.
+
 ### List resources
 
 Human-readable tables (default):

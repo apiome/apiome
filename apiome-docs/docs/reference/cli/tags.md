@@ -1,6 +1,6 @@
 ---
 title: "apiome tags"
-description: "List, inspect, create and move version tags."
+description: "List, inspect, create, move and delete version tags."
 sidebar_position: 27
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome tags {#tags}
 
-List, inspect, create and move version tags (named pointers to versions).
+List, inspect, create, move and delete version tags (named pointers to versions).
 
 ```text
 apiome tags [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#tags-create), [`list`](#tags-list), [`show`](#tags-show), [`update`](#tags-update).
+Subcommands: [`create`](#tags-create), [`delete`](#tags-delete), [`list`](#tags-list), [`show`](#tags-show), [`update`](#tags-update).
 
 ## apiome tags create {#tags-create}
 
@@ -45,6 +45,29 @@ apiome tags create [OPTIONS] PROJECT [TAG]
 | `--description` | text |  |  | What the tag is for (stored as its message). |
 | `--from-file` | path |  |  | JSON tag object (e.g. an edited `tags show --json`): name, version, description, channel, immutable. |
 | `--yes`, `-y` | flag |  |  | Skip the confirmation an immutable tag asks for. |
+
+## apiome tags delete {#tags-delete}
+
+Delete a version tag after you type its name (DELETE /v1/version-tags/{tenant}/{project}/{tag_id}).
+
+Only the tag goes: the version it points to is not touched. An immutable tag cannot be deleted (exit 6).
+
+```text
+apiome tags delete [OPTIONS] PROJECT TAG
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `TAG_REF` | text | yes | Tag name (exact) or tag UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the typed confirmation. |
 
 ## apiome tags list {#tags-list}
 

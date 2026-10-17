@@ -85,9 +85,9 @@ EXIT_DELETE_REFUSED = 6
 #: existing tag with ``tags update`` instead. Another per-command use of 6.
 EXIT_TAG_EXISTS = 6
 
-#: ``apiome tags update`` (CLI 11.6): the tag is **immutable** (checked first, and the server's
-#: ``409 TAG_IMMUTABLE``), so it can never be moved; nothing was changed. Another per-command use
-#: of 6.
+#: ``apiome tags update`` / ``tags delete`` (CLI 11.6 / 11.7): the tag is **immutable** (checked
+#: first, and the server's ``409 TAG_IMMUTABLE``), so it can never be moved or deleted; nothing was
+#: changed. Another per-command use of 6.
 EXIT_TAG_LOCKED = 6
 
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a

@@ -29,12 +29,12 @@ from apiome_cli.tag_update import (
     sum_mock_requests,
 )
 from apiome_cli.tag_view import TagNotFound, find_tag, render_tag_list, render_tag_show, sort_tags
-from apiome_cli.terminal import confirm_action
+from apiome_cli.terminal import confirm_action, confirm_typed
 from apiome_cli.version_fork import ForkError, find_source_version
 
 app = typer.Typer(
     name="tags",
-    help="List, inspect, create and move version tags (named pointers to versions).",
+    help="List, inspect, create, move and delete version tags (named pointers to versions).",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -300,3 +300,44 @@ def update_tag(
         typer.echo(f"✔ Tag '{updated.get('name', tag.get('name'))}' now points to {target.get('version_id')}.")
     else:
         typer.echo(f"✔ Tag '{updated.get('name', tag.get('name'))}' description updated.")
+
+
+@app.command("delete")
+def delete_tag(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    tag_ref: str = typer.Argument(..., metavar="TAG", help="Tag name (exact) or tag UUID."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the typed confirmation."),
+) -> None:
+    """Delete a version tag after you type its name (DELETE /v1/version-tags/{tenant}/{project}/{tag_id}).
+
+    Only the tag goes: the version it points to is not touched. An immutable tag cannot be deleted
+    (exit 6).
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    payload = client.get(api_paths.version_tags(tenant_slug, project_id)).json()
+    try:
+        tag = dict(find_tag(payload if isinstance(payload, list) else [], tag_ref))
+    except TagNotFound as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    name = str(tag.get("name"))
+    pointing_to = tag.get("target_version_string")
+    if tag.get("immutable"):
+        typer.echo(f"Tag '{name}' is immutable: it can never be deleted.", err=True)
+        raise typer.Exit(EXIT_TAG_LOCKED)
+    typer.echo(
+        f"Deleting tag '{name}' (currently points to {pointing_to}). The version itself is not touched.",
+        err=True,
+    )
+    confirm_typed("Type the tag name to confirm", name, skip=yes)
+    response = client.delete_raw(api_paths.version_tag_record(tenant_slug, project_id, str(tag["id"])))
+    if response.status_code == 409:
+        typer.echo(f"Tag '{name}' is immutable: it can never be deleted.", err=True)
+        raise typer.Exit(EXIT_TAG_LOCKED)
+    exit_on_api_error(response)
+    if json_mode_from_context(ctx):
+        emit_json({"deleted": True, "tag": name, "tag_id": str(tag["id"]), "was_pointing_to": pointing_to})
+        return
+    typer.echo(f"✔ Deleted tag '{name}'.")
