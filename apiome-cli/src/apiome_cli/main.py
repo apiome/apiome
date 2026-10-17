@@ -9,6 +9,7 @@ from apiome_cli import __version__
 from apiome_cli.client.errors import handle_cli_failure, is_verbose
 from apiome_cli.commands import (
     auth,
+    browse,
     checks,
     classes,
     compat,
@@ -77,6 +78,7 @@ app.add_typer(properties.app, name="properties")
 app.add_typer(classes.app, name="classes")
 app.add_typer(repos.app, name="repos")
 app.add_typer(repository.app, name="repository")
+app.add_typer(browse.app, name="browse")
 app.add_typer(schema.app, name="schema")
 app.add_typer(schemas.app, name="schemas")
 app.add_typer(types.app, name="types")

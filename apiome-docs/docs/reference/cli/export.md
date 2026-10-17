@@ -1,7 +1,7 @@
 ---
 title: "apiome export"
 description: "Export a version to a target format via the emitter registry."
-sidebar_position: 11
+sidebar_position: 12
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

@@ -1,7 +1,7 @@
 ---
 title: "apiome repository"
 description: "Repository auto-refresh: trigger a refresh and inspect per-file state."
-sidebar_position: 24
+sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

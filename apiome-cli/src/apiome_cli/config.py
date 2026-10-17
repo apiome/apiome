@@ -18,6 +18,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from apiome_cli.browse_url import BROWSE_SECTION, BROWSE_URL_KEY, BrowseUrlError, read_browse_section
 from apiome_cli.exit_codes import EXIT_USAGE
 
 _PACKAGE_ROOT = Path(__file__).resolve().parents[2]
@@ -132,9 +133,17 @@ def write_user_config_file(
     *,
     path: Path | None = None,
 ) -> None:
-    """Persist supported settings keys to the user config TOML file."""
+    """Persist supported settings keys to the user config TOML file.
+
+    The ``[browse] url`` section that ``apiome browse open`` reads (CLI 9.9) is hand-edited, not a
+    settings key; it is carried over so ``config set`` / ``config unset`` never drop it.
+    """
     config_path = path if path is not None else user_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        browse_url = read_browse_section(config_path)
+    except BrowseUrlError:
+        browse_url = None  # an unreadable file is rewritten from the known keys, as before
 
     lines: list[str] = []
     for field_name in _CONFIG_FIELD_ORDER:
@@ -148,8 +157,11 @@ def write_user_config_file(
             continue
         lines.append(f"{field_name} = {_toml_string(text)}")
 
+    if browse_url is not None:
+        lines += ["", f"[{BROWSE_SECTION}]", f"{BROWSE_URL_KEY} = {_toml_string(browse_url)}"]
+
     if lines:
-        config_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        config_path.write_text("\n".join(lines).lstrip("\n") + "\n", encoding="utf-8")
     elif config_path.is_file():
         config_path.unlink()
 

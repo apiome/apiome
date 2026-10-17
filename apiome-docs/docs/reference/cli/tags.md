@@ -1,7 +1,7 @@
 ---
 title: "apiome tags"
 description: "List, inspect, create, move and delete version tags."
-sidebar_position: 28
+sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

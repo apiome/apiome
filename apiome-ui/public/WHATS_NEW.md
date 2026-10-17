@@ -58,6 +58,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome schema arazzo <tenant>/<project>/<version>` downloads a published version's Arazzo workflows as YAML (or `--format json`), the whole bundle or one class with `--class`; `--expect-sha256` refuses to write a document whose bytes changed
   - `apiome schema json <tenant>/<project>/<version>` downloads a published version's JSON Schema — the whole bundle or one class with `--class`, ready to pipe into a code generator; same `--format`, `--output` and `--expect-sha256` flags as `schema arazzo`, JSON by default
   - `apiome schema diff <tenant>/<project> <v1> <v2>` shows which paths, classes and properties changed between two published versions — a summary, a unified diff, JSON or SARIF; add `--exit-code` for a one-line CI check that fails when your pinned version has moved
+  - `apiome browse open <tenant>/<project>/<version>` opens that page of the browse app in your browser — a tenant, a project, a version or a compare page; `--print-url` prints the link instead, for CI or SSH
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

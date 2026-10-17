@@ -1,7 +1,7 @@
 ---
 title: "apiome classes"
 description: "List a version's classes and create new ones."
-sidebar_position: 4
+sidebar_position: 5
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
