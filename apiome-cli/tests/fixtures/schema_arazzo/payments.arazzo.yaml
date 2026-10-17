@@ -1,0 +1,125 @@
+arazzo: 1.0.1
+info:
+  title: payments-api Workflows
+  version: 2.1.0
+  description: Payments API
+sourceDescriptions:
+- name: openapi-source
+  type: openapi
+  url: /v1/schema/acme-corp/payments-api/2.1.0
+  description: OpenAPI specification containing schema definitions
+workflows:
+- workflowId: chargeWorkflow
+  summary: Charge CRUD Workflow
+  description: A card charge.
+  steps:
+  - stepId: createCharge
+    description: Create a new Charge
+    operationId: createCharge
+    parameters: []
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Charge'
+    successCriteria:
+    - condition: $statusCode == 201
+      type: simple
+    outputs:
+      chargeId: $response.body.id
+  - stepId: getCharge
+    description: Retrieve a Charge by ID
+    operationId: getChargeById
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createCharge
+  - stepId: updateCharge
+    description: Update an existing Charge
+    operationId: updateCharge
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Charge'
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createCharge
+  - stepId: deleteCharge
+    description: Delete a Charge
+    operationId: deleteCharge
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    successCriteria:
+    - condition: $statusCode == 204
+      type: simple
+    dependsOn:
+    - updateCharge
+- workflowId: refundWorkflow
+  summary: Refund CRUD Workflow
+  description: Reversal of a charge.
+  steps:
+  - stepId: createRefund
+    description: Create a new Refund
+    operationId: createRefund
+    parameters: []
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Refund'
+    successCriteria:
+    - condition: $statusCode == 201
+      type: simple
+    outputs:
+      refundId: $response.body.id
+  - stepId: getRefund
+    description: Retrieve a Refund by ID
+    operationId: getRefundById
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createRefund.outputs.refundId
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createRefund
+  - stepId: updateRefund
+    description: Update an existing Refund
+    operationId: updateRefund
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createRefund.outputs.refundId
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Refund'
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createRefund
+  - stepId: deleteRefund
+    description: Delete a Refund
+    operationId: deleteRefund
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createRefund.outputs.refundId
+    successCriteria:
+    - condition: $statusCode == 204
+      type: simple
+    dependsOn:
+    - updateRefund

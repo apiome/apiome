@@ -1,0 +1,68 @@
+arazzo: 1.0.1
+info:
+  title: Charge Workflow
+  version: 2.1.0
+  description: Arazzo workflow specification for acme-corp/payments-api/2.1.0/Charge
+sourceDescriptions:
+- name: openapi-source
+  type: openapi
+  url: /v1/schema/acme-corp/payments-api/2.1.0/Charge
+  description: OpenAPI specification for Charge
+workflows:
+- workflowId: chargeWorkflow
+  summary: Charge CRUD Workflow
+  description: A card charge.
+  steps:
+  - stepId: createCharge
+    description: Create a new Charge
+    operationId: createCharge
+    parameters: []
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Charge'
+    successCriteria:
+    - condition: $statusCode == 201
+      type: simple
+    outputs:
+      chargeId: $response.body.id
+  - stepId: getCharge
+    description: Retrieve a Charge by ID
+    operationId: getChargeById
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createCharge
+  - stepId: updateCharge
+    description: Update an existing Charge
+    operationId: updateCharge
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    requestBody:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Charge'
+    successCriteria:
+    - condition: $statusCode == 200
+      type: simple
+    dependsOn:
+    - createCharge
+  - stepId: deleteCharge
+    description: Delete a Charge
+    operationId: deleteCharge
+    parameters:
+    - name: id
+      in: path
+      value: $steps.createCharge.outputs.chargeId
+    successCriteria:
+    - condition: $statusCode == 204
+      type: simple
+    dependsOn:
+    - updateCharge

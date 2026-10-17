@@ -649,6 +649,24 @@ and warns on stderr when it is stale (the draft or the policy moved since). Runn
 full-access API key; `checks show --version` also works with a CI key holding `diff:read` or
 `lint:read`.
 
+### Download published Arazzo workflows (`schema arazzo`)
+
+Fetch a **published** version's Arazzo workflow document by its slugs
+(`GET /v1/arazzo/{tenant}/{project}/{version}`, or `…/{class}` with `--class`). YAML to stdout is
+the default; no tenant configuration is needed, and `APIOME_API_KEY` is sent for private versions.
+
+```bash
+apiome schema arazzo acme-corp/payments-api/2.1.0 > workflows.arazzo.yaml
+apiome schema arazzo acme-corp/payments-api/2.1.0 --class Charge > charge.arazzo.yaml
+apiome schema arazzo acme-corp/payments-api/2.1.0 --format json -o workflows.arazzo.json
+apiome schema arazzo acme-corp/payments-api/2.1.0 -o w.yaml --expect-sha256 <hex>
+```
+
+The bytes are written as served; a summary with `Checksum: sha256:…` goes to stderr (global
+`--json`: one JSON object, on stdout when `--output` is a file). `--expect-sha256` that does not
+match exits **6** (`EXIT_CHECKSUM_MISMATCH`) and writes nothing; an unknown, unpublished or
+private version or class exits 2.
+
 ### Schema tests in CI (`schema test`)
 
 Run the Schema Test Bench's validation (IXH-5.1/5.2) from a pipeline, against the same

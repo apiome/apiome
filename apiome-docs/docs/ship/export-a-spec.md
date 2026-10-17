@@ -41,6 +41,43 @@ apiome spec export --project <id-or-slug> --version <id-or-label> --format arazz
 
 Use `-o -` to stream to stdout. `--format` accepts `openapi` (default) or `arazzo`.
 
+### Download Arazzo workflows by slug
+
+`apiome schema arazzo` takes the published version as one `tenant/project/version` argument
+(slugs, as in the REST route) and writes YAML to stdout by default, so it suits a redirect or a
+build step:
+
+```bash
+# Full Arazzo bundle
+apiome schema arazzo acme-corp/payments-api/2.1.0 > workflows.arazzo.yaml
+
+# One class's workflow (the per-class route)
+apiome schema arazzo acme-corp/payments-api/2.1.0 --class Charge > charge.arazzo.yaml
+
+# JSON instead of YAML, written to a file
+apiome schema arazzo acme-corp/payments-api/2.1.0 --format json --output workflows.arazzo.json
+
+# Pin the exact bytes in CI: exit 6, and nothing written, if the document changed
+apiome schema arazzo acme-corp/payments-api/2.1.0 -o workflows.arazzo.yaml \
+  --expect-sha256 <sha256-from-a-first-run>
+```
+
+| Flag | What it does |
+|---|---|
+| `--class NAME` | Download only that class's workflow. An unknown class exits 2. |
+| `--format json\|yaml` | Serialization. Default **yaml**, the usual form for Arazzo. |
+| `--output FILE`, `-o` | Write to a file. Default `-`, stdout. |
+| `--expect-sha256 HEX` | Compare the document's SHA-256 first; on a mismatch print both digests, write nothing and exit **6**. A `sha256:` prefix is accepted. |
+
+The document is written byte for byte as the server sent it. A summary — bytes written, format and
+`Checksum: sha256:…` — goes to stderr, so copy the checksum from a first run into
+`--expect-sha256`. With the global `--json`, the summary is one JSON object: on stdout when the
+document goes to a file, on stderr when the document goes to stdout.
+
+The version must be published. An unknown or unpublished version, or a private one without an API
+key, exits 2; set `APIOME_API_KEY` for private versions. No tenant configuration is needed — the
+tenant is in the argument.
+
 ## With the REST API
 
 ```http
@@ -53,7 +90,7 @@ Other representations of the same version:
 | Format | Route |
 |---|---|
 | OpenAPI | `GET /v1/schema/{tenant}/{project}/{version}` |
-| Arazzo | `GET /v1/arazzo/{tenant}/{project}/{version}` |
+| Arazzo | `GET /v1/arazzo/{tenant}/{project}/{version}` (one class: append `/{class}`) |
 | JSON Schema | `GET /v1/json/{tenant}/{project}/{version}` |
 
 For private versions, pass an in-scope API key via the `X-API-Key` header (or the `api_key` query
