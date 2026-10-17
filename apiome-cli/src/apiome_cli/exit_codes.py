@@ -90,6 +90,11 @@ EXIT_TAG_EXISTS = 6
 #: changed. Another per-command use of 6.
 EXIT_TAG_LOCKED = 6
 
+#: ``apiome properties update --primitive`` (CLI 6.4): classes use the property as **required**,
+#: so changing its primitive could break them; nothing was changed. The affected class attributes
+#: are listed; pass ``--allow-breaking`` to change it anyway. Another per-command use of 6.
+EXIT_PROPERTY_BREAKING = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

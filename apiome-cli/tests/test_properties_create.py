@@ -190,6 +190,11 @@ def test_multiple_of_is_decimal_exact() -> None:
     assert "19.995 is not a multiple of 0.01" in errors[0].message
 
 
+def test_the_property_required_flag_is_not_read_as_json_schema() -> None:
+    errors, warnings = check_examples({"type": "string", "required": True}, [1])
+    assert warnings == [] and [e.field for e in errors] == ["examples[0]"]
+
+
 def test_check_examples_checks_formats() -> None:
     errors, _ = check_examples({"type": "string", "format": "email"}, ["a@b.co", "nope"])
     assert [e.field for e in errors] == ["examples[1]"]

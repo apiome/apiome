@@ -1491,6 +1491,32 @@ rejected example, a `tags` key — is printed as `field: message` and exits **7*
 created. The tenant's primitive list is cached for 5 minutes in `$XDG_CACHE_HOME/apiome/`
 (`~/.cache/apiome/`). Properties have no tags, so there is no `--tag`.
 
+### Update a property
+
+`apiome properties update <project> <property>` changes a property
+(`PUT /v1/properties/{tenant}/{project}/{id}`). Only changed fields are sent, always with the
+property's `updated_at` as `expectedUpdatedAt` — the dump's for `--from-file`, otherwise the one just
+read — so a concurrent edit exits **6** instead of being overwritten.
+
+```bash
+apiome properties update payments-api amount --description 'Monetary amount.' --add-example 1234.56
+apiome properties update payments-api amount --remove-example 19.99 --name total
+apiome properties update payments-api amount --primitive decimal --allow-breaking --yes
+apiome properties update payments-api amount --required-everywhere --yes
+apiome properties show payments-api amount --json > amount.json   # edit, then:
+apiome properties update payments-api amount --from-file amount.json --dry-run
+```
+
+- `--primitive` re-copies the schema (keeping `examples` and `required`); classes keep their own
+  copies, so nothing cascades. It exits **6** listing the class attributes that require the
+  property, unless `--allow-breaking`.
+- `--required-everywhere` / `--optional-everywhere` sends `requiredEverywhere`: the server sets
+  `required` on every class attribute using the property in unpublished versions (published ones
+  are counted, not touched) in the same transaction.
+- `--dry-run` prints a `-`/`+` diff (schema keys as `data.<key>`); with `--json`,
+  `{dryRun, propertyId, changes, request}`.
+- A taken name or rejected example exits **7**; `--from-file` cannot be combined with field flags.
+
 ### List resources
 
 Human-readable tables (default):

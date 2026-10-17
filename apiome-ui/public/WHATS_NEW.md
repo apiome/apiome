@@ -50,6 +50,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome properties list <project>` shows each property's type, whether it is required and which classes use it — filter with `--type`, `--search` and `--unused`
   - `apiome properties show <project> <property>` shows one property's type, constraints, examples and description, and every class attribute that uses it; a mistyped name suggests the closest ones
   - `apiome properties create <project>` adds a property from a primitive — answer the prompts (type part of a primitive's name to search) or pass `--name`, `--primitive`, `--description` and `--example`, or `--from-file` with JSON or YAML; examples are checked against the primitive first, and every problem is listed by field (exit 7)
+  - `apiome properties update <project> <property>` renames a property, changes its description or examples, re-copies its schema from another primitive (refused while classes require it, unless `--allow-breaking`), or marks it required on every class that uses it — with a `--dry-run` diff, and `--from-file` that refuses to overwrite a newer edit
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

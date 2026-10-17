@@ -220,7 +220,8 @@ def check_examples(schema: Mapping[str, Any], examples: Sequence[Any]) -> tuple[
         and a warning when the schema cannot be checked here (an invalid schema, or a ``$ref`` to
         another document), in which case the server is left to judge.
     """
-    body = {k: v for k, v in schema.items() if k != "examples"}
+    # ``"required": true`` is Apiome's property-level flag, not the JSON Schema keyword (an array).
+    body = {k: v for k, v in schema.items() if k != "examples" and not (k == "required" and isinstance(v, bool))}
     try:
         Draft202012Validator.check_schema(body)
     except SchemaError as exc:

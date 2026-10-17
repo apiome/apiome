@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.218.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.219.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `properties` · 5 operations
 
@@ -132,7 +132,9 @@ Operation id: `get_property_v1_properties__tenant_slug___project_id___property_i
 
 **Update Property**
 
-Update an existing property.
+Update an existing property. ``expectedUpdatedAt`` makes it conditional (409 ``update_conflict``
+when the property changed since); ``requiredEverywhere`` also sets ``required`` on every class
+attribute using it in an unpublished version, reported in ``required_everywhere_result`` (#3226).
 
 Supports authentication via JWT token or API key.
 
@@ -244,6 +246,7 @@ A property on a project class, including nested structure and optional primitive
 | `used_by` | array of string or null | no | Distinct names of the classes (in any live version of the project) that use this property; list responses only (#3223). |
 | `used_by_count` | integer or null | no | Number of class properties (across live versions) that reference this property; list responses only. |
 | `usage` | array of `ProjectPropertyUsage` or null | no | Every class attribute (in any live version of the project) that uses this property, one entry per distinct class name, attribute name and required flag, sorted; single-property GET only (#3224). |
+| `required_everywhere_result` | `PropertyRequiredEverywhereResult` or null | no | Counts from `required_everywhere` on the PUT that set it (#3226); null on other responses. |
 
 ### `ProjectPropertyUpdateRequest` {#schema-projectpropertyupdaterequest}
 
@@ -255,3 +258,5 @@ Partial update payload for a class property.
 | `description` | string or null | no | Free-text description. |
 | `data` | object or null | no | Structured payload or extension data for the resource. |
 | `enabled` | boolean or null | no | Whether the resource is active. |
+| `expectedUpdatedAt` | string (date-time) or null | no | Optimistic-concurrency precondition (CLI 6.4, #3226): the property's updated_at as the caller last read it. When set, the update applies only if the property is unchanged since; otherwise the request fails with 409 code 'update_conflict' and the property's current updated_at. |
+| `requiredEverywhere` | boolean or null | no | Set `required` to this value on every class attribute that uses the property in an unpublished version of the project, in the same transaction (#3226). Published versions are left alone and counted in the response's `required_everywhere_result`. |

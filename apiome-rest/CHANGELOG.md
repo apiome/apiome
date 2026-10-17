@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.355.0] - 2026-10-17
+
+### Added
+- **Conditional property updates (#3226, CLI 6.4)**: `PUT /v1/properties/{tenant}/{project}/{property_id}` accepts
+  `expectedUpdatedAt` (or `expected_updated_at`), the property's `updated_at` as last read. When the property changed
+  since, nothing is written and the request fails with 409 `{code: "update_conflict", current_updated_at}`; the check
+  and the write are one statement. Used by `apiome properties update --from-file`.
+- **Required everywhere (#3226)**: the same PUT accepts `requiredEverywhere: true|false`, which sets `required` on every
+  class attribute that uses the property in an unpublished version, in the same transaction as the property update.
+  Published versions are left alone. The response carries `required_everywhere_result`
+  `{changed, unchanged, skipped_published}`. Used by `apiome properties update --required-everywhere`.
+
+The OpenAPI version moves to 1.219.0.
+
 ## [1.354.0] - 2026-10-17
 
 ### Added
