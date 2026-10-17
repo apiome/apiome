@@ -823,6 +823,8 @@ export interface CatalogBulkPlan {
   deletable: CatalogItem[];
   /** Selected rows that are deleted and can be restored. */
   restorable: CatalogItem[];
+  /** Selected rows the row menu would offer Convert for (MFI-28.5) — the live ones. */
+  convertible: CatalogItem[];
 }
 
 /**
@@ -833,8 +835,10 @@ export interface CatalogBulkPlan {
  * clearing and re-selecting. Each button states its own count, so neither can be pressed
  * without knowing how many rows it reaches.
  *
- * Convert is deliberately not a bulk verb: every conversion has its own fidelity preview to
- * read and its own low-tier acknowledgement, and a bulk button cannot ask for eight of them.
+ * Convert is a bulk verb too (MFI-28.5), but it does not *write*: it opens the bulk convert
+ * review, where every item still has its own fidelity preview and its own low-tier
+ * acknowledgement (or one explicit "apply the warning to all"). Which rows reach it is
+ * {@link catalogRowActions}'s `convert` gate, so the bar and the row menu cannot disagree.
  *
  * @param items Every row currently on screen.
  * @param selectedIds The ids the table reports as selected.
@@ -849,7 +853,38 @@ export function catalogBulkPlan(
   return {
     deletable: selected.filter((item) => !item.deleted_at),
     restorable: selected.filter((item) => Boolean(item.deleted_at)),
+    convertible: selected.filter((item) => catalogRowActions(item).convert),
   };
+}
+
+/** One item a bulk write could not apply to, and why (MFI-28.5). */
+export interface CatalogBulkFailure {
+  /** The item's id. */
+  id: string;
+  /** Its name, as the report prints it. */
+  name: string;
+  /** The server's refusal, or the write's fallback sentence. */
+  reason: string;
+}
+
+/**
+ * The title of the per-item failure report a partial bulk write opens (MFI-28.5).
+ *
+ * The toast says the split; this dialog says *which* items and *why*, one line each, which
+ * is what lets a reader retry the right ones rather than guess.
+ *
+ * @param verb The bare verb, lower case — `delete`, `undelete`, `convert`.
+ * @param failures The items the write refused.
+ * @returns e.g. `2 catalog items could not be deleted`.
+ */
+export function catalogBulkFailureTitle(
+  verb: 'delete' | 'undelete' | 'convert',
+  failures: readonly CatalogBulkFailure[]
+): string {
+  const count = failures.length;
+  const noun = count === 1 ? 'catalog item' : 'catalog items';
+  const participle = verb === 'convert' ? 'converted' : `${verb}d`;
+  return `${count} ${noun} could not be ${participle}`;
 }
 
 /**

@@ -680,6 +680,90 @@ describe('states', () => {
 });
 
 // ---------------------------------------------------------------------------------------
+// Bulk actions (MFI-28.5)
+// ---------------------------------------------------------------------------------------
+
+describe('bulk actions (MFI-28.5)', () => {
+  it('puts a checkbox on every card, and a select-all over the cards view', async () => {
+    await renderCatalog();
+    const cards = await screen.findAllByTestId('catalog-card');
+    expect(within(cards[0]).getByRole('checkbox', { name: /^Select / })).toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-cards-bulk-bar')).not.toBeInTheDocument();
+
+    fireEvent.click(within(cards[0]).getByRole('checkbox', { name: /^Select / }));
+    const bar = await screen.findByTestId('catalog-cards-bulk-bar');
+    expect(bar).toHaveTextContent('1 catalog item selected');
+    expect(cards[0]).toHaveAttribute('data-selected', 'true');
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /^Select all \d+/ }));
+    expect(bar).toHaveTextContent(`${cards.length} catalog items selected`);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Clear selection' }));
+    expect(screen.queryByTestId('catalog-cards-bulk-bar')).not.toBeInTheDocument();
+  });
+
+  it('keeps a card selection when the view switches to the table', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    fireEvent.click(within(card).getByRole('checkbox', { name: /^Select / }));
+    await showTable();
+    expect(screen.getByText('1 catalog item selected')).toBeInTheDocument();
+  });
+
+  it('exposes bulk delete and bulk convert for the selected cards', async () => {
+    await renderCatalog();
+    const cards = await screen.findAllByTestId('catalog-card');
+    fireEvent.click(within(cards[0]).getByRole('checkbox', { name: /^Select / }));
+    fireEvent.click(within(cards[1]).getByRole('checkbox', { name: /^Select / }));
+    const bar = await screen.findByTestId('catalog-cards-bulk-bar');
+    expect(within(bar).getByTestId('catalog-bulk-delete')).toHaveTextContent('Delete 2');
+    expect(within(bar).getByTestId('catalog-bulk-convert')).toHaveTextContent('Convert 2…');
+  });
+
+  it('opens the bulk convert review on the selected items', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    await showTable();
+    const boxes = within(screen.getByTestId('catalog-table')).getAllByRole('checkbox');
+    fireEvent.click(boxes[1]);
+    fireEvent.click(boxes[2]);
+    fireEvent.click(await screen.findByTestId('catalog-bulk-convert'));
+    const dialog = await screen.findByTestId('catalog-bulk-convert-dialog');
+    expect(dialog).toHaveTextContent('Convert 2 catalog items to OpenAPI');
+    expect(within(dialog).getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('offers no Convert for a selection of deleted items only', async () => {
+    await renderCatalog();
+    fireEvent.click(screen.getByLabelText('Show soft-deleted catalog items in the list'));
+    const deletedCard = (await screen.findAllByTestId('catalog-card')).find(
+      (card) => card.getAttribute('data-catalog-id') === RETIRED.id
+    ) as HTMLElement;
+    fireEvent.click(within(deletedCard).getByRole('checkbox', { name: /^Select / }));
+    const bar = await screen.findByTestId('catalog-cards-bulk-bar');
+    expect(within(bar).getByTestId('catalog-bulk-restore')).toHaveTextContent('Undelete 1');
+    expect(within(bar).queryByTestId('catalog-bulk-convert')).not.toBeInTheDocument();
+  });
+
+  it('reports a partial bulk delete per item, naming each refusal', async () => {
+    mockDeleteProject
+      .mockImplementationOnce(async () => JSON.stringify({ success: true }))
+      .mockImplementationOnce(async () => JSON.stringify({ success: false, error: 'Item is locked' }));
+    await renderCatalog();
+    const cards = await screen.findAllByTestId('catalog-card');
+    fireEvent.click(within(cards[0]).getByRole('checkbox', { name: /^Select / }));
+    fireEvent.click(within(cards[1]).getByRole('checkbox', { name: /^Select / }));
+    fireEvent.click(await screen.findByTestId('catalog-bulk-delete'));
+    await waitFor(() => expect(mockAlert).toHaveBeenCalledTimes(1));
+    const options = mockAlert.mock.calls[0][0] as { title: string; message: React.ReactElement };
+    expect(options.title).toBe('1 catalog item could not be deleted');
+    render(options.message);
+    const list = screen.getByTestId('catalog-bulk-failures');
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1);
+    expect(list).toHaveTextContent('Item is locked');
+  });
+});
+
+// ---------------------------------------------------------------------------------------
 // Keyboard and axe (MFI-28.8)
 // ---------------------------------------------------------------------------------------
 
@@ -836,6 +920,47 @@ describe('the browser fixtures', () => {
     // The table, which is the only surface that can scroll sideways.
     await showTable();
     write('table', page().outerHTML);
+  });
+
+  it('writes the bulk selection and the bulk convert review (MFI-28.5)', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    // Serve the review's dry-runs on top of the list's own reads: one clean, two low-tier —
+    // so the review shows the per-item acknowledgements *and* the apply-to-all gate.
+    const listFetch = global.fetch;
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (!url.includes('/convert')) return (listFetch as typeof fetch)(input, init);
+      const low = url.includes(ORDERS.id) || url.includes(EVENTS.id);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          report: {
+            score: low ? 34 : 92,
+            grade: low ? 'F' : 'A',
+            tier: low ? 'low' : 'high',
+            items: [],
+            losses: [],
+            coverage_counts: {},
+            penalty: 0,
+          },
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    fireEvent.click(within(screen.getByRole('note')).getByRole('button', { name: 'Got it' }));
+    for (const name of ['Ledger Graph', 'Orders RPC', 'Events Bus']) {
+      fireEvent.click(screen.getByRole('checkbox', { name: `Select ${name}` }));
+    }
+    await screen.findByTestId('catalog-cards-bulk-bar');
+    write('bulk-selection', page().outerHTML);
+
+    fireEvent.click(screen.getByTestId('catalog-bulk-convert'));
+    const dialog = await screen.findByTestId('catalog-bulk-convert-dialog');
+    await waitFor(() => expect(within(dialog).queryAllByText('Previewing…')).toHaveLength(0));
+    write('bulk-convert', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 
   it('writes the empty state', async () => {

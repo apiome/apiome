@@ -36,6 +36,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
+import { Checkbox } from '@/app/components/ui/Checkbox';
 import { Ring } from '@/app/components/ui/metrics';
 import { formatRelativeTime } from '@/app/ade/dashboard/versions/version-history-dag';
 import { CATALOG_EXPORT_VS_CONVERT_COPY, convertActionLabel } from '@/app/utils/catalog-conversion';
@@ -87,6 +88,13 @@ export interface CatalogCardProps extends CatalogItemHandlers {
   onOpenQuality: (item: CatalogItem) => void;
   /** True while a write is in flight — every verb on the card goes inert. */
   busy?: boolean;
+  /** Whether the card is part of the bulk selection (MFI-28.5). */
+  selected?: boolean;
+  /**
+   * Tick or untick the card for the bulk bar. Absent, the card draws no checkbox — a
+   * surface that offers no bulk verbs has nothing to select for.
+   */
+  onSelectedChange?: (item: CatalogItem, selected: boolean) => void;
 }
 
 /**
@@ -107,6 +115,8 @@ export default function CatalogCard({
   onRestore,
   onPermanentDelete,
   busy = false,
+  selected = false,
+  onSelectedChange,
 }: CatalogCardProps) {
   const lifecycle = catalogLifecycle(item);
   const isDeleted = lifecycle === 'deleted';
@@ -117,11 +127,24 @@ export default function CatalogCard({
     <article
       className="cat-card"
       data-lifecycle={lifecycle}
+      data-selected={selected ? 'true' : undefined}
       data-testid="catalog-card"
       data-catalog-id={item.id}
     >
       <div className="cat-card__body">
         <div className="cat-card__head">
+          {onSelectedChange ? (
+            /* Above the stretched link, so ticking a card never opens it. */
+            <span className="cat-card__select cat-card__above">
+              <Checkbox
+                checked={selected}
+                disabled={busy}
+                onCheckedChange={(next) => onSelectedChange(item, next === true)}
+                aria-label={`Select ${item.name}`}
+                data-testid="catalog-card-select"
+              />
+            </span>
+          ) : null}
           <Avatar shape="hex" size="lg" name={item.name} id={item.id} />
           <div className="cat-card__identity">
             <h3 className="cat-card__name">

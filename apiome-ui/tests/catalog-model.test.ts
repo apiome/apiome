@@ -24,6 +24,7 @@ import {
   CATALOG_SOURCE_OPTIONS,
   DEFAULT_CATALOG_SORT,
   EMPTY_CATALOG_FILTERS,
+  catalogBulkFailureTitle,
   catalogBulkPlan,
   catalogBulkResultMessage,
   CATALOG_FACT_FORMAT_PILLS,
@@ -579,10 +580,24 @@ describe('bulk selection', () => {
     const plan = catalogBulkPlan(ALL, [LEDGER.id, RETIRED.id, EVENTS.id]);
     expect(plan.deletable.map((row) => row.name)).toEqual(['Ledger Graph', 'Events Bus']);
     expect(plan.restorable.map((row) => row.name)).toEqual(['Legacy Graph']);
+    // Convert reaches the live rows only — the same gate as the row menu (MFI-28.5).
+    expect(plan.convertible.map((row) => row.name)).toEqual(['Ledger Graph', 'Events Bus']);
   });
 
   it('ignores an id that is no longer on screen', () => {
-    expect(catalogBulkPlan(ALL, ['not-here'])).toEqual({ deletable: [], restorable: [] });
+    expect(catalogBulkPlan(ALL, ['not-here'])).toEqual({
+      deletable: [],
+      restorable: [],
+      convertible: [],
+    });
+  });
+
+  it('titles the per-item failure report by verb and count', () => {
+    const one = [{ id: 'a', name: 'A', reason: 'Forbidden' }];
+    const two = [...one, { id: 'b', name: 'B', reason: 'Gone' }];
+    expect(catalogBulkFailureTitle('delete', one)).toBe('1 catalog item could not be deleted');
+    expect(catalogBulkFailureTitle('undelete', two)).toBe('2 catalog items could not be undeleted');
+    expect(catalogBulkFailureTitle('convert', two)).toBe('2 catalog items could not be converted');
   });
 
   it('states the split when a bulk write is only partly applied', () => {

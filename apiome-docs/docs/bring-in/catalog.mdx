@@ -123,8 +123,40 @@ it never creates a project.
 ## Delete and restore
 
 **Delete item** hides an item; turn on **Show deleted** and choose **Undelete item** to bring it
-back. **Permanently delete** asks you to type the item's slug, then **“Delete everything”**. In
-Table view, tick items to delete or undelete several at once.
+back. **Permanently delete** asks you to type the item's slug, then **“Delete everything”**.
+
+## Act on several items at once
+
+1. **Tick the checkbox** on each card (or table row) you want. **Select all** above the cards —
+   or the header checkbox in Table view — ticks every item the current filters show. Your
+   selection is kept when you switch between Cards and Table.
+2. A bar appears at the bottom of the page: **“Convert N…”**, **“Delete N”** and
+   **“Undelete N”**, each counting the items it applies to (Convert and Delete reach live
+   items; Undelete reaches deleted ones).
+3. **Click the × on the bar** to clear the selection.
+
+<Screenshot id="catalog-bulk-selection" alt="Three catalog cards ticked, with the bulk bar offering Convert 3… and Delete 3" />
+
+If some items cannot be deleted or undeleted, a message lists **each item and the reason** it was
+refused; the rest are done.
+
+### Convert several items
+
+**Click “Convert N…”** to open the review. Apiome previews every item first — the same fidelity
+check as [converting one item](#convert-to-openapi) — and lists each with its grade, its
+fidelity and its state.
+
+1. **Untick** any item you want to leave out.
+2. For each **low fidelity** item, tick **I understand the converted spec will be incomplete and
+   want to convert anyway.** When two or more items are low fidelity you can tick **Apply the
+   fidelity warning to all …** instead.
+3. Optionally **click “Review…”** on an item to open its full preview (summary, projection
+   graph, defaults) and convert it from there.
+4. **Click “Convert N”.** Items are converted one at a time; each row then shows **Converted**
+   (with **Open project**) or **Failed** with the reason. **Click “Convert”** again to retry the
+   failed ones, or **“Done”** to close.
+
+<Screenshot id="catalog-bulk-convert" alt="The bulk convert review: three items with their fidelity grades, two low-fidelity acknowledgements and the apply-to-all option" />
 
 ## Use the keyboard
 

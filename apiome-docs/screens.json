@@ -212,6 +212,22 @@
       ]
     },
     {
+      "id": "catalog-bulk-selection",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog/bulk-selection.html",
+      "scrollTo": "[data-testid=\"catalog-cards-bulk-bar\"]"
+    },
+    {
+      "id": "catalog-bulk-convert",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog/bulk-convert.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogBulkConvertDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-item",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",
