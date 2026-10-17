@@ -30,6 +30,7 @@ import {
   tableViewToHref,
   tableViewToSearchParams,
   textFilter,
+  withForeignParams,
   type TableView,
 } from '../src/app/components/ui/dataTableUrlState';
 
@@ -241,5 +242,22 @@ describe('the sort cycle', () => {
       column: 'updated',
       direction: 'asc',
     });
+  });
+});
+
+describe('a table that shares its page keeps the params it does not own (HIVE-11.4)', () => {
+  it('copies foreign params through and drops the ones the table owns', () => {
+    const current = new URLSearchParams('projectId=p1&tab=timeline&q=old&status=draft&sort=name&page=3');
+    const href = tableViewToHref('/ade/dashboard/versions', { filters: { ...filters.empty, q: 'new' }, sort: null, page: 1 }, filters);
+    expect(withForeignParams(href, current, filters)).toBe('/ade/dashboard/versions?q=new&projectId=p1&tab=timeline');
+  });
+
+  it('keeps the bare path when neither side has a param', () => {
+    expect(withForeignParams('/x', new URLSearchParams(), filters)).toBe('/x');
+  });
+
+  it('clearing every filter leaves only the foreign params', () => {
+    const current = new URLSearchParams('q=pay&projectId=p1');
+    expect(withForeignParams('/x', current, filters)).toBe('/x?projectId=p1');
   });
 });

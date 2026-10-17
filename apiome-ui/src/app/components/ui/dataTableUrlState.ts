@@ -469,6 +469,35 @@ export function tableViewToHref<Schema extends TableFilterSchema>(
 }
 
 /**
+ * Carry the params a table does not own across one of its writes (HIVE-11.4, #5600).
+ *
+ * A list that is the whole page owns its query string, but a table that is one part of a
+ * page shares it — Versions keeps `projectId` and `tab` beside the table's filters, and a
+ * filter change that dropped them would switch project. Anything that is neither one of
+ * the schema's fields nor `sort` / `dir` / `page` is copied through unchanged, after the
+ * table's own params.
+ *
+ * @param href The table's path and query, from `tableViewToHref`.
+ * @param current The query string the write replaces.
+ * @param definition The table's filter schema — the params it owns.
+ * @returns `href` plus every foreign param of `current`.
+ */
+export function withForeignParams<Schema extends TableFilterSchema>(
+  href: string,
+  current: { forEach(callback: (value: string, key: string) => void): void },
+  definition: TableFilterDefinition<Schema>
+): string {
+  const owned = new Set<string>([...Object.keys(definition.fields), ...RESERVED_TABLE_PARAMS]);
+  const [pathname, query = ''] = href.split('?');
+  const params = new URLSearchParams(query);
+  current.forEach((value, key) => {
+    if (!owned.has(key)) params.append(key, value);
+  });
+  const merged = params.toString();
+  return merged ? `${pathname}?${merged}` : pathname;
+}
+
+/**
  * The sort state a click on a column header produces.
  *
  * First click sorts ascending, a second on the same column flips to descending, and a third

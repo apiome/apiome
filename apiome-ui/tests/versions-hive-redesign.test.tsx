@@ -35,7 +35,16 @@ import { jest } from '@jest/globals';
 
 const mockConfirm = jest.fn<Promise<boolean>, [unknown]>(() => Promise.resolve(true));
 const mockAlert = jest.fn<Promise<void>, [unknown]>(() => Promise.resolve());
-const mockReplace = jest.fn();
+/**
+ * The address bar, as the mocked router keeps it. The toolbar's filters are URL state
+ * (HIVE-11.4), so `replace` has to land in `useSearchParams` for a chip or a menu to narrow.
+ */
+let mockSearch = new URLSearchParams();
+const mockSearchListeners = new Set<() => void>();
+const mockReplace = jest.fn((href: string) => {
+  mockSearch = new URLSearchParams(href.split('?')[1] ?? '');
+  mockSearchListeners.forEach((listener) => listener());
+});
 
 jest.mock('@lib/auth/session-client', () => ({
   useAuthSession: () => ({
@@ -46,11 +55,18 @@ jest.mock('@lib/auth/session-client', () => ({
   AuthSessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: mockReplace }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/ade/dashboard/versions',
-}));
+jest.mock('next/navigation', () => {
+  const { useSyncExternalStore } = jest.requireActual<typeof import('react')>('react');
+  const subscribe = (listener: () => void) => {
+    mockSearchListeners.add(listener);
+    return () => mockSearchListeners.delete(listener);
+  };
+  return {
+    useRouter: () => ({ push: jest.fn(), replace: mockReplace }),
+    useSearchParams: () => useSyncExternalStore(subscribe, () => mockSearch),
+    usePathname: () => '/ade/dashboard/versions',
+  };
+});
 
 jest.mock('@/app/components/providers/DialogProvider', () => ({
   useDialog: () => ({
@@ -435,6 +451,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   installFetch();
+  mockSearch = new URLSearchParams();
   // The status strip remembers its open chip per project for the session.
   window.sessionStorage.clear();
   mockConfirm.mockClear();
@@ -776,20 +793,129 @@ describe('the table', () => {
     expect(screen.getByTestId('versions-table-foot')).toHaveTextContent('sorted by version ↑');
   });
 
-  it('narrows with the timeline filters and resets them', async () => {
+  it('narrows with the toolbar search and clears it with the Clear filters chip', async () => {
     await renderVersions();
+    // One toolbar for the table: the Timeline card is gone (HIVE-11.4).
+    expect(screen.queryByTestId('versions-timeline-filters')).not.toBeInTheDocument();
+    const toolbar = screen.getByTestId('versions-table-toolbar');
+    expect(within(toolbar).getByLabelText('Search revisions')).toBeInTheDocument();
+    // No filter, no chip.
+    expect(screen.queryByTestId('versions-clear-filters')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Search revisions'), { target: { value: 'payout' } });
     await waitFor(() => expect(dataRows()).toHaveLength(3));
-    const reset = screen.getByTestId('versions-timeline-reset');
-    expect(reset).toBeEnabled();
-    fireEvent.click(reset);
+    // The search is URL state, under the REST list's own `q`, beside the project id.
+    expect(mockSearch.get('q')).toBe('payout');
+    const clear = screen.getByTestId('versions-clear-filters');
+    expect(clear).toHaveTextContent('Clear filters (1)');
+    fireEvent.click(clear);
     await waitFor(() => expect(dataRows()).toHaveLength(6));
-    expect(screen.getByTestId('versions-timeline-reset')).toBeDisabled();
+    expect(mockSearch.get('q')).toBeNull();
+    expect(screen.getByLabelText('Search revisions')).toHaveValue('');
+    expect(screen.queryByTestId('versions-clear-filters')).not.toBeInTheDocument();
     // Nothing matches → the timeline empty state, with its reset.
     fireEvent.change(screen.getByLabelText('Search revisions'), { target: { value: 'zzz-nothing' } });
     await screen.findByTestId('versions-empty-timeline');
     fireEvent.click(screen.getByRole('button', { name: 'Reset timeline filters' }));
     await waitFor(() => expect(screen.queryByTestId('versions-empty-timeline')).not.toBeInTheDocument());
+  });
+
+  it('applies a date range from the Any time popover, and restores focus on Escape', async () => {
+    await renderVersions();
+    const trigger = screen.getByTestId('versions-date-filter');
+    expect(trigger).toHaveTextContent('Any time');
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+
+    fireEvent.click(trigger);
+    const popover = await screen.findByRole('dialog', { name: 'Created between' });
+    fireEvent.change(within(popover).getByLabelText('From date'), { target: { value: '2026-07-01' } });
+    fireEvent.change(within(popover).getByLabelText('To date'), { target: { value: '2026-08-31' } });
+    fireEvent.click(within(popover).getByTestId('versions-date-filter-apply'));
+    await waitFor(() => expect(dataRows()).toHaveLength(3));
+    expect(mockSearch.get('createdAfter')).toBe('2026-07-01');
+    expect(mockSearch.get('createdBefore')).toBe('2026-08-31');
+    expect(trigger).toHaveTextContent('Jul 1, 2026 – Aug 31, 2026');
+    expect(screen.queryByRole('dialog', { name: 'Created between' })).not.toBeInTheDocument();
+    // Both dates are one filter each.
+    expect(screen.getByTestId('versions-clear-filters')).toHaveTextContent('Clear filters (2)');
+
+    // An inverted draft cannot be applied; Escape discards it and hands focus back.
+    fireEvent.click(trigger);
+    const again = await screen.findByRole('dialog', { name: 'Created between' });
+    expect(within(again).getByLabelText('From date')).toHaveValue('2026-07-01');
+    fireEvent.change(within(again).getByLabelText('From date'), { target: { value: '2026-09-30' } });
+    expect(within(again).getByRole('alert')).toHaveTextContent('From must be on or before To.');
+    expect(within(again).getByTestId('versions-date-filter-apply')).toBeDisabled();
+    fireEvent.keyDown(again, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Created between' })).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    expect(mockSearch.get('createdAfter')).toBe('2026-07-01');
+
+    // Clear inside the popover empties both.
+    fireEvent.click(trigger);
+    fireEvent.click(within(await screen.findByRole('dialog', { name: 'Created between' })).getByTestId('versions-date-filter-clear'));
+    await waitFor(() => expect(dataRows()).toHaveLength(6));
+    expect(trigger).toHaveTextContent('Any time');
+  });
+
+  it('fills the draft from a quick range chip', async () => {
+    await renderVersions();
+    fireEvent.click(screen.getByTestId('versions-date-filter'));
+    const popover = await screen.findByRole('dialog', { name: 'Created between' });
+    const chip = within(popover).getByTestId('versions-date-preset-last30');
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    expect(within(popover).getByLabelText('From date')).not.toHaveValue('');
+    fireEvent.click(within(popover).getByTestId('versions-date-filter-apply'));
+    await waitFor(() => expect(screen.getByTestId('versions-date-filter')).toHaveTextContent('Last 30 days'));
+  });
+
+  it('narrows by author from the All authors menu, with avatars, and restores focus', async () => {
+    await renderVersions();
+    const trigger = screen.getByTestId('versions-author-filter');
+    expect(trigger).toHaveTextContent('All authors');
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    // Radix names the menu after its trigger.
+    const menu = await screen.findByRole('menu', { name: 'All authors' });
+    const items = within(menu).getAllByRole('menuitemradio');
+    expect(items.map((item) => item.textContent)).toEqual([
+      'All authors',
+      'ALAda Lovelace',
+      'GHGrace Hopper',
+      'LTLinus Torvalds',
+    ]);
+    expect(items[0]).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(items[3]);
+    await waitFor(() => expect(dataRows()).toHaveLength(2));
+    expect(mockSearch.get('creatorId')).toBe('u-linus');
+    expect(trigger).toHaveTextContent('Linus Torvalds');
+    expect(screen.queryByTestId('versions-author-filter-menu')).not.toBeInTheDocument();
+    await waitFor(() => expect(trigger).toHaveFocus());
+
+    // Escape closes without changing the filter.
+    fireEvent.keyDown(trigger, { key: 'Enter' });
+    const again = await screen.findByTestId('versions-author-filter-menu');
+    expect(within(again).getByTestId('versions-author-u-linus')).toHaveAttribute('aria-checked', 'true');
+    fireEvent.keyDown(again, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByTestId('versions-author-filter-menu')).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    expect(mockSearch.get('creatorId')).toBe('u-linus');
+  });
+
+  it('reads every toolbar filter from a shared link and keeps the params it does not own', async () => {
+    mockSearch = new URLSearchParams(
+      `projectId=${PROJECT_ID}&q=payout&creatorId=u-ada&createdAfter=2026-01-01&createdBefore=2026-12-31&state=drafts`
+    );
+    render(<Versions />);
+    await screen.findByTestId('versions-table');
+    await waitFor(() => expect(screen.getByLabelText('Search revisions')).toHaveValue('payout'));
+    expect(screen.getByTestId('versions-author-filter')).toHaveTextContent(/Ada Lovelace|1 author/);
+    expect(screen.getByTestId('versions-facet-drafts')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('versions-clear-filters')).toHaveTextContent('Clear filters (5)');
+    fireEvent.click(screen.getByTestId('versions-clear-filters'));
+    await waitFor(() => expect(dataRows()).toHaveLength(6));
+    // Every filter dropped; the project stays.
+    expect(mockSearch.toString()).toBe(`projectId=${PROJECT_ID}`);
   });
 
   it('re-reads the list with the lifecycle filter and offers to clear it when nothing matches', async () => {

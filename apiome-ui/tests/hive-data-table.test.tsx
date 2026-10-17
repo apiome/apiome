@@ -36,6 +36,7 @@ import {
   DataTableBulkAction,
   DataTableCellPrimary,
   DataTableCellSub,
+  DataTableClearFilters,
   DataTableFilterChip,
   DataTableFoot,
   DataTablePager,
@@ -825,6 +826,29 @@ describe('the toolbar', () => {
       </DataTableToolbar>
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('draws Clear filters (n) only while a filter is active (HIVE-11.4)', async () => {
+    const user = userEvent.setup();
+    const onClear = jest.fn();
+    const { rerender } = render(
+      <DataTableToolbar>
+        <DataTableClearFilters count={0} onClick={onClear} />
+      </DataTableToolbar>
+    );
+    expect(screen.queryByRole('button', { name: /Clear filters/ })).not.toBeInTheDocument();
+
+    rerender(
+      <DataTableToolbar>
+        <DataTableClearFilters count={3} onClick={onClear} />
+      </DataTableToolbar>
+    );
+    const chip = screen.getByRole('button', { name: 'Clear filters (3)' });
+    expect(chip).toHaveAttribute('type', 'button');
+    // An action, not a toggle — it states no pressed state.
+    expect(chip).not.toHaveAttribute('aria-pressed');
+    await user.click(chip);
+    expect(onClear).toHaveBeenCalledTimes(1);
   });
 });
 

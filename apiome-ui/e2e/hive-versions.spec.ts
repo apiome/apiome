@@ -242,6 +242,44 @@ test.describe('the versions page keeps the document to one column', () => {
    The grids re-flow, which is what the rem asides are for
    ------------------------------------------------------------------------- */
 
+test.describe('the one table toolbar (HIVE-11.4)', () => {
+  /**
+   * The tops of the toolbar's direct children, rounded — one distinct value is one row.
+   *
+   * @param page The mounted fixture.
+   * @returns The set of distinct row tops.
+   */
+  async function toolbarRows(page: Page): Promise<number> {
+    return page.locator('[data-testid="versions-table-toolbar"]').evaluate((toolbar) => {
+      const tops = new Set<number>();
+      for (const child of Array.from(toolbar.children)) {
+        const box = (child as HTMLElement).getBoundingClientRect();
+        if (box.width > 0) tops.add(Math.round(box.top + box.height / 2));
+      }
+      return tops.size;
+    });
+  }
+
+  test('draws no Timeline card above the table', async ({ page }) => {
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, 'timeline');
+    await expect(page.locator('[data-testid="versions-timeline-filters"]')).toHaveCount(0);
+  });
+
+  test('lays the toolbar on one row at 1280 px', async ({ page }) => {
+    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+    await mount(page, 'timeline');
+    expect(await toolbarRows(page)).toBe(1);
+  });
+
+  test('wraps below 1280 px instead of scrolling the document', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 900 });
+    await mount(page, 'timeline');
+    expect(await toolbarRows(page)).toBeGreaterThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
+});
+
 test.describe('the two-column surfaces', () => {
   test('the overview grid keeps its aside on a desktop and folds it under on a tablet', async ({ page }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });

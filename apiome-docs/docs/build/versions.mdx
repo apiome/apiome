@@ -29,7 +29,7 @@ The dialogs are on [Version dialogs](./version-dialogs.mdx). Keyboard paths are 
 
 ## Timeline
 
-<Screenshot id="versions" alt="The Versions page, Timeline tab: the project name as the last breadcrumb, Compare, Import, More actions and New version, the Status strip, the Project facts card, filters and the version list" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
+<Screenshot id="versions" alt="The Versions page, Timeline tab: the project name as the last breadcrumb, Compare, Import, More actions and New version, the Status strip, the Project facts card, and the version list under its one filter toolbar" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
 
 From top to bottom:
 
@@ -42,11 +42,29 @@ From top to bottom:
    your choice for this project until you close the tab. With nothing to report, the row is not
    drawn.
 2. **Project** — id, slug, head version, last publish, and a link to **Published surface**.
-3. **Filters** — search the message and changelog, pick an author, a date range, a lifecycle
-   (**Stable**, **Beta**, **Deprecated**, **Archived**), and **All** / **Drafts** / **Published**.
-4. **The list** — **Version**, **Revision / changelog**, **Status**, **Mock**, **Created by**,
-   **Created** and actions. Badges mark the **HEAD** version, **Published** (read-only) and
-   **Locked** versions.
+3. **The list** — one toolbar on top of the table, then the versions. See [Filter the
+   list](#filter-the-list). The columns are **Version**, **Revision / changelog**, **Status**,
+   **Mock**, **Created by**, **Created** and actions. Badges mark the **HEAD** version,
+   **Published** (read-only) and **Locked** versions.
+
+### Filter the list
+
+Every filter sits in the toolbar on top of the table, left to right:
+
+| Control | Does |
+| --- | --- |
+| **Search revisions** | Matches the message, changelog, commit body and commit author as you type |
+| **All lifecycles** | Shows only **Stable**, **Beta**, **Deprecated** or **Archived** versions |
+| **“Any time”** | Opens **Created between**: set **From** and **To**, or **click** **Last 7 days**, **Last 30 days** or **This quarter**, then **click “Apply”**. **“Clear”** removes the range. The button then shows the range, for example **Last 7 days** |
+| **“All authors”** | Opens a list of the people who created the versions shown. **Click a name** to see only theirs |
+| **All revisions** | Shows the versions reachable from one tag. Shown when the project has tags |
+| **All** · **Drafts** · **Published** | Narrows the list by state; each chip shows its count |
+| **“Clear filters (n)”** | Appears while any filter is on; **n** is how many. **Click** it to show every version again |
+| **Sorted by …** | Sorts by created date, version or another column |
+
+<kbd>Esc</kbd> closes the date box and the author list without changing the filter. The filters are kept in
+the page address, so you can **copy the link** to share a filtered list. Switching to another project
+clears the search, author, dates, tag and lifecycle; the state chip stays.
 
 ### The mock switch
 

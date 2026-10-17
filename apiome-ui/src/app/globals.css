@@ -13334,49 +13334,6 @@ button.tfa-reset-notice__close > svg {
   justify-content: flex-start;
 }
 
-/* ---- Timeline filter bar ------------------------------------------------ */
-.ver-filters {
-  padding: var(--space-3) var(--space-4);
-}
-
-.ver-filters__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.ver-filters__label {
-  margin-inline-end: var(--space-1);
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
-.ver-filters__search {
-  inline-size: 14.375rem;
-  max-inline-size: 100%;
-}
-
-.ver-filters__author {
-  inline-size: 9.375rem;
-  max-inline-size: 100%;
-}
-
-.ver-filters__date {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
-}
-
-.ver-filters__date > input {
-  inline-size: 8.75rem;
-}
-
 /* ---- The git-like chip panels ------------------------------------------- */
 .ver-gitlike {
   padding: var(--space-3) var(--space-4);
@@ -13729,6 +13686,107 @@ button.tfa-reset-notice__close > svg {
 .ver-menu__item--danger[data-highlighted] > svg,
 .ver-menu__item--danger:hover > svg {
   color: currentColor;
+}
+
+/* ---- The table's one toolbar (HIVE-11.4) ---------------------------------
+   proposals/versions-status-strip.html callout 5: search · lifecycle · Any time ·
+   All authors · chips · sort, on one row at ≥ 1280 px. `DataTableToolbar` already
+   wraps, so below that it takes a second line instead of scrolling. */
+.ver-toolbar {
+  row-gap: var(--space-2);
+}
+
+.ver-toolbar .ver-toolbar-search {
+  inline-size: 15rem;
+  max-inline-size: 100%;
+}
+
+.ver-toolbar-trigger {
+  max-inline-size: 16rem;
+}
+
+.ver-toolbar-trigger.is-active {
+  background: var(--bg-subtle);
+}
+
+/* The "Created between" popover — hive.css §16 `.menu` chrome via `.tnt-menu`. */
+.ver-date-pop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  inline-size: 19rem;
+  max-inline-size: calc(100vw - 1rem);
+  padding: var(--space-3);
+}
+
+.ver-date-pop__title {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.ver-date-pop__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.ver-date-pop__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+/* The danger ink only on its own soft ground — the pair is calibrated for nothing else. */
+.ver-date-pop__error {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.ver-date-pop__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ver-date-pop__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* The author menu: a check column, then the avatar and the name. */
+.ver-author-menu {
+  max-block-size: min(20rem, 60vh);
+  overflow-y: auto;
+}
+
+.ver-author-menu__mark {
+  display: inline-flex;
+  inline-size: var(--icon-dense);
+  flex-shrink: 0;
+}
+
+.ver-author-menu__mark svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  stroke: var(--accent);
+}
+
+.ver-author-menu__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---- The toolbar's selects and its sort mark ---------------------------- */

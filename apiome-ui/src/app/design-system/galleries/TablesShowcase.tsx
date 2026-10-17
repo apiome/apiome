@@ -24,6 +24,7 @@ import {
   DataTableBulkAction,
   DataTableCellPrimary,
   DataTableCellSub,
+  DataTableClearFilters,
   DataTableFilterChip,
   DataTableFoot,
   DataTablePager,
@@ -36,6 +37,11 @@ import {
   type DataTableColumn,
   type DataTableSortState,
 } from '@/app/components/ui';
+import {
+  VersionsAuthorFilter,
+  VersionsDateFilter,
+  VersionsSearchField,
+} from '@/app/components/ade/versions/VersionsToolbarFilters';
 
 // ---------------------------------------------------------------------------------------
 // Specimen data
@@ -128,6 +134,12 @@ export function TablesShowcase() {
     column: 'title',
     direction: 'asc',
   });
+  // The Versions toolbar's filters (HIVE-11.4), held here so the overlays can be driven live.
+  const [revisionQuery, setRevisionQuery] = React.useState('');
+  const [revisionRange, setRevisionRange] = React.useState({ from: '', to: '' });
+  const [revisionAuthor, setRevisionAuthor] = React.useState('');
+  const revisionFilterCount =
+    (revisionQuery ? 1 : 0) + (revisionRange.from ? 1 : 0) + (revisionRange.to ? 1 : 0) + (revisionAuthor ? 1 : 0);
 
   const projectColumns: Array<DataTableColumn<Project>> = [
     {
@@ -399,6 +411,43 @@ export function TablesShowcase() {
             <DataTableFoot>
               <span>{dataTableRangeLabel(1, PAGE_SIZE, CATALOG.length, 'item')}</span>
             </DataTableFoot>
+          }
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-fg-muted">
+          One toolbar per table (HIVE-11.4): the Versions filters — search, an Any time date
+          popover and an author menu — beside the chips, with Clear filters (n) only while
+          something is narrowing the list.
+        </p>
+        <DataTable
+          caption="Revisions"
+          columns={catalogColumns.slice(0, 2)}
+          rows={CATALOG.slice(0, 2)}
+          getRowId={(item) => item.id}
+          toolbar={
+            <DataTableToolbar data-testid="gallery-revisions-toolbar">
+              <VersionsSearchField value={revisionQuery} onChange={setRevisionQuery} />
+              <VersionsDateFilter value={revisionRange} onChange={setRevisionRange} />
+              <VersionsAuthorFilter
+                value={revisionAuthor}
+                onChange={setRevisionAuthor}
+                options={[
+                  { id: 'u-ada', label: 'Ada Lovelace' },
+                  { id: 'u-grace', label: 'Grace Hopper' },
+                  { id: 'u-linus', label: 'Linus Torvalds' },
+                ]}
+              />
+              <DataTableClearFilters
+                count={revisionFilterCount}
+                onClick={() => {
+                  setRevisionQuery('');
+                  setRevisionRange({ from: '', to: '' });
+                  setRevisionAuthor('');
+                }}
+              />
+            </DataTableToolbar>
           }
         />
       </div>

@@ -260,6 +260,80 @@ test.describe('DataTable', () => {
     });
   });
 
+  /* HIVE-11.4 (#5600): the Versions toolbar's two overlays, on the gallery's Revisions
+     specimen — the same components the Versions page mounts. */
+  test.describe('toolbar overlays', () => {
+    test('the Any time popover traps focus, closes on Escape and restores focus', async ({ page }) => {
+      const trigger = page.getByTestId('gallery-revisions-toolbar').getByTestId('versions-date-filter');
+      await trigger.click();
+      const popover = page.getByRole('dialog', { name: 'Created between' });
+      await expect(popover).toBeVisible();
+      await expect(popover.getByLabel('From date')).toBeFocused();
+      // Tab never leaves the popover, however far it goes.
+      for (let step = 0; step < 10; step += 1) {
+        await page.keyboard.press('Tab');
+        expect(await popover.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+      }
+      await page.keyboard.press('Escape');
+      await expect(popover).toBeHidden();
+      await expect(trigger).toBeFocused();
+    });
+
+    test('a quick range applies and relabels the trigger, and Clear filters (n) appears', async ({ page }) => {
+      const toolbar = page.getByTestId('gallery-revisions-toolbar');
+      await expect(toolbar.getByRole('button', { name: /Clear filters/ })).toHaveCount(0);
+      await toolbar.getByTestId('versions-date-filter').click();
+      await page.getByTestId('versions-date-preset-last7').click();
+      await page.getByTestId('versions-date-filter-apply').click();
+      await expect(toolbar.getByTestId('versions-date-filter')).toHaveText(/Last 7 days/);
+      await expect(toolbar.getByRole('button', { name: 'Clear filters (2)' })).toBeVisible();
+      await toolbar.getByRole('button', { name: 'Clear filters (2)' }).click();
+      await expect(toolbar.getByTestId('versions-date-filter')).toHaveText(/Any time/);
+    });
+
+    test('the author menu traps focus, closes on Escape and restores focus', async ({ page }) => {
+      const trigger = page.getByTestId('gallery-revisions-toolbar').getByTestId('versions-author-filter');
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      const menu = page.getByTestId('versions-author-filter-menu');
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('menuitemradio')).toHaveCount(4);
+      for (let step = 0; step < 6; step += 1) {
+        await page.keyboard.press('Tab');
+        expect(await menu.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+      }
+      await page.keyboard.press('Escape');
+      await expect(menu).toBeHidden();
+      await expect(trigger).toBeFocused();
+    });
+
+    test('picking an author relabels the trigger and is undone by Clear filters', async ({ page }) => {
+      const toolbar = page.getByTestId('gallery-revisions-toolbar');
+      await toolbar.getByTestId('versions-author-filter').click();
+      await page.getByRole('menuitemradio', { name: /Grace Hopper/ }).click();
+      await expect(toolbar.getByTestId('versions-author-filter')).toHaveText(/Grace Hopper/);
+      await toolbar.getByRole('button', { name: 'Clear filters (1)' }).click();
+      await expect(toolbar.getByTestId('versions-author-filter')).toHaveText(/All authors/);
+    });
+
+    test('both overlays are axe-clean while open', async ({ page }) => {
+      const toolbar = page.getByTestId('gallery-revisions-toolbar');
+      await toolbar.getByTestId('versions-date-filter').click();
+      let results = await new AxeBuilder({ page })
+        .include('[data-testid="versions-date-filter-popover"]')
+        .withTags(WCAG_TAGS)
+        .analyze();
+      expect(blockingViolations(results.violations)).toEqual([]);
+      await page.keyboard.press('Escape');
+      await toolbar.getByTestId('versions-author-filter').click();
+      results = await new AxeBuilder({ page })
+        .include('[data-testid="versions-author-filter-menu"]')
+        .withTags(WCAG_TAGS)
+        .analyze();
+      expect(blockingViolations(results.violations)).toEqual([]);
+    });
+  });
+
   test('the tables section is axe-clean', async ({ page }) => {
     const results = await new AxeBuilder({ page })
       .withTags(WCAG_TAGS)
