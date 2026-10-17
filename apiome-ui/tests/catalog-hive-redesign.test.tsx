@@ -89,6 +89,7 @@ jest.mock('@/app/ade/dashboard/primitives/PrimitiveImportDialog', () => ({
 }));
 
 import CatalogClient from '../src/app/ade/dashboard/catalog/CatalogClient';
+import { CATALOG_VIEW_PREFS_STORAGE_KEY } from '../src/app/utils/catalog-view-preferences';
 
 // ---------------------------------------------------------------------------------------
 // Fixtures
@@ -634,6 +635,29 @@ describe('overlays', () => {
 });
 
 describe('states', () => {
+  it('holds the cards view with card-shaped skeletons while the first read is in flight', async () => {
+    // A read that never settles: the screen stays in its loading state.
+    global.fetch = jest.fn(() => new Promise(() => undefined)) as unknown as typeof fetch;
+    render(<CatalogClient />);
+    const region = await screen.findByTestId('catalog-cards-loading');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region).toHaveTextContent('Loading catalog…');
+    expect(within(region).getAllByTestId('catalog-card-skeleton')).toHaveLength(3);
+    // The toolbar is already in place above them, so nothing moves when the cards land.
+    expect(screen.getByTestId('catalog-toolbar')).toBeInTheDocument();
+  });
+
+  it('holds the table with per-column skeleton rows while the first read is in flight', async () => {
+    window.localStorage.setItem(CATALOG_VIEW_PREFS_STORAGE_KEY, JSON.stringify({ viewMode: 'table' }));
+    global.fetch = jest.fn(() => new Promise(() => undefined)) as unknown as typeof fetch;
+    render(<CatalogClient />);
+    const table = await screen.findByTestId('catalog-table');
+    await waitFor(() =>
+      expect(table.querySelector('tbody[aria-busy="true"], [aria-busy="true"]')).not.toBeNull()
+    );
+    expect(table.querySelectorAll('tbody tr[aria-hidden] .hive-skeleton').length).toBeGreaterThan(0);
+  });
+
   it('says a failed read failed, instead of showing an empty catalog', async () => {
     await renderCatalog(ALL_ROWS, { fail: true });
     expect(await screen.findByText('The catalog could not be loaded')).toBeInTheDocument();

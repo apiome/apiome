@@ -51,11 +51,11 @@ import {
   Filter,
   Link2,
   ListTree,
-  Loader2,
   Lock,
   X,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { CatalogAnalysisSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Card } from '@/app/components/ui/Card';
 import { clampRowIndex, computeWindowedRange } from '@/app/utils/windowed-rows';
 import { ANALYSIS_TREE_VIRTUALIZE_ABOVE } from '@/app/utils/preview-budgets';
@@ -892,13 +892,11 @@ export function CatalogFormatDetailPanel({
 
       {/* Transport states. A refusal is never rendered as an absence of analysis. */}
       {status === 'loading' ? (
-        <div
-          data-testid="catalog-format-detail-loading"
-          className="mt-4 flex items-center justify-center gap-2 py-8 text-sm text-fg-muted"
-        >
-          <Loader2 className="h-5 w-5 motion-safe:animate-spin text-accent" aria-hidden />
-          Loading the native payload analysis…
-        </div>
+        <CatalogAnalysisSkeleton
+          message="Loading the native payload analysis…"
+          testId="catalog-format-detail-loading"
+          className="mt-4"
+        />
       ) : status === 'forbidden' ? (
         <div
           data-testid="catalog-format-detail-forbidden"

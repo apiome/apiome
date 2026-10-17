@@ -17,7 +17,8 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { ConversionHistoryList } from './ConversionHistoryList';
 import { ConversionProjectionGraphPanel } from './ConversionProjectionGraphPanel';
 import { useConversionHistory } from './useConversionHistory';
@@ -77,10 +78,11 @@ export function CatalogConversionHistoryPanel({
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-fg-muted">
-          <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
-          Loading conversion history…
-        </div>
+        <CatalogTimelineSkeleton
+          message="Loading conversion history…"
+          testId="conversion-history-loading"
+          rows={2}
+        />
       ) : null}
 
       {error ? (

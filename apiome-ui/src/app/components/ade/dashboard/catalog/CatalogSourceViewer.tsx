@@ -28,6 +28,7 @@ import { monacoLanguageForCatalogFormat } from '@/app/utils/catalog-source-langu
 import type { CatalogSource } from '@/app/utils/catalog-format-registry';
 import { Card } from '@/app/components/ui/Card';
 import { cn } from '@lib/utils';
+import { CatalogCodeSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { CODE_EDITOR_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
 
 /**
@@ -63,11 +64,7 @@ const MonacoEditor = dynamic(
       .catch(() => OfflineSourceFallback),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-fg-muted">
-        Loading source…
-      </div>
-    ),
+    loading: () => <CatalogCodeSkeleton message="Loading source…" />,
   },
 );
 
@@ -414,9 +411,10 @@ export function CatalogSourceViewer({
                 {errorMessage || 'The raw source could not be loaded.'}
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-fg-muted">
-                Loading source…
-              </div>
+              <CatalogCodeSkeleton
+                message="Loading source…"
+                testId="catalog-detail-source-loading"
+              />
             )}
           </div>
         </>

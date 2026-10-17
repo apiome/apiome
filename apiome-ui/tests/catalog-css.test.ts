@@ -104,7 +104,6 @@ const CATALOG_PRELUDES = [
   '.cat-card',
   '.cat-card:hover',
   '.cat-card[data-lifecycle="disabled"], .cat-card[data-lifecycle="deleted"]',
-  '.cat-card--skeleton',
   '.cat-card__body',
   '.cat-card__head',
   '.cat-card__identity',

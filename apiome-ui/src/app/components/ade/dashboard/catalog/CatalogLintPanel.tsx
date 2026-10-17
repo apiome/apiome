@@ -42,6 +42,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { CatalogLintSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Alert } from '@/app/components/ui/Alert';
 import { Stat } from '@/app/components/ui/metrics';
 import { STATUS_TONE_DOT_CLASS } from '@/app/components/ui/statusVocabulary';
@@ -884,12 +885,11 @@ export function CatalogLintPanel({
       </div>
 
       {status === 'idle' || status === 'loading' ? (
-        <p
-          data-testid="catalog-lint-loading"
-          className="mt-6 text-sm text-fg-muted"
-        >
-          Loading lint report…
-        </p>
+        <CatalogLintSkeleton
+          message="Loading lint report…"
+          testId="catalog-lint-loading"
+          className="mt-4"
+        />
       ) : status === 'error' ? (
         <div
           data-testid="catalog-lint-error"

@@ -34,6 +34,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
+import { CatalogTimelineSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { Card } from '@/app/components/ui/Card';
 import { formatVersionWithPrefix, getVersionRevisionNote } from '@/app/utils/version-display';
 import {
@@ -317,12 +318,11 @@ export function CatalogVersionsPanel({
       </div>
 
       {status === 'idle' || status === 'loading' ? (
-        <p
-          data-testid="catalog-versions-loading"
-          className="mt-6 text-sm text-fg-muted"
-        >
-          Loading versions…
-        </p>
+        <CatalogTimelineSkeleton
+          message="Loading versions…"
+          testId="catalog-versions-loading"
+          className="mt-3"
+        />
       ) : status === 'error' ? (
         <div
           data-testid="catalog-versions-error"
