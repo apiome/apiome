@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List, show and fetch project properties."
+description: "List, show, fetch and create project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,44 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List, show and fetch project properties.
+List, show, fetch and create project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show).
+Subcommands: [`create`](#properties-create), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show).
+
+## apiome properties create {#properties-create}
+
+Create a property from a primitive (POST /v1/properties/{tenant}/{project}).
+
+The primitive's JSON Schema is copied in; each example is checked against it locally.
+
+On a terminal, missing fields are asked for. Properties have no tags.
+
+Exit 7, one line per field, when the property is invalid.
+
+```text
+apiome properties create [OPTIONS] PROJECT
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | Property name (unique in the project). |
+| `--primitive` | text |  |  | Primitive whose schema the property copies: name, UUID or $id. |
+| `--description` | text |  |  | What the property holds. |
+| `--example` | text (repeatable) |  |  | An example value (repeatable); read as JSON when it parses, else as text. |
+| `--from-file` | path |  |  | JSON or YAML object with name, primitive, description and examples. |
+| `--yes`, `-y` | flag |  |  | Skip the final question the prompts ask. |
 
 ## apiome properties get {#properties-get}
 
