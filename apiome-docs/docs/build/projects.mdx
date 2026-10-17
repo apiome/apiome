@@ -69,11 +69,29 @@ consumer contract.
 
 ## With the CLI or the API
 
-- CLI: `apiome projects list`, `apiome projects get <id-or-slug>` — see the [CLI
+- CLI: `apiome projects list`, `apiome projects get <id>`, and `apiome projects update
+  <slug-or-id>` to change a project's name, slug (`--rename`), description or domain — see the
+  [`projects` command reference](../reference/cli/projects.md) and the [CLI
   quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/projects/{tenant}`, `GET` / `PUT` / `DELETE
   /v1/projects/{tenant}/{project}`, `POST /v1/projects/{tenant}/{project}/restore` — see the [API
-  reference](../reference/api-reference.md).
+  reference](../reference/api-reference.md). A `PUT` may carry `expectedUpdatedAt` (the
+  project's `updated_at` as you last read it); if the project has changed since, nothing is
+  written and the response is `409` with code `update_conflict`.
+
+### Update a project from the CLI
+
+1. **Preview** the change: `apiome projects update payments-api --description 'Charges,
+   refunds, payouts.' --domain finance --dry-run` prints each changed field as a `-` / `+` pair
+   and sends nothing.
+2. **Apply** it by running the same command without `--dry-run`.
+3. To **change the slug**, add `--rename payments-v2`. The CLI asks you to confirm (pass
+   `--yes` in scripts): links, scripts and commands that use the old slug stop working, because
+   there is no redirect.
+4. To edit several fields at once, **dump** the project with `apiome --json projects get <id> >
+   project.json`, edit `name`, `slug`, `description`, `enabled` or `metadata`, and **apply** it
+   with `apiome projects update <id> --from-file project.json`. If someone changed the project
+   after your dump, nothing is written and the command exits `6` — dump it again and re-apply.
 
 ## Where next
 

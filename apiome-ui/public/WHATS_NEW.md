@@ -33,6 +33,8 @@ We continue to improve the platform based on your feedback with improvements and
       retention, column documentation, row identity, classification and declared quality checks
   - Added pills to supported format list to show the source and type that the API format provides
   - Every format now declares which versions it reads and writes, and which version an export produces by default
+- CLI:
+  - `apiome projects update <slug-or-id>` changes a project's name, slug (`--rename`, with confirmation), description or domain — or applies an edited `projects get --json` dump (`--from-file`); `--dry-run` shows the diff, and a project changed by someone else in the meantime is never overwritten (exit 6)
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

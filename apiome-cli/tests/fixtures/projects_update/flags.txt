@@ -1,0 +1,9 @@
+Project payments-api (aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa)
+- name: "Payments API"
++ name: "Payments v2"
+- slug: "payments-api"
++ slug: "payments-v2"
+- description: "Charges and refunds."
++ description: "Charges, refunds, payouts, and disputes."
+- metadata.domainCategory: "none"
++ metadata.domainCategory: "finance"

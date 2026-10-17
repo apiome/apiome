@@ -1,0 +1,9 @@
+Project payments-api (aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa)
+- description: "Charges and refunds."
++ description: (none)
+- enabled: true
++ enabled: false
+- metadata.owner: "team-pay"
++ metadata.owner: (none)
+- metadata.tier: (none)
++ metadata.tier: "gold"

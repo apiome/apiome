@@ -74,7 +74,7 @@ Follow [Command Line Interface Guidelines](https://clig.dev/):
 | `src/apiome_cli/run_interactive.py` | Interactive prompt and stdin batch runner used by `run.sh` |
 | `src/apiome_cli/cli_context.py` | Resolve settings, timeout, `--json`, `--no-progress`, `--insecure` from context |
 | `src/apiome_cli/config.py` | `CliSettings`, TOML user config, env/flag overrides |
-| `src/apiome_cli/exit_codes.py` | Process exit codes (0–6) |
+| `src/apiome_cli/exit_codes.py` | Process exit codes (0–8; codes above 5 are per-command) |
 | `src/apiome_cli/taxonomy_exit.py` | Map intake/delivery taxonomy categories → exit codes + stderr format (IXH-6.4) |
 | `src/apiome_cli/client/http.py` | `RestClient` (httpx sync), auth headers |
 | `src/apiome_cli/client/pagination.py` | Offset/limit pagination for list commands |
@@ -133,7 +133,7 @@ Registered in `main.py`:
 | `config` | `show` / `set` / `unset` for `base-url`, `tenant`, `api-key`, `session-token` |
 | `doctor` | Anonymous connectivity probe (`GET /health`) |
 | `health` | Print health JSON |
-| `projects` | `list`, `get` |
+| `projects` | `list`, `get`, `update <slug-or-id>` (CLI 3.4 / #3205: `--name`, `--rename` (confirm or `--yes`), `--description`, `--domain`, `--from-file`, `--dry-run`; sends only changed fields with `expectedUpdatedAt`; exit `6` on an `update_conflict` 409) |
 | `properties` | `list`, `get` |
 | `schema` | `test` runs schema tests server-side and gates on the verdicts (IXH-5.5, #5117): `--schema REF` (path-shaped IXH-5.1 reference), case sources `--payload FILE` (repeatable, expected valid; `*.xml` sent as XML), `--generate` (IXH-5.2 set — valid instances + single-constraint mutants — via `POST …/synthesize` with `verify: true`; `--seed` reproduces it), and `--suite PATH` (a directory of saved payload files, or an IXH-1.1 corpus manifest whose `instance-payload` entries run with expectations from `validity_class`; suite mode also runs the generated set unless `--no-generate`). Emits a stable report under global `--json` and JUnit XML via `--junit FILE\|-`; every mutant is reported with its intended keyword and whether it violated it, and server-rejected mutant candidates surface as `rejected_mutants`. Exit codes (this command): `0` all passed, `6` a case failed, `1` a case could not be checked / transport / empty run, `2` usage/auth/reference rejection (any 4xx). API key + tenant scope |
 | `schemas` | `list`, `get` |

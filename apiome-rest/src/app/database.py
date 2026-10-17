@@ -330,6 +330,33 @@ DEFAULT_FREE_MAX_AI_REQUESTS = 0
 ONBOARDING_WIZARD_STATE_TTL_HOURS = 24
 
 
+
+class ProjectUpdateConflict(Exception):
+    """A project update's ``expected_updated_at`` precondition failed (#3205).
+
+    Attributes:
+        current_updated_at: The project's ``updated_at`` now, for the caller to re-fetch against.
+    """
+
+    def __init__(self, current_updated_at: Any) -> None:
+        super().__init__("The project changed since it was read")
+        self.current_updated_at = current_updated_at
+
+
+def _same_instant(stored: Any, expected: datetime) -> bool:
+    """Whether a stored ``updated_at`` and a caller's value are the same instant.
+
+    A naive ``expected`` is read as UTC, the zone the API serializes timestamps in.
+    """
+    if not isinstance(stored, datetime):
+        return False
+    if expected.tzinfo is None:
+        expected = expected.replace(tzinfo=timezone.utc)
+    if stored.tzinfo is None:
+        stored = stored.replace(tzinfo=timezone.utc)
+    return stored == expected
+
+
 class Database:
     """Database connection and query manager."""
 
@@ -7594,15 +7621,39 @@ class Database:
         self,
         project_id: str,
         tenant_id: str,
-        updates: Dict[str, Any]
+        updates: Dict[str, Any],
+        expected_updated_at: Optional[datetime] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Update an existing project, ensuring it belongs to the tenant."""
+        """Update an existing project, ensuring it belongs to the tenant.
+
+        Args:
+            project_id: The project to update.
+            tenant_id: Its tenant.
+            updates: The fields to set (see the route for the accepted keys).
+            expected_updated_at: Optimistic-concurrency precondition (#3205). When given, the
+                ``UPDATE`` only matches a row whose ``updated_at`` still equals it, so a check
+                and the write are one atomic statement.
+
+        Returns:
+            The updated row, the unchanged row when there was nothing to update, or ``None``
+            when the project does not exist in the tenant.
+
+        Raises:
+            ProjectUpdateConflict: When ``expected_updated_at`` no longer matches.
+        """
         import json
 
         # First verify the project belongs to the tenant
         existing = self.get_project_by_id(project_id, tenant_id)
         if not existing:
             return None
+        if expected_updated_at is not None:
+            if expected_updated_at.tzinfo is None:
+                # The API serializes timestamps in UTC; a naive value means UTC, never the
+                # database session's zone.
+                expected_updated_at = expected_updated_at.replace(tzinfo=timezone.utc)
+            if not _same_instant(existing.get("updated_at"), expected_updated_at):
+                raise ProjectUpdateConflict(existing.get("updated_at"))
 
         # Build dynamic update query
         update_fields = []
@@ -7635,10 +7686,16 @@ class Database:
         update_fields.append("updated_at = CURRENT_TIMESTAMP")
 
         params.extend([project_id, tenant_id])
+        precondition = ""
+        if expected_updated_at is not None:
+            # Re-checked inside the write: a change between the read above and this statement
+            # matches no row instead of being overwritten.
+            precondition = "AND updated_at = %s"
+            params.append(expected_updated_at)
         query = f"""
             UPDATE apiome.projects
             SET {', '.join(update_fields)}
-            WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL
+            WHERE id = %s AND tenant_id = %s AND deleted_at IS NULL {precondition}
             RETURNING id, tenant_id, creator_id, name, description, slug,
                       enabled, metadata, change_report_template_version_id, publishable,
                       created_at, updated_at
@@ -7650,10 +7707,14 @@ class Database:
                 cursor.execute(query, tuple(params))
                 result = cursor.fetchone()
                 conn.commit()
-                return result
         except Exception as e:
             conn.rollback()
             raise e
+        if result is None and expected_updated_at is not None:
+            current = self.get_project_by_id(project_id, tenant_id)
+            if current:
+                raise ProjectUpdateConflict(current.get("updated_at"))
+        return result
 
     def delete_project(self, project_id: str, tenant_id: str) -> bool:
         """Soft delete a project, ensuring it belongs to the tenant."""

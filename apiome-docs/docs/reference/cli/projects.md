@@ -1,6 +1,6 @@
 ---
 title: "apiome projects"
-description: "List and fetch tenant projects."
+description: "List, fetch and update tenant projects."
 sidebar_position: 20
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome projects {#projects}
 
-List and fetch tenant projects.
+List, fetch and update tenant projects.
 
 ```text
 apiome projects [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`get`](#projects-get), [`list`](#projects-list).
+Subcommands: [`get`](#projects-get), [`list`](#projects-list), [`update`](#projects-update).
 
 ## apiome projects get {#projects-get}
 
@@ -41,3 +41,31 @@ List projects (GET /v1/projects/{tenant_slug}).
 ```text
 apiome projects list [OPTIONS]
 ```
+
+## apiome projects update {#projects-update}
+
+Update a project's name, slug, description or domain (PUT /v1/projects/{tenant}/{id}).
+
+Only the fields that change are sent. Every update carries the project's ``updated_at`` as a precondition — the dump's for ``--from-file``, otherwise the one read just before the write — so a concurrent edit is never overwritten: the command exits 6 instead.
+
+```text
+apiome projects update [OPTIONS] PROJECT_REF
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | New display name. |
+| `--rename` | text |  |  | New slug. Asks for confirmation (or --yes): links using the old slug stop working. |
+| `--description` | text |  |  | New description; an empty string clears it. |
+| `--domain` | text |  |  | Domain category: iot, social, gaming, travel, media, ecommerce, healthcare, finance, saas, education, realestate, logistics, or none. |
+| `--from-file` | path |  |  | Apply an edited `projects get --json` dump; fails (exit 6) if the project changed since the dump. |
+| `--yes`, `-y` | flag |  |  | Skip the --rename confirmation. |
+| `--dry-run` | flag |  |  | Print the changes as a diff without sending them. |

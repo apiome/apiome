@@ -132,7 +132,7 @@ def test_health_subcommand_help_exits_zero() -> None:
 _COMMAND_GROUPS: tuple[tuple[str, str], ...] = (
     ("config", "Show or change saved defaults"),
     ("repos", "List tenant Git repositories and inspect repository files"),
-    ("projects", "List and fetch tenant projects"),
+    ("projects", "List, fetch and update tenant projects"),
     ("properties", "List and fetch tenant properties"),
     ("schemas", "List and fetch tenant schemas"),
     ("types", "Browse tenant JSON Schema primitive types"),

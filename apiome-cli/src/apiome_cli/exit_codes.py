@@ -44,6 +44,13 @@ EXIT_PREFLIGHT_UNUSABLE = 5
 #: 4xx) so CI can tell "the tests failed" apart from "the tests could not run".
 EXIT_SCHEMA_TEST_FAILED = 6
 
+#: ``apiome projects update`` (CLI 3.4): the project **changed since it was read** — the
+#: ``updated_at`` in the ``--from-file`` dump (or the one read just before the write) no longer
+#: matches the server's, so nothing was written. Re-fetch with ``apiome projects get <id> --json``
+#: and apply again. Shares the value 6 with :data:`EXIT_SCHEMA_TEST_FAILED`: codes above 5 are
+#: per-command, and the two commands never overlap.
+EXIT_UPDATE_CONFLICT = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can
