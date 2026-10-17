@@ -103,6 +103,15 @@ describe('CatalogVersionsPanel', () => {
     expect(screen.getByTestId('catalog-versions-loading')).toBeInTheDocument();
   });
 
+  it('holds the timeline with skeleton rows, not a text line, while loading (MFI-28.6)', () => {
+    mockVersionsFetch(VERSIONS);
+    render(<CatalogVersionsPanel itemId={ITEM_ID} active={false} />);
+    const region = screen.getByTestId('catalog-versions-loading');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region).toHaveTextContent('Loading versions…');
+    expect(region.querySelectorAll('li').length).toBeGreaterThan(0);
+  });
+
   it('renders revisions newest-first once active', async () => {
     mockVersionsFetch(VERSIONS);
     render(<CatalogVersionsPanel itemId={ITEM_ID} active />);

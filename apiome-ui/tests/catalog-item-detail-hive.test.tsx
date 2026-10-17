@@ -404,6 +404,16 @@ describe('the states', () => {
     expect(screen.getByText('Loading catalog item…')).toBeInTheDocument();
   });
 
+  it('draws the header, tab strip and Overview as skeletons while loading (MFI-28.6)', () => {
+    mockReads(ITEM);
+    const { container } = render(<CatalogItemDetailClient itemId={ITEM.id} />);
+    expect(screen.getByTestId('catalog-detail-loading')).toHaveAttribute('role', 'status');
+    expect(container.querySelector('.page-header')).not.toBeNull();
+    expect(container.querySelector('.cid-tabs')).not.toBeNull();
+    expect(container.querySelectorAll('.cid-tile').length).toBeGreaterThan(0);
+    expect(container.querySelector('[class*="animate-spin"]')).toBeNull();
+  });
+
   it('offers a retry and a way back when the item cannot be read', async () => {
     mockReads(null, false);
     render(<CatalogItemDetailClient itemId={ITEM.id} />);

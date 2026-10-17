@@ -69,7 +69,6 @@ import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { ErrorState } from '@/app/components/ui/ErrorState';
-import { LoadingState } from '@/app/components/ui/LoadingState';
 import { Ring } from '@/app/components/ui/metrics';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
@@ -116,6 +115,7 @@ import { getProjectQualityHistory } from '@/app/utils/project-quality-score-hist
 import type { AnalysisSummary } from '@/app/utils/catalog-payload-analysis';
 import type { RelatedArtifact } from '@/app/utils/catalog-related-artifacts';
 import { cn } from '@lib/utils';
+import { CatalogDetailSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
 import { scrollBehavior } from '@lib/motion';
 
 /** The detail payload (MFI-23.2 envelope + the MFI-23.9 `summary`/`source` enrichments). */
@@ -433,13 +433,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   );
 
   if (loading) {
-    return (
-      <Page>
-        <PageBody>
-          <LoadingState message="Loading catalog item…" />
-        </PageBody>
-      </Page>
-    );
+    // The page's own header, tab strip and Overview, pending (MFI-28.6) — not a spinner.
+    return <CatalogDetailSkeleton />;
   }
 
   if (error || !item) {

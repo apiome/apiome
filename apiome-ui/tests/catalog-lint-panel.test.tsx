@@ -123,6 +123,15 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
     expect(screen.getByTestId('catalog-lint-loading')).toBeInTheDocument();
   });
 
+  it('holds the summary tiles and findings with skeletons while loading (MFI-28.6)', () => {
+    mockLintFetch(BASE_REPORT);
+    renderPanel({ active: false });
+    const region = screen.getByTestId('catalog-lint-loading');
+    expect(region).toHaveAttribute('role', 'status');
+    expect(region).toHaveTextContent('Loading lint report…');
+    expect(region.querySelectorAll('.hive-skeleton').length).toBeGreaterThan(5);
+  });
+
   it('fetches the report lazily on activation and renders the gauge + findings', async () => {
     mockLintFetch(BASE_REPORT);
     renderPanel();

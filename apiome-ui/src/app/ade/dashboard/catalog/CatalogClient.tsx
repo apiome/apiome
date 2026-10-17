@@ -70,6 +70,7 @@ import {
   CATALOG_SOURCE_OPTIONS,
   CatalogAboutDialog,
   CatalogCard,
+  CatalogCardGridSkeleton,
   CatalogExplainerCallout,
   CatalogFormatFacet,
   CatalogStatsRow,
@@ -932,14 +933,9 @@ export default function CatalogClient() {
               <Card className="cat-cards-panel" data-testid="catalog-cards">
                 {toolbar}
                 {loading ? (
-                  <div className="cat-grid" aria-busy>
-                    {[0, 1, 2].map((index) => (
-                      <div key={index} className="cat-card cat-card--skeleton" aria-hidden />
-                    ))}
-                    <p className="sr-only" role="status">
-                      Loading catalog…
-                    </p>
-                  </div>
+                  /* Cards shaped like the real ones (MFI-28.6), so the grid fills rather
+                     than jumps when the read lands. */
+                  <CatalogCardGridSkeleton />
                 ) : loadError ? (
                   <div className="cat-cards-panel__empty">
                     <EmptyState

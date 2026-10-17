@@ -192,7 +192,10 @@ describe('lazy loading', () => {
       nodeHref,
     };
     const { rerender } = render(<CatalogFormatDetailPanel {...props} active />);
-    await screen.findByTestId('catalog-format-detail-loading');
+    const loading = await screen.findByTestId('catalog-format-detail-loading');
+    // A skeleton of the analysis (MFI-28.6), not a spinner.
+    expect(loading).toHaveAttribute('role', 'status');
+    expect(loading.querySelector('[class*="animate-spin"]')).toBeNull();
 
     rerender(<CatalogFormatDetailPanel {...props} active={false} />);
     await act(async () => {

@@ -255,7 +255,7 @@ describe('token contrast gate (HIVE-10.2)', () => {
  * gain is locked in), and never raise it.
  */
 const MARK_TEXT_BASELINE: Record<string, number> = {
-  accent: 132,
+  accent: 131,
   ok: 59,
   warn: 48,
   danger: 84,
