@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.357.0] - 2026-10-17
+
+### Added
+- **Class summary in the version list (#3229, CLI 7.1)**: `GET /v1/classes/{tenant}?version_id=…` now returns, on
+  every class, `property_count` (its top-level properties) and `tags` (`{id, project_id, name, color, description}`,
+  sorted by name), in the same query — so a list view needs no per-class calls. The unfiltered list and the other
+  class responses leave `property_count` `null`. Used by `apiome classes list`.
+
+The OpenAPI version moves to 1.221.0.
+
 ## [1.356.0] - 2026-10-17
 
 ### Added

@@ -648,6 +648,11 @@ class ClassSchema(BaseModel):
     tags: Optional[List[TagSchema]] = None
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
+    # Summary (#3229, CLI 7.1): filled by the version-filtered list only; null elsewhere.
+    property_count: Optional[int] = Field(
+        default=None,
+        description="Number of top-level properties of the class; `GET /v1/classes/{tenant}?version_id=` only (#3229).",
+    )
 
     class Config:
         from_attributes = True

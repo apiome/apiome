@@ -27,7 +27,8 @@ async def list_classes(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[ClassSchema]:
     """
-    List all classes for a tenant, optionally filtered by version.
+    List all classes for a tenant, optionally filtered by version. Filtered by version, each class
+    also carries ``property_count`` (its top-level properties) and its ``tags`` (#3229).
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -49,7 +50,7 @@ async def list_classes(
                 status_code=404,
                 detail=f"Version not found: {version_id}"
             )
-        classes = db.get_classes_for_tenant_version(auth_data['tenant_id'], version_id)
+        classes = db.get_classes_for_tenant_version(auth_data['tenant_id'], version_id, with_summary=True)
     else:
         # Get all classes across all versions for the tenant
         # We'll need to get all versions first, then all classes for each

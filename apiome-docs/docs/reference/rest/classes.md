@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.220.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.221.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `classes` · 11 operations
 
@@ -17,7 +17,8 @@ Tag: `classes` · 11 operations
 
 **List Classes**
 
-List all classes for a tenant, optionally filtered by version.
+List all classes for a tenant, optionally filtered by version. Filtered by version, each class
+also carries ``property_count`` (its top-level properties) and its ``tags`` (#3229).
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -465,6 +466,7 @@ A version-scoped class (component schema) with its JSON Schema payload and tags.
 | `tags` | array of `TagSchema` or null | no | Associated tag labels. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
+| `property_count` | integer or null | no | Number of top-level properties of the class; `GET /v1/classes/{tenant}?version_id=` only (#3229). |
 
 ### `ClassUpdateRequest` {#schema-classupdaterequest}
 

@@ -1,7 +1,7 @@
 ---
 title: "apiome doctor"
 description: "Quick connectivity check against the REST service."
-sidebar_position: 9
+sidebar_position: 10
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

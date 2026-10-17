@@ -1,7 +1,7 @@
 ---
 title: "apiome schema"
 description: "Test payloads against cataloged schemas."
-sidebar_position: 24
+sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
