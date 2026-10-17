@@ -19,7 +19,7 @@
  * }
  * ```
  *
- * Three decisions the hook makes for every caller, so no screen has to make them again:
+ * Four decisions the hook makes for every caller, so no screen has to make them again:
  *
  *   • **`replace`, not `push`.** Narrowing a filter is not a navigation. Pushing would turn
  *     one considered query into a dozen Back presses to escape.
@@ -27,6 +27,9 @@
  *     a sort flip; scrolling to the top of a re-sorted table loses your place twice over.
  *   • **Any filter change resets to page 1.** Page 4 of a narrower result set is usually
  *     empty, and an empty table is read as "no matches" rather than as "wrong page".
+ *   • **Params it does not own survive.** A table that shares its page (Versions keeps
+ *     `projectId` and `tab` beside it) must not lose them on a filter change — see
+ *     {@link withForeignParams}.
  *
  * Because the state *is* the URL, Back and Forward step through a session's views for free,
  * and the address bar is always a shareable link to exactly what is on screen.
@@ -41,6 +44,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   parseTableView,
   tableViewToHref,
+  withForeignParams,
   type TableFilterDefinition,
   type TableFilterSchema,
   type TableFilters,
@@ -95,11 +99,16 @@ export function useDataTableUrlState<Schema extends TableFilterSchema>(
 
   const go = React.useCallback(
     (next: TableView<Schema>) => {
-      router.replace(tableViewToHref(pathname, next, definition, defaultsRef.current), {
-        scroll: false,
-      });
+      router.replace(
+        withForeignParams(
+          tableViewToHref(pathname, next, definition, defaultsRef.current),
+          searchParams,
+          definition
+        ),
+        { scroll: false }
+      );
     },
-    [router, pathname, definition]
+    [router, pathname, definition, searchParams]
   );
 
   const setFilters = React.useCallback(

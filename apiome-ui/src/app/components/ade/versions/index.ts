@@ -1,8 +1,8 @@
 /**
  * The Versions screen (HIVE-6.2, #5313).
  *
- * `docs/mockups/build/versions.html` in parts — the table and its row menu, the timeline
- * filters, the status strip (HIVE-11.2), the git-like chip panels, the project facts aside, and the
+ * `docs/mockups/build/versions.html` in parts — the table and its row menu, the table
+ * toolbar's filters (HIVE-11.4), the status strip (HIVE-11.2), the git-like chip panels, the project facts aside, and the
  * five in-scope dialogs (New · Edit · Sunset · Publish · Spec viewer) — plus `versionsModel`,
  * the rules all of them share.
  *
@@ -21,8 +21,19 @@ export type { VersionRowMenuProps } from './VersionRowMenu';
 export { default as VersionsTable } from './VersionsTable';
 export type { VersionsTableProps } from './VersionsTable';
 
-export { default as VersionsTimelineFilters } from './VersionsTimelineFilters';
-export type { VersionAuthorOption, VersionsTimelineFiltersProps } from './VersionsTimelineFilters';
+export * from './versionsToolbarModel';
+
+export {
+  VERSIONS_SEARCH_DEBOUNCE_MS,
+  VersionsAuthorFilter,
+  VersionsDateFilter,
+  VersionsSearchField,
+} from './VersionsToolbarFilters';
+export type {
+  VersionsAuthorFilterProps,
+  VersionsDateFilterProps,
+  VersionsSearchFieldProps,
+} from './VersionsToolbarFilters';
 
 export {
   default as VersionsStatusStrip,

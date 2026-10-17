@@ -941,6 +941,40 @@ const DataTableFilterChip = React.forwardRef<HTMLButtonElement, DataTableFilterC
 );
 DataTableFilterChip.displayName = 'DataTableFilterChip';
 
+export interface DataTableClearFiltersProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'children'> {
+  /** How many facets are narrowing the list — `activeTableFilterCount` from the URL state. */
+  count: number;
+}
+
+/**
+ * The toolbar's *Clear filters (n)* chip (HIVE-11.4, #5600).
+ *
+ * It replaces a permanently drawn, mostly disabled Reset button: it renders **only while
+ * a filter is active**, so an unfiltered toolbar carries nothing it cannot use, and the
+ * number says how much a click will undo. Returns `null` at a count of zero.
+ */
+const DataTableClearFilters = React.forwardRef<HTMLButtonElement, DataTableClearFiltersProps>(
+  ({ className, count, ...props }, ref) =>
+    count > 0 ? (
+      <button
+        ref={ref}
+        type="button"
+        className={cn(
+          'hit-target inline-flex h-[var(--control-h-sm)] shrink-0 items-center gap-1 rounded-full px-2.5',
+          'text-xs font-medium whitespace-nowrap text-fg-muted hover:bg-subtle hover:text-fg',
+          'focus-visible:outline-none',
+          className
+        )}
+        {...props}
+      >
+        <X className="size-[var(--icon-dense)]" aria-hidden />
+        Clear filters ({count})
+      </button>
+    ) : null
+);
+DataTableClearFilters.displayName = 'DataTableClearFilters';
+
 // ---------------------------------------------------------------------------------------
 // Cells
 // ---------------------------------------------------------------------------------------
@@ -1200,6 +1234,7 @@ export {
   DataTableBulkBar,
   DataTableCellPrimary,
   DataTableCellSub,
+  DataTableClearFilters,
   DataTableFilterChip,
   DataTableFoot,
   DataTablePager,

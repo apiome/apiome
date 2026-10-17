@@ -55,12 +55,15 @@ import { Textarea } from '../../../components/ui/Textarea';
 import { Badge } from '../../../components/ui/Badge';
 import { Card } from '../../../components/ui/Card';
 import {
+  DataTableClearFilters,
   DataTableFilterChip,
   DataTableFoot,
   DataTableToolbar,
   DataTableToolbarSpacer,
   type DataTableSortState,
 } from '../../../components/ui/DataTable';
+import { activeTableFilterCount } from '../../../components/ui/dataTableUrlState';
+import { useDataTableUrlState } from '../../../components/ui/useDataTableUrlState';
 import { FormatPill } from '../../../components/ui/catalog/FormatPill';
 import { gradeBand } from '../../../components/ui/statusVocabulary';
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '../../../components/ui/tabStyles';
@@ -110,7 +113,13 @@ import {
   VersionGitlikePanels,
   VersionsStatusStrip,
   VersionsTable,
-  VersionsTimelineFilters,
+  VersionsAuthorFilter,
+  VersionsDateFilter,
+  VersionsSearchField,
+  VERSIONS_PROJECT_SCOPED_FILTERS,
+  VERSIONS_TABLE_FILTERS,
+  stateFromVersionFacet,
+  versionFacetFromState,
   compatibilityBanner,
   deleteVersionConfirm,
   deprecationBanner,
@@ -504,16 +513,35 @@ const Versions = () => {
   const [tagImmutable, setTagImmutable] = useState(false);
   const [tagProtected, setTagProtected] = useState(false);
   const [tagSaving, setTagSaving] = useState(false);
-  const [historyTagFilter, setHistoryTagFilter] = useState<string>('');
-  /** Timeline: message / changelog / commit body / commit author (#2579) */
-  const [historySearchQ, setHistorySearchQ] = useState('');
-  const [historyAuthorCreatorId, setHistoryAuthorCreatorId] = useState('');
-  const [historyDateFrom, setHistoryDateFrom] = useState('');
-  const [historyDateTo, setHistoryDateTo] = useState('');
+  /**
+   * The table toolbar's filters live in the address bar (HIVE-11.4, #5600): search, author,
+   * date range (#2579), lifecycle, the Drafts / Published chip and the history tag. The
+   * names below are the pre-11.4 state names, now read from `VERSIONS_TABLE_FILTERS`.
+   */
+  const {
+    view: tableView,
+    setFilters: setTableFilters,
+    clearFilters: clearTableFilters,
+  } = useDataTableUrlState(VERSIONS_TABLE_FILTERS);
+  const historyTagFilter = tableView.filters.tag;
+  const historySearchQ = tableView.filters.q;
+  const historyAuthorCreatorId = tableView.filters.creatorId;
+  const historyDateFrom = tableView.filters.createdAfter;
+  const historyDateTo = tableView.filters.createdBefore;
+  const lifecycleFilter = tableView.filters.lifecycle;
+  const versionFacet = versionFacetFromState(tableView.filters.state);
+  const setHistoryTagFilter = useCallback((tag: string) => setTableFilters({ tag }), [setTableFilters]);
+  const setLifecycleFilter = useCallback(
+    (lifecycle: string) => setTableFilters({ lifecycle }),
+    [setTableFilters]
+  );
+  const setVersionFacet = useCallback(
+    (facet: VersionFacet) => setTableFilters({ state: stateFromVersionFacet(facet) }),
+    [setTableFilters]
+  );
+  const activeTableFilters = activeTableFilterCount(tableView.filters, VERSIONS_TABLE_FILTERS);
   /** The table's sort, bridged to the timeline's own comparator by `sortVersions` (HIVE-6.2). */
   const [versionsSort, setVersionsSort] = useState<DataTableSortState>(DEFAULT_VERSIONS_SORT);
-  /** The toolbar's quick chip — All · Drafts · Published (HIVE-6.2). */
-  const [versionFacet, setVersionFacet] = useState<VersionFacet>('all');
   /**
    * False until the selected project's first revisions read lands, so the table draws its
    * skeleton rather than an empty state that a moment later is not (HIVE-6.2). Only the first
@@ -526,7 +554,6 @@ const Versions = () => {
    * compatibility banner reads (HIVE-6.2). The Changes tab reads the same list itself.
    */
   const [changelogSummaries, setChangelogSummaries] = useState<VersionChangelogSummary[] | null>(null);
-  const [lifecycleFilter, setLifecycleFilter] = useState<string>('');
   const [editLifecycle, setEditLifecycle] = useState<string>('stable');
   const [editDeprecationMessage, setEditDeprecationMessage] = useState('');
   const [editSunsetLocal, setEditSunsetLocal] = useState('');
@@ -665,9 +692,13 @@ const Versions = () => {
       setSelectedProjectId(id);
       const params = new URLSearchParams(searchParams.toString());
       params.set('projectId', id);
+      // Search, author, dates, tag and lifecycle describe one project's history (HIVE-11.4).
+      if (id !== selectedProjectId) {
+        for (const key of VERSIONS_PROJECT_SCOPED_FILTERS) params.delete(key);
+      }
       router.replace(`/ade/dashboard/versions?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams]
+    [router, searchParams, selectedProjectId]
   );
 
   const leftPanelRef = useRef<HTMLDivElement>(null);
@@ -906,15 +937,10 @@ const Versions = () => {
     }
   };
 
+  /* The tag and lifecycle filters are URL state now (HIVE-11.4): a project switch clears them
+     in `handleSelectedProjectChange`, so a shared link's filters survive the first load. */
   useEffect(() => {
-    if (!selectedProjectId) {
-      setVersionTags([]);
-      setHistoryTagFilter('');
-      setLifecycleFilter('');
-    } else {
-      setHistoryTagFilter('');
-      setLifecycleFilter('');
-    }
+    if (!selectedProjectId) setVersionTags([]);
   }, [selectedProjectId]);
 
   useEffect(() => {
@@ -2302,25 +2328,21 @@ const Versions = () => {
     historySearchQ.trim() !== '' || !!historyAuthorCreatorId || !!historyDateFrom || !!historyDateTo;
 
   const resetHistoryTimelineFilters = useCallback(() => {
-    setHistorySearchQ('');
-    setHistoryAuthorCreatorId('');
-    setHistoryDateFrom('');
-    setHistoryDateTo('');
-  }, []);
-
-  useEffect(() => {
-    resetHistoryTimelineFilters();
-  }, [selectedProjectId, resetHistoryTimelineFilters]);
+    setTableFilters({ q: '', creatorId: '', createdAfter: '', createdBefore: '' });
+  }, [setTableFilters]);
 
   useEffect(() => {
     setHistoryGraphWindowSize(DEFAULT_HISTORY_WINDOW);
   }, [selectedProjectId, historyTagFilter, lifecycleFilter, historySearchQ, historyAuthorCreatorId, historyDateFrom, historyDateTo]);
 
+  /* An author who is not in the loaded list is dropped — but only once the list has landed,
+     so a shared `?creatorId=` link is not cleared while its revisions are still in flight. */
   useEffect(() => {
+    if (!versionsLoaded || versions.length === 0) return;
     if (historyAuthorCreatorId && !historyAuthorOptions.some((o) => o.id === historyAuthorCreatorId)) {
-      setHistoryAuthorCreatorId('');
+      setTableFilters({ creatorId: '' });
     }
-  }, [historyAuthorCreatorId, historyAuthorOptions]);
+  }, [versionsLoaded, versions.length, historyAuthorCreatorId, historyAuthorOptions, setTableFilters]);
 
   const handleCompareFormatChange = (newFormat: 'json' | 'yaml') => {
     setCompareFormat(newFormat);
@@ -3384,8 +3406,12 @@ const Versions = () => {
     </div>
   ) : undefined;
 
+  /* One toolbar for the table (HIVE-11.4, #5600): search · lifecycle · Any time · All
+     authors · history tag · state chips · Clear filters (n) · sort. It replaces the Timeline
+     card that used to sit above the table. */
   const tableToolbar = (
-    <DataTableToolbar>
+    <DataTableToolbar className="ver-toolbar" data-testid="versions-table-toolbar">
+      <VersionsSearchField value={historySearchQ} onChange={(q) => setTableFilters({ q })} />
       <Select
         value={lifecycleFilter || ALL_LIFECYCLES}
         onValueChange={(v) => setLifecycleFilter(v === ALL_LIFECYCLES ? '' : v)}
@@ -3402,6 +3428,15 @@ const Versions = () => {
           ))}
         </SelectContent>
       </Select>
+      <VersionsDateFilter
+        value={{ from: historyDateFrom, to: historyDateTo }}
+        onChange={(range) => setTableFilters({ createdAfter: range.from, createdBefore: range.to })}
+      />
+      <VersionsAuthorFilter
+        value={historyAuthorCreatorId}
+        onChange={(creatorId) => setTableFilters({ creatorId })}
+        options={historyAuthorOptions}
+      />
       {versionTags.length > 0 ? (
         <Select
           value={historyTagFilter || ALL_REVISIONS}
@@ -3436,6 +3471,11 @@ const Versions = () => {
           {VERSION_FACET_LABELS[entry]}
         </DataTableFilterChip>
       ))}
+      <DataTableClearFilters
+        count={activeTableFilters}
+        onClick={clearTableFilters}
+        data-testid="versions-clear-filters"
+      />
       <DataTableToolbarSpacer />
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
@@ -3700,19 +3740,6 @@ const Versions = () => {
               />
             ) : (
               <>
-                <VersionsTimelineFilters
-                  query={historySearchQ}
-                  onQueryChange={setHistorySearchQ}
-                  authorId={historyAuthorCreatorId}
-                  onAuthorChange={setHistoryAuthorCreatorId}
-                  authorOptions={historyAuthorOptions}
-                  dateFrom={historyDateFrom}
-                  onDateFromChange={setHistoryDateFrom}
-                  dateTo={historyDateTo}
-                  onDateToChange={setHistoryDateTo}
-                  active={historyTimelineFiltersActive}
-                  onReset={resetHistoryTimelineFilters}
-                />
 
                 {FEATURE_GITLIKE && selectedProjectId ? (
                   <VersionGitlikePanels

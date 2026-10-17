@@ -12,7 +12,7 @@
  *      `border-violet-200`, `text-emerald-600`, `bg-rose-100`, and `text-gray-500
  *      dark:text-gray-400` under every hint. Every one froze the surface on one palette.
  *   2. **Nothing is frozen in pixels.** The mockup's page-local block fixes six column
- *      widths, the project select, the search box, the author select, the date inputs, the
+ *      widths, the project select, the search box, the toolbar triggers, the date popover, the
  *      aside, the mock URL, the sparkline, the copy button, the flag, the row menu and the
  *      spec editor; all are `rem`, a token, or a viewport length here.
  *   3. **Every multi-column grid collapses**, so neither the overview grid, the publish
@@ -114,13 +114,6 @@ const VERSION_PRELUDES = [
   '.ver-facts__rule',
   '.ver-facts__links',
   '.ver-facts__links > *',
-  '.ver-filters',
-  '.ver-filters__row',
-  '.ver-filters__label',
-  '.ver-filters__search',
-  '.ver-filters__author',
-  '.ver-filters__date',
-  '.ver-filters__date > input',
   '.ver-gitlike',
   '.ver-gitlike__row',
   '.ver-gitlike__group',
@@ -174,6 +167,21 @@ const VERSION_PRELUDES = [
   '.ver-menu__item--publish > svg',
   '.ver-menu__item--danger[data-highlighted], .ver-menu__item--danger:hover',
   '.ver-menu__item--danger[data-highlighted] > svg, .ver-menu__item--danger:hover > svg',
+  '.ver-toolbar',
+  '.ver-toolbar .ver-toolbar-search',
+  '.ver-toolbar-trigger',
+  '.ver-toolbar-trigger.is-active',
+  '.ver-date-pop',
+  '.ver-date-pop__title',
+  '.ver-date-pop__grid',
+  '.ver-date-pop__field',
+  '.ver-date-pop__error',
+  '.ver-date-pop__presets',
+  '.ver-date-pop__actions',
+  '.ver-author-menu',
+  '.ver-author-menu__mark',
+  '.ver-author-menu__mark svg',
+  '.ver-author-menu__name',
   '.ver-toolbar-select',
   '.ver-toolbar-select--history',
   '.ver-sort-mark',
@@ -455,9 +463,9 @@ describe('density and font-scale independence', () => {
     expect(declaration('.ver-col-version', 'inline-size')).toBe('14.6875rem');
     expect(declaration('.ver-col-status', 'inline-size')).toBe('6.875rem');
     expect(declaration('.ver-col-mock', 'inline-size')).toBe('11.125rem');
-    expect(declaration('.ver-filters__search', 'inline-size')).toBe('14.375rem');
-    expect(declaration('.ver-filters__author', 'inline-size')).toBe('9.375rem');
-    expect(declaration('.ver-filters__date > input', 'inline-size')).toBe('8.75rem');
+    expect(declaration('.ver-toolbar .ver-toolbar-search', 'inline-size')).toBe('15rem');
+    expect(declaration('.ver-toolbar-trigger', 'max-inline-size')).toBe('16rem');
+    expect(declaration('.ver-date-pop', 'inline-size')).toBe('19rem');
     expect(declaration('.ver-overview', 'grid-template-columns')).toBe('minmax(0, 1fr) 23.75rem');
     expect(declaration('.ver-mock__url', 'max-inline-size')).toBe('10.3125rem');
     expect(declaration('.ver-mock__spark', 'inline-size')).toBe('5rem');
@@ -486,8 +494,11 @@ describe('density and font-scale independence', () => {
       ['.rart__footer', 'padding'],
       ['.ver-facts', 'padding'],
       ['.ver-kv', 'gap'],
-      ['.ver-filters', 'padding'],
-      ['.ver-filters__row', 'gap'],
+      ['.ver-toolbar', 'row-gap'],
+      ['.ver-date-pop', 'gap'],
+      ['.ver-date-pop', 'padding'],
+      ['.ver-date-pop__grid', 'gap'],
+      ['.ver-date-pop__presets', 'gap'],
       ['.ver-gitlike', 'padding'],
       ['.ver-cell', 'gap'],
       ['.ver-cell__line', 'gap'],
@@ -579,7 +590,7 @@ describe('horizontal containment', () => {
       '.ver-header__badges',
       '.ver-cell__line',
       '.ver-status',
-      '.ver-filters__row',
+      '.ver-date-pop__presets',
       '.ver-gitlike__row',
       '.ver-gitlike__group',
       '.rart__meta',
@@ -608,8 +619,8 @@ describe('contrast', () => {
   /** Every quiet line in the block, with the ground it is drawn on. */
   const QUIET = [
     ['.ver-quiet', '--bg-surface'],
-    ['.ver-filters__label', '--bg-surface'],
-    ['.ver-filters__date', '--bg-surface'],
+    ['.ver-date-pop__title', '--bg-surface'],
+    ['.ver-date-pop__field', '--bg-surface'],
     ['.ver-gitlike__label', '--bg-surface'],
     ['.ver-gitlike__note', '--bg-surface'],
     ['.ver-graph-card__head', '--bg-surface'],
