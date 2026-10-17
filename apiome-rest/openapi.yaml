@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.210.0
+  version: 1.211.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -4318,10 +4318,18 @@ paths:
       tags:
       - projects
       summary: Delete Project
-      description: "Delete a project (soft delete).\n\nSupports authentication via\
-        \ JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id:\
-        \ The project ID\n    auth_data: Authentication data (injected by dependency)\n\
-        \nReturns:\n    Success message"
+      description: "Delete a project — a soft delete by default, or permanently with\
+        \ ``?permanent=true``.\n\nA soft delete hides the project and keeps everything,\
+        \ so ``POST …/restore`` brings it back.\nA permanent delete removes the project,\
+        \ its revisions, classes, properties and paths in one\ntransaction; it also\
+        \ accepts a project that is already soft-deleted. Audit history is never\n\
+        deleted: if a revision is referenced by audit records the delete is refused\
+        \ with ``409``\n(``delete_blocked``) and nothing is removed. Requires ``projects:delete``.\n\
+        \nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug\n    project_id: The project ID\n    permanent: Delete irreversibly\
+        \ instead of soft-deleting.\n    auth_data: Authentication data (injected\
+        \ by dependency)\n\nReturns:\n    A success message, and ``permanent`` saying\
+        \ which kind of delete was made."
       operationId: delete_project_v1_projects__tenant_slug___project_id__delete
       parameters:
       - name: tenant_slug
@@ -4340,6 +4348,18 @@ paths:
           title: Project Id
           description: Project Id schema.
         description: Project identifier that scopes the request.
+      - name: permanent
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'Delete the project and everything under it irreversibly (CLI
+            3.5, #3206). Without it the delete is a soft delete, undone with POST
+            …/restore.'
+          default: false
+          title: Permanent
+        description: 'Delete the project and everything under it irreversibly (CLI
+          3.5, #3206). Without it the delete is a soft delete, undone with POST …/restore.'
       - name: authorization
         in: header
         required: false
@@ -4372,8 +4392,7 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties:
-                  type: string
+                additionalProperties: true
                 title: Response Delete Project V1 Projects  Tenant Slug   Project
                   Id  Delete
                 description: Response Delete Project V1 Projects  Tenant Slug   Project
@@ -4659,6 +4678,83 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get project by slugresponse422.
+  /v1/projects/{tenant_slug}/{project_id}/deletion-impact:
+    get:
+      tags:
+      - projects
+      summary: Get Project Deletion Impact
+      description: "What permanently deleting a project would destroy (CLI 3.5, #3206).\n\
+        \nCounts every revision (soft-deleted ones included — a permanent delete removes\
+        \ them too), the\nlive **published** revisions among them, and the classes,\
+        \ properties and paths under the\nproject. Works for a soft-deleted project\
+        \ as well, so an archived project can be reviewed\nbefore it is purged. Requires\
+        \ ``projects:view``.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id:\
+        \ The project ID (live or soft-deleted)\n    auth_data: Authentication data\
+        \ (injected by dependency)\n\nReturns:\n    ``{project_id, slug, name, deleted,\
+        \ versions, published_versions, unpublished_versions,\n    classes, properties,\
+        \ paths}``."
+      operationId: get_project_deletion_impact_v1_projects__tenant_slug___project_id__deletion_impact_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Deletion Impactauthorization schema.
+          - type: 'null'
+            description: Get Project Deletion Impactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Project Deletion Impact Xapikey schema.
+          - type: 'null'
+            description: Get Project Deletion Impact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get project deletion impact.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Project Deletion Impact V1 Projects  Tenant Slug   Project
+                  Id  Deletion Impact Get
+                description: Response Get Project Deletion Impact V1 Projects  Tenant
+                  Slug   Project Id  Deletion Impact Get schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get project deletion impactresponse422.
   /v1/projects/{tenant_slug}/{project_id}/restore:
     post:
       tags:
@@ -72037,7 +72133,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         completed_at:
           anyOf:
           - type: string
@@ -73491,7 +73587,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73664,7 +73760,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -74105,13 +74201,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -75680,7 +75776,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: e789b0a8-6991-4845-94b5-a2004d216271
+          example: b5de3206-4723-47af-ad4f-8ffb632c91ca
         method:
           type: string
           title: Method
@@ -77823,7 +77919,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         envelope:
           additionalProperties: true
           type: object
@@ -79203,7 +79299,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         browse_url:
           anyOf:
           - type: string
@@ -110663,7 +110759,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
       additionalProperties: false
       type: object
       required:
@@ -119543,7 +119639,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         detected_by:
           anyOf:
           - type: string
@@ -125066,13 +125162,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T03:01:45Z'
+          example: '2026-10-17T03:30:34Z'
         outcome:
           anyOf:
           - type: string

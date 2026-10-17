@@ -158,6 +158,43 @@ def echo_notice(message: str, *, err: bool = True) -> None:
     typer.echo(message, err=err)
 
 
+def confirm_typed(
+    prompt: str,
+    expected: str,
+    *,
+    skip: bool = False,
+    escape_flag: str = "--yes",
+) -> None:
+    """Confirm an irreversible action by having the user type ``expected`` exactly.
+
+    The ``gh repo delete`` pattern: a y/N answer is too easy to give by reflex, so the user
+    types the thing being destroyed. The comparison is exact and case-sensitive.
+
+    Args:
+        prompt: What to ask for, e.g. "Type the project slug to confirm deletion".
+        expected: The text that must be typed.
+        skip: True when the caller already passed the escape flag; confirms silently.
+        escape_flag: The flag named in the non-interactive error.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` when nothing can be typed (no terminal, or ``--no-input``)
+            and the escape flag was not passed, or when the typed text does not match.
+    """
+    if skip:
+        return
+    if not interactive_enabled():
+        typer.echo(
+            f"Refusing to continue without confirmation: no interactive terminal. "
+            f"Pass {escape_flag} to proceed non-interactively.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+    typed = typer.prompt(prompt, default="", show_default=False, err=True)
+    if typed != expected:
+        typer.echo(f"Did not match {expected!r}; nothing was changed.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+
 def confirm_action(
     prompt: str,
     *,

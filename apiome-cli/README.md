@@ -1281,6 +1281,24 @@ Every update is sent with the project's `updated_at` as a precondition — the d
 `--from-file`, otherwise the one read just before the write. If someone changed the project in
 between, nothing is written and the command exits **6** with a hint to re-fetch.
 
+### Delete a project
+
+`apiome projects delete <slug-or-id>` shows what will be removed (versions — and how many are
+published — classes, properties, paths), then deletes the project **permanently** once you type its
+slug exactly (case-sensitive):
+
+```bash
+apiome projects delete payments-api            # type "payments-api" to confirm
+apiome projects delete payments-api --yes      # scripts: the argument must be the exact slug
+apiome projects delete payments-api --archive  # soft delete; restorable (Projects → Show deleted → Undelete project)
+apiome --json projects delete payments-api --yes
+# {"deleted":true,"slug":"payments-api","permanent":true}
+```
+
+A project with published versions is refused with exit **6** unless you pass `--force`
+(`--archive` included). A permanent delete is refused when the project's versions have audit
+history — archive it instead.
+
 ### List resources
 
 Human-readable tables (default):

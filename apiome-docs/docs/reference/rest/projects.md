@@ -1,6 +1,6 @@
 ---
 title: "Projects"
-description: "REST endpoints tagged projects: 11 operations."
+description: "REST endpoints tagged projects: 12 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.210.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.211.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `projects` · 11 operations
+Tag: `projects` · 12 operations
 
 ## `GET /v1/projects/domains` {#list-project-domain-categories-global-v1-projects-domains-get}
 
@@ -247,17 +247,24 @@ Request body for update project.
 
 **Delete Project**
 
-Delete a project (soft delete).
+Delete a project — a soft delete by default, or permanently with ``?permanent=true``.
+
+A soft delete hides the project and keeps everything, so ``POST …/restore`` brings it back.
+A permanent delete removes the project, its revisions, classes, properties and paths in one
+transaction; it also accepts a project that is already soft-deleted. Audit history is never
+deleted: if a revision is referenced by audit records the delete is refused with ``409``
+(``delete_blocked``) and nothing is removed. Requires ``projects:delete``.
 
 Supports authentication via JWT token or API key.
 
 Args:
     tenant_slug: The tenant slug
     project_id: The project ID
+    permanent: Delete irreversibly instead of soft-deleting.
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    Success message
+    A success message, and ``permanent`` saying which kind of delete was made.
 
 Operation id: `delete_project_v1_projects__tenant_slug___project_id__delete`
 
@@ -267,6 +274,7 @@ Operation id: `delete_project_v1_projects__tenant_slug___project_id__delete`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `permanent` | query | boolean | no | Delete the project and everything under it irreversibly (CLI 3.5, #3206). Without it the delete is a soft delete, undone with POST …/restore. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -274,7 +282,7 @@ Operation id: `delete_project_v1_projects__tenant_slug___project_id__delete`
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for delete project. | `application/json` map of string |
+| 200 | Successful response for delete project. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/projects/{tenant_slug}/{project_id}/conversions` {#get-project-conversion-history-v1-projects-tenant-slug-project-id-conversions-get}
@@ -367,6 +375,44 @@ Operation id: `get_project_conversion_evidence_v1_projects__tenant_slug___projec
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for page through the stored evidence snapshot of one conversion of this project. | `application/json` [`ConversionEvidenceResponse`](#schema-conversionevidenceresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/projects/{tenant_slug}/{project_id}/deletion-impact` {#get-project-deletion-impact-v1-projects-tenant-slug-project-id-deletion-impact-get}
+
+**Get Project Deletion Impact**
+
+What permanently deleting a project would destroy (CLI 3.5, #3206).
+
+Counts every revision (soft-deleted ones included — a permanent delete removes them too), the
+live **published** revisions among them, and the classes, properties and paths under the
+project. Works for a soft-deleted project as well, so an archived project can be reviewed
+before it is purged. Requires ``projects:view``.
+
+Args:
+    tenant_slug: The tenant slug
+    project_id: The project ID (live or soft-deleted)
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    ``{project_id, slug, name, deleted, versions, published_versions, unpublished_versions,
+    classes, properties, paths}``.
+
+Operation id: `get_project_deletion_impact_v1_projects__tenant_slug___project_id__deletion_impact_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get project deletion impact. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/projects/{tenant_slug}/{project_id}/restore` {#restore-project-v1-projects-tenant-slug-project-id-restore-post}

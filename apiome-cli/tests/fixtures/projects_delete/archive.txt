@@ -1,0 +1,6 @@
+This will archive (soft-delete) the project; it can be restored:
+  • Project:    payments-api
+  • Versions:   8  (0 published, 8 unpublished)
+  • Classes:    24
+  • Properties: 142
+  • Paths:      18

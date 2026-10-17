@@ -400,6 +400,11 @@ def project(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/projects/{tenant_slug}/{project_id}"
 
 
+def project_deletion_impact(tenant_slug: str, project_id: str | UUID) -> str:
+    """What permanently deleting a project would destroy (CLI 3.5)."""
+    return f"{V1}/projects/{tenant_slug}/{project_id}/deletion-impact"
+
+
 def project_by_slug(tenant_slug: str, project_slug: str) -> str:
     return f"{V1}/projects/{tenant_slug}/by-slug/{project_slug}"
 

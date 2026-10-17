@@ -1,0 +1,6 @@
+This will permanently delete:
+  • Project:    payments-api
+  • Versions:   2,341  (3 published, 2,338 unpublished)
+  • Classes:    24
+  • Properties: 142
+  • Paths:      18

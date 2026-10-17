@@ -51,6 +51,11 @@ EXIT_SCHEMA_TEST_FAILED = 6
 #: per-command, and the two commands never overlap.
 EXIT_UPDATE_CONFLICT = 6
 
+#: ``apiome projects delete`` (CLI 3.5): the project still has **published** versions —
+#: specs consumers can fetch — and ``--force`` was not passed, so nothing was deleted or
+#: archived. Unpublish them first, or pass ``--force``. Another per-command use of 6.
+EXIT_PUBLISHED_VERSIONS = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

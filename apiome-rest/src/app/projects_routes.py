@@ -8,7 +8,7 @@ All endpoints are tenant-scoped and require authentication via JWT token or API 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List, Dict, Any
 
-from .database import ProjectUpdateConflict, db
+from .database import ProjectDeleteBlocked, ProjectUpdateConflict, db
 from .api_identity_service import build_related_artifact_refs
 from .conversion_evidence import evidence_response, parse_evidence_scope, provenance_entry
 from .models import (
@@ -496,33 +496,109 @@ async def update_project(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/{tenant_slug}/{project_id}/deletion-impact")
+async def get_project_deletion_impact(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    What permanently deleting a project would destroy (CLI 3.5, #3206).
+
+    Counts every revision (soft-deleted ones included — a permanent delete removes them too), the
+    live **published** revisions among them, and the classes, properties and paths under the
+    project. Works for a soft-deleted project as well, so an archived project can be reviewed
+    before it is purged. Requires ``projects:view``.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID (live or soft-deleted)
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        ``{project_id, slug, name, deleted, versions, published_versions, unpublished_versions,
+        classes, properties, paths}``.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    tenant_id = auth_data["tenant_id"]
+    project = db.get_project_by_id(project_id, tenant_id, include_deleted=True)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    impact = db.get_project_deletion_impact(project_id, tenant_id) or {}
+    return {
+        "project_id": str(project["id"]),
+        "slug": project.get("slug"),
+        "name": project.get("name"),
+        "deleted": project.get("deleted_at") is not None,
+        "versions": impact.get("versions", 0),
+        "published_versions": impact.get("published_versions", 0),
+        "unpublished_versions": impact.get("unpublished_versions", 0),
+        "classes": impact.get("classes", 0),
+        "properties": impact.get("properties", 0),
+        "paths": impact.get("paths", 0),
+    }
+
+
 @router.delete("/{tenant_slug}/{project_id}")
 async def delete_project(
     tenant_slug: str,
     project_id: str,
+    permanent: bool = Query(
+        False,
+        description="Delete the project and everything under it irreversibly (CLI 3.5, #3206). "
+        "Without it the delete is a soft delete, undone with POST …/restore.",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
-    Delete a project (soft delete).
+    Delete a project — a soft delete by default, or permanently with ``?permanent=true``.
+
+    A soft delete hides the project and keeps everything, so ``POST …/restore`` brings it back.
+    A permanent delete removes the project, its revisions, classes, properties and paths in one
+    transaction; it also accepts a project that is already soft-deleted. Audit history is never
+    deleted: if a revision is referenced by audit records the delete is refused with ``409``
+    (``delete_blocked``) and nothing is removed. Requires ``projects:delete``.
 
     Supports authentication via JWT token or API key.
 
     Args:
         tenant_slug: The tenant slug
         project_id: The project ID
+        permanent: Delete irreversibly instead of soft-deleting.
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        Success message
+        A success message, and ``permanent`` saying which kind of delete was made.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.DELETE)
-    # Check if project exists
-    existing = db.get_project_by_id(project_id, auth_data['tenant_id'])
+    # Check if project exists (a permanent delete may also purge an already soft-deleted one)
+    existing = db.get_project_by_id(project_id, auth_data['tenant_id'], include_deleted=permanent)
     if not existing:
         raise HTTPException(
             status_code=404,
             detail=f"Project not found: {project_id}"
         )
+
+    if permanent:
+        try:
+            deleted = db.permanently_delete_project(project_id, auth_data["tenant_id"])
+        except ProjectDeleteBlocked as blocked:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "delete_blocked",
+                    "message": "The project has history that cannot be deleted "
+                    f"(referenced from {blocked.table or 'another table'}); "
+                    "archive it (soft delete) instead.",
+                    "table": blocked.table,
+                },
+            )
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+        return {
+            "message": f"Project '{existing['name']}' permanently deleted",
+            "permanent": True,
+        }
 
     # Delete the project
     success = db.delete_project(project_id, auth_data['tenant_id'])
@@ -533,7 +609,7 @@ async def delete_project(
             detail="Failed to delete project"
         )
 
-    return {"message": f"Project '{existing['name']}' deleted successfully"}
+    return {"message": f"Project '{existing['name']}' deleted successfully", "permanent": False}
 
 
 @router.post("/{tenant_slug}/{project_id}/restore")

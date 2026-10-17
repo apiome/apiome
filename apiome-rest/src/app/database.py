@@ -331,6 +331,18 @@ ONBOARDING_WIZARD_STATE_TTL_HOURS = 24
 
 
 
+class ProjectDeleteBlocked(Exception):
+    """A permanent project delete was refused by a non-cascading reference (#3206).
+
+    Attributes:
+        table: The referencing table the database named (an audit table, typically), if any.
+    """
+
+    def __init__(self, table: Optional[str]) -> None:
+        super().__init__(f"Referenced from {table or 'another table'}")
+        self.table = table
+
+
 class ProjectUpdateConflict(Exception):
     """A project update's ``expected_updated_at`` precondition failed (#3205).
 
@@ -7715,6 +7727,138 @@ class Database:
             if current:
                 raise ProjectUpdateConflict(current.get("updated_at"))
         return result
+
+    def get_project_deletion_impact(
+        self, project_id: str, tenant_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Count what a permanent delete of a project would destroy (CLI 3.5, #3206).
+
+        Every revision is counted — soft-deleted ones too, since a permanent delete removes them —
+        while ``published_versions`` counts only live, published revisions: the ones consumers can
+        still fetch, and the ones ``apiome projects delete`` refuses to remove without ``--force``.
+
+        Args:
+            project_id: The project, live or soft-deleted.
+            tenant_id: Its tenant.
+
+        Returns:
+            ``{versions, published_versions, unpublished_versions, classes, properties, paths}``,
+            or ``None`` when the project is not in the tenant.
+        """
+        rows = self.execute_query(
+            """
+            SELECT
+              (SELECT COUNT(*) FROM apiome.versions v WHERE v.project_id = p.id)::int AS versions,
+              (SELECT COUNT(*) FROM apiome.versions v
+                 WHERE v.project_id = p.id AND v.deleted_at IS NULL AND v.published)::int
+                AS published_versions,
+              (SELECT COUNT(*) FROM apiome.classes c
+                 JOIN apiome.versions v ON v.id = c.version_id
+                 WHERE v.project_id = p.id)::int AS classes,
+              (SELECT COUNT(*) FROM apiome.properties pr WHERE pr.project_id = p.id)::int
+                AS properties,
+              (SELECT COUNT(*) FROM apiome.version_path vp
+                 JOIN apiome.versions v ON v.id = vp.version_id
+                 WHERE v.project_id = p.id)::int AS paths
+            FROM apiome.projects p
+            WHERE p.id = %s::uuid AND p.tenant_id = %s::uuid
+            """,
+            (project_id, tenant_id),
+        )
+        if not rows:
+            return None
+        impact = dict(rows[0])
+        impact["unpublished_versions"] = impact["versions"] - impact["published_versions"]
+        return impact
+
+    def permanently_delete_project(self, project_id: str, tenant_id: str) -> bool:
+        """Delete a project and everything under it, irreversibly, in one transaction (#3206).
+
+        The REST counterpart of the web app's "Permanently delete" (which ran the same cascade from
+        the UI server): class properties and classes (with the two shared-path schema back-fills
+        their ``ON DELETE SET NULL`` would otherwise violate), the project's properties, its merge
+        sessions and branches (whose tip/base references to revisions are ``RESTRICT``), then the
+        project — which cascades to its revisions and their remaining rows.
+
+        Audit history is never deleted: when a revision is referenced by an audit row whose
+        foreign key does not cascade, the database refuses, everything is rolled back, and
+        :class:`ProjectDeleteBlocked` names the table.
+
+        Args:
+            project_id: The project, live or soft-deleted.
+            tenant_id: Its tenant.
+
+        Returns:
+            ``True`` once deleted; ``False`` when the project is not in the tenant.
+
+        Raises:
+            ProjectDeleteBlocked: When a non-cascading reference blocks the delete.
+        """
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                "SELECT 1 FROM apiome.projects WHERE id = %s::uuid AND tenant_id = %s::uuid",
+                (project_id, tenant_id),
+            )
+            if cursor.fetchone() is None:
+                return None
+            cursor.execute(
+                """
+                SELECT c.id FROM apiome.classes c
+                JOIN apiome.versions v ON v.id = c.version_id
+                WHERE v.project_id = %s::uuid
+                """,
+                (project_id,),
+            )
+            class_ids = [str(row["id"]) for row in cursor.fetchall()]
+            if class_ids:
+                # shared_path_response / request-body content reference classes ON DELETE SET
+                # NULL; a row defined only by its class would then violate its "schema defined"
+                # check, so give it an empty inline schema first.
+                cursor.execute(
+                    """
+                    UPDATE apiome.shared_path_response
+                    SET data = COALESCE(data, '{}'::jsonb)
+                    WHERE class_id = ANY(%s::uuid[]) AND data IS NULL AND inline_schema IS NULL
+                    """,
+                    (class_ids,),
+                )
+                cursor.execute(
+                    """
+                    UPDATE apiome.shared_path_request_body_content
+                    SET inline_schema = COALESCE(
+                      inline_schema, '{"type":"object","properties":[]}'::jsonb)
+                    WHERE class_id = ANY(%s::uuid[]) AND inline_schema IS NULL
+                    """,
+                    (class_ids,),
+                )
+                cursor.execute(
+                    "DELETE FROM apiome.class_properties WHERE class_id = ANY(%s::uuid[])",
+                    (class_ids,),
+                )
+                cursor.execute(
+                    "DELETE FROM apiome.classes WHERE id = ANY(%s::uuid[])", (class_ids,)
+                )
+            cursor.execute(
+                "DELETE FROM apiome.properties WHERE project_id = %s::uuid", (project_id,)
+            )
+            cursor.execute(
+                "DELETE FROM apiome.merge_sessions WHERE project_id = %s::uuid", (project_id,)
+            )
+            cursor.execute(
+                "DELETE FROM apiome.version_branches WHERE project_id = %s::uuid", (project_id,)
+            )
+            cursor.execute(
+                "DELETE FROM apiome.projects WHERE id = %s::uuid AND tenant_id = %s::uuid",
+                (project_id, tenant_id),
+            )
+            return True
+
+        try:
+            return bool(self._guarded_tx(work))
+        except pg_errors.ForeignKeyViolation as exc:
+            table = getattr(getattr(exc, "diag", None), "table_name", None)
+            raise ProjectDeleteBlocked(table) from exc
 
     def delete_project(self, project_id: str, tenant_id: str) -> bool:
         """Soft delete a project, ensuring it belongs to the tenant."""
