@@ -9208,6 +9208,16 @@ class VersionTagUpdateRequest(BaseModel):
 
 # ==================== Project Property Models ====================
 
+class ProjectPropertyUsage(BaseModel):
+    """One class attribute that uses a library property (#3224, CLI 6.2)."""
+    class_name: str = Field(description="Name of the class that uses the property.")
+    attribute_name: str = Field(description="Name the property has inside that class.")
+    required: bool = Field(
+        default=False,
+        description="Whether the class marks this attribute required (its data has `\"required\": true`).",
+    )
+
+
 class ProjectPropertySchema(BaseModel):
     """Pydantic model for a project property (library property)."""
     id: str
@@ -9229,6 +9239,14 @@ class ProjectPropertySchema(BaseModel):
     used_by_count: Optional[int] = Field(
         default=None,
         description="Number of class properties (across live versions) that reference this property; list responses only.",
+    )
+    # Usage detail (#3224, CLI 6.2): filled by the single-property GET only; null on the other responses.
+    usage: Optional[List[ProjectPropertyUsage]] = Field(
+        default=None,
+        description=(
+            "Every class attribute (in any live version of the project) that uses this property, one entry per "
+            "distinct class name, attribute name and required flag, sorted; single-property GET only (#3224)."
+        ),
     )
 
     class Config:

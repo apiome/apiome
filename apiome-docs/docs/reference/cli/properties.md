@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List and fetch project properties."
+description: "List, show and fetch project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List and fetch project properties.
+List, show and fetch project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`get`](#properties-get), [`list`](#properties-list).
+Subcommands: [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show).
 
 ## apiome properties get {#properties-get}
 
@@ -66,3 +66,20 @@ apiome properties list [OPTIONS] [PROJECT]
 | `--unused` | flag |  |  | Only properties no class uses. |
 | `--limit` | integer range | `50` |  | Show at most this many. |
 | `--all` | flag |  |  | Show every match (ignores --limit). |
+
+## apiome properties show {#properties-show}
+
+Show one property: its type, constraints, examples, description and the classes that use it.
+
+The name is matched exactly, then ignoring case; a miss suggests the closest names (exit 2). ``--json`` prints the full property with ``usage`` of ``{class_name, attribute_name, required}``.
+
+```text
+apiome properties show [OPTIONS] PROJECT PROPERTY
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `PROPERTY_REF` | text | yes | Property name or UUID. |
