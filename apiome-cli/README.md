@@ -6,12 +6,24 @@ Follows [clig.dev](https://clig.dev/) guidelines: structured help (`help`, `-h` 
 
 ## Install
 
-**Requirements:** Python ≥ 3.14, [uv](https://docs.astral.sh/uv/) (recommended).
-
-From the monorepo:
+On Linux or macOS (Windows: WSL), install the `apiome` command with one line:
 
 ```bash
-cd packages/apiome-cli
+curl -fsSL https://get.apio.me | bash
+```
+
+The script is [`install.sh`](install.sh) in this folder. It installs [uv](https://docs.astral.sh/uv/)
+if needed, then installs `apiome` as an isolated uv tool (its own Python 3.12+) with the exact
+dependency versions in `uv.lock`, and checks that the command starts. Re-run it to upgrade. Options —
+`--version <tag|branch|commit>`, `--repo <url>`, `--no-modify-path`, `--uninstall` — go after
+`bash -s --` (for example `curl -fsSL https://get.apio.me | bash -s -- --uninstall`); see `--help`.
+
+### From the monorepo (development)
+
+**Requirements:** Python ≥ 3.12, [uv](https://docs.astral.sh/uv/) (recommended).
+
+```bash
+cd apiome-cli
 uv sync
 uv run apiome --version
 ```

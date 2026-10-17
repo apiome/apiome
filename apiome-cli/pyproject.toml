@@ -4,12 +4,20 @@ build-backend = "hatchling.build"
 
 [project]
 name = "apiome-cli"
-version = "0.51.0"
+version = "0.51.1"
 description = "Command-line client for the Apiome REST API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "typer[all]>=0.15",
+    # Capped at the versions the test suite passes on: Typer 0.26 changes how the global
+    # --quiet / --no-color flags and the root help behave, and Click 8.5 changes the option
+    # metadata the generated CLI reference is built from. Lifting a cap is its own change,
+    # made together with the suite.
+    "typer>=0.15,<0.26",
+    # Imported directly, so declared directly: newer Typer releases no longer depend on click,
+    # and the `typer[all]` extra that used to bring rich is gone.
+    "click>=8.1,<8.5",
+    "rich>=13",
     "httpx>=0.27",
     "pydantic-settings>=2.0",
     "py-yaml12>=0.1.0",
