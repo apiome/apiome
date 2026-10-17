@@ -70,6 +70,11 @@ EXIT_LAST_PUBLISHED_VERSION = 6
 #: administrator can pass ``--force-unfreeze``. Another per-command use of 6.
 EXIT_SNAPSHOT_DOWNLOADED = 6
 
+#: ``apiome versions compatibility`` (CLI 4.8): at least one **unsuppressed breaking change**
+#: between ``--base`` and ``--head`` (``--ignore`` / ``--allow-removals`` suppress). The CI gate's
+#: failure verdict. Another per-command use of 6.
+EXIT_BREAKING_CHANGES = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can
@@ -81,3 +86,8 @@ EXIT_CHECK_FAILED = 7
 #: of the draft the suite judges. Neither a pass nor a failure, so neither ``0`` nor ``7``: a
 #: pipeline decides whether "not yet" blocks it.
 EXIT_CHECK_PENDING = 8
+
+#: ``apiome versions compatibility`` (CLI 4.8): the server could not be reached, or failed
+#: fetching either side of the comparison — no verdict, so neither ``0`` nor ``6``. Another
+#: per-command use of 8.
+EXIT_COMPAT_UNAVAILABLE = 8

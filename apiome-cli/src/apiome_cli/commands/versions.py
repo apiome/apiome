@@ -21,9 +21,14 @@ from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.config import require_api_key
 from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.list_response import fetch_list
+from apiome_cli import __version__
 from apiome_cli.exit_codes import (
+    EXIT_BREAKING_CHANGES,
+    EXIT_COMPAT_UNAVAILABLE,
+    EXIT_ERROR,
     EXIT_LAST_PUBLISHED_VERSION,
     EXIT_SNAPSHOT_DOWNLOADED,
+    EXIT_SUCCESS,
     EXIT_USAGE,
     EXIT_VERSION_EXISTS,
 )
@@ -48,6 +53,19 @@ from apiome_cli.version_fork import (
     render_summary,
     tags_to_copy,
 )
+from apiome_cli.version_compat import (
+    SEVERITIES,
+    CompatError,
+    at_least,
+    breaking,
+    classify,
+    default_base,
+    default_head,
+    render_table,
+    to_json,
+    to_sarif,
+)
+from apiome_cli.version_compat import render_result as render_compat_result
 from apiome_cli.version_freeze import (
     downloaded_hint,
     json_result,
@@ -66,7 +84,7 @@ from apiome_cli.version_unpublish import (
 
 app = typer.Typer(
     name="versions",
-    help="List, fetch, publish, unpublish, freeze and fork project versions.",
+    help="List, fetch, publish, unpublish, freeze, fork and compare project versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -440,6 +458,101 @@ def _response_code(response: Any) -> Optional[str]:
     except (ValueError, AttributeError):
         return None
     return detail.get("code") if isinstance(detail, dict) else None
+
+
+@app.command("compatibility")
+def compatibility(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    base: Optional[str] = typer.Option(
+        None,
+        "--base",
+        help="Older version: label (2.0.0 or v2.0.0), revision UUID or tag. Default: the most recent published version before --head.",
+    ),
+    head: Optional[str] = typer.Option(
+        None, "--head", help="Newer version: label, revision UUID or tag. Default: the latest version."
+    ),
+    severity: str = typer.Option(
+        "info", "--severity", help="Show findings at this level or above: error, warn or info (default)."
+    ),
+    allow_removals: bool = typer.Option(
+        False, "--allow-removals", help="Treat breaking removals as warnings, so they do not fail the gate."
+    ),
+    ignore: Optional[list[str]] = typer.Option(
+        None,
+        "--ignore",
+        help="Rule id to skip, e.g. path_removed (repeat, or comma-separate). removed-path spelling is accepted.",
+    ),
+    sarif: bool = typer.Option(False, "--sarif", help="Print SARIF 2.1.0 (for GitHub code scanning) instead of the table."),
+) -> None:
+    """Check two versions for breaking changes — a CI gate (POST /v1/versions/{tenant}/{project}/compatibility).
+
+    Exit codes: 0 no unsuppressed breaking change, 6 at least one, 8 the server could not be reached
+    or failed fetching either side, 2 a bad argument or reference.
+    """
+    level = (severity or "info").strip().lower()
+    if level not in SEVERITIES:
+        raise typer.BadParameter("must be one of error, warn, info", param_hint="--severity")
+    rules = [part for value in (ignore or []) for part in value.split(",") if part.strip()]
+    json_mode = json_mode_from_context(ctx)
+    if sarif and json_mode:
+        typer.echo("Pass --sarif or --json, not both.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    try:
+        client, tenant_slug = tenant_scoped_client(ctx)
+        project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+        versions = list_versions(client, tenant_slug, project_id)
+        tags = client.get(api_paths.version_tags(tenant_slug, project_id)).json() if (base or head) else []
+        try:
+            head_version = _compat_side(versions, tags, head) if head else default_head(versions)
+            base_version = _compat_side(versions, tags, base) if base else default_base(versions, head_version)
+        except CompatError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+        if str(base_version.get("id")) == str(head_version.get("id")):
+            typer.echo("--base and --head are the same version; nothing to compare.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        if not json_mode and not sarif:
+            typer.echo(f"Comparing {base_version.get('version_id')} → {head_version.get('version_id')} …", err=True)
+        report = client.post(
+            api_paths.version_compatibility(tenant_slug, project_id),
+            json={"baseRevisionId": str(base_version["id"]), "headRevisionId": str(head_version["id"])},
+        ).json()
+    except typer.Exit as exc:
+        # Transport failures and 5xx exit EXIT_ERROR; for this gate that is "no verdict" (8).
+        if exc.exit_code == EXIT_ERROR:
+            raise typer.Exit(EXIT_COMPAT_UNAVAILABLE) from exc
+        raise
+
+    findings = classify(report.get("findings") or [], ignore=rules, allow_removals=allow_removals)
+    exit_code = EXIT_BREAKING_CHANGES if breaking(findings) else EXIT_SUCCESS
+    shown = at_least(findings, level)
+    if sarif:
+        project_slug = str(head_version.get("project_slug") or project_ref)
+        emit_json(
+            to_sarif(
+                findings=shown,
+                artifact_uri=f"v1/schema/{tenant_slug}/{project_slug}/{head_version.get('version_id')}",
+                tool_version=__version__,
+                base=base_version,
+                head=head_version,
+            )
+        )
+    elif json_mode:
+        emit_json(to_json(base=base_version, head=head_version, report=report, findings=shown, exit_code=exit_code))
+    else:
+        typer.echo(render_table(shown))
+        typer.echo("")
+        typer.echo(render_compat_result(findings))
+    raise typer.Exit(exit_code)
+
+
+def _compat_side(versions: list[dict[str, Any]], tags: Any, ref: str) -> dict[str, Any]:
+    """``--base`` / ``--head`` → the version (label, UUID or tag)."""
+    try:
+        return find_source_version(versions, tags if isinstance(tags, list) else [], ref).version
+    except ForkError as exc:
+        raise CompatError(f"No version or version tag {ref!r} in this project.") from exc
 
 
 def _version_exists_conflict(response: Any) -> bool:
