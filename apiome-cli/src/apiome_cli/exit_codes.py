@@ -65,6 +65,11 @@ EXIT_PUBLISHED_VERSIONS = 6
 #: label, so nothing was forked. Choose another ``--to``. Another per-command use of 6.
 EXIT_VERSION_EXISTS = 6
 
+#: ``apiome classes create`` (CLI 7.3): the version is **published or frozen**, so no class can be
+#: added to it; nothing was created. Create a draft version and add the class there. Another
+#: per-command use of 6.
+EXIT_VERSION_LOCKED = 6
+
 #: ``apiome versions unpublish`` (CLI 4.6): the version is the project's **only** published
 #: version, so unpublishing it would leave consumers nothing to fetch; nothing was unpublished.
 #: Pass ``--force`` to unpublish it anyway. Another per-command use of 6.

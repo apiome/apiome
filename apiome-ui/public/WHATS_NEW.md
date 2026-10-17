@@ -54,6 +54,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome properties delete <project> <property>` checks which classes use a property first — unused, you type its name to delete it; in use, it lists the class attributes and stops, unless `--force --yes` removes them and deletes the property in one step (never in published versions)
   - `apiome properties copy <project> <names> --to <project>` reuses property definitions in another project of the same tenant — one, several (comma-separated) or `--all`, with `--rename`, `--update` to overwrite and `--dry-run`; nothing is written if a schema refers to a primitive the tenant does not have
   - `apiome classes list <project> <version>` lists a version's classes with their property count, tags and description — filter with `--tag` and `--search`, or add `--with-properties` to see every class's properties
+  - `apiome classes create <project> <version>` adds a class to a draft version with its properties (each optional or required) and tags — answer the prompts, or pass `--name`, `--property amount:required` and `--tag`, or `--from-file` with JSON or YAML; missing tags are created, and a half-made class is removed again if a step fails
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

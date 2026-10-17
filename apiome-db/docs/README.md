@@ -113,7 +113,7 @@ The database uses PostgreSQL with the `apiome` schema. Key tables:
 - **external_auth_providers**: OAuth provider accounts linked to users (SSO)
 - **projects**: API/schema projects
 - **versions**: Project versions
-- **classes**: Data object definitions
+- **classes**: Data object definitions (names unique among a version's live classes; a soft-deleted class frees its name — V280)
 - **properties**: Reusable property definitions
 - **class_properties**: Junction table linking classes to properties (supports nesting via parent_id)
 - **groups**: Visual groupings of classes on the canvas with positional metadata
