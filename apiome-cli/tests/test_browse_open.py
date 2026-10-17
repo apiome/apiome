@@ -235,3 +235,14 @@ def test_usage_errors_exit_2_without_launching(recorder: _Recorder, args: list[s
     result = runner.invoke(app, args)
     assert result.exit_code == EXIT_USAGE
     assert recorder.opened == []
+
+
+def test_config_writes_keep_the_browse_section(tmp_path: Path) -> None:
+    """`config set` rewrites the known keys but carries [browse] url over (never drops it)."""
+    path = tmp_path / "config.toml"
+    path.write_text('base_url = "http://x.dev"\n\n[browse]\nurl = "https://specs.example.com"\n', encoding="utf-8")
+    config_module.write_user_config_file({"base_url": "https://api.y.dev"}, path=path)
+    assert read_browse_section(path) == "https://specs.example.com"
+    assert config_module.read_user_config_file(path) == {"base_url": "https://api.y.dev"}
+    config_module.write_user_config_file({}, path=path)
+    assert path.read_text(encoding="utf-8") == '[browse]\nurl = "https://specs.example.com"\n'
