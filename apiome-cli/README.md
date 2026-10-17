@@ -1436,6 +1436,23 @@ apiome tags update payments-api stable --version 2.1.0 --description 'Promoted f
 `apiome tags delete <project> <tag>` deletes a tag after you type its name (`--yes` skips). Only
 the tag goes, never the version; an immutable tag exits **6**.
 
+### List a project's properties
+
+`apiome properties list <project>` lists the project's property library: name, **type** (the JSON
+Schema `format`, else its `type`), whether its schema marks it required, and the classes that use it
+(`GET /v1/properties/{tenant}/{project}`, which reports `used_by`).
+
+```bash
+apiome properties list payments-api
+apiome properties list payments-api --type uuid            # --primitive works too
+apiome properties list payments-api --search customer
+apiome properties list payments-api --unused               # no class uses them
+apiome --json properties list payments-api --all
+```
+
+Properties have no tags, so there is no tag column or `--tag` filter. The older
+`apiome properties list --project-id <uuid>` still works.
+
 ### List resources
 
 Human-readable tables (default):
@@ -1443,7 +1460,7 @@ Human-readable tables (default):
 ```bash
 apiome projects list
 apiome projects list --limit 50 --all
-apiome properties list
+apiome properties list payments-api
 apiome schemas list
 apiome versions list --project-id <uuid>
 apiome types list

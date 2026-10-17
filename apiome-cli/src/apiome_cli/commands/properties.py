@@ -3,26 +3,29 @@
 from __future__ import annotations
 
 import json
+from typing import Optional
 from uuid import UUID
 
 import typer
 
 from apiome_cli.client import api_paths
 from apiome_cli.client.list_response import fetch_list
+from apiome_cli.client.pagination import DEFAULT_PAGE_LIMIT
+from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
+from apiome_cli.exit_codes import EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import (
-    ListColumn,
     RecordField,
     emit_json,
-    emit_list_table,
     emit_record_response,
     json_mode_from_context,
 )
+from apiome_cli.property_view import UsageUnavailable, filter_properties, render_table
 
 app = typer.Typer(
     name="properties",
-    help="List and fetch tenant properties.",
+    help="List and fetch project properties.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -50,13 +53,6 @@ def _format_value_as_json(value: object) -> str:
     return json.dumps(_sorted_json_value(value), separators=(",", ":"))
 
 
-_PROPERTY_LIST_COLUMNS: tuple[ListColumn, ...] = (
-    ("ID", "id", None),
-    ("Name", "name", None),
-    ("Description", "description", None),
-    ("Enabled", "enabled", lambda value: "" if value is None else str(value)),
-)
-
 _PROPERTY_RECORD_FIELDS: tuple[RecordField, ...] = (
     ("ID", "id", None),
     ("Tenant", "tenant_id", None),
@@ -72,15 +68,44 @@ _PROPERTY_RECORD_FIELDS: tuple[RecordField, ...] = (
 @app.command("list")
 def list_properties(
     ctx: typer.Context,
-    project_id: UUID = typer.Option(..., "--project-id", help="Project UUID."),
+    project_ref: Optional[str] = typer.Argument(
+        None, metavar="PROJECT", help="Project slug or UUID (or pass --project-id)."
+    ),
+    project_id: Optional[UUID] = typer.Option(None, "--project-id", help="Project UUID (the older form)."),
+    type_filter: Optional[str] = typer.Option(
+        None,
+        "--type",
+        "--primitive",
+        help="Only properties of this schema type, e.g. string, uuid, date-time, array<string>.",
+    ),
+    search: Optional[str] = typer.Option(None, "--search", help="Case-insensitive text in the name or description."),
+    unused: bool = typer.Option(False, "--unused", help="Only properties no class uses."),
+    limit: int = typer.Option(DEFAULT_PAGE_LIMIT, "--limit", min=1, help="Show at most this many."),
+    all_rows: bool = typer.Option(False, "--all", help="Show every match (ignores --limit)."),
 ) -> None:
-    """List project properties (GET /v1/properties/{tenant_slug}/{project_id})."""
+    """List a project's properties with their type and the classes that use them (GET /v1/properties/{tenant}/{project}).
+
+    Properties have no tags and are not bound to primitives, so the TYPE column is read from each
+    property's JSON Schema (its format, else its type).
+    """
+    if project_ref is None and project_id is None:
+        typer.echo("Name the project: apiome properties list <project>.", err=True)
+        raise typer.Exit(EXIT_USAGE)
     client, tenant_slug = tenant_scoped_client(ctx)
-    items, total = fetch_list(client, api_paths.properties(tenant_slug, project_id))
+    pid = project_id if project_id is not None else resolve_project_uuid(client, tenant_slug, str(project_ref))
+    items, _total = fetch_list(client, api_paths.properties(tenant_slug, pid))
+    try:
+        matched = filter_properties(items, type_filter=type_filter, search=search, unused=unused)
+    except UsageUnavailable as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    shown = matched if all_rows else matched[:limit]
     if json_mode_from_context(ctx):
-        emit_json({"total": total, "items": items})
-    else:
-        emit_list_table(items, _PROPERTY_LIST_COLUMNS, total=total)
+        emit_json({"total": len(matched), "items": shown})
+        return
+    typer.echo(
+        render_table(shown, matched=len(matched), project=str(project_ref or project_id), total=len(items))
+    )
 
 
 @app.command("get")

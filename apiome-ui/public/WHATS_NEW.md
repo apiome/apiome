@@ -47,6 +47,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome tags create <project> <tag> --version <version>` points a new version tag at a version (`--description`, `--from-file`); a name that already exists exits 6
   - `apiome tags update <project> <tag> --version <version>` moves a tag ("promote 2.1.0 to stable") after showing who may be affected — mock traffic, frozen-snapshot downloads and other tags on the current version; `--dry-run`, `--description`, `--yes`
   - `apiome tags delete <project> <tag>` removes a version tag once you type its name; the version it points to is left alone
+  - `apiome properties list <project>` shows each property's type, whether it is required and which classes use it — filter with `--type`, `--search` and `--unused`
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

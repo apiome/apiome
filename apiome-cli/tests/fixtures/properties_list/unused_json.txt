@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "data": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "description": "Unused since 2.0.",
+      "enabled": true,
+      "id": "id-legacy_ref",
+      "name": "legacy_ref",
+      "project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "used_by": [],
+      "used_by_count": 0
+    }
+  ],
+  "total": 1
+}

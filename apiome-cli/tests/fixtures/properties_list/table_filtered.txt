@@ -1,0 +1,5 @@
+NAME        TYPE       REQ?  USED BY
+amount      int64      —     Charge,Refund
+created_at  date-time  yes   Charge,Customer,Refund +1
+
+4 of 6 properties in project 'payments-api' match. Showing 2; pass --all or --limit N.

@@ -27,7 +27,8 @@ async def list_properties(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[ProjectPropertySchema]:
     """
-    List all properties for a project.
+    List all properties for a project, each with ``used_by`` (the class names that use it, across the
+    project's live versions) and ``used_by_count`` (#3223).
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -49,7 +50,7 @@ async def list_properties(
             detail=f"Project not found: {project_id}"
         )
 
-    properties = db.get_properties_for_project(project_id)
+    properties = db.get_properties_for_project(project_id, with_usage=True)
 
     # Parse JSON data if it's a string
     for prop in properties:
