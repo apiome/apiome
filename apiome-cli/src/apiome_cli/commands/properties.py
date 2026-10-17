@@ -9,6 +9,7 @@ from uuid import UUID
 
 import typer
 
+from apiome_cli.cli_input import exit_field_errors, prompt_primitive, read_object_file
 from apiome_cli.client import api_paths
 from apiome_cli.client.list_response import fetch_list
 from apiome_cli.client.errors import exit_on_api_error
@@ -22,7 +23,6 @@ from apiome_cli.exit_codes import (
     EXIT_PRIMITIVE_MISSING,
     EXIT_PROPERTY_BREAKING,
     EXIT_PROPERTY_IN_USE,
-    EXIT_PROPERTY_INVALID,
     EXIT_UPDATE_CONFLICT,
     EXIT_USAGE,
 )
@@ -33,7 +33,6 @@ from apiome_cli.output import (
     emit_record_response,
     json_mode_from_context,
 )
-from apiome_cli.import_.yaml_load import safe_load
 from apiome_cli.property_copy import (
     ACTION_CREATE,
     ACTION_SKIP,
@@ -60,7 +59,6 @@ from apiome_cli.property_create import (
     merge_draft,
     property_schema,
     request_body,
-    search_primitives,
     split_examples,
 )
 from apiome_cli.property_delete import (
@@ -206,29 +204,13 @@ def get_property(
 
 
 def _read_property_file(path: Path) -> dict[str, Any]:
-    """Read ``--from-file`` (one JSON or YAML object), or exit 2 saying why it cannot be used."""
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError as exc:
-        typer.echo(f"Cannot read {path}: {exc.strerror or exc}.", err=True)
-        raise typer.Exit(EXIT_USAGE) from exc
-    try:
-        document = safe_load(text)
-    except ValueError as exc:
-        typer.echo(f"{path} is not valid JSON or YAML: {exc}", err=True)
-        raise typer.Exit(EXIT_USAGE) from exc
-    if not isinstance(document, dict):
-        typer.echo(f"{path} must hold one property object (name, primitive, description, examples).", err=True)
-        raise typer.Exit(EXIT_USAGE)
-    return document
+    """Read ``--from-file`` (one JSON or YAML property object), or exit 2."""
+    return read_object_file(path, shape="property object (name, primitive, description, examples)")
 
 
 def _exit_invalid(errors: Sequence[FieldError]) -> None:
     """Print one ``field: message`` line per problem and exit 7 (nothing was created)."""
-    for error in errors:
-        typer.echo(str(error), err=True)
-    typer.echo("Nothing was created.", err=True)
-    raise typer.Exit(EXIT_PROPERTY_INVALID)
+    exit_field_errors(errors)
 
 
 def _prompt_name(existing: Sequence[str]) -> str:
@@ -241,23 +223,6 @@ def _prompt_name(existing: Sequence[str]) -> str:
         typer.echo(f"  {errors[0].message}", err=True)
 
 
-def _prompt_primitive(primitives: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
-    """Ask for the primitive; part of a name lists the matches to choose from, until one fits."""
-    while True:
-        text = typer.prompt("? Primitive (type to search)", err=True).strip()
-        try:
-            return find_primitive(primitives, text)
-        except PropertyInvalid:
-            pass
-        matches = search_primitives(primitives, text)
-        if len(matches) == 1:
-            return find_primitive(primitives, matches[0])
-        typer.echo(
-            f"  Matches: {', '.join(matches)}" if matches else f"  No primitive matches {text!r}.",
-            err=True,
-        )
-
-
 def _prompt_draft(
     draft: PropertyDraft, existing: Sequence[str], primitives: Sequence[Mapping[str, Any]]
 ) -> tuple[PropertyDraft, Optional[Mapping[str, Any]]]:
@@ -267,7 +232,7 @@ def _prompt_draft(
         The completed draft, and the primitive when it was chosen here (else ``None``).
     """
     name = draft.name or _prompt_name(existing)
-    chosen = None if draft.primitive else _prompt_primitive(primitives)
+    chosen = None if draft.primitive else prompt_primitive(primitives)
     description = draft.description
     if description is None:
         description = typer.prompt("? Description", default="", show_default=False, err=True).strip() or None

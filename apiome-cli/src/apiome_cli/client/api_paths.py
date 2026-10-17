@@ -652,6 +652,16 @@ def class_record(tenant_slug: str, class_id: str | UUID) -> str:
     return f"{V1}/classes/{tenant_slug}/{class_id}"
 
 
+def class_properties(tenant_slug: str, class_id: str | UUID) -> str:
+    """``POST`` attaches a property to a class; ``GET`` lists them."""
+    return f"{V1}/classes/{tenant_slug}/{class_id}/properties"
+
+
+def class_tags(tenant_slug: str, class_id: str | UUID) -> str:
+    """``POST {tag_id}`` assigns a project tag to a class; ``GET`` lists them."""
+    return f"{V1}/project-tags/{tenant_slug}/classes/{class_id}"
+
+
 def primitives(tenant_slug: str) -> str:
     return f"{V1}/primitives/{tenant_slug}"
 

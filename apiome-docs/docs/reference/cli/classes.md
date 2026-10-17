@@ -1,6 +1,6 @@
 ---
 title: "apiome classes"
-description: "List a version's classes."
+description: "List a version's classes and create new ones."
 sidebar_position: 4
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,46 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome classes {#classes}
 
-List a version's classes.
+List a version's classes and create new ones.
 
 ```text
 apiome classes [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`list`](#classes-list).
+Subcommands: [`create`](#classes-create), [`list`](#classes-list).
+
+## apiome classes create {#classes-create}
+
+Create a class in a draft version, with its properties and tags (POST /v1/classes/{tenant}).
+
+On a terminal, missing fields are asked for. Properties must exist, unless --create-missing.
+
+A published or frozen version exits 6; field problems exit 7.
+
+If attaching a property or tag fails, the class is deleted again (exit 1).
+
+```text
+apiome classes create [OPTIONS] PROJECT VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `VERSION_REF` | text | yes | Draft version: label (±v), UUID or tag. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | Class name (unique in the version). |
+| `--description` | text |  |  | What the class represents. |
+| `--tag` | text (repeatable) |  |  | A project tag (repeatable); created if missing. |
+| `--property` | text (repeatable) |  |  | A project property, `name` or `name:required` (repeatable). |
+| `--from-file` | path |  |  | JSON or YAML class spec: name, description, tags, properties. |
+| `--create-missing` | flag |  |  | Create missing properties, asking for each one's primitive (terminal only). |
+| `--yes`, `-y` | flag |  |  | Skip the final question the prompts ask. |
 
 ## apiome classes list {#classes-list}
 

@@ -1550,6 +1550,29 @@ apiome --json classes list payments-api 2.1.0 --all      # the raw API payload
 The version is a label (with or without `v`), a UUID or a version tag. `--json` prints the classes
 exactly as the API returns them, after `--tag`, `--search` and `--limit`.
 
+### Create a class
+
+`apiome classes create <project> <version>` creates a class in a **draft** version:
+`POST /v1/classes/{tenant}`, then `POST …/{class_id}/properties` per property (the library
+property's `data` with `required` set, linked by `property_id`), then the tags
+(`POST /v1/project-tags/{tenant}/classes/{class_id}`; a missing project tag is created first).
+
+```bash
+apiome classes create payments-api v2.2.0-rc.1                        # prompts
+apiome classes create payments-api v2.2.0-rc.1 --name Refund --description 'Reversal of a charge.' \
+  --tag financial --property amount:required --property currency:required --property reason --yes
+apiome classes create payments-api v2.2.0-rc.1 --from-file ./classes/refund.yaml --yes
+```
+
+- The class spec (JSON or YAML): `name`, `description`, `tags` (list), `properties` — each
+  `name`, `name:required` or `{name, required}`. Flags win over the file.
+- A published version, or one whose OpenAPI is frozen, exits **6**. Field problems — name missing
+  or taken, a property listed twice or not in the library — exit **7** before anything is written.
+- `--create-missing` (terminal only) creates missing library properties, asking for each one's
+  primitive like `properties create`.
+- If attaching a property or tag fails, the class is deleted again (exit **1**) so the same name can
+  be retried — class names are unique among a version's live classes (apiome-db V280).
+
 ### Copy properties to another project
 
 `apiome properties copy <src-project> <names> --to <dst-project>` composes the existing endpoints:

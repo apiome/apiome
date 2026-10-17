@@ -42,8 +42,9 @@ X-API-Key: <your-api-key>
 
 ## With the CLI
 
-The CLI can list a version's classes, and can list, show, create, update, delete and copy the
-project's properties. Classes themselves are still edited in the UI or through the REST API.
+The CLI can list a version's classes and create new ones, and can list, show, create, update,
+delete and copy the project's properties. Editing an existing class still happens in the UI or
+through the REST API.
 
 ```bash
 apiome classes list <project> <version>   # a version's classes
@@ -95,6 +96,84 @@ With `--json` the command prints the classes exactly as the API returns them, af
 the limit are applied: the plain list, or with `--with-properties` the list with properties and tags
 inline. The property count and tags need apiome-rest 1.357.0 or later; an older server shows `?` in
 **#PROPS**.
+
+### Create a class
+
+`apiome classes create <project> <version>` adds a class to a **draft** version, along with its
+properties and tags. The properties come from the project's property library.
+
+On a terminal, run it with just the project and version and answer the prompts:
+
+```bash
+apiome classes create payments-api v2.2.0-rc.1
+# ? Class name: Refund
+# ? Description: Reversal of a charge.
+# ? Tags (comma-separated): financial
+# ? Add properties now? [Y/n]: y
+# ? Property (type to search, empty to finish): am
+#   Required in this class? (amount) [y/N]: y
+# ? Property (type to search, empty to finish):
+# Create class 'Refund' with 1 property in 2.2.0-rc.1? [Y/n]: y
+# ✔ Created class 'Refund' with 1 property.
+#   New project tags: financial
+```
+
+Pick properties one at a time. Type part of a name to list the matches; if only one property
+matches, it is chosen. For each property, answer whether this class requires it. Leave the answer
+empty when you're done.
+
+In a script, pass the class as flags or from a file:
+
+```bash
+apiome classes create payments-api v2.2.0-rc.1 \
+  --name Refund \
+  --description 'Reversal of a charge.' \
+  --tag financial \
+  --property amount:required \
+  --property currency:required \
+  --property reason \
+  --yes
+
+apiome classes create payments-api v2.2.0-rc.1 --from-file ./classes/refund.yaml --yes
+```
+
+```yaml title="classes/refund.yaml"
+name: Refund
+description: Reversal of a charge.
+tags: [financial]
+properties:
+  - amount:required
+  - currency:required
+  - reason                              # optional
+  - {name: note, required: false}       # the object form works too
+```
+
+| Option | What it does |
+| --- | --- |
+| `--name <name>` | The class name. It must be new in the version. |
+| `--description <text>` | What the class represents. |
+| `--tag <tag>` | A project tag, repeatable. Tag names are lower-cased. A tag the project doesn't have yet is created. |
+| `--property <name>[:required]` | A property from the project's library, repeatable. Add `:required` if the class requires it. |
+| `--from-file <path>` | A JSON or YAML class spec with `name`, `description`, `tags` and `properties`. A flag overrides the same field in the file. |
+| `--create-missing` | Create properties that aren't in the library yet. The command asks for each one's primitive, so it needs a terminal. |
+| `--yes` | Skip the final question the prompts ask. |
+
+Each property is attached as a copy of its library definition, with **required** set for this
+class.
+
+**What can stop it.** Nothing is created in these cases:
+
+- The version is published or frozen. The command exits with code **6**. Create a draft version and
+  add the class there.
+- A field is wrong: the name is missing or already used in the version, a property is listed twice,
+  or a property isn't in the library (without `--create-missing`). The command lists every problem,
+  one line per field, and exits with code **7**.
+
+The class is created first, then its properties and tags are attached one at a time. If one of
+those steps fails, the class is deleted again and the command exits with code **1**, so you can fix
+the problem and run it again with the same name. Project tags and properties created along the way
+are kept. With `--json` the command prints the created class, its properties and tags, and which
+tags and properties it created.
 
 ### List a project's properties
 
