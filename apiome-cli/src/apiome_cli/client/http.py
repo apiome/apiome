@@ -224,6 +224,31 @@ class RestClient:
         except httpx.RequestError as exc:
             exit_on_connection_error(exc)
 
+    def patch_raw(self, path: str, *, json: object = None) -> httpx.Response:
+        """Issue PATCH ``path`` and return the response without exiting on HTTP errors.
+
+        For callers that render a particular rejection themselves — ``tags update`` turns a
+        ``409 TAG_IMMUTABLE`` into its own exit code.
+
+        Parameters
+        ----------
+        path:
+            URL path starting with ``/``.
+        json:
+            Optional JSON-serialisable payload; sets ``Content-Type: application/json``.
+
+        Returns
+        -------
+        httpx.Response
+            The HTTP response; transport errors still exit the CLI.
+        """
+        url = f"{self._base_url}{path}"
+        try:
+            with httpx.Client(timeout=self._timeout, verify=self._verify) as client:
+                return client.patch(url, json=json, headers=self._headers)
+        except httpx.RequestError as exc:
+            exit_on_connection_error(exc)
+
     def delete_raw(
         self, path: str, *, params: dict[str, str] | None = None
     ) -> httpx.Response:

@@ -1422,6 +1422,17 @@ apiome tags create payments-api prod-eu --version v2.0.0 --description 'Pinned f
 apiome tags create payments-api --from-file tag.json        # flags win over the file
 ```
 
+`apiome tags update <project> <tag> --version <version>` moves a tag
+(`PATCH /v1/version-tags/{tenant}/{project}/{tag_id}`). Before asking, it shows a best-effort blast
+radius for the version the tag points at now: mock requests in the last 7 days, frozen-snapshot
+downloads and the other tags on it. An immutable tag exits **6**.
+
+```bash
+apiome tags update payments-api stable --version v2.1.0
+apiome tags update payments-api stable --version 2.1.0 --dry-run
+apiome tags update payments-api stable --version 2.1.0 --description 'Promoted for GA' --yes
+```
+
 ### List resources
 
 Human-readable tables (default):

@@ -9191,11 +9191,16 @@ class VersionTagCreateRequest(BaseModel):
 
 
 class VersionTagUpdateRequest(BaseModel):
-    """Move tag to another revision and/or lock it."""
+    """Move tag to another revision, lock it, and/or change its message."""
 
     version_id: Optional[str] = None
     immutable: Optional[bool] = None
     protected: Optional[bool] = None
+    message: Optional[str] = Field(
+        default=None,
+        max_length=2000,
+        description="New tag message (#3265). Omit to keep it; null or an empty string clears it.",
+    )
 
     class Config:
         from_attributes = True

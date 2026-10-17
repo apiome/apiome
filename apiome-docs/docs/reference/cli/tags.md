@@ -1,6 +1,6 @@
 ---
 title: "apiome tags"
-description: "List, inspect and create version tags."
+description: "List, inspect, create and move version tags."
 sidebar_position: 27
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome tags {#tags}
 
-List, inspect and create version tags (named pointers to versions).
+List, inspect, create and move version tags (named pointers to versions).
 
 ```text
 apiome tags [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#tags-create), [`list`](#tags-list), [`show`](#tags-show).
+Subcommands: [`create`](#tags-create), [`list`](#tags-list), [`show`](#tags-show), [`update`](#tags-update).
 
 ## apiome tags create {#tags-create}
 
@@ -83,3 +83,29 @@ apiome tags show [OPTIONS] PROJECT TAG
 | --- | --- | --- | --- |
 | `PROJECT_REF` | text | yes | Project slug or UUID. |
 | `TAG_REF` | text | yes | Tag name (exact) or tag UUID. |
+
+## apiome tags update {#tags-update}
+
+Move a version tag to another version (PATCH /v1/version-tags/{tenant}/{project}/{tag_id}).
+
+Shows where the tag points now and, best-effort, who may be affected — mock requests in the last 7 days, frozen-snapshot downloads and other tags on the current version — then asks to continue.
+
+```text
+apiome tags update [OPTIONS] PROJECT TAG
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `TAG_REF` | text | yes | Tag name (exact) or tag UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--version` | text |  | yes | Version to move the tag to: label (2.1.0 or v2.1.0) or revision UUID. |
+| `--description` | text |  |  | New description (the tag's message); pass '' to clear it. |
+| `--dry-run` | flag |  |  | Show the move and its blast radius; change nothing. |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation. |

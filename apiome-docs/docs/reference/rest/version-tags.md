@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.215.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.216.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `version-tags` · 4 operations
 
@@ -71,7 +71,7 @@ Request body for create version tag.
 
 **Patch Version Tag**
 
-Move a tag to another revision and/or set immutable lock / protection policy.
+Move a tag to another revision, set its immutable lock / protection policy, and/or its message.
 
 Operation id: `patch_version_tag_v1_version_tags__tenant_slug___project_id___tag_id__patch`
 
@@ -168,10 +168,11 @@ Git-like tag pointing at a schema revision (versions.id).
 
 ### `VersionTagUpdateRequest` {#schema-versiontagupdaterequest}
 
-Move tag to another revision and/or lock it.
+Move tag to another revision, lock it, and/or change its message.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `version_id` | string or null | no | Project version identifier or semantic version label, depending on context. |
 | `immutable` | boolean or null | no | Immutable. |
 | `protected` | boolean or null | no | Protected. |
+| `message` | string or null | no | New tag message (#3265). Omit to keep it; null or an empty string clears it. |
