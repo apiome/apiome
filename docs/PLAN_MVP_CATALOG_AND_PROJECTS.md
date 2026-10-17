@@ -77,9 +77,9 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 
 #### Epics these close
 
-- [ ] [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 Catalog UX & Look-and-Feel Improvements — after #4121, #4122, #4124
-- [ ] [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 Catalog Detail View Parity — after #4093
-- [ ] [#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 Catalog → OpenAPI Conversion & Fidelity Preview — after #4009
+- [x] [#4116](https://github.com/apiome/apiome/issues/4116) MFI-EPIC-28 Catalog UX & Look-and-Feel Improvements — after #4121, #4122, #4124
+- [x] [#4078](https://github.com/apiome/apiome/issues/4078) MFI-EPIC-25 Catalog Detail View Parity — after #4093
+- [x] [#4000](https://github.com/apiome/apiome/issues/4000) MFI-EPIC-22 Catalog → OpenAPI Conversion & Fidelity Preview — after #4009
 - [ ] [#4001](https://github.com/apiome/apiome/issues/4001) MFI-EPIC-23 Catalog Screen & Non-Publishable Cataloged Items — one child left, #4021 (deferred, §1.3)
 
 ### 1.2 Should finish (Projects CLI parity)
@@ -88,49 +88,49 @@ The CLI is how CI drives Projects and Versions, so its gaps count against “fin
 
 #### Phase E — `projects update / delete / export`
 
-- [ ] [#3205](https://github.com/apiome/apiome/issues/3205) CLI 3.4 — `apiome projects update <slug-or-id> (partial flags)`
-- [ ] [#3206](https://github.com/apiome/apiome/issues/3206) CLI 3.5 — `apiome projects delete <slug-or-id> (typed-confirmation)`
-- [ ] [#3207](https://github.com/apiome/apiome/issues/3207) CLI 3.6 — `apiome projects export <slug-or-id> (full project JSON dump)`
+- [x] [#3205](https://github.com/apiome/apiome/issues/3205) CLI 3.4 — `apiome projects update <slug-or-id> (partial flags)`
+- [x] [#3206](https://github.com/apiome/apiome/issues/3206) CLI 3.5 — `apiome projects delete <slug-or-id> (typed-confirmation)`
+- [x] [#3207](https://github.com/apiome/apiome/issues/3207) CLI 3.6 — `apiome projects export <slug-or-id> (full project JSON dump)`
 
 #### Phase E — `versions fork / unpublish / freeze / compatibility / delete`
 
-- [ ] [#3211](https://github.com/apiome/apiome/issues/3211) CLI 4.4 — `apiome versions fork <project> <source-version> --to <new-version>`
-- [ ] [#3213](https://github.com/apiome/apiome/issues/3213) CLI 4.6 — `apiome versions unpublish <project> <version>`
-- [ ] [#3214](https://github.com/apiome/apiome/issues/3214) CLI 4.7 — `apiome versions freeze <project> <version> (immutable schema snapshot)`
-- [ ] [#3215](https://github.com/apiome/apiome/issues/3215) CLI 4.8 — `apiome versions compatibility <project> --base v1 --head v2 (CI exit-code)`
-- [ ] [#3216](https://github.com/apiome/apiome/issues/3216) CLI 4.9 — `apiome versions delete <project> <version> (with confirmation)`
+- [x] [#3211](https://github.com/apiome/apiome/issues/3211) CLI 4.4 — `apiome versions fork <project> <source-version> --to <new-version>`
+- [x] [#3213](https://github.com/apiome/apiome/issues/3213) CLI 4.6 — `apiome versions unpublish <project> <version>`
+- [x] [#3214](https://github.com/apiome/apiome/issues/3214) CLI 4.7 — `apiome versions freeze <project> <version> (immutable schema snapshot)`
+- [x] [#3215](https://github.com/apiome/apiome/issues/3215) CLI 4.8 — `apiome versions compatibility <project> --base v1 --head v2 (CI exit-code)`
+- [x] [#3216](https://github.com/apiome/apiome/issues/3216) CLI 4.9 — `apiome versions delete <project> <version> (with confirmation)`
 
 #### Phase E — `tags list / create / update / delete`
 
-- [ ] [#3263](https://github.com/apiome/apiome/issues/3263) CLI 11.4 — `apiome tags list <project> and tags show <project> <tag>`
-- [ ] [#3264](https://github.com/apiome/apiome/issues/3264) CLI 11.5 — `apiome tags create <project> <tag> --version <version>`
-- [ ] [#3265](https://github.com/apiome/apiome/issues/3265) CLI 11.6 — `apiome tags update <project> <tag> --version <new-version> (move tag)`
-- [ ] [#3266](https://github.com/apiome/apiome/issues/3266) CLI 11.7 — `apiome tags delete <project> <tag>`
+- [x] [#3263](https://github.com/apiome/apiome/issues/3263) CLI 11.4 — `apiome tags list <project> and tags show <project> <tag>`
+- [x] [#3264](https://github.com/apiome/apiome/issues/3264) CLI 11.5 — `apiome tags create <project> <tag> --version <version>`
+- [x] [#3265](https://github.com/apiome/apiome/issues/3265) CLI 11.6 — `apiome tags update <project> <tag> --version <new-version> (move tag)`
+- [x] [#3266](https://github.com/apiome/apiome/issues/3266) CLI 11.7 — `apiome tags delete <project> <tag>`
 
 #### Phase E (optional) — `properties`
 
-- [ ] [#3223](https://github.com/apiome/apiome/issues/3223) CLI 6.1 — `apiome properties list <project> (filter, search)`
-- [ ] [#3224](https://github.com/apiome/apiome/issues/3224) CLI 6.2 — `apiome properties show <project> <name-or-id>`
-- [ ] [#3225](https://github.com/apiome/apiome/issues/3225) CLI 6.3 — `apiome properties create <project> (interactive + --from-file)`
-- [ ] [#3226](https://github.com/apiome/apiome/issues/3226) CLI 6.4 — `apiome properties update <project> <name-or-id>`
-- [ ] [#3227](https://github.com/apiome/apiome/issues/3227) CLI 6.5 — `apiome properties delete <project> <name-or-id> (with usage check)`
-- [ ] [#3228](https://github.com/apiome/apiome/issues/3228) CLI 6.6 — `apiome properties copy <src-project> <name> --to <dst-project>`
+- [x] [#3223](https://github.com/apiome/apiome/issues/3223) CLI 6.1 — `apiome properties list <project> (filter, search)`
+- [x] [#3224](https://github.com/apiome/apiome/issues/3224) CLI 6.2 — `apiome properties show <project> <name-or-id>`
+- [x] [#3225](https://github.com/apiome/apiome/issues/3225) CLI 6.3 — `apiome properties create <project> (interactive + --from-file)`
+- [x] [#3226](https://github.com/apiome/apiome/issues/3226) CLI 6.4 — `apiome properties update <project> <name-or-id>`
+- [x] [#3227](https://github.com/apiome/apiome/issues/3227) CLI 6.5 — `apiome properties delete <project> <name-or-id> (with usage check)`
+- [x] [#3228](https://github.com/apiome/apiome/issues/3228) CLI 6.6 — `apiome properties copy <src-project> <name> --to <dst-project>`
 
 #### Phase E (optional) — `classes`
 
-- [ ] [#3229](https://github.com/apiome/apiome/issues/3229) CLI 7.1 — `apiome classes list <project> <version> (--with-properties flag)`
-- [ ] [#3231](https://github.com/apiome/apiome/issues/3231) CLI 7.3 — `apiome classes create <project> <version> (interactive + --from-file)`
+- [x] [#3229](https://github.com/apiome/apiome/issues/3229) CLI 7.1 — `apiome classes list <project> <version> (--with-properties flag)`
+- [x] [#3231](https://github.com/apiome/apiome/issues/3231) CLI 7.3 — `apiome classes create <project> <version> (interactive + --from-file)`
 
 #### Phase E (optional) — `schema arazzo / json / diff`, `browse open`
 
-- [ ] [#3249](https://github.com/apiome/apiome/issues/3249) CLI 9.6 — `apiome schema arazzo <tenant>/<project>/<version> [--class X]`
-- [ ] [#3250](https://github.com/apiome/apiome/issues/3250) CLI 9.7 — `apiome schema json <tenant>/<project>/<version> [--class X] (JSON Schema)`
-- [ ] [#3251](https://github.com/apiome/apiome/issues/3251) CLI 9.8 — `apiome schema diff <tenant>/<project>/<v1> <v2> (text + machine-readable diff)`
-- [ ] [#3252](https://github.com/apiome/apiome/issues/3252) CLI 9.9 — `apiome browse open <tenant>/<project>/<version> (open browse URL in default browser)`
+- [x] [#3249](https://github.com/apiome/apiome/issues/3249) CLI 9.6 — `apiome schema arazzo <tenant>/<project>/<version> [--class X]`
+- [x] [#3250](https://github.com/apiome/apiome/issues/3250) CLI 9.7 — `apiome schema json <tenant>/<project>/<version> [--class X] (JSON Schema)`
+- [x] [#3251](https://github.com/apiome/apiome/issues/3251) CLI 9.8 — `apiome schema diff <tenant>/<project>/<v1> <v2> (text + machine-readable diff)`
+- [x] [#3252](https://github.com/apiome/apiome/issues/3252) CLI 9.9 — `apiome browse open <tenant>/<project>/<version> (open browse URL in default browser)`
 
 #### Epic this closes
 
-- [ ] [#3176](https://github.com/apiome/apiome/issues/3176) Projects (CLI) — after #3205, #3206, #3207
+- [x] [#3176](https://github.com/apiome/apiome/issues/3176) Projects (CLI) — after #3205, #3206, #3207
 
 ### 1.3 Catalog/Projects-related but deferred (new capability, not hardening)
 
