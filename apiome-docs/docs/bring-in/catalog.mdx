@@ -67,7 +67,7 @@ wizard](./import-wizard.mdx#import-to-catalog).
 | **Overview** | The API surface (services, operations, types, channels), the quality snapshot and the source snapshot |
 | **Format details** | The payload's native structure in its own vocabulary — see [Catalog format details](./catalog-format-details.md) |
 | **Source & code** | The raw imported source, read-only, with **“Download raw source”** |
-| **Provenance** | Where it came from: intake, format detection, normalization and the import job |
+| **Provenance** | Where it came from — intake, format detection, normalization and the import job — and, beside it, **Toolchain & routing**: the revision **Fingerprint**, **Publishable** (`false` for every catalog item) and **Routing**, why the import stored it in the catalog |
 | **Conversions** | Every conversion to OpenAPI, with its evidence |
 | **Lint & score** | The lint score and findings |
 | **Test bench** | Validate a payload against one of the item's schemas |
@@ -89,7 +89,11 @@ same with placeholder cards and table rows.
 
 <Screenshot id="catalog-item-copybook" alt="Format details for a COBOL copybook: the record layout with levels, PICTURE clauses, offsets and lengths" />
 
-<Screenshot id="catalog-item-provenance" alt="The Provenance tab: source intake, format detection, normalization and the catalog record" />
+<Screenshot id="catalog-item-provenance" alt="The Provenance tab: the four import steps on the left, and Fingerprint, Publishable false and the routing reason on the right" />
+
+On **Provenance**, an item imported before the import recorded its fingerprint and routing reason
+shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
+marked *Derived from the format*.
 
 <Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
 

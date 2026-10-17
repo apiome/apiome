@@ -88,7 +88,7 @@ def _blocked_persistence(monkeypatch):
     """
     calls: List[str] = []
 
-    def _fake_persist(payload, model, intake, routing, scrub_resolution=None):
+    def _fake_persist(payload, model, intake, routing, scrub_resolution=None, fingerprint=None):
         calls.append("persist_adapter_import")
         return SpecImportJobResult(
             project_id="00000000-0000-0000-0000-000000000001",

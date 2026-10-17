@@ -22584,6 +22584,39 @@ button.cid-entity__head {
   color: var(--fg-muted);
 }
 
+/* Provenance in two columns (MFI-25.8): the rail as "Source & provenance",
+   and "Toolchain & routing" — fingerprint, Publishable, routing note — beside
+   it. One column below the page's wide breakpoint, where the rail needs the
+   full width for its captions. */
+.cid-prov {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 64rem) {
+  .cid-prov {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.cid-prov__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+/* An `h4` — the card title is the `h3` — so it resets the unlayered base
+   heading margin and size it would otherwise inherit. */
+.cid-prov__head {
+  margin: 0;
+}
+
+.cid-prov__note {
+  color: var(--fg);
+  line-height: var(--lh-snug);
+}
+
 /* ---- The Provenance rail ------------------------------------------------
    Four steps, each a tinted glyph tile beside its facts, joined by a connector
    drawn on the tile itself. The connector is `::after` on the tile rather than

@@ -14,7 +14,16 @@
  * height, and the tiles are `.tnt-icon-tile[data-tone]` — the same tinted square the tenants
  * drawer, the roles rail and six other surfaces already draw.
  *
- * @see `./catalogItemView.ts` — the step titles, captions, glyph keys and absent-copy.
+ * ### Two columns (MFI-25.8, #4093)
+ *
+ * The card splits into **Source & provenance** — the rail, unchanged, still carrying the
+ * tool-version chips and the import-job id — and **Toolchain & routing**, the three facts the
+ * rail had no step for: the revision **fingerprint**, the explicit **Publishable: false**, and
+ * the **routing note** saying why the import chose the catalog over a Project. The columns
+ * stack below the detail page's wide breakpoint (`.cid-prov`).
+ *
+ * @see `./catalogItemView.ts` — the step titles, captions, glyph keys and absent-copy, and
+ *   the fingerprint / routing-note / publishable rules.
  */
 
 import * as React from 'react';
@@ -22,6 +31,7 @@ import {
   CalendarClock,
   ClipboardPaste,
   FileUp,
+  Fingerprint,
   Globe,
   Library,
   Radar,
@@ -42,7 +52,11 @@ import {
   CATALOG_PROVENANCE_STEPS,
   PROVENANCE_ABSENT,
   catalogDetailTimestamp,
+  catalogFingerprint,
+  catalogFingerprintShort,
   catalogImportJobRef,
+  catalogPublishableRow,
+  catalogRoutingNote,
   catalogSourceChips,
   catalogSourceKindView,
   catalogToolVersions,
@@ -84,6 +98,8 @@ export interface CatalogItemProvenanceProps {
   createdAt: string | null | undefined;
   /** When it last changed. */
   updatedAt: string | null | undefined;
+  /** The item's `publishable` flag — `false` for every catalog item (MFI-23.1). */
+  publishable?: boolean | null;
 }
 
 /**
@@ -144,12 +160,16 @@ export function CatalogItemProvenance({
   creatorEmail,
   createdAt,
   updatedAt,
+  publishable,
 }: CatalogItemProvenanceProps) {
   const [intake, detection, normalization, record] = CATALOG_PROVENANCE_STEPS;
   const tools = catalogToolVersions(toolVersions);
   const importJobRef = catalogImportJobRef(formatMetadata);
   const createdRelative = formatRelativeTimestamp(createdAt);
   const updatedRelative = formatRelativeTimestamp(updatedAt);
+  const fingerprint = catalogFingerprint(formatMetadata);
+  const routingNote = catalogRoutingNote(formatMetadata, sourceFormat);
+  const publishableRow = catalogPublishableRow(publishable);
 
   return (
     <Card data-testid="catalog-detail-provenance">
@@ -162,118 +182,165 @@ export function CatalogItemProvenance({
           <p className="cid-note">How this item reached the catalog</p>
         </div>
       </CardHeader>
-      <CardBody>
-        <ol className="cid-rail">
-          <ProvenanceStep
-            step={intake.step}
-            title={intake.title}
-            caption={intake.caption}
-            icon={catalogSourceKindView(source?.kind ?? null).icon}
-            tone={intake.tone}
-            testId="catalog-detail-stage-intake"
-          >
-            <div className="cid-chips">
-              <span className="cid-step__name mono" title={source?.label || source?.uri || undefined}>
-                {source?.label || source?.uri || PROVENANCE_ABSENT.intake}
-              </span>
-              {source?.kind ? (
-                <Badge variant="outline">{catalogSourceKindView(source.kind).label}</Badge>
+      <CardBody className="cid-prov">
+        <section className="cid-prov__col" aria-labelledby="catalog-provenance-source-head">
+          <h4 id="catalog-provenance-source-head" className="cid-caps cid-prov__head">
+            Source &amp; provenance
+          </h4>
+          <ol className="cid-rail">
+            <ProvenanceStep
+              step={intake.step}
+              title={intake.title}
+              caption={intake.caption}
+              icon={catalogSourceKindView(source?.kind ?? null).icon}
+              tone={intake.tone}
+              testId="catalog-detail-stage-intake"
+            >
+              <div className="cid-chips">
+                <span
+                  className="cid-step__name mono"
+                  title={source?.label || source?.uri || undefined}
+                >
+                  {source?.label || source?.uri || PROVENANCE_ABSENT.intake}
+                </span>
+                {source?.kind ? (
+                  <Badge variant="outline">{catalogSourceKindView(source.kind).label}</Badge>
+                ) : null}
+                {catalogSourceChips(source)
+                  .filter((chip) => !chip.uri)
+                  .map((chip) => (
+                    <Badge key={chip.label} variant={CHIP_VARIANT[chip.tone]}>
+                      {chip.label}
+                    </Badge>
+                  ))}
+                {resolvedSource ? <SourceBadge source={resolvedSource} /> : null}
+              </div>
+              {source?.uri && source?.label ? (
+                <p className="cid-micro mono cid-step__uri" title={source.uri}>
+                  {source.uri}
+                </p>
               ) : null}
-              {catalogSourceChips(source)
-                .filter((chip) => !chip.uri)
-                .map((chip) => (
-                  <Badge key={chip.label} variant={CHIP_VARIANT[chip.tone]}>
-                    {chip.label}
-                  </Badge>
-                ))}
-              {resolvedSource ? <SourceBadge source={resolvedSource} /> : null}
-            </div>
-            {source?.uri && source?.label ? (
-              <p className="cid-micro mono cid-step__uri" title={source.uri}>
-                {source.uri}
-              </p>
-            ) : null}
-          </ProvenanceStep>
+            </ProvenanceStep>
 
-          <ProvenanceStep
-            step={detection.step}
-            title={detection.title}
-            caption={detection.caption}
-            icon={detection.icon}
-            tone={detection.tone}
-            testId="catalog-detail-stage-detection"
-          >
-            {sourceFormat || protocol ? (
-              <div className="cid-chips">
-                <FormatPill format={sourceFormat} />
-                <ProtocolPill protocol={protocol} />
-              </div>
-            ) : (
-              <p className="cid-note">{PROVENANCE_ABSENT.detection}</p>
-            )}
-          </ProvenanceStep>
+            <ProvenanceStep
+              step={detection.step}
+              title={detection.title}
+              caption={detection.caption}
+              icon={detection.icon}
+              tone={detection.tone}
+              testId="catalog-detail-stage-detection"
+            >
+              {sourceFormat || protocol ? (
+                <div className="cid-chips">
+                  <FormatPill format={sourceFormat} />
+                  <ProtocolPill protocol={protocol} />
+                </div>
+              ) : (
+                <p className="cid-note">{PROVENANCE_ABSENT.detection}</p>
+              )}
+            </ProvenanceStep>
 
-          <ProvenanceStep
-            step={normalization.step}
-            title={normalization.title}
-            caption={normalization.caption}
-            icon={normalization.icon}
-            tone={normalization.tone}
-            testId="catalog-detail-stage-normalization"
-          >
-            {tools.length > 0 ? (
-              <div className="cid-chips">
-                {tools.map(({ tool, version }) => (
-                  <Badge key={tool} variant="outline" mono>
-                    <Wrench aria-hidden />
-                    {tool} {version}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="cid-note">{PROVENANCE_ABSENT.normalization}</p>
-            )}
-          </ProvenanceStep>
+            <ProvenanceStep
+              step={normalization.step}
+              title={normalization.title}
+              caption={normalization.caption}
+              icon={normalization.icon}
+              tone={normalization.tone}
+              testId="catalog-detail-stage-normalization"
+            >
+              {tools.length > 0 ? (
+                <div className="cid-chips">
+                  {tools.map(({ tool, version }) => (
+                    <Badge key={tool} variant="outline" mono>
+                      <Wrench aria-hidden />
+                      {tool} {version}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="cid-note">{PROVENANCE_ABSENT.normalization}</p>
+              )}
+            </ProvenanceStep>
 
-          <ProvenanceStep
-            step={record.step}
-            title={record.title}
-            caption={record.caption}
-            icon={record.icon}
-            tone={record.tone}
-            testId="catalog-detail-stage-record"
-          >
-            <dl className="cid-kv">
-              <dt>Import job</dt>
-              <dd>
-                {importJobRef ? (
-                  <Badge variant="neutral" mono title={importJobRef}>
-                    {importJobRef}
-                  </Badge>
-                ) : (
-                  <span className="cid-absent">{PROVENANCE_ABSENT.record}</span>
-                )}
-              </dd>
-              <dt>Created by</dt>
-              <dd>
-                <User aria-hidden className="cid-kv__glyph" />
-                {creatorName || creatorEmail || 'Unknown'}
-              </dd>
-              <dt>Created</dt>
-              <dd>
-                <CalendarClock aria-hidden className="cid-kv__glyph" />
-                {catalogDetailTimestamp(createdAt)}
-                {createdRelative ? <span className="cid-quiet"> · {createdRelative}</span> : null}
-              </dd>
-              <dt>Last updated</dt>
-              <dd>
-                <CalendarClock aria-hidden className="cid-kv__glyph" />
-                {catalogDetailTimestamp(updatedAt)}
-                {updatedRelative ? <span className="cid-quiet"> · {updatedRelative}</span> : null}
-              </dd>
-            </dl>
-          </ProvenanceStep>
-        </ol>
+            <ProvenanceStep
+              step={record.step}
+              title={record.title}
+              caption={record.caption}
+              icon={record.icon}
+              tone={record.tone}
+              testId="catalog-detail-stage-record"
+            >
+              <dl className="cid-kv">
+                <dt>Import job</dt>
+                <dd>
+                  {importJobRef ? (
+                    <Badge variant="neutral" mono title={importJobRef}>
+                      {importJobRef}
+                    </Badge>
+                  ) : (
+                    <span className="cid-absent">{PROVENANCE_ABSENT.record}</span>
+                  )}
+                </dd>
+                <dt>Created by</dt>
+                <dd>
+                  <User aria-hidden className="cid-kv__glyph" />
+                  {creatorName || creatorEmail || 'Unknown'}
+                </dd>
+                <dt>Created</dt>
+                <dd>
+                  <CalendarClock aria-hidden className="cid-kv__glyph" />
+                  {catalogDetailTimestamp(createdAt)}
+                  {createdRelative ? <span className="cid-quiet"> · {createdRelative}</span> : null}
+                </dd>
+                <dt>Last updated</dt>
+                <dd>
+                  <CalendarClock aria-hidden className="cid-kv__glyph" />
+                  {catalogDetailTimestamp(updatedAt)}
+                  {updatedRelative ? <span className="cid-quiet"> · {updatedRelative}</span> : null}
+                </dd>
+              </dl>
+            </ProvenanceStep>
+          </ol>
+        </section>
+
+        <section
+          className="cid-prov__col"
+          aria-labelledby="catalog-provenance-routing-head"
+          data-testid="catalog-detail-routing"
+        >
+          <h4 id="catalog-provenance-routing-head" className="cid-caps cid-prov__head">
+            Toolchain &amp; routing
+          </h4>
+          <dl className="cid-kv">
+            <dt>Fingerprint</dt>
+            <dd data-testid="catalog-detail-fingerprint">
+              {fingerprint ? (
+                <Badge variant="neutral" mono title={fingerprint}>
+                  <Fingerprint aria-hidden />
+                  {catalogFingerprintShort(fingerprint)}
+                </Badge>
+              ) : (
+                <span className="cid-absent">{PROVENANCE_ABSENT.fingerprint}</span>
+              )}
+            </dd>
+            <dt>Publishable</dt>
+            <dd data-testid="catalog-detail-publishable">
+              <Badge variant="neutral" mono>
+                {publishableRow.value}
+              </Badge>
+              <span className="cid-quiet">{publishableRow.note}</span>
+            </dd>
+            <dt>Routing</dt>
+            <dd data-testid="catalog-detail-routing-note">
+              <span className="cid-prov__note">{routingNote.text}</span>
+              {routingNote.recorded ? null : (
+                <span className="cid-quiet">
+                  Derived from the format; the import did not record a reason.
+                </span>
+              )}
+            </dd>
+          </dl>
+        </section>
       </CardBody>
     </Card>
   );

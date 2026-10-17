@@ -1134,6 +1134,7 @@ def persist_adapter_import(
     intake: _ResolvedIntake,
     routing: ImportRoutingDecision,
     scrub_resolution: Optional[ScrubResolution] = None,
+    fingerprint: Optional[str] = None,
 ) -> Optional[SpecImportJobResult]:
     """Persist a non-dry-run adapter import as its routed artifact (canonical→catalog hook, MFI-23.7).
 
@@ -1157,6 +1158,9 @@ def persist_adapter_import(
         routing: The Project-vs-Catalog decision; ``routing.publishable`` sets the created row.
         scrub_resolution: The tenant's resolved secret-scrub mode (MFI-29.6). ``None`` means
             enforce, so a caller with no tenant policy context still redacts.
+        fingerprint: The adapter's revision fingerprint (the ``VERSION_FINGERPRINT`` phase),
+            recorded on ``format_metadata.fingerprint`` for the catalog Provenance tab
+            (MFI-25.8). ``None`` records nothing.
 
     Returns:
         The produced identifiers, or ``None`` when there is no tenant to write under.
@@ -1213,7 +1217,12 @@ def persist_adapter_import(
     format_metadata: Dict[str, Any] = {
         "sourceLabel": source_label,
         "inputKind": input_kind or "file",
+        # MFI-25.8: the routing verdict's reason, so the catalog Provenance tab can say *why*
+        # this landed in the catalog (the import summary that carried it is not kept).
+        "routingReason": routing.reason,
     }
+    if fingerprint:
+        format_metadata["fingerprint"] = fingerprint
     format_metadata.update(_source_content_for_persist(intake, scrub_resolution))
     if input_kind == "url" and source_label:
         format_metadata["sourceUri"] = source_label
@@ -1914,7 +1923,13 @@ async def run_adapter_import_job(
                 )
             else:
                 result = await asyncio.to_thread(
-                    persist_adapter_import, payload, model, intake, routing, scrub_resolution
+                    persist_adapter_import,
+                    payload,
+                    model,
+                    intake,
+                    routing,
+                    scrub_resolution,
+                    fingerprint,
                 )
             _phase_timing("persist", phase_started)
         except Exception as exc:  # noqa: BLE001 - surface a persistence fault as a failed job

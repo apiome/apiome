@@ -728,6 +728,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             creatorEmail={item.creator_email}
             createdAt={item.created_at}
             updatedAt={item.updated_at}
+            publishable={item.publishable ?? false}
           />
         </TabPanel>
 

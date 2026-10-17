@@ -33,7 +33,11 @@ import {
   catalogDetailTabs,
   catalogDetailTimestamp,
   catalogFormatNodeHref,
+  catalogFingerprint,
+  catalogFingerprintShort,
   catalogImportJobRef,
+  catalogPublishableRow,
+  catalogRoutingNote,
   catalogModelCountLine,
   catalogQualityBand,
   catalogSourceChips,
@@ -406,6 +410,57 @@ describe('the Provenance pane', () => {
     expect(PROVENANCE_ABSENT.normalization).toBe(
       'Tool versions were not recorded for this import.',
     );
+  });
+
+  it('reads the fingerprint the import stamped, under its tolerated spellings (MFI-25.8)', () => {
+    expect(catalogFingerprint({ fingerprint: ' sha256:abc ' })).toBe('sha256:abc');
+    expect(catalogFingerprint({ sourceFingerprint: 'f1' })).toBe('f1');
+    expect(catalogFingerprint({ source_fingerprint: 'f2' })).toBe('f2');
+    expect(catalogFingerprint({ fingerprint: '' })).toBeNull();
+    expect(catalogFingerprint({ fingerprint: 42 })).toBeNull();
+    expect(catalogFingerprint(null)).toBeNull();
+  });
+
+  it('shortens a long fingerprint to its ends and leaves a short one whole', () => {
+    expect(catalogFingerprintShort('abcdefgh12345678ZYXWVUTS')).toBe('abcdefgh…ZYXWVUTS');
+    expect(catalogFingerprintShort('short-fp')).toBe('short-fp');
+    expect(catalogFingerprintShort('a'.repeat(20))).toBe('a'.repeat(20));
+  });
+
+  it('prefers the recorded routing reason, flat or nested', () => {
+    expect(catalogRoutingNote({ routingReason: 'graphql → catalog item.' }, 'graphql')).toEqual({
+      text: 'graphql → catalog item.',
+      recorded: true,
+    });
+    expect(catalogRoutingNote({ routing_reason: 'snake' }, null)).toEqual({
+      text: 'snake',
+      recorded: true,
+    });
+    expect(catalogRoutingNote({ routing: { reason: 'nested' } }, null)).toEqual({
+      text: 'nested',
+      recorded: true,
+    });
+  });
+
+  it('derives the routing note from the format when the import recorded none', () => {
+    const note = catalogRoutingNote({ routingReason: '  ' }, 'graphql');
+    expect(note.recorded).toBe(false);
+    expect(note.text).toMatch(/^GraphQL is not OpenAPI, so the import stored it as a catalog item/);
+    expect(catalogRoutingNote(null, 'mystery-format').text).toMatch(/^mystery-format is not OpenAPI/);
+    expect(catalogRoutingNote(undefined, null)).toEqual({
+      text: 'Non-OpenAPI imports are stored as catalog items rather than Projects.',
+      recorded: false,
+    });
+  });
+
+  it('prints Publishable as the literal flag, false unless the payload says true', () => {
+    expect(catalogPublishableRow(false)).toEqual({
+      value: 'false',
+      note: 'Convert it to an OpenAPI Project to publish it.',
+    });
+    expect(catalogPublishableRow(undefined).value).toBe('false');
+    expect(catalogPublishableRow(null).value).toBe('false');
+    expect(catalogPublishableRow(true).value).toBe('true');
   });
 
   it('finds the import job under whichever of six spellings the importer used', () => {

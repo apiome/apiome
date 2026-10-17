@@ -181,6 +181,36 @@ def test_persists_a_non_publishable_catalog_item_with_raw_source(monkeypatch) ->
     assert call["format_metadata"]["inputKind"] == "file"
 
 
+def test_records_the_routing_reason_and_fingerprint_for_provenance(monkeypatch) -> None:
+    """MFI-25.8: the Provenance tab reads why it was routed and the revision fingerprint."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+
+    persist_adapter_import(
+        _payload(),
+        _model(),
+        _text_intake('syntax = "proto3";'),
+        _catalog_routing(),
+        fingerprint="sha256:abc123",
+    )
+
+    meta = fake.source_format_call["format_metadata"]
+    assert meta["routingReason"] == "non-OpenAPI format → catalog item"
+    assert meta["fingerprint"] == "sha256:abc123"
+
+
+def test_omits_the_fingerprint_when_none_was_computed(monkeypatch) -> None:
+    """No fingerprint → no ``fingerprint`` key, rather than an empty or null one."""
+    fake = _FakeDb()
+    monkeypatch.setattr("app.database.db", fake)
+
+    persist_adapter_import(_payload(), _model(), _text_intake("x"), _catalog_routing())
+
+    meta = fake.source_format_call["format_metadata"]
+    assert "fingerprint" not in meta
+    assert meta["routingReason"] == "non-OpenAPI format → catalog item"
+
+
 def test_records_url_intake_kind_and_source_uri(monkeypatch) -> None:
     """A URL import records inputKind='url' and the URL as the source URI (MFI-26.2)."""
     fake = _FakeDb()
