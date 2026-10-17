@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.346.0] - 2026-10-16
+
+### Added
+- **Optimistic concurrency on project updates (#3205, CLI 3.4)**: `PUT
+  /v1/projects/{tenant}/{project}` accepts an optional `expectedUpdatedAt` — the project's
+  `updated_at` as the caller last read it. When set, the update applies only if the project is
+  unchanged since; the check is part of the `UPDATE` statement, so a concurrent edit cannot slip in
+  between. Otherwise nothing is written and the response is `409` with `detail` `{ "code":
+  "update_conflict", "message", "current_updated_at" }`. Requests without the field behave as
+  before. Used by `apiome projects update` (exit 6 on a conflict).
+
+The OpenAPI version moves to 1.210.0.
+
 ## [1.345.0] - 2026-10-16
 
 ### Added

@@ -1233,6 +1233,42 @@ Use `--publish public` to import into the system-wide type library (master tenan
 
 Requires an API key (for `creator_id`) but not a tenant-scoped import target. If you run `import json-schema` on a type library file, the CLI suggests `import json-schema-type` instead.
 
+### Update a project
+
+`apiome projects update <slug-or-id>` changes a project's name, slug, description or domain
+(`PUT /v1/projects/{tenant}/{id}`). Only the fields that change are sent.
+
+```bash
+apiome projects update payments-api \
+  --description 'Charges, refunds, payouts, and disputes.' \
+  --domain finance
+
+# Preview the change as a diff; nothing is sent.
+apiome projects update payments-api --rename payments-v2 --dry-run
+
+# Change the slug. Asks for confirmation; --yes skips it (needed in scripts and CI).
+apiome projects update payments-api --rename payments-v2 --yes
+```
+
+`--rename` warns that links, scripts and CLI commands using the old slug stop working: there is
+no redirect from an old slug. `--domain` takes `iot`, `social`, `gaming`, `travel`, `media`,
+`ecommerce`, `healthcare`, `finance`, `saas`, `education`, `realestate`, `logistics`, or `none`
+to clear it. `--description ''` clears the description.
+
+Edit a JSON dump and apply it with `--from-file`. Only `name`, `slug`, `description`, `enabled`
+and `metadata` are read from the file; everything else in the dump is ignored:
+
+```bash
+apiome --json projects get <uuid> > project.json
+# edit project.json …
+apiome projects update <uuid> --from-file project.json --dry-run
+apiome projects update <uuid> --from-file project.json
+```
+
+Every update is sent with the project's `updated_at` as a precondition — the dump's for
+`--from-file`, otherwise the one read just before the write. If someone changed the project in
+between, nothing is written and the command exits **6** with a hint to re-fetch.
+
 ### List resources
 
 Human-readable tables (default):

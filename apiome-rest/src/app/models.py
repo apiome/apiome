@@ -3242,6 +3242,14 @@ class ProjectUpdateRequest(BaseModel):
         None,
         validation_alias=AliasChoices("changeReportTemplateVersionId", "change_report_template_version_id"),
     )
+    expected_updated_at: Optional[datetime] = Field(
+        None,
+        validation_alias=AliasChoices("expectedUpdatedAt", "expected_updated_at"),
+        description="Optimistic-concurrency precondition (CLI 3.4, #3205): the project's "
+        "updated_at as the caller last read it. When set, the update applies only if the "
+        "project is unchanged since; otherwise the request fails with 409 code "
+        "'update_conflict' and the project's current updated_at.",
+    )
 
     class Config:
         from_attributes = True

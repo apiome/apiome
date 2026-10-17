@@ -8,7 +8,7 @@ All endpoints are tenant-scoped and require authentication via JWT token or API 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional, List, Dict, Any
 
-from .database import db
+from .database import ProjectUpdateConflict, db
 from .api_identity_service import build_related_artifact_refs
 from .conversion_evidence import evidence_response, parse_evidence_scope, provenance_entry
 from .models import (
@@ -23,7 +23,7 @@ from .permissions import enforce_permission, Resource, Action
 
 router = APIRouter(prefix="/v1/projects", tags=["projects"])
 
-# Ids must stay aligned with apiome-cli `domain-categories.ts` PROJECT_DOMAIN_CHOICES (#3204).
+# Ids must stay aligned with apiome-cli `project_update.py` PROJECT_DOMAIN_CHOICES (#3205).
 PROJECT_DOMAIN_CATEGORY_IDS: List[str] = [
     "iot",
     "social",
@@ -401,6 +401,10 @@ async def update_project(
 
     Returns:
         The updated project
+
+    Raises:
+        HTTPException: 409 ``update_conflict`` when ``expectedUpdatedAt`` is given and the
+            project changed since (#3205); 409 for a slug already taken; 404 / 400 as before.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.EDIT)
     # Check if project exists
@@ -454,12 +458,24 @@ async def update_project(
         if "change_report_template_version_id" in fs:
             updates["change_report_template_version_id"] = request.change_report_template_version_id
 
-        # Update project
-        project = db.update_project(
-            project_id,
-            auth_data['tenant_id'],
-            updates
-        )
+        # Update project — guarded by the caller's last-read updated_at when given (#3205).
+        try:
+            project = db.update_project(
+                project_id,
+                auth_data['tenant_id'],
+                updates,
+                expected_updated_at=request.expected_updated_at,
+            )
+        except ProjectUpdateConflict as conflict:
+            current = conflict.current_updated_at
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "update_conflict",
+                    "message": "The project changed since it was read; re-fetch it and retry.",
+                    "current_updated_at": current.isoformat() if hasattr(current, "isoformat") else current,
+                },
+            )
 
         if not project:
             raise HTTPException(

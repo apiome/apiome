@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.209.0",
+    "version": "1.210.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -5755,7 +5755,7 @@
           "projects"
         ],
         "summary": "Update Project",
-        "description": "Update an existing project.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    request: Project update data\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The updated project",
+        "description": "Update an existing project.\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    request: Project update data\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    The updated project\n\nRaises:\n    HTTPException: 409 ``update_conflict`` when ``expectedUpdatedAt`` is given and the\n        project changed since (#3205); 409 for a slug already taken; 404 / 400 as before.",
         "operationId": "update_project_v1_projects__tenant_slug___project_id__put",
         "parameters": [
           {
@@ -96684,7 +96684,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "completed_at": {
             "anyOf": [
@@ -98594,7 +98594,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "comment_count": {
             "type": "integer",
@@ -98822,7 +98822,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99353,14 +99353,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101385,7 +101385,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "32b539dc-4717-424c-b878-1555c438fef0"
+            "example": "e789b0a8-6991-4845-94b5-a2004d216271"
           },
           "method": {
             "type": "string",
@@ -103912,7 +103912,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -105648,7 +105648,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "browse_url": {
             "anyOf": [
@@ -137482,6 +137482,21 @@
             ],
             "title": "Changereporttemplateversionid",
             "description": "Change Report Template Version ID."
+          },
+          "expectedUpdatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Request body for project update."
+              },
+              {
+                "type": "null",
+                "description": "Request body for project update."
+              }
+            ],
+            "title": "Expectedupdatedat",
+            "description": "Optimistic-concurrency precondition (CLI 3.4, #3205): the project's updated_at as the caller last read it. When set, the update applies only if the project is unchanged since; otherwise the request fails with 409 code 'update_conflict' and the project's current updated_at."
           }
         },
         "type": "object",
@@ -145490,7 +145505,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           }
         },
         "additionalProperties": false,
@@ -156812,7 +156827,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "detected_by": {
             "anyOf": [
@@ -163955,14 +163970,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T02:43:36Z"
+            "example": "2026-10-17T03:01:45Z"
           },
           "outcome": {
             "anyOf": [

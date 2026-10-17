@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.209.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.210.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `projects` · 11 operations
 
@@ -214,6 +214,10 @@ Args:
 
 Returns:
     The updated project
+
+Raises:
+    HTTPException: 409 ``update_conflict`` when ``expectedUpdatedAt`` is given and the
+        project changed since (#3205); 409 for a slug already taken; 404 / 400 as before.
 
 Operation id: `update_project_v1_projects__tenant_slug___project_id__put`
 
@@ -479,3 +483,4 @@ Request model for updating a project.
 | `enabled` | boolean or null | no | Whether the resource is active. |
 | `metadata` | object or null | no | Additional JSON metadata bag. |
 | `changeReportTemplateVersionId` | string or null | no | Change Report Template Version ID. |
+| `expectedUpdatedAt` | string (date-time) or null | no | Optimistic-concurrency precondition (CLI 3.4, #3205): the project's updated_at as the caller last read it. When set, the update applies only if the project is unchanged since; otherwise the request fails with 409 code 'update_conflict' and the project's current updated_at. |
