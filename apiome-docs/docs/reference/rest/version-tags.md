@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.214.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.215.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `version-tags` · 4 operations
 
@@ -164,6 +164,7 @@ Git-like tag pointing at a schema revision (versions.id).
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
 | `target_version_string` | string or null | no | Target Version String. |
+| `created_by_email` | string or null | no | Email of the user who created the tag (list responses only; #3263). Tags record no updater. |
 
 ### `VersionTagUpdateRequest` {#schema-versiontagupdaterequest}
 

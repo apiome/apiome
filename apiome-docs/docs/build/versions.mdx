@@ -169,6 +169,27 @@ in the web app.
 — pass `--allow-lesser` to go lower. If the target project already has that version, nothing is
 forked and the command exits `6`. With `--json` it prints the new version.
 
+### List version tags from the CLI
+
+Version tags (`stable`, `latest`, `prod` …) are named pointers to a version.
+`apiome tags list <project>` shows each tag, the version it points to, its channel, when it was
+last updated and who created it; `apiome tags show <project> <tag>` shows one tag in full, including
+whether it is immutable or protected.
+
+```bash
+apiome tags list payments-api
+# TAG     POINTS TO  CHANNEL  UPDATED     CREATED BY
+# latest  2.1.0               2026-05-04  kenji@example.com
+# prod    2.0.0               2026-02-18  kenji@example.com
+# stable  2.1.0      stable   2026-05-04  kenji@example.com
+
+apiome tags show payments-api stable
+```
+
+`tags list` shows the first 50 tags; pass `--limit N` or `--all`. Both commands take `--json`.
+Apiome keeps only a tag's current pointer — it records who created a tag, not who moved it — so
+there is no move history to show.
+
 ### Delete a version from the CLI
 
 `apiome versions delete <project> <version>` removes a version you no longer need — a typo in the

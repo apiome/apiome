@@ -1399,6 +1399,19 @@ apiome versions delete payments-api 2.1.0 --force --reason 'Abandoned'   # publi
 Version tags pointing at it, or a published / frozen state, exit **6** unless `--detach-tags` /
 `--force`. `--force` unpublishes (with `--reason`) and unfreezes the version before deleting it.
 
+### Version tags
+
+`apiome tags list <project>` lists a project's version tags — the version each points to, its
+channel, when it was last updated and who created it (`GET /v1/version-tags/{tenant}/{project}`).
+`apiome tags show <project> <tag>` shows one tag (by name or id). The server keeps only a tag's
+current pointer, so there is no move history.
+
+```bash
+apiome tags list payments-api              # first 50; --limit N or --all
+apiome tags show payments-api stable
+apiome --json tags list payments-api --all  # {total, items: [...]}
+```
+
 ### List resources
 
 Human-readable tables (default):
