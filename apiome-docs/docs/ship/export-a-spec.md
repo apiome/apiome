@@ -141,4 +141,6 @@ not yet available.
 - [Understand export fidelity](./export-fidelity.md) — cross-format exports: what is preserved,
   what is lost and why, and the risk acknowledgement
 - [Browse published specs](./browse-published-specs.md) — view the same spec rendered
+- [Compare published versions](./compare-published-versions.md) — diff two published versions
+  with `apiome schema diff`
 - [CLI quick-start](../reference/cli-quickstart.md) — full CLI reference

@@ -100,5 +100,7 @@ Set `APIOME_API_KEY`, `APIOME_BASE_URL` and `APIOME_TENANT_ID` as masked CI/CD v
 ## Related
 
 - [CI contract gate on GitHub](./ci-diff-gate.md) — gate a local file with `apiome diff`
+- [Compare published versions](../../ship/compare-published-versions.md) — an ungraded,
+  consumer-side diff of two published versions with `apiome schema diff`
 - [Versions](../../build/versions.mdx) — the versions being compared
 - [`versions` command reference](../cli/versions.md)

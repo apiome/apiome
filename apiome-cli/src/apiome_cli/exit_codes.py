@@ -114,6 +114,12 @@ EXIT_PROPERTY_IN_USE = 6
 #: match the expected digest; nothing was written. Another per-command use of 6.
 EXIT_CHECKSUM_MISMATCH = 6
 
+#: ``apiome schema diff --exit-code`` (CLI 9.8): git-like — the two versions **differ** (after
+#: ``--scope`` and ``--ignore``). Deliberately the value of :data:`EXIT_ERROR`, like ``git diff --exit-code``;
+#: under ``--exit-code`` the command remaps transport/5xx errors to :data:`EXIT_USAGE` so 1 is
+#: unambiguous. Without ``--exit-code`` it is never used.
+EXIT_DIFFERENCES = 1
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

@@ -1,6 +1,6 @@
 ---
 title: "apiome schema"
-description: "Download published specs and test payloads against schemas."
+description: "Download and diff published specs; test payloads against schemas."
 sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome schema {#schema}
 
-Download published specs and test payloads against schemas.
+Download and diff published specs; test payloads against schemas.
 
 ```text
 apiome schema [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`arazzo`](#schema-arazzo), [`json`](#schema-json), [`test`](#schema-test).
+Subcommands: [`arazzo`](#schema-arazzo), [`diff`](#schema-diff), [`json`](#schema-json), [`test`](#schema-test).
 
 ## apiome schema arazzo {#schema-arazzo}
 
@@ -46,6 +46,36 @@ apiome schema arazzo [OPTIONS] TENANT/PROJECT/VERSION
 | `--format` | text | `yaml` |  | json or yaml (default yaml, the usual form for Arazzo). |
 | `--output`, `-o` | text | `-` |  | File to write, or - for stdout (default). |
 | `--expect-sha256` | text |  |  | Fail with exit 6, writing nothing, unless the document has this SHA-256. |
+
+## apiome schema diff {#schema-diff}
+
+Compare two published versions: paths, classes and properties.
+
+Both sides are fetched from the public GET /v1/schema/{tenant}/{project}/{version} (no login; APIOME_API_KEY is sent for private versions) and compared in the CLI. A version typed as v2.1.0 that is not found is retried as 2.1.0. This lists what changed; to grade changes as breaking, use apiome versions compatibility.
+
+Exit codes: 0 done (with --exit-code: identical); 1 with --exit-code, differences found; 2 bad usage, or a version is unknown, unpublished or private without a key. Without --exit-code a transport or server error exits 1; with it, 2, so 1 always means "differs".
+
+```text
+apiome schema diff [OPTIONS] TENANT/PROJECT V1 V2
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project by slugs, e.g. acme-corp/payments-api. |
+| `BASE_VERSION` | text | yes | Base (older) published version, e.g. 2.0.0. |
+| `HEAD_VERSION` | text | yes | Head (newer) published version, e.g. 2.1.0. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text | `summary` |  | summary (default), unified, sarif or json. Global --json means json. |
+| `--scope` | text | `all` |  | Compare paths, schemas or all (default). |
+| `--ignore` | text (repeatable) |  |  | Drop a kind of change (repeatable): description-only. |
+| `--exit-code` | flag |  |  | Git-like: exit 1 if there are differences, 0 if identical. |
+| `--output`, `-o` | text | `-` |  | File to write, or - for stdout (default). |
 
 ## apiome schema json {#schema-json}
 

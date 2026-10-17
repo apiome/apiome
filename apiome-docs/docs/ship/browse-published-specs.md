@@ -52,4 +52,5 @@ list and renders in its Swagger UI.
 ## Related
 
 - [Export a spec](./export-a-spec.md) — download the raw OpenAPI document
+- [Compare published versions](./compare-published-versions.md) — what changed between two of them
 - [MCP quick-start](../reference/mcp-quickstart.md) — query the same published specs from an MCP host

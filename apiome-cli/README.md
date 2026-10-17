@@ -675,6 +675,25 @@ The bytes are written as served; a summary with `Checksum: sha256:…` goes to s
 match exits **6** (`EXIT_CHECKSUM_MISMATCH`) and writes nothing; an unknown, unpublished or
 private version or class exits 2.
 
+### Compare two published versions (`schema diff`)
+
+Fetch both versions from the public `GET /v1/schema/{tenant}/{project}/{version}` (no login) and
+diff them client-side: operations (`METHOD /path`), classes (`components.schemas`) and properties
+(`Class.property`), each added / removed / changed. It does not grade severity — that is
+`versions compatibility`.
+
+```bash
+apiome schema diff acme-corp/payments-api 2.0.0 2.1.0                      # summary
+apiome schema diff acme-corp/payments-api 2.0.0 2.1.0 --format unified | less
+apiome schema diff acme-corp/payments-api 2.0.0 2.1.0 --format sarif -o diff.sarif
+apiome schema diff acme-corp/payments-api 2.0.0 2.1.0 --exit-code --ignore description-only
+```
+
+`--format summary|unified|sarif|json` (global `--json` = json), `--scope paths|schemas|all`,
+`--ignore description-only` (repeatable), `--output`. `--exit-code` is git-like: **1** when the
+versions differ, 0 when identical; under it, transport/5xx errors exit 2 so 1 is unambiguous.
+`v2.1.0` that is not found is retried as `2.1.0`.
+
 ### Schema tests in CI (`schema test`)
 
 Run the Schema Test Bench's validation (IXH-5.1/5.2) from a pipeline, against the same
