@@ -1,0 +1,8 @@
+Tag:        stable
+Points to:  2.1.0  (v-21)
+Channel:    stable
+Message:    GA
+Locks:      —
+Updated:    2026-05-04 12:43 UTC
+Created:    2026-02-18 09:00 UTC by kenji@example.com
+History:    not recorded by the server (only the current pointer is kept)

@@ -9167,6 +9167,10 @@ class VersionTagSchema(BaseModel):
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
     target_version_string: Optional[str] = None
+    created_by_email: Optional[str] = Field(
+        default=None,
+        description="Email of the user who created the tag (list responses only; #3263). Tags record no updater.",
+    )
 
     class Config:
         from_attributes = True

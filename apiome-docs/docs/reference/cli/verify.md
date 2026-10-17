@@ -1,7 +1,7 @@
 ---
 title: "apiome verify"
 description: "Run executable contract verification and emit CI artifacts."
-sidebar_position: 28
+sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

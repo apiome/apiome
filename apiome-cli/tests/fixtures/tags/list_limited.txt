@@ -1,0 +1,4 @@
+TAG     POINTS TO  CHANNEL  UPDATED     CREATED BY
+latest  2.1.0               2026-05-04  kenji@example.com
+next    2.2.0               2026-05-06  morgan@example.com
+Showing 2 of 4 tags; pass --all for every tag or --limit N.

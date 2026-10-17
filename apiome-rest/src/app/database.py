@@ -12914,14 +12914,16 @@ class Database:
     # ==================== Version tags (git-like pointers to revisions) ====================
 
     def list_version_tags_for_project(self, project_id: str, tenant_id: str) -> List[Dict[str, Any]]:
-        """List tags for a project; tenant-scoped."""
+        """List tags for a project; tenant-scoped, with the creator's email (#3263)."""
         query = """
             SELECT t.id, t.project_id, t.version_id, t.name, t.message, t.channel, t.immutable, t.protected,
                    t.created_by, t.created_at, t.updated_at,
-                   v.version_id AS target_version_string
+                   v.version_id AS target_version_string,
+                   u.email AS created_by_email
             FROM apiome.version_tags t
             JOIN apiome.versions v ON v.id = t.version_id AND v.project_id = t.project_id
             JOIN apiome.projects p ON t.project_id = p.id
+            LEFT JOIN apiome.users u ON u.id = t.created_by
             WHERE t.project_id = %s
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL

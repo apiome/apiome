@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.351.0] - 2026-10-17
+
+### Added
+- **Version tag creator email (#3263, CLI 11.4)**: `GET /v1/version-tags/{tenant}/{project}` now returns
+  `created_by_email` on each tag (joined from `apiome.users`; `null` when the creator is unknown or deleted),
+  so `apiome tags list` can show who created each tag. Other tag responses leave it `null`. Tags still record
+  no updater and no move history.
+
+The OpenAPI version moves to 1.215.0.
+
 ## [1.350.0] - 2026-10-16
 
 ### Added
