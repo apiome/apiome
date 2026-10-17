@@ -26,7 +26,9 @@ import {
   EMPTY_CATALOG_FILTERS,
   catalogBulkPlan,
   catalogBulkResultMessage,
+  CATALOG_FACT_FORMAT_PILLS,
   catalogFacetCounts,
+  catalogFacts,
   catalogFootLabel,
   catalogFormatFacetOptions,
   catalogIdentityGroupLabel,
@@ -37,7 +39,6 @@ import {
   catalogScores,
   catalogShortId,
   catalogSortLabel,
-  catalogSummaryLine,
   catalogSummaryText,
   catalogVersionsHref,
   catalogVersionsLabel,
@@ -389,18 +390,60 @@ describe('copy', () => {
     );
   });
 
-  it('writes the header sentence over the live catalog only', () => {
-    expect(catalogSummaryLine(ALL, false)).toBe('3 items · 3 formats · avg quality B · 83');
+  /** The facts as `id → "value label"` text, the way the line reads them. */
+  const factText = (rows: readonly CatalogItem[], showDeleted: boolean) =>
+    Object.fromEntries(
+      catalogFacts(rows, showDeleted).map((fact) => [
+        fact.id,
+        fact.labelFirst
+          ? `${fact.label} ${fact.value}`
+          : [fact.value, fact.label].filter((part) => part !== undefined).join(' '),
+      ])
+    );
+
+  it('folds every figure of the stat strip into the facts line, over the live catalog only', () => {
+    // Three live items, three formats, the mean of 91 and 74, no conversion, one disabled.
+    expect(factText(ALL, false)).toEqual({
+      items: '3 items',
+      formats: '3 formats',
+      quality: 'avg quality B · 83',
+      converted: '0 converted to OpenAPI',
+      status: '2 active · 1 disabled',
+    });
+  });
+
+  it('carries one format pill per family, live items only, capped', () => {
+    const formats = catalogFacts(ALL, false).find((fact) => fact.id === 'formats')?.formats;
+    expect(formats).toEqual(['graphql', 'protobuf', 'asyncapi']);
+
+    const many = ['graphql', 'protobuf', 'asyncapi', 'avro', 'raml', 'wsdl'].map(
+      (sourceFormat, index) => item({ id: `id-${index}`, sourceFormat })
+    );
+    expect(catalogFacts(many, false).find((fact) => fact.id === 'formats')?.formats).toHaveLength(
+      CATALOG_FACT_FORMAT_PILLS
+    );
   });
 
   it('names the deleted count only when the switch that reveals them is on', () => {
-    expect(catalogSummaryLine(ALL, false)).not.toContain('deleted');
-    expect(catalogSummaryLine(ALL, true)).toContain('1 deleted');
+    expect(factText(ALL, false).status).not.toContain('deleted');
+    expect(factText(ALL, true).status).toBe('2 active · 1 disabled · 1 deleted');
   });
 
-  it('names a conversion when there is one', () => {
-    const converted = item({ id: 'z', conversion: { projectId: 'p-1', projectName: 'Ledger API' } });
-    expect(catalogSummaryLine([converted], false)).toContain('1 converted');
+  it('counts a conversion and says when nothing is scored', () => {
+    const converted = item({
+      id: 'z',
+      qualityScore: null,
+      conversion: { projectId: 'p-1', projectName: 'Ledger API' },
+    });
+    const text = factText([converted], false);
+    expect(text.items).toBe('1 item');
+    expect(text.formats).toBe('1 format');
+    expect(text.converted).toBe('1 converted to OpenAPI');
+    expect(text.quality).toBe('avg quality —');
+  });
+
+  it('draws the status aside in the muted ink', () => {
+    expect(catalogFacts(ALL, false).find((fact) => fact.id === 'status')?.muted).toBe(true);
   });
 
   it('labels the identity-group chip the way the mockup does', () => {

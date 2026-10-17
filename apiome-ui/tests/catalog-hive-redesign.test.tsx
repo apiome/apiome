@@ -163,9 +163,18 @@ const RETIRED = {
 
 const ALL_ROWS = [LEDGER, ORDERS, EVENTS, RETIRED];
 
-/** The registry `useCatalogImportAvailability` reads, with one adapter that cannot run here. */
+/**
+ * The registry `useCatalogImportAvailability` reads, with one adapter that cannot run here.
+ *
+ * Wide enough that "How the catalog works" draws a full row of pills and a "+n more", which is
+ * what the `about` fixture (and the docs screenshot made from it) should show.
+ */
 const IMPORT_SOURCES = [
-  { key: 'graphql', label: 'GraphQL', available: true, input_kinds: ['file', 'url', 'paste'] },
+  ...[
+    'graphql', 'asyncapi', 'thrift', 'avro', 'raml', 'wsdl', 'wit', 'postman', 'mcp', 'edix12',
+    'cobolcopybook', 'smithy', 'odata', 'xsd', 'openrpc', 'cloudevents', 'apiblueprint',
+    'typespec', 'hl7v2', 'fhir',
+  ].map((key) => ({ key, label: key, available: true, input_kinds: ['file', 'url', 'paste'] })),
   {
     // `catalogAdapterForFormat('protobuf').sourceKind` is `grpc`, which is the key the
     // availability lookup is made on.
@@ -230,38 +239,99 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------------------
 
 describe('the page', () => {
-  it('draws the header, the breadcrumb and the summary sentence', async () => {
+  it('draws the header, the breadcrumb and the description with its ghost link', async () => {
     await renderCatalog();
     expect(await screen.findByRole('heading', { name: 'Catalog', level: 1 })).toBeInTheDocument();
     const trail = screen.getByRole('navigation', { name: /breadcrumb/i });
     expect(trail).toHaveTextContent('Home');
     expect(trail).toHaveTextContent('Bring in');
-    // Three live items, three formats, the mean of 91 and 74, and one conversion.
-    expect(screen.getByText(/3 items · 3 formats · avg quality B · 83 · 1 converted/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Non-OpenAPI specs, stored as-is and converted only when you’re ready\./)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'How the catalog works' })).toBeInTheDocument();
   });
 
-  it('keeps the non-publishable note visible and announced as a note, not an alert', async () => {
+  it('folds the stat strip into one facts line, every figure present', async () => {
     await renderCatalog();
-    const note = await screen.findByTestId('catalog-nonpublishable-banner');
-    expect(note).toHaveAttribute('role', 'note');
-    expect(note.textContent).toContain('Catalog items are non-publishable.');
+    const facts = await screen.findByRole('list', { name: 'Catalog summary' });
+    await waitFor(() => expect(facts).toHaveTextContent('3 items'));
+    // Three live items, three formats, the mean of 91 and 74, one conversion, one disabled.
+    expect(facts).toHaveTextContent('3 formats');
+    expect(facts).toHaveTextContent('avg quality B · 83');
+    expect(facts).toHaveTextContent('1 converted to OpenAPI');
+    expect(facts).toHaveTextContent('2 active · 1 disabled');
+    expect(within(facts).getAllByTestId('format-pill').length).toBe(3);
   });
 
-  it('offers the supported-formats gallery collapsed, and opens it', async () => {
+  it('reveals the unchanged stat strip in place, and remembers the choice', async () => {
     await renderCatalog();
-    const toggle = await screen.findByTestId('catalog-supported-formats-toggle');
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const toggle = await screen.findByRole('button', { name: 'Show stats' });
+    expect(screen.getByTestId('catalog-stats-row').closest('[hidden]')).not.toBeNull();
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Importable now')).toBeInTheDocument();
-    // The adapter the registry says cannot run here is flagged rather than dropped.
-    expect((await screen.findAllByText('Unavailable in this runtime')).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('catalog-stats-row').closest('[hidden]')).toBeNull();
+    expect(screen.getByTestId('catalog-stat-items')).toHaveTextContent('3');
+    expect(window.localStorage.getItem('hive.catalog.stats')).toBe('1');
   });
 
-  it('hides the stat strip on an empty catalog, so the empty state leads', async () => {
+  it('shows the explainer once, as a note, and keeps it reachable after Got it', async () => {
+    await renderCatalog();
+    const note = await screen.findByRole('note');
+    expect(note.textContent).toContain('Catalog items are non-publishable.');
+    fireEvent.click(within(note).getByRole('button', { name: 'Got it' }));
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('hive.seen.catalog-explainer')).toBe('1');
+
+    // The header link still opens the same explanation.
+    fireEvent.click(screen.getByRole('button', { name: 'How the catalog works' }));
+    const dialog = await screen.findByRole('dialog', { name: 'How the catalog works' });
+    expect(within(dialog).getByText('They are not publishable until converted')).toBeInTheDocument();
+  });
+
+  it('opens the dialog from the callout’s Learn more, with the supported formats', async () => {
+    await renderCatalog();
+    const note = await screen.findByRole('note');
+    fireEvent.click(within(note).getByRole('button', { name: 'Learn more' }));
+    const dialog = await screen.findByRole('dialog', { name: 'How the catalog works' });
+    expect(within(dialog).getByText('Supported import formats')).toBeInTheDocument();
+    // The adapter the registry says cannot run here is not counted as importable.
+    await waitFor(() =>
+      expect(within(dialog).getByTestId('catalog-about-counts')).toHaveTextContent(
+        /unavailable here/
+      )
+    );
+  });
+
+  it('no longer stands the formats card or the banner above the list', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    expect(screen.queryByTestId('catalog-supported-formats')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('catalog-nonpublishable-banner')).not.toBeInTheDocument();
+  });
+
+  it('reads "0 items" with no stats toggle on an empty catalog, so the empty state leads', async () => {
     await renderCatalog([]);
     expect(await screen.findByText('Your catalog is empty')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Catalog summary' })).toHaveTextContent('0 items');
+    expect(screen.queryByRole('button', { name: 'Show stats' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('catalog-stats-row')).not.toBeInTheDocument();
+    // The empty state is drawn inside the list's one card.
+    expect(within(screen.getByTestId('catalog-cards')).getByText('Your catalog is empty')).toBeInTheDocument();
+  });
+
+  it('puts the filters, the view switch, the chips and the list in one card', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    const card = screen.getByTestId('catalog-cards');
+    const filterRow = within(card).getByTestId('catalog-toolbar');
+    expect(within(filterRow).getByTestId('catalog-view-table')).toBeInTheDocument();
+    expect(within(card).getByTestId('catalog-views')).toBeInTheDocument();
+    expect(within(card).getAllByTestId('catalog-card')).toHaveLength(3);
+
+    await showTable();
+    const table = screen.getByTestId('catalog-table');
+    expect(within(table).getByTestId('catalog-toolbar')).toBeInTheDocument();
+    expect(within(table).getByTestId('catalog-views')).toBeInTheDocument();
   });
 });
 
@@ -626,11 +696,20 @@ describe('the browser fixtures', () => {
     write('flat', page().outerHTML);
     fireEvent.click(screen.getByTestId('catalog-group-protocol'));
 
-    // The supported-formats gallery open, which is the widest grid on the screen.
-    fireEvent.click(screen.getByTestId('catalog-supported-formats-toggle'));
-    await screen.findByText('Importable now');
-    write('formats', page().outerHTML);
-    fireEvent.click(screen.getByTestId('catalog-supported-formats-toggle'));
+    // "How the catalog works" open over the page. Radix portals the dialog (and its scrim)
+    // out of `.page`, so the portal is written after the page, as the browser would stack it.
+    fireEvent.click(screen.getByRole('button', { name: 'How the catalog works' }));
+    const about = await screen.findByRole('dialog', { name: 'How the catalog works' });
+    await waitFor(() =>
+      expect(within(about).getByTestId('catalog-about-counts')).toHaveTextContent(/unavailable/)
+    );
+    write('about', page().outerHTML + (about.parentElement as HTMLElement).outerHTML);
+    fireEvent.click(within(about).getByRole('button', { name: 'Got it' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    // A returning reader: the first-visit explainer dismissed. Everything below — the deleted
+    // view and the table the parity harness and the docs screenshot measure — is that page.
+    fireEvent.click(within(screen.getByRole('note')).getByRole('button', { name: 'Got it' }));
 
     // The deleted card's amber treatment and its two recovery verbs.
     fireEvent.click(screen.getByLabelText('Show soft-deleted catalog items in the list'));

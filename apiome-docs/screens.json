@@ -203,10 +203,13 @@
       "data": "fixture:hive-catalog/cards.html"
     },
     {
-      "id": "catalog-formats",
+      "id": "catalog-how-it-works",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-catalog/formats.html"
+      "data": "fixture:hive-catalog/about.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogAboutDialog.tsx"
+      ]
     },
     {
       "id": "catalog-item",

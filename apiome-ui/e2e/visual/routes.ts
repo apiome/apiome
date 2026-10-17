@@ -49,7 +49,9 @@ export type UncoveredReason =
   /** The surface uses the auth, launcher or foundations shell, not the app page shell. */
   | 'other-shell'
   /** The route is redesigned, but its suite mounts markup built in the spec, not a dump. */
-  | 'no-page-fixture';
+  | 'no-page-fixture'
+  /** A round-2 proposal replaced this mockup as the route's authority; the route compares to that. */
+  | 'superseded';
 
 /** What each reason means, for the report and the README. */
 export const UNCOVERED_REASONS: Record<UncoveredReason, string> = {
@@ -61,6 +63,8 @@ export const UNCOVERED_REASONS: Record<UncoveredReason, string> = {
     'the surface uses the auth, launcher or foundations shell rather than the app page shell',
   'no-page-fixture':
     'the route is redesigned, but its browser suite builds its markup inline instead of dumping a fixture, so there is nothing committed to mount',
+  superseded:
+    'a round-2 proposal mockup replaced this one as the route’s authority, so the route is compared against the proposal instead',
 };
 
 /** A mockup the harness does not compare, and why. */
@@ -107,10 +111,12 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
   },
   {
     id: 'catalog',
-    mockup: 'sources/catalog.html',
+    // The quiet pass (HIVE-11.6) supersedes the top of `sources/catalog.html`: facts line,
+    // header ghost link, one card for the list. The table fixture is a returning reader's page.
+    mockup: 'proposals/catalog-quiet.html',
     route: '/ade/dashboard/catalog',
     subject: { kind: 'fixture', dir: 'hive-catalog', file: 'table.html' },
-    roadmapRef: 'HIVE-7.1',
+    roadmapRef: 'HIVE-11.6',
   },
   {
     id: 'catalog-item',
@@ -248,10 +254,10 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'home/overview.html', reason: 'no-page-fixture' },
   // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07): each supersedes part of a shipped
   // page and is compared once its ticket lands and the page fixture is re-dumped.
-  { mockup: 'proposals/catalog-quiet.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/rail-compact.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/versions-status-strip.html', reason: 'awaiting-redesign' },
+  { mockup: 'sources/catalog.html', reason: 'superseded' },
   { mockup: 'sources/repository-new.html', reason: 'overlay-not-page' },
   { mockup: 'tools/database.html', reason: 'awaiting-redesign' },
   { mockup: 'tools/migration.html', reason: 'awaiting-redesign' },

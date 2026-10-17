@@ -14,13 +14,13 @@
  *   2. **Nothing is frozen in pixels.** The mockup's page-local block fixes the filter field
  *      at 230px, the three selects at 116–136px, the orb gap at 14px, the chip padding at
  *      8/10px and the format tile at 28px; all are `rem` or a token here.
- *   3. **Every multi-column grid collapses**, so neither the card grid nor the four-column
- *      format gallery can scroll the document sideways at any font scale.
+ *   3. **Every multi-column grid collapses**, so the card grid cannot scroll the document
+ *      sideways at any font scale.
  *   4. **Quiet text is `--fg-muted`**, not the mockup's `--fg-subtle`, which does not clear AA
  *      at these sizes — measured here in all nine appearances.
  *   5. **A format's hue is the one thing that is *not* a token.** `.fmt--*` is the fixed
- *      identity block (HIVE-2.4): the gallery's tiles and the header's preview pills carry it
- *      deliberately, because it is the colour the table below then uses.
+ *      identity block (HIVE-2.4): the "How the catalog works" dialog's pills carry it
+ *      deliberately, because it is the colour the list then uses (HIVE-11.6, #5602).
  */
 
 import {
@@ -152,38 +152,31 @@ const CATALOG_PRELUDES = [
   '.cat-stat__grade > small',
   '.cat-stat__formats',
   '.cat-note__link',
-  '.cat-formats',
-  '.cat-formats__head',
-  '.cat-formats__head:hover',
-  '.cat-formats__tile',
-  '.cat-formats__tile > svg',
-  '.cat-formats__heading',
-  '.cat-formats__title',
-  '.cat-formats__counts',
-  '.cat-formats__preview',
-  '.cat-formats__more',
-  '.cat-formats__chevron',
-  '.cat-formats__head[aria-expanded="true"] .cat-formats__chevron',
-  '.cat-formats__panel',
-  '.cat-formats__legend',
-  '.cat-formats__grid',
-  '.cat-formats__none',
-  '.cat-fmt-chip',
-  'a.cat-fmt-chip:hover',
-  '.cat-fmt-chip--dim',
-  '.cat-fmt-chip--dim .cat-fmt-chip__tile',
-  '.cat-fmt-chip--unavailable',
-  '.cat-fmt-chip--unavailable .cat-fmt-chip__name, .cat-fmt-chip--unavailable .fmt-trait--origin',
-  '.cat-fmt-chip--unavailable .fmt-trait--origin',
-  '.cat-fmt-chip__tile',
-  '.cat-fmt-chip__tile > svg',
-  '.cat-fmt-chip__text',
-  '.cat-fmt-chip__traits',
-  '.cat-fmt-chip__name',
-  '.cat-fmt-chip__desc',
-  '.cat-fmt-chip__note',
+  '.cat-about-link',
+  '.cat-about-link:hover',
+  '.cat-about-link > svg',
+  '.cat-about__head',
+  '.cat-about__heading',
+  '.cat-about__glyph',
+  '.cat-about__glyph > svg',
+  '.cat-about__glyph--sm',
+  '.cat-about__glyph--accent',
+  '.cat-about__glyph--accent > svg',
+  '.cat-about__glyph--ok',
+  '.cat-about__glyph--ok > svg',
+  '.cat-about__points',
+  '.cat-about__point',
+  '.cat-about__point-text',
+  '.cat-about__point-title',
+  '.cat-about__point-body',
+  '.cat-about__formats-head',
+  '.cat-about__caps',
+  '.cat-about__counts',
+  '.cat-about__pills',
+  '.cat-about__more',
   '.cat-imp-source',
   '.cat-imp-source__main',
+  '.cat-imp-formats',
   '.cat-imp-guide',
   '.cat-imp-guide__list',
   '.cat-imp-guide__list > dt',
@@ -294,7 +287,7 @@ describe('the catalog section of globals.css', () => {
 
   it('sits after the unlayered p and h1–h4 base rules it has to outrank', () => {
     // `.cat-card__name` is an `h3`, `.cat-group__head` an `h2`, and `.cat-card__summary`,
-    // `.cat-imp-note` and `.cat-formats__none` are `p`s; both base rules are unlayered, so a
+    // `.cat-imp-note`, `.cat-imp-formats` and `.cat-about__point-title` are `p`s; both base rules are unlayered, so a
     // rule declared before them would lose whatever its specificity.
     for (const prelude of CATALOG_PRELUDES) {
       expect(catalogRule(prelude).line).toBeGreaterThan(BASE_TYPE_RULE_LINE);
@@ -335,9 +328,7 @@ describe('the catalog section of globals.css', () => {
   it('fades a control that is revealed on hover, and never a word of text', () => {
     // The card this replaces put `opacity: .9` on a whole deleted card — which fades the
     // amber warning along with everything else. The frame and the tinted footer carry that
-    // now. The two `opacity` rules left are the row-actions reveal `DataTable` also uses, and
-    // the tile of a format chip whose adapter cannot run — a mark, not a word: the chip's
-    // "Unavailable in this runtime" line stays at full contrast beside it.
+    // now. The two `opacity` rules left are the row-actions reveal `DataTable` also uses.
     const faded = rules.filter(
       (rule) =>
         CATALOG_PRELUDES.includes(rule.prelude as (typeof CATALOG_PRELUDES)[number]) &&
@@ -346,7 +337,6 @@ describe('the catalog section of globals.css', () => {
     expect(faded.map((rule) => rule.prelude)).toEqual([
       '.cat-card__actions',
       '.cat-card:hover .cat-card__actions, .cat-card:focus-within .cat-card__actions',
-      '.cat-fmt-chip--dim .cat-fmt-chip__tile',
     ]);
     expect(
       declaration(
@@ -414,8 +404,8 @@ describe('density and font-scale independence', () => {
       ['.cat-card__footer', 'padding'],
       ['.cat-orb', 'gap'],
       ['.cat-group__head', 'gap'],
-      ['.cat-formats__grid', 'gap'],
-      ['.cat-fmt-chip', 'padding'],
+      ['.cat-about__points', 'gap'],
+      ['.cat-about__pills', 'gap'],
       ['.cat-imp-source', 'gap'],
       ['.cat-imp-routing', 'padding'],
       ['.cat-imp-choice__option', 'padding'],
@@ -426,9 +416,6 @@ describe('density and font-scale independence', () => {
 
   it('sizes every glyph from a shared metric rather than from a literal', () => {
     for (const prelude of [
-      '.cat-formats__chevron',
-      '.cat-fmt-chip__tile > svg',
-      '.cat-formats__tile > svg',
       '.cat-imp-file__name > svg',
       '.cat-imp-card__title > svg',
       '.cat-imp-routing > svg',
@@ -452,7 +439,8 @@ describe('density and font-scale independence', () => {
 
   it('states every breakpoint in rem, so each one follows the font scale', () => {
     const media = SECTION.match(/@media \([^)]*\)/g) ?? [];
-    expect(media.length).toBeGreaterThanOrEqual(5);
+    // Four since HIVE-11.6 retired the supported-formats gallery and its two width queries.
+    expect(media.length).toBeGreaterThanOrEqual(4);
     for (const query of media) {
       // `(hover: none)` is a capability query, not a width — it has no unit to get wrong.
       if (query.includes('hover')) continue;
@@ -472,18 +460,12 @@ describe('density and font-scale independence', () => {
    ------------------------------------------------------------------------- */
 
 describe('horizontal containment', () => {
-  it('collapses the card grid and the format gallery to one column', () => {
+  it('collapses the card grid to one column', () => {
     // `auto-fit` over a `rem` minimum: three card columns at the default scale, two and then
     // one as the type grows — which is what stops the Largest scale pushing a scrollbar onto
     // the document. Below the phone breakpoint the grid is pinned to a single track.
     expect(declaration('.cat-grid', 'grid-template-columns')).toBe(
       'repeat(auto-fit, minmax(18rem, 1fr))'
-    );
-    // CATP-1.1 widened the format track from 15rem so a chip's two trait pills fit beside its
-    // name; `min(…, 100%)` keeps the wider minimum from overflowing a phone panel at the
-    // Largest scale, where 19rem is wider than the panel it sits in.
-    expect(declaration('.cat-formats__grid', 'grid-template-columns')).toBe(
-      'repeat(auto-fill, minmax(min(19rem, 100%), 1fr))'
     );
 
     const collapsed = rules.filter(
@@ -512,9 +494,6 @@ describe('horizontal containment', () => {
       '.cat-identity__text',
       '.cat-converted',
       '.cat-facet__label',
-      '.cat-formats__heading',
-      '.cat-fmt-chip',
-      '.cat-fmt-chip__text',
       '.cat-imp-source__main',
       '.cat-imp-file__name',
     ]) {
@@ -529,23 +508,10 @@ describe('horizontal containment', () => {
       '.cat-card__footer',
       '.cat-status',
       '.cat-stat__badges',
-      '.cat-formats__head',
-      '.cat-formats__legend',
       '.cat-imp-file',
     ]) {
       expect(declaration(prelude, 'flex-wrap')).toBe('wrap');
     }
-  });
-
-  it('hides the collapsed header’s pill preview below the width it fits at', () => {
-    expect(declaration('.cat-formats__preview', 'display')).toBe('none');
-    const wide = rules.find(
-      (rule) =>
-        rule.prelude === '@media (min-width: 60rem)' &&
-        rule.body.includes('.cat-formats__preview {')
-    );
-    expect(wide).toBeDefined();
-    expect(wide!.body).toContain('display: flex');
   });
 });
 
@@ -570,9 +536,9 @@ describe('contrast', () => {
     ['.cat-card__footer', '--bg-surface'],
     ['.cat-orb__label', '--bg-surface'],
     ['.cat-converted__gone', '--bg-surface'],
-    ['.cat-formats__counts', '--bg-surface'],
-    ['.cat-formats__none', '--bg-surface'],
-    ['.cat-fmt-chip__desc', '--bg-surface'],
+    ['.cat-about__counts', '--bg-surface'],
+    ['.cat-about__caps', '--bg-surface'],
+    ['.cat-about__point-body', '--bg-surface'],
     ['.cat-imp-note', '--bg-surface'],
     ['.cat-imp-guide__list > dd', '--bg-surface'],
     ['.cat-imp-preview__empty', '--bg-surface'],
@@ -613,23 +579,6 @@ describe('contrast', () => {
       expect(
         declaration('.cat-card[data-lifecycle="deleted"] .cat-card__footer', 'background')
       ).toBe('var(--warn-soft)');
-      const ratio = contrastRatio(
-        paint('--warn-fg', block, PAPER),
-        paint('--warn-soft', block, paint('--bg-surface', block, PAPER))
-      );
-      expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
-    }
-  );
-
-  it.each(APPEARANCES)(
-    'clears AA for an unavailable format’s reason line in the %s appearance',
-    (_id, block) => {
-      // The frame is what dims on a chip whose adapter cannot run — the sentence that says so
-      // keeps its full contrast, because it is the sentence most worth reading.
-      expect(declaration('.cat-fmt-chip__note', 'color')).toBe('var(--warn-fg)');
-      // Measured: that ink on the plain surface is 3.4:1–4.4:1 in five of the nine themes, so
-      // the chip takes the amber ground the pair was calibrated against.
-      expect(declaration('.cat-fmt-chip--unavailable', 'background')).toBe('var(--warn-soft)');
       const ratio = contrastRatio(
         paint('--warn-fg', block, PAPER),
         paint('--warn-soft', block, paint('--bg-surface', block, PAPER))
@@ -744,16 +693,14 @@ describe('the card’s stretched link', () => {
 
 describe('the one hue that is deliberately not a token', () => {
   it('leaves a format’s colour to the fixed identity block', () => {
-    // `.fmt--*` (HIVE-2.4) is what the gallery's tiles and the collapsed header's preview
-    // pills carry, and it is the point of showing the gallery at all: it teaches the colour
-    // the table below then uses. So this section declares no fill for either — only geometry.
-    expect(parseDeclarations(catalogRule('.cat-fmt-chip__tile').body).has('background')).toBe(
-      false
-    );
-    // The `+39` pill is *not* a format, so it takes the neutral surface rather than borrowing
-    // one format's identity.
-    expect(declaration('.cat-formats__more', 'background')).toBe('var(--bg-inset)');
-    expect(declaration('.cat-formats__more', 'color')).toBe('var(--fg-muted)');
+    // `.fmt--*` (HIVE-2.4) is what the "How the catalog works" dialog's format pills carry —
+    // the same `FormatPill` the list draws — so this section declares no fill for a pill row,
+    // only geometry.
+    expect(parseDeclarations(catalogRule('.cat-about__pills').body).has('background')).toBe(false);
+    // The `+33 more` pill is *not* a format, so it takes the neutral surface rather than
+    // borrowing one format's identity.
+    expect(declaration('.cat-about__more', 'background')).toBe('var(--bg-inset)');
+    expect(declaration('.cat-about__more', 'color')).toBe('var(--fg-muted)');
   });
 
   it('leaves the grade chip’s fill to the shared band table', () => {
@@ -765,62 +712,7 @@ describe('the one hue that is deliberately not a token', () => {
   });
 });
 
-describe('the format chip’s trait pills (CATP-1.1)', () => {
-  /** The one `@container` rule that re-lays the chip’s text column. */
-  const narrow = () => {
-    const rule = rules.find(
-      (candidate) =>
-        candidate.prelude.startsWith('@container cat-fmt-chip') &&
-        candidate.body.includes('.cat-fmt-chip__text {')
-    );
-    if (!rule) throw new Error('globals.css no longer narrows the format chip’s text column');
-    return rule;
-  };
-
-  it('queries the chip itself, which is the only thing that knows if the pills fit', () => {
-    // A `@container` rule with no container above it never matches at all — the quiet way a
-    // "responsive" rule turns out to be dead. The container is declared on the chip, and the
-    // queried element is inside it.
-    expect(declaration('.cat-fmt-chip', 'container')).toBe('cat-fmt-chip / inline-size');
-    expect(narrow().prelude).toContain('cat-fmt-chip');
-  });
-
-  it('measures the threshold in type, not in pixels, so it follows the font scale', () => {
-    // `em` in a container query resolves against the container, which the `data-font-scale`
-    // percentage on `html` has already scaled — unlike a `@media` width, which never moves.
-    expect(narrow().prelude).toMatch(/\(max-width: [\d.]+em\)$/);
-    expect(narrow().prelude).not.toMatch(/px\)/);
-  });
-
-  it('puts the pills top-right of the name, and bottom-right when they do not fit', () => {
-    const wide = parseDeclarations(catalogRule('.cat-fmt-chip__text').body);
-    expect(wide.get('grid-template-areas')).toBe('"name traits" "desc desc"');
-    expect(catalogRule('.cat-fmt-chip__traits').body).toContain('grid-area: traits');
-    expect(declaration('.cat-fmt-chip__traits', 'align-self')).toBe('start');
-    expect(declaration('.cat-fmt-chip__traits', 'justify-self')).toBe('end');
-    // Narrow: the same markup, the last row instead of the first column — still hard right,
-    // because `justify-self: end` is not restated and therefore not lost.
-    expect(narrow().body.replace(/\s+/g, ' ')).toContain('"name" "desc" "traits"');
-  });
-
-  it.each(APPEARANCES)(
-    'inks the amber chip’s name and outlined pill for that ground in the %s appearance',
-    (_id, block) => {
-      // `--fg` on a `-soft` fill is the pairing the token layer forbids: only the light and dark
-      // palettes recalibrate a `-soft` against it, and axe measured the name at 1.08:1 on the
-      // amber in five of the nine appearances before this rule existed.
-      expect(
-        declaration(
-          '.cat-fmt-chip--unavailable .cat-fmt-chip__name, .cat-fmt-chip--unavailable .fmt-trait--origin',
-          'color'
-        )
-      ).toBe('var(--warn-fg)');
-      const ink = paint('--warn-fg', block, PAPER);
-      const ground = paint('--warn-soft', block, paint('--bg-surface', block, PAPER));
-      expect(contrastRatio(ink, ground)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL_TEXT_MIN);
-    }
-  );
-
+describe('the trait pills (CATP-1.1)', () => {
   it('leaves the identity hue to the format, and takes the neutral pair instead', () => {
     // The chip's tile already carries the format's fixed hue. Two more saturated pills beside
     // it would compete with the only colour on the chip that means anything.
