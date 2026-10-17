@@ -355,6 +355,18 @@ class ProjectUpdateConflict(Exception):
         self.current_updated_at = current_updated_at
 
 
+class PropertyUsedInPublishedVersion(Exception):
+    """A forced property delete found uses in published versions, so nothing changed (#3227).
+
+    Attributes:
+        uses: ``{class_name, attribute_name, version}`` for each use in a published version.
+    """
+
+    def __init__(self, uses: List[Dict[str, Any]]) -> None:
+        super().__init__("The property is used in published versions")
+        self.uses = uses
+
+
 class PropertyUpdateConflict(Exception):
     """A property update's ``expected_updated_at`` precondition failed (#3226).
 
@@ -12036,6 +12048,79 @@ class Database:
         )
         row = cursor.fetchone()
         return {key: int(row[key]) for key in ("changed", "unchanged", "skipped_published")}
+
+    def force_delete_property(self, property_id: str, project_id: str) -> Optional[int]:
+        """Remove every class attribute using a property, then soft-delete it — one transaction (#3227).
+
+        The class attributes (``class_properties`` rows, with their nested children) are removed only
+        in live classes of live, unpublished versions. When any use is in a published version, the
+        transaction is rolled back and nothing changes.
+
+        Args:
+            property_id: The property to delete.
+            project_id: Its project.
+
+        Returns:
+            How many class attributes were removed, or ``None`` when the property does not exist.
+
+        Raises:
+            PropertyUsedInPublishedVersion: Listing the uses in published versions.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                # Lock the property so a concurrent attach cannot slip in between check and delete.
+                cursor.execute(
+                    """
+                    SELECT id FROM apiome.properties
+                    WHERE id = %s AND project_id = %s AND deleted_at IS NULL
+                    FOR UPDATE
+                    """,
+                    (property_id, project_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return None
+                cursor.execute(
+                    """
+                    SELECT DISTINCT c.name::text AS class_name, cp.name::text AS attribute_name,
+                           v.version_id::text AS version
+                    FROM apiome.class_properties cp
+                    JOIN apiome.classes c ON c.id = cp.class_id AND c.deleted_at IS NULL
+                    JOIN apiome.versions v ON v.id = c.version_id AND v.deleted_at IS NULL
+                    WHERE cp.property_id = %s AND v.published
+                    ORDER BY class_name, attribute_name, version
+                    """,
+                    (property_id,),
+                )
+                published = [dict(row) for row in cursor.fetchall()]
+                if published:
+                    conn.rollback()
+                    raise PropertyUsedInPublishedVersion(published)
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.class_properties cp
+                    USING apiome.classes c, apiome.versions v
+                    WHERE cp.property_id = %s
+                      AND c.id = cp.class_id AND c.deleted_at IS NULL
+                      AND v.id = c.version_id AND v.deleted_at IS NULL AND NOT v.published
+                    """,
+                    (property_id,),
+                )
+                detached = int(cursor.rowcount or 0)
+                cursor.execute(
+                    """
+                    UPDATE apiome.properties
+                    SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND project_id = %s AND deleted_at IS NULL
+                    """,
+                    (property_id, project_id),
+                )
+                conn.commit()
+                return detached
+        except Exception:
+            conn.rollback()
+            raise
 
     def delete_property(self, property_id: str, project_id: str) -> bool:
         """Soft delete a property, ensuring it belongs to the project."""

@@ -5,10 +5,10 @@ Provides CRUD endpoints for managing project properties (library properties).
 All endpoints are tenant-scoped and require authentication via JWT token or API key.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Dict, Any
 
-from .database import PropertyUpdateConflict, db
+from .database import PropertyUpdateConflict, PropertyUsedInPublishedVersion, db
 from .models import (
     ProjectPropertySchema,
     ProjectPropertyCreateRequest,
@@ -283,10 +283,17 @@ async def delete_property(
     tenant_slug: str,
     project_id: str,
     property_id: str,
+    force: bool = Query(
+        False,
+        description="Also remove every class attribute that uses the property, in the same transaction (#3227). "
+        "Refused with 409 `property_in_published_version` when any use is in a published version.",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
-    Delete a property (soft delete).
+    Delete a property (soft delete). With ``force=true``, first remove the class attributes that use
+    it in unpublished versions — all in one transaction — and report how many as ``detached``; any use
+    in a published version refuses the whole delete with 409 (#3227).
 
     Supports authentication via JWT token or API key.
 
@@ -315,6 +322,22 @@ async def delete_property(
             status_code=404,
             detail=f"Property not found: {property_id}"
         )
+
+    if force:
+        try:
+            detached = db.force_delete_property(property_id, project_id)
+        except PropertyUsedInPublishedVersion as refused:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "property_in_published_version",
+                    "message": "The property is used in published versions, which cannot change; nothing was deleted.",
+                    "uses": refused.uses,
+                },
+            )
+        if detached is None:
+            raise HTTPException(status_code=404, detail=f"Property not found: {property_id}")
+        return {"message": f"Property '{existing['name']}' deleted successfully", "detached": detached}
 
     # Delete the property
     success = db.delete_property(property_id, project_id)

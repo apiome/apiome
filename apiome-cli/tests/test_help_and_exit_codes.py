@@ -133,7 +133,7 @@ _COMMAND_GROUPS: tuple[tuple[str, str], ...] = (
     ("config", "Show or change saved defaults"),
     ("repos", "List tenant Git repositories and inspect repository files"),
     ("projects", "List, fetch, update, delete and export tenant projects"),
-    ("properties", "List, show, fetch, create and update project properties"),
+    ("properties", "List, show, fetch, create, update and delete project properties"),
     ("schemas", "List and fetch tenant schemas"),
     ("types", "Browse tenant JSON Schema primitive types"),
     ("versions", "List, publish, unpublish, freeze, fork, compare and delete versions"),

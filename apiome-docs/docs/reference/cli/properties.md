@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List, show, fetch, create and update project properties."
+description: "List, show, fetch, create, update and delete project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List, show, fetch, create and update project properties.
+List, show, fetch, create, update and delete project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#properties-create), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show), [`update`](#properties-update).
+Subcommands: [`create`](#properties-create), [`delete`](#properties-delete), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show), [`update`](#properties-update).
 
 ## apiome properties create {#properties-create}
 
@@ -50,6 +50,34 @@ apiome properties create [OPTIONS] PROJECT
 | `--example` | text (repeatable) |  |  | An example value (repeatable); read as JSON when it parses, else as text. |
 | `--from-file` | path |  |  | JSON or YAML object with name, primitive, description and examples. |
 | `--yes`, `-y` | flag |  |  | Skip the final question the prompts ask. |
+
+## apiome properties delete {#properties-delete}
+
+Delete a property once no class uses it (DELETE /v1/properties/{tenant}/{project}/{id}).
+
+In use, it lists the class attributes and exits 6.
+
+--force --yes removes those attributes and deletes it in one server transaction.
+
+A use in a published version refuses even a forced delete (exit 6).
+
+```text
+apiome properties delete [OPTIONS] PROJECT PROPERTY
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `PROPERTY_REF` | text | yes | Property name or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the typed confirmation. |
+| `--force` | flag |  |  | Remove it from the classes that use it, then delete it (needs --yes). |
 
 ## apiome properties get {#properties-get}
 
