@@ -1,7 +1,7 @@
 ---
 title: "apiome import"
 description: "Import OpenAPI, Swagger, Arazzo, JSON Schema, and JSON Schema type documents into Apiome."
-sidebar_position: 15
+sidebar_position: 16
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

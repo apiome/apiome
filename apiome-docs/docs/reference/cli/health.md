@@ -1,7 +1,7 @@
 ---
 title: "apiome health"
 description: "Check REST service health."
-sidebar_position: 13
+sidebar_position: 14
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

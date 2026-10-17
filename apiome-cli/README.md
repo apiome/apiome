@@ -649,6 +649,22 @@ and warns on stderr when it is stale (the draft or the policy moved since). Runn
 full-access API key; `checks show --version` also works with a CI key holding `diff:read` or
 `lint:read`.
 
+### Open the browse app (`browse open`)
+
+`apiome browse open PATH` opens a page of the `apiome-browse` app in the default browser, like
+`gh repo view --web`. PATH is `tenant`, `tenant/project`, `tenant/project/version`, or a longer
+browse path (`'tenant/project/compare?v1=2.0.0&v2=2.1.0'`); a leading `/` is from the browse root.
+
+```bash
+apiome browse open acme-corp/payments-api/2.1.0
+apiome browse open acme-corp --print-url          # headless / CI: print, don't open
+apiome browse open acme-corp --browser firefox
+```
+
+The browse address is `APIOME_BROWSE_URL`, else `[browse] url` in `~/.config/apiome/config.toml`,
+else derived from the base URL (`api.` → `browse.`; `localhost` → port 3001). Exit 2 for a bad
+PATH, no browse address or an unknown `--browser`; 1 when no browser could be launched.
+
 ### Download published Arazzo workflows and JSON Schema (`schema arazzo`, `schema json`)
 
 Fetch a **published** version's Arazzo workflow document by its slugs

@@ -1,7 +1,7 @@
 ---
 title: "apiome config"
 description: "Show or change saved defaults in the user config file."
-sidebar_position: 6
+sidebar_position: 7
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

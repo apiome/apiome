@@ -44,6 +44,48 @@ apiome projects list                    # projects you can see
 apiome versions list --project-id <id>  # versions in a project
 ```
 
+### Open a page in the browse app
+
+`apiome browse open` takes you from the terminal to the rendered page, as `gh repo view --web`
+does for a repository:
+
+```bash
+apiome browse open acme-corp                                  # the tenant's public projects
+apiome browse open acme-corp/payments-api                     # a project and its versions
+apiome browse open acme-corp/payments-api/2.1.0               # one version
+apiome browse open 'acme-corp/payments-api/compare?v1=2.0.0&v2=2.1.0'   # two versions side by side
+```
+
+```text
+→ Opening https://browse.apiome.dev/tenant/acme-corp/payments-api/2.1.0 …
+```
+
+The path goes under `/tenant/` in the browse app, and anything after the version is kept, so any
+browse page can be opened; quote it when it has a `?`. A path starting with `/` is taken from the
+browse app's root instead (`apiome browse open /mcp/search`).
+
+| Flag | What it does |
+|---|---|
+| `--print-url` | Print the URL and open nothing. Use it in CI or over SSH, where there is no display. |
+| `--browser NAME` | Use this browser instead of the default — `firefox`, `chrome`, `safari`, or any name Python's `webbrowser` module knows. An unknown name exits 2. |
+
+**Where the browse app is.** The CLI uses the first of these that is set:
+
+1. the `APIOME_BROWSE_URL` environment variable;
+2. `url` in the `[browse]` section of the config file (`~/.config/apiome/config.toml`):
+
+   ```toml
+   [browse]
+   url = "https://specs.example.com"
+   ```
+
+3. the REST base URL (`--base-url` / `APIOME_BASE_URL`) with `api.` changed to `browse.`, so
+   `https://api.apiome.dev` gives `https://browse.apiome.dev`. A local API (`localhost`,
+   `127.0.0.1`) gives the browse dev server on port **3001**.
+
+If none applies, the command exits 2 and says what to set. If no browser can be launched, it exits
+1; run it again with `--print-url`.
+
 ## Verify
 
 The version you published in [Publish a version](./publish-a-version.md) appears in the published
