@@ -70,6 +70,10 @@ import { isUuid } from '@lib/comment-discussion';
 import { useProjectUnresolvedTotal } from '../../../components/ade/discussion/useProjectUnresolvedTotal';
 import { getStudioWorkspaceRoute } from '@lib/external-links';
 import PageHeader from '../../../components/shell/PageHeader';
+import { BreadcrumbSwitcher } from '../../../components/shell/BreadcrumbSwitcher';
+import { useShortcuts } from '@/app/hooks/useShortcuts';
+import type { ShortcutBinding } from '@lib/shortcuts';
+import { isFeatureReleased } from '@lib/feature-release';
 import { Page, PageBody } from '../../../components/shell/pageChrome';
 import { cn } from '@lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/Select';
@@ -134,6 +138,16 @@ import {
   type VersionRowMenuAction,
   type VersionTagRow,
 } from '../../../components/ade/versions';
+import {
+  ALL_PROJECTS_ICON,
+  ALL_PROJECTS_ROUTE,
+  COPY_PROJECT_LINK_SHORTCUT,
+  NEEDS_PROJECT,
+  VERSIONS_OVERFLOW_HEADING,
+  projectVersionsLink,
+  versionsOverflowItems,
+  versionsSwitcherItems,
+} from '../../../components/ade/versions/versionsHeader';
 import type { VersionChangelogSummary } from '@lib/version-changelog';
 import { useDialog } from '../../../components/providers/DialogProvider';
 import {
@@ -3047,6 +3061,31 @@ const Versions = () => {
   // `components/ade/versions`, and the compare / merge / branch / tag / fork / rollback dialogs
   // that HIVE-6.3 (#5314) will re-skin in their turn.
 
+  /**
+   * Copy an absolute link to the selected project's Versions page (HIVE-11.3, #5599) — the
+   * ⋯ menu's last row and ⌘⇧C.
+   */
+  const copyProjectLink = useCallback(() => {
+    if (!selectedProjectId) return;
+    const link = projectVersionsLink(window.location.origin, selectedProjectId);
+    navigator.clipboard.writeText(link).then(
+      () => toast.success('Link copied'),
+      () => toast.error('Could not copy the link — copy it from the address bar instead')
+    );
+  }, [selectedProjectId]);
+
+  const copyLinkShortcuts = useMemo<ShortcutBinding[]>(
+    () => [
+      {
+        ...COPY_PROJECT_LINK_SHORTCUT,
+        run: copyProjectLink,
+        disabledReason: selectedProjectId ? undefined : NEEDS_PROJECT,
+      },
+    ],
+    [copyProjectLink, selectedProjectId]
+  );
+  useShortcuts(copyLinkShortcuts);
+
   const breadcrumb = [
     { label: 'Home', href: HOME_ROUTE },
     { label: 'Build' },
@@ -3138,25 +3177,21 @@ const Versions = () => {
     </span>
   );
 
+  /* HIVE-11.3 (#5599): Compare · Import · ⋯ · New version. The project switcher is the
+     breadcrumb's last step; Merge branches, Sunset timeline, Published surface, Export studio
+     and Copy link live in the ⋯ menu (`versionsHeader.tsx`). */
   const headerActions = (
     <>
-      <Select value={selectedProjectId} onValueChange={handleSelectedProjectChange}>
-        <SelectTrigger
-          className="ver-project-select"
-          aria-label="Select project"
-          title="Catalog items are excluded — convert one to OpenAPI to make it publishable"
-          data-testid="versions-project-select"
-        >
-          <SelectValue placeholder="Select Project" />
-        </SelectTrigger>
-        <SelectContent>
-          {selectableProjects.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Button
+        variant="outline"
+        onClick={handleCompareDialogOpen}
+        disabled={!selectedProjectId || versions.length < 2}
+        title="Compare two revisions (needs at least 2 versions)"
+        data-testid="versions-compare-button"
+      >
+        <GitCompareArrows aria-hidden />
+        Compare
+      </Button>
       {/* Import (#5260): start an import here instead of backtracking to Projects. */}
       <Button
         variant="outline"
@@ -3172,48 +3207,50 @@ const Versions = () => {
         <Upload aria-hidden />
         Import
       </Button>
-      <Button
-        variant="outline"
-        onClick={handleCompareDialogOpen}
-        disabled={!selectedProjectId || versions.length < 2}
-        title="Compare two revisions (needs at least 2 versions)"
-        data-testid="versions-compare-button"
-      >
-        <GitCompareArrows aria-hidden />
-        Compare
-      </Button>
-      {GITLIKE.visible ? (
-        <span className="ver-header__gitlike">
-          <Button
-            variant="outline"
-            onClick={handleVersionsOpenMerge}
-            disabled={!GITLIKE.enabled || !selectedProjectId || versionBranches.length < 2}
-            title={
-              !GITLIKE.enabled
-                ? GITLIKE_FLAG_TITLE
-                : versionBranches.length < 2
-                  ? 'Create at least two named branches to merge'
-                  : 'Merge branches'
-            }
-            data-testid="versions-merge-button"
-          >
-            <GitMerge aria-hidden />
-            Merge branches
-          </Button>
-          {GITLIKE.marked ? <GitlikeFlag enabled={GITLIKE.enabled} /> : null}
-        </span>
-      ) : null}
-      <Button
-        onClick={handleNewVersionClick}
-        disabled={!selectedProjectId}
-        title="Start a new version (fresh release line, defaults to a minor bump)"
-        data-testid="versions-new-button"
-      >
-        <GitFork aria-hidden />
-        New version
-      </Button>
     </>
   );
+
+  const headerOverflow = {
+    heading: VERSIONS_OVERFLOW_HEADING,
+    items: versionsOverflowItems({
+      gitlike: GITLIKE,
+      projectId: selectedProjectId || null,
+      branchCount: versionBranches.length,
+      exportStudioReleased: isFeatureReleased('export-studio'),
+      onOpenMerge: handleVersionsOpenMerge,
+      onCopyLink: copyProjectLink,
+    }),
+  };
+
+  const headerPrimaryAction = (
+    <Button
+      onClick={handleNewVersionClick}
+      disabled={!selectedProjectId}
+      title="Start a new version (fresh release line, defaults to a minor bump)"
+      data-testid="versions-new-button"
+    >
+      <GitFork aria-hidden />
+      New version
+    </Button>
+  );
+
+  /* Catalog items stay excluded (#4587): `selectableProjects` only adds one back while it is
+     the deep-linked selection. */
+  const crumbSwitcher = selectedProject ? (
+    <BreadcrumbSwitcher
+      label={selectedProject.name}
+      items={versionsSwitcherItems(selectableProjects)}
+      currentId={selectedProjectId || null}
+      onSelect={handleSelectedProjectChange}
+      triggerTitle="Switch project"
+      menuLabel="Projects"
+      searchLabel="Jump to project"
+      searchPlaceholder="Jump to project…"
+      emptyLabel="No matching projects"
+      footer={{ label: 'All projects', href: ALL_PROJECTS_ROUTE, icon: <ALL_PROJECTS_ICON aria-hidden /> }}
+      testId="versions-project-switch"
+    />
+  ) : undefined;
 
   /* A hand-built strip on the shared tab classes rather than `ui/Tabs`: Radix's `Tabs.Root`
      is one element that would have to wrap the header *and* the body, and `.page` is a flex
@@ -3514,6 +3551,9 @@ const Versions = () => {
         badge={headerBadges}
         description={pageDescription}
         actions={headerActions}
+        overflow={headerOverflow}
+        primaryAction={headerPrimaryAction}
+        crumbSwitcher={crumbSwitcher}
         tabs={headerTabs}
       />
 

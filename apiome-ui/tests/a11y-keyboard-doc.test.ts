@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import {
   CLOSE_OVERLAY_SHORTCUT,
+  COPY_PROJECT_LINK_SHORTCUT,
   DATA_TABLE_SHORTCUTS,
   JUMP_SHORTCUTS,
   LIST_ACTION_SHORTCUTS,
@@ -40,6 +41,7 @@ const DECLARED: ShortcutDefinition[] = [
   ...JUMP_SHORTCUTS,
   ...LIST_ACTION_SHORTCUTS,
   ...DATA_TABLE_SHORTCUTS,
+  COPY_PROJECT_LINK_SHORTCUT,
 ];
 
 /** The reference table's rows: `| \`chord\` | does | where |`. */
@@ -72,6 +74,7 @@ describe('apiome-docs/docs/workspace/keyboard.md', () => {
     'Find anything',
     'Go to a section',
     'Switch workspace',
+    'Switch project, and reach the page\'s other actions',
     'Browse, filter and act on a table',
     'Create something',
     'Import a specification',

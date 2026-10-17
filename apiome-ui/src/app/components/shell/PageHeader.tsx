@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import { cn } from '@lib/utils';
+import { PageHeaderOverflowMenu, type PageHeaderOverflow } from './PageHeaderOverflow';
 
 /**
  * `PageHeader` — the one header a page in the Hive shell draws (HIVE-3.5, #5291).
@@ -64,6 +65,15 @@ import { cn } from '@lib/utils';
  * The walk stops at anything it does not recognise, so a page that wraps its cluster in a
  * component of its own is simply not checked rather than wrongly reported.
  *
+ * ### Overflow, primary action and the breadcrumb switcher (HIVE-11.3)
+ *
+ * DESIGN.md §1.2 orders a header's cluster as *secondaries · ⋯ · primary*. A page that keeps
+ * more actions than that passes the extras as `overflow` rows — the header draws the ⋯
+ * button and its menu (`PageHeaderOverflow.tsx`) — and its one primary as `primaryAction`,
+ * so the ⋯ always lands between the two. A page about one member of a list passes a
+ * `BreadcrumbSwitcher` as `crumbSwitcher`, which replaces the trail's last step with a menu
+ * of that member's siblings.
+ *
  * ### The `<header>` element
  *
  * A `<header>` descended from `<main>` is *not* a `banner` landmark (HTML-AAM), so this
@@ -107,6 +117,22 @@ export interface PageHeaderProps {
    * overflow menu. The cluster wraps, so it never squeezes the title.
    */
   actions?: React.ReactNode;
+  /**
+   * The ⋯ menu, drawn after `actions` and before `primaryAction` (HIVE-11.3). Rows are data —
+   * see `PageHeaderOverflow.tsx`. No rows, no button.
+   */
+  overflow?: PageHeaderOverflow;
+  /**
+   * The page's one primary action, drawn last in the cluster, after the ⋯ button. Pages
+   * without an overflow menu may keep their primary inside `actions` instead.
+   */
+  primaryAction?: React.ReactNode;
+  /**
+   * Replaces the trail's last step with a menu button — a `BreadcrumbSwitcher` — so the
+   * reader can move to a sibling without leaving the page (HIVE-11.3). Ignored without a
+   * `breadcrumb`.
+   */
+  crumbSwitcher?: React.ReactNode;
   /** An optional underline tab row beneath the title block (`ui/Tabs`, or a route strip). */
   tabs?: React.ReactNode;
   /** Something to the left of the whole title block — a detail page's hex avatar. */
@@ -180,9 +206,16 @@ function countPrimaryActions(node: React.ReactNode): number {
  * `tests/page-chrome-css.test.ts` holds the ratio for every theme.
  *
  * @param props.items The steps, outermost first.
+ * @param props.switcher Drawn in place of the last step, when given.
  * @returns A `Breadcrumb` navigation landmark, or `null` when there is no trail.
  */
-function PageBreadcrumb({ items }: { items: readonly PageBreadcrumbItem[] }) {
+function PageBreadcrumb({
+  items,
+  switcher,
+}: {
+  items: readonly PageBreadcrumbItem[];
+  switcher?: React.ReactNode;
+}) {
   if (items.length === 0) return null;
 
   return (
@@ -195,9 +228,14 @@ function PageBreadcrumb({ items }: { items: readonly PageBreadcrumbItem[] }) {
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={`${item.label}-${index}`} className="flex items-center gap-1.5">
+            // The last step is keyed by position, not label: a switcher that changes the
+            // current object changes the label, and remounting would drop the focus the
+            // switcher just restored to its trigger.
+            <li key={isLast ? 'current' : `${item.label}-${index}`} className="flex items-center gap-1.5">
               {index > 0 && <ChevronRight aria-hidden className="shrink-0" />}
-              {item.href ? (
+              {isLast && switcher ? (
+                switcher
+              ) : item.href ? (
                 <Link
                   href={item.href}
                   aria-current={isLast ? 'page' : undefined}
@@ -228,6 +266,9 @@ export default function PageHeader({
   badge,
   description,
   actions,
+  overflow,
+  primaryAction,
+  crumbSwitcher,
   tabs,
   leading,
   meta,
@@ -244,7 +285,7 @@ export default function PageHeader({
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
 
-    const primaries = countPrimaryActions(actions);
+    const primaries = countPrimaryActions(actions) + countPrimaryActions(primaryAction);
     if (primaries > 1) {
       console.warn(
         `PageHeader: ${primaries} primary actions. DESIGN.md §7 gives a screen one primary ` +
@@ -252,7 +293,10 @@ export default function PageHeader({
           'an overflow menu.'
       );
     }
-  }, [actions]);
+  }, [actions, primaryAction]);
+
+  const hasOverflow = Boolean(overflow && overflow.items.length > 0);
+  const hasCluster = Boolean(actions || primaryAction || hasOverflow);
 
   return (
     <header
@@ -267,7 +311,7 @@ export default function PageHeader({
           <div className={cn('flex items-start', leading ? 'gap-4' : undefined)}>
             {leading}
             <div className="min-w-0">
-              {breadcrumb && <PageBreadcrumb items={breadcrumb} />}
+              {breadcrumb && <PageBreadcrumb items={breadcrumb} switcher={crumbSwitcher} />}
 
               {/* `.page-header__title` carries the type, not a `text-3xl`: the unlayered
                   `h1` rule at the foot of `globals.css` would outrank a utility class. */}
@@ -287,12 +331,14 @@ export default function PageHeader({
             </div>
           </div>
 
-          {actions && (
+          {hasCluster && (
             <div
               data-testid="page-header-actions"
               className="flex shrink-0 flex-wrap items-center justify-end gap-2 pt-0.5"
             >
               {actions}
+              {overflow && hasOverflow ? <PageHeaderOverflowMenu overflow={overflow} /> : null}
+              {primaryAction}
             </div>
           )}
         </div>

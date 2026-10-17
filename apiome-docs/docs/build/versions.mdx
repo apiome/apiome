@@ -8,15 +8,28 @@ tags: [versions]
 <Route path="/ade/dashboard/versions" />
 
 **Versions** is one project's history: every version, its status, its mock, and what changed. Open
-it by **clicking a project** on [Projects](./projects.mdx); the project selector at the top switches
-to another one.
+it by **clicking a project** on [Projects](./projects.mdx). To move to another project, **click the
+project's name** at the end of the breadcrumb: type in **Jump to project** to filter, then **click a
+project**. **All projects** at the bottom goes back to Projects. Catalog items are not listed;
+convert one to OpenAPI first.
 
-The header holds **Import**, **Compare** (needs two versions) and **“New version”**. The dialogs they
-open are on [Version dialogs](./version-dialogs.mdx).
+The header holds **“Compare”** (needs two versions), **“Import”**, **More actions** (`⋯`) and
+**“New version”**. **More actions** holds:
+
+| Item | Does |
+| --- | --- |
+| **Merge branches…** | Opens the merge dialog. Marked `gitlike`; unavailable until the project has two named branches, and the row says why |
+| **Sunset timeline** | Opens the [sunset timeline](/ship) |
+| **Published surface** | Opens the published surface |
+| **Export studio** | Opens the Export studio, once it is released |
+| **Copy link to project** | Copies a link to this project's Versions page (**`⌘ ⇧ C`**) |
+
+The dialogs are on [Version dialogs](./version-dialogs.mdx). Keyboard paths are on
+[Keyboard](../workspace/keyboard.md).
 
 ## Timeline
 
-<Screenshot id="versions" alt="The Versions page, Timeline tab: the Status strip with the deprecation detail open, the Project facts card, filters and the version list" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
+<Screenshot id="versions" alt="The Versions page, Timeline tab: the project name as the last breadcrumb, Compare, Import, More actions and New version, the Status strip, the Project facts card, filters and the version list" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
 
 From top to bottom:
 

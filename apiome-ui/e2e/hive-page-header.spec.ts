@@ -241,6 +241,99 @@ test.describe('page chrome', () => {
     });
   });
 
+  /**
+   * HIVE-11.3 (#5599): the breadcrumb switcher and the ⋯ overflow, on `specimen-overflow`.
+   * One primary, two secondaries and ⋯ must hold one row at every width ≥ 1280 px, and both
+   * menus must be keyboard-complete.
+   */
+  test.describe('overflow and breadcrumb switcher', () => {
+    test('keeps Compare · Import · ⋯ · New version on one row at 1280 px and wider', async ({ page }) => {
+      const specimen = page.getByTestId('specimen-overflow');
+      for (const width of [1280, 1440, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        const actions = specimen.getByTestId('page-header-actions');
+        const tops = await actions
+          .locator(':scope > *')
+          .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)));
+        expect(tops, `cluster at ${width}px`).toHaveLength(4);
+        expect(new Set(tops).size, `cluster wraps at ${width}px`).toBe(1);
+        // The cluster sits beside the title block, not under it.
+        const title = await specimen.locator('.page-header__title').boundingBox();
+        const cluster = await actions.boundingBox();
+        expect(cluster!.y, `cluster drops below the title at ${width}px`).toBeLessThan(title!.y + title!.height);
+        expect(await documentScrollsSideways(page)).toBe(false);
+      }
+    });
+
+    test('switches project from the keyboard and restores focus', async ({ page }) => {
+      const specimen = page.getByTestId('specimen-overflow');
+      const trigger = specimen.getByTestId('crumb-switch');
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      await expect(specimen.getByRole('searchbox', { name: 'Jump to project' })).toBeFocused();
+
+      // Arrow keys move into and through the list.
+      await page.keyboard.press('ArrowDown');
+      await expect(specimen.getByRole('menuitemradio', { name: /Payments API/ })).toBeFocused();
+      await page.keyboard.press('ArrowDown');
+      await expect(specimen.getByRole('menuitemradio', { name: /Orders Service/ })).toBeFocused();
+
+      // Escape closes and returns focus to the trigger.
+      await page.keyboard.press('Escape');
+      await expect(specimen.getByRole('menu', { name: 'Projects' })).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+
+      // Typeahead, then Enter switches.
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('inv');
+      await page.keyboard.press('Enter');
+      await expect(specimen.locator('.page-header__title')).toContainText('Inventory Events');
+      await expect(trigger).toBeFocused();
+    });
+
+    test('opens ⋯ from the keyboard, keeps an unavailable row reachable, Escape restores focus', async ({
+      page,
+    }) => {
+      const trigger = page.getByTestId('specimen-overflow').getByTestId('page-header-overflow');
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      const menu = page.getByTestId('page-header-overflow-menu');
+      await expect(menu).toBeVisible();
+      await page.keyboard.press('ArrowDown');
+      const merge = page.getByTestId('page-header-overflow-merge');
+      await expect(merge).toBeFocused();
+      await expect(merge).toHaveAttribute('aria-disabled', 'true');
+      await page.keyboard.press('Escape');
+      await expect(menu).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    });
+
+    for (const theme of [null, 'dark', 'high-contrast']) {
+      test(`has no serious or critical axe violations with each menu open — ${theme ?? 'light'}`, async ({
+        page,
+      }) => {
+        await applyTheme(page, theme);
+        const specimen = page.getByTestId('specimen-overflow');
+
+        await specimen.getByTestId('crumb-switch').click();
+        let results = await new AxeBuilder({ page })
+          .include('[data-testid="specimen-overflow"]')
+          .withTags(WCAG_TAGS)
+          .analyze();
+        expect(blockingViolations(results.violations)).toEqual([]);
+        await page.keyboard.press('Escape');
+
+        await specimen.getByTestId('page-header-overflow').click();
+        results = await new AxeBuilder({ page })
+          .include('[data-testid="page-header-overflow-menu"]')
+          .withTags(WCAG_TAGS)
+          .analyze();
+        expect(blockingViolations(results.violations)).toEqual([]);
+        await page.keyboard.press('Escape');
+      });
+    }
+  });
+
   test('has no serious or critical axe violations', async ({ page }) => {
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     expect(blockingViolations(results.violations)).toEqual([]);

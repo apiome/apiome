@@ -51,6 +51,19 @@ sidebar and press `↵` on a destination. **`⌘ \`** collapses or expands the s
 `Tab` to the workspace row at the top of the sidebar, press `↵`, choose with `↑` `↓` and `↵`.
 `Esc` closes the menu without switching.
 
+### Switch project, and reach the page's other actions
+On a project's **Versions** page:
+
+1. The last step of the breadcrumb is the project's name. `Tab` to it and press `↵`; the
+   **Jump to project** field has focus. Type to filter, then press `↵` to switch to the first
+   match, or `↓` into the list, `↑` `↓` to choose and `↵` to switch. **All projects** is at the
+   bottom. `Esc` closes the menu and returns focus to the name.
+2. `Tab` to **More actions** (`⋯`, between **Import** and **New version**) and press `↵`. Use
+   `↑` `↓` to choose **Merge branches…**, **Sunset timeline**, **Published surface**, **Export
+   studio** or **Copy link to project**, and `↵` to run it. An unavailable row stays in the list
+   and is read with its reason. `Esc` closes the menu and returns focus to `⋯`.
+3. Press **`⌘ ⇧ C`** anywhere on the page, outside a text field, to copy a link to the project.
+
 ### Browse, filter and act on a table (projects, catalog, repositories, versions…)
 1. `Tab` to the search box and type, or press **`/`**.
 2. `Tab` to the filter chips; `↵` or `Space` toggles one (its pressed state is announced).
@@ -110,3 +123,4 @@ is added there without a row here.
 | `↵` | Open the focused row | A focused table |
 | `X` | Select the focused row | A focused table |
 | `.` | Reach the row’s actions | A focused table |
+| `⌘ ⇧ C` | Copy link to this project | The Versions page, outside a text field |

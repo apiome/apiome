@@ -1281,6 +1281,167 @@ html[data-rail="collapsed"] {
   padding-top: 0;
 }
 
+/* ---- Breadcrumb switcher and ⋯ overflow (HIVE-11.3, #5599) ---------------
+   `docs/mockups/proposals/versions-status-strip.html` annotations 1 and 2:
+   the trail's last step as a menu button (`.crumb-switch`), and the header's
+   ⋯ menu (`#more-menu`). `BreadcrumbSwitcher.tsx` and `PageHeaderOverflow.tsx`
+   are the React halves.
+
+   Deviations from the mockup, all deliberate:
+
+   1. The trigger's height is `--control-h-sm` scaled from the crumb line, not
+      a fixed 22 px, so it follows density and font scale.
+   2. The menu's switch rows reuse the rail menu's row chrome (`railMenu.tsx`)
+      and its keyboard model, rather than a third copy of `.menu__item`.
+   3. A feature-flagged overflow row carries an outline badge in `--fg-muted`,
+      not the honey flag (HIVE-13.1: honey is a brand mark, not a state). */
+.crumb-switch__anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.crumb-switch {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-1);
+  margin: calc(var(--space-1) * -0.75) calc(var(--space-1) * -1.5);
+  padding: calc(var(--space-1) * 0.75) calc(var(--space-1) * 1.5) calc(var(--space-1) * 0.75) var(--space-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.crumb-switch:hover,
+.crumb-switch[aria-expanded='true'] {
+  background: var(--bg-subtle);
+}
+
+.crumb-switch__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The menu sits inside the crumb line, so it restates the type and ink the
+   trail's `text-xs text-fg-muted` would otherwise hand it, and undoes the
+   trail's 12 px separator sizing for its own glyphs. */
+.crumb-switch__menu {
+  width: 18.75rem;
+  max-height: min(70vh, 24rem);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.page-header__crumbs .crumb-switch__menu svg {
+  width: auto;
+  height: auto;
+  opacity: 1;
+}
+
+.crumb-switch__search {
+  flex-shrink: 0;
+  padding-bottom: var(--space-1);
+}
+
+.crumb-switch__list {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crumb-switch__items {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.crumb-switch__item--current {
+  background: var(--bg-subtle);
+  font-weight: 600;
+}
+
+.crumb-switch__item-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A mark, so its hue is a `stroke` (the mark-text ratchet reserves `color`
+   for text). */
+.crumb-switch__check {
+  flex-shrink: 0;
+  stroke: var(--accent);
+}
+
+.crumb-switch__empty {
+  padding: var(--space-2) var(--space-2);
+  color: var(--fg-muted);
+}
+
+.page-header__menu {
+  min-inline-size: 16.25rem;
+}
+
+.page-header__menu-label {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.page-header__menu-sep {
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--border);
+}
+
+.page-header__menu-item {
+  text-decoration: none;
+}
+
+.page-header__menu-text {
+  flex: 1 1 auto;
+}
+
+/* Unavailable, not disabled: the row stays in the arrow order so its reason
+   can be read, and it never lights up as if it would do something. */
+.page-header__menu-item[aria-disabled='true'] {
+  color: var(--fg-muted);
+  cursor: default;
+}
+
+.page-header__menu-item[aria-disabled='true']:hover,
+.page-header__menu-item[aria-disabled='true'][data-highlighted] {
+  background: var(--bg-subtle);
+}
+
+.page-header__menu-badge {
+  flex-shrink: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--r-xs);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.page-header__menu-kbd {
+  flex-shrink: 0;
+}
+
 /* ---- Command palette (HIVE-3.6, #5292; DESIGN.md §5.4) -------------------
    `docs/mockups/assets/hive.css` §15 (`.palette`). One 640 px dialog that
    rises from 12 vh, over the same scrim every other overlay uses.
@@ -12932,25 +13093,10 @@ button.tfa-reset-notice__close > svg {
   text-decoration: underline;
 }
 
-/* The project select's trigger. `inline-size` beats the primitive's `w-full`
-   because this rule is unlayered; the trigger still shrinks with the header's
-   action cluster because it may wrap. */
-.ver-project-select {
-  inline-size: 12rem;
-  max-inline-size: 100%;
-}
-
 .ver-tab-glyph {
   inline-size: var(--icon-dense);
   block-size: var(--icon-dense);
   flex-shrink: 0;
-}
-
-/* The Merge button and its flag, as one unit in the action cluster. */
-.ver-header__gitlike {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 
 /* A tab's panel that arrives without a card of its own (the conversion history). */

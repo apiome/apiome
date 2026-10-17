@@ -148,7 +148,7 @@ Milestone: **RC6** (all epics and issues).
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 11.1 | #5597 | `StatusStrip` component — one row of status chips, one open detail ✅ | New `components/ui/StatusStrip` (chips · one detail open · severity-first · session persistence) + design-system specimen | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/StatusStrip.tsx (new)`, `src/app/design-system/galleries/*`, `tests/status-strip.test.tsx (new)` |
 | 11.2 | #5598 | Versions — status strip replaces the three stacked banners ✅ | Compatible · What’s new · Deprecated (· gitlike Server ahead) become one `StatusStrip`; first revision row rises ≈ 200 px | `ui`, `versions`, `redesign`, `mvp` | N | Y | M | `src/app/components/ade/versions/VersionsBanners.tsx`, `src/app/ade/dashboard/versions/*`, `e2e/fixtures/hive-versions/*`, `tests/versions-hive-redesign.test.tsx` |
-| 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
+| 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher ✅ | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
 | 11.4 | #5600 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) | Merge the “Timeline” filter bar and the lifecycle toolbar into the table’s own toolbar; dates become an “Any time” popover | `ui`, `versions`, `redesign` | Y | N | M | `src/app/components/ade/versions/VersionsTimelineFilters.tsx`, `src/app/components/ade/versions/VersionsTable.tsx`, `src/app/components/ui/DataTable.tsx` |
 | 11.5 | #5601 | `FactsLine` and `DismissibleCallout` primitives (+ `hive.seen.*` persistence) ✅ | The stat strip folded into one tabular line with “Show stats”; a first-visit callout with Got it / Learn more that persists per device | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/FactsLine.tsx (new)`, `src/app/components/ui/DismissibleCallout.tsx (new)`, `src/lib/seen.ts (new)`, `src/app/design-system/galleries/*` |
 | 11.6 | #5602 | Catalog — quiet list page | Explainer → first-visit callout + “How the catalog works” dialog; stat strip → facts line; one card owns toolbar, chips and table; formats list moves into the dialog and Import step 1 | `ui`, `catalog`, `redesign`, `mvp` | N | Y | M | `src/app/ade/dashboard/catalog/*`, `src/app/components/ui/catalog/*`, `e2e/fixtures/hive-catalog/*`, `tests/catalog-*.test.tsx` |
@@ -203,7 +203,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-11.3] Versions header — ⋯ overflow menu and breadcrumb project switcher` — [#5599](https://github.com/apiome/apiome/issues/5599)
+### `apiome: [HIVE-11.3] Versions header — ⋯ overflow menu and breadcrumb project switcher` ✅ — [#5599](https://github.com/apiome/apiome/issues/5599)
 **Problem statement.** The Versions header carries a project `<select>`, Import, Compare, Merge branches (disabled), a honey `gitlike` flag and the primary New version — six controls against DESIGN.md §1.2 (“one primary, secondaries, overflow”) and §5.3.
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/versions-status-strip.html` (callouts 1, 2); rationale: `docs/mockups/PROPOSALS.md`.
@@ -214,8 +214,8 @@ Milestone: **RC6** (all epics and issues).
 
 **Acceptance criteria.**
 - [ ] Header renders at most one primary and two secondary buttons plus ⋯ at every viewport ≥ 1280 px (no wrapping to a second row)
-- [ ] Every former header action is reachable in ≤ 2 clicks; keyboard path documented in `docs/guide/keyboard.md`
-- [ ] Breadcrumb switcher is a `menu` with typeahead; arrow keys move, Enter switches, Escape closes and restores focus
+- [x] Every former header action is reachable in ≤ 2 clicks; keyboard path documented in `docs/guide/keyboard.md`
+- [x] Breadcrumb switcher is a `menu` with typeahead; arrow keys move, Enter switches, Escape closes and restores focus
 - [ ] axe: zero serious/critical in the three gate themes; `hive-page-header.spec.ts` extended
 
 **Parallelism / dependencies.** Independent. Prerequisite for the header gate in HIVE-13.2.
