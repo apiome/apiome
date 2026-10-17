@@ -21,9 +21,14 @@ from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.config import require_api_key
 from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.list_response import fetch_list
-from apiome_cli.exit_codes import EXIT_LAST_PUBLISHED_VERSION, EXIT_USAGE, EXIT_VERSION_EXISTS
+from apiome_cli.exit_codes import (
+    EXIT_LAST_PUBLISHED_VERSION,
+    EXIT_SNAPSHOT_DOWNLOADED,
+    EXIT_USAGE,
+    EXIT_VERSION_EXISTS,
+)
 from apiome_cli.help_util import group_callback_without_subcommand
-from apiome_cli.terminal import confirm_typed
+from apiome_cli.terminal import confirm_action, confirm_typed
 from apiome_cli.import_.publish import normalize_cli_import_visibility
 from apiome_cli.output import (
     ListColumn,
@@ -43,6 +48,14 @@ from apiome_cli.version_fork import (
     render_summary,
     tags_to_copy,
 )
+from apiome_cli.version_freeze import (
+    downloaded_hint,
+    json_result,
+    render_freeze_preview,
+    render_frozen,
+    render_unfreeze_preview,
+    render_unfrozen,
+)
 from apiome_cli.version_unpublish import (
     UnpublishError,
     check_reason,
@@ -53,7 +66,7 @@ from apiome_cli.version_unpublish import (
 
 app = typer.Typer(
     name="versions",
-    help="List, fetch, publish, unpublish and fork project versions.",
+    help="List, fetch, publish, unpublish, freeze and fork project versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -348,6 +361,85 @@ def unpublish_version(
         emit_json(result)
     else:
         typer.echo(render_result(result))
+
+
+@app.command("freeze")
+def freeze_version(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    version_ref: str = typer.Argument(
+        ..., metavar="VERSION", help="Published version label (2.1.0 or v2.1.0) or revision UUID."
+    ),
+    unfreeze: bool = typer.Option(
+        False, "--unfreeze", help="Remove the snapshot; refused once it has been downloaded."
+    ),
+    force_unfreeze: bool = typer.Option(
+        False,
+        "--force-unfreeze",
+        help="Unfreeze even though the snapshot has been downloaded (tenant administrators only).",
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation."),
+) -> None:
+    """Freeze a published version's OpenAPI document byte-for-byte (POST …/{version_record_id}/freeze-schema).
+
+    Shows the snapshot's class, property and path counts, SHA-256 and size, then asks before
+    freezing. While frozen, /v1/schema/{tenant}/{project}/{version} serves exactly those bytes,
+    whatever later happens to the version's classes. --unfreeze removes the snapshot.
+    """
+    release = parse_release(version_ref)
+    if release is not None:
+        version_ref = ".".join(str(part) for part in release)
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id, version_id = _resolve_publish_version_id(
+        client, tenant_slug, version_ref=version_ref, project_ref=project_ref
+    )
+    path = api_paths.version_freeze(tenant_slug, project_id, version_id)
+    json_mode = json_mode_from_context(ctx)
+
+    if unfreeze or force_unfreeze:
+        status = client.get(path).json()
+        if not status.get("frozen"):
+            typer.echo(f"{status.get('versionLabel') or version_ref} is not frozen; nothing to unfreeze.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        if int(status.get("downloadCount") or 0) > 0 and not force_unfreeze:
+            typer.echo(downloaded_hint(status), err=True)
+            raise typer.Exit(EXIT_SNAPSHOT_DOWNLOADED)
+        typer.echo(render_unfreeze_preview(status), err=True)
+        confirm_action("Unfreeze?", skip=yes)
+        response = client.delete_raw(path, params={"force": "true"} if force_unfreeze else None)
+        if _response_code(response) == "snapshot_downloaded":
+            # Downloaded between the status check and the delete.
+            detail = response.json().get("detail") or {}
+            raced = {**status, "downloadCount": detail.get("download_count") or status.get("downloadCount")}
+            typer.echo(downloaded_hint(raced), err=True)
+            raise typer.Exit(EXIT_SNAPSHOT_DOWNLOADED)
+        exit_on_api_error(response)
+        result = response.json()
+        if json_mode:
+            emit_json(json_result(result))
+        else:
+            typer.echo(render_unfrozen(result))
+        return
+
+    plan = client.post(path, json={"dryRun": True}).json()
+    typer.echo(render_freeze_preview(plan), err=True)
+    confirm_action("Continue?", skip=yes)
+    result = client.post(path, json={"dryRun": False}).json()
+    if json_mode:
+        emit_json(json_result(result))
+    else:
+        typer.echo(render_frozen(result))
+
+
+def _response_code(response: Any) -> Optional[str]:
+    """``detail.code`` of an error response, if any."""
+    if response.status_code < 400:
+        return None
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        return None
+    return detail.get("code") if isinstance(detail, dict) else None
 
 
 def _version_exists_conflict(response: Any) -> bool:

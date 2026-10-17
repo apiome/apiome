@@ -65,6 +65,11 @@ EXIT_VERSION_EXISTS = 6
 #: Pass ``--force`` to unpublish it anyway. Another per-command use of 6.
 EXIT_LAST_PUBLISHED_VERSION = 6
 
+#: ``apiome versions freeze --unfreeze`` (CLI 4.7): the frozen snapshot has already been
+#: **downloaded**, so a consumer may depend on its exact bytes; nothing was unfrozen. A tenant
+#: administrator can pass ``--force-unfreeze``. Another per-command use of 6.
+EXIT_SNAPSHOT_DOWNLOADED = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

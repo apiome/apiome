@@ -9703,6 +9703,104 @@ class Database:
             conn.rollback()
             raise e
 
+    # ------------------------- Frozen OpenAPI snapshots (#3214, V279) -------------------------
+
+    _SPEC_SNAPSHOT_META = """
+        version_id, sha256, size_bytes, class_count, property_count, path_count,
+        frozen_by, frozen_at, download_count, last_downloaded_at
+    """
+
+    def get_spec_snapshot(
+        self, version_record_id: str, *, with_content: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """The frozen snapshot row of a version, or ``None`` when it is not frozen.
+
+        Args:
+            version_record_id: The version.
+            with_content: Also return ``content`` (the stored bytes, as ``bytes``).
+        """
+        if not version_record_id or not is_uuid_string(str(version_record_id)):
+            return None
+        columns = self._SPEC_SNAPSHOT_META + (", content" if with_content else "")
+        rows = self.execute_query(
+            f"SELECT {columns} FROM apiome.version_spec_snapshots WHERE version_id = %s",
+            (version_record_id,),
+        )
+        if not rows:
+            return None
+        row = dict(rows[0])
+        if with_content and row.get("content") is not None:
+            row["content"] = bytes(row["content"])
+        return row
+
+    def insert_spec_snapshot(
+        self,
+        version_record_id: str,
+        *,
+        content: bytes,
+        sha256: str,
+        class_count: int,
+        property_count: int,
+        path_count: int,
+        frozen_by: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        """Store a version's frozen snapshot. Returns the row, or ``None`` if one already exists."""
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                f"""
+                INSERT INTO apiome.version_spec_snapshots
+                    (version_id, content, sha256, size_bytes, class_count, property_count,
+                     path_count, frozen_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (version_id) DO NOTHING
+                RETURNING {self._SPEC_SNAPSHOT_META}
+                """,
+                (
+                    version_record_id,
+                    psycopg2.Binary(content),
+                    sha256,
+                    len(content),
+                    class_count,
+                    property_count,
+                    path_count,
+                    frozen_by,
+                ),
+            )
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+        return self._guarded_tx(work)
+
+    def delete_spec_snapshot(self, version_record_id: str) -> Optional[Dict[str, Any]]:
+        """Unfreeze: delete the snapshot row. Returns the deleted row, or ``None`` if there was none."""
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                f"""
+                DELETE FROM apiome.version_spec_snapshots WHERE version_id = %s
+                RETURNING {self._SPEC_SNAPSHOT_META}
+                """,
+                (version_record_id,),
+            )
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+        return self._guarded_tx(work)
+
+    def record_spec_snapshot_download(self, version_record_id: str) -> bool:
+        """Count one served download of a frozen snapshot. True when a row was updated."""
+        return bool(
+            self._modify(
+                """
+                UPDATE apiome.version_spec_snapshots
+                SET download_count = download_count + 1, last_downloaded_at = CURRENT_TIMESTAMP
+                WHERE version_id = %s
+                """,
+                (version_record_id,),
+            )
+        )
+
     def unpublish_version(
         self,
         version_record_id: str,

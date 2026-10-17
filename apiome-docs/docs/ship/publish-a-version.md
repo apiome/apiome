@@ -94,6 +94,56 @@ Every field is optional; an empty body unpublishes, moves the tags and notifies 
 `publishedVersionsRemaining`) without changing anything. `silent: true` from someone who is not a
 tenant administrator is refused with `403` `silent_requires_admin`.
 
+## Freeze a version's schema
+
+`GET /v1/schema/{tenant}/{project}/{version}` normally builds the OpenAPI document from the
+version's **current** classes, properties and paths, so editing a published version changes what
+consumers download. **Freezing** stores the document byte-for-byte; while a version is frozen,
+`/v1/schema` serves exactly those bytes — the right thing to point an SDK generator at. Only a
+**published** version can be frozen, by its creator or a tenant administrator.
+
+### With the CLI
+
+```bash
+apiome versions freeze payments-api v2.1.0
+# Schema snapshot for 2.1.0:
+#   Classes:    24
+#   Properties: 142
+#   Paths:      18
+#   SHA-256:    7f2c…a041
+#   Size:       128.3 KiB
+#
+# After freeze, edits to 2.1.0's classes, properties and paths will NOT alter the
+# published schema at /v1/schema/acme/payments-api/2.1.0.
+# Continue? [y/N]: y
+# ✔ Frozen. Snapshot stored at /v1/schema/acme/payments-api/2.1.0 (SHA-256 7f2c…a041)
+```
+
+1. **Run** `apiome versions freeze <project> <version>`. The summary comes from the server, so the
+   SHA-256 is the one consumers will see.
+2. **Answer `y`** to freeze, or pass `--yes` in a script.
+3. **Verify** a download: the response carries the SHA-256 in the `X-Apiome-Snapshot-Sha256` header.
+
+With `--json` the command prints `{ "frozen": true, "sha256": "…", "size_bytes": …, "snapshot_url": "…" }`
+plus the counts.
+
+**Unfreeze** with `apiome versions freeze <project> <version> --unfreeze`. Every fetch of the
+frozen `/v1/schema` URL is counted; once anyone has downloaded the snapshot, unfreezing is refused
+(exit `6`) because a consumer may depend on its bytes. A tenant administrator can still unfreeze
+with `--force-unfreeze`. After an unfreeze, `/v1/schema` is generated from the version's current
+classes again.
+
+Only the version document at `/v1/schema/{tenant}/{project}/{version}` is frozen. Per-class
+documents, Swagger UI, `/v1/json` and `/v1/arazzo` are still generated live.
+
+### With the REST API
+
+| Request | What it does |
+| --- | --- |
+| `POST …/{version_record_id}/freeze-schema` | Freezes; body `{ "dryRun": true }` returns the snapshot without storing it. `409 version_not_published` for a draft, `409 already_frozen` when already frozen. |
+| `GET …/{version_record_id}/freeze-schema` | `frozen`, `sha256`, `sizeBytes`, `snapshotUrl`, counts and `downloadCount`. |
+| `DELETE …/{version_record_id}/freeze-schema` | Unfreezes. `409 snapshot_downloaded` once downloaded, unless `?force=true` (tenant administrators only; otherwise `403 force_unfreeze_requires_admin`). |
+
 ## Tip: lint before you publish
 
 Run [Lint and check quality](../build/lint-and-quality.md) first — clearing its findings clears most publish-gate

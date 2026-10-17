@@ -3434,6 +3434,47 @@ class VersionSchema(BaseModel):
         return {**data, "lifecycle": effective_lifecycle(data.get("metadata"))}
 
 
+class FreezeSchemaRequest(BaseModel):
+    """Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/freeze-schema`` (#3214)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    dry_run: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("dryRun", "dry_run"),
+        serialization_alias="dryRun",
+        description="Return the snapshot that would be stored (SHA-256, size, counts) without freezing.",
+    )
+
+
+class FreezeSchemaResponse(BaseModel):
+    """A version's frozen OpenAPI snapshot (#3214): freeze, dry run, status and unfreeze responses."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    version_id: str = Field(serialization_alias="versionId", description="Version record id.")
+    version_label: Optional[str] = Field(default=None, serialization_alias="versionLabel")
+    frozen: bool = Field(description="Whether the version is frozen after this call.")
+    dry_run: bool = Field(default=False, serialization_alias="dryRun")
+    sha256: Optional[str] = Field(default=None, description="Lower-case hex SHA-256 of the snapshot bytes.")
+    size_bytes: Optional[int] = Field(default=None, serialization_alias="sizeBytes")
+    snapshot_url: Optional[str] = Field(
+        default=None,
+        serialization_alias="snapshotUrl",
+        description="Where the frozen document is served: /v1/schema/{tenant}/{project}/{version}.",
+    )
+    class_count: int = Field(default=0, serialization_alias="classCount")
+    property_count: int = Field(default=0, serialization_alias="propertyCount")
+    path_count: int = Field(default=0, serialization_alias="pathCount")
+    frozen_at: Optional[Union[datetime, str]] = Field(default=None, serialization_alias="frozenAt")
+    frozen_by: Optional[str] = Field(default=None, serialization_alias="frozenBy")
+    download_count: int = Field(
+        default=0,
+        serialization_alias="downloadCount",
+        description="Successful GET /v1/schema fetches of the snapshot; above 0, unfreezing needs force.",
+    )
+
+
 class VersionUnpublishRequest(BaseModel):
     """Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/unpublish`` (#3213).
 

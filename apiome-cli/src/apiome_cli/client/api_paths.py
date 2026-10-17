@@ -581,6 +581,15 @@ def version_unpublish(
     return f"{version_record(tenant_slug, project_id, version_record_id)}/unpublish"
 
 
+def version_freeze(
+    tenant_slug: str,
+    project_id: str | UUID,
+    version_record_id: str | UUID,
+) -> str:
+    """``…/freeze-schema``: POST freezes, GET reports, DELETE unfreezes (#3214)."""
+    return f"{version_record(tenant_slug, project_id, version_record_id)}/freeze-schema"
+
+
 def version_mock(
     tenant_slug: str,
     project_id: str | UUID,
