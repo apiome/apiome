@@ -59,6 +59,7 @@ import {
   type StoredQualityIssue,
 } from '@/app/utils/project-quality-score-history';
 import { cn } from '@lib/utils';
+import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 
 interface ProjectQualityHistoryDialogProps {
   open: boolean;
@@ -206,6 +207,9 @@ export function ProjectQualityHistoryDialog({
   history,
   initialSection = 'trend',
 }: ProjectQualityHistoryDialogProps) {
+  // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
+  // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
+  const returnFocus = useReturnFocus(open);
   const [section, setSection] = React.useState<ProjectQualityReportSection>(initialSection);
 
   const reportSnapshot = React.useMemo(() => {
@@ -254,7 +258,7 @@ export function ProjectQualityHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg" className="pqh-dialog" aria-describedby={undefined}>
+      <DialogContent onCloseAutoFocus={returnFocus} size="lg" className="pqh-dialog" aria-describedby={undefined}>
         <div className="pqh-dialog__head">
           <DialogHeader className="pr-8">
             <DialogTitle className="truncate">Project scores — {projectName}</DialogTitle>

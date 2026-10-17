@@ -62,6 +62,7 @@ import {
 import { convertPreviewDialogTitle } from '../../../../utils/catalog-conversion';
 import { ConversionProjectionGraphPanel } from './ConversionProjectionGraphPanel';
 import { CODE_BLOCK_FONT_SIZE } from '@/app/components/ui/code/editorTypography';
+import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 
 /** Offline fallback when Monaco cannot load — keeps the raw OpenAPI JSON visible.
  * `value` is optional to stay prop-compatible with Monaco's `EditorProps` in the
@@ -156,6 +157,9 @@ export function ConversionPreviewDialog({
   onOpenChange,
   onConverted,
 }: ConversionPreviewDialogProps) {
+  // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
+  // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
+  const returnFocus = useReturnFocus(open);
   // Starts loading: with a per-item `key` on this dialog (set by the parent) a fresh open mounts
   // fresh, so the user always sees the spinner rather than a stale report.
   const [result, setResult] = useState<ConversionDryRunResult | null>(null);
@@ -313,7 +317,7 @@ export function ConversionPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[90vh] max-w-4xl flex-col">
+      <DialogContent onCloseAutoFocus={returnFocus} className="flex h-[90vh] max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{convertPreviewDialogTitle(itemName, sourceFormat)}</DialogTitle>
           <DialogDescription>

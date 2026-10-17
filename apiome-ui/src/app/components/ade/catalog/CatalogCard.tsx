@@ -309,6 +309,18 @@ export interface CatalogRowMenuProps extends CatalogItemHandlers {
  *
  * Which verbs appear is {@link catalogRowActions}, not a chain of `item.deleted_at ?` here.
  *
+ * ### Keyboard (MFI-28.8)
+ *
+ * Radix supplies the arrow keys, Home/End, type-ahead and Escape; `loop` makes the arrows wrap
+ * at either end, as the detail page's tab strip does. What Radix does *not* get right on its
+ * own is focus after a verb that opens a dialog. The verb runs from `onSelect`, while the menu
+ * item still holds focus — so the dialog remembers that item as the place to return to, the
+ * item is unmounted a moment later, and closing the dialog drops the reader on `<body>`.
+ *
+ * So a verb is only *queued* by `onSelect` and run from `onCloseAutoFocus`, after the trigger
+ * has focus again. Every dialog it opens then remembers the trigger, and Escape out of that
+ * dialog lands back on the `…` button the reader started from.
+ *
  * @param props See {@link CatalogRowMenuProps}.
  * @returns The trigger and its menu.
  */
@@ -326,10 +338,33 @@ export function CatalogRowMenu({
   onPermanentDelete,
 }: CatalogRowMenuProps) {
   const actions = catalogRowActions(item);
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+  /** The verb chosen from the menu, waiting for the menu to hand focus back. */
+  const pendingRef = React.useRef<(() => void) | null>(null);
+
+  /**
+   * Queue a verb to run once the menu has closed (see the component note).
+   *
+   * @param run The handler call to make.
+   * @returns The `onSelect` handler for one menu item.
+   */
+  const queue = (run: () => void) => () => {
+    pendingRef.current = run;
+  };
+
+  /** Put focus back on the trigger, then run the queued verb — or let Radix restore it. */
+  const handleCloseAutoFocus = (event: Event) => {
+    const run = pendingRef.current;
+    pendingRef.current = null;
+    if (!run) return;
+    event.preventDefault();
+    triggerRef.current?.focus();
+    run();
+  };
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
+      <DropdownMenu.Trigger asChild ref={triggerRef}>
         <Button
           variant="ghost"
           size="sm"
@@ -342,21 +377,27 @@ export function CatalogRowMenu({
         </Button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
+        <DropdownMenu.Content
+          className="tnt-menu"
+          sideOffset={4}
+          align="end"
+          loop
+          onCloseAutoFocus={handleCloseAutoFocus}
+        >
           {actions.details ? (
-            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={() => onOpenDetail(item)}>
+            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onOpenDetail(item))}>
               <PanelsTopLeft aria-hidden />
               Details
             </DropdownMenu.Item>
           ) : null}
           {actions.versions ? (
-            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={() => onOpenVersions(item)}>
+            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onOpenVersions(item))}>
               <Eye aria-hidden />
               View versions
             </DropdownMenu.Item>
           ) : null}
           {actions.lint ? (
-            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={() => onOpenLint(item)}>
+            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onOpenLint(item))}>
               <ScanLine aria-hidden />
               Lint
             </DropdownMenu.Item>
@@ -366,7 +407,7 @@ export function CatalogRowMenu({
               className={MENU_ITEM_CLASS}
               title={CATALOG_EXPORT_VS_CONVERT_COPY}
               data-testid="catalog-action-export"
-              onSelect={() => onExport(item)}
+              onSelect={queue(() => onExport(item))}
             >
               <FileOutput aria-hidden />
               Export to another format…
@@ -376,14 +417,14 @@ export function CatalogRowMenu({
             <DropdownMenu.Item
               className={MENU_ITEM_CLASS}
               data-testid="catalog-action-convert"
-              onSelect={() => onConvert(item)}
+              onSelect={queue(() => onConvert(item))}
             >
               <ArrowLeftRight aria-hidden />
               {convertActionLabel(item.conversion, item.sourceFormat)}
             </DropdownMenu.Item>
           ) : null}
           {actions.undelete ? (
-            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={() => onRestore(item)}>
+            <DropdownMenu.Item className={MENU_ITEM_CLASS} onSelect={queue(() => onRestore(item))}>
               <Undo2 aria-hidden />
               Undelete item
             </DropdownMenu.Item>
@@ -393,7 +434,7 @@ export function CatalogRowMenu({
               <DropdownMenu.Separator className="tnt-menu__sep" />
               <DropdownMenu.Item
                 className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
-                onSelect={() => onDelete(item)}
+                onSelect={queue(() => onDelete(item))}
               >
                 <Trash2 aria-hidden />
                 Delete item
@@ -404,7 +445,7 @@ export function CatalogRowMenu({
           )}
           <DropdownMenu.Item
             className={cn(MENU_ITEM_CLASS, 'cat-menu__item--danger')}
-            onSelect={() => onPermanentDelete(item)}
+            onSelect={queue(() => onPermanentDelete(item))}
           >
             <Trash2 aria-hidden />
             Permanently delete

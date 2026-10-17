@@ -414,6 +414,40 @@ export function catalogFormatNodeHref(itemId: string, nodeId: string): string {
   return `${CATALOG_LIST_HREF}/${encodeURIComponent(itemId)}?tab=format&node=${encodeURIComponent(nodeId)}`;
 }
 
+/**
+ * The query parameters that address a place *inside* one pane, keyed by that pane. They only
+ * mean something while their pane is open, so leaving the pane drops them — and the source
+ * pair has to go, because {@link catalogDetailTabFromQuery} lets it win over `?tab=`.
+ */
+const PANE_SCOPED_PARAMS: Readonly<Partial<Record<CatalogDetailTabId, readonly string[]>>> = {
+  source: ['sourcePath', 'line'],
+  format: ['node'],
+};
+
+/**
+ * The query string that records `tab` as the open pane (MFI-28.8), so a reader can copy the
+ * address and land a teammate on the same pane.
+ *
+ * Overview is the default, so it is spelled by *no* `?tab=` at all — the bare route and the
+ * Overview link stay one address. Every unrelated parameter (`?identityGroupId=`, tracking, …)
+ * is kept; the pane-scoped ones of any *other* pane are dropped (see {@link PANE_SCOPED_PARAMS}).
+ *
+ * @param search The current query string (with or without its leading `?`).
+ * @param tab The pane being opened.
+ * @returns The new query string, with its leading `?`, or `''` when nothing is left.
+ */
+export function catalogDetailTabSearch(search: string, tab: CatalogDetailTabId): string {
+  const params = new URLSearchParams(search);
+  if (tab === 'overview') params.delete('tab');
+  else params.set('tab', tab);
+  for (const [pane, names] of Object.entries(PANE_SCOPED_PARAMS)) {
+    if (pane === tab || !names) continue;
+    for (const name of names) params.delete(name);
+  }
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
 // ---------------------------------------------------------------------------------------
 // The Overview pane
 // ---------------------------------------------------------------------------------------

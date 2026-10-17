@@ -22,6 +22,8 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { axe } from 'jest-axe';
+import 'jest-axe/extend-expect';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
@@ -674,6 +676,97 @@ describe('states', () => {
     for (const link of screen.getAllByRole('link', { name: 'Projects' })) {
       expect(link).toHaveAttribute('href', '/ade/dashboard/projects');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------------------
+// Keyboard and axe (MFI-28.8)
+// ---------------------------------------------------------------------------------------
+
+/** jsdom cannot compute colour, and the region rule wants the app shell this screen sits in. */
+const AXE_OPTIONS = {
+  rules: { 'color-contrast': { enabled: false }, region: { enabled: false } },
+} as const;
+
+describe('keyboard (MFI-28.8)', () => {
+  it('wraps the actions menu’s arrow keys at either end', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    const items = await screen.findAllByRole('menuitem');
+    // Radix focuses the first item on a keyboard open; ArrowUp then wraps to the last.
+    await waitFor(() => expect(items[0]).toHaveFocus());
+    fireEvent.keyDown(items[0], { key: 'ArrowUp' });
+    await waitFor(() => expect(items[items.length - 1]).toHaveFocus());
+    fireEvent.keyDown(items[items.length - 1], { key: 'ArrowDown' });
+    await waitFor(() => expect(items[0]).toHaveFocus());
+  });
+
+  it('closes the actions menu on Escape and puts focus back on its trigger', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    const trigger = within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`);
+    openMenu(trigger);
+    const first = (await screen.findAllByRole('menuitem'))[0];
+    fireEvent.keyDown(first, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
+  it('runs a verb only after focus is back on the trigger, so its dialog can return there', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    const trigger = within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`);
+    openMenu(trigger);
+    fireEvent.click(await screen.findByTestId('catalog-action-convert'));
+    expect(await screen.findByTestId('catalog-convert-dialog')).toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('wraps the sort menu too', async () => {
+    await renderCatalog();
+    await screen.findAllByTestId('catalog-card');
+    openMenu(screen.getByTestId('catalog-sort-menu'));
+    const items = await screen.findAllByRole('menuitem');
+    await waitFor(() => expect(items[0]).toHaveFocus());
+    fireEvent.keyDown(items[0], { key: 'ArrowUp' });
+    await waitFor(() => expect(items[items.length - 1]).toHaveFocus());
+  });
+
+  it('puts every card control in the tab order and leaves nothing clickable that is not', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    // One link, the scored orbs, and the menu trigger — each a native, focusable control.
+    expect(within(card).getByRole('link', { name: LEDGER.name })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: /Quality/ })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: /Lint/ })).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: `Actions for ${LEDGER.name}` })).toBeInTheDocument();
+    for (const el of Array.from(card.querySelectorAll<HTMLElement>('[tabindex]'))) {
+      expect(el.tabIndex).toBeGreaterThanOrEqual(0);
+    }
+  });
+});
+
+describe('axe (MFI-28.8)', () => {
+  it('passes on the cards view', async () => {
+    await renderCatalog();
+    await screen.findAllByTestId('catalog-card');
+    expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
+  });
+
+  it('passes on the table view', async () => {
+    await renderCatalog();
+    await screen.findByText('Ledger Graph');
+    await showTable();
+    expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
+  });
+
+  it('passes with the actions menu open', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
+    await screen.findAllByRole('menuitem');
+    expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
   });
 });
 

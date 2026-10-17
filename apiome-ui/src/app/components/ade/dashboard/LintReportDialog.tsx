@@ -32,6 +32,7 @@ import {
   LintViolationFindingsList,
   lintReportGuideContext,
 } from './lint/LintViolationFindingsList';
+import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 
 interface LintReportDialogProps {
   open: boolean;
@@ -80,6 +81,9 @@ export function LintReportDialog({
   preferCapturedScore = false,
   expanded = false,
 }: LintReportDialogProps) {
+  // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
+  // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
+  const returnFocus = useReturnFocus(open);
   const findings = report ? sortLintFindings(report.findings) : [];
   const severity = report?.severityCounts ?? {};
   const guide = lintReportGuideContext(report);
@@ -94,6 +98,7 @@ export function LintReportDialog({
       {/* Expanded: 90vh tall + widened, with the header row auto-sized and the body row taking all
           remaining height (the DialogContent is a grid), so the findings list can flex-fill. */}
       <DialogContent
+        onCloseAutoFocus={returnFocus}
         className={
           expanded
             ? 'h-[90vh] max-w-6xl grid-rows-[auto_minmax(0,1fr)]'

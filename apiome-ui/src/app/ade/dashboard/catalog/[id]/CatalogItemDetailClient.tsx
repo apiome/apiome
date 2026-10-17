@@ -43,6 +43,11 @@
  * `?tab=` opens any pane; `?tab=source&sourcePath=&line=` is the CI/compatibility link
  * (CLX-2.3) and wins outright; `?tab=format&node=` addresses one construct inside the native
  * analysis. `catalogDetailTabFromQuery` is the single rule that resolves the three.
+ *
+ * The address also *follows* the reader (MFI-28.8): every pane switch goes through `selectTab`,
+ * which replaces the current history entry with `catalogDetailTabSearch`'s query — shallow, so
+ * nothing is refetched and Back still leaves the item rather than stepping through its tabs.
+ * Overview is the bare route.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -100,6 +105,7 @@ import {
   catalogDetailOrbs,
   catalogDetailStatusLabel,
   catalogDetailTabFromQuery,
+  catalogDetailTabSearch,
   catalogDetailTabs,
   catalogFormatNodeHref,
   isCatalogDetailReadonly,
@@ -285,8 +291,29 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
 
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
+  /**
+   * Open a pane and record it in the address (MFI-28.8) — the one way a *reader's* action
+   * switches panes, so the URL a teammate is sent always names the pane on screen.
+   *
+   * `history.replaceState` is Next's shallow-routing path: `useSearchParams` sees the change,
+   * the deep-link effect below resolves it back to the same pane, and nothing reloads.
+   *
+   * @param id The pane to open.
+   */
+  const selectTab = useCallback((id: CatalogDetailTabId) => {
+    setActiveTab(id);
+    try {
+      const search = catalogDetailTabSearch(window.location.search, id);
+      if (search === window.location.search) return;
+      const url = `${window.location.pathname}${search}${window.location.hash}`;
+      window.history.replaceState(window.history.state, '', url);
+    } catch {
+      // The address is a convenience; the pane has already switched.
+    }
+  }, []);
+
   /** "View code" (and any deep link into the raw source) jumps to the Source & code pane. */
-  const showSourceTab = useCallback(() => setActiveTab('source'), []);
+  const showSourceTab = useCallback(() => selectTab('source'), [selectTab]);
 
   // Compatibility / CI deep links open the Source pane; any other `?tab=` naming a known pane
   // opens that pane. An unknown value leaves the reader where they are.
@@ -307,9 +334,9 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
       label?: string | null,
     ) => {
       setSourceFocus({ line, file, range: range ?? null, label: label ?? null });
-      setActiveTab('source');
+      selectTab('source');
     },
-    [],
+    [selectTab],
   );
 
   /** The shareable address of one analysis node — `?tab=format&node=<id>` on this route. */
@@ -318,8 +345,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   /** Follow a lint finding to its parsed entity: switch to Overview and queue the scroll. */
   const navigateToEntity = useCallback((name: string) => {
     setPendingAnchor(catalogEntityAnchorId(name));
-    setActiveTab('overview');
-  }, []);
+    selectTab('overview');
+  }, [selectTab]);
 
   // Once Overview is active and its content has mounted, scroll the pending entity into view
   // and highlight it. Runs after commit so the anchor element exists.
@@ -426,10 +453,10 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
     (index: number) => {
       const count = tabs.length;
       const next = ((index % count) + count) % count;
-      setActiveTab(tabs[next].id);
+      selectTab(tabs[next].id);
       tabRefs.current[next]?.focus();
     },
-    [tabs],
+    [tabs, selectTab],
   );
 
   if (loading) {
@@ -499,7 +526,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             <SuiteRegressionBadge
               surface="catalog"
               artifact={item.slug || item.id}
-              onSelect={() => setActiveTab('test-bench')}
+              onSelect={() => selectTab('test-bench')}
             />
           </div>
         }
@@ -585,7 +612,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
                   tabIndex={isActive ? 0 : -1}
                   data-testid={`catalog-detail-tab-${tab.id}`}
                   className={tabTriggerClass({ active: isActive })}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => selectTab(tab.id)}
                   onKeyDown={(event) => {
                     switch (event.key) {
                       case 'ArrowRight':
@@ -631,7 +658,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             <CatalogConvertedStrip
               conversion={item.conversion}
               conversionCount={tabCounts.conversions ?? 0}
-              onOpenHistory={() => setActiveTab('conversions')}
+              onOpenHistory={() => selectTab('conversions')}
             />
           </div>
           <CatalogRelatedArtifactsPanel
@@ -652,7 +679,7 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
             qualityScore={orbs?.quality ?? null}
             qualityGrade={item.qualityGrade ?? null}
             highlightedAnchor={highlightedAnchor}
-            onOpenLint={() => setActiveTab('lint')}
+            onOpenLint={() => selectTab('lint')}
             onOpenSource={showSourceTab}
           />
         </TabPanel>
