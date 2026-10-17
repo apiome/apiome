@@ -239,6 +239,24 @@ apiome tags update payments-api stable --version v2.1.0
 `--version` set to where the tag already points, only the description changes. An **immutable** tag
 can never be moved — the command exits `6`. With `--json` it prints the updated tag.
 
+### Delete a version tag from the CLI
+
+`apiome tags delete <project> <tag>` removes a tag you no longer use — an old release-candidate
+channel, say. Only the tag goes: the version it points to is not touched.
+
+```bash
+apiome tags delete payments-api next-rc
+# Deleting tag 'next-rc' (currently points to 2.2.0). The version itself is not touched.
+# Type the tag name to confirm: next-rc
+# ✔ Deleted tag 'next-rc'.
+```
+
+1. **Run** the command with the tag's name (or its id).
+2. **Type the tag name** exactly as shown to confirm, or pass `--yes` in a script.
+
+An **immutable** tag can never be deleted — the command exits `6`. A protected tag needs a tenant
+administrator. With `--json` it prints `{ "deleted": true, "tag": "next-rc", "was_pointing_to": "2.2.0" }`.
+
 ### Delete a version from the CLI
 
 `apiome versions delete <project> <version>` removes a version you no longer need — a typo in the
