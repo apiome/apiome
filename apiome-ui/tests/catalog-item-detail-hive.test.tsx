@@ -74,6 +74,10 @@ const ITEM = {
     routingReason: 'x12 is OpenAPI-worthy but not OpenAPI (1 operation(s), 27 type(s), 0 channel(s)) → catalog item.',
   },
   toolVersions: { 'x12-adapter': '1.4.0', pyx12: '3.1.0' },
+  // MFI-6.3: the header shows the item's domain and tags.
+  paradigm: 'data_schema',
+  domain: 'healthcare',
+  tags: ['claims', 'hipaa', 'x12'],
   summary: { services: 1, operations: 1, types: 27, channels: null },
   source: {
     kind: 'file',
@@ -318,6 +322,29 @@ describe('the Overview pane', () => {
     const group = screen.getByTestId('catalog-detail-parsed-group');
     expect(group).toHaveTextContent('Types');
     expect(within(group).getAllByTestId('catalog-detail-parsed-entity')).toHaveLength(2);
+  });
+});
+
+describe('categories (MFI-6.3)', () => {
+  it('shows the domain and tags in the header, and opens the Categorize dialog', async () => {
+    await renderDetail({ ...ITEM, paradigm: 'data_schema', domain: 'healthcare', tags: ['claims', 'x12'] });
+    const line = screen.getByTestId('catalog-card-categories');
+    expect(line).toHaveTextContent('claims');
+    const button = screen.getByTestId('catalog-detail-categorize');
+    expect(button).toHaveTextContent('Edit categories');
+    fireEvent.click(button);
+    const dialog = await screen.findByTestId('catalog-categories-dialog');
+    expect(dialog).toHaveTextContent('Categorize Claims 837P');
+    expect(within(dialog).getByTestId('catalog-categories-paradigm')).toHaveTextContent('data_schema');
+  });
+
+  it('offers "Categorize…" on an uncategorized item, and nothing on a deleted one', async () => {
+    const { unmount } = await renderDetail({ ...ITEM, domain: null, tags: [] });
+    expect(screen.getByTestId('catalog-detail-categorize')).toHaveTextContent('Categorize…');
+    expect(screen.queryByTestId('catalog-card-categories')).not.toBeInTheDocument();
+    unmount();
+    await renderDetail({ ...ITEM, deleted_at: '2026-08-16T00:00:00.000Z' });
+    expect(screen.queryByTestId('catalog-detail-categorize')).not.toBeInTheDocument();
   });
 });
 

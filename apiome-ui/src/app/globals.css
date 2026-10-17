@@ -21872,6 +21872,89 @@ html[data-motion='reduce'] .prm-spin {
   color: var(--fg-muted);
 }
 
+/* ---- Categories: domain + tags (MFI-6.3, #3755) ---------------------------
+   One quiet line on the card (and the item page's header) under the format
+   slot: the domain as a neutral pill, then up to three tags and "+n". The
+   categorize dialog reuses the same tag pill with a remove button inside. */
+.cat-card__categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.cat-card__tag-more {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.cat-tag {
+  gap: var(--space-1);
+}
+
+.cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-tag__remove {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.cat-tag__remove:hover {
+  color: var(--fg);
+}
+
+.cat-tag__remove > svg {
+  inline-size: var(--fs-xs);
+  block-size: var(--fs-xs);
+}
+
+.cat-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cat-categories__paradigm {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.cat-categories__term {
+  color: var(--fg-muted);
+}
+
+.cat-categories__tags {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A refusal on its own soft ground — a `div`, so the unlayered `p` colour
+   cannot mute it (see the CATALOG ITEM DETAIL note). */
+.cat-categories__error {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  font-size: var(--fs-sm);
+  color: var(--danger-fg);
+}
+
 /* ==========================================================================
    CATALOG ITEM DETAIL  (HIVE-7.2, #5319)
    --------------------------------------------------------------------------

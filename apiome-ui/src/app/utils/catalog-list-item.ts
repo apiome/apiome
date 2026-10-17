@@ -28,6 +28,10 @@ export interface NormalizedCatalogListItem {
   formatMetadata?: Record<string, unknown> | null;
   identityGroupId?: string | null;
   conversion?: unknown;
+  /** Categorization (MFI-6.3): auto-derived paradigm, manual domain, free-form tags. */
+  paradigm?: string | null;
+  domain?: string | null;
+  tags?: string[];
 }
 
 function pick<T>(raw: Record<string, unknown>, camel: string, snake: string): T | undefined {
@@ -49,5 +53,7 @@ export function normalizeCatalogListItem(raw: Record<string, unknown>): Normaliz
       pick<Record<string, unknown>>(raw, 'formatMetadata', 'format_metadata') ?? base.formatMetadata,
     identityGroupId:
       pick<string | null>(raw, 'identityGroupId', 'identity_group_id') ?? base.identityGroupId,
+    // An older API without MFI-6.3 sends no tags; an empty list keeps every reader simple.
+    tags: Array.isArray(raw.tags) ? (raw.tags as unknown[]).filter((t): t is string => typeof t === 'string') : [],
   };
 }

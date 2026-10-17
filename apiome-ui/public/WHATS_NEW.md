@@ -40,6 +40,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Design system:
   - New status strip: several statuses about one object in one row of chips, with one detail open at a time, instead of a stack of banners
   - Catalog: an item's open tab is kept in the page address (`?tab=lint`), so you can link a teammate straight to it; the **⋯**, sort and format menus wrap with the arrow keys, and closing a dialog puts focus back on the button that opened it
+  - Catalog: give an item a **domain** and **tags** (**⋯ → Categorize…**, or **Categorize…** on its page) and filter the list by domain and tag, next to the paradigm the import detected
   - Catalog: an item's **Provenance** tab is now two columns — the import's four steps, and **Toolchain & routing** with the revision fingerprint, **Publishable: false** and why the import put it in the catalog
   - Catalog: tick several items (cards or table, with **Select all**) to convert, delete or undelete them together — bulk convert previews each item's fidelity and asks for each low-fidelity acknowledgement (or one for all), and any item that fails is listed with its reason
   - Catalog: while the list, an item or one of its tabs loads, placeholders in the shape of the content hold its place, so nothing jumps when it arrives

@@ -228,6 +228,15 @@
       ]
     },
     {
+      "id": "catalog-categorize",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-catalog/categorize.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/catalog/CatalogCategoriesDialog.tsx"
+      ]
+    },
+    {
       "id": "catalog-item",
       "route": "/ade/dashboard/catalog/[id]",
       "waitFor": "#a11y-mount > *",

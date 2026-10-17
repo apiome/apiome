@@ -48,6 +48,7 @@ import {
   type CatalogDashboardSortDirection,
 } from '@/app/utils/catalog-dashboard-sort';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
+import { PROJECT_DOMAIN_CATEGORIES } from '@/app/utils/project-domain-categories';
 
 // ---------------------------------------------------------------------------------------
 // The row
@@ -89,6 +90,12 @@ export interface CatalogItem {
   identityGroupId?: string | null;
   /** The convert-to-OpenAPI back-link (MFI-23.11): present once the item has been converted. */
   conversion?: CatalogConversion | null;
+  /** Auto-derived paradigm — the latest revision's protocol (MFI-6.3). */
+  paradigm?: string | null;
+  /** Manual domain id (`finance`, `iot`, …), or null when none is set (MFI-6.3). */
+  domain?: string | null;
+  /** Free-form tags, lower-cased and alphabetical (MFI-6.3). */
+  tags?: readonly string[];
 }
 
 /** The quality history of every item on screen, keyed by item id. */
@@ -240,7 +247,14 @@ export function searchCatalog<T extends CatalogItem>(items: readonly T[], query:
   return items.filter((item) => {
     const tokens = catalogFormatSearchTokens(item.sourceFormat ?? null);
     return (
-      [item.name, item.slug ?? '', item.description ?? '', item.sourceFormat ?? '', item.protocol ?? '']
+      [
+        item.name,
+        item.slug ?? '',
+        item.description ?? '',
+        item.sourceFormat ?? '',
+        item.protocol ?? '',
+        ...(item.tags ?? []),
+      ]
         .join(' ')
         .toLowerCase()
         .includes(needle) || tokens.some((token) => token.includes(needle))
@@ -270,6 +284,10 @@ export interface CatalogFilterState {
   source: string;
   /** An A–F letter, `unscored`, or {@link CATALOG_FILTER_ANY}. */
   grade: string;
+  /** A domain id, {@link CATALOG_UNCATEGORIZED}, or {@link CATALOG_FILTER_ANY} (MFI-6.3). */
+  domain: string;
+  /** A tag, {@link CATALOG_UNCATEGORIZED}, or {@link CATALOG_FILTER_ANY} (MFI-6.3). */
+  tag: string;
 }
 
 /** The neutral state of every quick filter — what "Clear all filters" restores. */
@@ -278,7 +296,101 @@ export const EMPTY_CATALOG_FILTERS: CatalogFilterState = {
   protocol: CATALOG_FILTER_ANY,
   source: CATALOG_FILTER_ANY,
   grade: CATALOG_FILTER_ANY,
+  domain: CATALOG_FILTER_ANY,
+  tag: CATALOG_FILTER_ANY,
 };
+
+/**
+ * The value the Domain and Tag selects use for "has none" — the same `uncategorized` bucket
+ * the REST facets (`GET /v1/catalog/{tenant}/facets`) use, so a URL or a CLI filter means the
+ * same thing here.
+ */
+export const CATALOG_UNCATEGORIZED = 'uncategorized';
+
+/**
+ * The display name of a domain id — the Projects pickers' label without its parenthesised
+ * examples ("Finance (Account, Transaction, …)" → "Finance"), short enough for a card pill and
+ * a filter menu; or the id itself for a free-text domain an older import recorded.
+ */
+export function catalogDomainLabel(domain: string): string {
+  const label = PROJECT_DOMAIN_CATEGORIES.find((entry) => entry.id === domain)?.label;
+  return label ? label.split(' (')[0] : domain;
+}
+
+/**
+ * The Domain select (MFI-6.3): every domain at least one item is in — plus the current choice,
+ * so a selection never vanishes from its own menu — in label order, then **No domain**.
+ *
+ * @param items Every row on screen (before the quick filters).
+ * @param selected The current Domain value.
+ * @returns The select's options.
+ */
+export function catalogDomainOptions(
+  items: readonly CatalogItem[],
+  selected: string = CATALOG_FILTER_ANY
+): CatalogFilterOption[] {
+  const present = new Set(items.map((item) => item.domain).filter((d): d is string => Boolean(d)));
+  if (selected !== CATALOG_FILTER_ANY && selected !== CATALOG_UNCATEGORIZED) present.add(selected);
+  const domains = [...present]
+    .map((value) => ({ value, label: catalogDomainLabel(value) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return [
+    { value: CATALOG_FILTER_ANY, label: 'All domains' },
+    ...domains,
+    { value: CATALOG_UNCATEGORIZED, label: 'No domain' },
+  ];
+}
+
+/** Most tags one catalog item may carry — the REST API's limit (MFI-6.3). */
+export const CATALOG_MAX_TAGS = 20;
+
+/** Longest tag the REST API accepts. */
+export const CATALOG_MAX_TAG_LENGTH = 64;
+
+/**
+ * A tag as the API will store it, or why it cannot be one (MFI-6.3).
+ *
+ * The same rule as the server's `normalize_tag`: inner whitespace collapsed, trimmed,
+ * lower-cased, 1–64 characters, no control characters, and never the reserved
+ * {@link CATALOG_UNCATEGORIZED} bucket name. Checking it here lets the editor refuse a tag as
+ * it is typed instead of after a round trip.
+ *
+ * @param raw What was typed.
+ * @returns `{ tag }` when it is acceptable, otherwise `{ error }`.
+ */
+export function normalizeCatalogTag(raw: string): { tag: string } | { error: string } {
+  const tag = raw.replace(/\s+/g, ' ').trim().toLowerCase();
+  if (!tag) return { error: 'A tag cannot be empty.' };
+  if (tag.length > CATALOG_MAX_TAG_LENGTH) {
+    return { error: `A tag can be at most ${CATALOG_MAX_TAG_LENGTH} characters.` };
+  }
+  if (/[\x00-\x1f\x7f]/.test(tag)) return { error: 'A tag cannot contain control characters.' };
+  if (tag === CATALOG_UNCATEGORIZED) {
+    return { error: `“${CATALOG_UNCATEGORIZED}” is reserved for items with no tags.` };
+  }
+  return { tag };
+}
+
+/**
+ * The Tag select (MFI-6.3): every tag in use (plus the current choice), alphabetical, then
+ * **No tags**.
+ *
+ * @param items Every row on screen (before the quick filters).
+ * @param selected The current Tag value.
+ * @returns The select's options.
+ */
+export function catalogTagOptions(
+  items: readonly CatalogItem[],
+  selected: string = CATALOG_FILTER_ANY
+): CatalogFilterOption[] {
+  const present = new Set(items.flatMap((item) => item.tags ?? []));
+  if (selected !== CATALOG_FILTER_ANY && selected !== CATALOG_UNCATEGORIZED) present.add(selected);
+  return [
+    { value: CATALOG_FILTER_ANY, label: 'All tags' },
+    ...[...present].sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value })),
+    { value: CATALOG_UNCATEGORIZED, label: 'No tags' },
+  ];
+}
 
 /** One entry of a quick-filter select. */
 export interface CatalogFilterOption {
@@ -390,6 +502,18 @@ export function matchesCatalogFilters(
       return false;
     }
   }
+  // Domain and Tag (MFI-6.3): the `uncategorized` value keeps the rows with none.
+  const domain = filters.domain ?? CATALOG_FILTER_ANY;
+  if (domain !== CATALOG_FILTER_ANY) {
+    if (domain === CATALOG_UNCATEGORIZED ? Boolean(item.domain) : item.domain !== domain) {
+      return false;
+    }
+  }
+  const tag = filters.tag ?? CATALOG_FILTER_ANY;
+  if (tag !== CATALOG_FILTER_ANY) {
+    const tags = item.tags ?? [];
+    if (tag === CATALOG_UNCATEGORIZED ? tags.length > 0 : !tags.includes(tag)) return false;
+  }
   return true;
 }
 
@@ -405,7 +529,9 @@ export function isCatalogNarrowed(
     filters.formats.length > 0 ||
     filters.protocol !== CATALOG_FILTER_ANY ||
     filters.source !== CATALOG_FILTER_ANY ||
-    filters.grade !== CATALOG_FILTER_ANY
+    filters.grade !== CATALOG_FILTER_ANY ||
+    (filters.domain ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY ||
+    (filters.tag ?? CATALOG_FILTER_ANY) !== CATALOG_FILTER_ANY
   );
 }
 

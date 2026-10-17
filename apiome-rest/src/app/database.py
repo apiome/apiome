@@ -13856,6 +13856,97 @@ class Database:
         "m.id, m.tenant_id, m.group_id, m.project_id, m.link_source, m.created_by, m.created_at"
     )
 
+    # ------------------------------------------------------------------------------------------------
+    # Catalog categorization (MFI-6.3, #3755): manual domain + free-form tags (V277 artifact_tags)
+    # ------------------------------------------------------------------------------------------------
+
+    def get_artifact_tags_for_projects(
+        self, tenant_id: str, project_ids: List[str]
+    ) -> Dict[str, List[str]]:
+        """Return each project's tags (``apiome.artifact_tags``), alphabetical, keyed by project id.
+
+        One query for the whole list, so the catalog list and its facets never read tags per row.
+        A project with no tags is absent from the result.
+
+        Args:
+            tenant_id: The tenant the projects belong to (the read is tenant-scoped).
+            project_ids: The projects to read; an empty list reads nothing.
+
+        Returns:
+            ``{project_id: [tag, ...]}``.
+        """
+        if not project_ids:
+            return {}
+        rows = self.execute_query(
+            """
+            SELECT project_id::text AS project_id, tag
+            FROM apiome.artifact_tags
+            WHERE tenant_id = %s::uuid AND project_id = ANY(%s::uuid[])
+            ORDER BY tag
+            """,
+            (tenant_id, list(project_ids)),
+        )
+        tags: Dict[str, List[str]] = {}
+        for row in rows:
+            tags.setdefault(row["project_id"], []).append(row["tag"])
+        return tags
+
+    def set_catalog_item_categories(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        domain: Optional[str],
+        tags: List[str],
+        user_id: Optional[str],
+    ) -> bool:
+        """Replace a catalog item's manual domain and tags, together, in one transaction.
+
+        The domain is written to ``metadata.domainCategory`` (``"none"`` clears it — the Projects
+        pickers' spelling) and any free-text ``metadata.domain`` is removed, since it would
+        otherwise override the choice just made. The tag set replaces the item's tags outright.
+
+        Args:
+            tenant_id: The item's tenant.
+            project_id: The catalog item (a non-publishable, live project).
+            domain: A validated domain id, or ``None`` to clear it.
+            tags: Validated, normalized tags (see :func:`app.catalog_categories.normalize_tags`).
+            user_id: Who made the change, recorded on each tag row.
+
+        Returns:
+            ``True`` once written; ``False`` when no live catalog item matched (nothing written).
+        """
+
+        def work(cursor: Any) -> Optional[bool]:
+            cursor.execute(
+                """
+                UPDATE apiome.projects
+                SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'domain')
+                               || jsonb_build_object('domainCategory', %s::text),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid AND tenant_id = %s::uuid
+                  AND publishable = false AND deleted_at IS NULL
+                """,
+                (domain or "none", project_id, tenant_id),
+            )
+            if cursor.rowcount != 1:
+                return None
+            cursor.execute(
+                "DELETE FROM apiome.artifact_tags WHERE tenant_id = %s::uuid AND project_id = %s::uuid",
+                (tenant_id, project_id),
+            )
+            for tag in tags:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.artifact_tags (tenant_id, project_id, tag, created_by)
+                    VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                    """,
+                    (tenant_id, project_id, tag, user_id),
+                )
+            return True
+
+        return bool(self._guarded_tx(work))
+
     def get_identity_group_id_for_project(
         self, tenant_id: str, project_id: str
     ) -> Optional[str]:

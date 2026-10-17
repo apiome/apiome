@@ -2646,9 +2646,73 @@ class CatalogItemSchema(BaseModel):
     related_artifacts: List["RelatedArtifactRef"] = Field(
         default_factory=list, serialization_alias="relatedArtifacts"
     )
+    # Categorization (MFI-6.3, #3755): the auto-derived paradigm (the latest revision's protocol),
+    # the manual domain (metadata.domainCategory) and the free-form tags (apiome.artifact_tags).
+    paradigm: Optional[str] = Field(
+        None, description="Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …)."
+    )
+    domain: Optional[str] = Field(
+        None, description="Manual domain id (e.g. 'finance'), or null when none is set."
+    )
+    tags: List[str] = Field(
+        default_factory=list, description="Free-form tags, lower-cased, alphabetical."
+    )
 
     class Config:
         from_attributes = True
+
+
+class CatalogCategoriesUpdate(BaseModel):
+    """``PUT /v1/catalog/{tenant}/{item}/categories`` (MFI-6.3): set an item's manual categories.
+
+    Both fields are replaced outright: ``domain`` null (or ``"none"``) clears the domain, and
+    ``tags`` is the item's whole tag set.
+    """
+
+    domain: Optional[str] = Field(
+        None,
+        description="A domain id from GET /v1/projects/domains, or null/'none' to clear it.",
+        max_length=64,
+    )
+    tags: List[str] = Field(
+        default_factory=list,
+        description="The item's tags (at most 20, each 1-64 characters); stored lower-cased.",
+        max_length=200,
+    )
+
+
+class CatalogCategoriesResponse(BaseModel):
+    """The item's categorization after a write (MFI-6.3)."""
+
+    paradigm: Optional[str] = None
+    domain: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+
+class CatalogFacetBucket(BaseModel):
+    """One value of one catalog facet, with how many items it would show (MFI-6.3)."""
+
+    value: str = Field(description="The value to filter by ('uncategorized' = items with none).")
+    label: str = Field(description="Display label.")
+    count: int = Field(description="Items with this value among those the other facets leave.")
+    selected: bool = Field(False, description="Whether the request selected this value.")
+
+
+class CatalogFacets(BaseModel):
+    """The four catalog browse facets (MFI-6.3)."""
+
+    protocols: List[CatalogFacetBucket] = Field(default_factory=list, description="Paradigm.")
+    formats: List[CatalogFacetBucket] = Field(default_factory=list, description="Source format.")
+    domains: List[CatalogFacetBucket] = Field(default_factory=list, description="Manual domain.")
+    tags: List[CatalogFacetBucket] = Field(default_factory=list, description="Free-form tags.")
+
+
+class CatalogFacetsResponse(BaseModel):
+    """``GET /v1/catalog/{tenant}/facets`` (MFI-6.3): facet counts for the catalog browse."""
+
+    total: int = Field(description="Catalog items before any facet is applied.")
+    matched: int = Field(description="Catalog items the selected facets keep.")
+    facets: CatalogFacets
 
 
 class CatalogNormalizedSummary(BaseModel):

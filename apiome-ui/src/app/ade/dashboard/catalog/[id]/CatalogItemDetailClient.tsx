@@ -62,6 +62,7 @@ import {
   LayoutDashboard,
   Route,
   ShieldCheck,
+  Tags,
 } from 'lucide-react';
 
 import { parseCompatibilitySourceQuery } from '@lib/compatibility-source-link';
@@ -122,6 +123,8 @@ import type { AnalysisSummary } from '@/app/utils/catalog-payload-analysis';
 import type { RelatedArtifact } from '@/app/utils/catalog-related-artifacts';
 import { cn } from '@lib/utils';
 import { CatalogDetailSkeleton } from '@/app/components/ade/catalog/CatalogSkeletons';
+import { CatalogCategoryRow } from '@/app/components/ade/catalog/CatalogCard';
+import { CatalogCategoriesDialog } from '@/app/components/ade/catalog/CatalogCategoriesDialog';
 import { scrollBehavior } from '@lib/motion';
 
 /** The detail payload (MFI-23.2 envelope + the MFI-23.9 `summary`/`source` enrichments). */
@@ -155,6 +158,10 @@ interface CatalogItemDetail {
   /** Cross-format identity group (MFI-6.4, #4410). */
   identityGroupId?: string | null;
   relatedArtifacts?: RelatedArtifact[];
+  /** Categorization (MFI-6.3): derived paradigm, manual domain, free-form tags. */
+  paradigm?: string | null;
+  domain?: string | null;
+  tags?: string[];
 }
 
 /** Element-id prefix shared by the tab bar and the panes so their ARIA wiring lines up. */
@@ -268,6 +275,8 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
   const [convertOpen, setConvertOpen] = useState(false);
   /** The in-place export dialog, used while the Export studio is unreleased. */
   const [exportOpen, setExportOpen] = useState(false);
+  /** The categorize dialog (MFI-6.3). */
+  const [categorizeOpen, setCategorizeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<CatalogDetailTabId>('overview');
   // The counts the three counted panes report once they have loaded (MFI-25.1 tab chips).
   const [tabCounts, setTabCounts] = useState<{
@@ -528,6 +537,19 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
               artifact={item.slug || item.id}
               onSelect={() => selectTab('test-bench')}
             />
+            {/* MFI-6.3: the item's domain and tags, and the way to change them. */}
+            <CatalogCategoryRow item={item} />
+            {isCatalogDetailReadonly(item) ? null : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCategorizeOpen(true)}
+                data-testid="catalog-detail-categorize"
+              >
+                <Tags aria-hidden />
+                {item.domain || (item.tags ?? []).length > 0 ? 'Edit categories' : 'Categorize…'}
+              </Button>
+            )}
           </div>
         }
         actions={
@@ -806,6 +828,25 @@ export function CatalogItemDetailClient({ itemId }: { itemId: string }) {
         onOpenChange={setConvertOpen}
         onConverted={handleConverted}
       />
+
+      {categorizeOpen ? (
+        <CatalogCategoriesDialog
+          open
+          item={{
+            id: item.id,
+            name: item.name,
+            paradigm: item.paradigm ?? null,
+            domain: item.domain ?? null,
+            tags: [...(item.tags ?? [])],
+          }}
+          onOpenChange={setCategorizeOpen}
+          onSaved={(saved) =>
+            setItem((current) =>
+              current ? { ...current, domain: saved.domain, tags: [...saved.tags].sort() } : current
+            )
+          }
+        />
+      ) : null}
 
       {exportOpen ? (
         <ExportDialog

@@ -143,6 +143,7 @@ export default function CatalogTable({
   onDelete,
   onRestore,
   onPermanentDelete,
+  onCategorize,
   busy = false,
   toolbar,
   empty,
@@ -301,6 +302,7 @@ export default function CatalogTable({
               onDelete={onDelete}
               onRestore={onRestore}
               onPermanentDelete={onPermanentDelete}
+              onCategorize={onCategorize}
             />
           </>
         ),
@@ -319,6 +321,7 @@ export default function CatalogTable({
       onOpenVersions,
       onPermanentDelete,
       onRestore,
+      onCategorize,
     ]
   );
 
