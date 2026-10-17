@@ -110,6 +110,10 @@ EXIT_PROPERTY_BREAKING = 6
 #: to remove the attributes and delete in one step. Another per-command use of 6.
 EXIT_PROPERTY_IN_USE = 6
 
+#: ``apiome schema arazzo --expect-sha256`` (CLI 9.6): the downloaded document's SHA-256 does not
+#: match the expected digest; nothing was written. Another per-command use of 6.
+EXIT_CHECKSUM_MISMATCH = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

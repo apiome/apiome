@@ -1,4 +1,10 @@
-"""``apiome schema test`` — CI schema testing over the IXH-5.1/5.2 services (#5117).
+"""``apiome schema`` — published-spec downloads (CLI 9.x) and CI schema testing (#5117).
+
+``apiome schema arazzo <tenant>/<project>/<version>`` (CLI 9.6, #3249) downloads a published
+version's Arazzo workflows; the shared ref/format/checksum logic is in
+:mod:`apiome_cli.published_spec`.
+
+``apiome schema test`` runs CI schema testing over the IXH-5.1/5.2 services.
 
 The command runs the same server-side validation the Schema Test Bench uses, against the
 same path-shaped schema reference, and turns the verdicts into CI evidence: a stable
@@ -21,15 +27,28 @@ this module owns only the flags and the HTTP calls.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Optional
 
 import typer
 
+from apiome_cli.cli_context import insecure_from_context, settings_from_context, timeout_from_context
 from apiome_cli.client import api_paths
+from apiome_cli.client.http import RestClient
 from apiome_cli.client.version_scope import tenant_scoped_client
+from apiome_cli.exit_codes import EXIT_CHECKSUM_MISMATCH, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, json_mode_from_context
+from apiome_cli.published_spec import (
+    fetch_published_document,
+    normalize_expected_sha256,
+    parse_published_ref,
+    parse_serialization,
+    published_document_path,
+    sha256_hex,
+)
+from apiome_cli.spec_output import build_spec_export_metadata, emit_download_metadata, write_document_bytes
 from apiome_cli.schema_test import (
     SOURCE_PAYLOAD,
     SOURCE_SUITE,
@@ -48,7 +67,7 @@ from apiome_cli.schema_test import (
 
 app = typer.Typer(
     name="schema",
-    help="Test payloads against cataloged schemas (CI evidence).",
+    help="Download published specs and test payloads against schemas.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -58,6 +77,90 @@ app = typer.Typer(
 def schema_group(ctx: typer.Context) -> None:
     """Schema testing command group."""
     group_callback_without_subcommand(ctx)
+
+
+@app.command("arazzo")
+def schema_arazzo(
+    ctx: typer.Context,
+    ref: str = typer.Argument(
+        ...,
+        metavar="TENANT/PROJECT/VERSION",
+        help="Published version by slugs, e.g. acme-corp/payments-api/2.1.0.",
+    ),
+    class_name: Optional[str] = typer.Option(
+        None,
+        "--class",
+        help="Download only this class's workflows (the per-class route).",
+    ),
+    serialization: str = typer.Option(
+        "yaml",
+        "--format",
+        help="json or yaml (default yaml, the usual form for Arazzo).",
+    ),
+    output: str = typer.Option(
+        "-",
+        "--output",
+        "-o",
+        help="File to write, or - for stdout (default).",
+    ),
+    expect_sha256: Optional[str] = typer.Option(
+        None,
+        "--expect-sha256",
+        help="Fail with exit 6, writing nothing, unless the document has this SHA-256.",
+    ),
+) -> None:
+    """Download a published version's Arazzo workflows.
+
+    Fetches GET /v1/arazzo/{tenant}/{project}/{version}, or the per-class route with --class,
+    and writes the document byte for byte as served. A summary with its sha256 checksum goes
+    to stderr (with --json, a JSON line: on stdout when --output is a file, on stderr when the
+    document goes to stdout).
+
+    Exit codes: 0 written; 6 --expect-sha256 did not match (nothing written); 2 bad usage, or
+    the version or class is unknown, unpublished, or private without an API key; 1 a
+    transport or server error.
+    """
+    try:
+        published = parse_published_ref(ref)
+        wanted_format = parse_serialization(serialization)
+        expected = normalize_expected_sha256(expect_sha256) if expect_sha256 is not None else None
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    if class_name is not None and not class_name.strip():
+        typer.echo("--class cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    output = output.strip()
+    if not output:
+        typer.echo("--output cannot be empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    settings = settings_from_context(ctx)
+    client = RestClient(settings, timeout=timeout_from_context(ctx), verify=not insecure_from_context(ctx))
+    path = published_document_path("arazzo", published, class_name.strip() if class_name else None)
+    download = fetch_published_document(client, path, spec_format="arazzo", serialization=wanted_format)
+
+    actual = sha256_hex(download.body)
+    if expected is not None and actual != expected:
+        typer.echo(
+            f"SHA-256 mismatch for {published.label()}: expected {expected}, got {actual}. "
+            "Nothing was written.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_CHECKSUM_MISMATCH)
+
+    write_document_bytes(download.body, output)
+    metadata = replace(
+        build_spec_export_metadata(
+            download=download,
+            scope_source_openapi_version=None,
+            scope_fidelity_target=None,
+            fidelity=None,
+            output=output,
+        ),
+        checksum=f"sha256:{actual}",
+    )
+    emit_download_metadata(metadata, json_mode=json_mode_from_context(ctx))
 
 
 @app.command("test")
