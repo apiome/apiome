@@ -672,6 +672,11 @@ def classes_with_properties_tags(tenant_slug: str, version_record_id: str | UUID
     return f"{V1}/classes/{tenant_slug}/version/{version_record_id}/with-properties-tags"
 
 
+def version_fork(tenant_slug: str, target_project_id: str | UUID) -> str:
+    """Fork a revision of another project into ``target_project_id`` (CLI 4.4)."""
+    return f"{V1}/versions/{tenant_slug}/{target_project_id}/fork"
+
+
 def project_tags(tenant_slug: str, project_id: str | UUID) -> str:
     """The project's class-tag library (``apiome.tags``)."""
     return f"{V1}/project-tags/{tenant_slug}/{project_id}"

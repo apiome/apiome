@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.212.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.212.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 52 operations
 
@@ -178,6 +178,9 @@ Fork a schema version line into this project from a source revision in another p
 
 Not the same as a named branch within one project (#500): fork is cross-project isolation with recorded lineage.
 The forked revision's quality/lint score is captured after the response is sent (#5259).
+
+Copies the source revision's classes and their properties (not its paths). A ``versionId``
+the target project already has is ``409`` with ``detail.code`` ``version_exists`` (#3211).
 
 Operation id: `fork_version_from_revision_v1_versions__tenant_slug___project_id__fork_post`
 

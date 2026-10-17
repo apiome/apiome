@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.212.0",
+    "version": "1.212.1",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -33700,7 +33700,7 @@
           "versions"
         ],
         "summary": "Fork Version From Revision",
-        "description": "Fork a schema version line into this project from a source revision in another project (sandbox / provenance).\n\nNot the same as a named branch within one project (#500): fork is cross-project isolation with recorded lineage.\nThe forked revision's quality/lint score is captured after the response is sent (#5259).",
+        "description": "Fork a schema version line into this project from a source revision in another project (sandbox / provenance).\n\nNot the same as a named branch within one project (#500): fork is cross-project isolation with recorded lineage.\nThe forked revision's quality/lint score is captured after the response is sent (#5259).\n\nCopies the source revision's classes and their properties (not its paths). A ``versionId``\nthe target project already has is ``409`` with ``detail.code`` ``version_exists`` (#3211).",
         "operationId": "fork_version_from_revision_v1_versions__tenant_slug___project_id__fork_post",
         "parameters": [
           {
@@ -96894,7 +96894,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "completed_at": {
             "anyOf": [
@@ -98804,7 +98804,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99032,7 +99032,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99563,14 +99563,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101595,7 +101595,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "35ecf579-4ba5-4864-8692-8b4883f19479"
+            "example": "76336905-6684-4869-9c8f-21a18b656252"
           },
           "method": {
             "type": "string",
@@ -104122,7 +104122,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -105858,7 +105858,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "browse_url": {
             "anyOf": [
@@ -145715,7 +145715,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           }
         },
         "additionalProperties": false,
@@ -157037,7 +157037,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164180,14 +164180,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T03:43:12Z"
+            "example": "2026-10-17T03:55:12Z"
           },
           "outcome": {
             "anyOf": [

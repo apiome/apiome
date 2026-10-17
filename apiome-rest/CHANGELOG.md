@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.348.1] - 2026-10-16
+
+### Fixed
+- **Fork into a project that already has the version (#3211, CLI 4.4)**: `POST /v1/versions/{tenant}/{project}/fork`
+  with a `versionId` the target project already has now returns `409` with `detail` `{ "code":
+  "version_exists", "message", "version_id" }`, instead of a `400` carrying the database's
+  unique-constraint text. `apiome versions fork` maps it to exit 6.
+
+The OpenAPI version moves to 1.212.1.
+
 ## [1.348.0] - 2026-10-16
 
 ### Added

@@ -1754,6 +1754,9 @@ async def fork_version_from_revision(
 
     Not the same as a named branch within one project (#500): fork is cross-project isolation with recorded lineage.
     The forked revision's quality/lint score is captured after the response is sent (#5259).
+
+    Copies the source revision's classes and their properties (not its paths). A ``versionId``
+    the target project already has is ``409`` with ``detail.code`` ``version_exists`` (#3211).
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.CREATE)
     target_project = db.get_project_by_id(project_id, auth_data["tenant_id"])
@@ -1821,6 +1824,17 @@ async def fork_version_from_revision(
 
     if not result.get("success"):
         err = result.get("error", "Fork failed")
+        if "versions_project_id_version_id_key" in err or "duplicate key" in err:
+            # The target project already has this version label (the unique key on
+            # (project_id, version_id)) — a conflict, not a malformed request (#3211).
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "version_exists",
+                    "message": f"Version {version_id} already exists in this project.",
+                    "version_id": version_id,
+                },
+            )
         if "different target project" in err or "Branch from here" in err:
             raise HTTPException(status_code=400, detail=err)
         if "not found" in err.lower():
