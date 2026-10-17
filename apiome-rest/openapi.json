@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.220.0",
+    "version": "1.221.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -4209,7 +4209,7 @@
           "classes"
         ],
         "summary": "List Classes",
-        "description": "List all classes for a tenant, optionally filtered by version.\n\nSupports authentication via:\n- JWT token in Authorization header (Bearer token)\n- API key in X-API-Key header\n\nArgs:\n    tenant_slug: The tenant slug\n    version_id: Optional version ID to filter by\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    List of classes for the tenant/version",
+        "description": "List all classes for a tenant, optionally filtered by version. Filtered by version, each class\nalso carries ``property_count`` (its top-level properties) and its ``tags`` (#3229).\n\nSupports authentication via:\n- JWT token in Authorization header (Bearer token)\n- API key in X-API-Key header\n\nArgs:\n    tenant_slug: The tenant slug\n    version_id: Optional version ID to filter by\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    List of classes for the tenant/version",
         "operationId": "list_classes_v1_classes__tenant_slug__get",
         "parameters": [
           {
@@ -97170,7 +97170,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "completed_at": {
             "anyOf": [
@@ -98104,6 +98104,20 @@
             ],
             "title": "Updated At",
             "description": "Last update timestamp (ISO 8601)."
+          },
+          "property_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "A version-scoped class (component schema) with its JSON Schema payload and tags."
+              },
+              {
+                "type": "null",
+                "description": "A version-scoped class (component schema) with its JSON Schema payload and tags."
+              }
+            ],
+            "title": "Property Count",
+            "description": "Number of top-level properties of the class; `GET /v1/classes/{tenant}?version_id=` only (#3229)."
           }
         },
         "type": "object",
@@ -99080,7 +99094,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99308,7 +99322,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99839,14 +99853,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101871,7 +101885,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "65a90e7a-4cce-4df3-bd17-4c5316ea406c"
+            "example": "cc46ea84-7af3-4f17-8d22-f167cc2134b7"
           },
           "method": {
             "type": "string",
@@ -104398,7 +104412,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -106134,7 +106148,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "browse_url": {
             "anyOf": [
@@ -146301,7 +146315,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           }
         },
         "additionalProperties": false,
@@ -157623,7 +157637,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164840,14 +164854,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T19:01:49Z"
+            "example": "2026-10-17T19:29:58Z"
           },
           "outcome": {
             "anyOf": [

@@ -1,7 +1,7 @@
 ---
 title: "apiome convert"
 description: "Convert a catalog item to OpenAPI; print the fidelity summary + warning."
-sidebar_position: 7
+sidebar_position: 8
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

@@ -1532,6 +1532,24 @@ apiome properties delete payments-api amount --force --yes
 apiome --json properties delete payments-api unused_prop --yes
 ```
 
+### List a version's classes
+
+`apiome classes list <project> <version>` lists a version's classes: NAME, #PROPS (top-level
+properties), TAGS and DESCRIPTION, from `GET /v1/classes/{tenant}?version_id=…` (which reports
+`property_count` and `tags` from apiome-rest 1.357.0). `--with-properties` uses the hydrated
+`GET /v1/classes/{tenant}/version/{id}/with-properties-tags` — one call for the whole version — and
+prints each class's properties (name, type, required; nested ones indented).
+
+```bash
+apiome classes list payments-api v2.1.0
+apiome classes list payments-api stable --tag financial --search charge
+apiome classes list payments-api 2.1.0 --with-properties
+apiome --json classes list payments-api 2.1.0 --all      # the raw API payload
+```
+
+The version is a label (with or without `v`), a UUID or a version tag. `--json` prints the classes
+exactly as the API returns them, after `--tag`, `--search` and `--limit`.
+
 ### Copy properties to another project
 
 `apiome properties copy <src-project> <names> --to <dst-project>` composes the existing endpoints:

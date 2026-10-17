@@ -42,14 +42,59 @@ X-API-Key: <your-api-key>
 
 ## With the CLI
 
-The CLI is **read-only** for classes and properties (authoring happens in the UI/REST). Inspect them
-with:
+The CLI can list a version's classes, and can list, show, create, update, delete and copy the
+project's properties. Classes themselves are still edited in the UI or through the REST API.
 
 ```bash
-apiome schemas list                       # all classes in the tenant
+apiome classes list <project> <version>   # a version's classes
 apiome schemas get <class_id>             # one class
 apiome properties list <project>          # the project's property library
 ```
+
+### List a version's classes
+
+`apiome classes list <project> <version>` lists the classes in one version: each one's name, how many
+properties it has, its tags and its description. Name the version by its label (`2.1.0` or
+`v2.1.0`), its UUID or a version tag such as `stable`.
+
+```bash
+apiome classes list payments-api v2.1.0
+# NAME      #PROPS  TAGS             DESCRIPTION
+# Charge    11      core, financial  Inbound payment from a customer.
+# Customer  9       identity, pii    End-user / payer record.
+# Refund    7       financial        Reversal of a charge.
+#
+# 3 classes in payments-api 2.1.0.
+```
+
+**#PROPS** counts a class's top-level properties. Properties nested under another property aren't
+counted.
+
+Add `--with-properties` to see each class's properties under its name. Each line shows the
+property's name, type and whether it's required, and nested properties are indented. The whole
+version comes back in one request.
+
+```bash
+apiome classes list payments-api v2.1.0 --with-properties
+# Charge  (3 properties · core, financial)  Inbound payment from a customer.
+#   NAME        TYPE       REQ?
+#   amount      number     yes
+#   created_at  date-time  yes
+#   metadata    object     —
+#     note      string     —
+```
+
+| Option | What it does |
+| --- | --- |
+| `--tag <tag>` | Only classes with that tag (any case). |
+| `--search <text>` | Only classes whose name or description contains the text (any case). |
+| `--with-properties` | Show each class's properties. |
+| `--limit N` / `--all` | Show the first `N` (default 50) or every match. |
+
+With `--json` the command prints the classes exactly as the API returns them, after the filters and
+the limit are applied: the plain list, or with `--with-properties` the list with properties and tags
+inline. The property count and tags need apiome-rest 1.357.0 or later; an older server shows `?` in
+**#PROPS**.
 
 ### List a project's properties
 

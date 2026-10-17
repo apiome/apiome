@@ -1,0 +1,5 @@
+NAME      #PROPS  TAGS             DESCRIPTION
+Charge    11      core, financial  Inbound payment from a customer.
+Customer  9       identity, pii    End-user / payer record.
+Refund    7       financial        Reversal of a charge.
+Webhook   0       —                —

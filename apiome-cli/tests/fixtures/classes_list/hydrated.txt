@@ -1,0 +1,10 @@
+Charge  (3 properties · core, financial)  Inbound payment from a customer.
+  NAME        TYPE       REQ?
+  amount      number     yes
+  created_at  date-time  yes
+  metadata    object     —
+    note      string     —
+
+Webhook  (0 properties)
+  (no properties)
+

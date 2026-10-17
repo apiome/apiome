@@ -809,11 +809,33 @@ class Database:
         results = self.execute_query(query, (class_id, tenant_id))
         return results[0] if results else None
 
-    def get_classes_for_tenant_version(self, tenant_id: str, version_id: str) -> List[Dict[str, Any]]:
-        """Get all classes for a specific version, ensuring it belongs to the tenant."""
-        query = """
+    def get_classes_for_tenant_version(
+        self, tenant_id: str, version_id: str, *, with_summary: bool = False
+    ) -> List[Dict[str, Any]]:
+        """Get all classes for a specific version, ensuring it belongs to the tenant.
+
+        Args:
+            tenant_id: The tenant the version must belong to.
+            version_id: The version.
+            with_summary: Also return ``property_count`` (top-level class properties) and ``tags``
+                (``{id, project_id, name, color, description}``, by name) for each class (#3229),
+                in the same query.
+        """
+        summary = ""
+        if with_summary:
+            summary = """,
+                   (SELECT count(*) FROM apiome.class_properties cp
+                     WHERE cp.class_id = c.id AND cp.parent_id IS NULL) AS property_count,
+                   COALESCE((
+                       SELECT json_agg(json_build_object(
+                                  'id', t.id, 'project_id', t.project_id, 'name', t.name,
+                                  'color', COALESCE(t.color, 'default'), 'description', t.description)
+                              ORDER BY t.name)
+                       FROM apiome.class_tags ct JOIN apiome.tags t ON t.id = ct.tag_id
+                       WHERE ct.class_id = c.id), '[]'::json) AS tags"""
+        query = f"""
             SELECT c.id, c.version_id, c.name, c.description, c.schema, c.enabled,
-                   c.created_at, c.updated_at
+                   c.created_at, c.updated_at{summary}
             FROM apiome.classes c
             JOIN apiome.versions v ON c.version_id = v.id
             JOIN apiome.projects p ON v.project_id = p.id

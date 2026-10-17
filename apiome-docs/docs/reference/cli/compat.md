@@ -1,7 +1,7 @@
 ---
 title: "apiome compat"
 description: "Compare two OpenAPI revisions via independent oasdiff compatibility evidence."
-sidebar_position: 4
+sidebar_position: 5
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

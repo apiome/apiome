@@ -1,7 +1,7 @@
 ---
 title: "apiome mock"
 description: "Manage the hosted mock for published project versions."
-sidebar_position: 17
+sidebar_position: 18
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

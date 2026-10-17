@@ -1,7 +1,7 @@
 ---
 title: "apiome projects"
 description: "List, fetch, update, delete and export tenant projects."
-sidebar_position: 20
+sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
