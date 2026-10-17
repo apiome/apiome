@@ -35,15 +35,17 @@ wheels = [
 
 [[package]]
 name = "apiome-cli"
-version = "0.51.0"
+version = "0.51.1"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "httpx" },
     { name = "jsonschema" },
     { name = "openapi-schema-validator" },
     { name = "openapi-spec-validator" },
     { name = "py-yaml12" },
     { name = "pydantic-settings" },
+    { name = "rich" },
     { name = "typer" },
 ]
 
@@ -56,13 +58,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.1,<8.5" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jsonschema", specifier = ">=4.0" },
     { name = "openapi-schema-validator", specifier = ">=0.6" },
     { name = "openapi-spec-validator", specifier = ">=0.8.5" },
     { name = "py-yaml12", specifier = ">=0.1.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
-    { name = "typer", extras = ["all"], specifier = ">=0.15" },
+    { name = "rich", specifier = ">=13" },
+    { name = "typer", specifier = ">=0.15,<0.26" },
 ]
 
 [package.metadata.requires-dev]

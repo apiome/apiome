@@ -16,7 +16,18 @@ Full details live in [`apiome-cli/README.md`](https://github.com/apiome/apiome/b
 
 ## Install & run
 
-**Requirements:** Python ≥ 3.14 and [uv](https://docs.astral.sh/uv/).
+On Linux or macOS, install the `apiome` command with one line — see [Install the CLI](./install-the-cli.md)
+for the options, upgrading and uninstalling:
+
+```bash
+curl -fsSL https://get.apio.me | bash
+apiome --version
+```
+
+### From a clone of the repository
+
+To work on the CLI itself, run it from source. **Requirements:** Python ≥ 3.12 and
+[uv](https://docs.astral.sh/uv/).
 
 ```bash
 cd apiome-cli
