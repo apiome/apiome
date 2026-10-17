@@ -14,7 +14,8 @@ from apiome_cli.client.browse_scope import (
 from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.http import RestClient
 
-SpecFormat = Literal["openapi", "arazzo"]
+# ``json-schema`` is only produced by ``apiome schema json`` (``published_spec``), not ``spec export``.
+SpecFormat = Literal["openapi", "arazzo", "json-schema"]
 SpecSerialization = Literal["json", "yaml"]
 
 

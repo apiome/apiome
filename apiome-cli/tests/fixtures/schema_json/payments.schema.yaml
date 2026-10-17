@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://apiome.dev/acme-corp/payments-api/2.1.0/schema.json
+title: payments-api Schema
+description: Payments API
+version: 2.1.0
+type: object
+$defs:
+  Charge:
+    type: object
+    title: Charge
+    description: A card charge.
+    properties:
+      amount:
+        type: integer
+      currency:
+        type: string
+    required:
+    - amount
+  Refund:
+    type: object
+    title: Refund
+    description: Reversal of a charge.
+    properties:
+      charge_id:
+        type: string
+        format: uuid

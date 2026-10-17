@@ -41,11 +41,24 @@ apiome spec export --project <id-or-slug> --version <id-or-label> --format arazz
 
 Use `-o -` to stream to stdout. `--format` accepts `openapi` (default) or `arazzo`.
 
-### Download Arazzo workflows by slug
+### Download Arazzo or JSON Schema by slug
 
-`apiome schema arazzo` takes the published version as one `tenant/project/version` argument
-(slugs, as in the REST route) and writes YAML to stdout by default, so it suits a redirect or a
-build step:
+`apiome schema arazzo` and `apiome schema json` take the published version as one
+`tenant/project/version` argument (slugs, as in the REST route) and write to stdout by default,
+so they suit a redirect, a pipe or a build step. They share the same flags; only the default
+`--format` differs — **yaml** for Arazzo, **json** for JSON Schema.
+
+```bash
+# JSON Schema (2020-12) bundle, every class
+apiome schema json acme-corp/payments-api/2.1.0 > schema.json
+
+# One class's schema, straight into a code generator
+apiome schema json acme-corp/payments-api/2.1.0 --class Charge \
+  | npx quicktype --src-lang schema --lang go > charge.go
+```
+
+The JSON Schema is streamed exactly as the server emits it (`$schema:
+https://json-schema.org/draft/2020-12/schema`); the CLI does not transform it.
 
 ```bash
 # Full Arazzo bundle
@@ -64,8 +77,8 @@ apiome schema arazzo acme-corp/payments-api/2.1.0 -o workflows.arazzo.yaml \
 
 | Flag | What it does |
 |---|---|
-| `--class NAME` | Download only that class's workflow. An unknown class exits 2. |
-| `--format json\|yaml` | Serialization. Default **yaml**, the usual form for Arazzo. |
+| `--class NAME` | Download only that class's workflow or schema. An unknown class exits 2. |
+| `--format json\|yaml` | Serialization. Default **yaml** for `schema arazzo` (the usual form for Arazzo), **json** for `schema json`. |
 | `--output FILE`, `-o` | Write to a file. Default `-`, stdout. |
 | `--expect-sha256 HEX` | Compare the document's SHA-256 first; on a mismatch print both digests, write nothing and exit **6**. A `sha256:` prefix is accepted. |
 
@@ -91,7 +104,7 @@ Other representations of the same version:
 |---|---|
 | OpenAPI | `GET /v1/schema/{tenant}/{project}/{version}` |
 | Arazzo | `GET /v1/arazzo/{tenant}/{project}/{version}` (one class: append `/{class}`) |
-| JSON Schema | `GET /v1/json/{tenant}/{project}/{version}` |
+| JSON Schema | `GET /v1/json/{tenant}/{project}/{version}` (one class: append `/{class}`) |
 
 For private versions, pass an in-scope API key via the `X-API-Key` header (or the `api_key` query
 parameter).

@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://apiome.dev/acme-corp/payments-api/2.1.0/Charge.json","title":"Charge","description":"A card charge.","version":"2.1.0","type":"object","properties":{"amount":{"type":"integer"},"currency":{"type":"string"}},"required":["amount"]}

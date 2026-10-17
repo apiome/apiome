@@ -110,7 +110,7 @@ EXIT_PROPERTY_BREAKING = 6
 #: to remove the attributes and delete in one step. Another per-command use of 6.
 EXIT_PROPERTY_IN_USE = 6
 
-#: ``apiome schema arazzo --expect-sha256`` (CLI 9.6): the downloaded document's SHA-256 does not
+#: ``apiome schema arazzo`` / ``schema json`` ``--expect-sha256`` (CLI 9.6 / 9.7): the downloaded document's SHA-256 does not
 #: match the expected digest; nothing was written. Another per-command use of 6.
 EXIT_CHECKSUM_MISMATCH = 6
 
