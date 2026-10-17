@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  ArrowLeftRight,
   CircleHelp,
   LayoutGrid,
   Link2,
@@ -28,8 +29,10 @@ import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
 import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
+import { Checkbox } from '@/app/components/ui/Checkbox';
 import {
   DataTableBulkAction,
+  DataTableBulkBar,
   DataTableFilterChip,
   DataTableSearch,
   DataTableToolbar,
@@ -69,6 +72,8 @@ import {
   CATALOG_SORT_OPTIONS,
   CATALOG_SOURCE_OPTIONS,
   CatalogAboutDialog,
+  CatalogBulkConvertDialog,
+  CatalogBulkFailureList,
   CatalogCard,
   CatalogCardGridSkeleton,
   CatalogExplainerCallout,
@@ -76,6 +81,7 @@ import {
   CatalogStatsRow,
   CatalogTable,
   EMPTY_CATALOG_FILTERS,
+  catalogBulkFailureTitle,
   catalogBulkPlan,
   catalogBulkResultMessage,
   catalogFacetCounts,
@@ -94,6 +100,7 @@ import {
   softDeleteCatalogItemConfirm,
   sortCatalog,
   undeleteCatalogItemConfirm,
+  type CatalogBulkFailure,
   type CatalogFacet,
   type CatalogFilterState,
   type CatalogItem,
@@ -376,6 +383,10 @@ export default function CatalogClient() {
   const [qualityFor, setQualityFor] = React.useState<CatalogItem | null>(null);
   const [lintFor, setLintFor] = React.useState<CatalogItem | null>(null);
   const [convertFor, setConvertFor] = React.useState<CatalogItem | null>(null);
+  /** The items the bulk bar's Convert… is reviewing (MFI-28.5), while its dialog is open. */
+  const [bulkConvertItems, setBulkConvertItems] = React.useState<CatalogItem[] | null>(null);
+  /** Bumped per bulk-convert opening, so each one mounts a fresh review. */
+  const [bulkConvertRun, setBulkConvertRun] = React.useState(0);
   /** The item the in-place export dialog is open for, while the Export studio is unreleased. */
   const [exportFor, setExportFor] = React.useState<CatalogItem | null>(null);
   const [importOpen, setImportOpen] = React.useState(false);
@@ -543,34 +554,65 @@ export default function CatalogClient() {
    *
    * Writes are sequential rather than parallel: these are the same endpoints a single-row
    * action calls, and firing eight of them at once at a soft-delete that cascades is how a
-   * list page turns into a load test. The result states the split.
+   * list page turns into a load test. The toast states the split; a partial failure then
+   * opens a message box naming every refused item and its reason (MFI-28.5).
    */
   const runBulk = React.useCallback(
     async (
       rows: readonly CatalogItem[],
       write: (item: CatalogItem) => Promise<string>,
-      verb: string,
+      verb: 'delete' | 'undelete',
       fallback: string
     ) => {
       setBusy(true);
-      let applied = 0;
-      let firstError: string | null = null;
+      const failures: CatalogBulkFailure[] = [];
       for (const item of rows) {
         const failure = await runWrite(() => write(item), fallback);
-        if (failure) firstError ??= failure;
-        else applied += 1;
+        if (failure) failures.push({ id: item.id, name: item.name, reason: failure });
       }
       setBusy(false);
       setSelectedIds([]);
-      const message = catalogBulkResultMessage(verb, applied, rows.length, firstError);
-      if (applied === rows.length) toast.success(message);
-      else toast.error(message);
+      const applied = rows.length - failures.length;
+      const pastTense = verb === 'delete' ? 'Deleted' : 'Undeleted';
+      const message = catalogBulkResultMessage(
+        pastTense,
+        applied,
+        rows.length,
+        failures[0]?.reason
+      );
+      if (failures.length === 0) toast.success(message);
+      else {
+        toast.error(message);
+        void alert({
+          title: catalogBulkFailureTitle(verb, failures),
+          message: <CatalogBulkFailureList failures={failures} />,
+          variant: 'error',
+        });
+      }
       await loadCatalog();
     },
-    [loadCatalog, runWrite]
+    [alert, loadCatalog, runWrite]
   );
 
   const bulk = React.useMemo(() => catalogBulkPlan(visible, selectedIds), [visible, selectedIds]);
+
+  /**
+   * Tick or untick one card (MFI-28.5). The cards share the table's `selectedIds`, so a
+   * selection made in one view is still there in the other.
+   */
+  const toggleCardSelection = React.useCallback((item: CatalogItem, next: boolean) => {
+    setSelectedIds((current) =>
+      next
+        ? current.includes(item.id)
+          ? current
+          : [...current, item.id]
+        : current.filter((id) => id !== item.id)
+    );
+  }, []);
+
+  /** How much of the cards view is ticked — drives its Select all checkbox. */
+  const selectedOnScreen = visible.filter((item) => selectedIds.includes(item.id)).length;
+  const allCardsSelected = visible.length > 0 && selectedOnScreen === visible.length;
 
   /** After a successful conversion, refresh so the promotion back-link appears. */
   const handleConverted = React.useCallback(() => {
@@ -802,6 +844,19 @@ export default function CatalogClient() {
 
   const bulkActions = (
     <>
+      {bulk.convertible.length > 0 ? (
+        <DataTableBulkAction
+          disabled={busy}
+          data-testid="catalog-bulk-convert"
+          onClick={() => {
+            setBulkConvertRun((run) => run + 1);
+            setBulkConvertItems(bulk.convertible);
+          }}
+        >
+          <ArrowLeftRight aria-hidden />
+          Convert {bulk.convertible.length}…
+        </DataTableBulkAction>
+      ) : null}
       {bulk.deletable.length > 0 ? (
         <DataTableBulkAction
           variant="danger-soft"
@@ -811,7 +866,7 @@ export default function CatalogClient() {
             void runBulk(
               bulk.deletable,
               (item) => deleteProject(item.id),
-              'Deleted',
+              'delete',
               'Failed to delete the catalog item.'
             )
           }
@@ -828,7 +883,7 @@ export default function CatalogClient() {
             void runBulk(
               bulk.restorable,
               (item) => restoreProject(item.id),
-              'Undeleted',
+              'undelete',
               'Failed to undelete the catalog item.'
             )
           }
@@ -930,69 +985,108 @@ export default function CatalogClient() {
                 {...handlers}
               />
             ) : (
-              <Card className="cat-cards-panel" data-testid="catalog-cards">
-                {toolbar}
-                {loading ? (
-                  /* Cards shaped like the real ones (MFI-28.6), so the grid fills rather
+              <>
+                <Card className="cat-cards-panel" data-testid="catalog-cards">
+                  {toolbar}
+                  {loading ? (
+                    /* Cards shaped like the real ones (MFI-28.6), so the grid fills rather
                      than jumps when the read lands. */
-                  <CatalogCardGridSkeleton />
-                ) : loadError ? (
-                  <div className="cat-cards-panel__empty">
-                    <EmptyState
-                      variant="compact"
-                      surface={false}
-                      tone="danger"
-                      title="The catalog could not be loaded"
-                      description={loadError}
-                      action={
-                        <Button variant="outline" onClick={() => void loadCatalog()}>
-                          Try again
-                        </Button>
-                      }
-                    />
-                  </div>
-                ) : visible.length === 0 ? (
-                  <div className="cat-cards-panel__empty">{emptyState}</div>
-                ) : groupMode === 'protocol' ? (
-                  /* One section per paradigm, in the fixed graph → rpc → event → rest →
-                     data-schema order with a trailing Other, empty paradigms omitted. */
-                  paradigmGroups.map((group) => (
-                    <section key={group.id} data-testid={`catalog-paradigm-group-${group.id}`}>
-                      <h2 className="cat-group__head">
-                        <span>{group.label}</span>
-                        <span className="cat-group__count">
-                          {group.items.length} item{group.items.length === 1 ? '' : 's'}
-                        </span>
-                      </h2>
-                      <div className="cat-grid cat-grid--grouped">
-                        {group.items.map((item) => (
-                          <CatalogCard
-                            key={item.id}
-                            item={item}
-                            qualityHistory={historyById[item.id] ?? []}
-                            busy={busy}
-                            onOpenQuality={openQuality}
-                            {...handlers}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ))
-                ) : (
-                  <div className="cat-grid">
-                    {visible.map((item) => (
-                      <CatalogCard
-                        key={item.id}
-                        item={item}
-                        qualityHistory={historyById[item.id] ?? []}
-                        busy={busy}
-                        onOpenQuality={openQuality}
-                        {...handlers}
+                    <CatalogCardGridSkeleton />
+                  ) : loadError ? (
+                    <div className="cat-cards-panel__empty">
+                      <EmptyState
+                        variant="compact"
+                        surface={false}
+                        tone="danger"
+                        title="The catalog could not be loaded"
+                        description={loadError}
+                        action={
+                          <Button variant="outline" onClick={() => void loadCatalog()}>
+                            Try again
+                          </Button>
+                        }
                       />
-                    ))}
-                  </div>
-                )}
-              </Card>
+                    </div>
+                  ) : visible.length === 0 ? (
+                    <div className="cat-cards-panel__empty">{emptyState}</div>
+                  ) : null}
+                  {!loading && !loadError && visible.length > 0 ? (
+                    /* The cards view's select-all (MFI-28.5): the table has its header checkbox;
+                     a grid has no header row, so it gets this one line above the cards. */
+                    <div className="cat-select-all" data-testid="catalog-cards-select-all">
+                      <Checkbox
+                        id="catalog-cards-select-all"
+                        checked={
+                          allCardsSelected ? true : selectedOnScreen > 0 ? 'indeterminate' : false
+                        }
+                        disabled={busy}
+                        onCheckedChange={(next) =>
+                          setSelectedIds(next === true ? visible.map((item) => item.id) : [])
+                        }
+                      />
+                      <Label htmlFor="catalog-cards-select-all">
+                        {allCardsSelected ? 'Clear selection' : `Select all ${visible.length}`}
+                      </Label>
+                    </div>
+                  ) : null}
+                  {loading || loadError || visible.length === 0 ? null : groupMode ===
+                    'protocol' ? (
+                    /* One section per paradigm, in the fixed graph → rpc → event → rest →
+                     data-schema order with a trailing Other, empty paradigms omitted. */
+                    paradigmGroups.map((group) => (
+                      <section key={group.id} data-testid={`catalog-paradigm-group-${group.id}`}>
+                        <h2 className="cat-group__head">
+                          <span>{group.label}</span>
+                          <span className="cat-group__count">
+                            {group.items.length} item{group.items.length === 1 ? '' : 's'}
+                          </span>
+                        </h2>
+                        <div className="cat-grid cat-grid--grouped">
+                          {group.items.map((item) => (
+                            <CatalogCard
+                              key={item.id}
+                              item={item}
+                              qualityHistory={historyById[item.id] ?? []}
+                              busy={busy}
+                              selected={selectedIds.includes(item.id)}
+                              onSelectedChange={toggleCardSelection}
+                              onOpenQuality={openQuality}
+                              {...handlers}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ))
+                  ) : (
+                    <div className="cat-grid">
+                      {visible.map((item) => (
+                        <CatalogCard
+                          key={item.id}
+                          item={item}
+                          qualityHistory={historyById[item.id] ?? []}
+                          busy={busy}
+                          selected={selectedIds.includes(item.id)}
+                          onSelectedChange={toggleCardSelection}
+                          onOpenQuality={openQuality}
+                          {...handlers}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </Card>
+                {/* The table mounts its own bulk bar; the cards get the same one (MFI-28.5),
+                  outside the panel — whose `overflow: hidden` would pin a sticky bar to the
+                  panel's own bottom edge instead of the viewport's. */}
+                {selectedIds.length > 0 ? (
+                  <DataTableBulkBar
+                    count={selectedIds.length}
+                    noun="catalog item"
+                    onClear={() => setSelectedIds([])}
+                    actions={bulkActions}
+                    data-testid="catalog-cards-bulk-bar"
+                  />
+                ) : null}
+              </>
             )}
           </>
         )}
@@ -1031,6 +1125,21 @@ export default function CatalogClient() {
         }}
         onConverted={handleConverted}
       />
+
+      {bulkConvertItems ? (
+        <CatalogBulkConvertDialog
+          key={`catalog-bulk-convert-${bulkConvertRun}`}
+          open
+          items={bulkConvertItems}
+          onOpenChange={(open) => {
+            if (!open) setBulkConvertItems(null);
+          }}
+          onFinished={() => {
+            setSelectedIds([]);
+            void loadCatalog();
+          }}
+        />
+      ) : null}
 
       {exportFor ? (
         <ExportDialog

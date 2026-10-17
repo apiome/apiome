@@ -21732,6 +21732,146 @@ html[data-motion='reduce'] .prm-spin {
   font-weight: 700;
 }
 
+/* ---- Bulk selection and bulk convert (MFI-28.5, #4121) --------------------
+   The card's checkbox sits above the stretched link (`.cat-card__above` gives
+   it the stacking step), so ticking a card never opens it. A ticked card
+   takes the accent frame — the same 2px ring a focused control gets — so the
+   selection reads at a glance without a second colour. */
+.cat-card__select {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--space-6);
+}
+
+.cat-card[data-selected="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-sm);
+}
+
+/* The cards view's select-all: one quiet line above the grid, where the
+   table has its header checkbox. */
+.cat-select-all {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* The bulk convert review: one row per item, its fidelity and its state. */
+.cbc-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-block-size: 50vh;
+  overflow-y: auto;
+}
+
+.cbc-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.cbc-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.cbc-row__name {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cbc-row__fidelity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cbc-row__grade {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--space-6);
+  padding: 0 var(--space-1);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.cbc-row__link {
+  font-size: var(--fs-sm);
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+/* A refusal is drawn on its own soft ground: the danger ink clears AA there
+   in every theme, and not on the plain surface. A `div`, not a `p`, so the
+   unlayered base `p` colour cannot mute it. */
+.cbc-row__error {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  font-size: var(--fs-sm);
+  color: var(--danger-fg);
+}
+
+.cbc-row__ack,
+.cbc-apply-all {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.cbc-footer__status {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* The per-item failure report a partial bulk delete or undelete opens. */
+.cbc-failures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cbc-failures__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cbc-failures__name {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.cbc-failures__reason {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
 /* ==========================================================================
    CATALOG ITEM DETAIL  (HIVE-7.2, #5319)
    --------------------------------------------------------------------------

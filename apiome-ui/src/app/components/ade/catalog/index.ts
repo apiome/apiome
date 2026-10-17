@@ -52,3 +52,9 @@ export {
 } from './CatalogSkeletons';
 export type { CatalogPaneSkeletonProps } from './CatalogSkeletons';
 export type { CatalogExplainerCalloutProps } from './CatalogExplainerCallout';
+
+export * from './catalogBulkConvertModel';
+export { CatalogBulkConvertDialog } from './CatalogBulkConvertDialog';
+export type { CatalogBulkConvertDialogProps } from './CatalogBulkConvertDialog';
+export { CatalogBulkFailureList } from './CatalogBulkFailureList';
+export type { CatalogBulkFailureListProps } from './CatalogBulkFailureList';
