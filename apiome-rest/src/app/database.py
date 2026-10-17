@@ -12608,6 +12608,65 @@ class Database:
             }
         return rules
 
+    def get_migration_plans_for_project(
+        self, project_id: str, tenant_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every migration plan of a project, each with all of its rules (CLI 3.6, #3207).
+
+        One read for a whole-project export (``apiome projects export``), instead of probing every
+        version pair. Plans come in ``(from_version_id, to_version_id)`` order and rules in
+        ``(class_name, source_property)`` order, so the result is stable across calls. The rule
+        payload is returned as stored.
+
+        Args:
+            project_id: The project (must be live and in the tenant).
+            tenant_id: The tenant.
+
+        Returns:
+            ``[{id, from_version_id, to_version_id, created_at, updated_at, rules: [{class_name,
+            source_property, rule}]}]`` — a plan without rules has an empty list.
+        """
+        rows = self.execute_query(
+            """
+            SELECT mp.id::text AS plan_id, mp.from_version_id::text AS from_version_id,
+                   mp.to_version_id::text AS to_version_id,
+                   mp.created_at, mp.updated_at,
+                   mpr.class_name, mpr.source_property, mpr.rule
+            FROM apiome.migration_plans mp
+            JOIN apiome.projects p
+              ON p.id = mp.project_id AND p.tenant_id = %s AND p.deleted_at IS NULL
+            LEFT JOIN apiome.migration_plan_rules mpr ON mpr.migration_plan_id = mp.id
+            WHERE mp.project_id = %s
+            ORDER BY mp.from_version_id, mp.to_version_id, mp.id,
+                     mpr.class_name NULLS FIRST, mpr.source_property NULLS FIRST
+            """,
+            (tenant_id, project_id),
+        )
+        plans: List[Dict[str, Any]] = []
+        by_id: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            plan = by_id.get(row["plan_id"])
+            if plan is None:
+                plan = {
+                    "id": row["plan_id"],
+                    "from_version_id": row["from_version_id"],
+                    "to_version_id": row["to_version_id"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                    "rules": [],
+                }
+                by_id[row["plan_id"]] = plan
+                plans.append(plan)
+            if row.get("class_name") is not None:
+                plan["rules"].append(
+                    {
+                        "class_name": row["class_name"],
+                        "source_property": row["source_property"],
+                        "rule": row["rule"],
+                    }
+                )
+        return plans
+
     def get_migration_plan_rule_counts(
         self,
         project_id: str,

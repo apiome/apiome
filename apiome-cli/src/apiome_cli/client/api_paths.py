@@ -667,6 +667,26 @@ def property_record(
     return f"{V1}/properties/{tenant_slug}/{project_id}/{property_id}"
 
 
+def classes_with_properties_tags(tenant_slug: str, version_record_id: str | UUID) -> str:
+    """Every class of a version with its properties and class tags inline (one call)."""
+    return f"{V1}/classes/{tenant_slug}/version/{version_record_id}/with-properties-tags"
+
+
+def project_tags(tenant_slug: str, project_id: str | UUID) -> str:
+    """The project's class-tag library (``apiome.tags``)."""
+    return f"{V1}/project-tags/{tenant_slug}/{project_id}"
+
+
+def version_tags(tenant_slug: str, project_id: str | UUID) -> str:
+    """The project's version tags (named refs to revisions)."""
+    return f"{V1}/version-tags/{tenant_slug}/{project_id}"
+
+
+def project_migration_plans(tenant_slug: str, project_id: str | UUID) -> str:
+    """Every migration plan of a project, with its rules (CLI 3.6)."""
+    return f"{V1}/migration-plans/{tenant_slug}/projects/{project_id}"
+
+
 def paths(tenant_slug: str, version_record_id: str | UUID) -> str:
     return f"{V1}/paths/{tenant_slug}/{version_record_id}"
 

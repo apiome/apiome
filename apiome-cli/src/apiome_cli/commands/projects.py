@@ -1,12 +1,16 @@
-"""Projects list, get, update and delete commands."""
+"""Projects list, get, update, delete and export commands."""
 
 from __future__ import annotations
 
+import gzip
+import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID
 
+import click
 import typer
 
 from apiome_cli.cli_context import insecure_from_context, settings_from_context, timeout_from_context
@@ -42,11 +46,21 @@ from apiome_cli.project_update import (
     render_diff,
     request_body,
 )
+from apiome_cli.project_export import (
+    ExportError,
+    ExportPlan,
+    ExportWriter,
+    build_document,
+    build_export,
+    human_size,
+    resolve_sections,
+    utc_now,
+)
 from apiome_cli.terminal import confirm_action, confirm_typed, echo_notice
 
 app = typer.Typer(
     name="projects",
-    help="List, fetch, update and delete tenant projects.",
+    help="List, fetch, update, delete and export tenant projects.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -394,3 +408,115 @@ def _json_detail(response: Any) -> Any:
         return response.json().get("detail")
     except (ValueError, AttributeError):
         return None
+
+
+@app.command("export")
+def export_project(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., help="Project slug or UUID."),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Write to this file instead of stdout."
+    ),
+    include: Optional[str] = typer.Option(
+        None,
+        "--include",
+        help="Sections to export, comma-separated: versions, classes, properties, paths, tags, "
+        "migrations (default: all of them).",
+    ),
+    exclude: Optional[str] = typer.Option(
+        None, "--exclude", help="Sections to leave out, comma-separated."
+    ),
+    versions: Optional[str] = typer.Option(
+        None, "--versions", help="Only these versions, by label (e.g. v2.0.0,v2.1.0)."
+    ),
+    output_format: str = typer.Option(
+        "json", "--format", help="json (streamed) or yaml (built in memory)."
+    ),
+    gzip_output: bool = typer.Option(
+        False, "--gzip", help="Compress the output with gzip (reproducible bytes)."
+    ),
+    deterministic: bool = typer.Option(
+        True,
+        "--deterministic/--no-deterministic",
+        help="Sort keys for byte-identical output across runs; --no-deterministic adds exportedAt.",
+    ),
+) -> None:
+    """Export a whole project as one JSON (or YAML) document — versions, classes, paths, tags.
+
+    The document format is ``apiome.project-export`` version 1. Summary counts and the
+    document's SHA-256 go to stderr, so stdout carries only the export.
+    """
+    fmt = output_format.strip().lower()
+    if fmt not in ("json", "yaml"):
+        typer.echo(f"--format must be json or yaml, not {output_format!r}.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    try:
+        sections = resolve_sections(include, exclude)
+    except ExportError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = RestClient(
+        settings,
+        timeout=timeout_from_context(ctx),
+        verify=not insecure_from_context(ctx),
+    )
+    tenant_slug = require_tenant_slug(settings, client)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    plan = ExportPlan(
+        tenant_slug=tenant_slug,
+        project_id=str(project_id),
+        sections=sections,
+        versions_filter=versions,
+        deterministic=deterministic,
+        exported_at=None if deterministic else utc_now(),
+    )
+
+    def fetch(path: str) -> Any:
+        return client.get(path).json()
+
+    # A file is written next to its destination and moved into place only when complete, so
+    # an interrupted export never leaves a truncated backup under the real name.
+    partial = output.with_name(f".{output.name}.partial") if output else None
+    raw = partial.open("wb") if partial else click.get_binary_stream("stdout")
+    try:
+        sink = gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") if gzip_output else raw
+        try:
+            if fmt == "json":
+                writer = ExportWriter(sink, deterministic=deterministic)
+                counts = build_export(fetch, plan, writer)
+                sha, size = writer.sha256, writer.size
+            else:
+                from yaml12 import format_yaml  # imported here: only the YAML path needs it
+
+                data = format_yaml(build_document(fetch, plan)).encode("utf-8")
+                if not data.endswith(b"\n"):
+                    data += b"\n"
+                sink.write(data)
+                counts = plan.counts
+                sha, size = hashlib.sha256(data).hexdigest(), len(data)
+        except ExportError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+        finally:
+            if gzip_output:
+                sink.close()
+        raw.flush()
+    except BaseException:
+        if partial:
+            raw.close()
+            partial.unlink(missing_ok=True)
+        raise
+    if partial and output:
+        raw.close()
+        os.replace(partial, output)
+
+    where = str(output) if output else "stdout"
+    written = output.stat().st_size if output else size
+    echo_notice(
+        f"✔ {counts.summary()}\n"
+        f"  → {where} ({human_size(written)}{', gzip' if gzip_output else ''}, "
+        f"{'deterministic ' if deterministic else ''}SHA-256: {sha})"
+    )

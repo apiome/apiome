@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.348.0] - 2026-10-16
+
+### Added
+- **All migration plans of a project (#3207, CLI 3.6)**: `GET /v1/migration-plans/{tenant}/projects/{project_id}`
+  returns `{ "plans": [{ id, from_version_id, to_version_id, created_at, updated_at, rules: [{ class_name,
+  source_property, rule }] }] }` in one call — plans ordered by version pair, rules by class and source
+  property, each rule as stored. Requires `projects:view`; `404` for an unknown project. Used by
+  `apiome projects export`, which previously would have had to probe every version pair.
+
+The OpenAPI version moves to 1.212.0.
+
 ## [1.347.0] - 2026-10-16
 
 ### Added

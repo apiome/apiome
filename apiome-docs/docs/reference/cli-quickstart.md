@@ -73,6 +73,7 @@ apiome health                      # REST health JSON
 apiome formats                     # every supported format, direction and version coverage
 apiome projects list               # needs tenant + API key
 apiome projects update payments-api --domain finance --dry-run   # preview a change
+apiome projects export payments-api -o payments-api.json        # whole-project backup
 apiome import openapi ./spec.yaml  # import (waits for the job)
 apiome lint --project <p> --version <v> --min-grade B
 apiome spec export --project <p> --version <v> -o spec.json

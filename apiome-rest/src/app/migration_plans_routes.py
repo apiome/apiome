@@ -93,3 +93,28 @@ async def get_migration_plan_rule_counts(
         tenant_id=auth_data["tenant_id"],
     )
     return {"counts": counts}
+
+
+@router.get("/{tenant_slug}/projects/{project_id}")
+async def list_project_migration_plans(
+    tenant_slug: str,
+    project_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    Every migration plan of a project, with all of its rules (CLI 3.6, #3207).
+
+    One call for a whole-project export (``apiome projects export``) rather than probing each
+    version pair. Plans are ordered by ``(from_version_id, to_version_id)`` and rules by
+    ``(class_name, source_property)``; each rule is returned as stored. Requires
+    ``projects:view``.
+
+    Returns:
+        ``{"plans": [{id, from_version_id, to_version_id, created_at, updated_at, rules:
+        [{class_name, source_property, rule}]}]}`` — empty when the project has none.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    tenant_id = auth_data["tenant_id"]
+    if not db.get_project_by_id(project_id, tenant_id):
+        raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
+    return {"plans": db.get_migration_plans_for_project(project_id, tenant_id)}

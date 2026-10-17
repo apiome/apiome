@@ -1,6 +1,6 @@
 ---
 title: "apiome projects"
-description: "List, fetch, update and delete tenant projects."
+description: "List, fetch, update, delete and export tenant projects."
 sidebar_position: 20
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome projects {#projects}
 
-List, fetch, update and delete tenant projects.
+List, fetch, update, delete and export tenant projects.
 
 ```text
 apiome projects [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`delete`](#projects-delete), [`get`](#projects-get), [`list`](#projects-list), [`update`](#projects-update).
+Subcommands: [`delete`](#projects-delete), [`export`](#projects-export), [`get`](#projects-get), [`list`](#projects-list), [`update`](#projects-update).
 
 ## apiome projects delete {#projects-delete}
 
@@ -43,6 +43,34 @@ apiome projects delete [OPTIONS] PROJECT_REF
 | `--yes`, `-y` | flag |  |  | Skip the typed confirmation; the argument must then be the project's exact slug. |
 | `--archive` | flag |  |  | Archive (soft-delete, restorable) instead of deleting permanently. |
 | `--force` | flag |  |  | Delete (or archive) even though the project has published versions (exit 6 without). |
+
+## apiome projects export {#projects-export}
+
+Export a whole project as one JSON (or YAML) document — versions, classes, paths, tags.
+
+The document format is ``apiome.project-export`` version 1. Summary counts and the document's SHA-256 go to stderr, so stdout carries only the export.
+
+```text
+apiome projects export [OPTIONS] PROJECT_REF
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--output`, `-o` | path |  |  | Write to this file instead of stdout. |
+| `--include` | text |  |  | Sections to export, comma-separated: versions, classes, properties, paths, tags, migrations (default: all of them). |
+| `--exclude` | text |  |  | Sections to leave out, comma-separated. |
+| `--versions` | text |  |  | Only these versions, by label (e.g. v2.0.0,v2.1.0). |
+| `--format` | text | `json` |  | json (streamed) or yaml (built in memory). |
+| `--gzip` | flag |  |  | Compress the output with gzip (reproducible bytes). |
+| `--deterministic` / `--no-deterministic` | flag | `--deterministic` |  | Sort keys for byte-identical output across runs; --no-deterministic adds exportedAt. |
 
 ## apiome projects get {#projects-get}
 
