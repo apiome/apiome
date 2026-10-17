@@ -1,4 +1,4 @@
-"""Properties list, show, get, create, update and delete commands."""
+"""Properties list, show, get, create, update, delete and copy commands."""
 
 from __future__ import annotations
 
@@ -17,6 +17,9 @@ from apiome_cli.client.primitive_cache import load_primitives
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.exit_codes import (
+    EXIT_CROSS_TENANT,
+    EXIT_ERROR,
+    EXIT_PRIMITIVE_MISSING,
     EXIT_PROPERTY_BREAKING,
     EXIT_PROPERTY_IN_USE,
     EXIT_PROPERTY_INVALID,
@@ -31,6 +34,22 @@ from apiome_cli.output import (
     json_mode_from_context,
 )
 from apiome_cli.import_.yaml_load import safe_load
+from apiome_cli.property_copy import (
+    ACTION_CREATE,
+    ACTION_SKIP,
+    ACTION_UPDATE,
+    CopyArgumentError,
+    CrossTenantCopy,
+    check_arguments,
+    dangling_refs,
+    needs_primitives,
+    parse_destination,
+    parse_names,
+    plan_copy,
+    render_plan,
+    render_summary,
+)
+from apiome_cli.property_copy import request_body as copy_request_body
 from apiome_cli.property_create import (
     FieldError,
     PropertyDraft,
@@ -69,7 +88,7 @@ from apiome_cli.terminal import confirm_action, confirm_typed, echo_notice, inte
 
 app = typer.Typer(
     name="properties",
-    help="List, show, fetch, create, update and delete project properties.",
+    help="List, show, fetch, create, update, delete and copy project properties.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -572,3 +591,127 @@ def delete_property(
         emit_json({"deleted": True, "property": name, "property_id": str(prop.get("id")), "detached": detached or 0})
         return
     typer.echo(render_deleted(name, detached))
+
+
+def _copy_one(client: Any, tenant_slug: str, project_id: UUID, item: Any) -> str:
+    """Write one planned copy; the outcome: ``created``, ``updated``, ``skipped`` or ``failed: …``."""
+    if item.action == ACTION_SKIP:
+        return "skipped"
+    body = copy_request_body(item)
+    if item.action == ACTION_CREATE:
+        response = client.post_raw(api_paths.properties(tenant_slug, project_id), json=body)
+    else:
+        response = client.put_raw(api_paths.property_record(tenant_slug, project_id, str(item.existing["id"])), json=body)
+    if response.is_success:
+        return "created" if item.action == ACTION_CREATE else "updated"
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        detail = None
+    if isinstance(detail, dict):
+        detail = detail.get("message") or detail.get("code")
+    return f"failed: HTTP {response.status_code}" + (f" — {detail}" if detail else "")
+
+
+@app.command("copy")
+def copy_properties(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="SRC_PROJECT", help="Source project slug or UUID."),
+    names_arg: Optional[str] = typer.Argument(
+        None, metavar="NAMES", help="Property name(s) to copy, comma-separated (or pass --all)."
+    ),
+    to: str = typer.Option(..., "--to", help="Destination project: <project>, or <tenant>/<project> (same tenant)."),
+    all_props: bool = typer.Option(False, "--all", help="Copy every property of the source project."),
+    rename: Optional[str] = typer.Option(None, "--rename", help="Name in the destination (one property only)."),
+    update: bool = typer.Option(False, "--update", help="Overwrite a destination property with the same name."),
+    skip_conflicts: bool = typer.Option(
+        False, "--skip-conflicts", help="Leave a destination property with the same name alone (the default)."
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be copied, and the conflicts, without writing."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the question --update asks before overwriting."),
+) -> None:
+    """Copy properties to another project of the same tenant (GET, then POST / PUT per property).
+
+    A name the destination already has is skipped, unless --update.
+
+    Nothing is written if a property refers to a primitive the tenant lacks (exit 7).
+
+    --to <tenant>/<project> naming another tenant exits 4. Properties have no tags.
+    """
+    names = parse_names(names_arg)
+    try:
+        check_arguments(names, all_props=all_props, rename=rename, update=update, skip=skip_conflicts)
+    except CopyArgumentError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    client, tenant_slug = tenant_scoped_client(ctx)
+    try:
+        destination_ref = parse_destination(to, tenant_slug)
+    except CopyArgumentError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    except CrossTenantCopy as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_CROSS_TENANT) from exc
+
+    source_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    destination_id = resolve_project_uuid(client, tenant_slug, destination_ref)
+    source_items, _total = fetch_list(client, api_paths.properties(tenant_slug, source_id))
+    if all_props:
+        sources = list(source_items)
+    else:
+        sources, misses = [], []
+        for name in names:
+            try:
+                sources.append(find_property(source_items, name, project=project_ref))
+            except PropertyNotFound as exc:
+                misses.append(str(exc))
+        if misses:
+            typer.echo("\n".join(misses), err=True)
+            raise typer.Exit(EXIT_USAGE)
+    destination_items, _total = fetch_list(client, api_paths.properties(tenant_slug, destination_id))
+    items = plan_copy(sources, destination_items, rename=rename, update=update)
+
+    if needs_primitives(items):
+        missing = dangling_refs(items, load_primitives(client, tenant_slug))
+        if missing:
+            for prop_name, ref in missing:
+                typer.echo(f"{prop_name}: $ref {ref!r} matches no primitive in tenant {tenant_slug!r}", err=True)
+            typer.echo("Import those primitives into this tenant first. Nothing was copied.", err=True)
+            raise typer.Exit(EXIT_PRIMITIVE_MISSING)
+
+    json_mode = json_mode_from_context(ctx)
+    plan_rows = [{"source": str(i.source.get("name")), "target": i.target, "action": i.action} for i in items]
+    if dry_run:
+        if json_mode:
+            emit_json({"dryRun": True, "from": project_ref, "to": destination_ref, "items": plan_rows})
+        else:
+            typer.echo(render_plan(items, source_project=project_ref, destination=destination_ref))
+        return
+    overwrites = [i.target for i in items if i.action == ACTION_UPDATE]
+    if overwrites:
+        confirm_action(f"Overwrite {', '.join(overwrites)} in {destination_ref}?", skip=yes)
+
+    writes = [i for i in items if i.action != ACTION_SKIP]
+    results = []
+    done = 0
+    for item in items:
+        outcome = _copy_one(client, tenant_slug, destination_id, item)
+        if item.action != ACTION_SKIP:
+            done += 1
+            if len(writes) > 1:
+                echo_notice(f"[{done}/{len(writes)}] {item.target}: {outcome}")
+        results.append((item, outcome))
+    failed = any(outcome.startswith("failed") for _, outcome in results)
+    if json_mode:
+        emit_json(
+            {
+                "from": project_ref,
+                "to": destination_ref,
+                "items": [{**row, "result": outcome} for row, (_, outcome) in zip(plan_rows, results)],
+            }
+        )
+    else:
+        typer.echo(render_summary(results, source_project=project_ref, destination=destination_ref))
+    if failed:
+        raise typer.Exit(EXIT_ERROR)

@@ -1532,6 +1532,29 @@ apiome properties delete payments-api amount --force --yes
 apiome --json properties delete payments-api unused_prop --yes
 ```
 
+### Copy properties to another project
+
+`apiome properties copy <src-project> <names> --to <dst-project>` composes the existing endpoints:
+both property lists, then one `POST` per new property (or a `PUT` with `expectedUpdatedAt` per
+overwrite) — there is no bulk endpoint. Same tenant only.
+
+```bash
+apiome properties copy payments-api amount --to billing-api
+apiome properties copy payments-api amount --to billing-api --rename gross_amount
+apiome properties copy payments-api 'amount,currency,customer_id' --to billing-api
+apiome properties copy payments-api --all --to billing-api --update --yes
+apiome properties copy payments-api --all --to billing-api --dry-run
+```
+
+- Conflicts (same name in the destination) are skipped by default (`--skip-conflicts`); `--update`
+  overwrites after a confirmation (`--yes` skips). Identical definitions are always skipped.
+- Before any write, every `$ref` in the copied schemas is checked against the tenant's primitives
+  (cached list): a registry URL must equal a primitive `$id`, a relative path must end one; `#…`
+  and non-registry URLs are not checked. Any miss exits **7**, listing property → ref.
+- `--to <tenant>/<project>` naming another tenant exits **4**.
+- More than one write shows `[i/N] name: outcome` progress; a failed write is listed and exits
+  **1** after the rest are tried.
+
 ### List resources
 
 Human-readable tables (default):

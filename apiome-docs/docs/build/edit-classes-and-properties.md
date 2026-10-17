@@ -289,6 +289,51 @@ property from those classes in a new draft version first.
 With `--json` the command prints `{ "deleted": true, "property": …, "property_id": …, "detached": … }`,
 where `detached` is how many class attributes were removed.
 
+### Copy properties to another project
+
+`apiome properties copy <source-project> <names> --to <destination-project>` reuses property
+definitions in another project of the same tenant. Each copy takes the property's name, description
+and schema.
+
+```bash
+apiome properties copy payments-api amount --to billing-api
+# ✔ Copied 'amount' from payments-api → billing-api.
+
+apiome properties copy payments-api amount --to billing-api --rename gross_amount
+apiome properties copy payments-api 'amount,currency,customer_id' --to billing-api
+apiome properties copy payments-api --all --to billing-api --dry-run
+```
+
+Name one property or several, separated by commas, or pass `--all` to copy every property of the
+source project. When more than one property is written, the command shows its progress as
+`[1/3] amount: created` and then a summary.
+
+| Option | What it does |
+| --- | --- |
+| `--to <project>` | The destination project. Required. You can also write `<tenant>/<project>`, but only for the current tenant. |
+| `--all` | Copy every property of the source project. |
+| `--rename <name>` | Use another name in the destination. Works with exactly one property. |
+| `--skip-conflicts` | Leave a destination property with the same name alone. This is the default. |
+| `--update` | Overwrite a destination property with the same name. The command asks first; `--yes` skips the question. |
+| `--dry-run` | List what would be created, overwritten or skipped, and write nothing. |
+
+**Conflicts.** If the destination already has a property with the same name, it is skipped and
+named in the summary. Pass `--update` to overwrite it instead. An overwrite fails if someone changes
+that property while the copy runs.
+
+**Primitives.** Before anything is written, every `$ref` in the copied schemas is checked against
+the tenant's primitives. If a reference matches none of them, the command lists each property and
+reference, copies nothing and exits with code **7**. Import the missing primitives into the tenant
+first, then run the copy again.
+
+**Other tenants.** Properties can only be copied within one tenant. Naming another tenant, as in
+`--to globex/billing-api`, exits with code **4**. To move properties to another tenant, export them
+and import them there.
+
+If a write fails, the copy carries on with the rest, lists each failure in the summary and exits
+with code **1**. Properties have no tags, so there is nothing else to copy. With `--json` the
+command prints each property's `source`, `target`, `action` and `result`.
+
 ## Verify
 
 - **UI:** the class shows its new description; properties reflect their edits.
