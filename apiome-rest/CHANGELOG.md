@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.343.0] - 2026-10-16
+
+### Added
+- **Catalog provenance: fingerprint and routing reason (#4093, MFI-25.8)**: a non-dry-run adapter
+  import now records two more keys on the created revision's `format_metadata`, which the catalog
+  item detail (`GET /v1/catalog/{tenant}/{item}`) already returns under `formatMetadata`:
+  - `fingerprint` — the adapter's revision fingerprint (the `VERSION_FINGERPRINT` phase), omitted
+    when none was computed;
+  - `routingReason` — the `routing_decision.reason` the import recorded when it routed the source
+    to the catalog rather than a Project.
+
+  The catalog item's **Provenance** tab shows both. Items imported earlier carry neither: the tab
+  shows the fingerprint as not recorded and derives the routing sentence from the format. No
+  schema change (the bag is free-form); the OpenAPI version moves to 1.207.0.
+
 ## [1.342.0] - 2026-10-12
 
 ### Added

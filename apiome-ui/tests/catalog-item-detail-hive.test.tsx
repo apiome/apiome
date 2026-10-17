@@ -69,6 +69,9 @@ const ITEM = {
     sourceLabel: 'claims-837p-sample.edi',
     inputKind: 'file',
     importJobId: 'job_2c9f4a71',
+    // MFI-25.8: what the import now records for the Toolchain & routing column.
+    fingerprint: 'sha256:9a41f07be2d35c18a6e0b4f7d2c19e85c2e0',
+    routingReason: 'x12 is OpenAPI-worthy but not OpenAPI (1 operation(s), 27 type(s), 0 channel(s)) → catalog item.',
   },
   toolVersions: { 'x12-adapter': '1.4.0', pyx12: '3.1.0' },
   summary: { services: 1, operations: 1, types: 27, channels: null },
@@ -343,6 +346,50 @@ describe('the Provenance pane', () => {
     expect(rail).toHaveTextContent('No detected format or protocol was recorded.');
     expect(rail).toHaveTextContent('Tool versions were not recorded for this import.');
   });
+
+  it('splits into Source & provenance and Toolchain & routing (MFI-25.8)', async () => {
+    mockSearch = 'tab=provenance';
+    await renderDetail();
+    const card = screen.getByTestId('catalog-detail-provenance');
+    expect(
+      within(card).getByRole('heading', { level: 4, name: 'Source & provenance' })
+    ).toBeInTheDocument();
+    const routing = within(card).getByRole('region', { name: 'Toolchain & routing' });
+    expect(routing).toBe(screen.getByTestId('catalog-detail-routing'));
+    // The rail keeps the tool-version chips and the import-job id.
+    const source = within(card).getByRole('region', { name: 'Source & provenance' });
+    expect(source).toHaveTextContent('x12-adapter 1.4.0');
+    expect(source).toHaveTextContent('job_2c9f4a71');
+  });
+
+  it('renders the fingerprint, Publishable: false and the recorded routing note', async () => {
+    mockSearch = 'tab=provenance';
+    await renderDetail();
+    const fingerprint = screen.getByTestId('catalog-detail-fingerprint');
+    // First and last eight characters; the whole value is the tooltip.
+    expect(fingerprint).toHaveTextContent('sha256:9…9e85c2e0');
+    expect(within(fingerprint).getByTitle('sha256:9a41f07be2d35c18a6e0b4f7d2c19e85c2e0')).toBeInTheDocument();
+    expect(screen.getByTestId('catalog-detail-publishable')).toHaveTextContent(
+      'falseConvert it to an OpenAPI Project to publish it.'
+    );
+    const note = screen.getByTestId('catalog-detail-routing-note');
+    expect(note).toHaveTextContent('x12 is OpenAPI-worthy but not OpenAPI');
+    expect(note).not.toHaveTextContent('Derived from the format');
+  });
+
+  it('derives the routing note from the format, and says so, when none was recorded', async () => {
+    mockSearch = 'tab=provenance';
+    await renderDetail({
+      ...ITEM,
+      formatMetadata: { sourceLabel: 'claims-837p-sample.edi', inputKind: 'file' },
+    });
+    expect(screen.getByTestId('catalog-detail-fingerprint')).toHaveTextContent('Not recorded');
+    const note = screen.getByTestId('catalog-detail-routing-note');
+    expect(note).toHaveTextContent(
+      'is not OpenAPI, so the import stored it as a catalog item rather than a Project.'
+    );
+    expect(note).toHaveTextContent('Derived from the format; the import did not record a reason.');
+  });
 });
 
 describe('the converted strip', () => {
@@ -425,7 +472,11 @@ describe('the states', () => {
 
   it('never offers Publish — a catalog item is the non-publishable slice of projects', async () => {
     await renderDetail();
-    expect(screen.queryByText(/publish/i)).not.toBeInTheDocument();
+    // No *control* to publish. The Provenance tab does state the flag in words — its
+    // "Publishable: false" row (MFI-25.8) — so the invariant is on roles, not on text.
+    for (const role of ['button', 'link', 'menuitem'] as const) {
+      expect(screen.queryByRole(role, { name: /publish/i })).not.toBeInTheDocument();
+    }
   });
 });
 

@@ -276,6 +276,8 @@ async def test_non_dry_run_persists_and_carries_result() -> None:
     intake = args[2]
     assert intake.text == "x"
     assert intake.fileset is None
+    # MFI-25.8: the revision fingerprint the pipeline computed rides along for format_metadata.
+    assert args[5] == final.summary["fingerprint"]
     assert final.result == _FAKE_RESULT
     assert final.summary["persisted"] is True
     assert any(e.code == "PERSISTED" for e in final.events)

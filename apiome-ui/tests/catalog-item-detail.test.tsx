@@ -291,7 +291,11 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: /Acme gRPC API/ })).toBeInTheDocument(),
     );
-    expect(screen.queryByText(/publish/i)).not.toBeInTheDocument();
+    // No *control* to publish. The Provenance tab does state the flag in words — its
+    // "Publishable: false" row (MFI-25.8) — so the invariant is on roles, not on text.
+    for (const role of ['button', 'link', 'menuitem'] as const) {
+      expect(screen.queryByRole(role, { name: /publish/i })).not.toBeInTheDocument();
+    }
   });
 
   it('offers a "Convert to OpenAPI Project" action for an unconverted non-OpenAPI item (MFI-23.11)', async () => {

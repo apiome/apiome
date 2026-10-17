@@ -39,6 +39,7 @@ import {
   type CatalogConversion,
 } from '@/app/utils/catalog-conversion';
 import type { ProjectQualitySnapshot } from '@/app/utils/project-quality-score-history';
+import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
 
 // ---------------------------------------------------------------------------------------
 // The item
@@ -682,7 +683,114 @@ export const PROVENANCE_ABSENT = {
   detection: 'No detected format or protocol was recorded.',
   normalization: 'Tool versions were not recorded for this import.',
   record: 'Not recorded',
+  fingerprint: 'Not recorded',
 } as const;
+
+// ---------------------------------------------------------------------------------------
+// Toolchain & routing (MFI-25.8)
+// ---------------------------------------------------------------------------------------
+
+/** The keys a revision fingerprint may travel under on `formatMetadata`, in priority order. */
+const FINGERPRINT_KEYS = ['fingerprint', 'sourceFingerprint', 'source_fingerprint'] as const;
+
+/** The keys the import's routing reason may travel under on `formatMetadata`. */
+const ROUTING_REASON_KEYS = ['routingReason', 'routing_reason'] as const;
+
+/**
+ * The revision fingerprint the import computed, from `formatMetadata` (MFI-25.8).
+ *
+ * The import stamps it as `fingerprint`; the two other spellings are tolerated for the same
+ * reason {@link catalogImportJobRef} tolerates several — older and hand-written records.
+ *
+ * @param bag The revision's `formatMetadata`.
+ * @returns The fingerprint, or `null` when none was recorded.
+ */
+export function catalogFingerprint(bag: Record<string, unknown> | null | undefined): string | null {
+  if (!bag) return null;
+  for (const key of FINGERPRINT_KEYS) {
+    const value = bag[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+/**
+ * A fingerprint shortened for the row — its first and last eight characters, the way the
+ * Lint pane prints the report fingerprint — with the whole value kept for the tooltip.
+ *
+ * @param fingerprint The full fingerprint.
+ * @returns The display form; a value of 20 characters or fewer is shown whole.
+ */
+export function catalogFingerprintShort(fingerprint: string): string {
+  return fingerprint.length <= 20 ? fingerprint : `${fingerprint.slice(0, 8)}…${fingerprint.slice(-8)}`;
+}
+
+/** Why the import put this item in the catalog, and whether that sentence was recorded. */
+export interface CatalogRoutingNote {
+  /** The sentence to show. */
+  text: string;
+  /**
+   * `true` when the import recorded it (`routing_decision.reason`); `false` when it is
+   * derived from the format here, for an item imported before the reason was recorded.
+   */
+  recorded: boolean;
+}
+
+/**
+ * The routing note of the Provenance tab (MFI-25.8).
+ *
+ * The import's own routing verdict wins: `format_metadata.routingReason` is the
+ * `routing_decision.reason` the server wrote when it chose catalog over Project. An item
+ * imported before that was recorded gets the rule restated from its format instead — the
+ * routing is a pure function of the emitted format (`app.import_routing`), so the restatement
+ * is the same rule, only less specific.
+ *
+ * @param bag The revision's `formatMetadata`.
+ * @param sourceFormat The detected format, for the derived sentence.
+ * @returns The note. See {@link CatalogRoutingNote}.
+ */
+export function catalogRoutingNote(
+  bag: Record<string, unknown> | null | undefined,
+  sourceFormat: string | null | undefined
+): CatalogRoutingNote {
+  if (bag) {
+    for (const key of ROUTING_REASON_KEYS) {
+      const value = bag[key];
+      if (typeof value === 'string' && value.trim()) return { text: value.trim(), recorded: true };
+    }
+    const nested = bag.routing;
+    if (nested && typeof nested === 'object') {
+      const reason = (nested as { reason?: unknown }).reason;
+      if (typeof reason === 'string' && reason.trim()) return { text: reason.trim(), recorded: true };
+    }
+  }
+  const label = sourceFormat ? resolveCatalogFormat(sourceFormat)?.label ?? sourceFormat : null;
+  return {
+    text: label
+      ? `${label} is not OpenAPI, so the import stored it as a catalog item rather than a Project.`
+      : 'Non-OpenAPI imports are stored as catalog items rather than Projects.',
+    recorded: false,
+  };
+}
+
+/**
+ * The Publishable row: the literal flag, plus the sentence that says what it means.
+ *
+ * A catalog item is the `publishable = false` slice of projects (MFI-23.1), so the flag is
+ * `false` for every item this screen draws; it is still read from the payload rather than
+ * assumed, so a row that somehow arrives `true` says so instead of contradicting the data.
+ *
+ * @param publishable The item's `publishable` flag; absent means a catalog item, i.e. `false`.
+ * @returns The value to print and its explanation.
+ */
+export function catalogPublishableRow(publishable: boolean | null | undefined): {
+  value: 'true' | 'false';
+  note: string;
+} {
+  return publishable === true
+    ? { value: 'true', note: 'This item can be published as it stands.' }
+    : { value: 'false', note: 'Convert it to an OpenAPI Project to publish it.' };
+}
 
 /**
  * Format an ISO instant for the Catalog record step, tolerating null and invalid input.
