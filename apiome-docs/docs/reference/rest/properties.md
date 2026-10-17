@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.219.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.220.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `properties` · 5 operations
 
@@ -177,7 +177,9 @@ Request body for update property.
 
 **Delete Property**
 
-Delete a property (soft delete).
+Delete a property (soft delete). With ``force=true``, first remove the class attributes that use
+it in unpublished versions — all in one transaction — and report how many as ``detached``; any use
+in a published version refuses the whole delete with 409 (#3227).
 
 Supports authentication via JWT token or API key.
 
@@ -199,6 +201,7 @@ Operation id: `delete_property_v1_properties__tenant_slug___project_id___propert
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
 | `property_id` | path | string | yes | Property identifier on the class. |
+| `force` | query | boolean | no | Also remove every class attribute that uses the property, in the same transaction (#3227). Refused with 409 `property_in_published_version` when any use is in a published version. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -206,7 +209,7 @@ Operation id: `delete_property_v1_properties__tenant_slug___project_id___propert
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for delete property. | `application/json` map of string |
+| 200 | Successful response for delete property. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}

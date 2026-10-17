@@ -247,6 +247,48 @@ field, with exit code **7**. Properties have no tags, so there are no tag option
 in the file is refused. With `--json` the command prints the updated property, or the planned
 changes and request when combined with `--dry-run`.
 
+### Delete a property
+
+`apiome properties delete <project> <property>` deletes a property. It first checks which classes use
+the property. Name the property by its name or UUID.
+
+If no class uses it, type the property name to confirm:
+
+```bash
+apiome properties delete payments-api unused_prop
+# Used by 0 classes — safe to delete.
+# Type the property name to confirm: unused_prop
+# ✔ Deleted property 'unused_prop'.
+```
+
+If classes use it, nothing is deleted. The command lists the class attributes and exits with code
+**6**:
+
+```bash
+apiome properties delete payments-api amount
+# ✘ Property 'amount' is in use by 3 class attributes:
+#      Charge.amount  (required)
+#      Payout.amount  (required)
+#      Refund.amount  (optional)
+# Hint: remove the attribute from those classes in the Studio,
+#       or pass --force --yes to remove them and delete the property in one step.
+```
+
+To go ahead anyway, either remove the attribute from each class in the Studio and run the command
+again, or pass `--force --yes`. With `--force`, the server removes the property from every class that
+uses it, along with any attributes nested under it, and then deletes it, all in one transaction.
+Published versions can't change, so if any class in a published version uses the property, nothing is
+deleted and the command lists those classes with their versions (exit code **6**). Remove the
+property from those classes in a new draft version first.
+
+| Option | What it does |
+| --- | --- |
+| `--yes` | Skip typing the name. |
+| `--force` | Remove the property from the classes that use it, then delete it. Requires `--yes`. |
+
+With `--json` the command prints `{ "deleted": true, "property": …, "property_id": …, "detached": … }`,
+where `detached` is how many class attributes were removed.
+
 ## Verify
 
 - **UI:** the class shows its new description; properties reflect their edits.

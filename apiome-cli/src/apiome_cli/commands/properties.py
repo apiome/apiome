@@ -1,4 +1,4 @@
-"""Properties list, show, get, create and update commands."""
+"""Properties list, show, get, create, update and delete commands."""
 
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.exit_codes import (
     EXIT_PROPERTY_BREAKING,
+    EXIT_PROPERTY_IN_USE,
     EXIT_PROPERTY_INVALID,
     EXIT_UPDATE_CONFLICT,
     EXIT_USAGE,
@@ -43,6 +44,12 @@ from apiome_cli.property_create import (
     search_primitives,
     split_examples,
 )
+from apiome_cli.property_delete import (
+    render_deleted,
+    render_force_plan,
+    render_in_use,
+    render_published_refusal,
+)
 from apiome_cli.property_show import PropertyNotFound, find_property, render_show
 from apiome_cli.property_update import (
     BreakingChange,
@@ -58,11 +65,11 @@ from apiome_cli.property_update import (
 )
 from apiome_cli.property_update import request_body as update_request_body
 from apiome_cli.property_view import UsageUnavailable, filter_properties, render_table
-from apiome_cli.terminal import confirm_action, echo_notice, interactive_enabled
+from apiome_cli.terminal import confirm_action, confirm_typed, echo_notice, interactive_enabled
 
 app = typer.Typer(
     name="properties",
-    help="List, show, fetch, create and update project properties.",
+    help="List, show, fetch, create, update and delete project properties.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -491,3 +498,77 @@ def update_property(
         emit_json(updated)
         return
     typer.echo(summary(prop, changes, updated.get("required_everywhere_result")))
+
+
+def _published_uses(response: Any) -> Optional[list]:
+    """The uses a 409 ``property_in_published_version`` lists, or ``None`` for any other response."""
+    if response.status_code != 409:
+        return None
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        return None
+    if isinstance(detail, dict) and detail.get("code") == "property_in_published_version":
+        return list(detail.get("uses") or [])
+    return None
+
+
+@app.command("delete")
+def delete_property(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    property_ref: str = typer.Argument(..., metavar="PROPERTY", help="Property name or UUID."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the typed confirmation."),
+    force: bool = typer.Option(
+        False, "--force", help="Remove it from the classes that use it, then delete it (needs --yes)."
+    ),
+) -> None:
+    """Delete a property once no class uses it (DELETE /v1/properties/{tenant}/{project}/{id}).
+
+    In use, it lists the class attributes and exits 6.
+
+    --force --yes removes those attributes and deletes it in one server transaction.
+
+    A use in a published version refuses even a forced delete (exit 6).
+    """
+    if force and not yes:
+        typer.echo("--force removes the property from classes as well; pass --yes with it.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    client, tenant_slug, pid, _items, prop = _resolve_property(ctx, project_ref, property_ref)
+    name = str(prop.get("name"))
+    usage = prop.get("usage")
+    if usage is None:
+        typer.echo(
+            "This server does not report which classes use the property (apiome-rest 1.354.0 or later does), "
+            "so it cannot be checked before deleting; nothing was deleted.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_PROPERTY_IN_USE)
+    if usage and not force:
+        typer.echo(render_in_use(name, usage), err=True)
+        raise typer.Exit(EXIT_PROPERTY_IN_USE)
+    if usage:
+        typer.echo(render_force_plan(name, usage), err=True)
+    else:
+        typer.echo("Used by 0 classes — safe to delete.", err=True)
+        confirm_typed("Type the property name to confirm", name, skip=yes)
+
+    path = api_paths.property_record(tenant_slug, pid, str(prop.get("id")))
+    response = client.delete_raw(path, params={"force": "true"} if usage else None)
+    published = _published_uses(response)
+    if published is not None:
+        typer.echo(render_published_refusal(name, published), err=True)
+        raise typer.Exit(EXIT_PROPERTY_IN_USE)
+    exit_on_api_error(response)
+    result = response.json() if response.content else {}
+    detached = result.get("detached") if isinstance(result, dict) else None
+    if usage and detached is None:
+        typer.echo(
+            "Warning: this server ignored --force (apiome-rest 1.356.0 or later honours it): the property was "
+            "deleted, but the class attributes listed above still use it.",
+            err=True,
+        )
+    if json_mode_from_context(ctx):
+        emit_json({"deleted": True, "property": name, "property_id": str(prop.get("id")), "detached": detached or 0})
+        return
+    typer.echo(render_deleted(name, detached))

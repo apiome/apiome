@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.219.0",
+    "version": "1.220.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -37255,7 +37255,7 @@
           "properties"
         ],
         "summary": "Delete Property",
-        "description": "Delete a property (soft delete).\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    property_id: The property ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    Success message",
+        "description": "Delete a property (soft delete). With ``force=true``, first remove the class attributes that use\nit in unpublished versions \u2014 all in one transaction \u2014 and report how many as ``detached``; any use\nin a published version refuses the whole delete with 409 (#3227).\n\nSupports authentication via JWT token or API key.\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project ID\n    property_id: The property ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n    Success message",
         "operationId": "delete_property_v1_properties__tenant_slug___project_id___property_id__delete",
         "parameters": [
           {
@@ -37290,6 +37290,18 @@
               "description": "Property Id schema."
             },
             "description": "Property identifier on the class."
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also remove every class attribute that uses the property, in the same transaction (#3227). Refused with 409 `property_in_published_version` when any use is in a published version.",
+              "default": false,
+              "title": "Force"
+            },
+            "description": "Also remove every class attribute that uses the property, in the same transaction (#3227). Refused with 409 `property_in_published_version` when any use is in a published version."
           },
           {
             "name": "authorization",
@@ -37339,9 +37351,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": true,
                   "title": "Response Delete Property V1 Properties  Tenant Slug   Project Id   Property Id  Delete",
                   "description": "Response Delete Property V1 Properties  Tenant Slug   Project Id   Property Id  Delete schema."
                 }
@@ -97160,7 +97170,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "completed_at": {
             "anyOf": [
@@ -99070,7 +99080,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99298,7 +99308,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99829,14 +99839,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101861,7 +101871,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "51695648-d2aa-4089-a3c9-b8de9ad313ee"
+            "example": "65a90e7a-4cce-4df3-bd17-4c5316ea406c"
           },
           "method": {
             "type": "string",
@@ -104388,7 +104398,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -106124,7 +106134,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "browse_url": {
             "anyOf": [
@@ -146291,7 +146301,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           }
         },
         "additionalProperties": false,
@@ -157613,7 +157623,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164830,14 +164840,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T18:29:35Z"
+            "example": "2026-10-17T19:01:49Z"
           },
           "outcome": {
             "anyOf": [

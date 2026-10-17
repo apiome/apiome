@@ -1517,6 +1517,21 @@ apiome properties update payments-api amount --from-file amount.json --dry-run
   `{dryRun, propertyId, changes, request}`.
 - A taken name or rejected example exits **7**; `--from-file` cannot be combined with field flags.
 
+### Delete a property
+
+`apiome properties delete <project> <property>` reads the property's `usage` first. Unused, it asks
+you to type the name (`--yes` skips) and deletes it. In use, it lists the class attributes and exits
+**6**. `--force --yes` sends `DELETE …?force=true`: the server removes those class attributes (with
+nested ones) in unpublished versions and soft-deletes the property in one transaction, answering
+`detached`; any use in a published version refuses it (409 `property_in_published_version`, exit
+**6**, listing class, attribute and version).
+
+```bash
+apiome properties delete payments-api unused_prop
+apiome properties delete payments-api amount --force --yes
+apiome --json properties delete payments-api unused_prop --yes
+```
+
 ### List resources
 
 Human-readable tables (default):
