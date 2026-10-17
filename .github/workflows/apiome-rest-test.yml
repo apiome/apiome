@@ -24,12 +24,26 @@ on:
       - 'README.md'
       - 'docs/format-counts.json'
       - 'docs/guide/**'
-      - 'apiome-docs/docs/**'
-      - 'apiome-browse/lib/**'
+      - 'apiome-docs/docs/bring-in/import-a-spec.md'
+      - 'apiome-docs/docs/ship/export-a-spec.md'
+      - 'apiome-browse/lib/browseFacets.ts'
+      - 'apiome-browse/lib/formatSurface.ts'
+      - 'apiome-browse/lib/generated/**'
       - 'apiome-browse/src/app/HomeClient.tsx'
       - 'apiome-ui/src/app/generated/**'
       - 'apiome-ui/src/app/components/ade/help/helpCatalog.ts'
       - 'apiome-ui/src/app/components/ui/catalog/FormatPill.tsx'
+      # Other docs pages this suite generates or drift-checks (lint rules, MCP rule references,
+      # format details, conversion and fidelity pages). Not the whole docs tree: a prose edit
+      # elsewhere on the site cannot fail these tests.
+      - 'apiome-docs/docs/bring-in/convert-to-openapi.md'
+      - 'apiome-docs/docs/bring-in/catalog-format-details.md'
+      - 'apiome-docs/docs/ship/export-fidelity.md'
+      - 'apiome-docs/docs/build/lint-rules.md'
+      - 'apiome-docs/docs/build/lint-and-quality.md'
+      - 'apiome-docs/docs/build/axis-score.md'
+      - 'apiome-docs/docs/govern/mcp-*-rules.md'
+      - 'apiome-docs/docs/reference/rest/**'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -40,12 +54,26 @@ on:
       - 'README.md'
       - 'docs/format-counts.json'
       - 'docs/guide/**'
-      - 'apiome-docs/docs/**'
-      - 'apiome-browse/lib/**'
+      - 'apiome-docs/docs/bring-in/import-a-spec.md'
+      - 'apiome-docs/docs/ship/export-a-spec.md'
+      - 'apiome-browse/lib/browseFacets.ts'
+      - 'apiome-browse/lib/formatSurface.ts'
+      - 'apiome-browse/lib/generated/**'
       - 'apiome-browse/src/app/HomeClient.tsx'
       - 'apiome-ui/src/app/generated/**'
       - 'apiome-ui/src/app/components/ade/help/helpCatalog.ts'
       - 'apiome-ui/src/app/components/ui/catalog/FormatPill.tsx'
+      # Other docs pages this suite generates or drift-checks (lint rules, MCP rule references,
+      # format details, conversion and fidelity pages). Not the whole docs tree: a prose edit
+      # elsewhere on the site cannot fail these tests.
+      - 'apiome-docs/docs/bring-in/convert-to-openapi.md'
+      - 'apiome-docs/docs/bring-in/catalog-format-details.md'
+      - 'apiome-docs/docs/ship/export-fidelity.md'
+      - 'apiome-docs/docs/build/lint-rules.md'
+      - 'apiome-docs/docs/build/lint-and-quality.md'
+      - 'apiome-docs/docs/build/axis-score.md'
+      - 'apiome-docs/docs/govern/mcp-*-rules.md'
+      - 'apiome-docs/docs/reference/rest/**'
   workflow_dispatch:
 
 jobs:

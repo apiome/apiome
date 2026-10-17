@@ -1,7 +1,10 @@
 name: apiome-cli
 
 on:
+  # Pull requests run through `pull_request`; `push` is for `main` only, so a PR branch is not
+  # tested twice.
   push:
+    branches: [ main ]
     paths:
       - "apiome-cli/**"
       - ".github/workflows/apiome-cli.yml"

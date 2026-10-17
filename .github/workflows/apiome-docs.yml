@@ -30,9 +30,48 @@ on:
       - 'apiome-rest/CHANGELOG.md'
       - 'apiome-ui/public/WHATS_NEW.md'
       - 'scripts/gen-release-notes.ts'
-  # Every pull request, whatever it touches: the gate is what keeps the docs current.
+  # Every pull request that touches the site or anything it is checked against: its pages, the
+  # sources of the generated reference, the release-notes inputs, and the app routes whose
+  # screenshots can go stale. A pull request touching none of these cannot fail the gate.
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'apiome-docs/**'
+      - 'docs/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.dockerignore'
+      - '.github/workflows/apiome-docs.yml'
+      # Loose-docs lint and the legacy-docs inventory (DOCS-1.14): Markdown under any package's docs/.
+      - 'apiome-*/docs/**'
+      - 'scripts/check-loose-docs.sh'
+      - 'scripts/loose-docs-allowlist.txt'
+      - 'scripts/legacy_docs_inventory.py'
+      - 'scripts/tests/**'
+      # Generated reference (DOCS-1.11): REST from the OpenAPI document, CLI from the command
+      # tree, MCP from the tool registry, CI action pages from their READMEs.
+      - 'apiome-rest/openapi.yaml'
+      - 'apiome-rest/src/app/rest_reference_doc.py'
+      - 'apiome-rest/src/app/docs_site.py'
+      - 'apiome-rest/scripts/generate_rest_reference_docs.py'
+      - 'apiome-cli/src/**'
+      - 'apiome-cli/scripts/generate_cli_reference_docs.py'
+      - 'apiome-cli/pyproject.toml'
+      - 'apiome-cli/uv.lock'
+      - 'apiome-mcp/src/**'
+      - 'apiome-mcp/scripts/generate_mcp_reference_docs.py'
+      - 'apiome-mcp/pyproject.toml'
+      - 'apiome-mcp/uv.lock'
+      - 'apiome-rest/src/app/mcp_*.py'
+      - 'diff-action/README.md'
+      - 'mock-action/README.md'
+      # Release notes (DOCS-1.12).
+      - 'apiome-rest/CHANGELOG.md'
+      - 'apiome-ui/public/WHATS_NEW.md'
+      - 'scripts/gen-release-notes.ts'
+      - 'scripts/package.json'
+      # Stale-screenshot rule: a screenshot is stale when its route's source changed after it.
+      - 'apiome-ui/src/**'
   # Allow manual trigger (deploys when run on main)
   workflow_dispatch:
 
@@ -151,7 +190,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # The gate runs on every pull request, but the image only needs rebuilding when its inputs moved.
+  # The gate runs on every docs-affecting pull request; the image only needs rebuilding when its own inputs moved.
   # (On `main`, apiome-docs-publish.yml decides that with its own path filter.)
   changes:
     name: Did the image's inputs change
@@ -171,7 +210,7 @@ jobs:
         run: |
           set -euo pipefail
           changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
-          if echo "$changed" | grep -qE '^(apiome-docs/|docs/|package\.json$|yarn\.lock$|\.dockerignore$|\.github/workflows/apiome-docs\.yml$|apiome-rest/CHANGELOG\.md$|apiome-ui/public/WHATS_NEW\.md$|scripts/(gen-release-notes\.ts|package\.json)$)'; then
+          if echo "$changed" | grep -qE '^(apiome-docs/|package\.json$|yarn\.lock$|\.dockerignore$|\.github/workflows/apiome-docs\.yml$|apiome-rest/CHANGELOG\.md$|apiome-ui/public/WHATS_NEW\.md$|scripts/(gen-release-notes\.ts|package\.json)$)'; then
             echo "image=true" >> "$GITHUB_OUTPUT"
           else
             echo "image=false" >> "$GITHUB_OUTPUT"

@@ -22,12 +22,38 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      # Not loaded by the axe gate: the import corpus, the jest suite, notes, other suites' configs.
+      - '!apiome-ui/examples/**'
+      - '!apiome-ui/tests/**'
+      - '!apiome-ui/docs/**'
+      - '!apiome-ui/playwright.config.ts'
+      - '!apiome-ui/playwright.journey.config.ts'
+      # The What's new page is gated as a static fixture (e2e/fixtures/hive-a11y/whats-new.html),
+      # so the release-notes copy itself is not an input.
+      - '!apiome-ui/public/WHATS_NEW.md'
+      # Nearly every apiome-ui/package.json edit is a version bump. A dependency change also
+      # rewrites yarn.lock, which is listed below, so it still triggers this gate.
+      - '!apiome-ui/package.json'
+      - '.github/workflows/apiome-ui-a11y.yml'
       - 'package.json'
       - 'yarn.lock'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      # Not loaded by the axe gate: the import corpus, the jest suite, notes, other suites' configs.
+      - '!apiome-ui/examples/**'
+      - '!apiome-ui/tests/**'
+      - '!apiome-ui/docs/**'
+      - '!apiome-ui/playwright.config.ts'
+      - '!apiome-ui/playwright.journey.config.ts'
+      # The What's new page is gated as a static fixture (e2e/fixtures/hive-a11y/whats-new.html),
+      # so the release-notes copy itself is not an input.
+      - '!apiome-ui/public/WHATS_NEW.md'
+      # Nearly every apiome-ui/package.json edit is a version bump. A dependency change also
+      # rewrites yarn.lock, which is listed below, so it still triggers this gate.
+      - '!apiome-ui/package.json'
+      - '.github/workflows/apiome-ui-a11y.yml'
       - 'package.json'
       - 'yarn.lock'
   workflow_dispatch:

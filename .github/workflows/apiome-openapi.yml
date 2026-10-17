@@ -1,12 +1,14 @@
 name: apiome-openapi
 
+# Publishes the REST OpenAPI document to the live catalog, so it runs only for `main`: a pull
+# request or a feature-branch push must never import an unmerged spec.
 on:
   push:
+    branches: [ main ]
     paths:
       - "apiome-rest/openapi.*"
-  pull_request:
-    paths:
-      - "apiome-rest/openapi.*"
+      - ".github/workflows/apiome-openapi.yml"
+  workflow_dispatch:
 
 jobs:
   publish:

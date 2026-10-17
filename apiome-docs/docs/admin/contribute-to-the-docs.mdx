@@ -7,7 +7,9 @@ tags: [docs, screenshots]
 
 This site is the `apiome-docs/` workspace in the Apiome repository. Documentation is part of the
 definition of done: every change to the product updates its pages in the same pull request, and
-`yarn docs:check` runs on **every** pull request and must pass before it merges.
+`yarn docs:check` runs on every pull request that touches the site or anything it is checked
+against — its pages, the sources of the generated reference, the release notes, or the app screens
+its screenshots show — and must pass before it merges.
 
 Every issue carries a **Documentation (Docusaurus)** section listing what its pull request owes the
 docs — pages, screenshots, reference, release notes and the gate — and the

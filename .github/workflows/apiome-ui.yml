@@ -5,6 +5,21 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
+      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
+      - '!apiome-ui/playwright*.config.ts'
+      - '!apiome-ui/docs/**'
+      - '.github/workflows/apiome-ui.yml'
+      # Read by jest from outside the package: the docs site (help catalog and docs-links checks,
+      # keyboard and CPDO guide pages), the redesign mockups, the old guide index, migrations, and
+      # the registries under scripts/.
+      - 'apiome-docs/docs/**'
+      - 'docs/mockups/**'
+      - 'docs/guide/README.md'
+      - 'apiome-db/scripts/**'
+      - 'scripts/auth_providers/registry.json'
+      - 'scripts/format_capabilities/vocabulary.json'
+      - 'scripts/golden_path/contract.json'
       # Root workspace resolution affects jsdom/jest (e.g. lru-cache hoisting).
       - 'package.json'
       - 'yarn.lock'
@@ -12,6 +27,21 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apiome-ui/**'
+      # Not read by jest or the build: the Playwright configs and the package's notes. (e2e/ stays:
+      # the a11y and visual route ledgers and the a11y fixtures are unit-tested here.)
+      - '!apiome-ui/playwright*.config.ts'
+      - '!apiome-ui/docs/**'
+      - '.github/workflows/apiome-ui.yml'
+      # Read by jest from outside the package: the docs site (help catalog and docs-links checks,
+      # keyboard and CPDO guide pages), the redesign mockups, the old guide index, migrations, and
+      # the registries under scripts/.
+      - 'apiome-docs/docs/**'
+      - 'docs/mockups/**'
+      - 'docs/guide/README.md'
+      - 'apiome-db/scripts/**'
+      - 'scripts/auth_providers/registry.json'
+      - 'scripts/format_capabilities/vocabulary.json'
+      - 'scripts/golden_path/contract.json'
       - 'package.json'
       - 'yarn.lock'
   # Allow manual trigger

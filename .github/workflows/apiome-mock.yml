@@ -6,23 +6,31 @@ on:
     paths:
       - '.github/workflows/apiome-mock.yml'
       - 'apiome-mock/**'
-      - 'apiome-mcp/**'
-      - 'apiome-rest/**'
+      # apiome-mcp and apiome-rest are editable dependencies: their code and packaging only.
+      - 'apiome-mcp/src/**'
+      - 'apiome-mcp/pyproject.toml'
+      - 'apiome-mcp/README.md'
+      - 'apiome-rest/src/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/README.md'
       - 'mock-action/**'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'apiome-db/**'
   pull_request:
     branches: [ main, develop ]
     paths:
       - '.github/workflows/apiome-mock.yml'
       - 'apiome-mock/**'
-      - 'apiome-mcp/**'
-      - 'apiome-rest/**'
+      # apiome-mcp and apiome-rest are editable dependencies: their code and packaging only.
+      - 'apiome-mcp/src/**'
+      - 'apiome-mcp/pyproject.toml'
+      - 'apiome-mcp/README.md'
+      - 'apiome-rest/src/**'
+      - 'apiome-rest/pyproject.toml'
+      - 'apiome-rest/README.md'
       - 'mock-action/**'
       - 'docker-compose.yml'
       - 'docker-compose.env.example'
-      - 'apiome-db/**'
   workflow_dispatch:
 
 jobs:

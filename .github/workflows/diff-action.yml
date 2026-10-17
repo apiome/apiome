@@ -6,7 +6,9 @@ name: diff-action
 # cannot rot as the CLI and the container image evolve.
 
 on:
+  # `push` is for `main` only; pull requests run through `pull_request` (no duplicate runs).
   push:
+    branches: [ main ]
     paths:
       - "diff-action/**"
       - "apiome-docs/docs/reference/ci/ci-diff-gate.md"
