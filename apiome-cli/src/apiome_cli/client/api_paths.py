@@ -701,6 +701,11 @@ def version_tags(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/version-tags/{tenant_slug}/{project_id}"
 
 
+def version_tag_record(tenant_slug: str, project_id: str | UUID, tag_id: str) -> str:
+    """One version tag (DELETE removes it)."""
+    return f"{version_tags(tenant_slug, project_id)}/{tag_id}"
+
+
 def project_migration_plans(tenant_slug: str, project_id: str | UUID) -> str:
     """Every migration plan of a project, with its rules (CLI 3.6)."""
     return f"{V1}/migration-plans/{tenant_slug}/projects/{project_id}"
