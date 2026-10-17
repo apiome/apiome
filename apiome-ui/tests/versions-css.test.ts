@@ -79,9 +79,7 @@ const VERSION_PRELUDES = [
   '.ver-header__badges',
   '.ver-desc-link',
   '.ver-desc-link:hover',
-  '.ver-project-select',
   '.ver-tab-glyph',
-  '.ver-header__gitlike',
   '.ver-panel',
   '.ver-status__detail',
   '.ver-overview',
@@ -457,7 +455,6 @@ describe('density and font-scale independence', () => {
     expect(declaration('.ver-col-version', 'inline-size')).toBe('14.6875rem');
     expect(declaration('.ver-col-status', 'inline-size')).toBe('6.875rem');
     expect(declaration('.ver-col-mock', 'inline-size')).toBe('11.125rem');
-    expect(declaration('.ver-project-select', 'inline-size')).toBe('12rem');
     expect(declaration('.ver-filters__search', 'inline-size')).toBe('14.375rem');
     expect(declaration('.ver-filters__author', 'inline-size')).toBe('9.375rem');
     expect(declaration('.ver-filters__date > input', 'inline-size')).toBe('8.75rem');

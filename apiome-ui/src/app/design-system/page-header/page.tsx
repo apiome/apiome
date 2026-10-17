@@ -24,7 +24,21 @@
  */
 
 import * as React from 'react';
-import { ArrowUpRight, Download, Plus, Settings2, Trash2, Upload } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Download,
+  FolderKanban,
+  GitCompareArrows,
+  GitFork,
+  GitMerge,
+  Globe,
+  Link2,
+  Plus,
+  Settings2,
+  Sunset,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import {
   Avatar,
   Badge,
@@ -42,7 +56,7 @@ import {
   TooltipProvider,
 } from '@/app/components/ui';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
-import { Page, PageBody, PageHeader } from '@/app/components/shell';
+import { BreadcrumbSwitcher, Page, PageBody, PageHeader } from '@/app/components/shell';
 import PreferenceAxes from '../PreferenceAxes';
 
 /**
@@ -53,6 +67,100 @@ import PreferenceAxes from '../PreferenceAxes';
  */
 const LONG_TITLE =
   'Contoso Health clearinghouse claims interchange — professional 837P, production';
+
+/** The overflow specimen's sibling projects (HIVE-11.3). */
+const SWITCHER_PROJECTS = [
+  { id: 'payments', label: 'Payments API', keywords: 'payments-api', leading: <FormatPill format="openapi" /> },
+  { id: 'orders', label: 'Orders Service', keywords: 'orders-service', leading: <FormatPill format="openapi" /> },
+  { id: 'inventory', label: 'Inventory Events', keywords: 'inventory-events', leading: <FormatPill format="asyncapi" /> },
+];
+
+/**
+ * The overflow specimen's header: a breadcrumb switcher, Compare · Import · ⋯ · New version.
+ *
+ * Stateful only so a switch is visible: choosing a sibling renames the page.
+ *
+ * @returns The page.
+ */
+function OverflowSpecimenPage() {
+  const [current, setCurrent] = React.useState('payments');
+  const name = SWITCHER_PROJECTS.find((project) => project.id === current)?.label ?? 'Payments API';
+  return (
+    <Page>
+      <PageHeader
+        breadcrumb={[
+          { label: 'Acme Corp', href: '/design-system/page-header' },
+          { label: 'Build' },
+          { label: 'Projects', href: '/design-system/page-header' },
+          { label: name },
+        ]}
+        crumbSwitcher={
+          <BreadcrumbSwitcher
+            label={name}
+            items={SWITCHER_PROJECTS}
+            currentId={current}
+            onSelect={setCurrent}
+            triggerTitle="Switch project"
+            menuLabel="Projects"
+            searchLabel="Jump to project"
+            searchPlaceholder="Jump to project…"
+            emptyLabel="No matching projects"
+            footer={{
+              label: 'All projects',
+              href: '/design-system/page-header',
+              icon: <FolderKanban aria-hidden />,
+            }}
+          />
+        }
+        title={name}
+        description="Revisions and releases for this project"
+        actions={
+          <>
+            <Button variant="outline">
+              <GitCompareArrows aria-hidden />
+              Compare
+            </Button>
+            <Button variant="outline">
+              <Upload aria-hidden />
+              Import
+            </Button>
+          </>
+        }
+        overflow={{
+          heading: 'This project',
+          items: [
+            {
+              id: 'merge',
+              label: 'Merge branches…',
+              icon: GitMerge,
+              disabledReason: 'Create at least two named branches to merge',
+              badge: 'gitlike',
+            },
+            { id: 'sunset', label: 'Sunset timeline', icon: Sunset, href: '/design-system/page-header' },
+            { id: 'published', label: 'Published surface', icon: Globe, href: '/design-system/page-header' },
+            {
+              id: 'copy',
+              label: 'Copy link to project',
+              icon: Link2,
+              onSelect: () => undefined,
+              kbd: ['⌘', '⇧', 'C'],
+              separatorBefore: true,
+            },
+          ],
+        }}
+        primaryAction={
+          <Button>
+            <GitFork aria-hidden />
+            New version
+          </Button>
+        }
+      />
+      <PageBody>
+        <BodyFiller count={3} />
+      </PageBody>
+    </Page>
+  );
+}
 
 /** The specimen frame's height: tall enough to scroll under, short enough to fit three. */
 const FRAME_CLASS =
@@ -258,7 +366,16 @@ export default function PageHeaderGalleryPage() {
           </Tabs>
         </Specimen>
 
-        {/* ---- 3. The form page: a narrow body under a full-width header ---------- */}
+        {/* ---- 3. Overflow and breadcrumb switcher (HIVE-11.3) -------------------- */}
+        <Specimen
+          id="specimen-overflow"
+          title="Object page — breadcrumb switcher, ⋯ overflow"
+          note="One primary, two secondaries and ⋯ (DESIGN.md §1.2). The last breadcrumb step is a menu of sibling projects with a filter; the ⋯ menu holds the rest, an unavailable row stating why."
+        >
+          <OverflowSpecimenPage />
+        </Specimen>
+
+        {/* ---- 4. The form page: a narrow body under a full-width header ---------- */}
         <Specimen
           id="specimen-form"
           title="Form page — narrow body (920 px)"

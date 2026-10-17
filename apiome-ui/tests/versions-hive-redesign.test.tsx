@@ -466,27 +466,96 @@ describe('the header', () => {
     expect(crumbs).toHaveTextContent('Payments API');
   });
 
-  it('keeps the selector › Import › Compare › New version order, one primary action, and excludes catalog items', async () => {
+  it('keeps Compare › Import › ⋯ › New version, one primary action, and nothing else in the cluster', async () => {
     await renderVersions();
     const actions = screen.getByTestId('page-header-actions');
-    const buttons = within(actions).getAllByRole('button');
-    const names = buttons.map((b) => b.getAttribute('data-testid') ?? b.textContent?.trim());
-    expect(names.indexOf('versions-project-select')).toBeLessThan(names.indexOf('versions-import-button'));
-    expect(names.indexOf('versions-import-button')).toBeLessThan(names.indexOf('versions-compare-button'));
-    expect(names.indexOf('versions-compare-button')).toBeLessThan(names.indexOf('versions-new-button'));
+    const names = within(actions)
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('data-testid') ?? b.textContent?.trim());
+    expect(names).toEqual([
+      'versions-compare-button',
+      'versions-import-button',
+      'page-header-overflow',
+      'versions-new-button',
+    ]);
     expect(screen.getByTestId('versions-import-button')).toBeEnabled();
     expect(screen.getByTestId('versions-compare-button')).toBeEnabled();
-    // The selector never offers a catalog item (#4587).
-    fireEvent.keyDown(screen.getByTestId('versions-project-select'), { key: 'Enter' });
-    const options = await screen.findAllByRole('option');
-    expect(options.map((o) => o.textContent)).toEqual(['Payments API', 'Orders Service']);
+    expect(screen.getByTestId('page-header-overflow')).toHaveAccessibleName('More actions');
+    // The honey flag has left the header's action cluster (HIVE-11.3).
+    expect(within(actions).queryByTestId('gitlike-flag')).not.toBeInTheDocument();
   });
 
-  it('draws the git-like Merge button and Change report tab inert with the flag, in this build', async () => {
+  it('moves the project switcher into the breadcrumb, excluding catalog items', async () => {
+    mockReplace.mockClear();
     await renderVersions();
-    const merge = screen.getByTestId('versions-merge-button');
-    expect(merge).toBeDisabled();
+    const trigger = within(screen.getByTestId('page-breadcrumb')).getByTestId('versions-project-switch');
+    expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
+    expect(trigger).toHaveTextContent('Payments API');
+    fireEvent.click(trigger);
+
+    const menu = await screen.findByRole('menu', { name: 'Projects' });
+    // The selector never offers a catalog item (#4587); the current project is checked.
+    const options = within(menu).getAllByRole('menuitemradio');
+    expect(options.map((o) => o.textContent)).toEqual(['OpenAPIPayments API', 'OpenAPIOrders Service']);
+    expect(options[0]).toHaveAttribute('aria-checked', 'true');
+    expect(within(menu).getByRole('menuitem', { name: 'All projects' })).toHaveAttribute('href', '/ade/dashboard/projects');
+
+    // Typeahead: the filter is focused, and Enter switches to the first match.
+    const search = screen.getByRole('searchbox', { name: 'Jump to project' });
+    expect(search).toHaveFocus();
+    fireEvent.change(search, { target: { value: 'orders' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.stringContaining('projectId=3b91de00-0000-4000-8000-000000000002'),
+      { scroll: false }
+    );
+    expect(screen.queryByRole('menu', { name: 'Projects' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('holds Merge branches, Sunset timeline, Published surface and Copy link in the ⋯ menu', async () => {
+    await renderVersions();
+    fireEvent.keyDown(screen.getByTestId('page-header-overflow'), { key: 'Enter' });
+    const menu = await screen.findByTestId('page-header-overflow-menu');
+    expect(menu).toHaveTextContent('This project');
+
+    // Unavailable, not removed: the row stays reachable and states why.
+    const merge = within(menu).getByTestId('page-header-overflow-merge');
+    expect(merge).toHaveAttribute('aria-disabled', 'true');
     expect(merge).toHaveAttribute('title', 'Compiled but hidden today (FEATURE_GITLIKE=false)');
+    expect(merge).toHaveTextContent('gitlike');
+    expect(within(merge).queryByTestId('gitlike-flag')).not.toBeInTheDocument();
+
+    expect(within(menu).getByTestId('page-header-overflow-sunset-timeline')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/versions/sunset-timeline'
+    );
+    expect(within(menu).getByTestId('page-header-overflow-published')).toHaveAttribute('href', '/ade/dashboard/published');
+    // Export studio waits for its release, exactly as the facts card's link does.
+    expect(within(menu).queryByTestId('page-header-overflow-export-studio')).not.toBeInTheDocument();
+
+    const copy = within(menu).getByTestId('page-header-overflow-copy-link');
+    expect(copy).toHaveAttribute('aria-keyshortcuts', 'Meta+Shift+C Control+Shift+C');
+    fireEvent.click(copy);
+    await waitFor(() =>
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/ade/dashboard/versions?projectId=${PROJECT_ID}`
+      )
+    );
+  });
+
+  it('copies the project link with ⌘⇧C', async () => {
+    await renderVersions();
+    fireEvent.keyDown(window, { key: 'C', metaKey: true, shiftKey: true });
+    await waitFor(() =>
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/ade/dashboard/versions?projectId=${PROJECT_ID}`
+      )
+    );
+  });
+
+  it('draws the git-like Change report tab inert with the flag, in this build', async () => {
+    await renderVersions();
     const tab = screen.getByTestId('versions-tab-change-report');
     expect(tab).toBeDisabled();
     expect(within(tab).getByTestId('gitlike-flag')).toHaveTextContent('gitlike');

@@ -32,13 +32,15 @@ const at = (marker: string): number => {
 };
 
 describe('Versions header Import button', () => {
-  it('sits between the project selector and the Compare button', () => {
-    const selector = at('placeholder="Select Project"');
-    const importButton = at('data-testid="versions-import-button"');
+  it('sits after Compare and before the ⋯ menu and New version (HIVE-11.3)', () => {
     const compare = at('onClick={handleCompareDialogOpen}');
+    const importButton = at('data-testid="versions-import-button"');
+    const primary = at('data-testid="versions-new-button"');
 
-    expect(importButton).toBeGreaterThan(selector);
-    expect(compare).toBeGreaterThan(importButton);
+    expect(importButton).toBeGreaterThan(compare);
+    expect(primary).toBeGreaterThan(importButton);
+    expect(source).toContain('overflow={headerOverflow}');
+    expect(source).toContain('primaryAction={headerPrimaryAction}');
   });
 
   it('opens the shared import dialog rather than a second importer', () => {

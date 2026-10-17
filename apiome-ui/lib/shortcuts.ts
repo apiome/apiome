@@ -510,6 +510,21 @@ export const LIST_ACTION_SHORTCUTS: readonly ListActionShortcutDefinition[] = [
 ];
 
 /**
+ * `⌘⇧C` — copy a link to the project a page is about (HIVE-11.3, #5599).
+ *
+ * Registered by the Versions page while it is mounted, and printed beside the "Copy link to
+ * project" row of its ⋯ menu. `surface` scope: it is that screen's own chord. Not live while
+ * typing — a field's own copy is `⌘C`, and a chord that fired from inside a text field would
+ * surprise a reader who added Shift by accident.
+ */
+export const COPY_PROJECT_LINK_SHORTCUT: ShortcutDefinition = {
+  id: 'copy-project-link',
+  scope: 'surface',
+  description: 'Copy link to this project',
+  chord: { key: 'c', mod: true, shift: true },
+};
+
+/**
  * What a table already does with the keyboard (HIVE-2.3), declared so the sheet can say so.
  *
  * `DataTable` implements every one of these on the focused `<tr>` itself, which is the only
@@ -553,6 +568,7 @@ export const SHORTCUT_DISPLAY_ORDER: readonly string[] = [
   'list-new',
   'list-import',
   ...DATA_TABLE_SHORTCUTS.map((shortcut) => shortcut.id),
+  COPY_PROJECT_LINK_SHORTCUT.id,
 ];
 
 /** One section of the sheet: a scope's heading and the bindings live in it. */

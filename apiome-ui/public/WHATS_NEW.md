@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Design system:
   - New status strip: several statuses about one object in one row of chips, with one detail open at a time, instead of a stack of banners
+  - Versions: switch project from the last breadcrumb step (type to filter), and find Merge branches, Sunset timeline, Published surface, Export studio and **Copy link** (⌘⇧C) under **⋯** — the header keeps Compare, Import and New version
   - Versions: the compatibility, what’s-new and deprecation banners are now one **Status** row of chips — click a chip to open its detail and actions — so the version list starts higher on the page
   - New facts line and first-visit callout: a list page's stats fit in one line with **Show stats** to open the full grid, and explainers show once with **Got it**
 - Documentation:

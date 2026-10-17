@@ -21,6 +21,14 @@ export { default as AdeAppShell } from './AdeAppShell';
 export type { AdeAppShellProps } from './AdeAppShell';
 export { default as PageHeader } from './PageHeader';
 export type { PageBreadcrumbItem, PageHeaderProps } from './PageHeader';
+export { PageHeaderOverflowMenu, PAGE_HEADER_OVERFLOW_LABEL } from './PageHeaderOverflow';
+export type { PageHeaderOverflow, PageHeaderOverflowItem } from './PageHeaderOverflow';
+export { BreadcrumbSwitcher, filterBreadcrumbSwitcherItems } from './BreadcrumbSwitcher';
+export type {
+  BreadcrumbSwitcherFooter,
+  BreadcrumbSwitcherItem,
+  BreadcrumbSwitcherProps,
+} from './BreadcrumbSwitcher';
 export { Page, PageBody } from './pageChrome';
 export type { PageBodyProps, PageProps, PageWidth } from './pageChrome';
 export { default as RailNav } from './RailNav';
