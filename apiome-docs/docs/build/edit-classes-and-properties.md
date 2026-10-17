@@ -118,6 +118,76 @@ With `--json` it prints the whole property plus a `usage` array of
 `{ "class_name": …, "attribute_name": …, "required": … }`. **Used by** needs apiome-rest 1.354.0 or
 later. An older server shows it as not reported, and `usage` is `null`.
 
+### Create a property
+
+`apiome properties create <project>` adds a property to the project's library. You start from a
+**primitive**: the command copies the primitive's JSON Schema into the new property and adds your
+examples.
+
+On a terminal, run it with just the project and answer the prompts:
+
+```bash
+apiome properties create payments-api
+# ? Name: amount
+# ? Primitive (type to search): iso
+#   Matches: iso4217-money, iso8601-date
+# ? Primitive (type to search): iso4217-money
+# ? Description: Monetary amount in smallest unit.
+# ? Examples (comma-separated): 19.99, 1000.00
+# Create property 'amount' from primitive 'iso4217-money'? [Y/n]: y
+# ✔ Created property 'amount'.
+```
+
+Type part of a primitive's name to list the matches. If only one primitive matches, it is chosen.
+The command keeps the tenant's primitive list for 5 minutes, so the matches appear straight away.
+Without a terminal, or with `--no-input`, nothing is asked and a missing name or primitive is an
+error.
+
+In a script, pass the fields as flags or from a file. Both send the same request as the prompts:
+
+```bash
+apiome properties create payments-api \
+  --name amount \
+  --primitive iso4217-money \
+  --description 'Monetary amount in smallest unit.' \
+  --example 19.99 --example 1000.00 \
+  --yes
+
+apiome properties create payments-api --from-file ./props/amount.yaml --yes
+```
+
+```yaml title="props/amount.yaml"
+name: amount
+primitive: iso4217-money
+description: Monetary amount in smallest unit.
+examples:
+  - 19.99
+  - 1000.00
+```
+
+| Option | What it does |
+| --- | --- |
+| `--name <name>` | The property name. It must be new in the project. |
+| `--primitive <primitive>` | The primitive to copy, named by its name (any case), UUID or `$id`. It must exist. |
+| `--description <text>` | What the property holds. |
+| `--example <value>` | An example, repeatable. Text that parses as JSON (`19.99`, `true`) is read as JSON, anything else as a string. |
+| `--from-file <path>` | A JSON or YAML object with `name`, `primitive`, `description` and `examples`. A flag overrides the same field in the file. |
+| `--yes` | Skip the final question the prompts ask. |
+
+Before anything is sent, each example is checked against the primitive's schema, including its
+`format`. Nothing is created if a field is wrong. The command lists every problem, one line per
+field, and exits with code **7**:
+
+```text
+name: the project already has a property 'amount'
+primitive: no primitive 'iso4217-mony' in this tenant. Did you mean: iso4217-money?
+examples[0]: -1 — -1 is less than the minimum of 0
+Nothing was created.
+```
+
+Properties have no tags, so there is no `--tag` option. A `tags` key in the file is reported as an
+error. With `--json` the command prints the created property.
+
 ## Verify
 
 - **UI:** the class shows its new description; properties reflect their edits.

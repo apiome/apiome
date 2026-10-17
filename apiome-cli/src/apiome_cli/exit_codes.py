@@ -96,6 +96,11 @@ EXIT_TAG_LOCKED = 6
 #: gate on the verdict itself.
 EXIT_CHECK_FAILED = 7
 
+#: ``apiome properties create`` (CLI 6.3): the new property is **invalid** — a field-level
+#: problem such as an unknown primitive or an example its schema rejects; one line per field on
+#: stderr, nothing was created. Another per-command use of 7.
+EXIT_PROPERTY_INVALID = 7
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the suite has **no verdict yet** — a
 #: required component is waiting on evidence (a contract run of this draft), or the commit is ahead
 #: of the draft the suite judges. Neither a pass nor a failure, so neither ``0`` nor ``7``: a

@@ -52,6 +52,11 @@ class RestClient:
         else:
             self._headers = _auth_headers(settings)
 
+    @property
+    def base_url(self) -> str:
+        """The API base URL this client calls (e.g. to key a local cache per server)."""
+        return self._base_url
+
     def get(self, path: str) -> httpx.Response:
         """Issue GET ``path`` relative to ``base_url`` and exit on HTTP error.
 

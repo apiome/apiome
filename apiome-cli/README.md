@@ -1469,6 +1469,28 @@ apiome --json properties show payments-api amount   # the property plus usage[]
 The name is matched exactly, then ignoring case; a miss exits **2** with "Did you mean: …?".
 `--json` prints the full property with `usage` — `[{class_name, attribute_name, required}]`.
 
+### Create a property
+
+`apiome properties create <project>` creates a library property from a primitive
+(`POST /v1/properties/{tenant}/{project}`). The primitive's JSON Schema is copied into the
+property's `data` (without `$id` / `$schema`) and the examples are added. On a terminal, missing
+fields are prompted for; typing part of a primitive's name lists the matches. The prompts, the flags
+and `--from-file` (JSON or YAML: `name`, `primitive`, `description`, `examples`; a flag wins) send
+identical bodies.
+
+```bash
+apiome properties create payments-api                       # prompts
+apiome properties create payments-api --name amount --primitive iso4217-money \
+  --description 'Monetary amount in smallest unit.' --example 19.99 --example 1000.00 --yes
+apiome properties create payments-api --from-file ./props/amount.yaml --yes
+```
+
+Each example is validated locally against the primitive's schema (formats included; `multipleOf`
+in decimal). Any field-level problem — a taken name, an unknown primitive (with "Did you mean"), a
+rejected example, a `tags` key — is printed as `field: message` and exits **7**; nothing is
+created. The tenant's primitive list is cached for 5 minutes in `$XDG_CACHE_HOME/apiome/`
+(`~/.cache/apiome/`). Properties have no tags, so there is no `--tag`.
+
 ### List resources
 
 Human-readable tables (default):
