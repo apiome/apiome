@@ -1,0 +1,21 @@
+{
+  "pack": "wadl",
+  "fixture": "apiome-ui/examples/wadl/06-task-tracker.wadl",
+  "tier": "medium",
+  "score": 82,
+  "grade": "B",
+  "operations": [
+    "DELETE /tasks/{taskId}",
+    "GET /tasks",
+    "GET /tasks/{taskId}",
+    "POST /tasks",
+    "PUT /tasks/{taskId}"
+  ],
+  "schemas": [
+    "tasks.Task"
+  ],
+  "refinements": [
+    "Renamed 1 schema name OpenAPI does not allow (e.g. 'http://example.com/tasks.Task' → 'tasks.Task')."
+  ],
+  "losses": []
+}

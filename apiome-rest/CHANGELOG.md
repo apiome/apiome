@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.344.0] - 2026-10-16
+
+### Added
+- **Per-format conversion packs (#4009, MFI-22.8)**: catalog → OpenAPI conversion now runs each
+  source format through its own pack (`app.conversion_packs`) — OData, Smithy, gRPC/Protobuf,
+  GraphQL, AsyncAPI, CloudEvents, WSDL, Avro, RAML, API Blueprint and WADL. The RAML (MFI-15.5),
+  API Blueprint (MFI-16.4) and WADL (§9.3) migrate-to-OpenAPI notes resolve to their packs.
+  - **gRPC/Protobuf** honors `option (google.api.http)`: an annotated method converts to its
+    declared method and path (`body`, custom verbs; `additional_bindings` reported) instead of a
+    synthesized `POST /{Service}/{Method}`. A service with methods but no annotation is now
+    capped at the **low** tier, with the loss `grpc-no-http-annotations`.
+  - **Smithy** honors `@http(method, uri)`; `@endpoint` and `@hostLabel` are charged as
+    losses (`smithy-endpoint-trait`, `smithy-hostLabel-trait`).
+  - **AsyncAPI** and **CloudEvents** are capped at the **low** tier (they previously reported
+    medium), with the loss `event-schemas-only`.
+  - **Every pack** renames schema names OpenAPI forbids (WSDL/WADL XML-qualified names, Avro
+    map names) together with every reference, so those conversions are now valid OpenAPI 3.1.
+  - Each pack names its authoritative converter (`odata-openapi`, `smithy-openapi`,
+    `protoc-gen-openapiv2`, `sofa-openapi`) and uses it through the toolchain runner when one is
+    registered (source on stdin, OpenAPI JSON on stdout), falling back natively otherwise. None
+    ships in the image, so all conversions are native today.
+  - `POST /v1/catalog/{tenant}/{item}/convert?dryRun=true` adds `conversionPack` (key, label,
+    `native`/`external` strategy, refinements, documented losses, expected tiers, converter
+    status); null for OpenAPI/Swagger/TypeSpec and formats without a pack.
+- **Protobuf import with `google.api.http`**: `google/api/annotations.proto` and
+  `google/api/http.proto` are vendored (Apache-2.0) and supplied to `buf build` when a source
+  imports them and does not carry its own copy, so annotated `.proto` files import and convert.
+
+The OpenAPI version moves to 1.208.0.
+
 ## [1.343.0] - 2026-10-16
 
 ### Added

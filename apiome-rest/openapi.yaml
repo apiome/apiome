@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.207.0
+  version: 1.208.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -71543,7 +71543,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         completed_at:
           anyOf:
           - type: string
@@ -72997,7 +72997,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73170,7 +73170,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73611,13 +73611,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -75186,7 +75186,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: d3ebe6f2-01c2-4d2f-9f8b-8b11a86da1e3
+          example: 57e283d8-e6e8-4d74-b8f3-88937f5f34bb
         method:
           type: string
           title: Method
@@ -77329,7 +77329,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         envelope:
           additionalProperties: true
           type: object
@@ -78709,7 +78709,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         browse_url:
           anyOf:
           - type: string
@@ -110157,7 +110157,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
       additionalProperties: false
       type: object
       required:
@@ -119037,7 +119037,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         detected_by:
           anyOf:
           - type: string
@@ -124560,13 +124560,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T01:43:45Z'
+          example: '2026-10-17T02:10:50Z'
         outcome:
           anyOf:
           - type: string

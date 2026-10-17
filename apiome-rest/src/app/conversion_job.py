@@ -57,6 +57,14 @@ from .conversion_projection import (
     build_conversion_manifest,
     summarize_conversion_manifest,
 )
+from .conversion_packs import (
+    ConversionPackInfo,
+    apply_source_losses,
+    apply_tier_ceiling,
+    refine_with_pack,
+    resolve_conversion_pack,
+    run_external_converter,
+)
 from .emitter import EmitResult
 from .export_service import ExportError, emit_canonical, resolve_emit_format
 from .fidelity import FidelityReport, analyze_fidelity
@@ -221,6 +229,11 @@ class ConversionPreview(BaseModel):
     manifest: ConversionManifest = Field(
         description="The deterministic conversion projection manifest (CPDO-1.3) — which source "
         "construct became which OpenAPI pointer, and why anything did not.",
+    )
+    pack: Optional[ConversionPackInfo] = Field(
+        default=None,
+        description="The per-format conversion pack that shaped this conversion (MFI-22.8); "
+        "``None`` on the passthrough/native paths and for a format with no pack.",
     )
 
 
@@ -466,29 +479,73 @@ def preview_conversion(
             ),
         )
 
-    api = _apply_defaults(source.api, defaults)
+    # MFI-22.8: the source format's conversion pack refines the model (an annotated gRPC/Smithy
+    # method keeps its declared HTTP binding), may cap the tier, and may hand the document to an
+    # installed authoritative converter. With no pack, every step below is the identity.
+    pack = resolve_conversion_pack(source.source_format, source.api.format)
+    refinement = refine_with_pack(pack, source.api, source.source_text)
+    api = _apply_defaults(refinement.api, defaults)
     try:
         resolved_format = resolve_emit_format(target_format)
         emit_result = emit_canonical(api, target_format)
     except ExportError as exc:
         raise ConversionError(str(exc), status_code=exc.status_code) from exc
-    report = analyze_fidelity(api, emit_result)
+    report = apply_source_losses(analyze_fidelity(api, emit_result), pack, source.source_text)
+    report = apply_tier_ceiling(report, pack, api)
+
+    # The fidelity report always describes what the *source* carries onto OpenAPI (the native
+    # analysis); an external converter only changes which tool projected the document. Its
+    # document has no per-pointer provenance trail, so the manifest is built without one, as on
+    # the passthrough path.
+    external_document, converter = run_external_converter(pack, source.source_text)
+    document = (
+        _fill_document_defaults(external_document, defaults)
+        if external_document is not None
+        else emit_result.document
+    )
     return ConversionPreview(
         fidelity=report,
-        document=emit_result.document,
+        document=document,
         target_format=resolved_format,
         conversion_mode=LOSSY_CONVERSION_MODE,
         manifest=_build_manifest(
             api=api,
-            document=emit_result.document,
+            document=document,
             report=report,
-            emit_result=emit_result,
+            emit_result=emit_result if external_document is None else None,
             source=source,
             defaults=defaults,
             target_format=resolved_format,
             conversion_mode=LOSSY_CONVERSION_MODE,
         ),
+        pack=(
+            pack.info(refinements=refinement.refinements, converter=converter)
+            if pack is not None
+            else None
+        ),
     )
+
+
+def _fill_document_defaults(
+    document: Dict[str, Any], defaults: Optional[ConversionDefaults]
+) -> Dict[str, Any]:
+    """Apply ``defaults`` to an external converter's document, only where it left a gap.
+
+    The same rule as :func:`_apply_defaults` (a default never overwrites a declared value),
+    applied to the document rather than the model because the model did not produce it.
+    """
+    if defaults is None:
+        return document
+    filled = dict(document)
+    info = dict(filled.get("info") or {})
+    if defaults.title and not str(info.get("title") or "").strip():
+        info["title"] = defaults.title
+    if defaults.version and not str(info.get("version") or "").strip():
+        info["version"] = defaults.version
+    filled["info"] = info
+    if defaults.servers and not filled.get("servers"):
+        filled["servers"] = [{"url": url} for url in defaults.servers if url and url.strip()]
+    return filled
 
 
 def _build_manifest(

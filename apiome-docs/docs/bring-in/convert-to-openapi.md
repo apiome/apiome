@@ -154,6 +154,59 @@ and the same values can be supplied in the CLI, so the manifest is reproducible.
 Recomputing (changed defaults, changed source) always resets the acknowledgement.
 **Cancel produces no persisted conversion state** — no project, no history entry.
 
+## Per-format conversion packs
+
+Each source format converts through its own **conversion pack**, which refines the
+generic projection for that format and says what to expect from it. The dry-run response
+(API and CLI) names the pack that ran: `conversionPack` gives its key, the changes it made
+(`refinements`), the losses the format is known to have (`documented_losses`), and its
+expected tier. There is no separate "migrate to OpenAPI" path for RAML, API Blueprint or
+WADL: converting a catalog item *is* the migration, through the pack below.
+
+| Source format | What the pack does | Expected tier | Authoritative converter (when installed) |
+|---|---|---|---|
+| **OData** | Entity sets, singletons, actions and functions convert to their own paths. | `high` | Microsoft.OpenApi.OData — OASIS OData → OpenAPI mapping (`odata-openapi`) |
+| **Smithy** | Honors each operation's `@http` trait (`method`, `uri`); `@endpoint` and `@hostLabel` are reported as losses. | `high` or `medium` | Smithy `smithy-openapi` plugin (`smithy-openapi`) |
+| **gRPC / Protobuf** | Honors `option (google.api.http)` — the method, path and `body` of each rule's primary binding; `additional_bindings` are reported. | `medium` — capped at **`low`** when no method is annotated | grpc-gateway `protoc-gen-openapiv2` (`protoc-gen-openapiv2`) |
+| **GraphQL** | Queries become `GET`, mutations `POST` (SOFA-style); subscriptions have no OpenAPI form. | `medium` | SOFA (`sofa-openapi`) |
+| **AsyncAPI**, **CloudEvents** | Schemas-only: the message schemas convert faithfully; channel operations are illustrative `POST` paths. | always **`low`** | — |
+| **WSDL / SOAP** | Each operation becomes a JSON `POST`; the SOAP envelope, headers and faults are not modelled. | `medium` | — |
+| **Avro** (and Avro IDL) | Record schemas become `components.schemas`. | `high` | — |
+| **RAML** | Resources and methods convert directly; resource types and traits are applied. | `high` | — |
+| **API Blueprint** | Resources and actions convert directly; example transactions are not carried. | `high` | — |
+| **WADL** | Resources and methods convert directly. | `high` or `medium` | — |
+
+What every pack does:
+
+- **Schema names are made valid.** OpenAPI only allows letters, digits, `.`, `_` and `-` in
+  a schema name, so an XML-qualified name such as `http://example.com/orders.Order`
+  (WSDL, WADL) becomes `orders.Order`, and every reference follows. The preview lists each
+  rename.
+- **A capped tier says why.** When a pack holds a conversion to `low` — an unannotated
+  gRPC service, any AsyncAPI or CloudEvents document — the fidelity report carries a loss
+  explaining it (`grpc-no-http-annotations`, `event-schemas-only`), so the required
+  acknowledgement is never a surprise.
+- **Authoritative converters are optional.** None ships with apiome today, so every pack
+  converts natively and `external_converter.fallback_reason` says the converter is not
+  installed. An operator who installs one registers it under the tool key above (it reads
+  the source on stdin and prints the OpenAPI document as JSON); the pack then uses its
+  document, keeps apiome's own fidelity report, and falls back natively if it fails.
+
+To get a REST surface from a gRPC service, annotate its methods before importing:
+
+```proto
+import "google/api/annotations.proto";
+
+service OrderService {
+  rpc GetOrder(GetOrderRequest) returns (Order) {
+    option (google.api.http) = { get: "/v1/orders/{id}" };
+  }
+}
+```
+
+apiome supplies `google/api/annotations.proto` and `google/api/http.proto` itself when an
+import references them, so a single `.proto` file is enough.
+
 ## Historical evidence vs a fresh preview
 
 The item's **Conversions** tab lists every conversion, newest first, each with the exact

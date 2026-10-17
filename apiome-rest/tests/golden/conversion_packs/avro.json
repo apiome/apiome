@@ -1,0 +1,21 @@
+{
+  "pack": "avro",
+  "fixture": "apiome-ui/examples/avro/05-stress-mixed-types.avsc",
+  "tier": "high",
+  "score": 93,
+  "grade": "A",
+  "operations": [],
+  "schemas": [
+    "com.example.telemetry.Map_null_string_double",
+    "com.example.telemetry.Md5",
+    "com.example.telemetry.TelemetryEnvelope",
+    "com.example.telemetry.Union_com_example_telemetry_readings_GaugeReading_com_example_telemetry_readings_CounterReading_null",
+    "com.example.telemetry.Union_null_string_double",
+    "com.example.telemetry.readings.CounterReading",
+    "com.example.telemetry.readings.GaugeReading"
+  ],
+  "refinements": [
+    "Renamed 1 schema name OpenAPI does not allow (e.g. \"com.example.telemetry.Map_['null', 'string', 'double']\" → 'com.example.telemetry.Map_null_string_double')."
+  ],
+  "losses": []
+}

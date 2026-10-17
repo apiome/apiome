@@ -549,6 +549,9 @@ async def convert_catalog_item(
                 target="openapi",
                 conversion_mode=preview.conversion_mode,
                 projection=summarize_conversion_manifest(preview.manifest).model_dump(mode="json"),
+                conversion_pack=(
+                    preview.pack.model_dump(mode="json") if preview.pack is not None else None
+                ),
             )
 
         result = await run_conversion(

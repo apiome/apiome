@@ -1,0 +1,31 @@
+{
+  "pack": "grpc",
+  "fixture": "apiome-rest/tests/fixtures/conversion_packs/orders-http.proto",
+  "tier": "medium",
+  "score": 78,
+  "grade": "C",
+  "operations": [
+    "DELETE /v1/orders/{id}",
+    "GET /v1/orders",
+    "GET /v1/orders/{id}",
+    "POST /v1/orders",
+    "POST /v1/orders/{id}:cancel"
+  ],
+  "schemas": [
+    "shop.orders.v1.CancelOrderRequest",
+    "shop.orders.v1.CreateOrderRequest",
+    "shop.orders.v1.DeleteOrderRequest",
+    "shop.orders.v1.DeleteOrderResponse",
+    "shop.orders.v1.GetOrderRequest",
+    "shop.orders.v1.LineItem",
+    "shop.orders.v1.ListOrdersRequest",
+    "shop.orders.v1.ListOrdersResponse",
+    "shop.orders.v1.Order",
+    "shop.orders.v1.OrderStatus"
+  ],
+  "refinements": [
+    "Honored 5 google.api.http bindings.",
+    "Reported 1 additional_bindings entry; only each rule's primary binding is emitted."
+  ],
+  "losses": []
+}
