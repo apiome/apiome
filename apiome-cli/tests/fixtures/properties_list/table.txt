@@ -1,0 +1,9 @@
+NAME         TYPE           REQ?  USED BY
+amount       int64          —     Charge,Refund
+created_at   date-time      yes   Charge,Customer,Refund +1
+currency     string         —     Charge,Refund
+customer_id  uuid           —     Charge,Customer
+legacy_ref   string|null    —     —
+tags         array<string>  —     Customer
+
+6 properties in project 'payments-api'.

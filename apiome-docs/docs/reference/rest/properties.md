@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.216.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.217.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `properties` · 5 operations
 
@@ -17,7 +17,8 @@ Tag: `properties` · 5 operations
 
 **List Properties**
 
-List all properties for a project.
+List all properties for a project, each with ``used_by`` (the class names that use it, across the
+project's live versions) and ``used_by_count`` (#3223).
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -239,6 +240,8 @@ A property on a project class, including nested structure and optional primitive
 | `enabled` | boolean | no | Whether the resource is active. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
+| `used_by` | array of string or null | no | Distinct names of the classes (in any live version of the project) that use this property; list responses only (#3223). |
+| `used_by_count` | integer or null | no | Number of class properties (across live versions) that reference this property; list responses only. |
 
 ### `ProjectPropertyUpdateRequest` {#schema-projectpropertyupdaterequest}
 

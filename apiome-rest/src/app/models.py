@@ -9218,6 +9218,18 @@ class ProjectPropertySchema(BaseModel):
     enabled: bool = True
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
+    # Usage (#3223, CLI 6.1): filled by the list endpoint only; null on the other responses.
+    used_by: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Distinct names of the classes (in any live version of the project) that use this property; "
+            "list responses only (#3223)."
+        ),
+    )
+    used_by_count: Optional[int] = Field(
+        default=None,
+        description="Number of class properties (across live versions) that reference this property; list responses only.",
+    )
 
     class Config:
         from_attributes = True

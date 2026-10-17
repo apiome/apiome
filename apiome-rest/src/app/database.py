@@ -11799,13 +11799,40 @@ class Database:
 
     # ==================== Project Properties Methods ====================
 
-    def get_properties_for_project(self, project_id: str) -> List[Dict[str, Any]]:
-        """Get all properties for a project."""
+    def get_properties_for_project(
+        self, project_id: str, *, with_usage: bool = False
+    ) -> List[Dict[str, Any]]:
+        """Get all properties for a project.
+
+        Args:
+            project_id: The project.
+            with_usage: Also return ``used_by`` (distinct class names, sorted) and
+                ``used_by_count`` (class-property references) across the project's live versions
+                (#3223). Classes and versions that are soft-deleted do not count.
+        """
+        if not with_usage:
+            query = """
+                SELECT id, project_id, name, description, data, enabled, created_at, updated_at
+                FROM apiome.properties
+                WHERE project_id = %s AND deleted_at IS NULL
+                ORDER BY name ASC
+            """
+            return self.execute_query(query, (project_id,))
         query = """
-            SELECT id, project_id, name, description, data, enabled, created_at, updated_at
-            FROM apiome.properties
-            WHERE project_id = %s AND deleted_at IS NULL
-            ORDER BY name ASC
+            SELECT p.id, p.project_id, p.name, p.description, p.data, p.enabled, p.created_at, p.updated_at,
+                   COALESCE(u.used_by, ARRAY[]::text[]) AS used_by,
+                   COALESCE(u.used_by_count, 0) AS used_by_count
+            FROM apiome.properties p
+            LEFT JOIN LATERAL (
+                SELECT array_agg(DISTINCT c.name::text ORDER BY c.name::text) AS used_by,
+                       count(*) AS used_by_count
+                FROM apiome.class_properties cp
+                JOIN apiome.classes c ON c.id = cp.class_id AND c.deleted_at IS NULL
+                JOIN apiome.versions v ON v.id = c.version_id AND v.deleted_at IS NULL
+                WHERE cp.property_id = p.id
+            ) u ON true
+            WHERE p.project_id = %s AND p.deleted_at IS NULL
+            ORDER BY p.name ASC
         """
         return self.execute_query(query, (project_id,))
 

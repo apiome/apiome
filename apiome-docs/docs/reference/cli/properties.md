@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List and fetch tenant properties."
+description: "List and fetch project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,7 +12,7 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List and fetch tenant properties.
+List and fetch project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
@@ -42,14 +42,27 @@ apiome properties get [OPTIONS] PROPERTY_ID
 
 ## apiome properties list {#properties-list}
 
-List project properties (GET /v1/properties/{tenant_slug}/{project_id}).
+List a project's properties with their type and the classes that use them (GET /v1/properties/{tenant}/{project}).
+
+Properties have no tags and are not bound to primitives, so the TYPE column is read from each property's JSON Schema (its format, else its type).
 
 ```text
-apiome properties list [OPTIONS]
+apiome properties list [OPTIONS] [PROJECT]
 ```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text |  | Project slug or UUID (or pass --project-id). |
 
 **Options**
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
-| `--project-id` | uuid |  | yes | Project UUID. |
+| `--project-id` | uuid |  |  | Project UUID (the older form). |
+| `--type`, `--primitive` | text |  |  | Only properties of this schema type, e.g. string, uuid, date-time, array&lt;string&gt;. |
+| `--search` | text |  |  | Case-insensitive text in the name or description. |
+| `--unused` | flag |  |  | Only properties no class uses. |
+| `--limit` | integer range | `50` |  | Show at most this many. |
+| `--all` | flag |  |  | Show every match (ignores --limit). |

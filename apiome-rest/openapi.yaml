@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.216.0
+  version: 1.217.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -27660,11 +27660,13 @@ paths:
       tags:
       - properties
       summary: List Properties
-      description: "List all properties for a project.\n\nSupports authentication\
-        \ via:\n- JWT token in Authorization header (Bearer token)\n- API key in X-API-Key\
-        \ header\n\nArgs:\n    tenant_slug: The tenant slug\n    project_id: The project\
-        \ ID\n    auth_data: Authentication data (injected by dependency)\n\nReturns:\n\
-        \    List of properties for the project"
+      description: "List all properties for a project, each with ``used_by`` (the\
+        \ class names that use it, across the\nproject's live versions) and ``used_by_count``\
+        \ (#3223).\n\nSupports authentication via:\n- JWT token in Authorization header\
+        \ (Bearer token)\n- API key in X-API-Key header\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug\n    project_id: The project ID\n    auth_data: Authentication\
+        \ data (injected by dependency)\n\nReturns:\n    List of properties for the\
+        \ project"
       operationId: list_properties_v1_properties__tenant_slug___project_id__get
       parameters:
       - name: tenant_slug
@@ -72415,7 +72417,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         completed_at:
           anyOf:
           - type: string
@@ -73869,7 +73871,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -74042,7 +74044,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -74483,13 +74485,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -76058,7 +76060,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: c85fb14a-5214-4dcd-afe8-fc7063294cb1
+          example: 1e4e97fc-688b-40ec-a689-82d6aa5202b0
         method:
           type: string
           title: Method
@@ -78201,7 +78203,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         envelope:
           additionalProperties: true
           type: object
@@ -79581,7 +79583,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         browse_url:
           anyOf:
           - type: string
@@ -104583,6 +104585,30 @@ components:
               and optional primitive binding.
           title: Updated At
           description: Last update timestamp (ISO 8601).
+        used_by:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: A property on a project class, including nested structure
+              and optional primitive binding.
+          - type: 'null'
+            description: A property on a project class, including nested structure
+              and optional primitive binding.
+          title: Used By
+          description: Distinct names of the classes (in any live version of the project)
+            that use this property; list responses only (#3223).
+        used_by_count:
+          anyOf:
+          - type: integer
+            description: A property on a project class, including nested structure
+              and optional primitive binding.
+          - type: 'null'
+            description: A property on a project class, including nested structure
+              and optional primitive binding.
+          title: Used By Count
+          description: Number of class properties (across live versions) that reference
+            this property; list responses only.
       type: object
       required:
       - id
@@ -111155,7 +111181,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
       additionalProperties: false
       type: object
       required:
@@ -120035,7 +120061,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         detected_by:
           anyOf:
           - type: string
@@ -125614,13 +125640,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T16:14:04Z'
+          example: '2026-10-17T16:31:50Z'
         outcome:
           anyOf:
           - type: string

@@ -48,8 +48,40 @@ with:
 ```bash
 apiome schemas list                       # all classes in the tenant
 apiome schemas get <class_id>             # one class
-apiome properties list --project-id <id>  # properties in a project
+apiome properties list <project>          # the project's property library
 ```
+
+### List a project's properties
+
+`apiome properties list <project>` lists the project's reusable properties: each one's name, its
+**type**, whether its schema marks it required, and the classes that use it.
+
+```bash
+apiome properties list payments-api
+# NAME         TYPE           REQ?  USED BY
+# amount       int64          —     Charge,Refund
+# created_at   date-time      yes   Charge,Customer,Refund +1
+# customer_id  uuid           —     Charge,Customer
+# legacy_ref   string|null    —     —
+#
+# 4 properties in project 'payments-api'.
+```
+
+- **TYPE** is read from the property's JSON Schema: its `format` when it has one (`uuid`,
+  `date-time`), otherwise its `type` (`array<string>`, `string|null`). Properties are not bound to
+  primitive types.
+- **USED BY** lists the classes, in any version of the project, that use the property.
+- Properties have no tags, so there is no tag column or filter.
+
+| Option | What it does |
+| --- | --- |
+| `--type <type>` (or `--primitive`) | Only properties of that type — the whole label or one of its `\|` alternatives (`--type string` matches `string\|null`). |
+| `--search <text>` | Only properties whose name or description contains the text (any case). |
+| `--unused` | Only properties no class uses. |
+| `--limit N` / `--all` | Show the first `N` (default 50) or every match. |
+
+With `--json` it prints `{ "total": …, "items": [...] }`, each item with `used_by` and
+`used_by_count`. The older form `apiome properties list --project-id <uuid>` still works.
 
 ## Verify
 

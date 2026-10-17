@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.353.0] - 2026-10-17
+
+### Added
+- **Where each property is used (#3223, CLI 6.1)**: `GET /v1/properties/{tenant}/{project}` returns, on every
+  property, `used_by` (the distinct names of the classes that use it, across the project's live versions, sorted)
+  and `used_by_count` (how many class properties reference it). Soft-deleted classes and versions do not count.
+  The single-property, create and update responses leave both `null`. Used by `apiome properties list --unused`.
+
+The OpenAPI version moves to 1.217.0.
+
 ## [1.352.0] - 2026-10-17
 
 ### Added
