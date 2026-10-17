@@ -11,7 +11,7 @@ import re
 import time
 from datetime import date as date_cls
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request, Response
@@ -114,6 +114,8 @@ from .models import (
     VersionMockToggleRequest,
     VersionPublishRequest,
     VersionSchema,
+    FreezeSchemaRequest,
+    FreezeSchemaResponse,
     VersionUnpublishRequest,
     VersionUnpublishResponse,
     VersionUpdateRequest,
@@ -126,6 +128,18 @@ from .publication_change_report import (
 from .rate_limit import FixedWindowRateLimiter
 from .publication_changelog import generate_version_changelog_on_publish
 from .publish_notifications import notify_version_published_on_publish
+from .spec_snapshot import (
+    CODE_ALREADY_FROZEN,
+    CODE_NOT_FROZEN,
+    CODE_NOT_PUBLISHED,
+    build_live_spec,
+    render_spec_bytes,
+    row_summary,
+    sha256_hex,
+    snapshot_url,
+    summarize,
+    unfreeze_refusal,
+)
 from .version_unpublish import (
     build_unpublish_notification,
     count_active_subscriptions,
@@ -3941,48 +3955,181 @@ async def unpublish_version(
     return VersionUnpublishResponse(**{**version, **summary, "tags_moved": tags_moved})
 
 
-@router.post("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
-async def freeze_version_schema(
-    tenant_slug: str,
-    project_id: str,
-    version_record_id: str,
-    auth_data: Dict[str, Any] = Depends(validate_authentication)
-) -> VersionSchema:
+def _freeze_target(
+    tenant_slug: str, project_id: str, version_record_id: str, auth_data: Dict[str, Any]
+) -> Tuple[Dict[str, Any], str, bool]:
+    """The version a freeze route acts on, the caller's user id, and whether they are an admin.
+
+    Raises 404 for a version outside the project and 403 without a user session.
     """
-    Freeze (capture) class schemas into apiome.class_schema for this version.
-    Only available when the version has no class_schema rows yet (e.g. published before schema capture existed).
-    Only the version creator or a tenant administrator can freeze schema.
-    """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
     if not existing:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Version not found: {version_record_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
     if existing["project_id"] != project_id:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Version not found in project: {project_id}"
-        )
-    if db.version_has_class_schema(version_record_id):
-        raise HTTPException(
-            status_code=400,
-            detail="Schema already frozen for this version. Class schemas are already captured."
-        )
+        raise HTTPException(status_code=404, detail=f"Version not found in project: {project_id}")
     user_id = get_authenticated_user_id(auth_data)
     if not user_id:
         raise HTTPException(
             status_code=403,
             detail="Freeze schema requires user authentication (JWT token)"
         )
-    version = db.freeze_version_schema(version_record_id, auth_data["tenant_id"], user_id)
-    if not version:
+    return existing, user_id, bool(db.is_user_tenant_admin(auth_data["tenant_id"], user_id))
+
+
+def _freeze_response(existing: Dict[str, Any], body: Dict[str, Any]) -> FreezeSchemaResponse:
+    return FreezeSchemaResponse(
+        version_id=str(existing["id"]), version_label=existing.get("version_id"), **body
+    )
+
+
+@router.post("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
+async def freeze_version_schema(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    body: Optional[FreezeSchemaRequest] = Body(default=None),
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> FreezeSchemaResponse:
+    """
+    Freeze a published version's OpenAPI document (#3214).
+
+    Stores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,
+    that route returns them verbatim, so later edits to the version's classes, properties and paths
+    do not change the downloaded document. Also captures the class schemas into
+    ``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).
+
+    * Only **published** versions can be frozen (409 ``version_not_published``).
+    * A version already frozen is 409 ``already_frozen`` (with its SHA-256).
+    * ``dryRun`` returns the snapshot that would be stored without writing anything.
+    * Only the version creator or a tenant administrator can freeze.
+
+    Returns:
+        ``frozen``, ``sha256``, ``sizeBytes``, ``snapshotUrl`` and the class / property / path counts.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+    request = body or FreezeSchemaRequest()
+    existing, user_id, is_admin = _freeze_target(tenant_slug, project_id, version_record_id, auth_data)
+    if existing.get("creator_id") != user_id and not is_admin:
         raise HTTPException(
             status_code=403,
             detail="Only the version creator or a tenant administrator can freeze schema for this version"
         )
-    return VersionSchema(**version)
+    if not existing.get("published"):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": CODE_NOT_PUBLISHED,
+                "message": "Only a published version can be frozen. Publish it first.",
+            },
+        )
+    label = str(existing.get("version_id"))
+    url = snapshot_url(tenant_slug, existing.get("project_slug") or "", label)
+    stored = db.get_spec_snapshot(version_record_id)
+    if stored:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": CODE_ALREADY_FROZEN,
+                "message": f"{label} is already frozen.",
+                "sha256": str(stored["sha256"]).strip(),
+            },
+        )
+    version_row = db.get_version_by_slugs(tenant_slug, existing.get("project_slug") or "", label)
+    if not version_row:
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
+    spec, counts = build_live_spec(db, version_row, tenant_slug, existing.get("project_slug") or "", label)
+    content = render_spec_bytes(spec)
+    if request.dry_run:
+        plan = summarize(content=content, counts=counts, url=url, frozen=False, dry_run=True)
+        return _freeze_response(existing, plan)
+
+    if not db.version_has_class_schema(version_record_id):
+        db.freeze_version_schema(version_record_id, auth_data["tenant_id"], user_id)
+    row = db.insert_spec_snapshot(
+        version_record_id,
+        content=content,
+        sha256=sha256_hex(content),
+        class_count=counts.classes,
+        property_count=counts.properties,
+        path_count=counts.paths,
+        frozen_by=user_id,
+    )
+    if not row:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": CODE_ALREADY_FROZEN, "message": f"{label} is already frozen."},
+        )
+    frozen = summarize(content=content, counts=counts, url=url, frozen=True, snapshot_row=row)
+    return _freeze_response(existing, frozen)
+
+
+@router.get("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
+async def get_version_freeze_status(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> FreezeSchemaResponse:
+    """
+    Whether a version is frozen, with the snapshot's SHA-256, size, counts and download count (#3214).
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
+    if not existing or existing["project_id"] != project_id:
+        raise HTTPException(status_code=404, detail=f"Version not found: {version_record_id}")
+    label = str(existing.get("version_id"))
+    url = snapshot_url(tenant_slug, existing.get("project_slug") or "", label)
+    stored = db.get_spec_snapshot(version_record_id)
+    if not stored:
+        return _freeze_response(existing, {"frozen": False, "snapshot_url": url})
+    return _freeze_response(existing, row_summary(stored, url, frozen=True))
+
+
+@router.delete("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")
+async def unfreeze_version_schema(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    force: bool = Query(
+        False, description="Unfreeze although the snapshot has been downloaded (tenant administrators only)."
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication)
+) -> FreezeSchemaResponse:
+    """
+    Unfreeze a version: delete its snapshot so ``/v1/schema`` is generated live again (#3214).
+
+    * 404 ``not_frozen`` when the version has no snapshot.
+    * 409 ``snapshot_downloaded`` once the snapshot has been fetched — a consumer may depend on it —
+      unless ``force=true``, which only a tenant administrator may pass (403
+      ``force_unfreeze_requires_admin``).
+    * Only the version creator or a tenant administrator can unfreeze.
+
+    Returns:
+        The removed snapshot's details, with ``frozen: false``.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
+    existing, user_id, is_admin = _freeze_target(tenant_slug, project_id, version_record_id, auth_data)
+    label = str(existing.get("version_id"))
+    stored = db.get_spec_snapshot(version_record_id)
+    if not stored:
+        raise HTTPException(
+            status_code=404, detail={"code": CODE_NOT_FROZEN, "message": f"{label} is not frozen."}
+        )
+    refusal = unfreeze_refusal(
+        int(stored.get("download_count") or 0),
+        force=force,
+        is_admin=is_admin,
+        is_owner=existing.get("creator_id") == user_id,
+    )
+    if refusal:
+        raise HTTPException(status_code=refusal[0], detail=refusal[1])
+    removed = db.delete_spec_snapshot(version_record_id)
+    if not removed:
+        raise HTTPException(
+            status_code=404, detail={"code": CODE_NOT_FROZEN, "message": f"{label} is not frozen."}
+        )
+    url = snapshot_url(tenant_slug, existing.get("project_slug") or "", label)
+    return _freeze_response(existing, row_summary(removed, url, frozen=False))
 
 
 @router.delete("/{tenant_slug}/{project_id}/{version_record_id}")

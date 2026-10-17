@@ -138,10 +138,11 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
 
 ## With the CLI or the API
 
-- CLI: `apiome versions list|get|publish|unpublish|fork`, `apiome mock status|enable|disable` — see
+- CLI: `apiome versions list|get|publish|unpublish|freeze|fork`, `apiome mock status|enable|disable` — see
   the [`versions` command reference](../reference/cli/versions.md) and the [CLI
   quick-start](../reference/cli-quickstart.md). To take a release back with a recorded reason, see
-  [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version).
+  [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version). To pin the published
+  OpenAPI document byte-for-byte, see [Freeze a version's schema](../ship/publish-a-version.md#freeze-a-versions-schema).
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).

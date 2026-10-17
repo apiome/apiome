@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.350.0] - 2026-10-16
+
+### Added
+- **Frozen OpenAPI snapshots (#3214, CLI 4.7)**: freezing a published version stores the exact bytes
+  `GET /v1/schema/{tenant}/{project}/{version}` serves (V279 `apiome.version_spec_snapshots`). While
+  frozen, that route returns the stored bytes verbatim — with an `X-Apiome-Snapshot-Sha256` header — and
+  counts each download, so later class / property / path edits no longer change the document.
+  - `POST /v1/versions/{tenant}/{project}/{version_record_id}/freeze-schema` takes an optional
+    `{ dryRun }` and returns `{ frozen, sha256, sizeBytes, snapshotUrl, classCount, propertyCount,
+    pathCount, downloadCount, … }`. `409 version_not_published` for a draft; `409 already_frozen`.
+  - `GET …/freeze-schema` reports the snapshot (or `frozen: false`).
+  - `DELETE …/freeze-schema` unfreezes; `409 snapshot_downloaded` once the snapshot was fetched,
+    unless `?force=true` from a tenant administrator (`403 force_unfreeze_requires_admin` otherwise).
+
+### Changed
+- `POST …/freeze-schema` used to only capture class schemas into `apiome.class_schema` (and returned
+  `400` when they already existed — true of every published version). It now freezes the OpenAPI
+  document, still captures the class schemas when they are missing, and returns the snapshot instead of
+  the version.
+
+The OpenAPI version moves to 1.214.0.
+
 ## [1.349.0] - 2026-10-16
 
 ### Added

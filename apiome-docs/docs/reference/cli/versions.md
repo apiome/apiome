@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List, fetch, publish, unpublish and fork project versions."
+description: "List, fetch, publish, unpublish, freeze and fork project versions."
 sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List, fetch, publish, unpublish and fork project versions.
+List, fetch, publish, unpublish, freeze and fork project versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`fork`](#versions-fork), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+Subcommands: [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
 
 ## apiome versions fork {#versions-fork}
 
@@ -48,6 +48,31 @@ apiome versions fork [OPTIONS] PROJECT_REF SOURCE_REF
 | `--include-tags` | flag |  |  | Also create the source's version tags on the fork. |
 | `--allow-lesser` | flag |  |  | Allow --to to be lower than or equal to the source. |
 | `--dry-run` | flag |  |  | Show what would be copied without forking. |
+
+## apiome versions freeze {#versions-freeze}
+
+Freeze a published version's OpenAPI document byte-for-byte (POST …/{version_record_id}/freeze-schema).
+
+Shows the snapshot's class, property and path counts, SHA-256 and size, then asks before freezing. While frozen, /v1/schema/{tenant}/{project}/{version} serves exactly those bytes, whatever later happens to the version's classes. --unfreeze removes the snapshot.
+
+```text
+apiome versions freeze [OPTIONS] PROJECT VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `VERSION_REF` | text | yes | Published version label (2.1.0 or v2.1.0) or revision UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--unfreeze` | flag |  |  | Remove the snapshot; refused once it has been downloaded. |
+| `--force-unfreeze` | flag |  |  | Unfreeze even though the snapshot has been downloaded (tenant administrators only). |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation. |
 
 ## apiome versions get {#versions-get}
 

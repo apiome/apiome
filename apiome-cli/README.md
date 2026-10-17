@@ -1351,6 +1351,20 @@ apiome --json versions unpublish payments-api 2.1.0 --silent --yes   # tenant ad
 the project's only published version exits **6** unless `--force`. The older form
 `apiome versions unpublish <version> --project <project>` still works.
 
+### Freeze a version's schema
+
+`apiome versions freeze <project> <version>` stores a published version's OpenAPI document
+byte-for-byte (`POST /v1/versions/{tenant}/{project}/{id}/freeze-schema`). While frozen,
+`/v1/schema/{tenant}/{project}/{version}` serves exactly that snapshot, even after the version's
+classes change. The command shows the class / property / path counts, SHA-256 and size, then asks.
+
+```bash
+apiome versions freeze payments-api v2.1.0
+apiome --json versions freeze payments-api 2.1.0 --yes     # {frozen, sha256, size_bytes, snapshot_url, …}
+apiome versions freeze payments-api 2.1.0 --unfreeze        # exit 6 once the snapshot was downloaded
+apiome versions freeze payments-api 2.1.0 --force-unfreeze  # tenant administrators
+```
+
 ### List resources
 
 Human-readable tables (default):

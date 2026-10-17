@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 52 operations."
+description: "REST endpoints tagged versions: 54 operations."
 sidebar_position: 81
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.213.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.214.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 52 operations
+Tag: `versions` · 54 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -856,15 +856,13 @@ Request body for renew draft lock.
 | 200 | Successful response for renew draft lock. | `application/json` [`VersionDraftLockResponse`](#schema-versiondraftlockresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
-## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema` {#freeze-version-schema-v1-versions-tenant-slug-project-id-version-record-id-freeze-schema-post}
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema` {#get-version-freeze-status-v1-versions-tenant-slug-project-id-version-record-id-freeze-schema-get}
 
-**Freeze Version Schema**
+**Get Version Freeze Status**
 
-Freeze (capture) class schemas into apiome.class_schema for this version.
-Only available when the version has no class_schema rows yet (e.g. published before schema capture existed).
-Only the version creator or a tenant administrator can freeze schema.
+Whether a version is frozen, with the snapshot's SHA-256, size, counts and download count (#3214).
 
-Operation id: `freeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_post`
+Operation id: `get_version_freeze_status_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_get`
 
 **Parameters**
 
@@ -880,7 +878,86 @@ Operation id: `freeze_version_schema_v1_versions__tenant_slug___project_id___ver
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for freeze version schema. | `application/json` [`VersionSchema`](#schema-versionschema) |
+| 200 | Successful response for get version freeze status. | `application/json` [`FreezeSchemaResponse`](#schema-freezeschemaresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema` {#freeze-version-schema-v1-versions-tenant-slug-project-id-version-record-id-freeze-schema-post}
+
+**Freeze Version Schema**
+
+Freeze a published version's OpenAPI document (#3214).
+
+Stores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,
+that route returns them verbatim, so later edits to the version's classes, properties and paths
+do not change the downloaded document. Also captures the class schemas into
+``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).
+
+* Only **published** versions can be frozen (409 ``version_not_published``).
+* A version already frozen is 409 ``already_frozen`` (with its SHA-256).
+* ``dryRun`` returns the snapshot that would be stored without writing anything.
+* Only the version creator or a tenant administrator can freeze.
+
+Returns:
+    ``frozen``, ``sha256``, ``sizeBytes``, ``snapshotUrl`` and the class / property / path counts.
+
+Operation id: `freeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (optional)
+
+Request body for freeze version schema.
+
+- `application/json` — [`FreezeSchemaRequest`](#schema-freezeschemarequest) or null
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for freeze version schema. | `application/json` [`FreezeSchemaResponse`](#schema-freezeschemaresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema` {#unfreeze-version-schema-v1-versions-tenant-slug-project-id-version-record-id-freeze-schema-delete}
+
+**Unfreeze Version Schema**
+
+Unfreeze a version: delete its snapshot so ``/v1/schema`` is generated live again (#3214).
+
+* 404 ``not_frozen`` when the version has no snapshot.
+* 409 ``snapshot_downloaded`` once the snapshot has been fetched — a consumer may depend on it —
+  unless ``force=true``, which only a tenant administrator may pass (403
+  ``force_unfreeze_requires_admin``).
+* Only the version creator or a tenant administrator can unfreeze.
+
+Returns:
+    The removed snapshot's details, with ``frozen: false``.
+
+Operation id: `unfreeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `force` | query | boolean | no | Unfreeze although the snapshot has been downloaded (tenant administrators only). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for unfreeze version schema. | `application/json` [`FreezeSchemaResponse`](#schema-freezeschemaresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `PUT /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/mock` {#set-version-mock-v1-versions-tenant-slug-project-id-version-record-id-mock-put}
@@ -1860,6 +1937,34 @@ trail, so the dialog, the API error, and the audit row can never disagree.
 | `recommendedVersion` | string or null | no | Recommended Version. |
 | `detail` | string or null | no | Detail. |
 | `message` | string | yes | Message. |
+
+### `FreezeSchemaRequest` {#schema-freezeschemarequest}
+
+Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/freeze-schema`` (#3214).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `dryRun` | boolean | no | Return the snapshot that would be stored (SHA-256, size, counts) without freezing. |
+
+### `FreezeSchemaResponse` {#schema-freezeschemaresponse}
+
+A version's frozen OpenAPI snapshot (#3214): freeze, dry run, status and unfreeze responses.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `versionId` | string | yes | Version record id. |
+| `versionLabel` | string or null | no | Version Label. |
+| `frozen` | boolean | yes | Whether the version is frozen after this call. |
+| `dryRun` | boolean | no | Dry Run. |
+| `sha256` | string or null | no | Lower-case hex SHA-256 of the snapshot bytes. |
+| `sizeBytes` | integer or null | no | Size Bytes. |
+| `snapshotUrl` | string or null | no | Where the frozen document is served: /v1/schema/{tenant}/{project}/{version}. |
+| `classCount` | integer | no | Number of class. |
+| `propertyCount` | integer | no | Number of property. |
+| `pathCount` | integer | no | Number of path. |
+| `frozenAt` | string (date-time) or string or null | no | Frozen At. |
+| `frozenBy` | string or null | no | Frozen By. |
+| `downloadCount` | integer | no | Successful GET /v1/schema fetches of the snapshot; above 0, unfreezing needs force. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

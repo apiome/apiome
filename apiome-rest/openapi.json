@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.213.0",
+    "version": "1.214.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -36464,7 +36464,7 @@
           "versions"
         ],
         "summary": "Freeze Version Schema",
-        "description": "Freeze (capture) class schemas into apiome.class_schema for this version.\nOnly available when the version has no class_schema rows yet (e.g. published before schema capture existed).\nOnly the version creator or a tenant administrator can freeze schema.",
+        "description": "Freeze a published version's OpenAPI document (#3214).\n\nStores the exact bytes ``GET /v1/schema/{tenant}/{project}/{version}`` serves now; while frozen,\nthat route returns them verbatim, so later edits to the version's classes, properties and paths\ndo not change the downloaded document. Also captures the class schemas into\n``apiome.class_schema`` when the version has none yet (the pre-#3214 behaviour).\n\n* Only **published** versions can be frozen (409 ``version_not_published``).\n* A version already frozen is 409 ``already_frozen`` (with its SHA-256).\n* ``dryRun`` returns the snapshot that would be stored without writing anything.\n* Only the version creator or a tenant administrator can freeze.\n\nReturns:\n    ``frozen``, ``sha256``, ``sizeBytes``, ``snapshotUrl`` and the class / property / path counts.",
         "operationId": "freeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_post",
         "parameters": [
           {
@@ -36541,13 +36541,33 @@
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/FreezeSchemaRequest"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for freeze version schemarequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for freeze version schema."
+        },
         "responses": {
           "200": {
             "description": "Successful response for freeze version schema.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VersionSchema",
+                  "$ref": "#/components/schemas/FreezeSchemaResponse",
                   "description": "Response payload for freeze version schemaresponse200."
                 }
               }
@@ -36560,6 +36580,232 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for freeze version schemaresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Get Version Freeze Status",
+        "description": "Whether a version is frozen, with the snapshot's SHA-256, size, counts and download count (#3214).",
+        "operationId": "get_version_freeze_status_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Freeze Statusauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Freeze Statusauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Version Freeze Status Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Version Freeze Status Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get version freeze status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreezeSchemaResponse",
+                  "description": "Response payload for get version freeze statusresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get version freeze statusresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "versions"
+        ],
+        "summary": "Unfreeze Version Schema",
+        "description": "Unfreeze a version: delete its snapshot so ``/v1/schema`` is generated live again (#3214).\n\n* 404 ``not_frozen`` when the version has no snapshot.\n* 409 ``snapshot_downloaded`` once the snapshot has been fetched \u2014 a consumer may depend on it \u2014\n  unless ``force=true``, which only a tenant administrator may pass (403\n  ``force_unfreeze_requires_admin``).\n* Only the version creator or a tenant administrator can unfreeze.\n\nReturns:\n    The removed snapshot's details, with ``frozen: false``.",
+        "operationId": "unfreeze_version_schema_v1_versions__tenant_slug___project_id___version_record_id__freeze_schema_delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Unfreeze although the snapshot has been downloaded (tenant administrators only).",
+              "default": false,
+              "title": "Force"
+            },
+            "description": "Unfreeze although the snapshot has been downloaded (tenant administrators only)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unfreeze Version Schemaauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unfreeze Version Schemaauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unfreeze Version Schema Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unfreeze Version Schema Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for unfreeze version schema.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreezeSchemaResponse",
+                  "description": "Response payload for unfreeze version schemaresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for unfreeze version schemaresponse422."
                 }
               }
             }
@@ -96914,7 +97160,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "completed_at": {
             "anyOf": [
@@ -98824,7 +99070,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99052,7 +99298,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "comment_count": {
             "type": "integer",
@@ -99583,14 +99829,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -101615,7 +101861,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "69d3f19f-8a47-4b36-b650-391eb270ffb9"
+            "example": "f4c2aa10-f6ce-42df-9449-0a1b49cb75f4"
           },
           "method": {
             "type": "string",
@@ -104142,7 +104388,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -105878,7 +106124,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "browse_url": {
             "anyOf": [
@@ -112039,6 +112285,167 @@
         ],
         "title": "FormatVersion",
         "description": "One version (or authored surface) a format is read at or written at.\n\nAttributes:\n    version: How the format itself spells this version (``3.1``, ``005010``, ``R4``). When the\n        format has no version to spell, this names the grammar or authored surface the row\n        covers (``Avro IDL (.avdl)``) and :attr:`support` is :attr:`VersionSupport.UNGATED`.\n    format_key: The registry key that selects this version. On a **read** row it is a key the\n        adapter declares and a document of this version detects as, which is what makes the\n        row checkable against the corpus. On a **write** row it is the emitter's output-format\n        key, which is what the round-trip matrix records a row under. Several rows may share\n        one key \u2014 three OpenAPI write versions all come out of the ``openapi-3.1`` emitter.\n    support: See :class:`VersionSupport`.\n    note: One line on the boundary. Required for :attr:`VersionSupport.PARTIAL` and\n        :attr:`VersionSupport.UNGATED`, because both are claims a reader cannot act on without\n        the reason; optional for :attr:`VersionSupport.FULL`, which needs none."
+      },
+      "FreezeSchemaRequest": {
+        "properties": {
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "description": "Return the snapshot that would be stored (SHA-256, size, counts) without freezing.",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "title": "FreezeSchemaRequest",
+        "description": "Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/freeze-schema`` (#3214)."
+      },
+      "FreezeSchemaResponse": {
+        "properties": {
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version record id.",
+            "example": "1.0.0"
+          },
+          "versionLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Versionlabel",
+            "description": "Version Label."
+          },
+          "frozen": {
+            "type": "boolean",
+            "title": "Frozen",
+            "description": "Whether the version is frozen after this call.",
+            "example": false
+          },
+          "dryRun": {
+            "type": "boolean",
+            "title": "Dryrun",
+            "default": false,
+            "description": "Dry Run.",
+            "example": false
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Sha256",
+            "description": "Lower-case hex SHA-256 of the snapshot bytes."
+          },
+          "sizeBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Sizebytes",
+            "description": "Size Bytes."
+          },
+          "snapshotUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Snapshoturl",
+            "description": "Where the frozen document is served: /v1/schema/{tenant}/{project}/{version}."
+          },
+          "classCount": {
+            "type": "integer",
+            "title": "Classcount",
+            "default": 0,
+            "description": "Number of class.",
+            "example": 1
+          },
+          "propertyCount": {
+            "type": "integer",
+            "title": "Propertycount",
+            "default": 0,
+            "description": "Number of property.",
+            "example": 1
+          },
+          "pathCount": {
+            "type": "integer",
+            "title": "Pathcount",
+            "default": 0,
+            "description": "Number of path.",
+            "example": 1
+          },
+          "frozenAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "string",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Frozenat",
+            "description": "Frozen At."
+          },
+          "frozenBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for freeze schema."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for freeze schema."
+              }
+            ],
+            "title": "Frozenby",
+            "description": "Frozen By."
+          },
+          "downloadCount": {
+            "type": "integer",
+            "title": "Downloadcount",
+            "description": "Successful GET /v1/schema fetches of the snapshot; above 0, unfreezing needs force.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "versionId",
+          "frozen"
+        ],
+        "title": "FreezeSchemaResponse",
+        "description": "A version's frozen OpenAPI snapshot (#3214): freeze, dry run, status and unfreeze responses."
       },
       "FunctionBody": {
         "properties": {
@@ -145735,7 +146142,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           }
         },
         "additionalProperties": false,
@@ -157057,7 +157464,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "detected_by": {
             "anyOf": [
@@ -164274,14 +164681,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-17T04:13:05Z"
+            "example": "2026-10-17T04:51:28Z"
           },
           "outcome": {
             "anyOf": [

@@ -86,6 +86,7 @@ from .observability import ObservabilityMiddleware, build_error_envelope
 from .onboarding_routes import router as onboarding_router
 from .openapi_enrichment import enrich_openapi_spec
 from .openapi_generator import generate_class_openapi_spec, generate_openapi_spec
+from .spec_snapshot import build_live_spec
 from .ops_routes import health_router, ops_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -163,7 +164,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.213.0",
+    version="1.214.0",
 )
 
 
@@ -1201,28 +1202,18 @@ async def get_version_openapi_spec(
     # Validate access for private versions (header or query param)
     validate_private_access(version, tenant_slug, x_api_key or api_key)
 
-    # Get all classes for this version
-    classes = db.get_classes_for_version(version['id'])
+    # A frozen version (#3214) serves its stored snapshot byte-for-byte, and counts the download.
+    snapshot = db.get_spec_snapshot(str(version['id']), with_content=True)
+    if snapshot and snapshot.get('content') is not None:
+        db.record_spec_snapshot_download(str(version['id']))
+        return Response(
+            content=snapshot['content'],
+            media_type="application/json",
+            headers={"X-Apiome-Snapshot-Sha256": str(snapshot['sha256']).strip()},
+        )
 
-    # Get properties for each class
-    all_properties = {}
-    for class_data in classes:
-        class_id = class_data['id']
-        properties = db.get_properties_for_class(class_id)
-        all_properties[class_id] = properties
-
-    # Generate OpenAPI specification with paths
-    openapi_spec = generate_openapi_spec(
-        tenant_slug,
-        project_slug,
-        version_slug,
-        classes,
-        all_properties,
-        version.get('project_description'),
-        version_db_id=version['id'],  # Pass version database ID to load paths
-        revision_metadata=version.get('metadata'),
-        project_metadata=version.get('project_metadata'),
-    )
+    # Classes, properties and paths, generated live (the same document a freeze stores).
+    openapi_spec, _counts = build_live_spec(db, version, tenant_slug, project_slug, version_slug)
 
     return JSONResponse(content=openapi_spec)
 
