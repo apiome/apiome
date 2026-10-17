@@ -145,3 +145,24 @@ describe('CatalogImportDialog — source grid (MFI-26.1)', () => {
     expect(card).toHaveTextContent('Nothing to set for this data type');
   });
 });
+
+describe('CatalogImportDialog — "Which formats can I import?" (HIVE-11.6, #5602)', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('opens "How the catalog works" from step 1, over the wizard', async () => {
+    global.fetch = mockFetch() as unknown as typeof fetch;
+    render(<CatalogImportDialog open onClose={jest.fn()} />);
+
+    fireEvent.click(await screen.findByTestId('catalog-import-which-formats'));
+    const about = await screen.findByRole('dialog', { name: 'How the catalog works' });
+    expect(about).toHaveTextContent('Supported import formats');
+    // The wizard is still open underneath: closing the formats dialog returns to step 1.
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'How the catalog works' })).toBeNull()
+    );
+    expect(screen.getByTestId('catalog-import-which-formats')).toBeInTheDocument();
+  });
+});

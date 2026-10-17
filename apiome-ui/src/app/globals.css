@@ -20546,9 +20546,8 @@ html[data-motion='reduce'] .prm-spin {
    No hue is named below — with one deliberate exception. Every colour is a
    token, so the surface follows all nine themes, *except* where a **format's**
    colour is involved: `.fmt--*` (the fixed identity block near line 2216) is
-   what the gallery's tiles and the collapsed header's preview pills carry, and
-   that is the point of the gallery — it teaches the colour the table below it
-   then uses. A status, a grade and a tier are the opposite and are never named
+   what the format pills in the facts line and the "How the catalog works"
+   dialog carry (HIVE-11.6), the same colour the table below then uses. A status, a grade and a tier are the opposite and are never named
    here either: the lifecycle pill takes its tone from `ui/statusVocabulary.ts`
    and the rings take theirs from `ui/metrics/metricTiers.ts`.
 
@@ -21230,305 +21229,169 @@ html[data-motion='reduce'] .prm-spin {
   text-underline-offset: 2px;
 }
 
-/* ---- The supported-formats gallery -------------------------------------- */
-.cat-formats {
-  overflow: hidden;
-}
+/* ---- How the catalog works (HIVE-11.6, #5602) ----------------------------
+   `docs/mockups/proposals/catalog-quiet.html` annotation 1. The standing
+   non-publishable note and the Supported import formats card moved off the
+   page into one dialog, opened from a ghost link in the page description. */
 
-.cat-formats__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  inline-size: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: none;
-  border: 0;
-  text-align: start;
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out);
-}
-
-.cat-formats__head:hover {
-  background: var(--bg-subtle);
-}
-
-.cat-formats__tile {
+/* The ghost link in the page description: accent ink, no chrome, underlined
+   on hover. A `<button>` (it opens a dialog), so the browser's button chrome
+   is reset here. */
+.cat-about-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  inline-size: 2rem;
-  block-size: 2rem;
-  flex-shrink: 0;
-  border-radius: var(--r-md);
-  background: var(--accent-soft);
+  gap: var(--space-1);
+  padding: 0;
+  background: none;
+  border: 0;
   color: var(--accent-fg);
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.cat-formats__tile > svg {
-  inline-size: var(--icon-dense);
-  block-size: var(--icon-dense);
+.cat-about-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.cat-formats__heading {
+.cat-about-link > svg {
+  inline-size: var(--icon-button);
+  block-size: var(--icon-button);
+  flex-shrink: 0;
+}
+
+.cat-about__head {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-inline-end: var(--space-6);
   min-inline-size: 0;
 }
 
-.cat-formats__title {
+.cat-about__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+/* The icon tile leading the header and each point (hive.css §12
+   `.icon-tile`). Glyphs are tinted with `stroke`, which outranks lucide's
+   `stroke="currentColor"` attribute. */
+.cat-about__glyph {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.cat-about__glyph > svg {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  stroke: var(--fg-muted);
+}
+
+.cat-about__glyph--sm {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+}
+
+.cat-about__glyph--accent {
+  background: var(--accent-soft);
+}
+
+.cat-about__glyph--accent > svg {
+  stroke: var(--accent-fg);
+}
+
+.cat-about__glyph--ok {
+  background: var(--ok-soft);
+}
+
+.cat-about__glyph--ok > svg {
+  stroke: var(--ok-fg);
+}
+
+.cat-about__points {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-about__point {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.cat-about__point-text {
+  min-inline-size: 0;
+}
+
+.cat-about__point-title {
+  margin: 0;
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--fg);
 }
 
-.cat-formats__counts {
-  font-size: var(--fs-xs);
+.cat-about__point-body {
+  margin: 0;
+  font-size: var(--fs-sm);
   color: var(--fg-muted);
 }
 
-/* The collapsed header's preview: a few of the pills the list below uses, so
-   the panel says what it holds without being opened. Hidden on a narrow
-   viewport, where the two counts beside it are the whole message. */
-.cat-formats__preview {
-  display: none;
-  margin-inline-start: auto;
-  gap: var(--space-2);
-}
-
-@media (min-width: 60rem) {
-  .cat-formats__preview {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-}
-
-/* The `+39` pill. Not a format, so it takes the neutral surface rather than
-   borrowing one format's identity hue. */
-.cat-formats__more {
-  background: var(--bg-inset);
-  color: var(--fg-muted);
-}
-
-.cat-formats__chevron {
-  inline-size: var(--icon-dense);
-  block-size: var(--icon-dense);
-  flex-shrink: 0;
-  margin-inline-start: auto;
-  color: var(--fg-muted);
-  transition: transform var(--dur-base) var(--ease-out);
-}
-
-.cat-formats__head[aria-expanded="true"] .cat-formats__chevron {
-  transform: rotate(180deg);
-}
-
-/* The preview takes the elastic margin when it is drawn, so the chevron must
-   give it up or the two fight over the same space. */
-@media (min-width: 60rem) {
-  .cat-formats__chevron {
-    margin-inline-start: 0;
-  }
-}
-
-.cat-formats__panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-4);
-  border-block-start: 1px solid var(--border);
-}
-
-.cat-formats__legend {
+.cat-about__formats-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-block-end: var(--space-3);
-}
-
-/* The track minimum grew from 15rem with CATP-1.1: a chip now carries a name,
-   two trait pills and a line of description, and at 15rem the pills never fit
-   beside the name — the fallback corner would have been the only corner. At
-   19rem three columns still fit a desktop panel and the pills sit where they
-   were asked to sit. `min(19rem, 100%)` and not a bare `19rem`, because a
-   minimum wider than its container overflows it: at the Largest font scale on
-   a phone, 19rem is 380px inside a ~340px panel, which is a document that
-   scrolls sideways. */
-.cat-formats__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr));
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-2);
 }
 
-/* The "nothing is waiting on the roadmap" line, drawn as the mockup's
-   `.empty--inline .empty--dashed` — an outline where rows would be. */
-.cat-formats__none {
-  padding: var(--space-3) var(--space-4);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-md);
-  font-size: var(--fs-xs);
+.cat-about__caps {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
-/* The chip is its own query container, so its trait pills can choose a
-   corner: beside the name while the chip is wide enough to hold both, and
-   under the description — still hard right — when it is not. A `@container`
-   and not a `@media`, because these chips are grid tracks; what decides
-   whether two pills fit beside a name is the *track's* width, which moves
-   with the panel, the rail and the reader's font scale, none of which a
-   viewport width knows — and a size query measures the *content* box, so the
-   threshold excludes the chip's own padding. It is the width the widest
-   registered name and both pills measure to, so the corner flips before a name has to give up
-   more than its last character or two — and the name carries a `title`, so a
-   longer one a later ticket registers is still readable where it does. `em`, for that last one: a container query's font
-   units resolve against the container, so the threshold grows with the type
-   it is measuring. And the container is declared right here on the queried
-   element's own ancestor — a `@container` rule with no container above it
-   never matches at all. */
-.cat-fmt-chip {
-  container: cat-fmt-chip / inline-size;
+.cat-about__counts {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-about__pills {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-block-start: var(--space-2);
   min-inline-size: 0;
-  padding: var(--space-2);
-  border-radius: var(--r-md);
-  box-shadow: inset 0 0 0 1px var(--border);
-  color: inherit;
-  text-decoration: none;
-  transition:
-    background-color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
 }
 
-/* Only the chips that go somewhere react to the pointer. */
-a.cat-fmt-chip:hover {
-  background: var(--bg-subtle);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-}
-
-/* A format the registry recognises but cannot import. The *frame* is what
-   dims — the words stay at full contrast, because the line that says why is
-   the one most worth reading. */
-.cat-fmt-chip--dim {
-  box-shadow: inset 0 0 0 1px var(--border);
-  border-style: dashed;
-}
-
-.cat-fmt-chip--dim .cat-fmt-chip__tile {
-  opacity: 0.6;
-}
-
-/* A format that *is* importable but whose adapter cannot run in this
-   deployment. It takes the amber ground so its reason line has the ground
-   `--warn-fg` was calibrated against: measured, that ink on the plain surface
-   is 3.4:1–4.4:1 in five of the nine themes, which is a serious `color-contrast`
-   finding at this size. */
-.cat-fmt-chip--unavailable {
-  background: var(--warn-soft);
-  box-shadow: inset 0 0 0 1px var(--warn);
-}
-
-/* …and everything printed on that ground takes the ink calibrated *for* it.
-   The rule above gave the reason line `--warn-fg`, but the name above it kept
-   `--fg` and the trait pill beside it `--fg-muted` — and `--fg` on a `-soft`
-   fill is the pairing the token layer forbids, because only the light and dark
-   palettes recalibrate a `-soft` against it. Measured with axe on the
-   gallery's own fixture, the name was **1.08:1–1.68:1** on the amber in five
-   of the nine appearances: High contrast, Blueprint, Solarized, Nord and
-   Darcula. The filled pill is exempt — it brings its own `--bg-inset` ground
-   and clears AA on all nine. */
-.cat-fmt-chip--unavailable .cat-fmt-chip__name,
-.cat-fmt-chip--unavailable .fmt-trait--origin {
-  color: var(--warn-fg);
-}
-
-.cat-fmt-chip--unavailable .fmt-trait--origin {
-  box-shadow: inset 0 0 0 1px var(--warn);
-}
-
-.cat-fmt-chip__tile {
+/* The `+33 more` pill. Not a format, so it takes the neutral well rather than
+   an identity hue. */
+.cat-about__more {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  flex-shrink: 0;
+  padding: 0 var(--space-2);
   border-radius: var(--r-sm);
-}
-
-.cat-fmt-chip__tile > svg {
-  inline-size: var(--icon-dense);
-  block-size: var(--icon-dense);
-}
-
-.cat-fmt-chip__text {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "name traits"
-    "desc desc";
-  flex: 1;
-  min-inline-size: 0;
-  column-gap: var(--space-2);
-}
-
-.cat-fmt-chip__traits {
-  grid-area: traits;
-  align-self: start;
-  justify-self: end;
-}
-
-/* Not enough width for a name and two pills on one line. The pills drop to
-   their own row under the description, right-aligned, which is the corner
-   left. */
-@container cat-fmt-chip (max-width: 19.5em) {
-  .cat-fmt-chip__text {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "name"
-      "desc"
-      "traits";
-    /* The description takes the slack, so the pills sit on the chip's floor
-       rather than wherever its description happened to end — the chips in a
-       row are stretched to the tallest of them, and a row of pills at six
-       different heights reads as six different components. `align-self` and
-       not the chip's `align-items`, because a `@container` rule styles what is
-       *inside* the container, never the container itself. */
-    grid-template-rows: auto 1fr auto;
-    align-self: stretch;
-  }
-
-  .cat-fmt-chip__traits {
-    margin-block-start: var(--space-1);
-  }
-}
-
-.cat-fmt-chip__name {
-  grid-area: name;
-  overflow: hidden;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  color: var(--fg);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cat-fmt-chip__desc {
-  grid-area: desc;
-  font-size: var(--fs-2xs);
-  line-height: var(--lh-snug);
+  background: var(--bg-inset);
   color: var(--fg-muted);
-}
-
-.cat-fmt-chip__note {
-  grid-area: desc;
   font-size: var(--fs-2xs);
-  font-weight: 500;
-  line-height: var(--lh-snug);
-  color: var(--warn-fg);
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ---- The catalog importer (HIVE-7.1, #5318) ------------------------------
@@ -21561,6 +21424,13 @@ a.cat-fmt-chip:hover {
   min-inline-size: 0;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* Step 1's "Which formats can I import?" link (HIVE-11.6, #5602) — a `p`, so it
+   resets the unlayered base margin; the link itself is `.cat-about-link`. */
+.cat-imp-formats {
+  margin: 0;
+  font-size: var(--fs-sm);
 }
 
 .cat-imp-guide {

@@ -64,7 +64,7 @@ Every ticket is a checkbox: tick it when the issue closes. Flags and area follow
 
 #### Phase C — Catalog
 
-- [ ] [#5602](https://github.com/apiome/apiome/issues/5602) HIVE-11.6 Catalog — quiet list page — `mvp` · Catalog
+- [x] [#5602](https://github.com/apiome/apiome/issues/5602) HIVE-11.6 Catalog — quiet list page — `mvp` · Catalog
 - [ ] [#4122](https://github.com/apiome/apiome/issues/4122) MFI-28.6 Skeleton loading states for catalog list & detail — Catalog
 - [ ] [#4124](https://github.com/apiome/apiome/issues/4124) MFI-28.8 URL-synced detail tabs & accessibility pass — Catalog
 - [ ] [#4121](https://github.com/apiome/apiome/issues/4121) MFI-28.5 Bulk actions on the catalog list — Catalog

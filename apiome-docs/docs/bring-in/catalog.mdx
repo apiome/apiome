@@ -15,7 +15,27 @@ original format: you can search, diff, lint and export them, but not publish the
 
 **Go to Bring in → Catalog.**
 
-<Screenshot id="catalog" alt="The Catalog in Table view: a banner explaining catalog items, supported formats, statistics, filters and four items" />
+<Screenshot id="catalog" alt="The Catalog in Table view: the facts line under the header, then one card with the filters, view chips and items" />
+
+Under the header, one line sums up the catalog: how many items, which formats (as pills), the
+average quality, how many were converted to OpenAPI, and how many are active or disabled (and
+deleted, when **Show deleted** is on). **Click “Show stats”** to open the full statistics in
+place; Apiome remembers the choice in this browser.
+
+## How the catalog works
+
+On your first visit a note above the list explains what catalog items are. **Click “Learn more”**
+to read the full explanation, or **“Got it”** to hide the note in this browser. The same
+explanation is always one click away: **click “How the catalog works”** in the page description,
+or **“Which formats can I import?”** on the first step of the [Import
+wizard](./import-wizard.mdx#import-to-catalog).
+
+The **How the catalog works** dialog says three things — catalog items are stored as-is, they are
+not publishable until converted, and OpenAPI and Swagger go to Projects — and lists the **Supported
+import formats** this deployment can import now. **Click “Supported formats guide”** for the full
+list on [Supported formats](./supported-formats.md).
+
+<Screenshot id="catalog-how-it-works" alt="The How the catalog works dialog: three points about catalog items and the supported import formats as pills" />
 
 ## Find an item
 
@@ -25,16 +45,10 @@ original format: you can search, diff, lint and export them, but not publish the
 - **Chips** — **All**, **Active**, **Needs attention**, and **Deleted** once **Show deleted** is on.
 - **Sort** by name, created, updated, quality, grade or format; choose the same column again to
   reverse it.
-- **Cards** or **Table**; cards can be grouped by protocol. Your choices are remembered in this
-  browser.
+- **Cards** or **Table**, at the end of the filter row; cards can be grouped by protocol. Your
+  choices are remembered in this browser.
 
 <Screenshot id="catalog-cards" alt="The Catalog in Cards view, grouped by protocol" />
-
-**Supported import formats** (collapsed under the banner) lists every format the catalog imports
-now, and the ones Apiome recognizes but cannot import yet. The full list is on [Supported
-formats](./supported-formats.md).
-
-<Screenshot id="catalog-formats" alt="The Supported import formats panel expanded: formats importable now and formats recognized but not yet importable" />
 
 ## Add an item
 

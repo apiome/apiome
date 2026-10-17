@@ -3,7 +3,18 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LayoutGrid, Link2, List, Rows3, Trash2, TriangleAlert, Undo2, Upload, X } from 'lucide-react';
+import {
+  CircleHelp,
+  LayoutGrid,
+  Link2,
+  List,
+  Rows3,
+  Trash2,
+  TriangleAlert,
+  Undo2,
+  Upload,
+  X,
+} from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
@@ -26,6 +37,7 @@ import {
   type DataTableSortState,
 } from '@/app/components/ui/DataTable';
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
+import { FactsLine } from '@/app/components/ui/FactsLine';
 import { Label } from '@/app/components/ui/Label';
 import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import {
@@ -56,22 +68,22 @@ import {
   CATALOG_PROTOCOL_OPTIONS,
   CATALOG_SORT_OPTIONS,
   CATALOG_SOURCE_OPTIONS,
+  CatalogAboutDialog,
   CatalogCard,
+  CatalogExplainerCallout,
   CatalogFormatFacet,
-  CatalogNonPublishableBanner,
   CatalogStatsRow,
-  CatalogSupportedFormats,
   CatalogTable,
   EMPTY_CATALOG_FILTERS,
   catalogBulkPlan,
   catalogBulkResultMessage,
   catalogFacetCounts,
+  catalogFacts,
   catalogFormatFacetOptions,
   catalogIdentityGroupLabel,
   catalogItemHref,
   catalogSortKey,
   catalogSortLabel,
-  catalogSummaryLine,
   catalogVersionsHref,
   isCatalogNarrowed,
   matchesCatalogFacet,
@@ -102,6 +114,9 @@ import {
 
 /** Where the breadcrumb's first crumb goes. */
 const HOME_ROUTE = '/ade/dashboard';
+
+/** What the catalog is, in the page description (the facts line carries the numbers). */
+const CATALOG_DESCRIPTION = 'Non-OpenAPI specs, stored as-is and converted only when you’re ready.';
 
 /**
  * Catalog — `/ade/dashboard/catalog` (HIVE-7.1, #5318).
@@ -147,6 +162,21 @@ const HOME_ROUTE = '/ade/dashboard';
  *    meant six menus and six confirms; the mockup's bulk bar is one of each.
  * 5. **Three facets the mockup draws did not exist.** Protocol, Source and Grade were in the
  *    toolbar drawing and nowhere in the product; the format facet had no counts.
+ *
+ * ### The quiet pass (HIVE-11.6, #5602)
+ *
+ * `docs/mockups/proposals/catalog-quiet.html` moved the first row from ≈ 600 px to ≈ 345 px
+ * at 1440 × 900 by taking the standing furniture off the top of the list, without losing any
+ * of it:
+ *
+ * - the non-publishable banner and the Supported import formats card became
+ *   `CatalogAboutDialog` ("How the catalog works"), opened from a ghost link in the page
+ *   description, from the first-visit `CatalogExplainerCallout`'s **Learn more**, and from the
+ *   Import wizard's step 1;
+ * - the four-figure stat strip folded into a `FactsLine` (`catalogFacts`), with **Show stats**
+ *   revealing the unchanged `CatalogStatsRow` in place and remembering the choice;
+ * - one card owns the list: the filter row (with the Cards/Table switch), the view chips and
+ *   sort row, and the table or grid.
  */
 export default function CatalogClient() {
   const router = useRouter();
@@ -336,10 +366,7 @@ export default function CatalogClient() {
     });
   }, [items, loading]);
 
-  const summary = React.useMemo(
-    () => catalogSummaryLine(items, showDeleted),
-    [items, showDeleted]
-  );
+  const facts = React.useMemo(() => catalogFacts(items, showDeleted), [items, showDeleted]);
 
   const paradigmGroups = React.useMemo(() => groupCatalogItemsByParadigm(visible), [visible]);
 
@@ -351,10 +378,13 @@ export default function CatalogClient() {
   /** The item the in-place export dialog is open for, while the Export studio is unreleased. */
   const [exportFor, setExportFor] = React.useState<CatalogItem | null>(null);
   const [importOpen, setImportOpen] = React.useState(false);
+  /** "How the catalog works" — the explainer and the supported-formats list. */
+  const [aboutOpen, setAboutOpen] = React.useState(false);
   const [primitiveSource, setPrimitiveSource] =
     React.useState<PrimitiveImportInitialSource | null>(null);
 
   const openImport = React.useCallback(() => setImportOpen(true), []);
+  const openAbout = React.useCallback(() => setAboutOpen(true), []);
 
   /** Open quality details — the server lint report when scored, otherwise local history. */
   const openQuality = React.useCallback((item: CatalogItem) => {
@@ -615,6 +645,24 @@ export default function CatalogClient() {
           options={CATALOG_GRADE_OPTIONS}
           onChange={(grade) => setFilters((current) => ({ ...current, grade }))}
         />
+
+        {/* The view switch closes the filter row, as the quiet-pass mockup draws it. */}
+        <DataTableToolbarSpacer />
+        <Segmented
+          value={view}
+          onValueChange={(next) => setView(next as CatalogViewMode)}
+          size="sm"
+          aria-label="List view"
+        >
+          <SegmentedItem value="cards" data-testid="catalog-view-cards">
+            <LayoutGrid aria-hidden />
+            Cards
+          </SegmentedItem>
+          <SegmentedItem value="table" data-testid="catalog-view-table">
+            <List aria-hidden />
+            Table
+          </SegmentedItem>
+        </Segmented>
       </DataTableToolbar>
 
       {/* Row two — which of them, in what order, drawn how. */}
@@ -710,22 +758,6 @@ export default function CatalogClient() {
             </SegmentedItem>
           </Segmented>
         ) : null}
-
-        <Segmented
-          value={view}
-          onValueChange={(next) => setView(next as CatalogViewMode)}
-          size="sm"
-          aria-label="List view"
-        >
-          <SegmentedItem value="cards" data-testid="catalog-view-cards">
-            <LayoutGrid aria-hidden />
-            Cards
-          </SegmentedItem>
-          <SegmentedItem value="table" data-testid="catalog-view-table">
-            <List aria-hidden />
-            Table
-          </SegmentedItem>
-        </Segmented>
       </DataTableToolbar>
     </>
   );
@@ -818,7 +850,20 @@ export default function CatalogClient() {
           { label: 'Catalog' },
         ]}
         title="Catalog"
-        description={summary}
+        description={
+          <>
+            {CATALOG_DESCRIPTION}{' '}
+            <button
+              type="button"
+              className="cat-about-link"
+              onClick={openAbout}
+              data-testid="catalog-about-link"
+            >
+              <CircleHelp aria-hidden />
+              How the catalog works
+            </button>
+          </>
+        }
         actions={
           <>
             <span className="cat-deleted-switch">
@@ -852,11 +897,18 @@ export default function CatalogClient() {
           <GatedState description="The catalog is scoped to one workspace." />
         ) : (
           <>
-            <CatalogNonPublishableBanner />
-            <CatalogSupportedFormats />
+            <CatalogExplainerCallout onLearnMore={openAbout} />
 
-            {/* A strip of zeros above an empty state says the same thing twice. */}
-            {items.length > 0 ? <CatalogStatsRow items={items} /> : null}
+            {/* The stat strip, folded into one line; Show stats reveals it in place. On an
+                empty catalog the line reads "0 items" and offers no strip of zeros. */}
+            <FactsLine
+              page="catalog"
+              aria-label="Catalog summary"
+              facts={facts}
+              loading={loading && items.length === 0}
+              empty={!loading && items.length === 0}
+              stats={<CatalogStatsRow items={items} />}
+            />
 
             {view === 'table' ? (
               <CatalogTable
@@ -995,6 +1047,8 @@ export default function CatalogClient() {
           studioOrigin="catalog"
         />
       ) : null}
+
+      <CatalogAboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
 
       {/* The catalog importer (MFI-23.12): store-raw intake — the source is kept in its
           original format and converted only when the user is ready, not at import time. */}

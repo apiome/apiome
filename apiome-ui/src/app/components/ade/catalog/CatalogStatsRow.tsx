@@ -14,8 +14,10 @@
  * their four hand-toned pill palettes are now {@link StatGrid} and {@link Badge} — one strip
  * shape and one status vocabulary, shared with the eleven other screens that draw one.
  *
- * Hidden on an empty catalog by the screen, not here: a strip of zeros above an empty state
- * says the same thing twice, and the empty state says it better.
+ * Since the quiet pass (HIVE-11.6, #5602) the strip is folded into the page's `FactsLine` and
+ * revealed in place by **Show stats**; it is unchanged, and `catalogFacts` states every figure
+ * it draws. On an empty catalog the facts line offers no toggle, so a strip of zeros never
+ * stands above the empty state.
  */
 
 import * as React from 'react';

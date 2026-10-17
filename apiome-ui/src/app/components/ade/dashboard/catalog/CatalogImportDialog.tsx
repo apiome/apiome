@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  CircleHelp,
   Clipboard,
   FileCode,
   FileUp,
@@ -47,6 +48,7 @@ import { resolveCatalogProtocol, resolveCatalogFormat } from '../../../../utils/
 import { monacoLanguageForCatalogFormat } from '../../../../utils/catalog-source-language';
 import { ReadOnlyCodeViewer } from '../export/ReadOnlyCodeViewer';
 import { useCatalogImportAvailability } from './useCatalogImportAvailability';
+import { CatalogAboutDialog } from '../../catalog/CatalogAboutDialog';
 import { CatalogImportQualityStep } from './CatalogImportQualityStep';
 import {
   CatalogBulkImportBanner,
@@ -176,6 +178,9 @@ export function CatalogImportDialog({
   onJsonSchemaAsCurrent,
 }: CatalogImportDialogProps) {
   const [step, setStep] = useState<Step>('source');
+  // "Which formats can I import?" on step 1 opens the catalog's "How the catalog works" dialog
+  // (HIVE-11.6, #5602), which carries the supported-formats list the Catalog page used to show.
+  const [formatsOpen, setFormatsOpen] = useState(false);
   const [sourceMethod, setSourceMethod] = useState<SourceMethod>('file');
   const [state, setState] = useState<ImportState>('idle');
   const [fileName, setFileName] = useState('');
@@ -791,6 +796,18 @@ export function CatalogImportDialog({
                   }}
                 />
 
+                <p className="cat-imp-formats">
+                  <button
+                    type="button"
+                    className="cat-about-link"
+                    onClick={() => setFormatsOpen(true)}
+                    data-testid="catalog-import-which-formats"
+                  >
+                    <CircleHelp aria-hidden />
+                    Which formats can I import?
+                  </button>
+                </p>
+
                 {sourceMethod === 'file' && (
                   <label
                     onDragOver={(e) => {
@@ -1258,6 +1275,10 @@ export function CatalogImportDialog({
             }
           />
         )}
+
+        {/* Rendered inside the wizard's content so Radix stacks it as a nested dialog: Escape
+            closes it first and focus returns to the link that opened it. */}
+        <CatalogAboutDialog open={formatsOpen} onOpenChange={setFormatsOpen} />
       </DialogContent>
     </Dialog>
   );

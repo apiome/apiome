@@ -13,7 +13,7 @@ import AxeBuilder from '@axe-core/playwright';
  *
  *   • **"No horizontal document scroll at ≥1280 px"**, held across all nine themes, both
  *     densities and all six font scales — on a screen carrying a three-column card grid, a
- *     four-column format gallery, a nine-column table and a toolbar of eleven controls.
+ *     nine-column table, a toolbar of eleven controls and the "How the catalog works" dialog.
  *   • **The card grid really collapses**, which is the whole reason `.cat-grid` is
  *     `auto-fit, minmax(18rem, 1fr)` rather than the mockup's fixed three columns: at the
  *     Largest font scale 18rem is 25% wider than at the default, and the grid has to drop a
@@ -22,8 +22,8 @@ import AxeBuilder from '@axe-core/playwright';
  *   • **A long artifact name cannot hold a card open** — `text-overflow: ellipsis` on a flex
  *     child only works because every ancestor carries `min-inline-size: 0`, and whether that
  *     chain is intact is a question about line breaking.
- *   • **The collapsed gallery's pill preview really disappears** below its `rem` fold, instead
- *     of wrapping into the header.
+ *   • **The first catalog row is ≤ 360 px from the top at 1440 × 900** for a returning reader
+ *     (HIVE-11.6, #5602) — the quiet pass's whole point, and a computed-layout question.
  *   • **"axe: zero serious/critical violations"** on all five surfaces, in every theme — the
  *     card being an `<article>` with one stretched link rather than a button full of buttons is
  *     exactly the `nested-interactive` finding this measures.
@@ -72,10 +72,10 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1100, 1024, 900, 768, 640, 420];
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-catalog');
 
 /** The surfaces the jsdom suite dumps. */
-type Fixture = 'cards' | 'flat' | 'formats' | 'deleted' | 'table' | 'empty';
+type Fixture = 'cards' | 'flat' | 'about' | 'deleted' | 'table' | 'empty';
 
 /** All six, for the sweeps that do not care which. */
-const ALL_FIXTURES: Fixture[] = ['cards', 'flat', 'formats', 'deleted', 'table', 'empty'];
+const ALL_FIXTURES: Fixture[] = ['cards', 'flat', 'about', 'deleted', 'table', 'empty'];
 
 /**
  * One rendered surface, as the jsdom suite wrote it.
@@ -199,9 +199,11 @@ test.describe('the screen keeps the document to one column', () => {
       });
     }
 
-    test(`the open format gallery does not scroll sideways at ${width}px`, async ({ page }) => {
+    test(`the How the catalog works dialog does not scroll sideways at ${width}px`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width, height: 900 });
-      await mount(page, 'formats');
+      await mount(page, 'about');
       expect(await documentOverflows(page)).toBe(false);
     });
   }
@@ -227,11 +229,11 @@ test.describe('the screen keeps the document to one column', () => {
       expect(await documentOverflows(page)).toBe(false);
     });
 
-    test(`the open format gallery does not scroll sideways at the ${fontScale} font scale`, async ({
+    test(`the How the catalog works dialog does not scroll sideways at the ${fontScale} font scale`, async ({
       page,
     }) => {
       await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
-      await mount(page, 'formats');
+      await mount(page, 'about');
       await applyPreferences(page, { fontScale });
       expect(await documentOverflows(page)).toBe(false);
     });
@@ -284,27 +286,6 @@ test.describe('the grids collapse rather than overflow', () => {
 
     expect(small).toBeGreaterThanOrEqual(large);
     expect(await documentOverflows(page)).toBe(false);
-  });
-
-  test('collapses the format gallery to one column on a phone', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await mount(page, 'formats');
-    expect(await gridColumns(page, '.cat-formats__grid')).toBeGreaterThan(1);
-
-    await page.setViewportSize({ width: 420, height: 900 });
-    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))));
-    expect(await gridColumns(page, '.cat-formats__grid')).toBe(1);
-  });
-
-  test('hides the collapsed header’s pill preview below its fold', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await mount(page, 'cards');
-    const preview = page.locator('.cat-formats__preview');
-    await expect(preview).toBeVisible();
-
-    await page.setViewportSize({ width: 768, height: 900 });
-    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))));
-    await expect(preview).toBeHidden();
   });
 
   test('scrolls the wide table inside its own card, never taking the page', async ({ page }) => {
@@ -433,9 +414,47 @@ test.describe('accessibility', () => {
     });
   }
 
-  test('the open format gallery is clean, including its unavailable chips', async ({ page }) => {
-    await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
-    await mount(page, 'formats');
-    expect(await blockingViolations(page)).toEqual([]);
+  for (const theme of THEMES) {
+    test(`the How the catalog works dialog is clean in the ${theme ?? 'light'} theme`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
+      await mount(page, 'about');
+      await applyPreferences(page, { theme });
+      expect(await blockingViolations(page)).toEqual([]);
+    });
+  }
+});
+
+/* -------------------------------------------------------------------------
+   The quiet pass (HIVE-11.6, #5602)
+   ------------------------------------------------------------------------- */
+
+test.describe('the list starts near the top', () => {
+  /** The top edge of the first data row, in CSS pixels from the top of the document. */
+  async function firstRowTop(page: Page): Promise<number> {
+    return page
+      .locator('[data-testid="catalog-table"] tbody tr')
+      .first()
+      .evaluate((row) => (row as Element).getBoundingClientRect().top + window.scrollY);
+  }
+
+  test('puts the first catalog row within 360px of the top at 1440 × 900', async ({ page }) => {
+    // The table fixture is a returning reader's page: the first-visit explainer dismissed,
+    // the stats folded into the facts line. It was ≈ 600 px before the quiet pass.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await mount(page, 'table');
+    expect(await firstRowTop(page)).toBeLessThanOrEqual(360);
+  });
+
+  test('draws the facts line as one line at 1440px', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await mount(page, 'table');
+    const height = await page
+      .locator('.facts')
+      .first()
+      .evaluate((node) => (node as Element).getBoundingClientRect().height);
+    // One line of `--fs-sm` text beside a small ghost button, not a wrapped paragraph.
+    expect(height).toBeLessThan(48);
   });
 });

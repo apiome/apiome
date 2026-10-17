@@ -151,7 +151,7 @@ Milestone: **RC6** (all epics and issues).
 | 11.3 | #5599 | Versions header — ⋯ overflow menu and breadcrumb project switcher ✅ | Six header controls → Compare · Import · ⋯ · New version; the project `<select>` becomes the last breadcrumb | `ui`, `versions`, `redesign`, `mvp` | Y | Y | M | `src/app/components/shell/PageHeader.tsx`, `src/app/ade/dashboard/versions/*`, `src/app/components/ade/versions/VersionGitlikePanels.tsx` |
 | 11.4 | #5600 | Versions — one table toolbar (date popover, author menu, lifecycle, chips) ✅ | Merge the “Timeline” filter bar and the lifecycle toolbar into the table’s own toolbar; dates become an “Any time” popover | `ui`, `versions`, `redesign` | Y | N | M | `src/app/components/ade/versions/VersionsTimelineFilters.tsx`, `src/app/components/ade/versions/VersionsTable.tsx`, `src/app/components/ui/DataTable.tsx` |
 | 11.5 | #5601 | `FactsLine` and `DismissibleCallout` primitives (+ `hive.seen.*` persistence) ✅ | The stat strip folded into one tabular line with “Show stats”; a first-visit callout with Got it / Learn more that persists per device | `ui`, `design-system`, `redesign`, `mvp` | Y | Y | M | `src/app/components/ui/FactsLine.tsx (new)`, `src/app/components/ui/DismissibleCallout.tsx (new)`, `src/lib/seen.ts (new)`, `src/app/design-system/galleries/*` |
-| 11.6 | #5602 | Catalog — quiet list page | Explainer → first-visit callout + “How the catalog works” dialog; stat strip → facts line; one card owns toolbar, chips and table; formats list moves into the dialog and Import step 1 | `ui`, `catalog`, `redesign`, `mvp` | N | Y | M | `src/app/ade/dashboard/catalog/*`, `src/app/components/ui/catalog/*`, `e2e/fixtures/hive-catalog/*`, `tests/catalog-*.test.tsx` |
+| 11.6 | #5602 | Catalog — quiet list page ✅ | Explainer → first-visit callout + “How the catalog works” dialog; stat strip → facts line; one card owns toolbar, chips and table; formats list moves into the dialog and Import step 1 | `ui`, `catalog`, `redesign`, `mvp` | N | Y | M | `src/app/ade/dashboard/catalog/*`, `src/app/components/ui/catalog/*`, `e2e/fixtures/hive-catalog/*`, `tests/catalog-*.test.tsx` |
 | 11.7 | #5603 | Repositories and repository detail — facts line, activity chip | Both 5-stat strips fold into facts lines; the Refresh activity panel becomes a “1 stale · 1 failed” chip that opens it | `ui`, `repository`, `redesign` | Y | N | M | `src/app/ade/dashboard/repositories/*`, `e2e/fixtures/hive-repositories/*`, `e2e/fixtures/hive-repository-detail/*` |
 | 11.8 | #5604 | Primitives & types — facts line over the registry | The 5-stat strip (core · tenant · imported · bound · unresolved) becomes a facts line; unresolved `$ref` stays a danger chip linking to the resolver | `ui`, `redesign` | Y | N | S | `src/app/ade/dashboard/primitives/*`, `e2e/fixtures/hive-primitives/*` |
 | 11.9 | #5605 | Members — seat facts line; Identity provider cards → “Coming next” line | Seat meter folds into “4 of 5 seats · 1 pending”; SSO/SCIM cards with dead buttons become one text line | `ui`, `redesign`, `tenancy` | Y | N | S | `src/app/ade/dashboard/members/*`, `e2e/hive-members.spec.ts` |
@@ -263,7 +263,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-### `apiome: [HIVE-11.6] Catalog — quiet list page` — [#5602](https://github.com/apiome/apiome/issues/5602)
+### `apiome: [HIVE-11.6] Catalog — quiet list page` ✅ — [#5602](https://github.com/apiome/apiome/issues/5602)
 **Problem statement.** Measured at 1440 × 900: the “Catalog items are non-publishable” banner, the Supported import formats row, the 4-stat strip and two toolbar rows precede the list, so the first catalog row is ≈ 600 px down on every visit (Published, the baseline, is ≈ 236 px).
 
 **Solution / scope.** Mockup: `docs/mockups/proposals/catalog-quiet.html` (callouts 1–4); rationale: `docs/mockups/PROPOSALS.md`.
@@ -275,11 +275,11 @@ Milestone: **RC6** (all epics and issues).
 - Re-dump `e2e/fixtures/hive-catalog/*`; update the jsdom suite and parity landmarks.
 
 **Acceptance criteria.**
-- [ ] First catalog row at 1440 × 900 is ≤ 360 px from the top (today ≈ 600 px); empty state still renders inside the card
-- [ ] Every fact from the stat strip is present in the facts line; the strip expands in place and remembers the choice
-- [ ] The explainer copy is reachable after dismissal via the header link and from Import step 1
-- [ ] Cards view, protocol grouping, URL filters, Show deleted, bulk actions and inspectors unchanged (jsdom suite green)
-- [ ] Copy-voice gate (`tests/copy-voice-gate.test.ts`) and a11y gate green
+- [x] First catalog row at 1440 × 900 is ≤ 360 px from the top (today ≈ 600 px); empty state still renders inside the card
+- [x] Every fact from the stat strip is present in the facts line; the strip expands in place and remembers the choice
+- [x] The explainer copy is reachable after dismissal via the header link and from Import step 1
+- [x] Cards view, protocol grouping, URL filters, Show deleted, bulk actions and inspectors unchanged (jsdom suite green)
+- [x] Copy-voice gate (`tests/copy-voice-gate.test.ts`) and a11y gate green
 
 **Parallelism / dependencies.** Depends on HIVE-11.5. First page to apply the rule; 11.7–11.10 copy it.
 

@@ -39,6 +39,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Several mock services have been improved including mock rules and testing via UI and JSON rules
 - Design system:
   - New status strip: several statuses about one object in one row of chips, with one detail open at a time, instead of a stack of banners
+  - Catalog: the list starts near the top of the page — the explainer shows once (**Learn more** or **Got it**), the numbers fold into one line with **Show stats** for the full statistics, and **How the catalog works** in the page description (or **Which formats can I import?** in the import wizard) explains the catalog and lists the supported formats
   - Versions: one toolbar on the version list — search, lifecycle, **Any time** (a date popover with Last 7 days, Last 30 days and This quarter), **All authors**, the state chips and sort — with **Clear filters (n)** while anything is filtered; the filters are kept in the page address, so a filtered list can be shared
   - Versions: switch project from the last breadcrumb step (type to filter), and find Merge branches, Sunset timeline, Published surface, Export studio and **Copy link** (⌘⇧C) under **⋯** — the header keeps Compare, Import and New version
   - Versions: the compatibility, what’s-new and deprecation banners are now one **Status** row of chips — click a chip to open its detail and actions — so the version list starts higher on the page

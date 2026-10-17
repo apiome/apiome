@@ -96,7 +96,7 @@ describe('the rules live in the model, not in the screen', () => {
       'catalogFacetCounts',
       'catalogFormatFacetOptions',
       'sortCatalog',
-      'catalogSummaryLine',
+      'catalogFacts',
       'catalogBulkPlan',
       'softDeleteCatalogItemConfirm',
       'undeleteCatalogItemConfirm',

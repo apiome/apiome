@@ -29,7 +29,8 @@ import {
   destructiveConfirm,
   type DestructiveConfirmOptions,
 } from '@/app/components/dialogs/destructiveConfirm';
-import { letterGradeFromOverallPercent } from '@/app/utils/numeric-score-tier';
+import type { FactsLineFact } from '@/app/components/ui/FactsLine';
+import { computeCatalogStats } from '@/app/utils/catalog-dashboard-stats';
 import { catalogOrbScores } from '@/app/utils/catalog-card-presentation';
 import type { CatalogConversion } from '@/app/utils/catalog-conversion';
 import {
@@ -526,49 +527,67 @@ export function catalogShortId(id: string): string {
   return `cat_${id.replace(/-/g, '').slice(0, 6)}`;
 }
 
+/** How many format pills the facts line draws before the count alone speaks for the rest. */
+export const CATALOG_FACT_FORMAT_PILLS = 4;
+
 /**
- * The line under the page title: `7 items · 5 formats · avg quality B · 82 · 2 converted`.
+ * The facts line under the page header (HIVE-11.6, #5602):
+ * `3 items · 3 formats [pills] · avg quality B · 83 · 1 converted to OpenAPI · 2 active · 1 disabled`.
  *
- * Every figure describes the *live* catalog, matching the stats row above it, and the deleted
- * count only appears when the switch that reveals deleted rows is on — a count of rows the
- * reader cannot see is a count they cannot act on.
+ * It is the four-figure stat strip (`CatalogStatsRow`) folded into one sentence, so **every
+ * figure the strip draws is here**, from the same {@link computeCatalogStats} — the live
+ * catalog only. The strip itself stays one click away behind **Show stats**. The deleted count
+ * is added only when the switch that reveals deleted rows is on: a count of rows the reader
+ * cannot see is a count they cannot act on.
+ *
+ * Each format pill carries the first raw `sourceFormat` seen for its family, which is what
+ * `FormatPill` resolves to an identity hue; at most {@link CATALOG_FACT_FORMAT_PILLS} are drawn.
  *
  * @param items Every row currently loaded.
  * @param showDeleted Whether the Show-deleted switch is on.
- * @returns One sentence for `PageHeader`'s description.
+ * @returns The facts, in reading order, for `FactsLine`.
  */
-export function catalogSummaryLine(
+export function catalogFacts(
   items: readonly CatalogItem[],
   showDeleted: boolean
-): string {
-  const live = items.filter((item) => !item.deleted_at);
-  const parts: string[] = [`${live.length} ${live.length === 1 ? 'item' : 'items'}`];
+): FactsLineFact[] {
+  const stats = computeCatalogStats(items);
 
+  const formats: string[] = [];
   const families = new Set<string>();
-  for (const item of live) {
-    const familyId = catalogFormatFamilyId(item.sourceFormat);
-    if (familyId) families.add(familyId);
-  }
-  if (families.size > 0) {
-    parts.push(`${families.size} ${families.size === 1 ? 'format' : 'formats'}`);
-  }
-
-  const scored = live
-    .map((item) => item.qualityScore)
-    .filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
-  if (scored.length > 0) {
-    const mean = Math.round(scored.reduce((sum, score) => sum + score, 0) / scored.length);
-    parts.push(`avg quality ${letterGradeFromOverallPercent(mean)} · ${mean}`);
+  for (const item of items) {
+    if (item.deleted_at) continue;
+    const raw = item.sourceFormat?.trim();
+    if (!raw) continue;
+    const family = catalogFormatFamilyId(raw) ?? raw.toLowerCase();
+    if (families.has(family)) continue;
+    families.add(family);
+    formats.push(raw);
   }
 
-  const converted = live.filter((item) => Boolean(item.conversion)).length;
-  if (converted > 0) parts.push(`${converted} converted`);
-
+  const status = [`${stats.active} active`, `${stats.disabled} disabled`];
   if (showDeleted) {
     const deleted = items.filter((item) => item.deleted_at).length;
-    if (deleted > 0) parts.push(`${deleted} deleted`);
+    if (deleted > 0) status.push(`${deleted} deleted`);
   }
-  return parts.join(' · ');
+
+  return [
+    { id: 'items', value: stats.total, label: stats.total === 1 ? 'item' : 'items' },
+    {
+      id: 'formats',
+      value: stats.formatCount,
+      label: stats.formatCount === 1 ? 'format' : 'formats',
+      formats: formats.slice(0, CATALOG_FACT_FORMAT_PILLS),
+    },
+    {
+      id: 'quality',
+      label: 'avg quality',
+      value: stats.avgScore != null ? `${stats.avgGrade} · ${stats.avgScore}` : '—',
+      labelFirst: true,
+    },
+    { id: 'converted', value: stats.converted, label: 'converted to OpenAPI' },
+    { id: 'status', label: status.join(' · '), muted: true },
+  ];
 }
 
 /** The identity-group chip's label — `Identity group idg_7c21e9…`, the mockup's spelling. */

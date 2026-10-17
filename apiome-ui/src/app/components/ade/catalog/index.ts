@@ -1,9 +1,11 @@
 /**
  * The Catalog list screen (HIVE-7.1, #5318).
  *
- * `docs/mockups/sources/catalog.html` in six parts — the card, the table, the stat strip, the
- * format facet, the supported-formats gallery and the non-publishable note — plus the two
- * shared marks and `catalogModel`, the rules all of them share.
+ * `docs/mockups/sources/catalog.html` — the card, the table, the stat strip and the format
+ * facet — plus the two shared marks and `catalogModel`, the rules all of them share. The quiet
+ * pass (HIVE-11.6, #5602, `docs/mockups/proposals/catalog-quiet.html`) replaced the standing
+ * non-publishable note and the supported-formats gallery with the first-visit explainer
+ * callout and the "How the catalog works" dialog.
  *
  * The dialogs the screen opens are deliberately *not* here: the lint report, the quality
  * history, the conversion preview and the import wizard all live under
@@ -29,9 +31,12 @@ export { CatalogFormatFacet } from './CatalogFormatFacet';
 export type { CatalogFormatFacetProps } from './CatalogFormatFacet';
 
 export {
-  CatalogSupportedFormats,
-  CATALOG_FORMAT_UNAVAILABLE_NOTE,
-} from './CatalogSupportedFormats';
-export type { CatalogSupportedFormatsProps } from './CatalogSupportedFormats';
+  CatalogAboutDialog,
+  CATALOG_ABOUT_PILL_LIMIT,
+  SUPPORTED_FORMATS_GUIDE_HREF,
+  catalogFormatCountsLine,
+} from './CatalogAboutDialog';
+export type { CatalogAboutDialogProps, CatalogFormatCounts } from './CatalogAboutDialog';
 
-export { CatalogNonPublishableBanner } from './CatalogNonPublishableBanner';
+export { CatalogExplainerCallout, CATALOG_EXPLAINER_ID } from './CatalogExplainerCallout';
+export type { CatalogExplainerCalloutProps } from './CatalogExplainerCallout';
