@@ -44,6 +44,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome versions compatibility <project>` is a CI gate for breaking changes between two versions (default: latest vs the previous published one) — exit 6 on a breaking change, 8 when the server can't answer; `--allow-removals`, `--ignore <rule>`, `--json`, and `--sarif` for GitHub code scanning
   - `apiome versions delete <project> <version>` removes a draft once you type its version; tags pointing at it are listed and need `--detach-tags`, and a published or frozen version needs `--force` (which unpublishes and unfreezes it first, with `--reason`)
   - `apiome tags list <project>` and `apiome tags show <project> <tag>` list a project's version tags — the version each points to, its channel, when it was updated and who created it
+  - `apiome tags create <project> <tag> --version <version>` points a new version tag at a version (`--description`, `--from-file`); a name that already exists exits 6
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

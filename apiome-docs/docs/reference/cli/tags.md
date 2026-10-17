@@ -1,6 +1,6 @@
 ---
 title: "apiome tags"
-description: "List and inspect version tags."
+description: "List, inspect and create version tags."
 sidebar_position: 27
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,39 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome tags {#tags}
 
-List and inspect version tags (named pointers to versions).
+List, inspect and create version tags (named pointers to versions).
 
 ```text
 apiome tags [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`list`](#tags-list), [`show`](#tags-show).
+Subcommands: [`create`](#tags-create), [`list`](#tags-list), [`show`](#tags-show).
+
+## apiome tags create {#tags-create}
+
+Create a version tag pointing at a version (POST /v1/version-tags/{tenant}/{project}).
+
+Exit 6 when the project already has a tag with that name — move it with `tags update` instead.
+
+```text
+apiome tags create [OPTIONS] PROJECT [TAG]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `TAG` | text |  | Tag name, lower-cased: a letter, then letters, digits or hyphens (2–41). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--version` | text |  |  | Version the tag points to: label (2.1.0 or v2.1.0) or revision UUID. |
+| `--description` | text |  |  | What the tag is for (stored as its message). |
+| `--from-file` | path |  |  | JSON tag object (e.g. an edited `tags show --json`): name, version, description, channel, immutable. |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation an immutable tag asks for. |
 
 ## apiome tags list {#tags-list}
 
