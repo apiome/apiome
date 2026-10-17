@@ -36,6 +36,7 @@ timing out, or emitting an unreadable descriptor.
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
@@ -99,6 +100,19 @@ _MAX_PROTO_FILES = 2000
 #: Output filename ``buf build`` writes the descriptor set to inside the scratch module. The
 #: leading dunder keeps it from colliding with a real ``.proto`` the caller supplied.
 _DESCRIPTOR_OUTPUT_NAME = "__apiome_descriptor__.binpb"
+
+#: Where the vendored googleapis protos live (MFI-22.8): ``google/api/annotations.proto`` and
+#: the ``google/api/http.proto`` it imports. ``buf build`` runs with no network, so a source that
+#: annotates its methods with ``option (google.api.http)`` could not otherwise compile.
+_VENDORED_PROTO_ROOT = os.path.join(os.path.dirname(__file__), "data", "proto_vendor")
+
+#: The vendored files, each with the vendored files it imports, in the order they are added.
+_VENDORED_PROTOS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+    ("google/api/http.proto", ()),
+    ("google/api/annotations.proto", ("google/api/http.proto",)),
+)
+
+_IMPORT_RE = re.compile(r'^\s*import\s+(?:public\s+|weak\s+)?"([^"]+)"\s*;', re.MULTILINE)
 
 
 # ===========================================================================
@@ -581,6 +595,36 @@ def materialize_proto_module(
     return target_names
 
 
+def vendored_proto_imports(files: Sequence[ProtoFile]) -> List[ProtoFile]:
+    """Return the vendored googleapis protos ``files`` import but do not supply (MFI-22.8).
+
+    A source that imports ``google/api/annotations.proto`` (to declare ``google.api.http``
+    bindings) or ``google/api/http.proto`` gets the vendored copy of that file and of what it
+    imports in turn. A file the caller supplied under the same path always wins, so a fileset
+    that carries its own googleapis tree compiles against exactly that tree.
+
+    Args:
+        files: The caller's ``.proto`` files.
+
+    Returns:
+        The vendored files to add to the module, possibly empty, never one the caller supplied.
+    """
+    supplied = {proto.path.lstrip("./") for proto in files}
+    wanted: set[str] = set()
+    for proto in files:
+        wanted.update(_IMPORT_RE.findall(proto.content))
+    # Close over the vendored files' own imports (annotations.proto → http.proto).
+    for path, deps in reversed(_VENDORED_PROTOS):
+        if path in wanted:
+            wanted.update(deps)
+    extra: List[ProtoFile] = []
+    for path, _deps in _VENDORED_PROTOS:
+        if path in wanted and path not in supplied:
+            with open(os.path.join(_VENDORED_PROTO_ROOT, *path.split("/")), encoding="utf-8") as handle:
+                extra.append(ProtoFile(path=path, content=handle.read()))
+    return extra
+
+
 async def compile_proto_descriptor_set(
     files: Sequence[ProtoFile],
     *,
@@ -628,8 +672,12 @@ async def compile_proto_descriptor_set(
     active_runner = runner if runner is not None else default_runner
     spec = _buf_build_spec()
 
+    # MFI-22.8: supply the googleapis protos a `google.api.http` annotation needs. They are
+    # written into the module but never flagged as targets, so they arrive as imports.
+    vendored = vendored_proto_imports(files)
+
     with tempfile.TemporaryDirectory(prefix="apiome-proto-") as scratch:
-        target_names = materialize_proto_module(scratch, files)
+        target_names = materialize_proto_module(scratch, [*files, *vendored])[: len(files)]
         output_path = os.path.join(scratch, _DESCRIPTOR_OUTPUT_NAME)
         args = [scratch, "--as-file-descriptor-set", "--output", output_path]
 

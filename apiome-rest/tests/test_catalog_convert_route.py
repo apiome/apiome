@@ -153,6 +153,13 @@ def test_convert_dry_run_returns_report_and_document():
         assert body["conversionMode"] == "lossy"
         assert body["report"]["grade"] in {"A", "B", "C", "D", "F"}
         assert body["openapi"]["openapi"].startswith("3.1")
+        # MFI-22.8: the GraphQL conversion pack shaped it, natively — no converter is installed.
+        pack = body["conversionPack"]
+        assert pack["key"] == "graphql"
+        assert pack["strategy"] == "native"
+        assert pack["expected_tiers"] == ["medium"]
+        assert pack["external_converter"]["tool"] == "sofa-openapi"
+        assert pack["external_converter"]["used"] is False
         # No commit side effect.
         mock_run.assert_not_called()
     finally:

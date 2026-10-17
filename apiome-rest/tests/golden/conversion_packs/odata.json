@@ -1,0 +1,21 @@
+{
+  "pack": "odata",
+  "fixture": "apiome-ui/examples/odata/01-northwind.edmx",
+  "tier": "high",
+  "score": 91,
+  "grade": "A",
+  "operations": [
+    "GET /Categories",
+    "GET /Categories({key})",
+    "GET /Products",
+    "GET /Products({key})",
+    "POST /Categories",
+    "POST /Products"
+  ],
+  "schemas": [
+    "Example.Catalog.Category",
+    "Example.Catalog.Product"
+  ],
+  "refinements": [],
+  "losses": []
+}

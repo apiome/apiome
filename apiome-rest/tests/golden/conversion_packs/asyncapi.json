@@ -1,0 +1,17 @@
+{
+  "pack": "asyncapi",
+  "fixture": "apiome-ui/examples/asyncapi/02-order-events-3.0.yaml",
+  "tier": "low",
+  "score": 59,
+  "grade": "F",
+  "operations": [
+    "POST /order/placed/receiveOrderPlaced",
+    "POST /order/shipped/receiveOrderShipped"
+  ],
+  "schemas": [],
+  "refinements": [],
+  "losses": [
+    "event-pubsub-action",
+    "event-schemas-only"
+  ]
+}

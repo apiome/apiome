@@ -1,0 +1,73 @@
+// MFI-22.8 golden fixture: a gRPC service whose methods declare their REST
+// surface with google.api.http (gRPC transcoding), as protoc-gen-openapiv2 reads it.
+syntax = "proto3";
+
+package shop.orders.v1;
+
+import "google/api/annotations.proto";
+
+service OrderService {
+  // Fetch one order by id.
+  rpc GetOrder(GetOrderRequest) returns (Order) {
+    option (google.api.http) = {
+      get: "/v1/orders/{id}"
+    };
+  }
+
+  // List the orders of a customer; also reachable under the customer.
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders"
+      additional_bindings { get: "/v1/customers/{customer_id}/orders" }
+    };
+  }
+
+  // Place a new order; the whole request is the body.
+  rpc CreateOrder(CreateOrderRequest) returns (Order) {
+    option (google.api.http) = {
+      post: "/v1/orders"
+      body: "*"
+    };
+  }
+
+  // Cancel an order (a custom verb).
+  rpc CancelOrder(CancelOrderRequest) returns (Order) {
+    option (google.api.http) = {
+      post: "/v1/orders/{id}:cancel"
+      body: "*"
+    };
+  }
+
+  // Remove an order.
+  rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse) {
+    option (google.api.http) = {
+      delete: "/v1/orders/{id}"
+    };
+  }
+}
+
+message Order {
+  string id = 1;
+  string customer_id = 2;
+  repeated LineItem items = 3;
+  OrderStatus status = 4;
+}
+
+message LineItem {
+  string sku = 1;
+  int32 quantity = 2;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_OPEN = 1;
+  ORDER_STATUS_CANCELLED = 2;
+}
+
+message GetOrderRequest { string id = 1; }
+message ListOrdersRequest { string customer_id = 1; int32 page_size = 2; }
+message ListOrdersResponse { repeated Order orders = 1; }
+message CreateOrderRequest { Order order = 1; }
+message CancelOrderRequest { string id = 1; }
+message DeleteOrderRequest { string id = 1; }
+message DeleteOrderResponse {}

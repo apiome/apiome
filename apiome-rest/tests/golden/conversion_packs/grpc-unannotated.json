@@ -1,0 +1,26 @@
+{
+  "pack": "grpc",
+  "fixture": "apiome-ui/examples/protobuf/02-grpc-service.proto",
+  "tier": "low",
+  "score": 59,
+  "grade": "F",
+  "operations": [
+    "POST /example.catalog.v1.ProductService/CreateProduct",
+    "POST /example.catalog.v1.ProductService/GetProduct",
+    "POST /example.catalog.v1.ProductService/ListProducts"
+  ],
+  "schemas": [
+    "example.catalog.v1.CreateProductRequest",
+    "example.catalog.v1.Dimensions",
+    "example.catalog.v1.GetProductRequest",
+    "example.catalog.v1.ListProductsRequest",
+    "example.catalog.v1.ListProductsResponse",
+    "example.catalog.v1.Product",
+    "example.catalog.v1.Product.AttributesEntry"
+  ],
+  "refinements": [],
+  "losses": [
+    "grpc-no-http-annotations",
+    "synthesized-http-binding"
+  ]
+}

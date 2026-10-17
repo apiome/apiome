@@ -1,0 +1,29 @@
+{
+  "pack": "wsdl",
+  "fixture": "apiome-ui/examples/wsdl/02-order-service.wsdl",
+  "tier": "medium",
+  "score": 74,
+  "grade": "C",
+  "operations": [
+    "POST /http://example.com/orders.OrderPort.CancelOrder",
+    "POST /http://example.com/orders.OrderPort.CreateOrder",
+    "POST /http://example.com/orders.OrderPort.GetOrder"
+  ],
+  "schemas": [
+    "orders.CancelOrderRequest",
+    "orders.CancelOrderResponse",
+    "orders.CreateOrderRequest",
+    "orders.CreateOrderResponse",
+    "orders.GetOrderRequest",
+    "orders.GetOrderResponse",
+    "orders.Order",
+    "orders.OrderFault",
+    "orders.OrderLine"
+  ],
+  "refinements": [
+    "Renamed 9 schema names OpenAPI does not allow (e.g. 'http://example.com/orders.CancelOrderRequest' → 'orders.CancelOrderRequest')."
+  ],
+  "losses": [
+    "synthesized-http-binding"
+  ]
+}

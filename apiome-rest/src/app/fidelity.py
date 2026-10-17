@@ -58,6 +58,7 @@ __all__ = [
     "FidelityReport",
     "FidelityAnalyzer",
     "analyze_fidelity",
+    "band_for_score",
 ]
 
 #: Most example coordinates any one checklist row carries (kept small + sorted so
@@ -824,3 +825,18 @@ def _tier_for_score(score: int) -> FidelityTier:
     if score >= TIER_MEDIUM_MIN:
         return FidelityTier.MEDIUM
     return FidelityTier.LOW
+
+
+def band_for_score(score: int) -> Tuple[str, FidelityTier]:
+    """Return the ``(grade, tier)`` the analyzer would give ``score``.
+
+    Public so a report adjusted after analysis — a conversion pack's tier ceiling (MFI-22.8)
+    — is banded by exactly the rules :class:`FidelityAnalyzer` uses.
+
+    Args:
+        score: A 0-100 fidelity score.
+
+    Returns:
+        The A-F grade and the high/medium/low tier.
+    """
+    return _grade_for_score(score), _tier_for_score(score)

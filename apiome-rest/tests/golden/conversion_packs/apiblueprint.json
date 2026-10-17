@@ -1,0 +1,19 @@
+{
+  "pack": "apiblueprint",
+  "fixture": "apiome-ui/examples/api-blueprint/03-bookstore-service.apib",
+  "tier": "high",
+  "score": 90,
+  "grade": "A",
+  "operations": [
+    "DELETE /books/{id}",
+    "GET /books",
+    "GET /books/{id}",
+    "POST /books"
+  ],
+  "schemas": [
+    "Book",
+    "NewBook"
+  ],
+  "refinements": [],
+  "losses": []
+}

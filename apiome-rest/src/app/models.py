@@ -2848,6 +2848,15 @@ class ConvertDryRunResponse(BaseModel):
         "snapshot hash, the converter tool versions, and the per-status/reason/scope tallies. The "
         "node/edge graph itself is paged from POST .../projection using this hash.",
     )
+    conversion_pack: Optional[Dict[str, Any]] = Field(
+        default=None,
+        serialization_alias="conversionPack",
+        description="The per-format conversion pack that shaped this conversion (MFI-22.8): its "
+        "key and label, whether the document came from the native projection or an installed "
+        "external converter (and why not, when not), the refinements it made, its documented "
+        "losses and expected tiers. Null on the passthrough/native paths and for a format "
+        "with no pack.",
+    )
 
 
 class ConvertCommitResponse(BaseModel):

@@ -1,0 +1,31 @@
+{
+  "pack": "smithy",
+  "fixture": "apiome-rest/tests/fixtures/conversion_packs/orders-http.smithy",
+  "tier": "medium",
+  "score": 70,
+  "grade": "C",
+  "operations": [
+    "DELETE /orders/{id}",
+    "GET /orders",
+    "GET /orders/{id}",
+    "POST /orders"
+  ],
+  "schemas": [
+    "shop.orders.CreateOrderInput",
+    "shop.orders.DeleteOrderInput",
+    "shop.orders.GetOrderInput",
+    "shop.orders.LineItem",
+    "shop.orders.LineItemList",
+    "shop.orders.ListOrdersInput",
+    "shop.orders.ListOrdersOutput",
+    "shop.orders.Order",
+    "shop.orders.OrderList"
+  ],
+  "refinements": [
+    "Honored 4 @http trait bindings."
+  ],
+  "losses": [
+    "smithy-endpoint-trait",
+    "smithy-hostLabel-trait"
+  ]
+}

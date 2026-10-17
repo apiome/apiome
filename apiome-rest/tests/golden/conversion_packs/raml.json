@@ -1,0 +1,20 @@
+{
+  "pack": "raml",
+  "fixture": "apiome-ui/examples/raml/03-orders-service.raml",
+  "tier": "high",
+  "score": 88,
+  "grade": "B",
+  "operations": [
+    "DELETE /orders/{orderId}",
+    "GET /orders",
+    "GET /orders/{orderId}",
+    "POST /orders"
+  ],
+  "schemas": [
+    "NewOrder",
+    "Order",
+    "OrderItem"
+  ],
+  "refinements": [],
+  "losses": []
+}

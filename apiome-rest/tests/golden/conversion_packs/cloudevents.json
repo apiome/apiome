@@ -1,0 +1,18 @@
+{
+  "pack": "cloudevents",
+  "fixture": "apiome-ui/examples/cloudevents/01-order-created.json",
+  "tier": "low",
+  "score": 59,
+  "grade": "F",
+  "operations": [
+    "POST /com.example.order.created/A234-1234-1234"
+  ],
+  "schemas": [
+    "OrderCreated"
+  ],
+  "refinements": [],
+  "losses": [
+    "event-pubsub-action",
+    "event-schemas-only"
+  ]
+}
