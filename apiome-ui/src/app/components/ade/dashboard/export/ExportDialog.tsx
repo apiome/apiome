@@ -42,6 +42,7 @@ import {
   type ExportFidelityTier,
   type ExportTargetCard,
 } from './exportTargetCatalog';
+import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 
 /** What a successful emit produced — handed to `onExported` (e.g. to record it as a recent export, MFX-6.5). */
 export interface ExportedArtifactSummary {
@@ -151,6 +152,9 @@ export function ExportDialog({
   studioOrigin,
   onExported,
 }: ExportDialogProps) {
+  // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
+  // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
+  const returnFocus = useReturnFocus(open);
   const router = useRouter();
   const [step, setStep] = useState<Step>('source');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -359,7 +363,7 @@ export function ExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => (!o ? handleClose() : undefined)}>
-      <DialogContent className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden">
+      <DialogContent onCloseAutoFocus={returnFocus} className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
           <DialogTitle>
             Export “{sourceLabel}” {versionLabel !== 'latest' ? `v${versionLabel}` : ''}

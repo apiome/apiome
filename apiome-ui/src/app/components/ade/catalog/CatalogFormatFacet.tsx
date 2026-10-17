@@ -94,6 +94,7 @@ export function CatalogFormatFacet({ options, selected, onChange }: CatalogForma
           className="tnt-menu cat-facet__menu"
           sideOffset={4}
           align="start"
+          loop
           data-testid="catalog-format-facet-menu"
         >
           <DropdownMenu.Label className="cat-facet__head">

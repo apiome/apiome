@@ -60,6 +60,7 @@ import {
   persistImportQualityPreferences,
   readImportQualityPreferences,
 } from '../../../../utils/import-quality-preferences';
+import { useReturnFocus } from '@/app/components/dialogs/useReturnFocus';
 
 interface CatalogImportDialogProps {
   open: boolean;
@@ -177,6 +178,9 @@ export function CatalogImportDialog({
   onSuccess,
   onJsonSchemaAsCurrent,
 }: CatalogImportDialogProps) {
+  // Opened from plain buttons and menu items, not a `Dialog.Trigger`, so Radix has nowhere to
+  // put focus back on close; this hands it to whatever opened the dialog (MFI-28.8).
+  const returnFocus = useReturnFocus(open);
   const [step, setStep] = useState<Step>('source');
   // "Which formats can I import?" on step 1 opens the catalog's "How the catalog works" dialog
   // (HIVE-11.6, #5602), which carries the supported-formats list the Catalog page used to show.
@@ -756,7 +760,7 @@ export function CatalogImportDialog({
       {/* The 6.4 wizard frame (`size="full"` + `.imp-wizard`): head, rail, one scrolling body
           and a pinned footer. Sharing it is this ticket's acceptance criterion — and it is what
           gives the detect step's editor a column it can fill instead of the dialog growing. */}
-      <DialogContent size="full" className="imp-wizard">
+      <DialogContent onCloseAutoFocus={returnFocus} size="full" className="imp-wizard">
         <ImportWizardHead
           title="Import to catalog"
           description="File, URL, clipboard or a Git repository. Catalog imports are stored in their original format and converted only when you ask."

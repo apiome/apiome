@@ -712,7 +712,7 @@ export default function CatalogClient() {
             </Button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
-            <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end">
+            <DropdownMenu.Content className="tnt-menu" sideOffset={4} align="end" loop>
               {CATALOG_SORT_OPTIONS.map((option) => (
                 <DropdownMenu.Item
                   key={option.id}
