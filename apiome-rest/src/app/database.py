@@ -355,6 +355,18 @@ class ProjectUpdateConflict(Exception):
         self.current_updated_at = current_updated_at
 
 
+class PropertyUpdateConflict(Exception):
+    """A property update's ``expected_updated_at`` precondition failed (#3226).
+
+    Attributes:
+        current_updated_at: The property's ``updated_at`` now, for the caller to re-fetch against.
+    """
+
+    def __init__(self, current_updated_at: Any) -> None:
+        super().__init__("The property changed since it was read")
+        self.current_updated_at = current_updated_at
+
+
 def _same_instant(stored: Any, expected: datetime) -> bool:
     """Whether a stored ``updated_at`` and a caller's value are the same instant.
 
@@ -11890,8 +11902,42 @@ class Database:
             conn.rollback()
             raise e
 
-    def update_property(self, property_id: str, project_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Update a property, ensuring it belongs to the project."""
+    def update_property(
+        self,
+        property_id: str,
+        project_id: str,
+        updates: Dict[str, Any],
+        *,
+        expected_updated_at: Optional[datetime] = None,
+        required_everywhere: Optional[bool] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Update a property, ensuring it belongs to the project.
+
+        Args:
+            property_id: The property to update.
+            project_id: Its project.
+            updates: The fields to set (``name``, ``description``, ``data``, ``enabled``).
+            expected_updated_at: Optimistic-concurrency precondition (#3226). When given, the
+                ``UPDATE`` only matches a row whose ``updated_at`` still equals it.
+            required_everywhere: When given, set ``required`` to it on every class attribute that
+                uses the property in an unpublished version, in the same transaction (#3226).
+
+        Returns:
+            The property row (with ``required_everywhere_result`` when that was asked for), or
+            ``None`` when the property does not exist in the project.
+
+        Raises:
+            PropertyUpdateConflict: When ``expected_updated_at`` no longer matches.
+        """
+        existing = self.get_property_by_id(property_id, project_id)
+        if not existing:
+            return None
+        if expected_updated_at is not None:
+            if expected_updated_at.tzinfo is None:
+                expected_updated_at = expected_updated_at.replace(tzinfo=timezone.utc)
+            if not _same_instant(existing.get("updated_at"), expected_updated_at):
+                raise PropertyUpdateConflict(existing.get("updated_at"))
+
         # Build dynamic update query
         set_clauses = []
         params = []
@@ -11910,32 +11956,86 @@ class Database:
             set_clauses.append("enabled = %s")
             params.append(updates['enabled'])
 
-        if not set_clauses:
+        if not set_clauses and required_everywhere is None:
             # No updates provided
-            return self.get_property_by_id(property_id, project_id)
-
-        set_clauses.append("updated_at = CURRENT_TIMESTAMP")
-
-        query = f"""
-            UPDATE apiome.properties
-            SET {', '.join(set_clauses)}
-            WHERE id = %s AND project_id = %s AND deleted_at IS NULL
-            RETURNING id, project_id, name, description, data, enabled, created_at, updated_at
-        """
-        params.extend([property_id, project_id])
+            return existing
 
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(query, tuple(params))
-                result = cursor.fetchone()
+                result = existing
+                if set_clauses:
+                    set_clauses.append("updated_at = CURRENT_TIMESTAMP")
+                    params.extend([property_id, project_id])
+                    precondition = ""
+                    if expected_updated_at is not None:
+                        # Re-checked inside the write: a change since the read above matches no row.
+                        precondition = "AND updated_at = %s"
+                        params.append(expected_updated_at)
+                    cursor.execute(
+                        f"""
+                        UPDATE apiome.properties
+                        SET {', '.join(set_clauses)}
+                        WHERE id = %s AND project_id = %s AND deleted_at IS NULL {precondition}
+                        RETURNING id, project_id, name, description, data, enabled, created_at, updated_at
+                        """,
+                        tuple(params),
+                    )
+                    result = cursor.fetchone()
+                    if result is None:
+                        conn.rollback()
+                        current = self.get_property_by_id(property_id, project_id)
+                        if current and expected_updated_at is not None:
+                            raise PropertyUpdateConflict(current.get("updated_at"))
+                        return None
+                    if isinstance(result.get('data'), str):
+                        result['data'] = json.loads(result['data'])
+                result = dict(result)
+                if required_everywhere is not None:
+                    result['required_everywhere_result'] = self._set_property_required_everywhere(
+                        cursor, property_id, required_everywhere
+                    )
                 conn.commit()
-                if result and isinstance(result.get('data'), str):
-                    result['data'] = json.loads(result['data'])
                 return result
         except Exception as e:
             conn.rollback()
             raise e
+
+    @staticmethod
+    def _set_property_required_everywhere(cursor: Any, property_id: str, required: bool) -> Dict[str, int]:
+        """Set ``data.required`` on the class attributes using a property (#3226), in the caller's transaction.
+
+        Only classes in live, unpublished versions change; published versions are counted, not touched.
+
+        Returns:
+            ``changed``, ``unchanged`` (already ``required``) and ``skipped_published`` counts.
+        """
+        cursor.execute(
+            """
+            WITH targets AS (
+                SELECT cp.id,
+                       COALESCE(v.published, false) AS published,
+                       COALESCE(cp.data->>'required' = 'true', false) AS is_required
+                FROM apiome.class_properties cp
+                JOIN apiome.classes c ON c.id = cp.class_id AND c.deleted_at IS NULL
+                JOIN apiome.versions v ON v.id = c.version_id AND v.deleted_at IS NULL
+                WHERE cp.property_id = %(property_id)s
+            ), changed AS (
+                UPDATE apiome.class_properties cp
+                SET data = jsonb_set(COALESCE(cp.data, '{}'::jsonb), '{required}', to_jsonb(%(required)s::boolean), true)
+                FROM targets t
+                WHERE cp.id = t.id AND NOT t.published AND t.is_required <> %(required)s::boolean
+                RETURNING cp.id
+            )
+            SELECT (SELECT count(*) FROM changed) AS changed,
+                   (SELECT count(*) FROM targets WHERE NOT published AND is_required = %(required)s::boolean)
+                       AS unchanged,
+                   (SELECT count(*) FROM targets WHERE published) AS skipped_published
+            """,
+            {"property_id": property_id, "required": required},
+        )
+        row = cursor.fetchone()
+        return {key: int(row[key]) for key in ("changed", "unchanged", "skipped_published")}
 
     def delete_property(self, property_id: str, project_id: str) -> bool:
         """Soft delete a property, ensuring it belongs to the project."""

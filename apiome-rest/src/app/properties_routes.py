@@ -8,7 +8,7 @@ All endpoints are tenant-scoped and require authentication via JWT token or API 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any
 
-from .database import db
+from .database import PropertyUpdateConflict, db
 from .models import (
     ProjectPropertySchema,
     ProjectPropertyCreateRequest,
@@ -186,7 +186,9 @@ async def update_property(
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> ProjectPropertySchema:
     """
-    Update an existing property.
+    Update an existing property. ``expectedUpdatedAt`` makes it conditional (409 ``update_conflict``
+    when the property changed since); ``requiredEverywhere`` also sets ``required`` on every class
+    attribute using it in an unpublished version, reported in ``required_everywhere_result`` (#3226).
 
     Supports authentication via JWT token or API key.
 
@@ -236,12 +238,26 @@ async def update_property(
         if request.enabled is not None:
             updates['enabled'] = request.enabled
 
-        # Update property
-        property_data = db.update_property(
-            property_id,
-            project_id,
-            updates
-        )
+        # Update property — guarded by the caller's last-read updated_at when given, and setting
+        # `required` on the class attributes that use it when asked (#3226).
+        try:
+            property_data = db.update_property(
+                property_id,
+                project_id,
+                updates,
+                expected_updated_at=request.expected_updated_at,
+                required_everywhere=request.required_everywhere,
+            )
+        except PropertyUpdateConflict as conflict:
+            current = conflict.current_updated_at
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "update_conflict",
+                    "message": "The property changed since it was read; re-fetch it and retry.",
+                    "current_updated_at": current.isoformat() if hasattr(current, "isoformat") else current,
+                },
+            )
 
         if not property_data:
             raise HTTPException(

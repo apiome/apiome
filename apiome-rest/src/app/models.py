@@ -9218,6 +9218,13 @@ class ProjectPropertyUsage(BaseModel):
     )
 
 
+class PropertyRequiredEverywhereResult(BaseModel):
+    """What ``required_everywhere`` changed on the class attributes using a property (#3226)."""
+    changed: int = Field(description="Class attributes whose `required` flag was changed.")
+    unchanged: int = Field(description="Class attributes in unpublished versions that already had that value.")
+    skipped_published: int = Field(description="Class attributes in published versions, left alone.")
+
+
 class ProjectPropertySchema(BaseModel):
     """Pydantic model for a project property (library property)."""
     id: str
@@ -9248,6 +9255,11 @@ class ProjectPropertySchema(BaseModel):
             "distinct class name, attribute name and required flag, sorted; single-property GET only (#3224)."
         ),
     )
+    # Bulk required toggle (#3226): filled by a PUT that asked for required_everywhere; null otherwise.
+    required_everywhere_result: Optional[PropertyRequiredEverywhereResult] = Field(
+        default=None,
+        description="Counts from `required_everywhere` on the PUT that set it (#3226); null on other responses.",
+    )
 
     class Config:
         from_attributes = True
@@ -9269,6 +9281,20 @@ class ProjectPropertyUpdateRequest(BaseModel):
     description: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
     enabled: Optional[bool] = None
+    expected_updated_at: Optional[datetime] = Field(
+        None,
+        validation_alias=AliasChoices("expectedUpdatedAt", "expected_updated_at"),
+        description="Optimistic-concurrency precondition (CLI 6.4, #3226): the property's updated_at as the "
+        "caller last read it. When set, the update applies only if the property is unchanged since; otherwise "
+        "the request fails with 409 code 'update_conflict' and the property's current updated_at.",
+    )
+    required_everywhere: Optional[bool] = Field(
+        None,
+        validation_alias=AliasChoices("requiredEverywhere", "required_everywhere"),
+        description="Set `required` to this value on every class attribute that uses the property in an "
+        "unpublished version of the project, in the same transaction (#3226). Published versions are left "
+        "alone and counted in the response's `required_everywhere_result`.",
+    )
 
     class Config:
         from_attributes = True

@@ -1,6 +1,6 @@
 ---
 title: "apiome properties"
-description: "List, show, fetch and create project properties."
+description: "List, show, fetch, create and update project properties."
 sidebar_position: 21
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome properties {#properties}
 
-List, show, fetch and create project properties.
+List, show, fetch, create and update project properties.
 
 ```text
 apiome properties [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#properties-create), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show).
+Subcommands: [`create`](#properties-create), [`get`](#properties-get), [`list`](#properties-list), [`show`](#properties-show), [`update`](#properties-update).
 
 ## apiome properties create {#properties-create}
 
@@ -114,3 +114,39 @@ apiome properties show [OPTIONS] PROJECT PROPERTY
 | --- | --- | --- | --- |
 | `PROJECT_REF` | text | yes | Project slug or UUID. |
 | `PROPERTY_REF` | text | yes | Property name or UUID. |
+
+## apiome properties update {#properties-update}
+
+Change a property's name, description, primitive or examples (PUT /v1/properties/{tenant}/{project}/{id}).
+
+Only changed fields are sent. A concurrent edit since the read (or the file) exits 6.
+
+--primitive is refused (exit 6) while a class requires the property, unless --allow-breaking.
+
+Field problems exit 7. Properties have no tags.
+
+```text
+apiome properties update [OPTIONS] PROJECT PROPERTY
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `PROPERTY_REF` | text | yes | Property name or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | Rename the property. |
+| `--primitive` | text |  |  | Re-copy the schema from this primitive (name, UUID or $id); keeps examples. |
+| `--description` | text |  |  | New description; an empty string clears it. |
+| `--add-example` | text (repeatable) |  |  | Add an example (repeatable). |
+| `--remove-example` | text (repeatable) |  |  | Remove an example (repeatable). |
+| `--required-everywhere` / `--optional-everywhere` | flag | `--optional-everywhere` |  | Mark it required (or optional) on every class attribute using it, in unpublished versions. |
+| `--from-file` | path |  |  | Apply an edited `properties show --json` dump (JSON or YAML); exit 6 if it changed since. |
+| `--allow-breaking` | flag |  |  | Change the primitive even though classes require the property. |
+| `--dry-run` | flag |  |  | Print the changes as a diff without sending them. |
+| `--yes`, `-y` | flag |  |  | Skip the question --primitive and --required-everywhere ask. |

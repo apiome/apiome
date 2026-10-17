@@ -1,4 +1,4 @@
-"""Properties list, show, get and create commands."""
+"""Properties list, show, get, create and update commands."""
 
 from __future__ import annotations
 
@@ -16,7 +16,12 @@ from apiome_cli.client.pagination import DEFAULT_PAGE_LIMIT
 from apiome_cli.client.primitive_cache import load_primitives
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
-from apiome_cli.exit_codes import EXIT_PROPERTY_INVALID, EXIT_USAGE
+from apiome_cli.exit_codes import (
+    EXIT_PROPERTY_BREAKING,
+    EXIT_PROPERTY_INVALID,
+    EXIT_UPDATE_CONFLICT,
+    EXIT_USAGE,
+)
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import (
     RecordField,
@@ -39,12 +44,25 @@ from apiome_cli.property_create import (
     split_examples,
 )
 from apiome_cli.property_show import PropertyNotFound, find_property, render_show
+from apiome_cli.property_update import (
+    BreakingChange,
+    PropertyUpdateError,
+    changes_from_file,
+    changes_from_flags,
+    check_changes,
+    check_primitive_change,
+    expected_updated_at,
+    field_changes,
+    render_diff,
+    summary,
+)
+from apiome_cli.property_update import request_body as update_request_body
 from apiome_cli.property_view import UsageUnavailable, filter_properties, render_table
 from apiome_cli.terminal import confirm_action, echo_notice, interactive_enabled
 
 app = typer.Typer(
     name="properties",
-    help="List, show, fetch and create project properties.",
+    help="List, show, fetch, create and update project properties.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -138,15 +156,7 @@ def show_property(
     The name is matched exactly, then ignoring case; a miss suggests the closest names (exit 2).
     ``--json`` prints the full property with ``usage[]`` of ``{class_name, attribute_name, required}``.
     """
-    client, tenant_slug = tenant_scoped_client(ctx)
-    pid = resolve_project_uuid(client, tenant_slug, project_ref)
-    items, _total = fetch_list(client, api_paths.properties(tenant_slug, pid))
-    try:
-        match = find_property(items, property_ref, project=project_ref)
-    except PropertyNotFound as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(EXIT_USAGE) from exc
-    prop = client.get(api_paths.property_record(tenant_slug, pid, str(match["id"]))).json()
+    _client, _tenant, _pid, _items, prop = _resolve_property(ctx, project_ref, property_ref)
     if json_mode_from_context(ctx):
         emit_json(prop)
         return
@@ -311,3 +321,173 @@ def create_property(
         emit_json(created)
         return
     typer.echo(f"✔ Created property '{created.get('name', draft.name)}'.")
+
+
+def _resolve_property(ctx: typer.Context, project_ref: str, property_ref: str) -> tuple[Any, str, UUID, list, dict]:
+    """The client, tenant, project id, the project's property list, and the property as read.
+
+    Exits 2 (with did-you-mean) when the property is not found.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    pid = resolve_project_uuid(client, tenant_slug, project_ref)
+    items, _total = fetch_list(client, api_paths.properties(tenant_slug, pid))
+    try:
+        match = find_property(items, property_ref, project=project_ref)
+    except PropertyNotFound as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    prop = client.get(api_paths.property_record(tenant_slug, pid, str(match["id"]))).json()
+    return client, tenant_slug, pid, items, prop
+
+
+def _exit_on_property_conflict(response: Any, *, name: str, from_file: Optional[Path]) -> None:
+    """Exit 6 on ``update_conflict`` (re-fetch hint), or 7 when a rename hit a taken name."""
+    if response.status_code != 409:
+        return
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        detail = None
+    if isinstance(detail, dict) and detail.get("code") == "update_conflict":
+        source = f"{from_file} was read" if from_file else "it was read"
+        typer.echo(
+            f"Conflict: property {name!r} changed since {source} (server updated_at "
+            f"{detail.get('current_updated_at') or 'unknown'}). Nothing was written.\n"
+            "Re-fetch it with `apiome properties show <project> <property> --json > property.json`, "
+            "re-apply your edit, and run the update again.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_UPDATE_CONFLICT)
+    _exit_invalid([FieldError("name", "the project already has a property with that name")])
+
+
+@app.command("update")
+def update_property(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    property_ref: str = typer.Argument(..., metavar="PROPERTY", help="Property name or UUID."),
+    name: Optional[str] = typer.Option(None, "--name", help="Rename the property."),
+    primitive: Optional[str] = typer.Option(
+        None, "--primitive", help="Re-copy the schema from this primitive (name, UUID or $id); keeps examples."
+    ),
+    description: Optional[str] = typer.Option(None, "--description", help="New description; an empty string clears it."),
+    add_example: Optional[list[str]] = typer.Option(None, "--add-example", help="Add an example (repeatable)."),
+    remove_example: Optional[list[str]] = typer.Option(None, "--remove-example", help="Remove an example (repeatable)."),
+    required_everywhere: Optional[bool] = typer.Option(
+        None,
+        "--required-everywhere/--optional-everywhere",
+        help="Mark it required (or optional) on every class attribute using it, in unpublished versions.",
+    ),
+    from_file: Optional[Path] = typer.Option(
+        None,
+        "--from-file",
+        help="Apply an edited `properties show --json` dump (JSON or YAML); exit 6 if it changed since.",
+    ),
+    allow_breaking: bool = typer.Option(
+        False, "--allow-breaking", help="Change the primitive even though classes require the property."
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the changes as a diff without sending them."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the question --primitive and --required-everywhere ask."),
+) -> None:
+    """Change a property's name, description, primitive or examples (PUT /v1/properties/{tenant}/{project}/{id}).
+
+    Only changed fields are sent. A concurrent edit since the read (or the file) exits 6.
+
+    --primitive is refused (exit 6) while a class requires the property, unless --allow-breaking.
+
+    Field problems exit 7. Properties have no tags.
+    """
+    field_flags = (name, primitive, description, add_example, remove_example, required_everywhere)
+    flags_given = any(value not in (None, []) for value in field_flags)
+    if from_file is not None and flags_given:
+        typer.echo("--from-file cannot be combined with field flags.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if from_file is None and not flags_given:
+        typer.echo(
+            "Nothing to update: pass --name, --primitive, --description, --add-example, --remove-example, "
+            "--required-everywhere / --optional-everywhere or --from-file.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+    document = _read_property_file(from_file) if from_file else None
+
+    client, tenant_slug, pid, items, prop = _resolve_property(ctx, project_ref, property_ref)
+    others = [str(p.get("name")) for p in items if str(p.get("id")) != str(prop.get("id"))]
+    chosen: Optional[Mapping[str, Any]] = None
+    try:
+        if primitive is not None:
+            chosen = find_primitive(load_primitives(client, tenant_slug), primitive)
+        if document is not None:
+            changes = changes_from_file(prop, document)
+            precondition = expected_updated_at(document)
+        else:
+            changes = changes_from_flags(
+                prop,
+                name=name,
+                description=description,
+                primitive=chosen,
+                add_examples=add_example or [],
+                remove_examples=remove_example or [],
+            )
+            precondition = prop.get("updated_at")
+    except PropertyUpdateError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    except PropertyInvalid as exc:
+        _exit_invalid(exc.errors)
+    primitive_changed = chosen is not None and "data" in changes
+    if primitive_changed:
+        try:
+            check_primitive_change(prop.get("usage"), allow_breaking=allow_breaking)
+        except BreakingChange as exc:
+            typer.echo(str(exc), err=True)
+            for use in exc.uses:
+                typer.echo(f"  {use}  (required)", err=True)
+            typer.echo("Nothing was changed. Pass --allow-breaking to change it anyway.", err=True)
+            raise typer.Exit(EXIT_PROPERTY_BREAKING) from exc
+
+    errors = check_changes(prop, changes, others)
+    if errors:
+        _exit_invalid(errors)
+
+    json_mode = json_mode_from_context(ctx)
+    body = update_request_body(changes, precondition, required_everywhere)
+    if dry_run:
+        if json_mode:
+            emit_json(
+                {
+                    "dryRun": True,
+                    "propertyId": str(prop.get("id")),
+                    "changes": [
+                        {"field": row.field, "before": row.before, "after": row.after}
+                        for row in field_changes(prop, changes)
+                    ],
+                    "request": body,
+                }
+            )
+        else:
+            typer.echo(render_diff(prop, changes, required_everywhere))
+        return
+    if not changes and required_everywhere is None:
+        echo_notice(f"Property {prop.get('name')!r} already matches; nothing to update.")
+        if json_mode:
+            emit_json(prop)
+        return
+
+    if primitive_changed or required_everywhere is not None:
+        typer.echo(render_diff(prop, changes, required_everywhere), err=True)
+        if primitive_changed:
+            typer.echo(
+                "Classes keep their own copy of the schema: changing the primitive here does not change them.",
+                err=True,
+            )
+        confirm_action("Apply these changes?", skip=yes)
+
+    response = client.put_raw(api_paths.property_record(tenant_slug, pid, str(prop.get("id"))), json=body)
+    _exit_on_property_conflict(response, name=str(prop.get("name")), from_file=from_file)
+    exit_on_api_error(response)
+    updated = response.json()
+    if json_mode:
+        emit_json(updated)
+        return
+    typer.echo(summary(prop, changes, updated.get("required_everywhere_result")))
