@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List, fetch, publish, unpublish, freeze, fork and compare project versions."
+description: "List, publish, unpublish, freeze, fork, compare and delete versions."
 sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List, fetch, publish, unpublish, freeze, fork and compare project versions.
+List, publish, unpublish, freeze, fork, compare and delete versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`compatibility`](#versions-compatibility), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+Subcommands: [`compatibility`](#versions-compatibility), [`delete`](#versions-delete), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
 
 ## apiome versions compatibility {#versions-compatibility}
 
@@ -46,6 +46,32 @@ apiome versions compatibility [OPTIONS] PROJECT
 | `--allow-removals` | flag |  |  | Treat breaking removals as warnings, so they do not fail the gate. |
 | `--ignore` | text (repeatable) |  |  | Rule id to skip, e.g. path_removed (repeat, or comma-separate). removed-path spelling is accepted. |
 | `--sarif` | flag |  |  | Print SARIF 2.1.0 (for GitHub code scanning) instead of the table. |
+
+## apiome versions delete {#versions-delete}
+
+Delete a version, after typing it to confirm (DELETE /v1/versions/{tenant}/{project}/{version_record_id}).
+
+Meant for drafts. A published or frozen version is refused unless --force, which unpublishes (with --reason) and unfreezes it first. Version tags pointing at it stop the delete unless --detach-tags or --force removes them.
+
+```text
+apiome versions delete [OPTIONS] PROJECT VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `VERSION_REF` | text | yes | Version label (2.2.0 or v2.2.0), revision UUID or version tag. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--detach-tags` | flag |  |  | Remove the version tags pointing at it first. |
+| `--force` | flag |  |  | Delete a published or frozen version: unpublish and unfreeze it first, and remove its tags. |
+| `--reason` | text |  |  | Unpublish reason, required with --force on a published version. |
+| `--yes`, `-y` | flag |  |  | Skip the typed confirmation. |
 
 ## apiome versions fork {#versions-fork}
 

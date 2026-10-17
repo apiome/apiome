@@ -25,6 +25,7 @@ from apiome_cli import __version__
 from apiome_cli.exit_codes import (
     EXIT_BREAKING_CHANGES,
     EXIT_COMPAT_UNAVAILABLE,
+    EXIT_DELETE_REFUSED,
     EXIT_ERROR,
     EXIT_LAST_PUBLISHED_VERSION,
     EXIT_SNAPSHOT_DOWNLOADED,
@@ -66,6 +67,9 @@ from apiome_cli.version_compat import (
     to_sarif,
 )
 from apiome_cli.version_compat import render_result as render_compat_result
+from apiome_cli.version_delete import DeleteRefused, DeleteUsageError, plan_delete
+from apiome_cli.version_delete import json_result as delete_json_result
+from apiome_cli.version_delete import render_plan as render_delete_plan
 from apiome_cli.version_freeze import (
     downloaded_hint,
     json_result,
@@ -84,7 +88,7 @@ from apiome_cli.version_unpublish import (
 
 app = typer.Typer(
     name="versions",
-    help="List, fetch, publish, unpublish, freeze, fork and compare project versions.",
+    help="List, publish, unpublish, freeze, fork, compare and delete versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -553,6 +557,118 @@ def _compat_side(versions: list[dict[str, Any]], tags: Any, ref: str) -> dict[st
         return find_source_version(versions, tags if isinstance(tags, list) else [], ref).version
     except ForkError as exc:
         raise CompatError(f"No version or version tag {ref!r} in this project.") from exc
+
+
+@app.command("delete")
+def delete_version_cmd(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    version_ref: str = typer.Argument(
+        ..., metavar="VERSION", help="Version label (2.2.0 or v2.2.0), revision UUID or version tag."
+    ),
+    detach_tags: bool = typer.Option(
+        False, "--detach-tags", help="Remove the version tags pointing at it first."
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Delete a published or frozen version: unpublish and unfreeze it first, and remove its tags.",
+    ),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="Unpublish reason, required with --force on a published version."
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the typed confirmation."),
+) -> None:
+    """Delete a version, after typing it to confirm (DELETE /v1/versions/{tenant}/{project}/{version_record_id}).
+
+    Meant for drafts. A published or frozen version is refused unless --force, which unpublishes
+    (with --reason) and unfreezes it first. Version tags pointing at it stop the delete unless
+    --detach-tags or --force removes them.
+    """
+    release = parse_release(version_ref)
+    if release is not None:
+        version_ref = ".".join(str(part) for part in release)
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    versions = list_versions(client, tenant_slug, project_id)
+    tags = client.get(api_paths.version_tags(tenant_slug, project_id)).json()
+    tags = tags if isinstance(tags, list) else []
+    try:
+        version = find_source_version(versions, tags, version_ref).version
+    except ForkError as exc:
+        typer.echo(f"No version or version tag {version_ref!r} in this project.", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    version_id = str(version["id"])
+    freeze_path = api_paths.version_freeze(tenant_slug, project_id, version_id)
+    freeze = client.get(freeze_path).json()
+    pointing = [t for t in tags if str(t.get("version_id")) == version_id]
+    try:
+        plan = plan_delete(
+            version,
+            frozen=bool(freeze.get("frozen")),
+            tags=pointing,
+            force=force,
+            detach_tags=detach_tags,
+            reason=reason,
+        )
+    except DeleteRefused as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_DELETE_REFUSED) from exc
+    except DeleteUsageError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    classes = client.get(api_paths.classes_with_properties_tags(tenant_slug, version_id)).json()
+    paths, _total = fetch_list(client, api_paths.paths(tenant_slug, version_id))
+    downloads = int(freeze.get("downloadCount") or 0)
+    typer.echo(
+        render_delete_plan(
+            plan,
+            classes=len(classes) if isinstance(classes, list) else 0,
+            paths=len(paths),
+            downloads=downloads,
+            reason=(reason or "").strip() or None,
+        ),
+        err=True,
+    )
+    confirm_typed(f"Type the version to confirm ({plan.label})", plan.label, skip=yes)
+
+    moved: list[dict[str, Any]] = []
+    if plan.unpublish:
+        unpublished = client.post(
+            api_paths.version_unpublish(tenant_slug, project_id, version_id),
+            json={"reason": (reason or "").strip(), "silent": False, "keepTags": False},
+        ).json()
+        moved = list(unpublished.get("tagsMoved") or [])
+    if plan.unfreeze:
+        exit_on_api_error(client.delete_raw(freeze_path, params={"force": "true"} if downloads else None))
+    removed: list[str] = []
+    if plan.detach:
+        # Unpublishing may have moved some tags back already; remove only those still here.
+        current = client.get(api_paths.version_tags(tenant_slug, project_id)).json()
+        for tag in current if isinstance(current, list) else []:
+            if str(tag.get("version_id")) == version_id:
+                client.delete(api_paths.version_tag_record(tenant_slug, project_id, str(tag["id"])))
+                removed.append(str(tag.get("name")))
+    client.delete(api_paths.version_record(tenant_slug, project_id, version_id))
+
+    if json_mode_from_context(ctx):
+        emit_json(
+            delete_json_result(
+                label=plan.label,
+                version_record_id=version_id,
+                removed_tags=removed,
+                moved_tags=moved,
+                unpublished=plan.unpublish,
+                unfrozen=plan.unfreeze,
+            )
+        )
+        return
+    typer.echo(f"✔ Deleted {plan.label}.")
+    if moved:
+        typer.echo("  Tags moved: " + ", ".join(f"{m.get('name')} → {m.get('toVersionLabel')}" for m in moved))
+    if removed:
+        typer.echo("  Tags removed: " + ", ".join(removed))
 
 
 def _version_exists_conflict(response: Any) -> bool:

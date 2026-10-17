@@ -1384,6 +1384,21 @@ See the docs site's *Version compatibility gate in CI* page for GitHub Actions a
 To gate a local OpenAPI file against a published version, use `apiome diff`; for independent
 oasdiff evidence, `apiome compat`.
 
+### Delete a version
+
+`apiome versions delete <project> <version>` deletes a version after you type it to confirm
+(`DELETE /v1/versions/{tenant}/{project}/{id}`; the version leaves every list and spec URL). It is
+meant for drafts:
+
+```bash
+apiome versions delete payments-api v2.2.0
+apiome versions delete payments-api 2.2.0 --detach-tags --yes            # remove its tags first
+apiome versions delete payments-api 2.1.0 --force --reason 'Abandoned'   # published / frozen
+```
+
+Version tags pointing at it, or a published / frozen state, exit **6** unless `--detach-tags` /
+`--force`. `--force` unpublishes (with `--reason`) and unfreezes the version before deleting it.
+
 ### List resources
 
 Human-readable tables (default):

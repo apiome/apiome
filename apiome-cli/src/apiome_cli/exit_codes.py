@@ -75,6 +75,11 @@ EXIT_SNAPSHOT_DOWNLOADED = 6
 #: failure verdict. Another per-command use of 6.
 EXIT_BREAKING_CHANGES = 6
 
+#: ``apiome versions delete`` (CLI 4.9): the version is **published or frozen** and ``--force``
+#: was not passed, or version tags still point at it and neither ``--detach-tags`` nor
+#: ``--force`` was passed; nothing was changed. Another per-command use of 6.
+EXIT_DELETE_REFUSED = 6
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the API change check suite **failed** — a
 #: required component judged the change unacceptable. Distinct from :data:`EXIT_ERROR` (the suite
 #: could not be reached) and :data:`EXIT_USAGE` (a rejected reference or credential) so CI can

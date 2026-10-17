@@ -136,7 +136,7 @@ _COMMAND_GROUPS: tuple[tuple[str, str], ...] = (
     ("properties", "List and fetch tenant properties"),
     ("schemas", "List and fetch tenant schemas"),
     ("types", "Browse tenant JSON Schema primitive types"),
-    ("versions", "List, fetch, publish, unpublish, freeze, fork and compare project versions"),
+    ("versions", "List, publish, unpublish, freeze, fork, compare and delete versions"),
     ("paths", "List and inspect OpenAPI path templates"),
     ("operations", "Inspect OpenAPI operations"),
     ("spec", "Export reconstructed OpenAPI/Arazzo specs"),
