@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.347.0] - 2026-10-16
+
+### Added
+- **Permanent project delete and deletion impact (#3206, CLI 3.5)**:
+  - `DELETE /v1/projects/{tenant}/{project}?permanent=true` deletes the project and everything under
+    it — revisions, classes and their properties, project properties, paths, branches and merge
+    sessions — irreversibly, in one transaction (the same cascade the web app's "Permanently delete"
+    ran). It also accepts an already soft-deleted project. Audit history is never deleted: when a
+    revision is referenced by audit records the request is refused with `409` `detail.code`
+    `delete_blocked` (naming the table) and nothing is removed. Without `permanent` the route is the
+    unchanged soft delete; both responses now carry `permanent`.
+  - `GET /v1/projects/{tenant}/{project}/deletion-impact` counts what a permanent delete would remove:
+    `versions` (all, soft-deleted included), `published_versions` (live and published),
+    `unpublished_versions`, `classes`, `properties`, `paths`, plus `slug`, `name` and `deleted`.
+    Requires `projects:view`; works for soft-deleted projects.
+
+The OpenAPI version moves to 1.211.0.
+
 ## [1.346.0] - 2026-10-16
 
 ### Added

@@ -69,13 +69,16 @@ consumer contract.
 
 ## With the CLI or the API
 
-- CLI: `apiome projects list`, `apiome projects get <id>`, and `apiome projects update
-  <slug-or-id>` to change a project's name, slug (`--rename`), description or domain — see the
+- CLI: `apiome projects list`, `apiome projects get <id>`, `apiome projects update
+  <slug-or-id>` to change a project's name, slug (`--rename`), description or domain, and
+  `apiome projects delete <slug-or-id>` to delete one — see the
   [`projects` command reference](../reference/cli/projects.md) and the [CLI
   quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/projects/{tenant}`, `GET` / `PUT` / `DELETE
   /v1/projects/{tenant}/{project}`, `POST /v1/projects/{tenant}/{project}/restore` — see the [API
-  reference](../reference/api-reference.md). A `PUT` may carry `expectedUpdatedAt` (the
+  reference](../reference/api-reference.md). `DELETE` is a soft delete (undone with `restore`);
+  `DELETE …?permanent=true` removes the project and everything under it for good, and
+  `GET …/{project}/deletion-impact` counts what that would remove. A `PUT` may carry `expectedUpdatedAt` (the
   project's `updated_at` as you last read it); if the project has changed since, nothing is
   written and the response is `409` with code `update_conflict`.
 
@@ -97,3 +100,21 @@ consumer contract.
 
 - [Versions](./versions.mdx)
 - [Edit classes and properties](./edit-classes-and-properties.md)
+
+### Delete a project from the CLI
+
+`apiome projects delete <slug-or-id>` first shows what will be removed — the project's versions
+(and how many are published), classes, properties and paths.
+
+1. **Archive** — a soft delete you can undo on the Projects page (turn on **Show deleted**, then **Undelete project**):
+   `apiome projects delete payments-api --archive`, then answer **y**.
+2. **Delete permanently** — `apiome projects delete payments-api`, then **type the project slug**
+   (`payments-api`, exactly — it is case-sensitive). In a script, pass `--yes` instead; the
+   argument must then be the exact slug, not the project's id.
+3. A project with **published versions** is refused — the command exits `6` — because consumers can
+   still fetch those specs. Unpublish them first, or add `--force`. This applies to `--archive` too.
+4. A permanent delete is refused if the project's versions have **audit history**, which Apiome
+   never deletes; archive the project instead.
+
+With `--json`, a successful delete prints `{"deleted": true, "slug": "payments-api",
+"permanent": true}`.

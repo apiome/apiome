@@ -1,6 +1,6 @@
 ---
 title: "apiome projects"
-description: "List, fetch and update tenant projects."
+description: "List, fetch, update and delete tenant projects."
 sidebar_position: 20
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,37 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome projects {#projects}
 
-List, fetch and update tenant projects.
+List, fetch, update and delete tenant projects.
 
 ```text
 apiome projects [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`get`](#projects-get), [`list`](#projects-list), [`update`](#projects-update).
+Subcommands: [`delete`](#projects-delete), [`get`](#projects-get), [`list`](#projects-list), [`update`](#projects-update).
+
+## apiome projects delete {#projects-delete}
+
+Delete a project — permanently, or with --archive restorably (DELETE /v1/projects/{tenant}/{id}).
+
+Shows what will be removed, refuses a project with published versions unless --force is passed (exit 6), and asks you to type the project slug before a permanent delete.
+
+```text
+apiome projects delete [OPTIONS] PROJECT_REF
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID (with --yes, the exact slug). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the typed confirmation; the argument must then be the project's exact slug. |
+| `--archive` | flag |  |  | Archive (soft-delete, restorable) instead of deleting permanently. |
+| `--force` | flag |  |  | Delete (or archive) even though the project has published versions (exit 6 without). |
 
 ## apiome projects get {#projects-get}
 

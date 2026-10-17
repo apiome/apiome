@@ -1,4 +1,4 @@
-"""Projects list, get and update commands."""
+"""Projects list, get, update and delete commands."""
 
 from __future__ import annotations
 
@@ -17,7 +17,11 @@ from apiome_cli.client.list_response import fetch_list
 from apiome_cli.client.project_version_resolve import resolve_project_uuid
 from apiome_cli.client.tenant_scope import require_tenant_slug
 from apiome_cli.config import require_api_key
-from apiome_cli.exit_codes import EXIT_UPDATE_CONFLICT, EXIT_USAGE
+from apiome_cli.exit_codes import (
+    EXIT_PUBLISHED_VERSIONS,
+    EXIT_UPDATE_CONFLICT,
+    EXIT_USAGE,
+)
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import (
     ListColumn,
@@ -38,11 +42,11 @@ from apiome_cli.project_update import (
     render_diff,
     request_body,
 )
-from apiome_cli.terminal import confirm_action, echo_notice
+from apiome_cli.terminal import confirm_action, confirm_typed, echo_notice
 
 app = typer.Typer(
     name="projects",
-    help="List, fetch and update tenant projects.",
+    help="List, fetch, update and delete tenant projects.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -264,3 +268,129 @@ def update_project(
         return
     fields = ", ".join(row.field for row in field_changes(project, changes))
     typer.echo(f"Updated project {updated.get('slug')!r}: {fields}.")
+
+
+def deletion_summary(impact: dict[str, Any], *, archive: bool) -> str:
+    """The "This will … delete:" block shown before a delete (pure, for tests).
+
+    Args:
+        impact: ``GET …/deletion-impact`` — ``slug`` and the counts.
+        archive: True for ``--archive`` (a restorable soft delete).
+
+    Returns:
+        The block, one indented line per item.
+    """
+    if archive:
+        heading = "This will archive (soft-delete) the project; it can be restored:"
+    else:
+        heading = "This will permanently delete:"
+    versions = int(impact.get("versions") or 0)
+    published = int(impact.get("published_versions") or 0)
+    unpublished = int(impact.get("unpublished_versions") or 0)
+    rows = [
+        ("Project", str(impact.get("slug") or impact.get("project_id"))),
+        ("Versions", f"{versions:,}  ({published:,} published, {unpublished:,} unpublished)"),
+        ("Classes", f"{int(impact.get('classes') or 0):,}"),
+        ("Properties", f"{int(impact.get('properties') or 0):,}"),
+        ("Paths", f"{int(impact.get('paths') or 0):,}"),
+    ]
+    width = max(len(label) for label, _ in rows) + 1
+    lines = [heading]
+    lines.extend(f"  • {(label + ':').ljust(width)} {value}" for label, value in rows)
+    return "\n".join(lines)
+
+
+@app.command("delete")
+def delete_project(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(
+        ..., help="Project slug or UUID (with --yes, the exact slug)."
+    ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip the typed confirmation; the argument must then be the project's exact slug.",
+    ),
+    archive: bool = typer.Option(
+        False,
+        "--archive",
+        help="Archive (soft-delete, restorable) instead of deleting permanently.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Delete (or archive) even though the project has published versions (exit 6 without).",
+    ),
+) -> None:
+    """Delete a project — permanently, or with --archive restorably (DELETE /v1/projects/{tenant}/{id}).
+
+    Shows what will be removed, refuses a project with published versions unless --force is
+    passed (exit 6), and asks you to type the project slug before a permanent delete.
+    """
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = RestClient(
+        settings,
+        timeout=timeout_from_context(ctx),
+        verify=not insecure_from_context(ctx),
+    )
+    tenant_slug = require_tenant_slug(settings, client)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    impact = client.get(api_paths.project_deletion_impact(tenant_slug, project_id)).json()
+    slug = str(impact.get("slug") or "")
+
+    if yes and project_ref.strip() != slug:
+        # --yes trades the typed confirmation for typing the slug on the command line.
+        typer.echo(
+            f"--yes needs the project's exact slug as the argument ({slug!r}), not "
+            f"{project_ref!r}.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+
+    echo_notice(deletion_summary(impact, archive=archive))
+
+    published = int(impact.get("published_versions") or 0)
+    if published and not force:
+        typer.echo(
+            f"Refusing: {slug!r} has {published} published version"
+            f"{'s' if published != 1 else ''} that consumers can still fetch. "
+            "Unpublish them first, or pass --force.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_PUBLISHED_VERSIONS)
+
+    if archive:
+        confirm_action(f"Archive project {slug!r}?", skip=yes)
+    else:
+        confirm_typed("Type the project slug to confirm deletion", slug, skip=yes)
+
+    path = api_paths.project(tenant_slug, project_id)
+    response = client.delete_raw(path, params=None if archive else {"permanent": "true"})
+    if response.status_code == 409:
+        detail = _json_detail(response)
+        if isinstance(detail, dict) and detail.get("code") == "delete_blocked":
+            typer.echo(
+                f"{detail.get('message') or 'The project cannot be permanently deleted.'}\n"
+                f"Archive it instead: apiome projects delete {slug} --archive",
+                err=True,
+            )
+            raise typer.Exit(EXIT_USAGE)
+    exit_on_api_error(response)
+
+    if json_mode_from_context(ctx):
+        emit_json({"deleted": True, "slug": slug, "permanent": not archive})
+        return
+    if archive:
+        typer.echo(f"✔ Archived {slug}. Restore it from the Projects page (Show deleted → Undelete project).")
+    else:
+        typer.echo(f"✔ Deleted {slug}.")
+
+
+def _json_detail(response: Any) -> Any:
+    """The ``detail`` of an error response, or ``None`` when it is not JSON."""
+    try:
+        return response.json().get("detail")
+    except (ValueError, AttributeError):
+        return None
