@@ -1365,6 +1365,25 @@ apiome versions freeze payments-api 2.1.0 --unfreeze        # exit 6 once the sn
 apiome versions freeze payments-api 2.1.0 --force-unfreeze  # tenant administrators
 ```
 
+### Check two versions for breaking changes (CI gate)
+
+`apiome versions compatibility <project>` compares two stored versions with the native
+compatibility engine (`POST /v1/versions/{tenant}/{project}/compatibility`). `--head` defaults to
+the latest version and `--base` to the most recent published version before it. Exit `0` = no
+unsuppressed breaking change, `6` = at least one, `8` = the server could not answer.
+
+```bash
+apiome versions compatibility payments-api                               # latest vs previous published
+apiome versions compatibility payments-api --base v2.0.0 --head v2.1.0 --allow-removals
+apiome versions compatibility payments-api --ignore path_removed --severity warn
+apiome versions compatibility payments-api --sarif > compatibility.sarif  # GitHub code scanning
+apiome --json versions compatibility payments-api
+```
+
+See the docs site's *Version compatibility gate in CI* page for GitHub Actions and GitLab recipes.
+To gate a local OpenAPI file against a published version, use `apiome diff`; for independent
+oasdiff evidence, `apiome compat`.
+
 ### List resources
 
 Human-readable tables (default):

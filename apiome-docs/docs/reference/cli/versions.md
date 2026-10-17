@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List, fetch, publish, unpublish, freeze and fork project versions."
+description: "List, fetch, publish, unpublish, freeze, fork and compare project versions."
 sidebar_position: 29
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,40 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List, fetch, publish, unpublish, freeze and fork project versions.
+List, fetch, publish, unpublish, freeze, fork and compare project versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+Subcommands: [`compatibility`](#versions-compatibility), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+
+## apiome versions compatibility {#versions-compatibility}
+
+Check two versions for breaking changes — a CI gate (POST /v1/versions/{tenant}/{project}/compatibility).
+
+Exit codes: 0 no unsuppressed breaking change, 6 at least one, 8 the server could not be reached or failed fetching either side, 2 a bad argument or reference.
+
+```text
+apiome versions compatibility [OPTIONS] PROJECT
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--base` | text |  |  | Older version: label (2.0.0 or v2.0.0), revision UUID or tag. Default: the most recent published version before --head. |
+| `--head` | text |  |  | Newer version: label, revision UUID or tag. Default: the latest version. |
+| `--severity` | text | `info` |  | Show findings at this level or above: error, warn or info (default). |
+| `--allow-removals` | flag |  |  | Treat breaking removals as warnings, so they do not fail the gate. |
+| `--ignore` | text (repeatable) |  |  | Rule id to skip, e.g. path_removed (repeat, or comma-separate). removed-path spelling is accepted. |
+| `--sarif` | flag |  |  | Print SARIF 2.1.0 (for GitHub code scanning) instead of the table. |
 
 ## apiome versions fork {#versions-fork}
 

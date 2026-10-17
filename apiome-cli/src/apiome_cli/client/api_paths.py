@@ -691,6 +691,11 @@ def project_tags(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/project-tags/{tenant_slug}/{project_id}"
 
 
+def version_compatibility(tenant_slug: str, project_id: str | UUID) -> str:
+    """Native compatibility check of two revisions (POST; CLI 4.8, #3215)."""
+    return f"{V1}/versions/{tenant_slug}/{project_id}/compatibility"
+
+
 def version_tags(tenant_slug: str, project_id: str | UUID) -> str:
     """The project's version tags (named refs to revisions)."""
     return f"{V1}/version-tags/{tenant_slug}/{project_id}"
