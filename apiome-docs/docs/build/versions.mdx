@@ -85,7 +85,7 @@ The row's quick buttons are **Publish** (or **Unpublish**) and **Edit** or **Sch
 | **Export to another format…** | Opens the export dialog — see [Export](./version-dialogs.mdx#export) |
 | **Schedule sunset (EOL)…** | Deprecates the version and sets its end-of-life date |
 | **Edit** | Changes lifecycle, notes and sunset metadata |
-| **Publish** / **Unpublish** | Publishes the version, or takes it back after a confirmation |
+| **Publish** / **Unpublish** | Publishes the version, or takes it back after a confirmation. Unpublishing moves the version's tags back to the previous published version and notifies webhook subscribers — see [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version) |
 
 Git-like actions (branch, fork, tag, freeze, lock, delete) also live here when <Flag
 name="FEATURE_GITLIKE"/> is on — it is off in every shipped build. See [Git-like
@@ -140,7 +140,8 @@ constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds d
 
 - CLI: `apiome versions list|get|publish|unpublish|fork`, `apiome mock status|enable|disable` — see
   the [`versions` command reference](../reference/cli/versions.md) and the [CLI
-  quick-start](../reference/cli-quickstart.md).
+  quick-start](../reference/cli-quickstart.md). To take a release back with a recorded reason, see
+  [Unpublish a version](../ship/publish-a-version.md#unpublish-a-version).
 - REST: `GET` / `POST /v1/versions/{tenant}/{project}`, `PUT /v1/versions/{tenant}/{project}/{version}`,
   `…/publish`, `…/unpublish`, `PUT …/mock`, `POST /v1/versions/{tenant}/{project}/fork`,
   `GET /v1/versions/{tenant}/sunset-timeline` — see the [API reference](../reference/api-reference.md).

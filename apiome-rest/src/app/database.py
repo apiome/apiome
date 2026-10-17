@@ -7964,6 +7964,7 @@ class Database:
                    v.commit_author, v.commit_message, v.external_ref,
                    v.source_commit_sha, v.source_committed_at,
                    v.quality_score, v.quality_grade,
+                   v.unpublish_reason, v.unpublished_at, v.unpublished_by,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
                    up.name AS upstream_project_name,
@@ -8037,6 +8038,7 @@ class Database:
                    v.commit_author, v.commit_message, v.external_ref,
                    v.source_commit_sha, v.source_committed_at,
                    v.quality_score, v.quality_grade,
+                   v.unpublish_reason, v.unpublished_at, v.unpublished_by,
                    vf.version_id AS fork_source_version_string,
                    pf.name AS fork_source_project_name,
                    up.name AS upstream_project_name,
@@ -9701,43 +9703,87 @@ class Database:
             conn.rollback()
             raise e
 
-    def unpublish_version(self, version_record_id: str, tenant_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        """Unpublish a version (only owner or tenant admin can unpublish). Call version_has_data_records before this to block when data exists."""
-        query = """
-            UPDATE apiome.versions v
-            SET published = false,
-                published_at = NULL,
-                published_immutable = false,
-                updated_at = CURRENT_TIMESTAMP
-            FROM apiome.projects p
-            WHERE v.id = %s
-              AND v.project_id = p.id
-              AND p.tenant_id = %s
-              AND v.deleted_at IS NULL
-              AND p.deleted_at IS NULL
-              AND (
-                v.creator_id = %s
-                OR EXISTS (
-                  SELECT 1 FROM apiome.tenant_administrators ta
-                  WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
-                )
-              )
-            RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
-                      v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
-                      v.enabled, v.commit_author, v.commit_message, v.external_ref,
-                      v.source_commit_sha, v.source_committed_at,
-                      v.created_at, v.updated_at
+    def unpublish_version(
+        self,
+        version_record_id: str,
+        tenant_id: str,
+        user_id: str,
+        *,
+        reason: Optional[str] = None,
+        tag_moves: Sequence[Mapping[str, Any]] = (),
+    ) -> Optional[Dict[str, Any]]:
+        """Unpublish a version and move its tags, in one transaction (#3213).
+
+        Only the version's creator or a tenant administrator can unpublish. Call
+        ``version_has_data_records`` before this to block when data exists.
+
+        Args:
+            version_record_id: The revision to unpublish.
+            tenant_id: Owning tenant.
+            user_id: The caller; recorded as ``unpublished_by``.
+            reason: Recorded as ``unpublish_reason`` (``None`` clears an older reason).
+            tag_moves: ``{"id", "toVersionId"}`` per version tag to repoint
+                (``version_unpublish.plan_tag_moves``). A tag that became immutable or moved
+                elsewhere since the plan was made is left alone.
+
+        Returns:
+            ``{"version": row, "moved_tag_ids": [...]}``, or ``None`` when the caller may not
+            unpublish this revision (nothing is written).
         """
-        conn = self.connect()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(query, (version_record_id, tenant_id, user_id, user_id))
-                result = cursor.fetchone()
-                conn.commit()
-                return result
-        except Exception as e:
-            conn.rollback()
-            raise e
+
+        def work(cursor: Any) -> Optional[Dict[str, Any]]:
+            cursor.execute(
+                """
+                UPDATE apiome.versions v
+                SET published = false,
+                    published_at = NULL,
+                    published_immutable = false,
+                    unpublish_reason = %s,
+                    unpublished_at = CURRENT_TIMESTAMP,
+                    unpublished_by = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                FROM apiome.projects p
+                WHERE v.id = %s
+                  AND v.project_id = p.id
+                  AND p.tenant_id = %s
+                  AND v.deleted_at IS NULL
+                  AND p.deleted_at IS NULL
+                  AND (
+                    v.creator_id = %s
+                    OR EXISTS (
+                      SELECT 1 FROM apiome.tenant_administrators ta
+                      WHERE ta.tenant_id = p.tenant_id AND ta.user_id = %s
+                    )
+                  )
+                RETURNING v.id, v.project_id, v.creator_id, v.version_id, v.description,
+                          v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
+                          v.enabled, v.commit_author, v.commit_message, v.external_ref,
+                          v.source_commit_sha, v.source_committed_at,
+                          v.unpublish_reason, v.unpublished_at, v.unpublished_by,
+                          v.created_at, v.updated_at
+                """,
+                (reason, user_id, version_record_id, tenant_id, user_id, user_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            moved: List[str] = []
+            for move in tag_moves:
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_tags
+                    SET version_id = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND version_id = %s AND project_id = %s AND immutable = false
+                    RETURNING id
+                    """,
+                    (move["toVersionId"], move["id"], version_record_id, row["project_id"]),
+                )
+                hit = cursor.fetchone()
+                if hit:
+                    moved.append(str(hit["id"]))
+            return {"version": dict(row), "moved_tag_ids": moved}
+
+        return self._guarded_tx(work)
 
     def is_user_tenant_admin(self, tenant_id: str, user_id: str) -> bool:
         """True if user is a tenant administrator."""

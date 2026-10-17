@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.212.1
+  version: 1.213.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -27306,11 +27306,24 @@ paths:
       tags:
       - versions
       summary: Unpublish Version
-      description: "Unpublish a version.\n\nOnly the version creator or a tenant administrator\
-        \ can unpublish a version.\n\nArgs:\n    tenant_slug: The tenant slug\n  \
-        \  project_id: The project ID\n    version_record_id: The version record ID\n\
-        \    auth_data: Authentication data (injected by dependency)\n\nReturns:\n\
-        \    The unpublished version"
+      description: "Unpublish a version: return it to draft, record why, move its\
+        \ tags, notify subscribers.\n\nOnly the version creator or a tenant administrator\
+        \ can unpublish a version (#3213):\n\n* ``reason`` is stored as ``unpublishReason``\
+        \ (with ``unpublishedAt`` / ``unpublishedBy``)\n  and sent in the ``version.unpublished``\
+        \ webhook.\n* Unless ``keepTags``, every version tag on the revision moves\
+        \ to the project's\n  next-most-recent published revision, in the same transaction.\
+        \ Immutable tags, protected\n  tags (for a non-administrator) and tags with\
+        \ nowhere to go stay, listed in ``tagsKept``.\n* A ``version.unpublished``\
+        \ push-webhook event goes to every active subscription unless\n  ``silent``\
+        \ — which only a tenant administrator may ask for (403 ``silent_requires_admin``).\n\
+        * ``dryRun`` returns the same plan without writing anything.\n\nAn empty body\
+        \ behaves as before #3213, plus the tag move and the webhook.\n\nArgs:\n \
+        \   tenant_slug: The tenant slug\n    project_id: The project ID\n    version_record_id:\
+        \ The version record ID\n    background_tasks: Runs the webhook fan-out after\
+        \ the response\n    body: Optional reason / silent / keepTags / dryRun\n \
+        \   auth_data: Authentication data (injected by dependency)\n\nReturns:\n\
+        \    The unpublished version, with ``tagsMoved``, ``tagsKept``, ``notify``\
+        \ and\n    ``webhookSubscribers``"
       operationId: unpublish_version_v1_versions__tenant_slug___project_id___version_record_id__unpublish_post
       parameters:
       - name: tenant_slug
@@ -27362,13 +27375,24 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/VersionUnpublishRequest'
+              - type: 'null'
+                description: Request body for unpublish versionrequest.
+              title: Body
+              description: Body schema.
+        description: Request body for unpublish version.
       responses:
         '200':
           description: Successful response for unpublish version.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionSchema'
+                $ref: '#/components/schemas/VersionUnpublishResponse'
                 description: Response payload for unpublish versionresponse200.
         '422':
           description: Validation Error
@@ -72215,7 +72239,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         completed_at:
           anyOf:
           - type: string
@@ -73669,7 +73693,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -73842,7 +73866,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -74283,13 +74307,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -75858,7 +75882,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 76336905-6684-4869-9c8f-21a18b656252
+          example: 69d3f19f-8a47-4b36-b650-391eb270ffb9
         method:
           type: string
           title: Method
@@ -78001,7 +78025,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         envelope:
           additionalProperties: true
           type: object
@@ -79381,7 +79405,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         browse_url:
           anyOf:
           - type: string
@@ -110841,7 +110865,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
       additionalProperties: false
       type: object
       required:
@@ -119721,7 +119745,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         detected_by:
           anyOf:
           - type: string
@@ -123522,6 +123546,62 @@ components:
       - relatedProjectId
       title: UnlinkArtifactsRequest
       description: Remove one project from a shared identity group (pairwise unlink).
+    UnpublishTagKept:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        reason:
+          type: string
+          title: Reason
+          description: keep-tags | immutable | protected | no-published-version
+          example: example
+      type: object
+      required:
+      - id
+      - name
+      - reason
+      title: UnpublishTagKept
+      description: A version tag that stays on the unpublished revision, and why.
+    UnpublishTagMove:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        toVersionId:
+          type: string
+          title: Toversionid
+          description: To Version ID.
+          example: 1.0.0
+        toVersionLabel:
+          anyOf:
+          - type: string
+            description: Unpublish Tag Move schema.
+          - type: 'null'
+            description: Unpublish Tag Move schema.
+          title: Toversionlabel
+          description: To Version Label.
+      type: object
+      required:
+      - id
+      - name
+      - toVersionId
+      title: UnpublishTagMove
+      description: A version tag an unpublish moves to the previous published revision.
     UnreadCount:
       properties:
         total:
@@ -125244,13 +125324,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-17T03:55:12Z'
+          example: '2026-10-17T04:13:05Z'
         outcome:
           anyOf:
           - type: string
@@ -128895,6 +128975,34 @@ components:
             description: Version schema.
           title: Qualitygrade
           description: Stored A-F grade matching qualityScore; null when unscored.
+        unpublishReason:
+          anyOf:
+          - type: string
+            description: Version schema.
+          - type: 'null'
+            description: Version schema.
+          title: Unpublishreason
+          description: Reason recorded with the most recent unpublish (#3213); null
+            when never unpublished or no reason was given.
+        unpublishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Version schema.
+          - type: string
+            description: Version schema.
+          - type: 'null'
+            description: Version schema.
+          title: Unpublishedat
+          description: When the revision was most recently unpublished (#3213).
+        unpublishedBy:
+          anyOf:
+          - type: string
+            description: Version schema.
+          - type: 'null'
+            description: Version schema.
+          title: Unpublishedby
+          description: User id that most recently unpublished the revision (#3213).
         creator_name:
           anyOf:
           - type: string
@@ -129197,6 +129305,443 @@ components:
       type: object
       title: VersionTagUpdateRequest
       description: Move tag to another revision and/or lock it.
+    VersionUnpublishRequest:
+      properties:
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Request body for version unpublish.
+          - type: 'null'
+            description: Request body for version unpublish.
+          title: Reason
+          description: Why the revision is unpublished; stored as unpublishReason
+            and sent in the webhook.
+        silent:
+          type: boolean
+          title: Silent
+          description: Skip the version.unpublished webhook. Tenant administrators
+            only (403 silent_requires_admin).
+          default: false
+          example: false
+        keepTags:
+          type: boolean
+          title: Keeptags
+          description: Leave version tags on the unpublished revision instead of moving
+            them to the previous published revision.
+          default: false
+          example: false
+        dryRun:
+          type: boolean
+          title: Dryrun
+          description: Return the plan (tag moves, webhook subscribers) without unpublishing
+            anything.
+          default: false
+          example: false
+      type: object
+      title: VersionUnpublishRequest
+      description: 'Optional body of ``POST /v1/versions/{tenant}/{project}/{id}/unpublish``
+        (#3213).
+
+
+        An empty body keeps the original behaviour: unpublish, move the revision''s
+        tags to the
+
+        previous published revision, and notify webhook subscribers.'
+    VersionUnpublishResponse:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        project_id:
+          type: string
+          title: Project Id
+          description: Project identifier the resource belongs to.
+          example: prj_01h2xcejqtf3fz5y5j0v8k9m2p
+        creator_id:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Creator Id
+          description: Creator ID.
+        version_id:
+          type: string
+          title: Version Id
+          description: Project version identifier or semantic version label, depending
+            on context.
+          example: 1.0.0
+        shortMessage:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Shortmessage
+          description: Human-readable revision note (stored as description in DB).
+        changelog:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Changelog
+          description: Markdown changelog / release notes (stored as change_log in
+            DB).
+        author:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Author
+          description: Optional commit author string (audit / CI identity; stored
+            as commit_author).
+        message:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Message
+          description: Optional full commit message body (stored as commit_message).
+        externalRef:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Externalref
+          description: External work item id or URL (Jira, Linear, etc.).
+        visibility:
+          type: string
+          title: Visibility
+          default: private
+          description: Visibility.
+          example: private
+        published:
+          type: boolean
+          title: Published
+          default: false
+          description: Published.
+          example: false
+        published_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for version unpublish.
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Published At
+          description: Published At timestamp (ISO 8601).
+        publishedImmutable:
+          type: boolean
+          title: Publishedimmutable
+          description: 'When published: if true, git-like writes require tenant-admin
+            override (#2586).'
+          default: false
+          example: false
+        mockEnabled:
+          type: boolean
+          title: Mockenabled
+          description: When true, apiome-mock serves this revision (#4422). Draft
+            mocks require a tenant API key (#4446).
+          default: false
+          example: false
+        mockPrivate:
+          type: boolean
+          title: Mockprivate
+          description: When true, the mock is key-gated for an unpublished draft (#4446,
+            SIM-2.5).
+          default: false
+          example: false
+        mockBaseUrl:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Mockbaseurl
+          description: Stable mock URL when mockEnabled is true (computed by REST).
+        enabled:
+          type: boolean
+          title: Enabled
+          default: true
+          description: Whether the resource is active.
+          example: true
+        parent_version_id:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Parent Version Id
+          description: Parent Version ID.
+        merge_parent_version_id:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Merge Parent Version Id
+          description: Merge Parent Version ID.
+        sourceCommitSha:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Sourcecommitsha
+          description: Repository source commit SHA that triggered this revision (RAR-4.2
+            refresh provenance); NULL for hand-authored revisions.
+        sourceCommittedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for version unpublish.
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Sourcecommittedat
+          description: Commit timestamp of source_commit_sha (RAR-4.2 refresh provenance).
+        forkedFromRevisionId:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Forkedfromrevisionid
+          description: Source revision (versions.id) if this row is a fork.
+        upstreamProjectId:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Upstreamprojectid
+          description: Upstream project for merge/sync (optional).
+        forkSourceVersionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Forksourceversionlabel
+          description: Fork Source Version Label.
+        forkSourceProjectName:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Forksourceprojectname
+          description: Fork Source Project Name.
+        upstreamProjectName:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Upstreamprojectname
+          description: Upstream Project Name.
+        revisionLocked:
+          type: boolean
+          title: Revisionlocked
+          description: 'Tenant-admin lock: revision cannot be soft-deleted by non-admins.'
+          default: false
+          example: false
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Metadata
+          description: Revision-level JSON (deprecation, sunset, successor revision
+            id, lifecycle tag, etc.).
+        lifecycle:
+          type: string
+          title: Lifecycle
+          description: 'Governance lifecycle tag: stable | beta | deprecated | archived
+            (#739); aligns with metadata.lifecycle and #507 deprecation when unset.'
+          default: stable
+          example: example
+        qualityScore:
+          anyOf:
+          - type: integer
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Qualityscore
+          description: Stored 0-100 quality score for this revision (#5259); null
+            when the revision has not been linted yet. Open GET .../lint to compute
+            and store it.
+        qualityGrade:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Qualitygrade
+          description: Stored A-F grade matching qualityScore; null when unscored.
+        unpublishReason:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Unpublishreason
+          description: Reason recorded with the most recent unpublish (#3213); null
+            when never unpublished or no reason was given.
+        unpublishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for version unpublish.
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Unpublishedat
+          description: When the revision was most recently unpublished (#3213).
+        unpublishedBy:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Unpublishedby
+          description: User id that most recently unpublished the revision (#3213).
+        creator_name:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Creator Name
+          description: Creator Name.
+        creator_email:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Creator Email
+          description: Creator Email.
+        project_name:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Project Name
+          description: Project Name.
+        project_slug:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Project Slug
+          description: Project Slug.
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for version unpublish.
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Response payload for version unpublish.
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        dryRun:
+          type: boolean
+          title: Dryrun
+          default: false
+          description: Dry Run.
+          example: false
+        tagsMoved:
+          items:
+            $ref: '#/components/schemas/UnpublishTagMove'
+          type: array
+          title: Tagsmoved
+          description: Tags Moved.
+          maxItems: 1000
+        tagsKept:
+          items:
+            $ref: '#/components/schemas/UnpublishTagKept'
+          type: array
+          title: Tagskept
+          description: Tags Kept.
+          maxItems: 1000
+        previousPublishedVersionId:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Previouspublishedversionid
+          description: 'Revision the tags move to: the project''s next-most-recent
+            published revision.'
+        previousPublishedVersionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Previouspublishedversionlabel
+          description: Previous Published Version Label.
+        publishedVersionsRemaining:
+          type: integer
+          title: Publishedversionsremaining
+          description: Published revisions the project has once this one is unpublished.
+          default: 0
+          example: 1
+        notify:
+          type: boolean
+          title: Notify
+          description: Whether a version.unpublished webhook is (or would be) sent.
+          default: true
+          example: false
+        webhookSubscribers:
+          anyOf:
+          - type: integer
+            description: Response payload for version unpublish.
+          - type: 'null'
+            description: Response payload for version unpublish.
+          title: Webhooksubscribers
+          description: Active push-webhook subscriptions notified; null when the count
+            could not be read.
+      type: object
+      required:
+      - id
+      - project_id
+      - version_id
+      title: VersionUnpublishResponse
+      description: 'The unpublished revision plus what the unpublish did (#3213).
+
+
+        On a dry run, the revision is returned as it is now (still published) and
+        nothing is written.'
     VersionUpdateRequest:
       properties:
         shortMessage:

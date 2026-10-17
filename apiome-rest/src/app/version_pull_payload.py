@@ -28,6 +28,10 @@ SECTION_FIELD_KEYS: dict[str, frozenset[str]] = {
             "published_at",
             "publishedImmutable",
             "enabled",
+            # Unpublish audit (#3213).
+            "unpublishReason",
+            "unpublishedAt",
+            "unpublishedBy",
         }
     ),
     "mock": frozenset({"mockEnabled", "mockPrivate", "mockBaseUrl"}),

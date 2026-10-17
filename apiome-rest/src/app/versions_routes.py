@@ -114,6 +114,8 @@ from .models import (
     VersionMockToggleRequest,
     VersionPublishRequest,
     VersionSchema,
+    VersionUnpublishRequest,
+    VersionUnpublishResponse,
     VersionUpdateRequest,
 )
 from .openapi_generator import generate_openapi_spec
@@ -124,6 +126,13 @@ from .publication_change_report import (
 from .rate_limit import FixedWindowRateLimiter
 from .publication_changelog import generate_version_changelog_on_publish
 from .publish_notifications import notify_version_published_on_publish
+from .version_unpublish import (
+    build_unpublish_notification,
+    count_active_subscriptions,
+    notify_version_unpublished,
+    plan_tag_moves,
+    previous_published,
+)
 from .sdk_regen_subscriptions import enqueue_regen_on_publish
 from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
@@ -3786,25 +3795,43 @@ async def unpublish_version(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
+    background_tasks: BackgroundTasks,
+    body: Optional[VersionUnpublishRequest] = Body(default=None),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
-) -> VersionSchema:
+) -> VersionUnpublishResponse:
     """
-    Unpublish a version.
+    Unpublish a version: return it to draft, record why, move its tags, notify subscribers.
 
-    Only the version creator or a tenant administrator can unpublish a version.
+    Only the version creator or a tenant administrator can unpublish a version (#3213):
+
+    * ``reason`` is stored as ``unpublishReason`` (with ``unpublishedAt`` / ``unpublishedBy``)
+      and sent in the ``version.unpublished`` webhook.
+    * Unless ``keepTags``, every version tag on the revision moves to the project's
+      next-most-recent published revision, in the same transaction. Immutable tags, protected
+      tags (for a non-administrator) and tags with nowhere to go stay, listed in ``tagsKept``.
+    * A ``version.unpublished`` push-webhook event goes to every active subscription unless
+      ``silent`` — which only a tenant administrator may ask for (403 ``silent_requires_admin``).
+    * ``dryRun`` returns the same plan without writing anything.
+
+    An empty body behaves as before #3213, plus the tag move and the webhook.
 
     Args:
         tenant_slug: The tenant slug
         project_id: The project ID
         version_record_id: The version record ID
+        background_tasks: Runs the webhook fan-out after the response
+        body: Optional reason / silent / keepTags / dryRun
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        The unpublished version
+        The unpublished version, with ``tagsMoved``, ``tagsKept``, ``notify`` and
+        ``webhookSubscribers``
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    request = body or VersionUnpublishRequest()
+    tenant_id = auth_data['tenant_id']
     # Check if version exists
-    existing = db.get_version_by_id(version_record_id, auth_data['tenant_id'])
+    existing = db.get_version_by_id(version_record_id, tenant_id)
     if not existing:
         raise HTTPException(
             status_code=404,
@@ -3842,15 +3869,76 @@ async def unpublish_version(
             detail="Unpublishing requires user authentication (JWT token)"
         )
 
-    version = db.unpublish_version(version_record_id, auth_data['tenant_id'], user_id)
+    is_admin = db.is_user_tenant_admin(tenant_id, user_id)
+    if request.silent and not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "silent_requires_admin",
+                "message": "Only a tenant administrator can unpublish without notifying webhook subscribers.",
+            },
+        )
 
-    if not version:
+    reason = (request.reason or "").strip() or None
+    versions = db.get_versions_for_project(project_id, tenant_id)
+    target = previous_published(versions, version_record_id)
+    plan = plan_tag_moves(
+        db.list_version_tags_for_project(project_id, tenant_id),
+        version_record_id,
+        target,
+        keep_tags=request.keep_tags,
+        is_admin=is_admin,
+    )
+    notify = not request.silent
+    summary: Dict[str, Any] = {
+        "dry_run": request.dry_run,
+        "tags_kept": plan.kept,
+        "previous_published_version_id": str(target["id"]) if target else None,
+        "previous_published_version_label": target.get("version_id") if target else None,
+        "published_versions_remaining": sum(
+            1 for v in versions if v.get("published") and str(v.get("id")) != version_record_id
+        ),
+        "notify": notify,
+        "webhook_subscribers": count_active_subscriptions(db, tenant_id) if notify else 0,
+    }
+
+    if request.dry_run:
+        if existing.get("creator_id") != user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Only the version creator or a tenant administrator can unpublish this version"
+            )
+        return VersionUnpublishResponse(**{**existing, **summary, "tags_moved": plan.moves})
+
+    result = db.unpublish_version(
+        version_record_id, tenant_id, user_id, reason=reason, tag_moves=plan.moves
+    )
+
+    if not result:
         raise HTTPException(
             status_code=403,
             detail="Only the version creator or a tenant administrator can unpublish this version"
         )
 
-    return VersionSchema(**version)
+    moved_ids = set(result["moved_tag_ids"])
+    tags_moved = [m for m in plan.moves if m["id"] in moved_ids]
+    version = result["version"]
+    if notify:
+        background_tasks.add_task(
+            notify_version_unpublished,
+            db,
+            tenant_id=tenant_id,
+            payload=build_unpublish_notification(
+                project_id=project_id,
+                version_record_id=version_record_id,
+                version_label=version.get("version_id"),
+                actor_id=user_id,
+                reason=reason,
+                unpublished_at=version.get("unpublished_at"),
+                tags_moved=tags_moved,
+            ),
+        )
+    return VersionUnpublishResponse(**{**version, **summary, "tags_moved": tags_moved})
 
 
 @router.post("/{tenant_slug}/{project_id}/{version_record_id}/freeze-schema")

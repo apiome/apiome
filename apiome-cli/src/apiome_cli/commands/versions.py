@@ -21,8 +21,9 @@ from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.config import require_api_key
 from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.list_response import fetch_list
-from apiome_cli.exit_codes import EXIT_USAGE, EXIT_VERSION_EXISTS
+from apiome_cli.exit_codes import EXIT_LAST_PUBLISHED_VERSION, EXIT_USAGE, EXIT_VERSION_EXISTS
 from apiome_cli.help_util import group_callback_without_subcommand
+from apiome_cli.terminal import confirm_typed
 from apiome_cli.import_.publish import normalize_cli_import_visibility
 from apiome_cli.output import (
     ListColumn,
@@ -38,13 +39,21 @@ from apiome_cli.version_fork import (
     copy_counts,
     find_source_version,
     label_exists,
+    parse_release,
     render_summary,
     tags_to_copy,
+)
+from apiome_cli.version_unpublish import (
+    UnpublishError,
+    check_reason,
+    parse_positionals,
+    render_plan,
+    render_result,
 )
 
 app = typer.Typer(
     name="versions",
-    help="List, fetch, publish and fork project versions.",
+    help="List, fetch, publish, unpublish and fork project versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -74,6 +83,13 @@ _VERSION_RECORD_FIELDS: tuple[RecordField, ...] = (
     ("Slug", "slug", None),
     ("Source", "source", None),
     ("Enabled", "enabled", lambda value: "" if value is None else str(value)),
+)
+
+#: Shown by ``versions get`` once a version has been unpublished (#3213).
+_VERSION_UNPUBLISH_FIELDS: tuple[RecordField, ...] = (
+    ("Unpublished At", "unpublishedAt", lambda value: "" if value is None else str(value)),
+    ("Unpublished By", "unpublishedBy", lambda value: "" if value is None else str(value)),
+    ("Unpublish Reason", "unpublishReason", lambda value: "" if value is None else str(value)),
 )
 
 _VERSION_PUBLISH_RECORD_FIELDS: tuple[RecordField, ...] = (
@@ -206,9 +222,11 @@ def get_version(
 
     tenant_slug = require_tenant_slug(settings, client)
     response = client.get(api_paths.version_record(tenant_slug, project_id, version_id))
+    record = response.json()
+    unpublished = isinstance(record, dict) and record.get("unpublishedAt")
     emit_record_response(
-        response.json(),
-        _VERSION_RECORD_FIELDS,
+        record,
+        _VERSION_RECORD_FIELDS + (_VERSION_UNPUBLISH_FIELDS if unpublished else ()),
         json_mode=json_mode_from_context(ctx),
     )
 
@@ -260,33 +278,76 @@ def publish_version(
 @app.command("unpublish")
 def unpublish_version(
     ctx: typer.Context,
-    version: str = typer.Argument(
+    first: str = typer.Argument(
         ...,
+        metavar="PROJECT",
+        help="Project slug or UUID (or the version, when --project is passed).",
+    ),
+    second: Optional[str] = typer.Argument(
+        None,
         metavar="VERSION",
-        help="Version UUID, or a slug/label when --project is supplied.",
+        help="Version label (2.1.0 or v2.1.0) or revision UUID.",
     ),
-    project: str = typer.Option(
-        ...,
+    project: Optional[str] = typer.Option(
+        None,
         "--project",
-        help="Project UUID or slug.",
+        help="Project UUID or slug; the older form `unpublish <version> --project <project>`.",
     ),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="Why it is unpublished; recorded for audit. Required unless --silent."
+    ),
+    keep_tags: bool = typer.Option(
+        False, "--keep-tags", help="Leave version tags on it instead of moving them to the previous published version."
+    ),
+    silent: bool = typer.Option(
+        False, "--silent", help="Do not notify webhook subscribers (tenant administrators only)."
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Unpublish even when it is the project's only published version."
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the typed confirmation."),
 ) -> None:
-    """Return a published version to draft (POST …/{version_record_id}/unpublish)."""
+    """Unpublish a version: return it to draft and move its tags back (POST …/{version_record_id}/unpublish).
+
+    Shows what will happen — the spec endpoints it disappears from, the version tags that move
+    to the next-most-recent published version, the webhook subscribers notified — then asks you
+    to type the version to confirm. The reason is stored and shown by `versions get`.
+    """
+    try:
+        project_ref, version_ref = parse_positionals(first, second, project)
+        release = parse_release(version_ref)
+        if release is not None:
+            # Labels are stored without the "v": v2.1.0 resolves as 2.1.0.
+            version_ref = ".".join(str(part) for part in release)
+        clean_reason = check_reason(reason, silent=silent)
+    except UnpublishError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
     client, tenant_slug = tenant_scoped_client(ctx)
     project_id, version_id = _resolve_publish_version_id(
         client,
         tenant_slug,
-        version_ref=version,
-        project_ref=project,
+        version_ref=version_ref,
+        project_ref=project_ref,
     )
-    response = client.post(
-        api_paths.version_unpublish(tenant_slug, project_id, version_id),
-    )
-    emit_record_response(
-        response.json(),
-        _VERSION_PUBLISH_RECORD_FIELDS,
-        json_mode=json_mode_from_context(ctx),
-    )
+    path = api_paths.version_unpublish(tenant_slug, project_id, version_id)
+    body = {"reason": clean_reason, "silent": silent, "keepTags": keep_tags}
+    plan = client.post(path, json={**body, "dryRun": True}).json()
+    label = str(plan.get("version_id") or version_ref)
+    if not plan.get("publishedVersionsRemaining") and not force:
+        typer.echo(
+            f"{label} is the only published version of this project; unpublishing it leaves "
+            "nothing to fetch. Pass --force to unpublish it anyway.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_LAST_PUBLISHED_VERSION)
+    typer.echo(render_plan(plan, reason=clean_reason), err=True)
+    confirm_typed(f"Type the version to confirm ({label})", label, skip=yes)
+    result = client.post(path, json=body).json()
+    if json_mode_from_context(ctx):
+        emit_json(result)
+    else:
+        typer.echo(render_result(result))
 
 
 def _version_exists_conflict(response: Any) -> bool:
