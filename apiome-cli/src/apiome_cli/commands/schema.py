@@ -1,7 +1,8 @@
 """``apiome schema`` — published-spec downloads (CLI 9.x) and CI schema testing (#5117).
 
-``apiome schema arazzo <tenant>/<project>/<version>`` (CLI 9.6, #3249) downloads a published
-version's Arazzo workflows; the shared ref/format/checksum logic is in
+``apiome schema arazzo <tenant>/<project>/<version>`` (CLI 9.6, #3249) and ``apiome schema json``
+(CLI 9.7, #3250) download a published version's Arazzo workflows or JSON Schema through
+:func:`_download_published`; the shared ref/format/checksum logic is in
 :mod:`apiome_cli.published_spec`.
 
 ``apiome schema test`` runs CI schema testing over the IXH-5.1/5.2 services.
@@ -36,6 +37,7 @@ import typer
 from apiome_cli.cli_context import insecure_from_context, settings_from_context, timeout_from_context
 from apiome_cli.client import api_paths
 from apiome_cli.client.http import RestClient
+from apiome_cli.client.spec_download import SpecFormat
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.exit_codes import EXIT_CHECKSUM_MISMATCH, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -120,6 +122,100 @@ def schema_arazzo(
     the version or class is unknown, unpublished, or private without an API key; 1 a
     transport or server error.
     """
+    _download_published(
+        ctx,
+        route="arazzo",
+        spec_format="arazzo",
+        ref=ref,
+        class_name=class_name,
+        serialization=serialization,
+        output=output,
+        expect_sha256=expect_sha256,
+    )
+
+
+@app.command("json")
+def schema_json(
+    ctx: typer.Context,
+    ref: str = typer.Argument(
+        ...,
+        metavar="TENANT/PROJECT/VERSION",
+        help="Published version by slugs, e.g. acme-corp/payments-api/2.1.0.",
+    ),
+    class_name: Optional[str] = typer.Option(
+        None,
+        "--class",
+        help="Download only this class's schema (the per-class route).",
+    ),
+    serialization: str = typer.Option(
+        "json",
+        "--format",
+        help="json (default) or yaml.",
+    ),
+    output: str = typer.Option(
+        "-",
+        "--output",
+        "-o",
+        help="File to write, or - for stdout (default).",
+    ),
+    expect_sha256: Optional[str] = typer.Option(
+        None,
+        "--expect-sha256",
+        help="Fail with exit 6, writing nothing, unless the document has this SHA-256.",
+    ),
+) -> None:
+    """Download a published version's JSON Schema.
+
+    Fetches GET /v1/json/{tenant}/{project}/{version}, or the per-class route with --class,
+    and streams the document byte for byte as served (no transformation), so it pipes
+    straight into code generators. A summary with its sha256 checksum goes to stderr (with
+    --json, a JSON line: on stdout when --output is a file, on stderr when the document goes
+    to stdout).
+
+    Exit codes: 0 written; 6 --expect-sha256 did not match (nothing written); 2 bad usage, or
+    the version or class is unknown, unpublished, or private without an API key; 1 a
+    transport or server error.
+    """
+    _download_published(
+        ctx,
+        route="json",
+        spec_format="json-schema",
+        ref=ref,
+        class_name=class_name,
+        serialization=serialization,
+        output=output,
+        expect_sha256=expect_sha256,
+    )
+
+
+def _download_published(
+    ctx: typer.Context,
+    *,
+    route: str,
+    spec_format: SpecFormat,
+    ref: str,
+    class_name: Optional[str],
+    serialization: str,
+    output: str,
+    expect_sha256: Optional[str],
+) -> None:
+    """Download one published document for a ``schema <format>`` command and write it.
+
+    Shared by ``schema arazzo`` and ``schema json``: validates the flags (exit 2 before any
+    request), fetches ``/v1/{route}/{tenant}/{project}/{version}[/{class}]``, checks
+    ``--expect-sha256`` before writing (exit 6, nothing written), writes the bytes unchanged and
+    emits the summary.
+
+    Args:
+        ctx: Typer context (settings, timeout, ``--insecure``, global ``--json``).
+        route: The spec route name, ``arazzo`` or ``json``.
+        spec_format: Recorded as ``format`` in the summary.
+        ref: The ``tenant/project/version`` argument.
+        class_name: ``--class``, or ``None`` for the whole bundle.
+        serialization: ``--format`` value (``json`` or ``yaml``).
+        output: ``--output`` path, or ``-`` for stdout.
+        expect_sha256: ``--expect-sha256`` digest, or ``None``.
+    """
     try:
         published = parse_published_ref(ref)
         wanted_format = parse_serialization(serialization)
@@ -137,8 +233,8 @@ def schema_arazzo(
 
     settings = settings_from_context(ctx)
     client = RestClient(settings, timeout=timeout_from_context(ctx), verify=not insecure_from_context(ctx))
-    path = published_document_path("arazzo", published, class_name.strip() if class_name else None)
-    download = fetch_published_document(client, path, spec_format="arazzo", serialization=wanted_format)
+    path = published_document_path(route, published, class_name.strip() if class_name else None)
+    download = fetch_published_document(client, path, spec_format=spec_format, serialization=wanted_format)
 
     actual = sha256_hex(download.body)
     if expected is not None and actual != expected:

@@ -56,6 +56,7 @@ We continue to improve the platform based on your feedback with improvements and
   - `apiome classes list <project> <version>` lists a version's classes with their property count, tags and description — filter with `--tag` and `--search`, or add `--with-properties` to see every class's properties
   - `apiome classes create <project> <version>` adds a class to a draft version with its properties (each optional or required) and tags — answer the prompts, or pass `--name`, `--property amount:required` and `--tag`, or `--from-file` with JSON or YAML; missing tags are created, and a half-made class is removed again if a step fails
   - `apiome schema arazzo <tenant>/<project>/<version>` downloads a published version's Arazzo workflows as YAML (or `--format json`), the whole bundle or one class with `--class`; `--expect-sha256` refuses to write a document whose bytes changed
+  - `apiome schema json <tenant>/<project>/<version>` downloads a published version's JSON Schema — the whole bundle or one class with `--class`, ready to pipe into a code generator; same `--format`, `--output` and `--expect-sha256` flags as `schema arazzo`, JSON by default
 - Sign-up:
   - Administrators choose who can create an account — **Open**, **Invite only** or **Closed**, with an optional list of allowed email domains — on **System settings** in the admin console, with no restart; the same policy covers email and every sign-in provider
 - Mock Services:

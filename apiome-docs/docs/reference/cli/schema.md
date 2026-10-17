@@ -18,7 +18,7 @@ Download published specs and test payloads against schemas.
 apiome schema [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`arazzo`](#schema-arazzo), [`test`](#schema-test).
+Subcommands: [`arazzo`](#schema-arazzo), [`json`](#schema-json), [`test`](#schema-test).
 
 ## apiome schema arazzo {#schema-arazzo}
 
@@ -44,6 +44,33 @@ apiome schema arazzo [OPTIONS] TENANT/PROJECT/VERSION
 | --- | --- | --- | --- | --- |
 | `--class` | text |  |  | Download only this class's workflows (the per-class route). |
 | `--format` | text | `yaml` |  | json or yaml (default yaml, the usual form for Arazzo). |
+| `--output`, `-o` | text | `-` |  | File to write, or - for stdout (default). |
+| `--expect-sha256` | text |  |  | Fail with exit 6, writing nothing, unless the document has this SHA-256. |
+
+## apiome schema json {#schema-json}
+
+Download a published version's JSON Schema.
+
+Fetches GET /v1/json/{tenant}/{project}/{version}, or the per-class route with --class, and streams the document byte for byte as served (no transformation), so it pipes straight into code generators. A summary with its sha256 checksum goes to stderr (with --json, a JSON line: on stdout when --output is a file, on stderr when the document goes to stdout).
+
+Exit codes: 0 written; 6 --expect-sha256 did not match (nothing written); 2 bad usage, or the version or class is unknown, unpublished, or private without an API key; 1 a transport or server error.
+
+```text
+apiome schema json [OPTIONS] TENANT/PROJECT/VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REF` | text | yes | Published version by slugs, e.g. acme-corp/payments-api/2.1.0. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--class` | text |  |  | Download only this class's schema (the per-class route). |
+| `--format` | text | `json` |  | json (default) or yaml. |
 | `--output`, `-o` | text | `-` |  | File to write, or - for stdout (default). |
 | `--expect-sha256` | text |  |  | Fail with exit 6, writing nothing, unless the document has this SHA-256. |
 
