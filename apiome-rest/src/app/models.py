@@ -6,6 +6,7 @@ from urllib.parse import urlsplit, urlunsplit
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .config import settings
+from .entity_owners import EntityOwnerRef, owner_ref_from_value
 from .lint_evidence import coverage_entries, expected_scanners_for_subject
 from .mcp_catalog_inventory import derive_health as derive_mcp_endpoint_health
 from .mcp_change_severity import (
@@ -2469,6 +2470,12 @@ class ProjectSchema(BaseModel):
     # Project-vs-Catalog boundary (MFI-23.1): true for publishable OpenAPI/Swagger Projects,
     # false for non-publishable catalog items. Existing projects default to publishable.
     publishable: bool = True
+    # Owner team (CDG-2.2, #5961): the confirmed owner, else the first suggestion; null when none.
+    owner: Optional[EntityOwnerRef] = Field(
+        None,
+        validation_alias=AliasChoices("owner", "entity_owner"),
+        description="The owner team: confirmed, or else suggested (with its source).",
+    )
     # Cross-format identity group (MFI-6.4, #4410).
     identity_group_id: Optional[str] = Field(None, serialization_alias="identityGroupId")
     related_artifacts: List["RelatedArtifactRef"] = Field(
@@ -2661,6 +2668,12 @@ class CatalogItemSchema(BaseModel):
     )
     tags: List[str] = Field(
         default_factory=list, description="Free-form tags, lower-cased, alphabetical."
+    )
+    # Owner team (CDG-2.2, #5961): the confirmed owner, else the first suggestion; null when none.
+    owner: Optional[EntityOwnerRef] = Field(
+        None,
+        validation_alias=AliasChoices("owner", "entity_owner"),
+        description="The owner team: confirmed, or else suggested (with its source).",
     )
 
     class Config:
@@ -11909,6 +11922,8 @@ class McpEndpointOut(BaseModel):
     added_via: str = "manual"
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    # Owner team (CDG-2.2, #5961): confirmed, else suggested; null when none (list reads only).
+    owner: Optional[EntityOwnerRef] = None
 
 
 class McpEndpointListResponse(BaseModel):
@@ -12321,6 +12336,7 @@ def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
         added_via=str(row.get("added_via") or "manual"),
         created_at=_ts(row.get("created_at")),
         updated_at=_ts(row.get("updated_at")),
+        owner=owner_ref_from_value(row.get("entity_owner")),
     )
 
 

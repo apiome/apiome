@@ -13,9 +13,9 @@ so a team never changes without the row that says who changed it.
 same rows, so a writer that bypasses this module cannot store one either. The reverse direction —
 a user who *leaves* the tenant leaves every team in the same transaction — is V284's other trigger.
 
-**A delete is soft, and refuses while the team owns entities.** Ownership arrives with CDG-2.2's
-``entity_owners`` table; until then :func:`_owned_entity_count` reads zero because the table is
-absent. Once it exists, a team with confirmed ownership rows can only be deleted with
+**A delete is soft, and refuses while the team owns entities.** Ownership is CDG-2.2's
+``entity_owners`` table (apiome-db V285); on a database without it :func:`_owned_entity_count`
+reads zero. A team with confirmed ownership rows can only be deleted with
 ``reassign_to``, which moves those rows to the named team in the delete's own transaction.
 """
 
@@ -218,8 +218,8 @@ _MEMBERS_SQL = """
 def _owned_entity_count(cursor: Any, team_id: str) -> int:
     """How many entities the team is the confirmed owner of.
 
-    CDG-2.2 adds ``apiome.entity_owners``; until that migration has run the table is absent and
-    the team owns nothing. Reading through ``to_regclass`` keeps this module correct on both sides
+    CDG-2.2 adds ``apiome.entity_owners`` (V285); before that migration has run the table is absent
+    and the team owns nothing. Reading through ``to_regclass`` keeps this module correct on both sides
     of that migration without a code change.
 
     Args:

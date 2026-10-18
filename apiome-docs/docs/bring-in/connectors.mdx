@@ -266,8 +266,10 @@ listens inside your network, an operator has to allow its range (see
   workspace), the service's tags and **enabled** flag, and the protocols, hosts and paths its routes
   declare.
 - **Suggested owners.** A service tag of the form `owner:<team-slug>`, such as `owner:payments`,
-  is recorded as a suggested owner under `deployment.suggestedOwners`. A suggestion is only a
-  suggestion; it never makes the team the owner. A malformed owner tag is a finding.
+  makes that team a [suggested owner](../workspace/teams.mdx#ownership) of the catalog item (it is
+  also kept under `deployment.suggestedOwners`). A suggestion never makes the team the owner until
+  someone confirms it. A tag naming a team that does not exist is a finding, *unknown team `x` in
+  tag*; a malformed owner tag is a finding too.
 - **Plugins.** Auth plugins such as `key-auth` become the item's security schemes, labelled
   *inferred*. Every other plugin, such as `rate-limiting` or a custom plugin, is listed in the
   item's coverage ledger as **partially mapped**. Its configuration stays in the item's captured
@@ -376,8 +378,9 @@ change the scope.
 - **Deployment details.** Each item's **`deployment`** records the region, account, API id and type
   (`rest` or `http`), stage, `deploymentId`, invoke URL and the API's tags.
 - **Suggested owners.** An API tagged `apiome:owner` with a team slug, such as `payments`, gets that
-  team as a suggested owner. A suggestion never makes the team the owner. A malformed value is a
-  finding.
+  team as a [suggested owner](../workspace/teams.mdx#ownership) of its catalog item; a team that
+  does not exist is an *unknown team* finding. A suggestion never makes the team the owner until
+  someone confirms it. A malformed value is a finding.
 - **Findings.** A region with no APIs is a successful run with no candidates and a `region-empty`
   finding, so an empty result is visible. A stage with no deployment (`stage-not-deployed`) and a
   WebSocket API (`websocket-api-not-exported`) are findings, because neither can be exported.

@@ -545,6 +545,83 @@ def _after_import(db: Any, source: Any, candidate: RefreshCandidate, project_id:
         summary["postImportFailed"] = int(summary.get("postImportFailed", 0)) + 1
 
 
+#: Finding a connector run reports when an owner tag names no team (CDG-2.2, #5961).
+FINDING_OWNER_TEAM_UNKNOWN = "owner-team-unknown"
+
+
+def _default_owner_recorder(
+    tenant_id: str, kind: str, entity_id: str, source: str, suggestions: Sequence[Mapping[str, Any]]
+) -> List[str]:
+    """Record suggestions through :func:`app.entity_owner_store.record_suggestions` (lazy import)."""
+    from .entity_owner_store import record_suggestions
+
+    return record_suggestions(tenant_id, kind, entity_id, source, suggestions)
+
+
+#: The recorder :func:`_record_owner_suggestions` calls; tests replace it.
+owner_recorder: Callable[..., List[str]] = _default_owner_recorder
+
+
+def _record_owner_suggestions(
+    connector: Mapping[str, Any],
+    candidates: Sequence[RefreshCandidate],
+    rows: Mapping[str, Mapping[str, Any]],
+    summary: Dict[str, Any],
+) -> None:
+    """Turn each item's gateway owner tags into suggested owners of its catalog item (CDG-2.2).
+
+    Runs for every item that is linked to a catalog item, imported this run or not, because tags
+    change without the document changing. A tag naming a team that does not exist is stored
+    nowhere; it becomes an ``owner-team-unknown`` finding ("unknown team `x` in tag") on the run.
+    Nothing is confirmed and nothing is notified. A failure is logged and counted
+    (``summary.ownerSuggestionsFailed``), never raised: the sync itself succeeded.
+
+    Args:
+        connector: The connector row.
+        candidates: The inventory.
+        rows: The connector item rows by remote id (with ``project_id`` after import).
+        summary: The run summary, extended in place.
+    """
+    tenant_id = str(connector["tenant_id"])
+    unknown_findings: List[Dict[str, Any]] = []
+    for candidate in candidates:
+        project_id = (rows.get(candidate.remote_id) or {}).get("project_id")
+        if not project_id:
+            continue
+        suggestions = [
+            s for s in ((candidate.deployment or {}).get("suggestedOwners") or [])
+            if isinstance(s, Mapping) and s.get("team")
+        ]
+        try:
+            unknown = owner_recorder(tenant_id, "catalog_item", str(project_id), "gateway_tag", suggestions)
+        except Exception as exc:  # noqa: BLE001 - ownership must not fail a finished sync
+            _logger.warning(
+                "connector owner suggestions failed remote_id=%s error=%s",
+                candidate.remote_id,
+                f"{type(exc).__name__}: {exc}"[:_MESSAGE_MAX_CHARS],
+            )
+            summary["ownerSuggestionsFailed"] = int(summary.get("ownerSuggestionsFailed", 0)) + 1
+            continue
+        for slug in unknown:
+            tag = next((s.get("sourceRef") for s in suggestions if s.get("team") == slug), slug)
+            unknown_findings.append(
+                {
+                    "code": FINDING_OWNER_TEAM_UNKNOWN,
+                    "severity": "warning",
+                    "remoteId": candidate.remote_id,
+                    "remoteName": candidate.name,
+                    "team": slug,
+                    "tag": tag,
+                    "message": f"unknown team `{slug}` in tag",
+                }
+            )
+    if unknown_findings:
+        findings = list(summary.get("findings") or [])
+        total = int(summary.get("findingsTotal", len(findings))) + len(unknown_findings)
+        summary["findings"] = (findings + unknown_findings)[:FINDINGS_MAX]
+        summary["findingsTotal"] = total
+
+
 def _audit(db: Any, connector: Mapping[str, Any], result: ConnectorSyncResult, actor_id: Optional[str]) -> None:
     """Write the run's ``repository.connector.sync`` workflow-audit row (no credentials)."""
     db.insert_workflow_audit(
@@ -742,6 +819,8 @@ def run_connector_sync(
             summary["imported"] += 1
             settled += 1
             _after_import(db, source, candidate, project_id, summary)
+
+        _record_owner_suggestions(connector, candidates, rows, summary)
 
         if failures and settled == 0:
             error_class, http_status, message = failures[0]

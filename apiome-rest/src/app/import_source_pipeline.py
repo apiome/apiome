@@ -1279,12 +1279,52 @@ def persist_adapter_import(
             git_source=git_source if isinstance(git_source, dict) else None,
         )
 
+    _record_spec_owner_suggestions(
+        tenant_id, str(project_id), bool(routing.publishable), getattr(model, "raw", None)
+    )
+
     return SpecImportJobResult(
         project_id=project_id,
         project_slug=project_slug,
         version_id=version_id,
         version_record_id=version_record_id,
     )
+
+
+def _record_spec_owner_suggestions(
+    tenant_id: str, project_id: str, publishable: bool, document: Any
+) -> None:
+    """Record the owner a document names about itself as a *suggested* owner (CDG-2.2, #5961).
+
+    Reads an ``x-apiome-owner`` root extension and an ``info.contact.name`` shaped like a team slug
+    (:func:`app.entity_owners.spec_owner_suggestions`). Only slugs that name a live team are stored,
+    with source ``spec_extension``; the set replaces the previous import's, so removing the
+    extension removes the suggestion. Nothing is confirmed. A failure is logged, never raised: the
+    import itself succeeded.
+
+    Args:
+        tenant_id: The importing tenant.
+        project_id: The project or catalog item the import wrote.
+        publishable: Whether that row is a project (``True``) or a catalog item.
+        document: The parsed source document (``model.raw``).
+    """
+    from .entity_owner_store import record_suggestions
+    from .entity_owners import SOURCE_SPEC_EXTENSION, spec_owner_suggestions
+
+    try:
+        record_suggestions(
+            tenant_id,
+            "project" if publishable else "catalog_item",
+            project_id,
+            SOURCE_SPEC_EXTENSION,
+            spec_owner_suggestions(document),
+        )
+    except Exception as exc:  # noqa: BLE001 - ownership must not fail a finished import
+        logger.warning(
+            "owner suggestions from the document failed project_id=%s error=%s",
+            project_id,
+            f"{type(exc).__name__}: {exc}"[:300],
+        )
 
 
 def _normalize_import_project_slug(slug: str, name: str) -> str:

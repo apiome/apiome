@@ -67,6 +67,14 @@ In the table, tick rows to **Delete** or **Undelete** several at once.
 each one uses. **“Register consumer”** adds one by hand; **“Import Pact file”** adds one from a
 consumer contract.
 
+## Owner
+
+A project can have an owner team. CODEOWNERS rules for the spec's path and the document's own
+`x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
+confirms it. The projects list carries each project's `owner`. Owners are set over the API for
+now — see [Teams → Ownership](../workspace/teams.mdx#ownership). Consumers can have an owner team
+too.
+
 ## With the CLI or the API
 
 - CLI: `apiome projects list`, `apiome projects get <id>`, `apiome projects update

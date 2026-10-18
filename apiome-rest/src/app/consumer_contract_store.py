@@ -47,6 +47,7 @@ from .consumer_contract import (
     validate_slug,
 )
 from .database import db
+from .entity_owners import owner_ref_from_value
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
@@ -224,15 +225,22 @@ def list_consumer_summaries(tenant_id: str, project_id: str) -> List[ConsumerSum
     Returns:
         The summaries, newest consumer first, each with its current contract or ``None``.
     """
-    consumers = [consumer_record_from_row(row) for row in db.list_consumers(project_id, tenant_id)]
+    rows = db.list_consumers(project_id, tenant_id)
     contracts_by_consumer: Dict[str, ConsumerContractRecord] = {}
     for row in db.list_current_consumer_contracts(project_id, tenant_id):
         record = contract_record_from_row(row)
         contracts_by_consumer[record.consumer_id] = record
-    return [
-        ConsumerSummary(consumer=consumer, contract=contracts_by_consumer.get(consumer.id))
-        for consumer in consumers
-    ]
+    summaries = []
+    for row in rows:
+        consumer = consumer_record_from_row(row)
+        summaries.append(
+            ConsumerSummary(
+                consumer=consumer,
+                contract=contracts_by_consumer.get(consumer.id),
+                owner=owner_ref_from_value(row.get("entity_owner")),
+            )
+        )
+    return summaries
 
 
 def create_consumer(

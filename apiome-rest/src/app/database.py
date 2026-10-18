@@ -37,6 +37,7 @@ from .lint_evidence import (
     mcp_evidence_run,
     native_evidence_run,
 )
+from .entity_owners import owner_envelope_join
 from .mcp_facets import (
     COMPLEXITY_MODERATE_MAX_PROPERTIES,
     COMPLEXITY_SIMPLE_MAX_PROPERTIES,
@@ -3468,6 +3469,10 @@ class Database:
                    END AS quality_grade
     """
 
+    #: Owner of a projects row (project or catalog item) for list envelopes (CDG-2.2, #5961):
+    #: adds ``own.entity_owner`` without a second statement.
+    _PROJECT_OWNER_LATERAL = owner_envelope_join(("project", "catalog_item"), "p.id", "p.tenant_id")
+
     def get_projects_for_tenant(
         self, tenant_id: str, *, include_deleted: bool = False
     ) -> List[Dict[str, Any]]:
@@ -3492,10 +3497,12 @@ class Database:
                    p.created_at, p.updated_at,
                    p.deleted_at,
                    u.name as creator_name, u.email as creator_email,
-                   {self._PROJECT_VERSIONS_SUMMARY_COLUMNS}
+                   {self._PROJECT_VERSIONS_SUMMARY_COLUMNS},
+                   own.entity_owner
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._PROJECT_VERSIONS_SUMMARY_LATERAL}
+            {self._PROJECT_OWNER_LATERAL}
             WHERE p.tenant_id = %s {deleted_filter}
             {order_clause}
         """
@@ -3603,13 +3610,15 @@ class Database:
                    cv.source_format, cv.protocol, cv.format_metadata, cv.tool_versions,
                    COALESCE(vc.versions_count, 0) AS versions_count,
                    aim.group_id::text AS identity_group_id,
-                   {self._CATALOG_CONVERSION_COLUMNS}
+                   {self._CATALOG_CONVERSION_COLUMNS},
+                   own.entity_owner
             FROM apiome.projects p
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._CATALOG_VERSION_LATERAL}
             {self._CATALOG_VERSIONS_COUNT_LATERAL}
             {self._CATALOG_CONVERSION_LATERAL}
             {self._CATALOG_IDENTITY_JOIN}
+            {self._PROJECT_OWNER_LATERAL}
             WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter}
             {order_clause}
         """
@@ -19787,6 +19796,91 @@ class Database:
         self.delete_tenant_repository_files(repository_id, branch)
         self.append_tenant_repository_files(repository_id, branch, files)
 
+    #: Where GitHub looks for a CODEOWNERS file, in its order of precedence (CDG-2.2, #5961).
+    CODEOWNERS_PATHS = (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS")
+
+    def find_tenant_repository_codeowners_path(
+        self, repository_id: str, branch: str
+    ) -> Optional[str]:
+        """The branch's CODEOWNERS file path from the index, in GitHub's precedence (CDG-2.2).
+
+        Args:
+            repository_id: The repository.
+            branch: The scanned branch.
+
+        Returns:
+            ``.github/CODEOWNERS``, ``CODEOWNERS`` or ``docs/CODEOWNERS`` — the first indexed — or
+            ``None``.
+        """
+        rows = self.execute_query(
+            """
+            SELECT path FROM apiome.tenant_repository_files
+            WHERE repository_id = %s::uuid AND branch = %s AND path = ANY(%s::text[])
+            """,
+            (repository_id, branch, list(self.CODEOWNERS_PATHS)),
+        )
+        found = {row["path"] for row in rows}
+        return next((path for path in self.CODEOWNERS_PATHS if path in found), None)
+
+    def list_codeowner_candidate_files(self, repository_id: str, branch: str) -> List[Dict[str, Any]]:
+        """Indexed files CODEOWNERS is matched against: spec candidates and linked paths (CDG-2.2).
+
+        Args:
+            repository_id: The repository.
+            branch: The scanned branch.
+
+        Returns:
+            ``[{path, codeowners}]`` for every file with a ``detected_kind`` or an import spec.
+        """
+        return self.execute_query(
+            """
+            SELECT f.path, f.codeowners
+            FROM apiome.tenant_repository_files f
+            WHERE f.repository_id = %s::uuid AND f.branch = %s
+              AND (f.detected_kind IS NOT NULL OR EXISTS (
+                  SELECT 1 FROM apiome.repository_import_spec spec
+                  WHERE spec.repository_id = f.repository_id AND spec.branch = f.branch
+                    AND spec.path = f.path
+              ))
+            """,
+            (repository_id, branch),
+        )
+
+    def set_tenant_repository_file_codeowners(
+        self, repository_id: str, branch: str, updates: Sequence[Tuple[str, List[str]]]
+    ) -> int:
+        """Store each file's CODEOWNERS owners (CDG-2.2); V285's trigger refreshes suggestions.
+
+        Args:
+            repository_id: The repository.
+            branch: The scanned branch.
+            updates: ``(path, owners)`` pairs; only rows whose owners differ are written.
+
+        Returns:
+            How many rows changed.
+        """
+        if not updates:
+            return 0
+        conn = self.connect()
+        changed = 0
+        try:
+            with conn.cursor() as cursor:
+                for path, owners in updates:
+                    cursor.execute(
+                        """
+                        UPDATE apiome.tenant_repository_files SET codeowners = %s::text[]
+                        WHERE repository_id = %s::uuid AND branch = %s AND path = %s
+                          AND codeowners IS DISTINCT FROM %s::text[]
+                        """,
+                        (list(owners), repository_id, branch, path, list(owners)),
+                    )
+                    changed += cursor.rowcount or 0
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        return changed
+
     def count_tenant_repository_files(self, repository_id: str, branch: str) -> Tuple[int, int]:
         """Count indexed entries for a branch as ``(total, importable)``.
 
@@ -20380,10 +20474,11 @@ class Database:
     )
 
     def list_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """List a tenant's live catalog endpoints, newest first (MCAT-3.1)."""
+        """List a tenant's live catalog endpoints, newest first (MCAT-3.1), each with its owner (CDG-2.2)."""
         q = f"""
-            SELECT {self._MCP_ENDPOINT_COLUMNS}
+            SELECT {self._MCP_ENDPOINT_COLUMNS}, own.entity_owner
             FROM apiome.mcp_endpoints
+            {owner_envelope_join(("mcp_endpoint",), "mcp_endpoints.id", "mcp_endpoints.tenant_id")}
             WHERE tenant_id = %s::uuid AND deleted_at IS NULL
             ORDER BY created_at DESC
         """
@@ -30165,15 +30260,17 @@ class Database:
             include_deleted: Include retired consumers.
 
         Returns:
-            The consumer rows; empty when nothing is registered or either id is not a UUID.
+            The consumer rows, each with ``entity_owner`` (CDG-2.2); empty when nothing is
+            registered or either id is not a UUID.
         """
         if not is_uuid_string(str(project_id or "")) or not is_uuid_string(str(tenant_id or "")):
             return []
         clause = "" if include_deleted else " AND deleted_at IS NULL"
         return self.execute_query(
             f"""
-            SELECT {self._CONSUMER_COLUMNS}
+            SELECT {self._CONSUMER_COLUMNS}, own.entity_owner
             FROM apiome.consumer
+            {owner_envelope_join(("consumer",), "consumer.id", "consumer.tenant_id")}
             WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause}
             ORDER BY created_at DESC, slug
             """,
