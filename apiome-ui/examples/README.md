@@ -25,7 +25,7 @@ The corpus holds **1421 files** across **103 format directories**. Every file ha
 | `arazzo/` | Arazzo workflows | rest | top-level `arazzo:` version | 11 |
 | `arazzo-1.1/` | Arazzo 1.1 workflows | rest | top-level `arazzo: 1.1.x` | 14 |
 | `aws-apigateway/` | AWS API Gateway | rest | OpenAPI document carrying `x-amazon-apigateway-*` extensions | 13 |
-| `azure-apim/` | Azure API Management (pending #5456) | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
+| `azure-apim/` | Azure API Management | rest | `<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources | 14 |
 | `consul/` | Consul service definitions (pending #5459) | rest | `service`/`services` definitions, or `Kind: service-router`/`ingress-gateway` | 15 |
 | `discovery/` | Google API Discovery | rest | `kind: discovery#restDescription` / `discoveryVersion` | 11 |
 | `envoy-xds/` | Envoy xDS routes (pending #5458) | rest | `static_resources` + `HttpConnectionManager`, or `virtual_hosts[]` route config | 15 |
@@ -398,24 +398,24 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 
 > ⚠ **`negative/04-wrong-format-plain-openapi.yaml`** — The FMT-7.1 acceptance case: a plain OpenAPI document with no AWS extensions must route to the openapi adapter, so this adapter's detect() must not claim it.
 
-### `azure-apim/` — Azure API Management (pending #5456)
+### `azure-apim/` — Azure API Management
 
 | File | Rung | Expected detection | Class | Features |
 | --- | --- | --- | --- | --- |
-| `01-minimal-policy.xml` | minimal | `azure-apim` ≥ 0.85 | valid | `policy`, `pipeline-sections`, `set-backend-service`, `pending-adapter` |
-| `02-typical-arm-api.json` | typical | `azure-apim` ≥ 0.85 | valid | `arm-template`, `api-resource`, `operations`, `operation-policy`, `rate-limit-by-key`, `subscription-keys`, `pending-adapter` |
-| `03-api-with-policy-set/orders.openapi.yaml` | multi-file (root) | `azure-apim` ≥ 0.85 | valid | `multi-file`, `definition-half`, `openapi`, `subscription-key`, `pending-adapter` |
-| `03-api-with-policy-set/policy.xml` ⚠ | multi-file (member) | `azure-apim` (no guarantee) | valid | `multi-file`, `policy-half`, `validate-jwt`, `cors`, `quota-by-key`, `rewrite-uri`, `pending-adapter` |
-| `04-stress-policy-vocabulary.xml` ⚠ | stress | `azure-apim` ≥ 0.85 | valid | `validate-jwt`, `ip-filter`, `rate-limit`, `quota`, `choose`, `retry`, `cache-lookup`, `send-request`, `set-variable`, `unknown-policy`, `pending-adapter` |
-| `05-real-world-soap-passthrough-arm.json` | real-world | `azure-apim` ≥ 0.85 | valid | `soap-passthrough`, `wsdl-derived`, `backends-resource`, `product`, `xml-to-json`, `authentication-certificate`, `pending-adapter` |
-| `06-typical-arm-api-versionset.json` | typical | `azure-apim` ≥ 0.85 | valid | `apiVersionSets`, `segment-versioning`, `two-versions`, `operation-policy`, `pending-adapter` |
-| `07-composition-policy-inheritance.xml` ⚠ | composition | `azure-apim` ≥ 0.85 | valid | `base-element`, `scope-inheritance`, `global-scope`, `product-scope`, `api-scope`, `operation-scope`, `pending-adapter` |
-| `negative/01-syntactic-unclosed-policy.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element`, `pending-adapter` |
-| `negative/02-semantic-policy-without-sections.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `semantic`, `no-pipeline-sections`, `pending-adapter` |
-| `negative/03-truncated-mid-policy.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute`, `pending-adapter` |
-| `negative/04-wrong-format-kong.yaml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `wrong-format`, `kong`, `pending-adapter` |
-| `negative/05-encoding-utf16.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `encoding`, `utf-16`, `pending-adapter` |
-| `negative/06-unresolvable-backend-reference.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-backend-id`, `missing-named-value`, `pending-adapter` |
+| `01-minimal-policy.xml` | minimal | `azure-apim` ≥ 0.85 | valid | `policy`, `pipeline-sections`, `set-backend-service` |
+| `02-typical-arm-api.json` | typical | `azure-apim` ≥ 0.85 | valid | `arm-template`, `api-resource`, `operations`, `operation-policy`, `rate-limit-by-key`, `subscription-keys` |
+| `03-api-with-policy-set/orders.openapi.yaml` | multi-file (root) | `azure-apim` ≥ 0.85 | valid | `multi-file`, `definition-half`, `openapi`, `subscription-key` |
+| `03-api-with-policy-set/policy.xml` ⚠ | multi-file (member) | `azure-apim` (no guarantee) | valid | `multi-file`, `policy-half`, `validate-jwt`, `cors`, `quota-by-key`, `rewrite-uri` |
+| `04-stress-policy-vocabulary.xml` ⚠ | stress | `azure-apim` ≥ 0.85 | valid | `validate-jwt`, `ip-filter`, `rate-limit`, `quota`, `choose`, `retry`, `cache-lookup`, `send-request`, `set-variable`, `unknown-policy` |
+| `05-real-world-soap-passthrough-arm.json` | real-world | `azure-apim` ≥ 0.85 | valid | `soap-passthrough`, `wsdl-derived`, `backends-resource`, `product`, `xml-to-json`, `authentication-certificate` |
+| `06-typical-arm-api-versionset.json` | typical | `azure-apim` ≥ 0.85 | valid | `apiVersionSets`, `segment-versioning`, `two-versions`, `operation-policy` |
+| `07-composition-policy-inheritance.xml` ⚠ | composition | `azure-apim` ≥ 0.85 | valid | `base-element`, `scope-inheritance`, `global-scope`, `product-scope`, `api-scope`, `operation-scope` |
+| `negative/01-syntactic-unclosed-policy.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
+| `negative/02-semantic-policy-without-sections.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `semantic`, `no-pipeline-sections` |
+| `negative/03-truncated-mid-policy.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
+| `negative/04-wrong-format-kong.yaml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `wrong-format`, `kong` |
+| `negative/05-encoding-utf16.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
+| `negative/06-unresolvable-backend-reference.xml` | — | `azure-apim` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-backend-id`, `missing-named-value` |
 
 > ⚠ **`03-api-with-policy-set/policy.xml`** — Fileset member: the policy document. Facts here are policy-derived provenance, distinct from the definition-derived facts in the root.
 

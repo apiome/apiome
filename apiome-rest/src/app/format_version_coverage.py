@@ -312,6 +312,32 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         ],
         writes=[],
     ),
+    "azure-apim": VersionCoverage(
+        reads=[
+            FormatVersion(
+                version="APIM policy XML (inbound/backend/outbound/on-error)",
+                format_key="azure-apim",
+                support=VersionSupport.FULL,
+                note="One policy document per scope, or several composed through `<base />`. Unmapped "
+                "policies are preserved verbatim and reported.",
+            ),
+            FormatVersion(
+                version="ARM template (Microsoft.ApiManagement/service resources)",
+                format_key="azure-apim",
+                support=VersionSupport.FULL,
+                note="APIs, operations, API- and operation-level policies, products, backends, named "
+                "values and version sets; the resource `apiVersion` does not change their shape.",
+            ),
+            FormatVersion(
+                version="APIM-exported OpenAPI definition with its policy documents",
+                format_key="azure-apim",
+                support=VersionSupport.FULL,
+                note="The definition is read by the OpenAPI path at its own version; policy members are "
+                "scoped by file name.",
+            ),
+        ],
+        writes=[],
+    ),
     "avro": VersionCoverage(
         reads=[
             FormatVersion(

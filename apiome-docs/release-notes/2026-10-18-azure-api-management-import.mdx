@@ -1,0 +1,22 @@
+---
+slug: azure-api-management-import
+title: Import Azure API Management APIs, policies and all
+description: APIM definitions import with their JWT, rate-limit, backend and CORS policies.
+authors: [apiome]
+---
+
+You can now [import an API from Azure API Management](/bring-in/azure-api-management-import).
+Apiome reads the API definition and its XML policy documents, so the catalog records what the
+gateway enforces, not only what the API looks like.
+
+{/* truncate */}
+
+- **Three ways in.** A policy document, an ARM template of APIM resources, or the OpenAPI
+  definition APIM exports together with its policy files.
+- **Policies become metadata.** JWT validation, rate limits and quotas, backends, URL rewrites,
+  CORS and IP filters are recorded on each operation, combined through `<base />` the way APIM
+  runs them.
+- **Definition or policy, always told apart.** Every fact says whether the definition or a
+  policy (and which scope) declared it.
+- **Nothing silently dropped.** Policies Apiome keeps but does not interpret are preserved verbatim
+  and listed in the import's coverage ledger.

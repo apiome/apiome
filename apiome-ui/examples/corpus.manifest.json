@@ -63,7 +63,7 @@
       "marker": "OpenAPI document carrying `x-amazon-apigateway-*` extensions"
     },
     "azure-apim": {
-      "label": "Azure API Management (pending #5456)",
+      "label": "Azure API Management",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "`<policies>` sections, or `Microsoft.ApiManagement/service/apis` ARM resources"
@@ -3525,7 +3525,7 @@
     {
       "path": "azure-apim/01-minimal-policy.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3534,8 +3534,7 @@
       "features": [
         "policy",
         "pipeline-sections",
-        "set-backend-service",
-        "pending-adapter"
+        "set-backend-service"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3546,7 +3545,7 @@
     {
       "path": "azure-apim/02-typical-arm-api.json",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3558,8 +3557,7 @@
         "operations",
         "operation-policy",
         "rate-limit-by-key",
-        "subscription-keys",
-        "pending-adapter"
+        "subscription-keys"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3570,7 +3568,7 @@
     {
       "path": "azure-apim/03-api-with-policy-set/orders.openapi.yaml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3580,8 +3578,7 @@
         "multi-file",
         "definition-half",
         "openapi",
-        "subscription-key",
-        "pending-adapter"
+        "subscription-key"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3593,7 +3590,7 @@
     {
       "path": "azure-apim/03-api-with-policy-set/policy.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3605,8 +3602,7 @@
         "validate-jwt",
         "cors",
         "quota-by-key",
-        "rewrite-uri",
-        "pending-adapter"
+        "rewrite-uri"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3619,7 +3615,7 @@
     {
       "path": "azure-apim/04-stress-policy-vocabulary.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3635,8 +3631,7 @@
         "cache-lookup",
         "send-request",
         "set-variable",
-        "unknown-policy",
-        "pending-adapter"
+        "unknown-policy"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3648,7 +3643,7 @@
     {
       "path": "azure-apim/05-real-world-soap-passthrough-arm.json",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3660,8 +3655,7 @@
         "backends-resource",
         "product",
         "xml-to-json",
-        "authentication-certificate",
-        "pending-adapter"
+        "authentication-certificate"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3672,7 +3666,7 @@
     {
       "path": "azure-apim/06-typical-arm-api-versionset.json",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3682,8 +3676,7 @@
         "apiVersionSets",
         "segment-versioning",
         "two-versions",
-        "operation-policy",
-        "pending-adapter"
+        "operation-policy"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3694,7 +3687,7 @@
     {
       "path": "azure-apim/07-composition-policy-inheritance.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "valid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3706,8 +3699,7 @@
         "global-scope",
         "product-scope",
         "api-scope",
-        "operation-scope",
-        "pending-adapter"
+        "operation-scope"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -3719,7 +3711,7 @@
     {
       "path": "azure-apim/negative/01-syntactic-unclosed-policy.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3728,8 +3720,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3741,7 +3732,7 @@
     {
       "path": "azure-apim/negative/02-semantic-policy-without-sections.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3750,8 +3741,7 @@
       "features": [
         "negative",
         "semantic",
-        "no-pipeline-sections",
-        "pending-adapter"
+        "no-pipeline-sections"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3763,7 +3753,7 @@
     {
       "path": "azure-apim/negative/03-truncated-mid-policy.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3772,8 +3762,7 @@
       "features": [
         "negative",
         "truncated",
-        "mid-attribute",
-        "pending-adapter"
+        "mid-attribute"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3785,7 +3774,7 @@
     {
       "path": "azure-apim/negative/04-wrong-format-kong.yaml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3794,8 +3783,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "kong",
-        "pending-adapter"
+        "kong"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3807,7 +3795,7 @@
     {
       "path": "azure-apim/negative/05-encoding-utf16.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3816,8 +3804,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -3829,7 +3816,7 @@
     {
       "path": "azure-apim/negative/06-unresolvable-backend-reference.xml",
       "format": "azure-apim",
-      "adapter_key": null,
+      "adapter_key": "azure-apim",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "azure-apim",
@@ -3839,8 +3826,7 @@
         "negative",
         "unresolvable-ref",
         "missing-backend-id",
-        "missing-named-value",
-        "pending-adapter"
+        "missing-named-value"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

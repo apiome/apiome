@@ -1,0 +1,366 @@
+{
+  "adapter": "azure-apim",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "azure_apim": {
+        "apiPolicy": {},
+        "apis": [
+          {
+            "apiVersion": "v1",
+            "apiVersionSetId": "catalogue-version-set",
+            "displayName": "Catalogue API",
+            "isCurrent": false,
+            "name": "catalogue-v1",
+            "operationCount": 0,
+            "path": "catalogue",
+            "protocols": [
+              "https"
+            ],
+            "serviceUrl": "https://catalogue.internal.example.com/v1",
+            "subscriptionRequired": true
+          },
+          {
+            "apiVersion": "v2",
+            "apiVersionSetId": "catalogue-version-set",
+            "displayName": "Catalogue API",
+            "isCurrent": true,
+            "name": "catalogue-v2",
+            "operationCount": 2,
+            "path": "catalogue",
+            "protocols": [
+              "https"
+            ],
+            "serviceUrl": "https://catalogue.internal.example.com/v2",
+            "subscriptionRequired": true
+          }
+        ],
+        "backends": [],
+        "collisions": [],
+        "linkedPolicies": [],
+        "mapped": {
+          "rate-limit-by-key": {
+            "count": 1,
+            "scopes": [
+              "operation"
+            ]
+          }
+        },
+        "namedValues": [],
+        "policies": [
+          {
+            "api": "catalogue-v2",
+            "operation": "list-products",
+            "scope": "operation",
+            "sections": {
+              "backend": [
+                "base"
+              ],
+              "inbound": [
+                "base",
+                "rate-limit-by-key",
+                "cache-lookup"
+              ],
+              "on-error": [
+                "base"
+              ],
+              "outbound": [
+                "base",
+                "cache-store"
+              ]
+            }
+          }
+        ],
+        "products": [],
+        "provenance": "declared",
+        "service": "example-apim",
+        "shape": "arm-template",
+        "unattachedOperations": {},
+        "unmapped": [
+          {
+            "name": "cache-lookup",
+            "operation": "list-products",
+            "scope": "operation",
+            "section": "inbound",
+            "status": "preserved",
+            "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\"><vary-by-query-parameter>category</vary-by-query-parameter></cache-lookup>"
+          },
+          {
+            "name": "cache-store",
+            "operation": "list-products",
+            "scope": "operation",
+            "section": "outbound",
+            "status": "preserved",
+            "xml": "<cache-store duration=\"300\" />"
+          }
+        ],
+        "unresolvedBackends": [],
+        "versionSets": [
+          {
+            "displayName": "Catalogue",
+            "name": "catalogue-version-set",
+            "versioningScheme": "Segment"
+          }
+        ]
+      }
+    },
+    "format": "azure-apim",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Catalogue API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": null,
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://example-apim.azure-api.net/catalogue",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List products",
+            "extras": {
+              "azure_apim": {
+                "policyScopes": [
+                  "operation"
+                ],
+                "unmapped": [
+                  {
+                    "name": "cache-lookup",
+                    "scope": "operation",
+                    "section": "inbound",
+                    "status": "preserved",
+                    "xml": "<cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\"><vary-by-query-parameter>category</vary-by-query-parameter></cache-lookup>"
+                  },
+                  {
+                    "name": "cache-store",
+                    "scope": "operation",
+                    "section": "outbound",
+                    "status": "preserved",
+                    "xml": "<cache-store duration=\"300\" />"
+                  }
+                ]
+              },
+              "backend": {
+                "derivedFrom": "definition",
+                "kind": "http",
+                "provenance": "declared",
+                "uri": "https://catalogue.internal.example.com/v2"
+              },
+              "operationId": "list-products",
+              "rate_limits": [
+                {
+                  "byKey": true,
+                  "calls": 300,
+                  "counterKey": "@(context.Subscription.Id)",
+                  "derivedFrom": "policy",
+                  "kind": "rate-limit",
+                  "policy": "rate-limit-by-key",
+                  "policyScope": "operation",
+                  "provenance": "declared",
+                  "renewalPeriodSeconds": 60
+                }
+              ],
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "List products"
+            },
+            "http_method": "GET",
+            "http_path": "/products",
+            "key": "GET /products",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "list-products",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /products#query.category",
+                "location": "query",
+                "name": "category",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get product",
+            "extras": {
+              "backend": {
+                "derivedFrom": "definition",
+                "kind": "http",
+                "provenance": "declared",
+                "uri": "https://catalogue.internal.example.com/v2"
+              },
+              "operationId": "get-product",
+              "security": [
+                {
+                  "derivedFrom": "definition",
+                  "in": "header",
+                  "name": "apiKeyHeader",
+                  "parameterName": "Ocp-Apim-Subscription-Key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                },
+                {
+                  "derivedFrom": "definition",
+                  "in": "query",
+                  "name": "apiKeyQuery",
+                  "parameterName": "subscription-key",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ],
+              "summary": "Get product"
+            },
+            "http_method": "GET",
+            "http_path": "/products/{sku}",
+            "key": "GET /products/{sku}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products/{sku}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              },
+              {
+                "content_types": [],
+                "description": "",
+                "extras": {},
+                "headers": [],
+                "key": "GET /products/{sku}#response.404",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": "404"
+              }
+            ],
+            "name": "get-product",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /products/{sku}#path.sku",
+                "location": "path",
+                "name": "sku",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Catalogue API",
+    "types": [],
+    "version": "v2"
+  },
+  "corpus_path": "azure-apim/06-typical-arm-api-versionset.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "azure-apim"
+  },
+  "fingerprint": "sha256:3fdcc0f26b33f92a076051223164bdea9cb25aef6b51cbbaa07579ac8a338d81",
+  "lint": {
+    "findings": 1,
+    "grade": "A",
+    "report_fingerprint": "6d4d5f440cd1092d07f59acd8d946f6f8c697f33dbeb423b4568b3ec41b3c480",
+    "score": 99,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

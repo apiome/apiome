@@ -351,6 +351,49 @@
       "waivers": {}
     },
     {
+      "format_key": "azure-apim",
+      "label": "Azure API Management",
+      "paradigm": "rest",
+      "corpus_formats": [
+        "azure-apim"
+      ],
+      "corpus_directories": [
+        "azure-apim"
+      ],
+      "fixtures": {
+        "valid": 8,
+        "negative": 6,
+        "adversarial": 0,
+        "scale": 0,
+        "total": 14
+      },
+      "rungs": [
+        "composition",
+        "minimal",
+        "multi-file",
+        "real-world",
+        "stress",
+        "typical"
+      ],
+      "rung_waivers": [],
+      "goldens": 7,
+      "golden_directories": [
+        "azure-apim"
+      ],
+      "emit_key": null,
+      "roundtrip_row": true,
+      "roundtrip_cells": [],
+      "capability_provenance": "derived",
+      "requirements": {
+        "valid-examples": "satisfied",
+        "negative-examples": "satisfied",
+        "golden-snapshots": "satisfied",
+        "roundtrip-matrix": "satisfied",
+        "capability-entry": "satisfied"
+      },
+      "waivers": {}
+    },
+    {
       "format_key": "capnproto",
       "label": "Cap'n Proto",
       "paradigm": "rpc",
@@ -2648,7 +2691,6 @@
   "export_only_destinations": [],
   "pending_corpus_directories": [
     "apigee",
-    "azure-apim",
     "cics-bms",
     "consul",
     "cue",

@@ -19,6 +19,7 @@ We continue to improve the platform based on your feedback with improvements and
     - Swagger 1.2 import
     - Postman Collection v2.0 import
     - AWS API Gateway (REST and HTTP API exports) import
+    - Azure API Management (definitions and policies) import
     - Protobuf editions 2023/2024 normalization parity
     - RELAX NG import
     - DTD import
