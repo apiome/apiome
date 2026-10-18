@@ -1,7 +1,7 @@
 ---
 title: "Projects"
 description: "REST endpoints tagged projects: 12 operations."
-sidebar_position: 52
+sidebar_position: 53
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.232.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.233.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `projects` · 12 operations
 
@@ -510,6 +510,7 @@ ProjectSchema schema.
 | `qualityGrade` | string or null | no | Quality Grade. |
 | `versionsCount` | integer | no | Number of versions. |
 | `publishable` | boolean | no | Publishable. |
+| `owner` | `EntityOwnerRef` or null | no | The owner team: confirmed, or else suggested (with its source). |
 | `identityGroupId` | string or null | no | Identity Group ID. |
 | `relatedArtifacts` | array of `RelatedArtifactRef` | no | Related Artifacts. |
 | `creator_name` | string or null | no | Creator Name. |

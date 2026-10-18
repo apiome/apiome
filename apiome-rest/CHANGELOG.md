@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.369.0] - 2026-10-18
+
+### Added
+- **Entity owners (#5961, CDG-2.2)**: `GET|PUT|DELETE /v1/tenants/{tenant}/owners/{kind}/{id}`,
+  `POST /v1/tenants/{tenant}/owners/{kind}/{id}/confirm` and bulk `POST /v1/tenants/{tenant}/owners:assign`
+  (`{team, entities: [{kind, id}]}`, up to 200, all or nothing). `kind` is `project`, `catalog_item`,
+  `mcp_endpoint`, `consumer` or `connector`; reads need the kind's `view` and changes its `edit` (`projects` for
+  projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports` for connectors). An
+  entity has at most one **confirmed** owner team and any number of **suggested** ones, each with its `source`
+  (`manual`, `gateway_tag`, `codeowners`, `spec_extension`) and `source_ref`. Confirming keeps the source and
+  records `confirmed_by` / `confirmed_at`; replacing or removing an owner that came from a suggestion turns it back
+  into a suggestion. Refusals: `400 owner-invalid`, `404 owner-entity-not-found`, `404 owner-team-not-found`,
+  `404 owner-no-suggestion`. Audited as `owner.assign`, `owner.confirm`, `owner.remove`, `owner.bulk_assign` and
+  (importer changes) `owner.suggestions`.
+- **Suggested owners from importers (#5961)**: connector syncs turn Kong `owner:<slug>` and AWS `apiome:owner`
+  tags into `gateway_tag` suggestions on the synced catalog item, and report a tag naming no team as an
+  `owner-team-unknown` finding ("unknown team `x` in tag"); imports read an `x-apiome-owner` root extension (or an
+  `info.contact.name` that is a team slug) as a `spec_extension` suggestion; repository scans match the branch's
+  CODEOWNERS file (`.github/`, root, `docs/`) to spec paths, and an `@org/<team-slug>` owner becomes a `codeowners`
+  suggestion on the project imported from that path. Suggestions never notify anyone.
+- **`owner` in list envelopes (#5961)**: `GET /v1/catalog/{tenant}`, `GET /v1/projects/{tenant}`,
+  `GET /v1/mcp/{tenant}/endpoints` (each endpoint) and the project consumers list (each summary, beside the
+  free-text `consumer.owner`) carry `owner: {team: {id, slug, name}, status, source}` — the confirmed owner, else
+  the first suggestion — from one SQL join; no list read gains a statement.
+
+The OpenAPI version moves to 1.233.0.
+
 ## [1.368.0] - 2026-10-18
 
 ### Added

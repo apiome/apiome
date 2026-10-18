@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.232.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.233.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -725,6 +725,7 @@ analysed reports a declared ``unavailable`` status with a reason code, never a f
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
 | `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
 | `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
+| `owner` | `EntityOwnerRef` or null | no | The owner team: confirmed, or else suggested (with its source). |
 | `summary` | `CatalogNormalizedSummary` | no | Short summary suitable for navigation and reference docs. |
 | `source` | `CatalogSourceDescriptor` | no | Provenance source for the record (for example human or imported). |
 | `parsed` | array of `CatalogParsedGroup` | no | Parsed. |
@@ -771,6 +772,7 @@ latest revision (MFI-7.1/7.2): ``sourceFormat``, ``protocol``, ``formatMetadata`
 | `paradigm` | string or null | no | Auto-derived paradigm: the latest revision's protocol (rest, rpc, event, …). |
 | `domain` | string or null | no | Manual domain id (e.g. 'finance'), or null when none is set. |
 | `tags` | array of string | no | Free-form tags, lower-cased, alphabetical. |
+| `owner` | `EntityOwnerRef` or null | no | The owner team: confirmed, or else suggested (with its source). |
 
 ### `CatalogProjectionRequest` {#schema-catalogprojectionrequest}
 

@@ -719,6 +719,64 @@ def _record_scan_volume(db: Database, tenant_id: str, bytes_scanned: int) -> Non
     record_quota_usage(db, tenant_id, METRIC_BYTES_SCANNED, bytes_scanned)
 
 
+def apply_codeowners(
+    db: Database,
+    repository_id: str,
+    branch: str,
+    owner: str,
+    repo: str,
+    token: Optional[str],
+    *,
+    fetch_text: Optional[Any] = None,
+) -> int:
+    """Match the branch's CODEOWNERS file to its spec files (CDG-2.2, #5961).
+
+    Runs once a walk completes. The CODEOWNERS file is looked up where GitHub looks for it
+    (``.github/``, the root, ``docs/``), parsed, and each spec-candidate or linked file gets the
+    owners of the last matching rule in ``tenant_repository_files.codeowners``. apiome-db V285's
+    trigger turns ``@org/<team-slug>`` owners into *suggested* owners of the project a linked path
+    was imported into. With no CODEOWNERS file, every file's owners are cleared.
+
+    Ownership is advisory, so any failure (a missing token, a GitHub error) is logged and the scan
+    goes on.
+
+    Args:
+        db: Database handle.
+        repository_id: The repository.
+        branch: The scanned branch.
+        owner: GitHub owner.
+        repo: GitHub repository name.
+        token: Access token, if any.
+        fetch_text: Replaces :func:`fetch_github_repository_file_text` (tests).
+
+    Returns:
+        How many file rows changed owners.
+    """
+    from .entity_owners import codeowners_for_path, parse_codeowners
+
+    fetch = fetch_text or fetch_github_repository_file_text
+    try:
+        path = db.find_tenant_repository_codeowners_path(repository_id, branch)
+        rules = []
+        if path:
+            text, _ = fetch(owner, repo, path, branch, token, max_bytes=256_000)
+            rules = parse_codeowners(text)
+        updates = []
+        for row in db.list_codeowner_candidate_files(repository_id, branch):
+            owners = codeowners_for_path(rules, str(row["path"])) if rules else []
+            if list(row.get("codeowners") or []) != owners:
+                updates.append((str(row["path"]), owners))
+        return db.set_tenant_repository_file_codeowners(repository_id, branch, updates)
+    except Exception as exc:  # noqa: BLE001 - CODEOWNERS is advisory; never fail the scan
+        _logger.warning(
+            "CODEOWNERS matching skipped repository_id=%s branch=%s error=%s",
+            repository_id,
+            branch,
+            f"{type(exc).__name__}: {exc}"[:300],
+        )
+        return 0
+
+
 def scan_repository_branch_into_index(
     db: Database,
     repo_row: Dict[str, Any],
@@ -888,6 +946,7 @@ def scan_repository_branch_into_index(
         )
 
     db.clear_repository_scan_cursor(repository_id, branch)
+    apply_codeowners(db, repository_id, branch, owner, repo, token)
     total_files, importable_count = db.count_tenant_repository_files(repository_id, branch)
     db.update_tenant_repository_after_file_scan(
         tenant_id=tenant_id,

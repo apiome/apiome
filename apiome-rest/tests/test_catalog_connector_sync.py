@@ -540,3 +540,95 @@ def test_default_importer_links_a_revision_another_environment_already_imported(
         "proj-1"
     )
     assert ran == []
+
+
+# ---------------------------------------------------------------------------------------------
+# Owner suggestions from gateway tags (CDG-2.2, #5961)
+# ---------------------------------------------------------------------------------------------
+
+
+class _OwnerRecorder:
+    """Stands in for ``record_suggestions``: records calls, knows only the team ``payments``."""
+
+    def __init__(self, fail: bool = False) -> None:
+        self.calls: List[Dict[str, Any]] = []
+        self.fail = fail
+
+    def __call__(self, tenant_id, kind, entity_id, source, suggestions):
+        if self.fail:
+            raise RuntimeError("database unavailable")
+        self.calls.append(
+            {"tenant": tenant_id, "kind": kind, "entity": entity_id, "source": source,
+             "teams": [s["team"] for s in suggestions]}
+        )
+        return [s["team"] for s in suggestions if s["team"] != "payments"]
+
+
+def _tagged(remote_id: str, *tags: str) -> RefreshCandidate:
+    from dataclasses import replace
+
+    from app.kong_connector_source import owner_suggestions
+
+    suggestions, _invalid = owner_suggestions(list(tags))
+    return replace(_api(remote_id), deployment={"suggestedOwners": suggestions})
+
+
+def test_a_kong_owner_tag_becomes_a_suggested_owner_of_the_catalog_item(
+    store, db, importer, connector, monkeypatch
+):
+    recorder = _OwnerRecorder()
+    monkeypatch.setattr(sync, "owner_recorder", recorder)
+    FakeGatewaySource.inventory = [_tagged("orders", "owner:payments", "env:prod")]
+    result = _run(db, connector, importer)
+    assert result.status == "succeeded"
+    assert recorder.calls == [
+        {"tenant": TENANT, "kind": "catalog_item", "entity": "proj-orders",
+         "source": "gateway_tag", "teams": ["payments"]}
+    ]
+    assert "findings" not in result.summary
+
+
+def test_a_tag_naming_no_team_is_a_connector_finding_not_a_suggestion(
+    store, db, importer, connector, monkeypatch
+):
+    monkeypatch.setattr(sync, "owner_recorder", _OwnerRecorder())
+    FakeGatewaySource.inventory = [_tagged("orders", "owner:payments", "owner:ghost")]
+    result = _run(db, connector, importer)
+    findings = result.summary["findings"]
+    assert [f["code"] for f in findings] == ["owner-team-unknown"]
+    assert findings[0]["message"] == "unknown team `ghost` in tag"
+    assert findings[0]["tag"] == "owner:ghost" and findings[0]["remoteId"] == "orders"
+    assert result.summary["findingsTotal"] == 1
+
+
+def test_suggestions_refresh_for_items_that_did_not_change(
+    store, db, importer, connector, monkeypatch
+):
+    """Tags change without the document changing, so an unchanged item is still re-suggested."""
+    recorder = _OwnerRecorder()
+    monkeypatch.setattr(sync, "owner_recorder", recorder)
+    FakeGatewaySource.inventory = [_tagged("orders", "owner:payments")]
+    _run(db, connector, importer)
+    FakeGatewaySource.inventory = [_tagged("orders")]
+    result = _run(db, connector, importer)
+    assert result.summary["unchanged"] == 1
+    assert recorder.calls[-1]["teams"] == []
+
+
+def test_an_item_that_was_never_imported_gets_no_suggestion(
+    store, db, importer, connector, monkeypatch
+):
+    recorder = _OwnerRecorder()
+    monkeypatch.setattr(sync, "owner_recorder", recorder)
+    importer.fail_for["orders"] = "bad document"
+    FakeGatewaySource.inventory = [_tagged("orders", "owner:payments")]
+    _run(db, connector, importer)
+    assert recorder.calls == []
+
+
+def test_an_ownership_failure_never_fails_the_sync(store, db, importer, connector, monkeypatch):
+    monkeypatch.setattr(sync, "owner_recorder", _OwnerRecorder(fail=True))
+    FakeGatewaySource.inventory = [_tagged("orders", "owner:payments")]
+    result = _run(db, connector, importer)
+    assert result.status == "succeeded"
+    assert result.summary["ownerSuggestionsFailed"] == 1

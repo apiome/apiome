@@ -35,6 +35,8 @@ from typing import Any, Dict, List, Literal, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .entity_owners import EntityOwnerRef
+
 __all__ = [
     "CONTRACT_SCHEMA_VERSION",
     "CODE_CONSUMER_NOT_FOUND",
@@ -511,12 +513,20 @@ class ConsumerSummary(BaseModel):
     Attributes:
         consumer: The consumer.
         contract: Its current contract revision, or ``None`` when it has declared nothing yet.
+        owner: Its owner team, or ``None``.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     consumer: ConsumerRecord
     contract: Optional[ConsumerContractRecord] = None
+    owner: Optional[EntityOwnerRef] = Field(
+        default=None,
+        description=(
+            "The consumer's owner team (CDG-2.2): confirmed, else suggested. Distinct from the "
+            "free-text `consumer.owner`."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------------------------

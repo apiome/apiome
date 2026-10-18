@@ -7,8 +7,8 @@ tags: [workspace, teams, ownership, permissions]
 
 A **team** is a named group of workspace members — *Payments*, *Platform*, *Identity* — and the
 links people use to reach it: a contact e-mail, a chat channel, an on-call schedule and its
-documentation. Teams are the owners Apiome routes work to: ownership of catalog entities and
-routing findings to their owner build on them. A team is the only kind of group in a workspace.
+documentation. Teams are the [owners](#ownership) of projects, catalog items, MCP endpoints,
+consumers and connectors. A team is the only kind of group in a workspace.
 
 Teams are managed over the [REST API](../reference/rest/teams.md) today; the Teams screen and the
 `apiome teams` command come later.
@@ -42,9 +42,58 @@ When someone leaves the workspace, they leave every team they were on at the sam
 Deleting a team removes it from every list, and its slug is free again. Its history stays in the
 access audit.
 
-A team that still **owns** entities cannot simply be deleted: the request is refused with how many
+A team that is the confirmed [owner](#ownership) of anything cannot simply be deleted: the request is refused with how many
 entities it owns. Name another team with `reassign_to` and those entities move to it as the team is
 deleted.
+
+## Ownership
+
+Every project, catalog item, MCP endpoint, consumer and connector can have an **owner**: a team.
+An owner is either:
+
+- **Confirmed** — the team responsible for the entity. Findings about the entity are routed to it.
+  There is at most one.
+- **Suggested** — a team an importer found evidence for. Each suggestion shows where it came from,
+  and nothing is ever sent to a suggested owner. There can be several.
+
+A suggestion only becomes the owner when someone confirms it, and the access audit records who did.
+
+### Where suggestions come from
+
+| Source | Evidence | Becomes a suggestion for |
+| --- | --- | --- |
+| `gateway_tag` | A Kong tag `owner:payments`, or an AWS API Gateway tag `apiome:owner` = `payments` (see [Connectors](../bring-in/connectors.mdx)) | The catalog item the connector synced |
+| `codeowners` | A CODEOWNERS rule naming `@your-org/payments` for the spec's path — the file in `.github/`, the repository root or `docs/`, last matching rule wins | The project or catalog item imported from that path |
+| `spec_extension` | `x-apiome-owner: payments` at the root of the document, or `info.contact.name: payments` | The project or catalog item the import wrote |
+
+Only team slugs count. A suggestion naming a team that does not exist is not stored. A connector
+says so in its run's findings — *unknown team `ghost` in tag* — so you can create the team or fix the
+tag. CODEOWNERS owners that are people (`@alice`) or e-mail addresses are not suggestions.
+Suggestions refresh on every sync, scan and import: when the tag, rule or extension goes away, so
+does the suggestion.
+
+### Confirm or assign an owner
+
+- **Confirm a suggestion:** `POST /v1/tenants/{tenant}/owners/{kind}/{id}/confirm`, with
+  `{"team": "payments"}` — or `{}` when only one team is suggested. The owner keeps its source and
+  records who confirmed it.
+- **Assign any team:** `PUT /v1/tenants/{tenant}/owners/{kind}/{id}` with `{"team": "platform"}`.
+- **Assign one team to many entities:** `POST /v1/tenants/{tenant}/owners:assign` with
+  `{"team": "platform", "entities": [{"kind": "catalog_item", "id": "…"}]}` (up to 200; all or
+  nothing).
+- **Remove the owner:** `DELETE /v1/tenants/{tenant}/owners/{kind}/{id}`. Suggestions stay, and an
+  owner that came from a suggestion becomes a suggestion again.
+- **See an entity's owner and suggestions:** `GET /v1/tenants/{tenant}/owners/{kind}/{id}`.
+
+`kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`. Who may change an
+owner is whoever may edit the entity: `projects:edit` for projects, catalog items and MCP endpoints,
+`consumer_contracts:edit` for consumers and `imports:edit` for connectors. Reading needs the matching
+`view`. Every change is in the access audit as `owner.assign`, `owner.confirm`, `owner.remove`,
+`owner.bulk_assign`, or — when an importer changes the suggestions — `owner.suggestions`.
+
+The catalog, project, MCP endpoint and consumer lists show each entity's owner as
+`owner: {team, status, source}`: the confirmed owner, or else its first suggestion with
+`status: "suggested"`. See the [Owners API reference](../reference/rest/owners.md).
 
 ## Permissions
 

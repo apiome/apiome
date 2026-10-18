@@ -1,0 +1,21 @@
+---
+slug: entity-owners
+title: Every API can have an owner team
+description: Owner teams on catalog entities, suggested from tags, CODEOWNERS and the spec itself.
+authors: [apiome]
+---
+
+Projects, catalog items, MCP endpoints, consumers and connectors can now have an
+[owner team](/workspace/teams#ownership) — the team findings about them will be routed to.
+
+{/* truncate */}
+
+- **Suggested, never assumed.** Gateway tags (`owner:payments`), CODEOWNERS rules for a spec's path
+  and an `x-apiome-owner` extension in the document suggest owners, each shown with its source.
+  Nothing is sent to a suggestion until someone confirms it.
+- **Confirm, assign or bulk assign** over the API; every change is in the access audit, including
+  who confirmed a suggestion.
+- **Unknown teams are called out.** A gateway tag naming a team that does not exist is a connector
+  finding — *unknown team `x` in tag* — instead of a silent miss.
+- **Owners in every list.** The catalog, projects, MCP endpoint and consumer lists carry each
+  entity's `owner`, with no extra request.

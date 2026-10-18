@@ -173,6 +173,13 @@ OpenAPI](./convert-to-openapi.md).
 **Export to another format…** in the item's menu produces a document in another format instead —
 it never creates a project.
 
+## Owner
+
+Each item can have an owner team. Connectors, CODEOWNERS files and the document's own
+`x-apiome-owner` extension *suggest* one, and a suggestion becomes the owner only when someone
+confirms it. The catalog list carries each item's `owner` (`status` is `confirmed` or `suggested`).
+Owners are set over the API for now — see [Teams → Ownership](../workspace/teams.mdx#ownership).
+
 ## Delete and restore
 
 **Delete item** hides an item; turn on **Show deleted** and choose **Undelete item** to bring it
