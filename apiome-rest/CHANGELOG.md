@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.365.0] - 2026-10-18
+
+### Added
+- **Apigee proxy bundle import (#5457, FMT-7.3)**: a new `apigee` import source reads a proxy bundle (the `apiproxy/`
+  zip Apigee's `?format=bundle` revision download returns — through archive intake or as raw bytes), a loose
+  `ProxyEndpoint` / `TargetEndpoint` / `SharedFlow` file, or a fileset of them.
+  - Each `ProxyEndpoint` is a service; each `Flow` whose condition reduces to a path and/or verb is an operation
+    (`MatchesPath "/x/*"` → `/x/{segment1}`, `**` → `{path}`, no verb → `ANY`), under the endpoint's base path.
+  - Each `TargetEndpoint` is a server (its URL, or a load balancer as `https://{server}<path>` with the balanced
+    servers as the variable's enum).
+  - `VerifyAPIKey` / `OAuthV2` (VerifyAccessToken) → `operation.extras.security`; `SpikeArrest` / `Quota` →
+    `extras.rate_limits`; an `AssignMessage` setting `Access-Control-*` → `extras.cors`. PreFlow/PostFlow steps
+    apply to every operation; step conditions are kept; `FlowCallout` expands a shared flow carried in the input.
+  - Conditions that cannot be reduced (header/variable tests, `or`, `not`), unconditional flows and route rules
+    without a target are **declared conditions** (`extras.apigee.declaredConditions`, or on the operation when part
+    of the condition reduced) and coverage-ledger rows (`apigee#declared-condition.*`). Ordered route rules, fault
+    rules, unmapped policies (verbatim) and unresolved steps are reported too.
+  - A bundle with no ProxyEndpoint is `INPUT_SEMANTIC_INVALID`; a route rule naming a missing target endpoint is
+    `INPUT_REFERENCE_UNRESOLVED`; a truncated zip is `INPUT_ARCHIVE_INVALID`.
+- Archive intake treats `.xml` members as root candidates, so an uploaded bundle resolves its `APIProxy` manifest.
+- The `apigee` corpus (9 valid entries incl. 4 bundle zips, 6 negatives) is now live; the corpus suites read `.zip`
+  entries as binary, and the round-trip harness imports binary entries through the shared helpers.
+
+The OpenAPI version moves to 1.229.0.
+
 ## [1.364.0] - 2026-10-18
 
 ### Added

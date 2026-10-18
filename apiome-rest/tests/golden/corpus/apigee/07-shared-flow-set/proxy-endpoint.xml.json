@@ -1,0 +1,178 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": "Shipments proxy: security delegated to a shared flow.",
+    "extras": {
+      "apigee": {
+        "basePaths": [
+          "/v2/shipments"
+        ],
+        "declaredConditions": [],
+        "faultRules": [],
+        "flowCallouts": [
+          {
+            "policy": "Call-Security-SharedFlow",
+            "resolved": true,
+            "sharedFlowBundle": "security-v1"
+          }
+        ],
+        "mapped": {},
+        "policies": {
+          "Call-Security-SharedFlow": "FlowCallout"
+        },
+        "provenance": "declared",
+        "proxyEndpoints": [
+          {
+            "basePath": "/v2/shipments",
+            "name": "default",
+            "virtualHosts": [
+              "secure"
+            ]
+          }
+        ],
+        "proxyName": "default",
+        "resources": [],
+        "revision": null,
+        "routeRules": [
+          {
+            "condition": null,
+            "name": "default",
+            "order": 0,
+            "proxy": "default",
+            "target": "default"
+          }
+        ],
+        "shape": "files",
+        "sharedFlows": [
+          "default"
+        ],
+        "targetEndpoints": [],
+        "unmapped": [],
+        "unresolvedSteps": {
+          "Add-Trace-Header": [
+            "preflow/postflow"
+          ],
+          "Call-Logging-SharedFlow": [
+            "preflow/postflow"
+          ],
+          "Quota-Per-App": [
+            "preflow/postflow"
+          ],
+          "Verify-OAuth-Token": [
+            "preflow/postflow"
+          ]
+        }
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "default",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": "Shipments proxy: security delegated to a shared flow.",
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/shipments\") and (request.verb = \"GET\")",
+                "flow": "ListShipments",
+                "proxyEndpoint": "default"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/shipments/shipments",
+            "key": "GET /v2/shipments/shipments",
+            "kind": "request_response",
+            "messages": [],
+            "name": "ListShipments",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/shipments/*\") and (request.verb = \"GET\")",
+                "flow": "GetShipment",
+                "proxyEndpoint": "default"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v2/shipments/shipments/{segment1}",
+            "key": "GET /v2/shipments/shipments/{segment1}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "GetShipment",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /v2/shipments/shipments/{segment1}#path.segment1",
+                "location": "path",
+                "name": "segment1",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "default",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "apigee/07-shared-flow-set/proxy-endpoint.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:e89f0011197d98a7a03a0aea4b8ff8694f276af042c968a991ba1a14ca83721b",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "b5f620388503cfcba747aa8fc9d0917638894816b1617196a363c3989cb9ac3d",
+    "score": 92,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 2
+    }
+  },
+  "snapshot_version": 1
+}

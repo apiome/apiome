@@ -9,7 +9,7 @@ Importing turns an existing API description into something Apiome can search, di
 convert. Import is **asynchronous**: you create a job, it runs in the background, and you poll it
 to completion.
 
-**Apiome imports 53<!--format-count:importable--> formats**, spanning all
+**Apiome imports 54<!--format-count:importable--> formats**, spanning all
 6<!--format-count:paradigms--> canonical paradigms, and exports 44<!--format-count:exportable-->
 of them again. The full list — with each format's registry key, input kinds, version coverage,
 file extensions and export support — is generated from the running registries at
@@ -233,6 +233,7 @@ check is server-side, so a client cannot grant itself one.
   generated from the registries (its **Runtime** column is where a missing bundled tool shows up)
 - [Import an AWS API Gateway export](./aws-api-gateway-import.md) — what an exported REST or HTTP API's extensions become
 - [Import an Azure API Management API](./azure-api-management-import.md) — what an APIM API's policies become
+- [Import an Apigee proxy bundle](./apigee-proxy-bundle-import.md) — what a bundle's flows, targets and policies become
 - [Read a catalog item's format details](./catalog-format-details.md) — what a catalog item records per format
 - [Convert a catalog item to OpenAPI](./convert-to-openapi.md) — promote a catalog item to a publishable Project
 - [Edit classes and properties](../build/edit-classes-and-properties.md) — refine what you imported

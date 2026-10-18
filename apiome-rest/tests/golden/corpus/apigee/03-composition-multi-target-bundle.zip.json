@@ -1,0 +1,330 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": "Storefront proxy with three targets.",
+    "extras": {
+      "apigee": {
+        "basePaths": [
+          "/v1/store"
+        ],
+        "declaredConditions": [
+          {
+            "expression": "(proxy.pathsuffix MatchesPath \"/admin/**\") and (request.header.x-admin-token != null)",
+            "kind": "route-condition",
+            "meaning": "Routes to target endpoint 'admin' on a condition that is not a path and verb.",
+            "provenance": "declared",
+            "proxy": "default",
+            "routeRule": "to-admin",
+            "target": "admin",
+            "unreduced": [
+              "request.header.x-admin-token != null"
+            ]
+          },
+          {
+            "expression": "request.verb = \"TRACE\"",
+            "kind": "route-without-target",
+            "meaning": "Requests matching this rule reach no target endpoint (the proxy answers itself).",
+            "provenance": "declared",
+            "proxy": "default",
+            "routeRule": "no-route"
+          }
+        ],
+        "faultRules": [],
+        "flowCallouts": [],
+        "mapped": {
+          "VerifyAPIKey": 3
+        },
+        "policies": {
+          "Check-Admin-Role": "RaiseFault",
+          "Verify-API-Key": "VerifyAPIKey"
+        },
+        "provenance": "declared",
+        "proxyEndpoints": [
+          {
+            "basePath": "/v1/store",
+            "name": "default",
+            "virtualHosts": [
+              "secure"
+            ]
+          }
+        ],
+        "proxyName": "store-v1",
+        "resources": [],
+        "revision": "7",
+        "routeRules": [
+          {
+            "condition": "proxy.pathsuffix MatchesPath \"/search\"",
+            "name": "to-search",
+            "order": 0,
+            "proxy": "default",
+            "target": "search"
+          },
+          {
+            "condition": "(proxy.pathsuffix MatchesPath \"/admin/**\") and (request.header.x-admin-token != null)",
+            "name": "to-admin",
+            "order": 1,
+            "proxy": "default",
+            "target": "admin",
+            "unreduced": [
+              "request.header.x-admin-token != null"
+            ]
+          },
+          {
+            "condition": "request.verb = \"TRACE\"",
+            "name": "no-route",
+            "order": 2,
+            "proxy": "default",
+            "target": null
+          },
+          {
+            "condition": null,
+            "name": "default",
+            "order": 3,
+            "proxy": "default",
+            "target": "catalogue"
+          }
+        ],
+        "shape": "bundle",
+        "sharedFlows": [],
+        "targetEndpoints": [
+          {
+            "name": "admin",
+            "url": "https://admin.internal.example.com"
+          },
+          {
+            "name": "catalogue",
+            "url": "https://catalogue.internal.example.com"
+          },
+          {
+            "name": "search",
+            "properties": {
+              "io.timeout.millis": "3000"
+            },
+            "url": "https://search.internal.example.com"
+          }
+        ],
+        "unmapped": [
+          {
+            "name": "Check-Admin-Role",
+            "policyType": "RaiseFault",
+            "usedBy": [
+              "flow:Admin"
+            ],
+            "xml": "<RaiseFault name=\"Check-Admin-Role\">\n    <DisplayName>Check Admin Role</DisplayName>\n    <FaultResponse>\n        <Set>\n            <StatusCode>403</StatusCode>\n            <ReasonPhrase>Forbidden</ReasonPhrase>\n            <Payload contentType=\"application/json\">{\"message\":\"admin role required\"}</Payload>\n        </Set>\n    </FaultResponse>\n    <Condition>NOT (verifyapikey.Verify-API-Key.developer.app.name = \"admin-console\")</Condition>\n</RaiseFault>"
+          }
+        ],
+        "unresolvedSteps": {}
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "store-v1",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Apigee target endpoint admin.",
+        "extras": {},
+        "name": "admin",
+        "protocol": null,
+        "url": "https://admin.internal.example.com",
+        "variables": []
+      },
+      {
+        "description": "Apigee target endpoint catalogue.",
+        "extras": {},
+        "name": "catalogue",
+        "protocol": null,
+        "url": "https://catalogue.internal.example.com",
+        "variables": []
+      },
+      {
+        "description": "Apigee target endpoint search.",
+        "extras": {},
+        "name": "search",
+        "protocol": null,
+        "url": "https://search.internal.example.com",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Routes by path and by header to three different targets.",
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/products/**\") and (request.verb = \"GET\")",
+                "flow": "Catalogue",
+                "proxyEndpoint": "default"
+              },
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-API-Key",
+                  "parameterName": "x-api-key",
+                  "policy": "Verify-API-Key",
+                  "policyType": "VerifyAPIKey",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/v1/store/products/{path}",
+            "key": "GET /v1/store/products/{path}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Catalogue",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Any number of path segments (Apigee `**`).",
+                "extras": {},
+                "key": "GET /v1/store/products/{path}#path.path",
+                "location": "path",
+                "name": "path",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/search\") and (request.verb = \"GET\")",
+                "flow": "Search",
+                "proxyEndpoint": "default"
+              },
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-API-Key",
+                  "parameterName": "x-api-key",
+                  "policy": "Verify-API-Key",
+                  "policyType": "VerifyAPIKey",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "GET",
+            "http_path": "/v1/store/search",
+            "key": "GET /v1/store/search",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Search",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/admin/**\")",
+                "flow": "Admin",
+                "proxyEndpoint": "default"
+              },
+              "security": [
+                {
+                  "in": "header",
+                  "name": "Verify-API-Key",
+                  "parameterName": "x-api-key",
+                  "policy": "Verify-API-Key",
+                  "policyType": "VerifyAPIKey",
+                  "provenance": "declared",
+                  "scheme": "apiKey",
+                  "scopes": []
+                }
+              ]
+            },
+            "http_method": "ANY",
+            "http_path": "/v1/store/admin/{path}",
+            "key": "ANY /v1/store/admin/{path}",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Admin",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": "Any number of path segments (Apigee `**`).",
+                "extras": {},
+                "key": "ANY /v1/store/admin/{path}#path.path",
+                "location": "path",
+                "name": "path",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "Store v1",
+    "types": [],
+    "version": "7"
+  },
+  "corpus_path": "apigee/03-composition-multi-target-bundle.zip",
+  "counts": {
+    "channels": 0,
+    "operations": 3,
+    "servers": 3,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:9b2bff3af26c107540b38f3be79088f290d7787a13bf00c8b6315761bbf5c0ab",
+  "lint": {
+    "findings": 3,
+    "grade": "B",
+    "report_fingerprint": "7725fe981a1b8882af8437dbe6b88659e1686a717fe79a2203679dc433f42533",
+    "score": 88,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

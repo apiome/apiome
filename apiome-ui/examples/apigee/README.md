@@ -3,7 +3,8 @@
 Fixtures for **FMT-7.3** ([#5457](https://github.com/apiome/apiome/issues/5457)). An Apigee proxy
 bundle is a **zip** of `apiproxy/` XML — proxy endpoints, target endpoints, flows, conditions and
 policies — and it describes Google-estate APIs. Gravitee already federates from Apigee; Apiome cannot
-read one at all. Entries carry `adapter_key: null` and the `pending-adapter` tag.
+read one at all. Entries are read by the `apigee` adapter
+(`apiome-rest/src/app/apigee_import_source.py`).
 
 **Detection markers.** For the archive: a zip whose members are under `apiproxy/` with an
 `apiproxy/<name>.xml` manifest whose root is `APIProxy`. For loose files: a `ProxyEndpoint` or

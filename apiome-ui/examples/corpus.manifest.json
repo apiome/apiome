@@ -9,7 +9,7 @@
       "marker": "`FORMAT: 1A` metadata line"
     },
     "apigee": {
-      "label": "Apigee proxy bundle (pending #5457)",
+      "label": "Apigee proxy bundle",
       "category": "rest-http",
       "paradigm": "rest",
       "marker": "zip with `apiproxy/` members and an `APIProxy` manifest, or a `ProxyEndpoint`/`TargetEndpoint` root"
@@ -854,7 +854,7 @@
     {
       "path": "apigee/01-minimal-proxy-endpoint.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -864,8 +864,7 @@
         "proxy-endpoint",
         "base-path",
         "route-rule",
-        "flow-condition",
-        "pending-adapter"
+        "flow-condition"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -876,7 +875,7 @@
     {
       "path": "apigee/02-typical-proxy-bundle.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -889,8 +888,7 @@
         "VerifyAPIKey",
         "SpikeArrest",
         "Quota",
-        "cors",
-        "pending-adapter"
+        "cors"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -901,7 +899,7 @@
     {
       "path": "apigee/03-composition-multi-target-bundle.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -913,8 +911,7 @@
         "multi-target",
         "ordered-route-rules",
         "conditioned-route",
-        "no-route-rule",
-        "pending-adapter"
+        "no-route-rule"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -925,7 +922,7 @@
     {
       "path": "apigee/04-stress-policy-coverage-bundle.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -942,8 +939,7 @@
         "FaultRules",
         "load-balancer",
         "unconditional-flow",
-        "script-resource",
-        "pending-adapter"
+        "script-resource"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -954,7 +950,7 @@
     {
       "path": "apigee/05-real-world-payments-bundle.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -968,8 +964,7 @@
         "hmac",
         "idempotency",
         "environment-routing",
-        "mtls",
-        "pending-adapter"
+        "mtls"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -980,7 +975,7 @@
     {
       "path": "apigee/06-typical-target-endpoint.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -991,8 +986,7 @@
         "load-balancer",
         "ssl-info",
         "timeouts",
-        "success-codes",
-        "pending-adapter"
+        "success-codes"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -1003,7 +997,7 @@
     {
       "path": "apigee/07-shared-flow-set/flow-callout.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -1012,8 +1006,7 @@
       "features": [
         "flow-callout-policy",
         "shared-flow-bundle",
-        "parameters",
-        "pending-adapter"
+        "parameters"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -1026,7 +1019,7 @@
     {
       "path": "apigee/07-shared-flow-set/proxy-endpoint.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -1034,8 +1027,7 @@
       },
       "features": [
         "flow-callout",
-        "delegated-security",
-        "pending-adapter"
+        "delegated-security"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -1047,7 +1039,7 @@
     {
       "path": "apigee/07-shared-flow-set/shared-flow.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "valid",
       "expected_detection": {
         "format": "apigee",
@@ -1056,8 +1048,7 @@
       "features": [
         "shared-flow",
         "oauth",
-        "quota",
-        "pending-adapter"
+        "quota"
       ],
       "expected_outcome": "imports_with_warnings",
       "source": "hand-authored",
@@ -1070,7 +1061,7 @@
     {
       "path": "apigee/negative/01-syntactic-unclosed-flow.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1079,8 +1070,7 @@
       "features": [
         "negative",
         "syntactic",
-        "unclosed-element",
-        "pending-adapter"
+        "unclosed-element"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -1092,7 +1082,7 @@
     {
       "path": "apigee/negative/02-semantic-no-proxy-endpoint.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1102,8 +1092,7 @@
         "negative",
         "semantic",
         "no-proxy-endpoint",
-        "bundle",
-        "pending-adapter"
+        "bundle"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -1115,7 +1104,7 @@
     {
       "path": "apigee/negative/03-truncated-bundle.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1124,8 +1113,7 @@
       "features": [
         "negative",
         "truncated",
-        "truncated-archive",
-        "pending-adapter"
+        "truncated-archive"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -1138,7 +1126,7 @@
     {
       "path": "apigee/negative/04-wrong-format-gateway-api.yaml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1147,8 +1135,7 @@
       "features": [
         "negative",
         "wrong-format",
-        "gateway-api",
-        "pending-adapter"
+        "gateway-api"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -1160,7 +1147,7 @@
     {
       "path": "apigee/negative/05-encoding-utf16.xml",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1169,8 +1156,7 @@
       "features": [
         "negative",
         "encoding",
-        "utf-16",
-        "pending-adapter"
+        "utf-16"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",
@@ -1182,7 +1168,7 @@
     {
       "path": "apigee/negative/06-unresolvable-target-endpoint.zip",
       "format": "apigee",
-      "adapter_key": null,
+      "adapter_key": "apigee",
       "validity_class": "invalid",
       "expected_detection": {
         "format": "apigee",
@@ -1192,8 +1178,7 @@
         "negative",
         "unresolvable-ref",
         "missing-target-endpoint",
-        "bundle",
-        "pending-adapter"
+        "bundle"
       ],
       "expected_outcome": "rejects",
       "source": "hand-authored",

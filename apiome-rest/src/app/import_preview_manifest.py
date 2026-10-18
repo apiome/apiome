@@ -247,6 +247,10 @@ PROVENANCE_EXTRA_KEYS = frozenset(SOURCE_LOCATION_EXTRA_KEYS) | frozenset(NATIVE
         # ``_azure_apim_capability_rows``; the interpreted constructs ride in ``security``,
         # ``rate_limits``, ``backend``, ``rewrite``, ``cors`` and ``access``.
         "azure_apim",
+        # FMT-7.3: the Apigee bundle report (proxy and target endpoints, ordered route rules, the
+        # declared conditions, fault rules, mapped and verbatim unmapped policies). Rendered by
+        # ``_apigee_capability_rows``.
+        "apigee",
         # FMT-5.1: the ODCS projection record (declared api version, contract status and
         # identity, the schema objects, declared limits, the composed file set). Our own
         # bookkeeping about the read — the contract's *own* governance blocks live under
@@ -1102,6 +1106,7 @@ def _document_scope_rows(
     ledger.extend(_wit_capability_rows(api))
     ledger.extend(_aws_apigateway_capability_rows(api))
     ledger.extend(_azure_apim_capability_rows(api))
+    ledger.extend(_apigee_capability_rows(api))
     ledger.extend(_relaxng_capability_rows(api))
     ledger.extend(_dtd_capability_rows(api))
     ledger.extend(_cddl_capability_rows(api))
@@ -1502,6 +1507,74 @@ def _azure_apim_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
             CoverageClass.PARTIALLY_MAPPED,
             f"<base /> in {', '.join(inherits)} inherits from a parent scope (product or global) the "
             "input does not carry; the local policies are interpreted, the inherited ones are unknown.",
+        )
+    return rows
+
+
+def _apigee_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
+    """Render the FMT-7.3 Apigee bundle report as document-scoped ledger rows.
+
+    Mapped policy types (``VerifyAPIKey``, ``OAuthV2``, ``SpikeArrest``, ``Quota``, CORS
+    ``AssignMessage``) and the target endpoints are ``mapped``. A **declared condition** — a flow or
+    route-rule condition that is not a path and verb, a flow with no condition, a route rule with no
+    target — is ``partially-mapped``: kept verbatim in ``extras.apigee.declaredConditions`` and listed
+    here, never dropped. So is every policy without a canonical construct, and every step whose
+    policy the input does not carry.
+    """
+    report = api.extras.get("apigee") if isinstance(api.extras, dict) else None
+    if not isinstance(report, dict):
+        return []
+    rows: List[CoverageEntry] = []
+
+    def _row(construct: str, coverage: CoverageClass, detail: str) -> None:
+        status, reason = STATUS_FOR_COVERAGE[coverage]
+        rows.append(
+            CoverageEntry(
+                source_construct=construct,
+                coverage=coverage,
+                status=status,
+                reason=reason,
+                detail=detail,
+                document_scoped=True,
+            )
+        )
+
+    for policy_type, count in sorted((report.get("mapped") or {}).items()):
+        _row(
+            f"apigee#policy.{policy_type}",
+            CoverageClass.MAPPED,
+            f"{count} {policy_type} step(s) recorded as canonical security, rate-limit or CORS metadata (declared).",
+        )
+    for target in report.get("targetEndpoints") or []:
+        if isinstance(target, dict) and (target.get("url") or target.get("loadBalancer")):
+            _row(
+                f"apigee#target.{target.get('name')}",
+                CoverageClass.MAPPED,
+                f"Target endpoint {target.get('name')!r} recorded as a server.",
+            )
+    for index, condition in enumerate(report.get("declaredConditions") or []):
+        if not isinstance(condition, dict):
+            continue
+        where = condition.get("flow") or condition.get("routeRule") or index
+        _row(
+            f"apigee#declared-condition.{condition.get('kind')}.{where}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"{condition.get('meaning')} Expression: {condition.get('expression') or '(none)'}. Kept as a "
+            "declared condition, never dropped.",
+        )
+    for policy in report.get("unmapped") or []:
+        if isinstance(policy, dict):
+            _row(
+                f"apigee#policy.{policy.get('policyType')}.{policy.get('name')}",
+                CoverageClass.PARTIALLY_MAPPED,
+                f"Policy {policy.get('name')!r} ({policy.get('policyType')}) has no canonical construct; preserved "
+                "verbatim in extras.apigee.unmapped.",
+            )
+    for step, sites in sorted((report.get("unresolvedSteps") or {}).items()):
+        _row(
+            f"apigee#unresolved-step.{step}",
+            CoverageClass.PARTIALLY_MAPPED,
+            f"Step {step!r} ({', '.join(sites)}) names a policy the input does not carry; its behaviour is unknown.",
         )
     return rows
 

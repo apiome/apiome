@@ -2474,6 +2474,2002 @@
       "unexplained": []
     },
     {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 6,
+      "emit_format": "apiblueprint",
+      "emit_key": "apiblueprint",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to API Blueprint",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed root '', added service 'Orders v2', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders v2"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "arazzo",
+      "emit_key": "arazzo",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Arazzo",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default#CreateOrder', added operation 'default#GetOrder', added operation 'default#ListOrders', changed root '', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default#CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default#GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default#ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "asn1",
+      "emit_key": "asn1",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<ordersv2 DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference. (observed: Re-import failed: Malformed ASN.1 module: Invalid ASN.1 syntax at line 3, column 1: '>!<ordersv2 DEFINITIONS AUTOMATIC TAGS ::= BEGIN': Expected modulereference.)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "asyncapi-3",
+      "emit_key": "asyncapi",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Property \"apigee\" is not expected to be here (observed: Re-import failed: Property \"apigee\" is not expected to be here)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "avro",
+      "emit_key": "avro",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: EmitResult has no files (observed: Re-import failed: EmitResult has no files)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "capnproto",
+      "emit_key": "capnproto",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Cap'n Proto",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.CreateOrder', added operation 'default.GetOrder', added operation 'default.ListOrders', changed root '', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "cddl",
+      "emit_key": "cddl",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: the CDDL document declares no rules (apigee->cddl), so it describes no data (observed: Re-import failed: the CDDL document declares no rules (apigee->cddl), so it describes no data)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "cloudevents",
+      "emit_key": "cloudevents",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: type object 'LossKind' has no attribute 'DROP' (observed: Emit failed: type object 'LossKind' has no attribute 'DROP')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "cobolcopybook",
+      "emit_key": "cobolcopybook",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import (observed: Emit failed: COBOL copybook export requires `cobolcopybook_tree` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "connectrpc",
+      "emit_key": "connectrpc",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Connect RPC",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.CreateOrder', added operation 'default.GetOrder', added operation 'default.ListOrders', changed root '', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "corbaidl",
+      "emit_key": "corbaidl",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'Exported.default.CreateOrder', added operation 'Exported.default.GetOrder', added operation 'Exported.default.ListOrders', removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', changed root '', added service 'Exported.default', removed service 'default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Exported.default.ListOrders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Exported.default"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "edix12",
+      "emit_key": "edix12",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: EDI X12 export requires `x12_transactions` extras from import (observed: Emit failed: EDI X12 export requires `x12_transactions` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 10,
+      "emit_format": "fhir",
+      "emit_key": "fhir",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to FHIR",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /default', added operation 'GET /default/{id}', removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', added operation 'POST /default', removed operation 'POST /v2/orders/orders', changed root '', removed service 'default', added service 'default.default', added type 'default.default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /default"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /default/{id}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /default"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default.default"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "default.default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "fix",
+      "emit_key": "fix",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: FIX export requires `fix_fields` extras from import (observed: Emit failed: FIX export requires `fix_fields` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "flatbuffers",
+      "emit_key": "flatbuffers",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a FlatBuffers .fbs schema (observed: Re-import failed: Content does not appear to be a FlatBuffers .fbs schema)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 5,
+      "emit_format": "gateway-api",
+      "emit_key": "gateway-api",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Gateway API HTTPRoute",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 10,
+      "emit_format": "graphql",
+      "emit_key": "graphql",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', added operation 'Mutation.CreateOrder', removed operation 'POST /v2/orders/orders', added operation 'Query.GetOrder', added operation 'Query.ListOrders', changed root '', added service 'Mutation', added service 'Query', removed service 'default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Mutation.CreateOrder"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "Query.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Mutation"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Query"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "hl7v2",
+      "emit_key": "hl7v2",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import (observed: Emit failed: HL7 v2 export requires `hl7v2_segments` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "http-file",
+      "emit_key": "http-file",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to HTTP Request File",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', added operation 'GET /v2/v2/orders/orders', added operation 'GET /v2/v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'POST /v2/v2/orders/orders', added service 'apigee->http-file', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /v2/v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /v2/v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apigee->http-file"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "iso20022",
+      "emit_key": "iso20022",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 20022 export requires `iso20022_tree` extras from import (observed: Emit failed: ISO 20022 export requires `iso20022_tree` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "iso8583",
+      "emit_key": "iso8583",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import (observed: Emit failed: ISO 8583 export requires `iso8583_data_elements` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 6,
+      "emit_format": "json-schema",
+      "emit_key": "json-schema",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'default', added type 'Orders v2')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Orders v2"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 6,
+      "emit_format": "jtd",
+      "emit_key": "jtd",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'default', added type 'Orders v2')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "Orders v2"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 7,
+      "emit_format": "k8s-crd",
+      "emit_key": "k8s-crd",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 3,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', removed service 'default', added service 'ordersv2s.example.com', added type 'example.com/v1.OrdersV2')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "ordersv2s.example.com"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "example.com/v1.OrdersV2"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "kafka-connect",
+      "emit_key": "kafka-connect",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none. (observed: Emit failed: Kafka Connect export requires at least one record type \u2014 a Connect schema describes a struct, and this model declares none.)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 5,
+      "emit_format": "kong",
+      "emit_key": "kong",
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Kong Declarative Config",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 12,
+      "emit_format": "llm-tools",
+      "emit_key": "llm-tools",
+      "loss_approx": 1,
+      "loss_drop": 1,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 1,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to LLM Tool Definitions",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'apigee->llm-tools.CreateOrder', added operation 'apigee->llm-tools.GetOrder', added operation 'apigee->llm-tools.ListOrders', added service 'apigee->llm-tools', removed service 'default', added type 'CreateOrderParams', added type 'GetOrderParams', added type 'ListOrdersParams'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apigee->llm-tools.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apigee->llm-tools.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apigee->llm-tools.ListOrders"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apigee->llm-tools"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "CreateOrderParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "GetOrderParams"
+        },
+        {
+          "change": "added",
+          "entity": "type",
+          "key": "ListOrdersParams"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "odata",
+      "emit_key": "odata",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to OData",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /default', added operation 'GET /default({key})', removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', added operation 'POST /default', removed operation 'POST /v2/orders/orders', changed root '', removed service 'default', added service 'orders-v2.default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /default"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /default({key})"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /default"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "orders-v2.default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "odcs",
+      "emit_key": "odcs",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 6,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none (observed: Emit failed: ODCS export requires at least one record type \u2014 a data contract states a dataset's structure, and this model describes none)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "oncrpc",
+      "emit_key": "oncrpc",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.default.CreateOrder', added operation 'default.default.GetOrder', added operation 'default.default.ListOrders', changed root '', removed service 'default', added service 'default.default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "default.default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 5,
+      "emit_format": "openapi-3.1",
+      "emit_key": "openapi",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to OpenAPI 3.1",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed root '', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "openrpc",
+      "emit_key": "openrpc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No OpenRPC methods or component schemas found (apigee->openrpc) (observed: Re-import failed: No OpenRPC methods or component schemas found (apigee->openrpc))",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 6,
+      "emit_format": "postman",
+      "emit_key": "postman",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Postman",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed root '', added service 'Orders v2', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders v2"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "proto3",
+      "emit_key": "protobuf",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to Protocol Buffers (proto3)",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.CreateOrder', added operation 'default.GetOrder', added operation 'default.ListOrders', changed root '', changed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 6,
+      "emit_format": "raml",
+      "emit_key": "raml",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to RAML",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed operation 'GET /v2/orders/orders', changed operation 'GET /v2/orders/orders/{segment1}', changed operation 'POST /v2/orders/orders', changed root '', added service 'Orders v2', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "changed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Orders v2"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "smithy",
+      "emit_key": "smithy",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.CreateOrder', added operation 'default.GetOrder', added operation 'default.ListOrders', changed root '', changed service 'default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 8,
+      "emit_format": "thrift",
+      "emit_key": "thrift",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'default.CreateOrder', added operation 'default.GetOrder', added operation 'default.ListOrders', changed root '', changed service 'default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "changed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "typespec",
+      "emit_key": "typespec",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to TypeSpec",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added operation 'GET /', removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', added operation 'GET /{segment1}', added operation 'POST /', removed operation 'POST /v2/orders/orders', changed root '', added service 'Exported.default', removed service 'default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "GET /{segment1}"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "Exported.default"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "wadl",
+      "emit_key": "wadl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: Content does not appear to be a WADL document (observed: Re-import failed: Content does not appear to be a WADL document)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 10,
+      "emit_format": "wit",
+      "emit_key": "wit",
+      "loss_approx": 3,
+      "loss_drop": 0,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'apiome:orders-v2.default.create-order', added operation 'apiome:orders-v2.default.get-order', added operation 'apiome:orders-v2.default.list-orders', changed root '', added service 'apiome:orders-v2.default', added service 'apiome:orders-v2.orders-v2', removed service 'default')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-v2.default.create-order"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-v2.default.get-order"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "apiome:orders-v2.default.list-orders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:orders-v2.default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "apiome:orders-v2.orders-v2"
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 9,
+      "emit_format": "wsdl",
+      "emit_key": "wsdl",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [
+        {
+          "construct": "GET /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "GET /v2/orders/orders/{segment1}",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        },
+        {
+          "construct": "POST /v2/orders/orders",
+          "kind": "ok",
+          "message": "operation carried to WSDL",
+          "severity": "info",
+          "target_mapping": null
+        }
+      ],
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed operation 'GET /v2/orders/orders', removed operation 'GET /v2/orders/orders/{segment1}', removed operation 'POST /v2/orders/orders', added operation 'http://example.com/service.default.CreateOrder', added operation 'http://example.com/service.default.GetOrder', added operation 'http://example.com/service.default.ListOrders', changed root '', removed service 'default', added service 'http://example.com/service.default'; overclaim: OK 'GET /v2/orders/orders', OK 'GET /v2/orders/orders/{segment1}', OK 'POST /v2/orders/orders')",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "GET /v2/orders/orders/{segment1}"
+        },
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "POST /v2/orders/orders"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.default.CreateOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.default.GetOrder"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "http://example.com/service.default.ListOrders"
+        },
+        {
+          "change": "changed",
+          "entity": "root",
+          "key": ""
+        },
+        {
+          "change": "removed",
+          "entity": "service",
+          "key": "default"
+        },
+        {
+          "change": "added",
+          "entity": "service",
+          "key": "http://example.com/service.default"
+        }
+      ]
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "xmlrpc",
+      "emit_key": "xmlrpc",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: XML-RPC export requires at least one RPC operation (observed: Emit failed: XML-RPC export requires at least one RPC operation)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "xsd",
+      "emit_key": "xsd",
+      "loss_approx": 0,
+      "loss_drop": 3,
+      "loss_ok": 0,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Re-import failed: No XSD types or elements found (apigee->xsd) (observed: Re-import failed: No XSD types or elements found (apigee->xsd))",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
+      "corpus_path": "apigee/02-typical-proxy-bundle.zip",
+      "diff_count": 0,
+      "emit_format": "zosconnect",
+      "emit_key": "zosconnect",
+      "loss_approx": 0,
+      "loss_drop": 0,
+      "loss_ok": 3,
+      "loss_synth": 0,
+      "matched_count": 0,
+      "overclaims": [],
+      "reason": "Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import (observed: Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import)",
+      "source_format": "apigee",
+      "status": "xfail",
+      "unexplained": []
+    },
+    {
       "corpus_path": "arazzo-1.1/02-typical-checkout-flow.yaml",
       "diff_count": 7,
       "emit_format": "apiblueprint",
@@ -151981,6 +153977,7 @@
   "matrix_version": 1,
   "source_formats": [
     "api-blueprint",
+    "apigee",
     "arazzo",
     "arrow",
     "asn1",

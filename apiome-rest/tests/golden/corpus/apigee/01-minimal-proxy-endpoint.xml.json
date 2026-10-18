@@ -1,0 +1,116 @@
+{
+  "adapter": "apigee",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "apigee": {
+        "basePaths": [
+          "/v1/ping"
+        ],
+        "declaredConditions": [],
+        "faultRules": [],
+        "flowCallouts": [],
+        "mapped": {},
+        "policies": {},
+        "provenance": "declared",
+        "proxyEndpoints": [
+          {
+            "basePath": "/v1/ping",
+            "name": "default",
+            "virtualHosts": [
+              "secure"
+            ]
+          }
+        ],
+        "proxyName": "default",
+        "resources": [],
+        "revision": null,
+        "routeRules": [
+          {
+            "condition": null,
+            "name": "default",
+            "order": 0,
+            "proxy": "default",
+            "target": "default"
+          }
+        ],
+        "shape": "files",
+        "sharedFlows": [],
+        "targetEndpoints": [],
+        "unmapped": [],
+        "unresolvedSteps": {}
+      }
+    },
+    "format": "apigee",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "default",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "default",
+        "name": "default",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "apigee": {
+                "condition": "(proxy.pathsuffix MatchesPath \"/ping\") and (request.verb = \"GET\")",
+                "flow": "Ping",
+                "proxyEndpoint": "default"
+              }
+            },
+            "http_method": "GET",
+            "http_path": "/v1/ping/ping",
+            "key": "GET /v1/ping/ping",
+            "kind": "request_response",
+            "messages": [],
+            "name": "Ping",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "default",
+    "types": [],
+    "version": null
+  },
+  "corpus_path": "apigee/01-minimal-proxy-endpoint.xml",
+  "counts": {
+    "channels": 0,
+    "operations": 1,
+    "servers": 0,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "apigee"
+  },
+  "fingerprint": "sha256:fce45123a85115e0d3a491ad46570df93e3d87a644735c9d4b8428565a2fa9cc",
+  "lint": {
+    "findings": 2,
+    "grade": "A",
+    "report_fingerprint": "b9402129024e3b809dcfc53d6fa5629358f67c25b781271e58112e5af6559d13",
+    "score": 95,
+    "severity_counts": {
+      "error": 0,
+      "info": 1,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}
