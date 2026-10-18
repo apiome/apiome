@@ -499,7 +499,11 @@ def _map(
             backend["authentication"] = previous["authentication"]
         facts.backend = backend
     elif name in ("rewrite-uri", "set-method", "set-query-parameter"):
-        rewrite = facts.rewrite or {**base}
+        # One effective rewrite: later policies override earlier fields, and the provenance is the
+        # last policy that wrote to it (an operation-scope rewrite-uri after the API scope's).
+        rewrite = dict(facts.rewrite or {})
+        rewrite.pop("conditional", None)
+        rewrite.update(base)
         if name == "rewrite-uri":
             rewrite["uriTemplate"] = element.get("template")
             if element.get("copy-unmatched-params") is not None:

@@ -506,3 +506,21 @@ def test_several_apis_are_prefixed_with_their_paths():
     assert document["servers"] == [{"url": "https://s.azure-api.net"}]
     assert set(document["paths"]) == {"/a", "/b/items"}
     assert owners[("GET", "/b/items")] == ("b", "y")
+
+
+def test_an_operation_rewrite_after_the_api_rewrite_reports_the_operation_scope(adapter):
+    members = {p.name: p.read_text(encoding="utf-8") for p in POLICY_SET.iterdir()}
+    members["operations/get-order.xml"] = _policy(inbound='<base /><rewrite-uri template="/v3/orders/{orderId}" />')
+    rewrite = _ops(_fileset_model(adapter, members, "orders.openapi.yaml"))["GET /orders/{orderId}"].extras["rewrite"]
+    assert rewrite["uriTemplate"] == "/v3/orders/{orderId}" and rewrite["policyScope"] == "operation"
+    assert rewrite["copyUnmatchedParams"] is True  # the API scope's field is kept
+
+
+def test_the_definition_is_the_root_even_when_another_member_is_named_root(adapter):
+    members = {p.name: p.read_text(encoding="utf-8") for p in POLICY_SET.iterdir()}
+    members["service.json"] = (
+        '{"resources": [{"type": "Microsoft.ApiManagement/service/backends", "name": "s/b", "properties": {}}]}'
+    )
+    for root in ("service.json", "policy.xml"):
+        model = _fileset_model(adapter, members, root)
+        assert model.extras["azure_apim"]["shape"] == "definition+policy" and len(model.operations()) == 3

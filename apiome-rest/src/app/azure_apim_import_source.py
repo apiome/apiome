@@ -246,12 +246,16 @@ class AzureApimImportSource(ImportSource, register=True):
                     policies.append({"path": path, "xml": text})
                 continue
             structured[path] = _load_structured(text, path)
-        root = fileset.root if fileset.root in structured else None
-        if root is None:
-            candidates = [p for p, d in structured.items() if is_openapi_document(d)] or [
-                p for p, d in structured.items() if is_apim_arm_template(d)
-            ]
-            root = candidates[0] if candidates else None
+        # The definition is the root whenever there is one: archive intake ranks members by
+        # detection confidence, so a policy or an ARM member (0.95) can outrank it (0.9).
+        definitions = [p for p, d in structured.items() if is_openapi_document(d)]
+        templates = [p for p, d in structured.items() if is_apim_arm_template(d)]
+        if definitions:
+            root = fileset.root if fileset.root in definitions else definitions[0]
+        elif templates:
+            root = fileset.root if fileset.root in templates else templates[0]
+        else:
+            root = None
         if root is None:
             if not policies:
                 raise ImportSourceError(
