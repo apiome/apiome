@@ -1,0 +1,21 @@
+---
+slug: declared-dependencies
+title: Say what your API depends on
+description: Declare dependencies in the spec, a Backstage file, the API or the CLI.
+authors: [apiome]
+---
+
+An API can now declare what it depends on, and those declarations become edges in the
+[dependency graph](/govern/dependency-graph#declare-dependencies).
+
+{/* truncate */}
+
+- **In the spec.** Add `x-apiome-depends-on: [payments, customers#/components/schemas/Customer]` at
+  the root of an OpenAPI, AsyncAPI, JSON Schema or Avro document, or as a line in a GraphQL
+  description. Every import keeps the list up to date.
+- **From Backstage.** A `catalog-info.yaml` in the repository is read on every scan: `consumesApis`
+  and `dependsOn` become dependencies of the APIs you imported from that branch.
+- **By hand.** `PUT /v1/graph/{tenant}/entities/{kind}/{entity}/dependencies`, or
+  `apiome graph declare project orders --depends-on payments`.
+- **Nothing silently dropped.** A name that matches no API is listed as unresolved, so a typo or a
+  missing API stays visible.

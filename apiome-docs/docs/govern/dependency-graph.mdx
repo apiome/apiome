@@ -24,6 +24,7 @@ An edge goes *from* one node *to* another and has a kind:
 | `built_from` | MCP endpoint → MCP source | Linking a source artifact to an MCP endpoint |
 | `deployed_on` | catalog item → connector | A [connector](../bring-in/connectors.mdx) sync that found the API on a gateway |
 | `served_by` | Project or catalog item → repository | A repository import, or a draft bound to a repository branch |
+| `depends_on` | Project or catalog item → what it depends on | A [declared dependency](#declare-dependencies). A Backstage `consumesApis` entry is a declared `consumes` edge. |
 
 Node kinds are `project`, `catalog_item`, `consumer`, `connector`, `mcp_endpoint`, `mcp_source`,
 `repository` and `identity_group`. A Project that is not yet publishable is a `catalog_item`.
@@ -34,8 +35,8 @@ Every edge says how Apiome knows about it:
 
 | Provenance | Meaning |
 | --- | --- |
-| `derived` | Apiome worked it out from records it already has: contracts, conversions, links, syncs. All the edges above are derived. |
-| `declared` | Someone stated it, for example in an API's own metadata. Reserved for a later release. |
+| `derived` | Apiome worked it out from records it already has: contracts, conversions, links, syncs. Every edge kind above except `depends_on` is derived. |
+| `declared` | Someone stated it: through the API, in the spec itself, or in a Backstage file. See [Declare dependencies](#declare-dependencies). |
 | `runtime` | Seen in traffic. Reserved for a later release. |
 
 The same two nodes can be joined by edges of different provenance. Each edge also names the record
@@ -58,11 +59,100 @@ the record comes back first, the edge is current again.
 
 Re-deriving is safe to repeat: running it again over the same records leaves the same edges.
 
+Declared edges don't go stale. They change only when their source does: see
+[Declare dependencies](#declare-dependencies).
+
 ### Consumers and impact
 
 A consumer's `consumes` edges are exactly the pointers its current contract declares. The consumers
 that a change to an API can affect are the ones with a current `consumes` edge whose pointer
 overlaps a changed pointer, the same set the consumer impact check reports when a version is compared or published.
+
+## Declare dependencies
+
+A consumer contract says what a *registered client* uses. A service can also say what *it* depends
+on: "this API calls the payments API and uses the customer schema". Apiome reads that from three
+places. Each one keeps its own list:
+
+| Where | `source_ref` | Edge |
+| --- | --- | --- |
+| The REST API or `apiome graph declare` | `manual` | `depends_on` |
+| `x-apiome-depends-on` in the spec you import | `spec` | `depends_on` |
+| A Backstage `catalog-info.yaml` in the API's repository ([details](../bring-in/repositories.mdx#backstage-files)) | `backstage:<path>` | `consumes` or `depends_on` |
+
+Each source replaces its own list every time: importing the spec again, scanning the repository
+again or sending the same list again never adds duplicates, and removing an entry removes its edge.
+One source never changes another's list.
+
+**A reference that names nothing is kept, not dropped.** It is listed under **unresolved** with the
+reason `not-found` (or `self`, when an API names itself), so a typo or an API that is not in the
+catalog yet stays visible.
+
+### In the spec: `x-apiome-depends-on`
+
+List what the API depends on at the root of the document. Each entry is
+`<slug>[#<pointer>]`: the slug of a project or catalog item, optionally followed by `#` and a JSON
+pointer into it.
+
+```yaml
+openapi: 3.1.0
+info:
+  title: Orders
+  version: 1.0.0
+x-apiome-depends-on:
+  - payments
+  - customers#/components/schemas/Customer
+```
+
+| Format | Where to put it |
+| --- | --- |
+| OpenAPI, AsyncAPI | A root property, as above |
+| JSON Schema, Avro (`.avsc`) | A top-level property of the schema |
+| GraphQL | A line `x-apiome-depends-on: payments, customers#/types/Customer` in a description, usually the `schema` block's |
+
+The value can also be one string, or a comma-separated string. At most 200 entries are read.
+
+```graphql
+"""
+x-apiome-depends-on: payments, customers#/types/Customer
+"""
+schema { query: Query }
+```
+
+Avro IDL has no root to extend, so it can't declare dependencies.
+
+### Through the API or the CLI
+
+```http
+PUT /v1/graph/{tenant}/entities/{kind}/{entity}/dependencies
+X-API-Key: <your-api-key>
+
+{
+  "dependencies": [
+    { "to": { "slug": "payments" }, "note": "card capture" },
+    { "to": { "kind": "project", "id": "<project-id>" }, "pointer": "/components/schemas/Customer" }
+  ]
+}
+```
+
+- **`to`** names the target: a project or catalog item by `slug`, or any entity by `kind` and `id`.
+- **`pointer`** (optional) is a JSON pointer into the target. **`note`** (optional) is up to 500
+  characters.
+- The list **replaces** the entity's `manual` dependencies. Send `[]` to clear them.
+- `{entity}` is the entity's id, or a project or catalog item's slug.
+- Reading needs the kind's `view` permission, changing it needs `edit`. Changes are audited as
+  `graph.dependencies.update`.
+
+`GET` on the same path lists every declared dependency the entity has, from all three sources, and
+its unresolved references.
+
+From the command line, [`apiome graph declare`](../reference/cli/graph.md) sends the same list and
+`apiome graph dependencies` lists it:
+
+```bash
+apiome graph declare project orders --depends-on payments --depends-on customers#/components/schemas/Customer
+apiome graph dependencies project orders
+```
 
 ## Reading edges
 
