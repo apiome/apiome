@@ -26,7 +26,8 @@
         "operation_count": 5,
         "route_count": 2,
         "schemaless_operation_count": 5,
-        "unmapped_plugins": []
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
       },
       "inferred_auth_schemes": [
         "apiKey"
@@ -340,7 +341,7 @@
     "confidence": 0.95,
     "format": "kong"
   },
-  "fingerprint": "sha256:96c90906fec0dacc7578d714148153bfefeb5dca76f7a082b1f06f3458c5671c",
+  "fingerprint": "sha256:5ebeca9ae5d9361f3fb925760f626782798dc73f0f871264181e116d24367960",
   "lint": {
     "findings": 6,
     "grade": "C",

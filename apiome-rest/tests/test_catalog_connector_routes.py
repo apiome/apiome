@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 from unittest.mock import patch
 
 import pytest
-from catalog_connector_fakes import FakeConnectorStore
+from catalog_connector_fakes import FakeConnectorStore, restore_builtin_sources
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -55,6 +55,8 @@ def _settings(monkeypatch):
     monkeypatch.setattr(settings, "mcp_credential_active_key_version", None)
     monkeypatch.setattr(settings, "ssrf_allow_private", False)
     monkeypatch.setattr(settings, "connector_private_network_allowlist", "")
+    yield
+    restore_builtin_sources()
 
 
 @pytest.fixture
@@ -143,19 +145,34 @@ def test_create_returns_the_connector_without_credentials(store, audits):
     assert created["kind"] == "kong-admin" and created["baseUrl"] == "https://93.184.216.34/admin"
     assert created["status"] == "active" and created["conflictPolicy"] == "hold-for-review"
     assert created["hasCredentials"] is False and created["refreshIntervalSeconds"] == 900
-    assert created["syncable"] is False
+    assert created["syncable"] is True  # the Kong sources ship with CDG-1.2
     assert audits[-1]["action"] == AUDIT_CREATE
+    assert _create(kind="apigee", name="Apigee", scope={})["syncable"] is False
 
 
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
-    _create()
-    register_connector_source("kong-admin", ConnectorRefreshSource)
+    _create(kind="apigee", name="Apigee", scope={})
+    body = client.get(_BASE).json()
+    assert len(body["kinds"]) == 8 and body["syncableKinds"] == ["kong-admin", "kong-konnect"]
+    assert body["connectors"][0]["syncable"] is False
+    register_connector_source("apigee", ConnectorRefreshSource)
     try:
         body = client.get(_BASE).json()
     finally:
-        unregister_connector_source("kong-admin")
-    assert len(body["kinds"]) == 8 and body["syncableKinds"] == ["kong-admin"]
+        unregister_connector_source("apigee")
+    assert body["syncableKinds"] == ["apigee", "kong-admin", "kong-konnect"]
     assert body["connectors"][0]["syncable"] is True
+
+
+def test_a_kong_scope_is_checked_on_create_and_update(store, audits):
+    response = client.post(_BASE, json={"kind": "kong-konnect", "name": "K", "scope": {"region": "mars"}})
+    assert response.status_code == 422 and response.json()["detail"]["code"] == "connector-invalid"
+    created = _create(kind="kong-konnect", name="Konnect", scope={"region": "eu", "controlPlanes": ["cp-1"]})
+    assert created["scope"] == {"region": "eu", "controlPlanes": ["cp-1"]}
+    response = client.patch(f"{_BASE}/{created['id']}", json={"scope": {"controlPlanes": "cp-1"}})
+    assert response.status_code == 422 and "controlPlanes" in response.json()["detail"]["message"]
+    response = client.patch(f"{_BASE}/{created['id']}", json={"scope": {"region": "us"}})
+    assert response.status_code == 200 and response.json()["scope"] == {"region": "us"}
 
 
 def test_a_private_range_base_url_is_refused_with_a_stable_reason(store, audits):

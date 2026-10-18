@@ -121,6 +121,9 @@ class RefreshCandidate:
         base_path: The path prefix it is served under (connectors only).
         raw: The source-specific row behind the candidate (the Git candidate row, the
             provider's inventory entry). Never contains credentials.
+        deployment: Where and how the provider serves it (connectors only; CDG-1.2): for
+            example the control plane, tags, protocols, paths and suggested owners. Stored on
+            the inventory row as given. Never contains credentials.
     """
 
     remote_id: str
@@ -131,6 +134,7 @@ class RefreshCandidate:
     hosts: Tuple[str, ...] = ()
     base_path: Optional[str] = None
     raw: Mapping[str, Any] = field(default_factory=dict)
+    deployment: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

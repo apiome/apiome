@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.222.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.223.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `connectors` · 9 operations
 
@@ -288,7 +288,7 @@ Operation id: `sync_connector_v1_tenants__tenant_slug__connectors__connector_id_
 | `kind` | enum `"kong-konnect"`, `"kong-admin"`, `"aws-apigateway"`, `"azure-apim"`, `"apigee"`, `"url"`, … | yes | Kind. |
 | `name` | string | yes | Human-readable name. |
 | `baseUrl` | string or null | no | Base URL. |
-| `scope` | object | no | Scope. |
+| `scope` | object | no | Kind-specific coordinates; never secrets. `kong-konnect`: `{"region": "us"\|"eu"\|"au"\|"me"\|"in"\|"sg", "controlPlanes": ["<control plane id>", …]}` (no control planes = every control plane the token can read). `kong-admin`: `{"workspace": "…", "environment": "…"}`, both optional. Kinds with a source check their scope on every write. |
 | `refreshIntervalSeconds` | integer or null | no | Refresh Interval Seconds. |
 | `conflictPolicy` | enum `"overwrite"`, `"hold-for-review"`, `"new-branch"` | no | Conflict Policy. |
 | `status` | enum `"active"`, `"paused"` | no | Status. |
@@ -393,7 +393,7 @@ One sync run of a connector (a row of the shared refresh ledger).
 | --- | --- | --- | --- |
 | `name` | string or null | no | Human-readable name. |
 | `baseUrl` | string or null | no | Base URL. |
-| `scope` | object or null | no | Scope. |
+| `scope` | object or null | no | Kind-specific coordinates; never secrets. `kong-konnect`: `{"region": "us"\|"eu"\|"au"\|"me"\|"in"\|"sg", "controlPlanes": ["<control plane id>", …]}` (no control planes = every control plane the token can read). `kong-admin`: `{"workspace": "…", "environment": "…"}`, both optional. Kinds with a source check their scope on every write. |
 | `refreshIntervalSeconds` | integer or null | no | Refresh Interval Seconds. |
 | `conflictPolicy` | enum `"overwrite"`, `"hold-for-review"`, `"new-branch"` or null | no | Conflict Policy. |
 | `status` | enum `"active"`, `"paused"` or null | no | Status. |

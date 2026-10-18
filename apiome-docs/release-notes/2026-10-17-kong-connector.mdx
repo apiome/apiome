@@ -1,0 +1,25 @@
+---
+slug: kong-connector
+title: Kong services sync straight into the catalog
+description: Konnect and Admin API connectors import each Kong service as a catalog item.
+authors: [apiome]
+---
+
+The `kong-konnect` and `kong-admin` [connectors](/bring-in/connectors#kong) now sync. Point one at
+your Konnect control planes, or at a self-managed gateway's Admin API, and each Kong service becomes
+a catalog item. You no longer need a `kong.yaml` in a repository.
+
+{/* truncate */}
+
+- **Same result as the declarative file.** A synced service imports exactly like the Kong
+  declarative file it is equivalent to: declared hosts, paths and methods, and inferred path
+  parameters and auth schemes.
+- **Only what changed.** If you change one route, the next sync adds one revision to that service's
+  item and writes a change report showing the paths that moved. The other items are left alone.
+- **Deployment details and suggested owners.** Each item records its control plane, tags, protocols,
+  hosts and paths. A tag such as `owner:payments` is kept as a suggested owner, never a confirmed one.
+- **Nothing silently dropped.** Plugins Apiome does not model, such as `rate-limiting`, are listed
+  in the item's coverage ledger. A route that is not attached to a service is reported as a
+  finding on the run.
+- **Clear failures.** If the token is revoked, the run fails with `auth` and Kong's `401` message,
+  and the connector turns **failing**.

@@ -43,7 +43,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from . import catalog_connector_store as store
 from .auth import validate_authentication
-from .catalog_connector_sync import run_connector_sync, syncable_kinds
+from .catalog_connector_sync import run_connector_sync, syncable_kinds, validate_connector_scope
 from .catalog_connectors import (
     CODE_ENCRYPTION_UNCONFIGURED,
     CODE_INVALID,
@@ -165,6 +165,7 @@ def _item_out(row: Mapping[str, Any]) -> ConnectorItemOut:
         project_id=_text(row.get("project_id")),
         first_seen_at=_iso(row.get("first_seen_at")),
         last_seen_at=_iso(row.get("last_seen_at")),
+        deployment=dict(row.get("deployment") or {}),
     )
 
 
@@ -240,6 +241,7 @@ async def create_connector(
         name = validate_name(body.name)
         scope = validate_scope(body.scope)
         base_url = connector_base_url_from_settings(body.base_url) if body.base_url else None
+        validate_connector_scope(body.kind, scope, base_url)
         row = store.create_connector(
             db,
             tenant_id,
@@ -286,7 +288,7 @@ async def update_connector(
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     actor_id = enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT, target=f"connector:{connector_id}")
-    _require_connector(tenant_id, connector_id)
+    existing = _require_connector(tenant_id, connector_id)
     sent = body.model_dump(exclude_unset=True)
     changes: Dict[str, Any] = {}
     try:
@@ -298,6 +300,12 @@ async def update_connector(
             changes["base_url"] = connector_base_url_from_settings(body.base_url) if body.base_url else None
         if "scope" in sent:
             changes["scope"] = validate_scope(body.scope)
+        if "scope" in changes or "base_url" in changes:
+            validate_connector_scope(
+                str(existing["kind"]),
+                changes.get("scope", existing.get("scope") or {}),
+                changes.get("base_url", existing.get("base_url")),
+            )
         if "refresh_interval_seconds" in sent:
             changes["refresh_interval_seconds"] = body.refresh_interval_seconds
         for field_name in ("conflict_policy", "status"):

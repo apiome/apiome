@@ -53,3 +53,10 @@ def test_kind_check_matches_the_app_vocabulary(repo_root: Path) -> None:
     text = (repo_root / _MIGRATION).read_text()
     for kind in KINDS:
         assert f"'{kind}'" in text
+
+
+def test_v282_adds_the_deployment_bag_to_inventory_rows(repo_root: Path) -> None:
+    text = (repo_root / "apiome-db/scripts/V282__catalog_connector_item_deployment_cdg_1_2.sql").read_text()
+    assert "ALTER TABLE apiome.catalog_connector_items" in text
+    assert "ADD COLUMN IF NOT EXISTS deployment JSONB NOT NULL DEFAULT '{}'::jsonb" in text
+    assert "DROP COLUMN IF EXISTS deployment" in text  # documented rollback

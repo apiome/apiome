@@ -180,6 +180,7 @@ class FakeConnectorStore:
             "base_path": candidate.base_path,
             "remote_revision": candidate.revision,
             "remote_updated_at": candidate.updated_at,
+            "deployment": dict(candidate.deployment or {}),
             "last_seen_at": _now(),
         }
         if existing is None:
@@ -293,3 +294,12 @@ class FakeDb:
 
     def quota_total(self, metric: str) -> int:
         return sum(q["amount"] for q in self.quota if q["metric"] == metric)
+
+
+def restore_builtin_sources() -> None:
+    """Re-register the sources the app ships (tests that swap in a fake source call this after)."""
+    from app import kong_connector_source as kong
+    from app.catalog_connector_sync import register_connector_source
+
+    register_connector_source(kong.KIND_KONNECT, kong.KongKonnectSource, scope_validator=kong.validate_konnect_scope)
+    register_connector_source(kong.KIND_ADMIN, kong.KongAdminSource, scope_validator=kong.validate_admin_scope)

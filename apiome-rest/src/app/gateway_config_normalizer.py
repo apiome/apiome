@@ -270,6 +270,18 @@ def normalize_gateway_config(
         ],
         "global_plugins": sorted({plugin.name for plugin in document.global_plugins}),
     }
+    if document.flavor == "kong":
+        # CDG-1.2: every non-auth plugin is gateway policy the canonical model does not
+        # represent (rate limits, transforms, CORS). Its name rides on the operations it
+        # applies to and its config stays in the captured source; the ledger lists it so it
+        # is visibly kept, never silently dropped.
+        gateway_report["unmodeled_plugins"] = [
+            {"name": name, "scope": scope}
+            for name, scope in sorted(
+                {(plugin.name, plugin.scope) for route in document.routes for plugin in route.plugins}
+                | {(plugin.name, plugin.scope) for plugin in document.global_plugins}
+            )
+        ]
 
     api_extras: Dict[str, Any] = {"gateway": gateway_report}
     if inferred_schemes:

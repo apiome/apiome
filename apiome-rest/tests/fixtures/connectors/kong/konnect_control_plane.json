@@ -1,0 +1,14 @@
+{
+  "id": "5f1c2a3b-0000-4000-8000-00000000c001",
+  "name": "prod-eu",
+  "description": "Production gateways (EU)",
+  "labels": {"env": "prod"},
+  "config": {
+    "control_plane_endpoint": "https://5f1c2a3b.eu.cp0.konghq.com",
+    "telemetry_endpoint": "https://5f1c2a3b.eu.tp0.konghq.com",
+    "cluster_type": "CLUSTER_TYPE_CONTROL_PLANE",
+    "auth_type": "pinned_client_certs"
+  },
+  "created_at": "2026-06-01T09:00:00Z",
+  "updated_at": "2026-09-30T12:00:00Z"
+}

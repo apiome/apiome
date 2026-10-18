@@ -60,6 +60,20 @@
             "name": "hmac-auth",
             "scope": "service"
           }
+        ],
+        "unmodeled_plugins": [
+          {
+            "name": "cors",
+            "scope": "global"
+          },
+          {
+            "name": "prometheus",
+            "scope": "global"
+          },
+          {
+            "name": "rate-limiting",
+            "scope": "service"
+          }
         ]
       },
       "inferred_auth_schemes": [
@@ -531,7 +545,7 @@
     "confidence": 0.95,
     "format": "kong"
   },
-  "fingerprint": "sha256:fac7da0082306f9bfeef7ea68b5a4afa40627e5d473e2005b06f82af67e44598",
+  "fingerprint": "sha256:9eced666b044ae3da24b97259d59b5303d598910a5fad1ee92f30fefdb999c19",
   "lint": {
     "findings": 9,
     "grade": "C",

@@ -218,3 +218,45 @@ def test_fileset_merges_split_declarative_config(adapter: KongImportSource) -> N
     )
     model = adapter.normalize(adapter.parse_fileset(fileset))
     assert {op.key for op in model.operations()} == {"GET /ping", "GET /status"}
+
+
+UNMODELED_PLUGINS = """\
+_format_version: "3.0"
+services:
+  - name: orders-service
+    plugins:
+      - name: acme-audit-trail
+        config:
+          sink: s3://audit
+    routes:
+      - name: orders
+        paths: ["/orders"]
+        methods: [GET]
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 60
+plugins:
+  - name: correlation-id
+"""
+
+
+def test_unmodeled_plugins_are_listed_in_the_ledger_not_dropped(adapter: KongImportSource) -> None:
+    """CDG-1.2: every non-auth plugin is a partially-mapped ledger row, by name and scope."""
+    model = adapter.normalize(adapter.parse(UNMODELED_PLUGINS, source_label="kong.yaml"))
+    assert model.extras["gateway"]["unmodeled_plugins"] == [
+        {"name": "acme-audit-trail", "scope": "service"},
+        {"name": "correlation-id", "scope": "global"},
+        {"name": "rate-limiting", "scope": "route"},
+    ]
+    page = paginate_import_preview_manifest(
+        build_import_preview_manifest(model, adapter_key="kong", options={})
+    )
+    rows = {r.source_construct: r for r in page.coverage}
+    for construct in (
+        "gateway#plugin.acme-audit-trail.service",
+        "gateway#plugin.correlation-id.global",
+        "gateway#plugin.rate-limiting.route",
+    ):
+        assert rows[construct].coverage is CoverageClass.PARTIALLY_MAPPED
+        assert "captured source" in rows[construct].detail

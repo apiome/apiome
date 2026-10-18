@@ -3,7 +3,7 @@
 The engine and route tests run over an in-memory fake; this module runs the real store
 functions against the local database so the V281 SQL itself is exercised: tenant scoping, the
 live-name index, the single-flight run index, missing-marking that never deletes, the shared
-quota count and the ledger's shape check. It skips itself when no database with V281 applied
+quota count and the ledger's shape check. It skips itself when no database with V281/V282 applied
 (and at least one tenant) is reachable, so it never fails a machine without Postgres.
 """
 
@@ -26,12 +26,16 @@ def live() -> Iterator[tuple]:
     """A real Database, a tenant id and a cleanup list; skips when unavailable."""
     database = Database()
     try:
-        ready = database.execute_query("SELECT to_regclass('apiome.catalog_connectors') AS t")
+        ready = database.execute_query(
+            "SELECT to_regclass('apiome.catalog_connectors') AS t, EXISTS (SELECT 1 FROM information_schema.columns "
+            "WHERE table_schema = 'apiome' AND table_name = 'catalog_connector_items' "
+            "AND column_name = 'deployment') AS has_deployment"
+        )
         tenants = database.execute_query("SELECT id FROM apiome.tenants ORDER BY created_at LIMIT 1")
     except Exception as exc:  # noqa: BLE001 - no database at all
         pytest.skip(f"no live Postgres: {exc}")
-    if not ready or ready[0]["t"] is None or not tenants:
-        pytest.skip("V281 not applied or no tenant in the local database")
+    if not ready or ready[0]["t"] is None or not ready[0]["has_deployment"] or not tenants:
+        pytest.skip("V281/V282 not applied or no tenant in the local database")
     created: list = []
     try:
         yield database, str(tenants[0]["id"]), created
@@ -105,6 +109,12 @@ def test_inventory_marks_missing_and_never_deletes(live):
     back = store.upsert_seen_item(database, connector_id, RefreshCandidate(remote_id="b", revision="r2"))
     assert back["status"] == "discovered" and back["remote_revision"] == "r2"
     assert store.count_items(database, connector_id, status=None) == 2
+    # V282: the deployment bag round-trips and is replaced by the next sighting.
+    seen = store.upsert_seen_item(
+        database, connector_id, RefreshCandidate(remote_id="a", deployment={"controlPlaneName": "prod", "tags": ["x"]})
+    )
+    assert seen["deployment"] == {"controlPlaneName": "prod", "tags": ["x"]}
+    assert store.upsert_seen_item(database, connector_id, RefreshCandidate(remote_id="a"))["deployment"] == {}
     page = store.list_items(database, connector_id, status="discovered", limit=1, offset=1)
     assert [r["remote_id"] for r in page] == ["b"]
 

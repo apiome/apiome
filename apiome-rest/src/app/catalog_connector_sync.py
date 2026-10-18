@@ -32,10 +32,21 @@ succeeded is ``succeeded`` with the failures counted in its summary.
 run, not to the audit row, not to a log line. A provider error message that happens to echo a
 credential value has the value redacted before it is stored.
 
-**Sources** are registered per kind with :func:`register_connector_source`. This ticket ships
-the engine only; the gateway sources are CDG-1.2–1.7 and the ``url`` source is RAR-6.1. A
-connector whose kind has no source is listed and editable but cannot sync
-(``connector-kind-unsupported``), and the sweep skips it.
+**Sources** are registered per kind with :func:`register_connector_source`, optionally with a
+scope validator the routes run on every write (:func:`validate_connector_scope`). The Kong
+sources (``kong-konnect``, ``kong-admin``; CDG-1.2) register themselves from
+:mod:`app.kong_connector_source`, imported at the bottom of this module; the other gateway
+sources are CDG-1.3–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
+is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
+
+**Findings.** A source may expose ``findings`` (a list of credential-free dicts with a ``code``)
+about the inventory as a whole rather than one API — the Kong source reports a route that
+belongs to no service this way. The run records them in its summary (``findings``, capped at
+:data:`FINDINGS_MAX`, with ``findingsTotal``).
+
+**Change reports.** When a sync adds a revision to a catalog item that already had one, the
+default importer writes a change report between the two revisions
+(:mod:`app.catalog_revision_change_report`), so a gateway change is reviewable like a refresh.
 """
 
 from __future__ import annotations
@@ -85,6 +96,7 @@ __all__ = [
     "source_factory_for",
     "syncable_kinds",
     "unregister_connector_source",
+    "validate_connector_scope",
 ]
 
 #: Workflow-audit action for a connector run (the ``repository.`` prefix puts it in the
@@ -98,20 +110,52 @@ ERROR_CLASS_IMPORT_FAILED = "import-failed"
 
 _MESSAGE_MAX_CHARS = 500
 
+#: At most this many source findings are kept on a run's summary (``findingsTotal`` counts all).
+FINDINGS_MAX = 50
+
 #: ``(connector_row, credentials or None) -> RefreshSource``.
 SourceFactory = Callable[[Mapping[str, Any], Optional[Dict[str, str]]], RefreshSource]
 
+#: ``(scope, base_url) -> None``; raises :class:`ConnectorError` (``connector-invalid``).
+ScopeValidator = Callable[[Mapping[str, Any], Optional[str]], None]
+
 _SOURCES: Dict[str, SourceFactory] = {}
+_SCOPE_VALIDATORS: Dict[str, ScopeValidator] = {}
 
 
-def register_connector_source(kind: str, factory: SourceFactory) -> None:
-    """Make connectors of ``kind`` syncable with sources built by ``factory``."""
+def register_connector_source(
+    kind: str, factory: SourceFactory, *, scope_validator: Optional[ScopeValidator] = None
+) -> None:
+    """Make connectors of ``kind`` syncable with sources built by ``factory``.
+
+    Args:
+        kind: The connector kind.
+        factory: Builds the source for one connector row and its unsealed credentials.
+        scope_validator: Checks the kind's ``scope`` (and base URL) when a connector is created
+            or updated; ``None`` accepts any scope that passes the generic checks.
+    """
     _SOURCES[kind] = factory
+    if scope_validator is not None:
+        _SCOPE_VALIDATORS[kind] = scope_validator
+    else:
+        _SCOPE_VALIDATORS.pop(kind, None)
 
 
 def unregister_connector_source(kind: str) -> None:
-    """Remove the source for ``kind`` (tests)."""
+    """Remove the source (and scope validator) for ``kind`` (tests)."""
     _SOURCES.pop(kind, None)
+    _SCOPE_VALIDATORS.pop(kind, None)
+
+
+def validate_connector_scope(kind: str, scope: Mapping[str, Any], base_url: Optional[str]) -> None:
+    """Run the kind's scope validator, when its source registered one.
+
+    Raises:
+        ConnectorError: ``connector-invalid`` naming what is wrong with the scope.
+    """
+    validator = _SCOPE_VALIDATORS.get(kind)
+    if validator is not None:
+        validator(scope, base_url)
 
 
 def source_factory_for(kind: str) -> Optional[SourceFactory]:
@@ -249,8 +293,9 @@ def import_document_as_catalog_item(
     """Import a fetched document through the in-process pipeline as a catalog item.
 
     The first import of a remote API creates the catalog item; later imports add a revision to
-    the same item (its id is on the inventory row). An item that was deleted, or converted into
-    a Project since, is not written to; a new catalog item is created instead.
+    the same item (its id is on the inventory row) and write a change report against the
+    revision imported before it (CDG-1.2). An item that was deleted, or converted into a Project
+    since, is not written to; a new catalog item is created instead.
 
     Runs the async pipeline to completion on a private event loop, so it must be called from a
     thread with no running loop (the routes and the sweep call the engine via ``to_thread``).
@@ -271,11 +316,17 @@ def import_document_as_catalog_item(
         raise ConnectorImportError(f"No importer for kind {document.import_kind!r}.")
 
     existing_project_id = None
+    parent_version_id: Optional[str] = None
     prior = item_row.get("project_id")
     if prior:
         project = db.get_project_by_id(str(prior), tenant_id)
         if project and not project.get("deleted_at") and project.get("publishable") is False:
             existing_project_id = str(prior)
+            if item_row.get("imported_revision"):
+                parent = db.get_version_by_version_id(
+                    existing_project_id, revision_label(item_row.get("imported_revision")), tenant_id
+                )
+                parent_version_id = str(parent["id"]) if parent else None
 
     revision = document.revision or candidate.revision
     payload: Dict[str, Any] = {
@@ -306,7 +357,19 @@ def import_document_as_catalog_item(
     if final.state != "completed" or final.result is None or not final.result.project_id:
         reason = final.error.message if final.error is not None else f"import ended {final.state}"
         raise ConnectorImportError(reason)
-    return str(final.result.project_id)
+    project_id = str(final.result.project_id)
+    new_version_id = final.result.version_record_id
+    if parent_version_id and new_version_id and str(new_version_id) != parent_version_id:
+        from .catalog_revision_change_report import generate_catalog_revision_change_report
+
+        generate_catalog_revision_change_report(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            revision_version_id=str(new_version_id),
+            parent_version_id=parent_version_id,
+            actor_id=actor_id or connector.get("created_by"),
+        )
+    return project_id
 
 
 def _audit(db: Any, connector: Mapping[str, Any], result: ConnectorSyncResult, actor_id: Optional[str]) -> None:
@@ -405,6 +468,10 @@ def run_connector_sync(
         source = factory(connector, credentials)
         candidates = list(source.list_candidates())
         summary["candidates"] = len(candidates)
+        findings = [dict(f) for f in (getattr(source, "findings", None) or [])]
+        if findings:
+            summary["findings"] = findings[:FINDINGS_MAX]
+            summary["findingsTotal"] = len(findings)
 
         rows: Dict[str, Dict[str, Any]] = {}
         for candidate in candidates:
@@ -591,3 +658,7 @@ def process_connector_refresh_sweep(db: Any) -> int:
         if quota is not None:
             quota.consume(tenant_id, result.pull_count)
     return pulled
+
+
+# Built-in sources register themselves on import (they subclass ConnectorRefreshSource above).
+from . import kong_connector_source  # noqa: E402,F401

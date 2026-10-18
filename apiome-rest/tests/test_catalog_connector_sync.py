@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import pytest
-from catalog_connector_fakes import FakeConnectorStore, FakeDb
+from catalog_connector_fakes import FakeConnectorStore, FakeDb, restore_builtin_sources
 
 from app import catalog_connector_sync as sync
 from app.catalog_connector_sync import (
@@ -29,7 +29,6 @@ from app.catalog_connector_sync import (
     register_connector_source,
     run_connector_sync,
     syncable_kinds,
-    unregister_connector_source,
 )
 from app.catalog_connectors import CODE_KIND_UNSUPPORTED, CODE_SYNC_RUNNING, ConnectorError
 from app.config import settings
@@ -111,7 +110,7 @@ def _source():
     FakeGatewaySource.fetched = []
     register_connector_source("kong-admin", FakeGatewaySource)
     yield
-    unregister_connector_source("kong-admin")
+    restore_builtin_sources()
 
 
 @pytest.fixture(autouse=True)
@@ -469,3 +468,49 @@ def test_default_importer_surfaces_a_failed_import(monkeypatch):
         import_document_as_catalog_item(
             connector, _api("o"), FetchedDocument(content=b"x", filename="o", import_kind="nope-format"), {}, ACTOR
         )
+
+
+def test_default_importer_writes_a_change_report_when_it_adds_a_revision(monkeypatch):
+    async def _fake_run(adapter, payload, **kwargs):
+        return SpecImportJobStatus(
+            job_id="j",
+            state="completed",
+            percent=100,
+            result=SpecImportJobResult(project_id="proj-1", version_id="r2", version_record_id="ver-2"),
+        )
+
+    reports: List[Dict[str, Any]] = []
+    looked_up: List[tuple] = []
+
+    def _version_by_label(project_id, label, tenant_id):
+        looked_up.append((project_id, label, tenant_id))
+        return {"id": "ver-1"} if label == "r1" else None
+
+    monkeypatch.setattr("app.import_source_pipeline.run_adapter_import_job", _fake_run)
+    monkeypatch.setattr(
+        "app.database.db.get_project_by_id", lambda pid, tid: {"id": pid, "publishable": False, "deleted_at": None}
+    )
+    monkeypatch.setattr("app.database.db.get_version_by_version_id", _version_by_label)
+    monkeypatch.setattr(
+        "app.catalog_revision_change_report.generate_catalog_revision_change_report",
+        lambda **kwargs: reports.append(kwargs),
+    )
+    connector = {"id": "c1", "tenant_id": TENANT, "kind": "kong-admin", "name": "P", "created_by": ACTOR}
+    document = FetchedDocument(content=b"{}", filename="o.json", revision="r2")
+    row = {"project_id": "proj-1", "imported_revision": "r1"}
+    assert import_document_as_catalog_item(connector, _api("o", "r2"), document, row, None) == "proj-1"
+    assert looked_up == [("proj-1", "r1", TENANT)]
+    assert reports == [
+        {
+            "tenant_id": TENANT,
+            "project_id": "proj-1",
+            "revision_version_id": "ver-2",
+            "parent_version_id": "ver-1",
+            "actor_id": ACTOR,
+        }
+    ]
+
+    # A first import (no prior revision) writes no report.
+    reports.clear()
+    import_document_as_catalog_item(connector, _api("o", "r2"), document, {}, ACTOR)
+    assert reports == []

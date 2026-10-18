@@ -1182,8 +1182,9 @@ def _gateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
     row per inferred auth scheme, one ``partially-mapped`` row per auth plugin
     with no canonical mapping (its config rides in extras), one
     ``unsupported-by-canonical-model`` row per recognized-but-unmodeled source
-    construct, and a ``mapped`` statement of credential redaction so the scrub
-    is visible, not silent.
+    construct, one ``partially-mapped`` row per non-auth Kong plugin (CDG-1.2: gateway
+    policy the canonical model does not represent, kept in the captured source), and a
+    ``mapped`` statement of credential redaction so the scrub is visible, not silent.
     """
     report = api.extras.get("gateway") if isinstance(api.extras, dict) else None
     if not isinstance(report, dict):
@@ -1244,6 +1245,25 @@ def _gateway_capability_rows(api: CanonicalApi) -> List[CoverageEntry]:
                     f"Auth plugin {plugin.get('name')!r} ({plugin.get('scope')} scope) "
                     "has no canonical security mapping; its configuration is preserved "
                     "verbatim in extras."
+                ),
+                document_scoped=True,
+            )
+        )
+
+    for plugin in report.get("unmodeled_plugins") or []:
+        if not isinstance(plugin, dict) or not plugin.get("name"):
+            continue
+        rows.append(
+            CoverageEntry(
+                source_construct=f"gateway#plugin.{plugin.get('name')}.{plugin.get('scope')}",
+                coverage=CoverageClass.PARTIALLY_MAPPED,
+                status=partial_status,
+                reason=partial_reason,
+                detail=(
+                    f"Plugin {plugin.get('name')!r} ({plugin.get('scope')} scope) is gateway "
+                    "policy the canonical model does not represent; its name is kept on the "
+                    "operations it applies to and its configuration stays in the captured "
+                    "source."
                 ),
                 document_scoped=True,
             )
