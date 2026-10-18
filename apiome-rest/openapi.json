@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.233.0",
+    "version": "1.234.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -21816,6 +21816,149 @@
         }
       }
     },
+    "/v1/tenants/{tenant_slug}/unowned-findings": {
+      "get": {
+        "tags": [
+          "owners"
+        ],
+        "summary": "List unowned findings",
+        "description": "Findings that reached no team because their entity has no confirmed owner \u2014 never dropped, kept here, newest first. One row per entity and finding type, with `occurrences` and the latest `payload`. Assigning an owner (`PUT /v1/tenants/{tenant}/owners/{kind}/{id}`) routes the next occurrence to the team and clears the row.\n\nRequires `teams:view`.",
+        "operationId": "get_unowned_findings_v1_tenants__tenant_slug__unowned_findings_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "owner_finding",
+                    "owner_breaking_change",
+                    "owner_verification_drift",
+                    "owner_gate_blocked",
+                    "owner_trust_drift",
+                    "owner_shadow_api",
+                    "owner_sync_failed"
+                  ],
+                  "type": "string",
+                  "description": "Listunownedfindingstype schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listunownedfindingstype schema."
+                }
+              ],
+              "title": "Type",
+              "description": "Type schema."
+            },
+            "description": "Query parameter: type."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset",
+              "description": "Offset schema."
+            },
+            "description": "Number of rows to skip before returning results."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listunownedfindingsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listunownedfindingsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listunownedfindings Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listunownedfindings Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list unowned findings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnownedFindingsResponse",
+                  "description": "Response payload for listunownedfindingsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listunownedfindingsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/comment-threads": {
       "get": {
         "tags": [
@@ -27057,7 +27200,14 @@
                     "review_requested",
                     "review_decision",
                     "thread_resolved",
-                    "version_published"
+                    "version_published",
+                    "owner_finding",
+                    "owner_breaking_change",
+                    "owner_verification_drift",
+                    "owner_gate_blocked",
+                    "owner_trust_drift",
+                    "owner_shadow_api",
+                    "owner_sync_failed"
                   ],
                   "type": "string",
                   "description": "Listthecallersnotificationstype schema."
@@ -100334,7 +100484,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "completed_at": {
             "anyOf": [
@@ -102258,7 +102408,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "comment_count": {
             "type": "integer",
@@ -102486,7 +102636,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "comment_count": {
             "type": "integer",
@@ -103017,14 +103167,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -106163,7 +106313,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "5e80b99b-ca71-4485-b7a3-2fbdabaaaa4d"
+            "example": "de2a80ec-c271-4576-94c5-4eb5a6e5d2c0"
           },
           "method": {
             "type": "string",
@@ -108690,7 +108840,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -110426,7 +110576,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "browse_url": {
             "anyOf": [
@@ -138438,7 +138588,14 @@
               "review_requested",
               "review_decision",
               "thread_resolved",
-              "version_published"
+              "version_published",
+              "owner_finding",
+              "owner_breaking_change",
+              "owner_verification_drift",
+              "owner_gate_blocked",
+              "owner_trust_drift",
+              "owner_shadow_api",
+              "owner_sync_failed"
             ],
             "title": "Type",
             "description": "Which kind of event this is.",
@@ -151181,7 +151338,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           }
         },
         "additionalProperties": false,
@@ -163326,7 +163483,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "detected_by": {
             "anyOf": [
@@ -168841,6 +168998,110 @@
         "title": "UnlinkArtifactsRequest",
         "description": "Remove one project from a shared identity group (pairwise unlink)."
       },
+      "UnownedFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "entity_kind": {
+            "type": "string",
+            "title": "Entity Kind",
+            "description": "`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.",
+            "example": "example"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id",
+            "description": "Entity ID.",
+            "example": "entity_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "finding_type": {
+            "type": "string",
+            "title": "Finding Type",
+            "description": "Finding Type.",
+            "example": "example"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "description": "The latest occurrence: `summary`, `link`, `finding_id`, `entity_name` and details."
+          },
+          "occurrences": {
+            "type": "integer",
+            "title": "Occurrences",
+            "description": "How many times this finding has happened on the entity.",
+            "example": 1
+          },
+          "first_seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Unowned Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Unowned Finding schema."
+              }
+            ],
+            "title": "First Seen At",
+            "description": "First Seen At timestamp (ISO 8601)."
+          },
+          "last_seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Unowned Finding schema."
+              },
+              {
+                "type": "null",
+                "description": "Unowned Finding schema."
+              }
+            ],
+            "title": "Last Seen At",
+            "description": "Last Seen At timestamp (ISO 8601)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_kind",
+          "entity_id",
+          "finding_type",
+          "occurrences"
+        ],
+        "title": "UnownedFinding",
+        "description": "One entity and finding type that reached no owner."
+      },
+      "UnownedFindingsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnownedFinding"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "total"
+        ],
+        "title": "UnownedFindingsResponse",
+        "description": "A page of the report."
+      },
       "UnpublishTagKept": {
         "properties": {
           "id": {
@@ -171099,14 +171360,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T19:16:33Z"
+            "example": "2026-10-18T19:55:09Z"
           },
           "outcome": {
             "anyOf": [

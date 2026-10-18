@@ -488,7 +488,7 @@ describe('the other tabs', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('switches the five in-app notification types on and off (COL-3.2, #4522)', async () => {
+  it('switches every in-app notification type on and off (COL-3.2, #4522; CDG-2.3, #5962)', async () => {
     const user = userEvent.setup();
     renderHost();
     await openPane(user);
@@ -521,9 +521,11 @@ describe('the other tabs', () => {
     await user.click(screen.getByRole('tab', { name: 'Notifications' }));
     const panel = screen.getByTestId('preferences-notifications');
 
-    // The five switches govern the in-app centre only. A tab that let the reader infer
+    // The switches govern the in-app centre only. A tab that let the reader infer
     // otherwise would be the same mistake HIVE-1.4 left it empty to avoid.
-    expect(panel).toHaveTextContent('Email digests and chat delivery are not available yet');
+    expect(panel).toHaveTextContent('Email digests and personal chat delivery are not available yet');
+    // Owner findings also reach the team's chat channel, which is not the reader's switch.
+    expect(panel).toHaveTextContent('which these switches do not change');
     expect(panel).toHaveTextContent('apply to this device');
   });
 

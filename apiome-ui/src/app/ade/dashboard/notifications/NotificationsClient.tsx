@@ -15,6 +15,7 @@ import { useAuthSession } from '@lib/auth/session-client';
 import { useNotifications } from '@/app/hooks/useNotifications';
 import { useNotificationPreferences } from '@/app/hooks/useNotificationPreferences';
 import {
+  NOTIFICATION_TYPES,
   NOTIFICATION_TYPE_LABELS,
   groupNotificationsByTime,
   notificationHref,
@@ -97,7 +98,7 @@ export default function NotificationsClient({ now }: { now?: number }) {
   );
 
   /** How many of the five the reader has switched off, for the note under the chips. */
-  const mutedCount = 5 - visibleTypes.length;
+  const mutedCount = NOTIFICATION_TYPES.length - visibleTypes.length;
 
   const handleOpenPreferences = React.useCallback(() => {
     openPreferences('notifications');

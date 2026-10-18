@@ -2,11 +2,18 @@
 
 import * as React from 'react';
 import {
+  Activity,
   AtSign,
+  Bug,
   CircleCheckBig,
+  FileDiff,
+  Ghost,
   GitPullRequestArrow,
   MessageSquareCheck,
+  OctagonX,
+  RefreshCwOff,
   Rocket,
+  ShieldAlert,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,6 +51,13 @@ export const NOTIFICATION_TYPE_ICONS: Readonly<Record<NotificationType, LucideIc
   review_decision: CircleCheckBig,
   thread_resolved: MessageSquareCheck,
   version_published: Rocket,
+  owner_finding: Bug,
+  owner_breaking_change: FileDiff,
+  owner_verification_drift: Activity,
+  owner_gate_blocked: OctagonX,
+  owner_trust_drift: ShieldAlert,
+  owner_shadow_api: Ghost,
+  owner_sync_failed: RefreshCwOff,
 };
 
 /** Props for {@link NotificationRowContent}. */

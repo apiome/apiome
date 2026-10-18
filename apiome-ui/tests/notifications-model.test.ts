@@ -26,6 +26,9 @@ import {
   NOTIFICATION_TYPES,
   groupNotificationsByTime,
   isNotificationType,
+  isOwnerNotificationType,
+  OWNER_NOTIFICATION_TYPES,
+  ownerFindingHref,
   notificationBucket,
   notificationContext,
   notificationExcerpt,
@@ -72,13 +75,20 @@ function row(overrides: Partial<NotificationRow> = {}): NotificationRow {
 }
 
 describe('the type vocabulary', () => {
-  test('is the five COL-3.1 writes, and nothing else passes the guard', () => {
+  test('is the five COL-3.1 writes and the seven CDG-2.3 owner findings, and nothing else passes the guard', () => {
     expect(NOTIFICATION_TYPES).toEqual([
       'mention',
       'review_requested',
       'review_decision',
       'thread_resolved',
       'version_published',
+      'owner_finding',
+      'owner_breaking_change',
+      'owner_verification_drift',
+      'owner_gate_blocked',
+      'owner_trust_drift',
+      'owner_shadow_api',
+      'owner_sync_failed',
     ]);
     for (const type of NOTIFICATION_TYPES) expect(isNotificationType(type)).toBe(true);
     for (const other of ['', 'Mention', 'email', null, 7, undefined]) {
@@ -363,5 +373,64 @@ describe('sanitizeMarkReadBody', () => {
     const many = Array.from({ length: NOTIFICATION_MAX_LIMIT + 50 }, () => THREAD_ID);
     const sanitized = sanitizeMarkReadBody({ ids: many });
     expect(sanitized && 'ids' in sanitized && sanitized.ids.length).toBe(NOTIFICATION_MAX_LIMIT);
+  });
+});
+
+describe('owner findings (CDG-2.3)', () => {
+  const owner = (overrides: Partial<NotificationRow> = {}) =>
+    row({
+      type: 'owner_breaking_change',
+      actor_id: null,
+      actor_name: null,
+      payload: {
+        entity_kind: 'catalog_item',
+        entity_name: 'Payments API',
+        summary: 'A refresh introduced 2 breaking changes',
+        link: '/ade/dashboard/catalog/abc',
+        team: { slug: 'payments', name: 'Payments' },
+      },
+      ...overrides,
+    });
+
+  test('the seven owner types are told apart from the collaboration types', () => {
+    expect(OWNER_NOTIFICATION_TYPES).toHaveLength(7);
+    for (const type of OWNER_NOTIFICATION_TYPES) expect(isOwnerNotificationType(type)).toBe(true);
+    expect(isOwnerNotificationType('mention')).toBe(false);
+  });
+
+  test('the sentence is the finding\'s own summary, with no actor', () => {
+    expect(notificationSentence(owner())).toBe('A refresh introduced 2 breaking changes');
+  });
+
+  test('a finding with no summary still says what kind of finding it is', () => {
+    expect(notificationSentence(owner({ type: 'owner_sync_failed', payload: {} }))).toBe(
+      'A connector sync failed'
+    );
+  });
+
+  test('the context names the team and the entity', () => {
+    expect(notificationContext(owner())).toBe('Payments · Payments API');
+    expect(
+      notificationContext(owner({ payload: { entity_kind: 'connector', team: { slug: 'payments' } } }))
+    ).toBe('payments · Connector');
+    expect(notificationContext(owner({ payload: {} }))).toBe('');
+  });
+
+  test('the link is the finding\'s own, and only an app path is followed', () => {
+    expect(notificationHref(owner())).toBe('/ade/dashboard/catalog/abc');
+    expect(ownerFindingHref('/ade/dashboard/connectors/c-1?tab=runs')).toBe(
+      '/ade/dashboard/connectors/c-1?tab=runs'
+    );
+    for (const unsafe of [
+      'https://evil.example/',
+      '//evil.example/ade/',
+      'javascript:alert(1)',
+      '/api/notifications',
+      '/ade\\..\\evil',
+      '',
+      undefined,
+    ]) {
+      expect(ownerFindingHref(unsafe)).toBeNull();
+    }
   });
 });

@@ -1,9 +1,10 @@
 /**
  * Per-type in-app notification preferences — COL-3.2 (#4522).
  *
- * The reader decides which of COL-3.1's five events the notification centre shows them.
+ * The reader decides which notification types — COL-3.1's five, plus CDG-2.3's owner findings —
+ * the notification centre shows them.
  * The switches live in the preferences pane's Notifications tab; this module is where the
- * five values are stored, read and applied.
+ * values are stored, read and applied.
  *
  * ### Why the preference is honoured on *read*
  *
@@ -25,8 +26,8 @@
  *   it does not.
  *
  * They are **not** added to `config/preferences.ts`: every key in that record is applied
- * to `<html>` as a `data-*` attribute by a blocking boot script, and these five change no
- * token and no layout. Putting them there would cost every page five attributes and five
+ * to `<html>` as a `data-*` attribute by a blocking boot script, and these values change no
+ * token and no layout. Putting them there would cost every page a dozen attributes and a dozen
  * lines of pre-paint script to decide which rows a dropdown draws.
  *
  * Every read and write is guarded, like `components/shell/whatsNewSeen.ts`: storage
@@ -43,7 +44,7 @@ import {
 /** Whether a type's notifications are shown in the app. */
 export type NotificationChannelState = 'on' | 'off';
 
-/** The reader's choice for each of the five types. */
+/** The reader's choice for each type. */
 export type NotificationPreferences = Record<NotificationType, NotificationChannelState>;
 
 /**
@@ -51,7 +52,7 @@ export type NotificationPreferences = Record<NotificationType, NotificationChann
  *
  * Namespaced with the rest of the shell's keys (`hive.*`) so a future "reset preferences"
  * can find them, and keyed per type rather than as one JSON blob so a corrupt value costs
- * one switch rather than all five.
+ * one switch rather than all of them.
  */
 export const NOTIFICATION_PREFERENCE_KEYS: Readonly<Record<NotificationType, string>> =
   Object.freeze(
@@ -64,7 +65,7 @@ export const NOTIFICATION_PREFERENCE_KEYS: Readonly<Record<NotificationType, str
 const OWNED_KEYS: ReadonlySet<string> = new Set(Object.values(NOTIFICATION_PREFERENCE_KEYS));
 
 /**
- * What a reader who has never opened the tab gets: all five on.
+ * What a reader who has never opened the tab gets: every type on.
  *
  * Also the server snapshot. Defaulting to *on* is the only safe direction — a default of
  * off would hide a review request from somebody who never asked for it to be hidden.
@@ -103,7 +104,7 @@ export function readNotificationPreference(type: NotificationType): Notification
 }
 
 /**
- * Read all five.
+ * Read them all.
  *
  * @returns The reader's preferences, complete.
  */
@@ -143,7 +144,7 @@ export function subscribeNotificationPreferences(listener: () => void): () => vo
   if (typeof window === 'undefined') return () => {};
 
   const handleStorage = (event: StorageEvent) => {
-    // `key === null` is `localStorage.clear()`, which resets all five at once.
+    // `key === null` is `localStorage.clear()`, which resets every type at once.
     if (event.key !== null && !OWNED_KEYS.has(event.key)) return;
     listener();
   };
@@ -221,7 +222,7 @@ export function filterMutedNotifications<T extends { type: NotificationType }>(
  * Whether every type is switched off.
  *
  * The one state a surface has to explain rather than draw: an empty centre because there
- * is nothing to say, and an empty centre because the reader silenced all five, must not be
+ * is nothing to say, and an empty centre because the reader silenced every type, must not be
  * the same screen.
  *
  * @param preferences - The reader's preferences.

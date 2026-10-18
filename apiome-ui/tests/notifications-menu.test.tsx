@@ -313,6 +313,28 @@ describe('the dropdown', () => {
 });
 
 describe('deep links', () => {
+  test('an owner finding lands on the finding its team was told about', async () => {
+    const user = userEvent.setup();
+    inbox = [
+      row('n1', {
+        type: 'owner_sync_failed',
+        project_id: null,
+        payload: {
+          entity_kind: 'connector',
+          entity_name: 'Prod Kong',
+          summary: 'Prod Kong failed to sync (auth)',
+          link: '/ade/dashboard/connectors/c-1?tab=runs',
+          team: { slug: 'payments', name: 'Payments' },
+        },
+      }),
+    ];
+    renderBell();
+    await openMenu(user);
+    const item = await screen.findByTestId('notification-n1');
+    expect(item).toHaveAttribute('href', '/ade/dashboard/connectors/c-1?tab=runs');
+    expect(item).toHaveTextContent('Prod Kong failed to sync (auth)');
+  });
+
   test('a mention lands on its thread', async () => {
     const user = userEvent.setup();
     inbox = [row('n1')];

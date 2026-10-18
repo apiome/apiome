@@ -26,8 +26,16 @@ __all__ = [
     "MAX_MARK_READ_IDS",
     "MAX_RECIPIENTS",
     "NOTIFICATION_TYPES",
+    "OWNER_NOTIFICATION_TYPES",
     "RETENTION_PER_USER",
     "TYPE_MENTION",
+    "TYPE_OWNER_BREAKING_CHANGE",
+    "TYPE_OWNER_FINDING",
+    "TYPE_OWNER_GATE_BLOCKED",
+    "TYPE_OWNER_SHADOW_API",
+    "TYPE_OWNER_SYNC_FAILED",
+    "TYPE_OWNER_TRUST_DRIFT",
+    "TYPE_OWNER_VERIFICATION_DRIFT",
     "TYPE_REVIEW_DECISION",
     "TYPE_REVIEW_REQUESTED",
     "TYPE_THREAD_RESOLVED",
@@ -52,17 +60,47 @@ TYPE_THREAD_RESOLVED = "thread_resolved"
 #: A version the recipient collaborated on was published.
 TYPE_VERSION_PUBLISHED = "version_published"
 
-#: The whole vocabulary. Mirrors ``notifications_type_check`` in apiome-db V263.
+# Owner routing (CDG-2.3, #5962): a finding about an entity the recipient's team owns.
+#: A new error-level lint finding.
+TYPE_OWNER_FINDING = "owner_finding"
+#: A refresh classified a breaking change.
+TYPE_OWNER_BREAKING_CHANGE = "owner_breaking_change"
+#: A verification schedule found drift.
+TYPE_OWNER_VERIFICATION_DRIFT = "owner_verification_drift"
+#: The deploy gate failed.
+TYPE_OWNER_GATE_BLOCKED = "owner_gate_blocked"
+#: An MCP endpoint drifted from its trust baseline.
+TYPE_OWNER_TRUST_DRIFT = "owner_trust_drift"
+#: A connector found APIs the catalog does not describe.
+TYPE_OWNER_SHADOW_API = "owner_shadow_api"
+#: A connector sync failed.
+TYPE_OWNER_SYNC_FAILED = "owner_sync_failed"
+
+#: The owner types, in the order the notification centre lists them.
+OWNER_NOTIFICATION_TYPES = (
+    TYPE_OWNER_FINDING,
+    TYPE_OWNER_BREAKING_CHANGE,
+    TYPE_OWNER_VERIFICATION_DRIFT,
+    TYPE_OWNER_GATE_BLOCKED,
+    TYPE_OWNER_TRUST_DRIFT,
+    TYPE_OWNER_SHADOW_API,
+    TYPE_OWNER_SYNC_FAILED,
+)
+
+#: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286).
 NOTIFICATION_TYPES = (
     TYPE_MENTION,
     TYPE_REVIEW_REQUESTED,
     TYPE_REVIEW_DECISION,
     TYPE_THREAD_RESOLVED,
     TYPE_VERSION_PUBLISHED,
+    *OWNER_NOTIFICATION_TYPES,
 )
 
 NotificationType = Literal[
-    "mention", "review_requested", "review_decision", "thread_resolved", "version_published"
+    "mention", "review_requested", "review_decision", "thread_resolved", "version_published",
+    "owner_finding", "owner_breaking_change", "owner_verification_drift", "owner_gate_blocked",
+    "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
 ]
 
 #: Newest rows kept per user. Mirrors ``retention_cap`` in V263's pruning trigger, which is what

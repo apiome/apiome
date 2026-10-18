@@ -17,6 +17,7 @@ The comparison is run against the SQL with ``--`` comments removed, so prose can
 from pathlib import Path
 
 _MIGRATION = "apiome-db/scripts/V263__notifications_col_3_1.sql"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _REQUIRED_FRAGMENTS = (
     "CREATE TABLE IF NOT EXISTS notifications (",
@@ -78,15 +79,18 @@ def test_migration_adds_no_rbac_resource_no_enum_type_and_no_preferences():
 
 
 def test_the_type_vocabulary_matches_the_rest_models():
-    from app.notifications import NOTIFICATION_TYPES
+    """V263 created the five collaboration types; V286 (CDG-2.3) swapped the CHECK to add the seven
+    owner types. Together they are exactly the vocabulary the API knows."""
+    from app.notifications import NOTIFICATION_TYPES, OWNER_NOTIFICATION_TYPES
 
     statements = _statements()
-    for name in NOTIFICATION_TYPES:
-        assert f"'{name}'" in statements, name
-    # And nothing the API does not know: every quoted type in the CHECK is one of ours.
     check = statements[statements.index("CHECK (type IN (") : statements.index("payload JSONB")]
-    quoted = {fragment.split("'")[0] for fragment in check.split("'")[1::2]}
-    assert quoted == set(NOTIFICATION_TYPES)
+    original = {fragment.split("'")[0] for fragment in check.split("'")[1::2]}
+    assert original == set(NOTIFICATION_TYPES) - set(OWNER_NOTIFICATION_TYPES)
+
+    swap = (_REPO_ROOT / "apiome-db/scripts/V286__owner_routing_cdg_2_3.sql").read_text()
+    widened = swap[swap.index("CHECK (type IN (") : swap.index("COMMENT ON COLUMN notifications.type")]
+    assert {fragment for fragment in widened.split("'")[1::2]} == set(NOTIFICATION_TYPES)
 
 
 def test_the_retention_cap_matches_the_constant_the_api_advertises():

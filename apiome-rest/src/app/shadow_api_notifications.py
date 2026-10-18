@@ -11,8 +11,9 @@ active push-webhook subscriptions, a Slack-native body for a Slack incoming webh
 structured JSON for anything else. The throttle is the same one-per-hour conditional upsert, keyed by
 connector (V283), because the repository throttle table is keyed by repository.
 
-Routing to the connector's **owner team** is CDG-2.3's: until it lands, every channel of the tenant
-receives the event. Possible matches never notify — they wait for a person in the report.
+The connector's **owner team** is told as well (CDG-2.3): an inbox row per member and its chat
+channel, or the Unowned findings report when the connector has no confirmed owner. Possible
+matches never notify — they wait for a person in the report.
 
 Best-effort throughout: every failure is logged and swallowed, so a notification problem can never
 fail the sync that found the API.
@@ -74,6 +75,26 @@ def build_shadow_notification(connector: Mapping[str, Any], shadow_rows: Sequenc
     }
 
 
+def _route_to_owner(db: Any, connector: Mapping[str, Any], payload: Mapping[str, Any]) -> str:
+    """Route the new shadow APIs to the connector's owner team (CDG-2.3); return the outcome status."""
+    from .owner_routing import TYPE_OWNER_SHADOW_API, OwnerFinding, route_owner_finding_safely
+
+    outcome = route_owner_finding_safely(
+        db,
+        OwnerFinding(
+            tenant_id=str(connector["tenant_id"]),
+            entity_kind="connector",
+            entity_id=str(connector["id"]),
+            finding_type=TYPE_OWNER_SHADOW_API,
+            summary=str(payload.get("summary") or "New shadow APIs"),
+            link=str(payload.get("reportHref") or "") or None,
+            entity_name=connector.get("name"),
+            details={"count": payload.get("count"), "apis": payload.get("apis")},
+        ),
+    )
+    return outcome.status
+
+
 def notify_new_shadow_apis(
     db: Any, connector: Mapping[str, Any], new_rows: Sequence[Mapping[str, Any]]
 ) -> Optional[Dict[str, Any]]:
@@ -85,8 +106,9 @@ def notify_new_shadow_apis(
         new_rows: The inventory rows the sync inserted (never seen before).
 
     Returns:
-        ``{shadow, delivered, suppressed}`` describing what happened, or ``None`` when there was
-        nothing to report. Never raises.
+        ``{shadow, delivered, suppressed, owner}`` describing what happened — ``owner`` is the
+        CDG-2.3 routing outcome (``routed``, ``throttled``, ``unowned``…) — or ``None`` when there
+        was nothing to report. Never raises.
     """
     try:
         candidates = [r for r in new_rows if not r.get("project_id") and r.get("status") != "ignored"]
@@ -97,12 +119,13 @@ def notify_new_shadow_apis(
         shadow = [row for row in candidates if not match_item(row, entries)]
         if not shadow:
             return None
+        payload = build_shadow_notification(connector, shadow)
+        owner = _route_to_owner(db, connector, payload)
         channels = resolve_channels(db, tenant_id)
         if not channels:
-            return {"shadow": len(shadow), "delivered": [], "suppressed": "no-channels"}
+            return {"shadow": len(shadow), "delivered": [], "suppressed": "no-channels", "owner": owner}
         if not claim_connector_notification_slot(db, tenant_id, str(connector["id"])):
-            return {"shadow": len(shadow), "delivered": [], "suppressed": "throttled"}
-        payload = build_shadow_notification(connector, shadow)
+            return {"shadow": len(shadow), "delivered": [], "suppressed": "throttled", "owner": owner}
         delivered: List[str] = []
         for channel in channels:
             try:
@@ -113,7 +136,7 @@ def notify_new_shadow_apis(
                     delivered.append(str(row["id"]))
             except Exception:  # noqa: BLE001 - one bad subscription must not stop the fan-out
                 logger.exception("shadow-api notification: enqueue failed for subscription %s", channel.subscription_id)
-        return {"shadow": len(shadow), "delivered": delivered, "suppressed": None}
+        return {"shadow": len(shadow), "delivered": delivered, "suppressed": None, "owner": owner}
     except Exception:  # noqa: BLE001 - a notification must never fail the sync
         logger.exception("shadow-api notification failed connector_id=%s", connector.get("id"))
         return None

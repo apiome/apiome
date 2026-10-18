@@ -433,6 +433,72 @@ describe('the empty states', () => {
  * from these dumps: `A11Y_FIXTURE_DUMP=1 npx jest tests/notifications-page.test.tsx -t "docs fixtures"`.
  * The same inbox inside the app shell is dumped by `tests/app-shell.test.tsx`.
  */
+/** An owner finding (CDG-2.3), as apiome-rest routes one to a team member. */
+function ownerRow(id: string, overrides: Partial<NotificationRow> = {}): NotificationRow {
+  return row(id, {
+    type: 'owner_breaking_change',
+    actor_id: null,
+    actor_name: null,
+    version_id: null,
+    payload: {
+      entity_kind: 'catalog_item',
+      entity_id: PROJECT_ID,
+      entity_name: 'Payments API',
+      summary: 'A refresh of acme/payments introduced 2 breaking changes',
+      link: `/ade/dashboard/catalog/${PROJECT_ID}`,
+      finding_id: 'report-7',
+      team: { id: 't-1', slug: 'payments', name: 'Payments' },
+    },
+    ...overrides,
+  });
+}
+
+describe('owner findings', () => {
+  test('say what happened, name the team and the entity, and link to the finding', async () => {
+    inbox = [ownerRow('o1')];
+    unread = { owner_breaking_change: 1 };
+    await renderPage();
+
+    const item = screen.getByTestId('notification-o1');
+    expect(item).toHaveTextContent('A refresh of acme/payments introduced 2 breaking changes');
+    expect(item).toHaveTextContent('Payments · Payments API');
+    expect(within(item).getByRole('link')).toHaveAttribute(
+      'href',
+      `/ade/dashboard/catalog/${PROJECT_ID}`
+    );
+  });
+
+  test('a finding whose link leaves the app is drawn inert', async () => {
+    inbox = [ownerRow('o2', { payload: { summary: 'x', link: 'https://evil.example/phish' } })];
+    await renderPage();
+    expect(within(screen.getByTestId('notification-o2')).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  test('every owner type has a chip of its own', async () => {
+    await renderPage();
+    for (const type of [
+      'owner_finding',
+      'owner_breaking_change',
+      'owner_verification_drift',
+      'owner_gate_blocked',
+      'owner_trust_drift',
+      'owner_shadow_api',
+      'owner_sync_failed',
+    ]) {
+      expect(screen.getByTestId(`notifications-filter-${type}`)).toBeInTheDocument();
+    }
+  });
+
+  test('a muted owner type leaves the page and is counted in the note', async () => {
+    window.localStorage.setItem(NOTIFICATION_PREFERENCE_KEYS.owner_sync_failed, 'off');
+    await renderPage();
+    expect(screen.queryByTestId('notifications-filter-owner_sync_failed')).not.toBeInTheDocument();
+    expect(screen.getByTestId('notifications-muted-note')).toHaveTextContent(
+      'One notification type is switched off'
+    );
+  });
+});
+
 describe('the docs fixtures', () => {
   test('renders the inbox, then narrowed to unread mentions', async () => {
     const user = userEvent.setup();
@@ -458,5 +524,41 @@ describe('the docs fixtures', () => {
     );
     expect(screen.getByTestId('notification-n3')).toBeInTheDocument();
     writeA11yFixture('notifications-filtered', page().outerHTML);
+  });
+
+  test('renders owner findings routed to the reader\'s team', async () => {
+    const at = (day: number, hour: number) => new Date(2026, 8, day, hour, 0, 0).toISOString();
+    const team = { id: 't-1', slug: 'payments', name: 'Payments' };
+    inbox = [
+      ownerRow('o1', { created_at: at(15, 14) }),
+      ownerRow('o2', {
+        type: 'owner_finding',
+        payload: { entity_kind: 'catalog_item', entity_name: 'Payments API', team, summary: '3 new error-level lint findings', link: `/ade/dashboard/catalog/${PROJECT_ID}?tab=lint` },
+        created_at: at(15, 11),
+      }),
+      ownerRow('o3', {
+        type: 'owner_verification_drift',
+        payload: { entity_kind: 'project', entity_name: 'Refunds', team, summary: 'Nightly prod check found drift (2 operations)', link: `/ade/dashboard/versions?projectId=${PROJECT_ID}` },
+        created_at: at(15, 7),
+      }),
+      ownerRow('o4', {
+        type: 'owner_sync_failed',
+        project_id: null,
+        payload: { entity_kind: 'connector', entity_name: 'Prod Kong', team, summary: 'Prod Kong failed to sync (auth)', link: '/ade/dashboard/connectors/c-1?tab=runs' },
+        read_at: at(14, 18),
+        created_at: at(14, 17),
+      }),
+      ownerRow('o5', {
+        type: 'owner_gate_blocked',
+        payload: { entity_kind: 'project', entity_name: 'Orders Service', team, summary: 'Deploy gate failed for orders-service 1.9.0: lint grade below B', link: `/ade/dashboard/versions?projectId=${PROJECT_ID}` },
+        read_at: at(14, 12),
+        created_at: at(14, 10),
+      }),
+    ];
+    unread = { owner_breaking_change: 1, owner_finding: 1, owner_verification_drift: 1 };
+    await renderPage();
+    const page = () => (document.querySelector('.page') ?? document.body.firstElementChild) as HTMLElement;
+    expect(screen.getByTestId('notification-o1')).toBeInTheDocument();
+    writeA11yFixture('notifications-owner-finding', page().outerHTML);
   });
 });

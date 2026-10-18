@@ -206,6 +206,13 @@ describe('applying the preference', () => {
       'review_decision',
       'thread_resolved',
       'version_published',
+      'owner_finding',
+      'owner_breaking_change',
+      'owner_verification_drift',
+      'owner_gate_blocked',
+      'owner_trust_drift',
+      'owner_shadow_api',
+      'owner_sync_failed',
     ]);
   });
 });

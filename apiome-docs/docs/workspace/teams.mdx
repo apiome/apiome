@@ -91,6 +91,14 @@ owner is whoever may edit the entity: `projects:edit` for projects, catalog item
 `view`. Every change is in the access audit as `owner.assign`, `owner.confirm`, `owner.remove`,
 `owner.bulk_assign`, or — when an importer changes the suggestions — `owner.suggestions`.
 
+### What an owner team hears about
+
+Lint regressions, breaking changes on refresh, verification drift, failing deploy gates, MCP trust
+drift, shadow APIs and failed connector syncs reach the **confirmed** owner team: a notification for
+each member and one message to the team's `chat_url`. See
+[Notifications → Owner findings](./notifications.mdx#owner-findings). Without a confirmed owner the
+finding goes to the **Unowned findings** report instead.
+
 The catalog, project, MCP endpoint and consumer lists show each entity's owner as
 `owner: {team, status, source}`: the confirmed owner, or else its first suggestion with
 `status: "suggested"`. See the [Owners API reference](../reference/rest/owners.md).

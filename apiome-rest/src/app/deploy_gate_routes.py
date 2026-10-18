@@ -40,7 +40,12 @@ from .deploy_gate import (
     DeployGateReport,
     GateThresholdError,
 )
-from .deploy_gate_service import DeployGateError, build_project_gate, resolve_project
+from .deploy_gate_service import (
+    DeployGateError,
+    build_project_gate,
+    resolve_project,
+    route_blocked_gate,
+)
 from .deploy_gate_store import audit_detail, clear_policy, load_policy, save_policy
 from .permissions import Action, Resource, enforce_permission, has_permission
 
@@ -239,10 +244,10 @@ async def get_project_deploy_gate(
         HTTPException: 403 without ``versions:view``; 404/400/409 per
             :class:`~app.deploy_gate_service.DeployGateError`.
     """
-    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    actor_id = enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = _tenant_id(auth_data)
     try:
-        return build_project_gate(
+        report = build_project_gate(
             tenant_id=tenant_id,
             tenant_slug=tenant_slug,
             project_ref=project_ref,
@@ -256,6 +261,9 @@ async def get_project_deploy_gate(
             status_code=exc.status_code,
             detail={"code": exc.code, "message": str(exc)},
         ) from exc
+    # A failing gate reaches the project's owner team (CDG-2.3); throttled, never raises.
+    route_blocked_gate(report, tenant_id=tenant_id, actor_id=actor_id)
+    return report
 
 
 # -------------------------------------------------------------------------------------------
