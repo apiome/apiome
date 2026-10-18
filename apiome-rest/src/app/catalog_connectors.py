@@ -147,6 +147,15 @@ class ConnectorError(ValueError):
 # ---------------------------------------------------------------------------------------
 
 
+#: The ``scope`` field's description (create and update).
+SCOPE_DESCRIPTION = (
+    "Kind-specific coordinates; never secrets. `kong-konnect`: `{\"region\": \"us\"|\"eu\"|\"au\"|"
+    "\"me\"|\"in\"|\"sg\", \"controlPlanes\": [\"<control plane id>\", …]}` (no control planes = "
+    "every control plane the token can read). `kong-admin`: `{\"workspace\": \"…\", "
+    "\"environment\": \"…\"}`, both optional. Kinds with a source check their scope on every write."
+)
+
+
 class ConnectorCreate(BaseModel):
     """``POST /v1/tenants/{t}/connectors``."""
 
@@ -164,7 +173,7 @@ class ConnectorCreate(BaseModel):
     ]
     name: str = Field(min_length=1, max_length=NAME_MAX_CHARS)
     base_url: Optional[str] = Field(default=None, alias="baseUrl", max_length=BASE_URL_MAX_CHARS)
-    scope: Dict[str, Any] = Field(default_factory=dict)
+    scope: Dict[str, Any] = Field(default_factory=dict, description=SCOPE_DESCRIPTION)
     refresh_interval_seconds: Optional[int] = Field(default=None, alias="refreshIntervalSeconds", gt=0)
     conflict_policy: Literal["overwrite", "hold-for-review", "new-branch"] = Field(
         default=DEFAULT_CONFLICT_POLICY.value, alias="conflictPolicy"
@@ -179,7 +188,7 @@ class ConnectorUpdate(BaseModel):
 
     name: Optional[str] = Field(default=None, min_length=1, max_length=NAME_MAX_CHARS)
     base_url: Optional[str] = Field(default=None, alias="baseUrl", max_length=BASE_URL_MAX_CHARS)
-    scope: Optional[Dict[str, Any]] = None
+    scope: Optional[Dict[str, Any]] = Field(default=None, description=SCOPE_DESCRIPTION)
     refresh_interval_seconds: Optional[int] = Field(default=None, alias="refreshIntervalSeconds", gt=0)
     conflict_policy: Optional[Literal["overwrite", "hold-for-review", "new-branch"]] = Field(
         default=None, alias="conflictPolicy"
@@ -250,6 +259,15 @@ class ConnectorItemOut(BaseModel):
     project_id: Optional[str] = Field(default=None, serialization_alias="catalogItemId")
     first_seen_at: Optional[str] = Field(default=None, serialization_alias="firstSeenAt")
     last_seen_at: Optional[str] = Field(default=None, serialization_alias="lastSeenAt")
+    deployment: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Where and how the provider serves this API, as the latest sync saw it. Kong "
+            "connectors record `controlPlaneId`, `controlPlaneName`, `tags`, `enabled`, "
+            "`protocols`, `hosts`, `paths`, `updatedAt` and `suggestedOwners` (from "
+            "`owner:<team-slug>` tags; suggestions only, never confirmed owners)."
+        ),
+    )
 
 
 class ConnectorItemPage(BaseModel):

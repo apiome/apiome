@@ -28,7 +28,13 @@
         "operation_count": 10,
         "route_count": 4,
         "schemaless_operation_count": 10,
-        "unmapped_plugins": []
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "rate-limiting",
+            "scope": "global"
+          }
+        ]
       },
       "inferred_auth_schemes": [
         "apiKey"
@@ -456,7 +462,7 @@
     "confidence": 0.95,
     "format": "kong"
   },
-  "fingerprint": "sha256:8b8a1605eb55be16be113e4e8edad9772b575add070e1798067eba254fc694e8",
+  "fingerprint": "sha256:42870701822b6f703fd23e50c4a47b148b2b0e77feb50d095737b314402a5a53",
   "lint": {
     "findings": 11,
     "grade": "C",

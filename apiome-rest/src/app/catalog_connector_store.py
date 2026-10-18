@@ -69,7 +69,7 @@ _CONNECTOR_COLUMNS = """
 _ITEM_COLUMNS = """
     i.id, i.connector_id, i.remote_id, i.remote_name, i.environment, i.hosts, i.base_path,
     i.remote_revision, i.remote_updated_at, i.imported_revision, i.imported_remote_updated_at,
-    i.imported_sha256, i.status, i.project_id, i.first_seen_at, i.last_seen_at
+    i.imported_sha256, i.status, i.project_id, i.first_seen_at, i.last_seen_at, i.deployment
 """
 
 _RUN_COLUMNS = """
@@ -376,20 +376,22 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
     """Record that a sync saw ``candidate``: insert it, or refresh what the remote reports.
 
     A ``missing`` row that reappears returns to ``imported`` when it has a catalog item and to
-    ``discovered`` otherwise; ``ignored`` stays ignored.
+    ``discovered`` otherwise; ``ignored`` stays ignored. ``deployment`` (V282) is replaced with
+    what the latest sync saw.
     """
     return _first(
         db.execute_query(
             f"""
             INSERT INTO apiome.catalog_connector_items AS i
               (connector_id, remote_id, remote_name, environment, hosts, base_path,
-               remote_revision, remote_updated_at, status)
-            VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+               remote_revision, remote_updated_at, deployment, status)
+            VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
             ON CONFLICT (connector_id, remote_id) DO UPDATE
               SET remote_name = EXCLUDED.remote_name,
                   environment = EXCLUDED.environment,
                   hosts = EXCLUDED.hosts,
                   base_path = EXCLUDED.base_path,
+                  deployment = EXCLUDED.deployment,
                   remote_revision = EXCLUDED.remote_revision,
                   remote_updated_at = EXCLUDED.remote_updated_at,
                   last_seen_at = now(),
@@ -409,6 +411,7 @@ def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) ->
                 candidate.base_path,
                 candidate.revision,
                 candidate.updated_at,
+                json.dumps(dict(candidate.deployment or {}), sort_keys=True, default=str),
                 ITEM_DISCOVERED,
                 ITEM_IGNORED,
                 ITEM_IMPORTED,

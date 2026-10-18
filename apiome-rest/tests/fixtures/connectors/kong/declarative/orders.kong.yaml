@@ -1,0 +1,86 @@
+_format_version: '3.0'
+services:
+- name: orders
+  protocol: http
+  host: orders.internal
+  port: 8080
+  tags:
+  - owner:commerce
+  retries: 5
+  connect_timeout: 60000
+  read_timeout: 60000
+  write_timeout: 60000
+  enabled: true
+  routes:
+  - name: orders-create
+    protocols:
+    - http
+    - https
+    methods:
+    - POST
+    hosts:
+    - api.example.com
+    paths:
+    - /orders
+    strip_path: false
+    preserve_host: false
+    path_handling: v0
+    regex_priority: 0
+    https_redirect_status_code: 426
+    request_buffering: true
+    response_buffering: true
+    plugins:
+    - name: rate-limiting
+      enabled: true
+      config:
+        fault_tolerant: true
+        hide_client_headers: false
+        limit_by: consumer
+        minute: 60
+        policy: local
+        redis:
+          host: null
+          password: null
+          port: 6379
+  - name: orders-item
+    protocols:
+    - http
+    - https
+    methods:
+    - GET
+    - DELETE
+    hosts:
+    - api.example.com
+    paths:
+    - ~/orders/(?<order_id>\d+)$
+    strip_path: false
+    preserve_host: false
+    path_handling: v0
+    regex_priority: 5
+    https_redirect_status_code: 426
+    request_buffering: true
+    response_buffering: true
+  - name: orders-list
+    protocols:
+    - http
+    - https
+    methods:
+    - GET
+    hosts:
+    - api.example.com
+    paths:
+    - /orders
+    strip_path: false
+    preserve_host: false
+    path_handling: v0
+    regex_priority: 0
+    https_redirect_status_code: 426
+    request_buffering: true
+    response_buffering: true
+plugins:
+- name: correlation-id
+  enabled: true
+  config:
+    echo_downstream: false
+    generator: uuid#counter
+    header_name: Kong-Request-ID

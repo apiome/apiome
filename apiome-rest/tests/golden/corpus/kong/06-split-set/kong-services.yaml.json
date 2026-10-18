@@ -15,7 +15,13 @@
         "operation_count": 2,
         "route_count": 2,
         "schemaless_operation_count": 2,
-        "unmapped_plugins": []
+        "unmapped_plugins": [],
+        "unmodeled_plugins": [
+          {
+            "name": "correlation-id",
+            "scope": "global"
+          }
+        ]
       }
     },
     "format": "kong",
@@ -137,7 +143,7 @@
     "confidence": 0.95,
     "format": "kong"
   },
-  "fingerprint": "sha256:cb0d5f0969869bbf281dc9017ed2f4a6e703ace7d763ed72c041e294626784f5",
+  "fingerprint": "sha256:62abaae2d9db341af424788811406f5ac81cb51e147e80be6e1ed4b7f6d4375d",
   "lint": {
     "findings": 3,
     "grade": "A",

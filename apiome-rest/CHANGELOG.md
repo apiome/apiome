@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.359.0] - 2026-10-17
+
+### Added
+- **Kong connector: Konnect control planes and the Admin API (#5953, CDG-1.2)**: `kong-konnect` and `kong-admin`
+  connectors now sync (`syncableKinds` lists both).
+  - `kong-konnect` reads `GET /v2/control-planes/{cp}/core-entities/services|routes|plugins|consumers`, paged by
+    `size` and Kong's `offset` token, with a personal or system access token (`{"token": "kpat_…"}`). Scope
+    `{"region": "us"|"eu"|"au"|"me"|"in"|"sg", "controlPlanes": [...]}`; no control planes means every control plane
+    the token can read. `kong-admin` reads `GET /services|routes|plugins|consumers` on the connector's base URL, with
+    an optional `Kong-Admin-Token` and scope `{"workspace", "environment"}`. Both scopes are checked on create and
+    update (422 `connector-invalid`).
+  - One catalog item per Kong service. Its document is the declarative file the `kong` adapter already parses
+    (the service with its routes and plugins nested, plus global plugins), so a synced service imports exactly
+    like that file. Its revision is the document's digest, so changing one route imports one new revision.
+  - Inventory items gain `deployment` (V282): control plane id and name (or workspace), tags, enabled, protocols,
+    hosts, paths, `updatedAt` and `suggestedOwners` from `owner:<team-slug>` tags. `environment` is the control
+    plane's name.
+  - Runs record connector-level `summary.findings`: `route-without-service`, `owner-tag-invalid`,
+    `consumer-plugins-not-imported`, `consumers-not-imported`.
+  - A revoked token fails the run with `errorClass: "auth"`, `httpStatus: 401` and Kong's error message. New error
+    classes `invalid-configuration` (missing token or base URL) and `address-refused` (SSRF guard).
+- A connector sync that adds a revision to an existing catalog item writes a change report between the two
+  revisions (shared change report plus the CTG-1.1 classified diff under `classifiedChanges`), audited as
+  `catalog.connector.change_report.generated`.
+- The Kong import's coverage ledger lists every non-auth plugin as `partially-mapped`
+  (`gateway#plugin.<name>.<scope>`, from `extras.gateway.unmodeled_plugins`) instead of leaving it out.
+
+The OpenAPI version moves to 1.223.0.
+
 ## [1.358.0] - 2026-10-17
 
 ### Added

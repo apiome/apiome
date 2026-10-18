@@ -13,7 +13,8 @@
         "operation_count": 1,
         "route_count": 1,
         "schemaless_operation_count": 1,
-        "unmapped_plugins": []
+        "unmapped_plugins": [],
+        "unmodeled_plugins": []
       }
     },
     "format": "kong",
@@ -78,7 +79,7 @@
     "confidence": 0.95,
     "format": "kong"
   },
-  "fingerprint": "sha256:c1853645ecbe29f4393f748a926119830f073a6e273d5f2fb3bb1b8615c4e9a0",
+  "fingerprint": "sha256:6afe983718e85f5e2e4537a462363c62bb7d71e8b2ff85c0081445356a9eb986",
   "lint": {
     "findings": 2,
     "grade": "A",
