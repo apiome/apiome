@@ -35,15 +35,23 @@ credential value has the value redacted before it is stored.
 **Sources** are registered per kind with :func:`register_connector_source`, optionally with a
 scope validator the routes run on every write (:func:`validate_connector_scope`). The Kong
 sources (``kong-konnect``, ``kong-admin``; CDG-1.2) and the AWS API Gateway source
-(``aws-apigateway``; CDG-1.3) register themselves from :mod:`app.kong_connector_source` and
-:mod:`app.aws_apigateway_connector_source`, imported at the bottom of this module; the other
-gateway sources are CDG-1.4–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
+(``aws-apigateway``; CDG-1.3) and the Azure API Management source (``azure-apim``; CDG-1.4)
+register themselves from :mod:`app.kong_connector_source`, :mod:`app.aws_apigateway_connector_source`
+and :mod:`app.azure_apim_connector_source`, imported at the bottom of this module; the other
+gateway sources are CDG-1.5–1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
 is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
 
 **Findings.** A source may expose ``findings`` (a list of credential-free dicts with a ``code``)
 about the inventory as a whole rather than one API — the Kong source reports a route that
 belongs to no service this way. The run records them in its summary (``findings``, capped at
 :data:`FINDINGS_MAX`, with ``findingsTotal``).
+
+**Source hooks** (CDG-1.4). A source may decide that a candidate is recorded but not imported
+(``should_import(candidate) -> bool``; Azure API Management lists non-current API revisions this
+way, as ``discovered`` items, unless the connector opts in) and may finish an imported item with
+``after_import(db, candidate, project_id)`` (Azure API Management turns the API's products into tags
+on the catalog item). A failing ``after_import`` never fails the import: it is counted on the run
+summary as ``postImportFailed``.
 
 **Change reports.** When a sync adds a revision to a catalog item that already had one, the
 default importer writes a change report between the two revisions
@@ -446,6 +454,27 @@ def _note_unchanged(summary: Dict[str, Any], source: Any, candidate: RefreshCand
     )
 
 
+def _after_import(db: Any, source: Any, candidate: RefreshCandidate, project_id: str, summary: Dict[str, Any]) -> None:
+    """Run the source's ``after_import`` hook, when it has one (see the module docstring).
+
+    A hook failure is logged and counted (``summary.postImportFailed``), never raised: the import
+    itself already succeeded.
+    """
+    hook = getattr(source, "after_import", None)
+    if not callable(hook):
+        return
+    try:
+        hook(db, candidate, project_id)
+    except Exception as exc:  # noqa: BLE001 - a post-import step must not undo the import
+        _logger.warning(
+            "connector post-import step failed remote_id=%s project_id=%s error=%s",
+            candidate.remote_id,
+            project_id,
+            f"{type(exc).__name__}: {exc}"[:_MESSAGE_MAX_CHARS],
+        )
+        summary["postImportFailed"] = int(summary.get("postImportFailed", 0)) + 1
+
+
 def _audit(db: Any, connector: Mapping[str, Any], result: ConnectorSyncResult, actor_id: Optional[str]) -> None:
     """Write the run's ``repository.connector.sync`` workflow-audit row (no credentials)."""
     db.insert_workflow_audit(
@@ -559,6 +588,11 @@ def run_connector_sync(
             if row.get("status") == ITEM_IGNORED:
                 summary["ignored"] += 1
                 continue
+            should_import = getattr(source, "should_import", None)
+            if callable(should_import) and not should_import(candidate):
+                # Recorded (``discovered``) but not imported: the source says so (CDG-1.4).
+                summary["discovered"] = int(summary.get("discovered", 0)) + 1
+                continue
             decision = decide_refresh(source, candidate)
             if not decision.should_refresh:
                 summary["unchanged"] += 1
@@ -589,6 +623,7 @@ def run_connector_sync(
                 )
                 summary["unchanged"] += 1
                 settled += 1
+                _after_import(db, source, candidate, str(row["project_id"]), summary)
                 continue
             try:
                 project_id = importer(connector, candidate, document, row, actor_id)
@@ -606,6 +641,7 @@ def run_connector_sync(
             )
             summary["imported"] += 1
             settled += 1
+            _after_import(db, source, candidate, project_id, summary)
 
         if failures and settled == 0:
             error_class, http_status, message = failures[0]
@@ -737,4 +773,4 @@ def process_connector_refresh_sweep(db: Any) -> int:
 
 
 # Built-in sources register themselves on import (they subclass ConnectorRefreshSource above).
-from . import aws_apigateway_connector_source, kong_connector_source  # noqa: E402,F401
+from . import aws_apigateway_connector_source, azure_apim_connector_source, kong_connector_source  # noqa: E402,F401

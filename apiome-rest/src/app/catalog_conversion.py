@@ -26,10 +26,12 @@ status the endpoint maps straight through, so the caller never has to re-classif
 
 from __future__ import annotations
 
+import base64
 from typing import Any, Dict, Optional
 
 from .catalog_detail import resolve_source_payload
 from .conversion_job import ConversionError, ConversionSource
+from .fileset import IntakeFileset
 from .import_source import (
     DetectionInput,
     ImportSource,
@@ -94,6 +96,32 @@ def resolve_conversion_adapter(source_format: Optional[str], raw: str) -> Import
     )
 
 
+def _captured_fileset(item: Dict[str, Any], raw: str) -> Optional[IntakeFileset]:
+    """The fileset of an item imported from an archive, or ``None`` for a single document.
+
+    An archive intake (``format_metadata.intakeKind == "archive"``) captures the original archive
+    as base64 (``sourceEncoding``) with the root the import chose (``filesetRoot``). Unpacking it
+    with that root rebuilds exactly the fileset the import parsed (CDG-1.4: a connector item is an
+    archive of a definition and its policies).
+
+    Raises:
+        ImportSourceError: ``INPUT_ARCHIVE_INVALID`` when the captured archive cannot be unpacked.
+    """
+    fmd = item.get("format_metadata") if isinstance(item.get("format_metadata"), dict) else {}
+    if fmd.get("intakeKind") != "archive" or fmd.get("sourceEncoding") != "base64":
+        return None
+    from .archive_intake import ArchiveIntakeError, unpack_archive
+
+    root = fmd.get("filesetRoot") if isinstance(fmd.get("filesetRoot"), str) else None
+    try:
+        unpacked = unpack_archive(base64.standard_b64decode(raw), root_path=root)
+    except (ArchiveIntakeError, ValueError) as exc:
+        raise ImportSourceError(
+            f"The captured archive cannot be unpacked: {exc}", code="INPUT_ARCHIVE_INVALID"
+        ) from exc
+    return IntakeFileset.from_members(unpacked.members, root=unpacked.root_path)
+
+
 def build_conversion_source(
     item: Dict[str, Any],
     *,
@@ -140,7 +168,11 @@ def build_conversion_source(
 
     adapter = resolve_conversion_adapter(source_format, raw)
     try:
-        native_ast = adapter.parse(raw, source_label=source_label)
+        fileset = _captured_fileset(item, raw)
+        if fileset is not None:
+            native_ast = adapter.parse_fileset(fileset, source_label=fileset.root)
+        else:
+            native_ast = adapter.parse(raw, source_label=source_label)
         api = adapter.normalize(native_ast)
     except ImportSourceError as exc:
         raise ConversionError(

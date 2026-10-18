@@ -292,7 +292,20 @@ def _is_unquoted_literal(text: str, start: int, end: int, secret_type: str) -> b
     """
     if secret_type != "secret-assignment" or text[start:end].lower() not in _NON_SECRET_LITERALS:
         return False
-    return start == 0 or text[start - 1] not in "\"'"
+    return start == 0 or text[start - 1] not in "\"'" or _is_attribute_boolean(text, start, end)
+
+
+def _is_attribute_boolean(text: str, start: int, end: int) -> bool:
+    """True when a quoted ``true``/``false`` is an XML attribute value (``name="true"``).
+
+    ``<cors allow-credentials="true">`` (an Azure API Management policy) names a credential but
+    holds a boolean; XML quotes every attribute value, so the unquoted-literal rule cannot see it.
+    Only ``=``-assignments are exempt: a JSON ``"key": "true"`` is a string and is still redacted.
+    """
+    if text[start:end].lower() not in ("true", "false") or end >= len(text) or text[end] != text[start - 1]:
+        return False
+    before = text[: start - 1].rstrip()
+    return before.endswith("=")
 
 
 def _collect_secret_spans(

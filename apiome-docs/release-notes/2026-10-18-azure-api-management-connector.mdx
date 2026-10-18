@@ -1,0 +1,24 @@
+---
+slug: azure-api-management-connector
+title: Sync Azure API Management into the catalog
+description: An azure-apim connector keeps every APIM API, policies included, in the catalog.
+authors: [apiome]
+---
+
+[Azure API Management connectors](/bring-in/connectors#azure-api-management) now sync. Point one at
+an APIM instance and every API's current revision becomes a catalog item, with its OpenAPI
+definition **and** its policies.
+
+{/* truncate */}
+
+- **Read-only access.** Apiome signs in as an Entra ID application with the **API Management
+  Service Reader Role**, using a client secret or a federated credential.
+- **Policies included.** JWT validation, rate limits, backends, rewrites, CORS and IP filters are
+  recorded on each operation, exactly as an [imported APIM API](/bring-in/azure-api-management-import)
+  records them.
+- **Revisions and products.** Non-current revisions are listed as discovered (import them with
+  `includeNonCurrentRevisions`), and each API's products become tags on its catalog item.
+- **Clear failures.** An expired client secret fails the run with Entra ID's error code, such as
+  `AADSTS7000222`.
+- **Archive imports rebuild.** Catalog items imported from an archive now show their parsed model and
+  can be converted.

@@ -1,0 +1,8 @@
+{
+  "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/apis/orders-api/operations/get-order/policies/policy",
+  "name": "policy",
+  "properties": {
+    "format": "rawxml",
+    "value": "<policies><inbound><cache-lookup vary-by-developer=\"false\" vary-by-developer-groups=\"false\" /><base /><rewrite-uri template=\"/v2/orders/{orderId}\" /><set-header name=\"X-Tenant\" exists-action=\"override\"><value>{{tenant-header}}</value></set-header><example-unknown-policy mode=\"observe\" /></inbound><backend><base /></backend><outbound><base /><cache-store duration=\"60\" /></outbound><on-error><base /></on-error></policies>"
+  }
+}

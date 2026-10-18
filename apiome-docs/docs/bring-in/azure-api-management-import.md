@@ -106,3 +106,4 @@ listed in the coverage ledger as unresolved.
 
 - [Supported formats](./supported-formats.md): the shapes this importer reads.
 - [Import an AWS API Gateway export](./aws-api-gateway-import.md): the same idea for Amazon API Gateway.
+- [Connectors](./connectors.mdx#azure-api-management): sync every API of an APIM instance automatically.

@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "AuthorizationFailed",
+    "message": "The client '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d' with object id 'ffffffff-0000-0000-0000-000000000000' does not have authorization to perform action 'Microsoft.ApiManagement/service/apis/read' over scope '/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim' or the scope is invalid."
+  }
+}

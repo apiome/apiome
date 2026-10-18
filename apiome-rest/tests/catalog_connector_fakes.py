@@ -295,10 +295,32 @@ class FakeDb:
     def quota_total(self, metric: str) -> int:
         return sum(q["amount"] for q in self.quota if q["metric"] == metric)
 
+    # Project tags (CDG-1.4: a source's ``after_import`` hook tags the catalog item).
+    def get_tags_for_project(self, project_id):
+        return [dict(t) for t in getattr(self, "tags", []) if t["project_id"] == project_id]
+
+    def create_tag(self, project_id, name, color="default", description=None):
+        self.tags = getattr(self, "tags", [])
+        tag = {
+            "id": f"tag-{len(self.tags) + 1}",
+            "project_id": project_id,
+            "name": name,
+            "color": color,
+            "description": description,
+        }
+        self.tags.append(tag)
+        return tag
+
+    def delete_tag(self, tag_id):
+        before = len(getattr(self, "tags", []))
+        self.tags = [t for t in getattr(self, "tags", []) if t["id"] != tag_id]
+        return len(self.tags) < before
+
 
 def restore_builtin_sources() -> None:
     """Re-register the sources the app ships (tests that swap in a fake source call this after)."""
     from app import aws_apigateway_connector_source as aws
+    from app import azure_apim_connector_source as azure
     from app import kong_connector_source as kong
     from app.catalog_connector_sync import register_connector_source
 
@@ -310,5 +332,6 @@ def restore_builtin_sources() -> None:
         accepts_credentials=False,
     )
 
+    register_connector_source(azure.KIND, azure.AzureApimSource, scope_validator=azure.validate_azure_scope)
     register_connector_source(kong.KIND_KONNECT, kong.KongKonnectSource, scope_validator=kong.validate_konnect_scope)
     register_connector_source(kong.KIND_ADMIN, kong.KongAdminSource, scope_validator=kong.validate_admin_scope)

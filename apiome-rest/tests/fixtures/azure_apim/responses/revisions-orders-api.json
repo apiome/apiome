@@ -1,0 +1,21 @@
+{
+  "value": [
+    {
+      "apiId": "/apis/orders-api;rev=2",
+      "apiRevision": "2",
+      "isCurrent": true,
+      "isOnline": true,
+      "createdDateTime": "2026-09-01T10:00:00Z",
+      "updatedDateTime": "2026-10-10T09:00:00Z",
+      "description": "Adds quota"
+    },
+    {
+      "apiId": "/apis/orders-api;rev=1",
+      "apiRevision": "1",
+      "isCurrent": false,
+      "isOnline": true,
+      "createdDateTime": "2026-06-01T10:00:00Z",
+      "updatedDateTime": "2026-08-01T09:00:00Z"
+    }
+  ]
+}

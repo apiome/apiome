@@ -1,0 +1,22 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/products/starter",
+      "name": "starter",
+      "properties": {
+        "displayName": "Starter",
+        "state": "published",
+        "subscriptionRequired": true
+      }
+    },
+    {
+      "id": "/subscriptions/5f1c3a2e-8d4b-4e6f-9a7c-2b1d0e3f4a5b/resourceGroups/rg-apis/providers/Microsoft.ApiManagement/service/contoso-apim/products/unlimited",
+      "name": "unlimited",
+      "properties": {
+        "displayName": "Unlimited",
+        "state": "published",
+        "approvalRequired": true
+      }
+    }
+  ]
+}
