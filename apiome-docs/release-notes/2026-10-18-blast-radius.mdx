@@ -1,0 +1,22 @@
+---
+slug: blast-radius
+title: Know what a change breaks before you make it
+description: Ask who depends on an operation or schema, and what evidence a change invalidates.
+authors: [apiome]
+---
+
+The new [blast radius](/govern/dependency-graph#blast-radius) query answers "what consumes this
+operation, and what do we lose if it changes".
+
+{/* truncate */}
+
+- **Who is affected.** Direct consumers of the operation or schema, the same set the consumer
+  impact check reports, and everything that depends on them in turn, each with its owner team and
+  the path that reaches it.
+- **What evidence goes stale.** Verification runs, consumer contracts, deploy-gate results, SDK
+  targets, agent-toolset tools, mock fixture packs and scenarios, and consumers still on deprecated
+  versions.
+- **An empty answer is an answer.** When nothing is affected, the response says the evidence was
+  checked.
+- Run `apiome graph impact --project petstore --operation "GET /pets/{id}"`, or call
+  `POST /v1/graph/{tenant}/blast-radius`.

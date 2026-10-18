@@ -154,6 +154,74 @@ apiome graph declare project orders --depends-on payments --depends-on customers
 apiome graph dependencies project orders
 ```
 
+## Blast radius
+
+Before you change an operation or a schema, ask what the change affects: who depends on it, and
+which evidence you would have to produce again.
+
+```bash
+apiome graph impact --project petstore --operation "GET /pets/{id}"
+apiome graph impact --project petstore --schema Pet --format json
+```
+
+```http
+POST /v1/graph/{tenant}/blast-radius
+X-API-Key: <your-api-key>
+
+{
+  "entity": { "kind": "project", "id": "petstore" },
+  "pointers": ["/paths/~1pets~1{id}/get"],
+  "depth": 3
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `entity` | What changes: a `kind` and its `id` (a project or catalog item may be named by slug) |
+| `pointers` | JSON pointers into it that change, such as `/paths/~1pets~1{id}/get` or `/components/schemas/Pet`. Leave it out and the whole entity changes. |
+| `depth` | How many levels of dependents to follow, 1–5. Default 3. |
+| `provenance` | Which edges to follow: `declared`, `derived`, `runtime`. Default all three. |
+| `version` | Which version's evidence to check, by label or id. Default: the latest published version, or the latest revision when none is published. |
+
+On the command line, `--operation "METHOD /path"` and `--schema <name>` are turned into these
+pointers for you. Path parameter names don't have to match: `GET /pets/{id}` finds consumers that
+declared `GET /pets/{petId}`.
+
+### Who is affected
+
+- **Direct**: what depends on the changed entity itself. A consumer counts when its current contract
+  declares the operation or a field it reaches; this is the same set the consumer impact check
+  reports for the change. A declared dependency counts when it names the whole entity or an
+  overlapping pointer.
+- **Transitive**: what depends on something already affected, level by level, up to `depth`. For
+  example, a service that declared it depends on one of the direct consumers.
+
+Only dependency edges are followed: `consumes`, `depends_on` and `runtime_calls`. Each affected
+entity comes with its **path** (the edges from it back to the change), its provenance and its owner
+team. The answer covers at most 2,000 entities. `truncated: true` says there is more, beyond
+`depth` or that limit.
+
+### Invalidated evidence
+
+For a project or catalog item, the answer also lists the evidence the change makes out of date, in
+the chosen version:
+
+| Evidence | What is listed |
+| --- | --- |
+| `verification_runs` | The latest provider verification run on each target that exercised an affected operation |
+| `consumer_contracts` | The current contract revisions whose pointers overlap the change |
+| `deploy_gate_evaluations` | Deploy-gate and publish evaluations that cited one of those runs |
+| `sdk_regen_targets` | The project's active SDK regeneration subscriptions, when the change affects anything else |
+| `agent_toolset_tools` | The version's agent-toolset tools for an affected operation |
+| `mock_fixture_packs` | Mock fixture packs whose collection path contains an affected operation's path, and mock scenarios for an affected operation |
+| `sunset_consumers` | Consumers whose current contract is pinned to a deprecated or sunset version (see the [sunset timeline](../ship/sunset-timeline.mdx)) and overlaps the change |
+
+A schema pointer affects every operation of the version that reaches that schema through `$ref`s.
+`operations` in the answer lists the operations the change reaches (`null` means all of them).
+
+**Empty is an answer.** `evidence_checked: true` with empty lists means Apiome looked and nothing is
+affected. It does not mean the evidence wasn't checked.
+
 ## Reading edges
 
 ```http

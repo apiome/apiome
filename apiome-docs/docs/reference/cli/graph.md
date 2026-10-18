@@ -18,7 +18,7 @@ The dependency graph: declare and list what an API depends on.
 apiome graph [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`declare`](#graph-declare), [`dependencies`](#graph-dependencies).
+Subcommands: [`declare`](#graph-declare), [`dependencies`](#graph-dependencies), [`impact`](#graph-impact).
 
 ## apiome graph declare {#graph-declare}
 
@@ -65,4 +65,28 @@ apiome graph dependencies [OPTIONS] KIND ENTITY
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
+| `--format` | text | `table` |  | Output: table (default) or json (the API response). |
+
+## apiome graph impact {#graph-impact}
+
+Ask what a change affects (POST …/blast-radius).
+
+Lists the entities that depend on the change — direct consumers, then transitive dependents — with their owner team, and how many pieces of evidence it invalidates (verification runs, contracts, deploy-gate evaluations, SDK targets, agent tools, mock packs, consumers on deprecated versions). With no ``--operation``, ``--schema`` or ``--pointer`` the whole project changes. ``--format json`` prints the full answer, including every edge path.
+
+```text
+apiome graph impact [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project` | text |  | yes | The project or catalog item (slug or id) that changes. |
+| `--operation` | text (repeatable) |  |  | An operation that changes, as METHOD /path, e.g. "GET /pets/{id}" (repeatable). |
+| `--schema` | text (repeatable) |  |  | A component schema that changes, by name, e.g. Pet (repeatable). |
+| `--pointer` | text (repeatable) |  |  | A raw JSON pointer that changes (repeatable). |
+| `--kind` | text | `project` |  | The changing entity's kind (default project). |
+| `--version` | text |  |  | Version for the evidence; default latest published. |
+| `--depth` | integer range | `3` |  | Levels of dependents to walk (1-5). |
+| `--provenance` | text (repeatable) |  |  | declared, derived or runtime (repeatable; default all). |
 | `--format` | text | `table` |  | Output: table (default) or json (the API response). |

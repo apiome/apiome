@@ -5,6 +5,9 @@
 replaces its ``manual`` declarations. Both are gated on the entity kind's own ``view`` / ``edit``,
 like ownership.
 
+``…/blast-radius`` (CDG-3.3, #5968): ``POST`` answers "what does changing this affect" — direct
+and transitive dependents plus the evidence a change invalidates (:mod:`app.blast_radius`).
+
 ``…/edges`` (CDG-3.1, #5966):
 
 One entity's edges in ``apiome.catalog_edges``, outgoing (``direction=out``, the default) or incoming
@@ -24,6 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import validate_authentication
+from .blast_radius import BlastRadiusRequest, blast_radius
 from .catalog_graph import MAX_READ_LIMIT, GraphValidationError, list_edges
 from .consumer_contract_store import actor_from_auth
 from .database import db
@@ -287,3 +291,129 @@ async def put_entity_dependencies(
     except DependencyValidationError as exc:
         raise _dependency_error(exc) from exc
     return _dependencies_response(result)
+
+
+# ---------------------------------------------------------------------------------------------
+# Blast radius (CDG-3.3, #5968)
+# ---------------------------------------------------------------------------------------------
+
+
+class BlastRadiusEntity(BaseModel):
+    """The changed entity."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str = Field(description="`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.")
+    id: str = Field(description="Its id, or a project or catalog item's slug.")
+
+
+class BlastRadiusInput(BaseModel):
+    """One blast-radius question."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    entity: BlastRadiusEntity
+    pointers: List[str] = Field(
+        default_factory=list,
+        max_length=200,
+        description="JSON pointers that change (`/paths/~1pets~1{id}/get`, `/components/schemas/Pet`); "
+        "empty means the whole entity.",
+    )
+    depth: int = Field(default=3, ge=1, le=5, description="Levels of dependents to walk (1–5).")
+    provenance: List[str] = Field(
+        default_factory=lambda: ["declared", "derived", "runtime"], description="Edge provenances to follow."
+    )
+    version: Optional[str] = Field(
+        default=None, description="Version label or id for the evidence; default the latest published."
+    )
+
+
+class AffectedEntity(BaseModel):
+    """One entity a change reaches."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    id: str
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    depth: int = Field(description="1 for a direct dependent, 2+ for a transitive one.")
+    edge_kind: str = Field(description="The edge that reached it: `consumes`, `depends_on` or `runtime_calls`.")
+    provenance: str
+    pointers: List[str] = Field(default_factory=list, description="The changed pointers it depends on.")
+    path: List[Dict[str, Any]] = Field(default_factory=list, description="The edges from it back to the change.")
+    owner: Optional[Dict[str, Any]] = Field(default=None, description="Its owner team `{slug, name, status}`.")
+
+
+class InvalidatedEvidence(BaseModel):
+    """The evidence a change invalidates."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    verification_runs: List[Dict[str, Any]] = Field(default_factory=list)
+    consumer_contracts: List[Dict[str, Any]] = Field(default_factory=list)
+    deploy_gate_evaluations: List[Dict[str, Any]] = Field(default_factory=list)
+    sdk_regen_targets: List[Dict[str, Any]] = Field(default_factory=list)
+    agent_toolset_tools: List[Dict[str, Any]] = Field(default_factory=list)
+    mock_fixture_packs: List[Dict[str, Any]] = Field(default_factory=list)
+    sunset_consumers: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class BlastRadiusResponse(BaseModel):
+    """What a change affects."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    entity: Dict[str, Any]
+    version: Optional[Dict[str, Any]] = Field(default=None, description="The version the evidence is from.")
+    pointers: List[str]
+    operations: Optional[List[str]] = Field(
+        default=None, description="The operations the pointers reach; `null` means every operation."
+    )
+    depth: int
+    provenance: List[str]
+    direct: List[AffectedEntity]
+    transitive: List[AffectedEntity]
+    invalidated_evidence: InvalidatedEvidence
+    evidence_checked: bool = Field(description="True whenever evidence was looked for: empty means none.")
+    truncated: bool = Field(description="True when the depth or the 2,000-entity bound cut the walk short.")
+    node_count: int
+    warnings: List[str] = Field(default_factory=list)
+
+
+@router.post(
+    "/{tenant_slug}/blast-radius",
+    response_model=BlastRadiusResponse,
+    summary="Ask what a change affects",
+    description=(
+        "Who depends on `entity` (optionally narrowed to `pointers` into it), directly and "
+        "transitively, along inbound `consumes`, `depends_on` and `runtime_calls` edges — each with "
+        "its edge path, provenance and owner team — and the evidence a change invalidates: "
+        "verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, "
+        "agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated "
+        "or sunset version. The direct `consumes` layer is the consumer-impact intersection, so the "
+        "two agree. At most 5 levels and 2,000 entities; `truncated` is true past that. "
+        "`evidence_checked: true` with empty sections means nothing is affected.\n\n"
+        "Requires `projects:view`."
+    ),
+)
+async def post_blast_radius(
+    tenant_slug: str,
+    body: BlastRadiusInput,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> BlastRadiusResponse:
+    """Answer one blast-radius question."""
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW, target="graph")
+    _ = tenant_slug
+    request = BlastRadiusRequest(
+        kind=body.entity.kind,
+        entity=body.entity.id,
+        pointers=tuple(body.pointers),
+        depth=body.depth,
+        provenances=tuple(body.provenance),
+        version=body.version,
+    )
+    try:
+        return BlastRadiusResponse(**blast_radius(db, _auth_tenant(auth_data), request))
+    except DependencyValidationError as exc:
+        raise _dependency_error(exc) from exc

@@ -1,6 +1,6 @@
 ---
 title: "Graph"
-description: "REST endpoints tagged graph: 3 operations."
+description: "REST endpoints tagged graph: 4 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,40 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.238.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.239.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `graph` · 3 operations
+Tag: `graph` · 4 operations
+
+## `POST /v1/graph/{tenant_slug}/blast-radius` {#post-blast-radius-v1-graph-tenant-slug-blast-radius-post}
+
+**Ask what a change affects**
+
+Who depends on `entity` (optionally narrowed to `pointers` into it), directly and transitively, along inbound `consumes`, `depends_on` and `runtime_calls` edges — each with its edge path, provenance and owner team — and the evidence a change invalidates: verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated or sunset version. The direct `consumes` layer is the consumer-impact intersection, so the two agree. At most 5 levels and 2,000 entities; `truncated` is true past that. `evidence_checked: true` with empty sections means nothing is affected.
+
+Requires `projects:view`.
+
+Operation id: `post_blast_radius_v1_graph__tenant_slug__blast_radius_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for ask what a change affects.
+
+- `application/json` — [`BlastRadiusInput`](#schema-blastradiusinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for ask what a change affects. | `application/json` [`BlastRadiusResponse`](#schema-blastradiusresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/graph/{tenant_slug}/entities/{kind}/{entity_id}/edges` {#get-entity-edges-v1-graph-tenant-slug-entities-kind-entity-id-edges-get}
 
@@ -106,6 +137,38 @@ Request body for replace an entity's manual dependencies.
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
+
+### `BlastRadiusInput` {#schema-blastradiusinput}
+
+One blast-radius question.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `entity` | `BlastRadiusEntity` | yes | Entity. |
+| `pointers` | array of string | no | JSON pointers that change (`/paths/~1pets~1{id}/get`, `/components/schemas/Pet`); empty means the whole entity. |
+| `depth` | integer | no | Levels of dependents to walk (1–5). |
+| `provenance` | array of string | no | Edge provenances to follow. |
+| `version` | string or null | no | Version label or id for the evidence; default the latest published. |
+
+### `BlastRadiusResponse` {#schema-blastradiusresponse}
+
+What a change affects.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `entity` | object | yes | Entity. |
+| `version` | object or null | no | The version the evidence is from. |
+| `pointers` | array of string | yes | Pointers. |
+| `operations` | array of string or null | no | The operations the pointers reach; `null` means every operation. |
+| `depth` | integer | yes | Depth. |
+| `provenance` | array of string | yes | Provenance. |
+| `direct` | array of `AffectedEntity` | yes | Direct. |
+| `transitive` | array of `AffectedEntity` | yes | Transitive. |
+| `invalidated_evidence` | `InvalidatedEvidence` | yes | Invalidated Evidence. |
+| `evidence_checked` | boolean | yes | True whenever evidence was looked for: empty means none. |
+| `truncated` | boolean | yes | True when the depth or the 2,000-entity bound cut the walk short. |
+| `node_count` | integer | yes | Number of node. |
+| `warnings` | array of string | no | Warnings. |
 
 ### `DependenciesInput` {#schema-dependenciesinput}
 

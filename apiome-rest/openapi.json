@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.238.0",
+    "version": "1.239.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -22904,6 +22904,105 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for replaceanentitysmanualdependenciesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/graph/{tenant_slug}/blast-radius": {
+      "post": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Ask what a change affects",
+        "description": "Who depends on `entity` (optionally narrowed to `pointers` into it), directly and transitively, along inbound `consumes`, `depends_on` and `runtime_calls` edges \u2014 each with its edge path, provenance and owner team \u2014 and the evidence a change invalidates: verification runs, consumer contracts, deploy-gate evaluations, SDK regeneration targets, agent-toolset tools, mock fixture packs and scenarios, and consumers pinned to a deprecated or sunset version. The direct `consumes` layer is the consumer-impact intersection, so the two agree. At most 5 levels and 2,000 entities; `truncated` is true past that. `evidence_checked: true` with empty sections means nothing is affected.\n\nRequires `projects:view`.",
+        "operationId": "post_blast_radius_v1_graph__tenant_slug__blast_radius_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Askwhatachangeaffectsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Askwhatachangeaffectsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Askwhatachangeaffects Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Askwhatachangeaffects Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlastRadiusInput",
+                "description": "Request body for askwhatachangeaffectsrequest."
+              }
+            }
+          },
+          "description": "Request body for ask what a change affects."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for ask what a change affects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlastRadiusResponse",
+                  "description": "Response payload for askwhatachangeaffectsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for askwhatachangeaffectsresponse422."
                 }
               }
             }
@@ -92459,6 +92558,113 @@
         "title": "AddVersionResponse",
         "description": "The outcome of adding a version."
       },
+      "AffectedEntity": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Affected Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Affected Entity schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Affected Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Affected Entity schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-safe identifier."
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth",
+            "description": "1 for a direct dependent, 2+ for a transitive one.",
+            "example": 1
+          },
+          "edge_kind": {
+            "type": "string",
+            "title": "Edge Kind",
+            "description": "The edge that reached it: `consumes`, `depends_on` or `runtime_calls`.",
+            "example": "example"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance",
+            "description": "Provenance.",
+            "example": "example"
+          },
+          "pointers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pointers",
+            "description": "The changed pointers it depends on.",
+            "maxItems": 1000
+          },
+          "path": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Path",
+            "description": "The edges from it back to the change.",
+            "maxItems": 1000
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Affected Entity schema."
+              },
+              {
+                "type": "null",
+                "description": "Affected Entity schema."
+              }
+            ],
+            "title": "Owner",
+            "description": "Its owner team `{slug, name, status}`."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "depth",
+          "edge_kind",
+          "provenance"
+        ],
+        "title": "AffectedEntity",
+        "description": "One entity a change reaches."
+      },
       "AgentKeyAllowlistUpdate": {
         "properties": {
           "toolAllowlist": {
@@ -95243,6 +95449,217 @@
         ],
         "title": "BindingListResponse",
         "description": "A page of a project's bindings."
+      },
+      "BlastRadiusEntity": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.",
+            "example": "example"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Its id, or a project or catalog item's slug.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "id"
+        ],
+        "title": "BlastRadiusEntity",
+        "description": "The changed entity."
+      },
+      "BlastRadiusInput": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/BlastRadiusEntity",
+            "description": "Entity."
+          },
+          "pointers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Pointers",
+            "description": "JSON pointers that change (`/paths/~1pets~1{id}/get`, `/components/schemas/Pet`); empty means the whole entity."
+          },
+          "depth": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Depth",
+            "description": "Levels of dependents to walk (1\u20135).",
+            "default": 3,
+            "example": 1
+          },
+          "provenance": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Provenance",
+            "description": "Edge provenances to follow.",
+            "maxItems": 1000
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Blast Radius Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Blast Radius Input schema."
+              }
+            ],
+            "title": "Version",
+            "description": "Version label or id for the evidence; default the latest published."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "entity"
+        ],
+        "title": "BlastRadiusInput",
+        "description": "One blast-radius question."
+      },
+      "BlastRadiusResponse": {
+        "properties": {
+          "entity": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Entity",
+            "description": "Entity."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Response payload for blast radius."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for blast radius."
+              }
+            ],
+            "title": "Version",
+            "description": "The version the evidence is from."
+          },
+          "pointers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pointers",
+            "description": "Pointers.",
+            "maxItems": 1000
+          },
+          "operations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "description": "Response payload for blast radius."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for blast radius."
+              }
+            ],
+            "title": "Operations",
+            "description": "The operations the pointers reach; `null` means every operation."
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth",
+            "description": "Depth.",
+            "example": 1
+          },
+          "provenance": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Provenance",
+            "description": "Provenance.",
+            "maxItems": 1000
+          },
+          "direct": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedEntity"
+            },
+            "type": "array",
+            "title": "Direct",
+            "description": "Direct.",
+            "maxItems": 1000
+          },
+          "transitive": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedEntity"
+            },
+            "type": "array",
+            "title": "Transitive",
+            "description": "Transitive.",
+            "maxItems": 1000
+          },
+          "invalidated_evidence": {
+            "$ref": "#/components/schemas/InvalidatedEvidence",
+            "description": "Invalidated Evidence."
+          },
+          "evidence_checked": {
+            "type": "boolean",
+            "title": "Evidence Checked",
+            "description": "True whenever evidence was looked for: empty means none.",
+            "example": false
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when the depth or the 2,000-entity bound cut the walk short.",
+            "example": false
+          },
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count",
+            "description": "Number of node.",
+            "example": 1
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Warnings.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "entity",
+          "pointers",
+          "depth",
+          "provenance",
+          "direct",
+          "transitive",
+          "invalidated_evidence",
+          "evidence_checked",
+          "truncated",
+          "node_count"
+        ],
+        "title": "BlastRadiusResponse",
+        "description": "What a change affects."
       },
       "BotPresetBody": {
         "properties": {
@@ -101457,7 +101874,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "completed_at": {
             "anyOf": [
@@ -103381,7 +103798,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "comment_count": {
             "type": "integer",
@@ -103609,7 +104026,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "comment_count": {
             "type": "integer",
@@ -104140,14 +104557,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -107286,7 +107703,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "d73c6f52-269f-4024-aa6d-6690e82de57c"
+            "example": "f5fef455-78e6-4068-9931-7d3e22738009"
           },
           "method": {
             "type": "string",
@@ -109813,7 +110230,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -111709,7 +112126,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "browse_url": {
             "anyOf": [
@@ -122200,6 +122617,84 @@
         ],
         "title": "InstanceFinding",
         "description": "One structured way an instance failed its schema.\n\nAttributes:\n    pointer: RFC 6901 JSON Pointer to the offending value **in the instance**\n        (``\"\"`` for the document root).\n    keyword: The schema keyword that failed (``required``, ``type``, ``pattern``, \u2026).\n    schema_pointer: JSON Pointer to the failing keyword **in the schema**, so a UI can\n        link the finding to the constraint that produced it.\n    expected: What the schema demanded \u2014 the keyword's value, rendered (and summarized\n        when large, see :attr:`truncated`).\n    actual: What the instance held at :attr:`pointer`, rendered the same way.\n    message: Human-readable description of the failure.\n    line: 1-based line number, when the validator reports one (XML instances only).\n    column: 1-based column number, when the validator reports one (XML instances only).\n    truncated: ``True`` when :attr:`expected` or :attr:`actual` was summarized rather than\n        reproduced verbatim, so a caller never mistakes a summary for the real value."
+      },
+      "InvalidatedEvidence": {
+        "properties": {
+          "verification_runs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Verification Runs",
+            "description": "Verification Runs.",
+            "maxItems": 1000
+          },
+          "consumer_contracts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Consumer Contracts",
+            "description": "Consumer Contracts.",
+            "maxItems": 1000
+          },
+          "deploy_gate_evaluations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Deploy Gate Evaluations",
+            "description": "Deploy Gate Evaluations.",
+            "maxItems": 1000
+          },
+          "sdk_regen_targets": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sdk Regen Targets",
+            "description": "Sdk Regen Targets.",
+            "maxItems": 1000
+          },
+          "agent_toolset_tools": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Agent Toolset Tools",
+            "description": "Agent Toolset Tools.",
+            "maxItems": 1000
+          },
+          "mock_fixture_packs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Mock Fixture Packs",
+            "description": "Mock Fixture Packs.",
+            "maxItems": 1000
+          },
+          "sunset_consumers": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sunset Consumers",
+            "description": "Sunset Consumers.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "InvalidatedEvidence",
+        "description": "The evidence a change invalidates."
       },
       "InvocationBody": {
         "properties": {
@@ -153002,7 +153497,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           }
         },
         "additionalProperties": false,
@@ -165255,7 +165750,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "detected_by": {
             "anyOf": [
@@ -173269,14 +173764,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-10-18T22:48:35Z"
+            "example": "2026-10-18T23:27:15Z"
           },
           "outcome": {
             "anyOf": [

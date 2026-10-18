@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.375.0] - 2026-10-18
+
+### Added
+- **Blast radius (#5968, CDG-3.3)**: `POST /v1/graph/{tenant}/blast-radius` (`projects:view`) with `{entity: {kind, id},
+  pointers?, depth? (1–5, default 3), provenance?, version?}` returns the `direct` and `transitive` dependents of the change
+  along inbound `consumes` / `depends_on` / `runtime_calls` edges (each with its edge `path`, provenance and owner team) and
+  `invalidated_evidence`: the latest verification run per target exercising an affected operation, overlapping consumer
+  contracts, deploy-gate evaluations citing those runs, SDK regeneration targets, agent-toolset tools, mock fixture packs
+  and scenarios, and consumers pinned to deprecated or sunset versions. The direct `consumes` layer reuses the CTG-4.2
+  pointer intersection with a segment-wise filter, so it equals the consumer-impact verdict set. Operations match by
+  template shape (`{id}` ≡ `{petId}`); schema pointers reach operations through `$ref`s. At most 2,000 entities;
+  `truncated` past that or past `depth`; `evidence_checked: true` always.
+
+The OpenAPI version moves to 1.239.0.
+
 ## [1.374.0] - 2026-10-18
 
 ### Added

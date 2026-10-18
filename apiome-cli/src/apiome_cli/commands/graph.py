@@ -1,4 +1,8 @@
-"""The catalog dependency graph from the command line — CDG-3.2 (#5967).
+"""The catalog dependency graph from the command line — CDG-3.2 (#5967), CDG-3.3 (#5968).
+
+``apiome graph impact --project <slug> --operation "GET /pets/{id}"`` asks what a change affects:
+the consumers and dependents it reaches, directly and transitively, and the evidence it
+invalidates (``POST …/blast-radius``).
 
 ``apiome graph declare <kind> <entity> --depends-on <slug>`` sets what an entity declares it
 depends on (its ``manual`` declarations, ``PUT …/dependencies``), and ``apiome graph dependencies``
@@ -19,7 +23,14 @@ import typer
 from apiome_cli.client import api_paths
 from apiome_cli.client.connectors import refusal
 from apiome_cli.client.errors import http_exit_code
-from apiome_cli.client.graph import dependency_rows, parse_depends_on
+from apiome_cli.client.graph import (
+    dependency_rows,
+    evidence_rows,
+    impact_rows,
+    operation_pointer,
+    parse_depends_on,
+    schema_pointer,
+)
 from apiome_cli.client.teams import ENTITY_KINDS, validate_kind
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -157,3 +168,72 @@ def dependencies(
     client, tenant = tenant_scoped_client(ctx)
     body = _expect(client.get_raw(api_paths.graph_dependencies(tenant, normalised, entity))).json()
     _emit(body, fmt)
+
+
+_IMPACT_COLUMNS = (
+    ("Depth", "depth", None),
+    ("Kind", "kind", None),
+    ("Entity", "name", None),
+    ("Edge", "edge", None),
+    ("Provenance", "provenance", None),
+    ("Owner", "owner", None),
+)
+
+_EVIDENCE_COLUMNS = (("Evidence", "evidence", None), ("Count", "count", None))
+
+
+@app.command("impact")
+def impact(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", help="The project or catalog item (slug or id) that changes."),
+    operation: list[str] | None = typer.Option(
+        None, "--operation", help='An operation that changes, as METHOD /path, e.g. "GET /pets/{id}" (repeatable).'
+    ),
+    schema: list[str] | None = typer.Option(
+        None, "--schema", help="A component schema that changes, by name, e.g. Pet (repeatable)."
+    ),
+    pointer: list[str] | None = typer.Option(None, "--pointer", help="A raw JSON pointer that changes (repeatable)."),
+    kind: str = typer.Option("project", "--kind", help="The changing entity's kind (default project)."),
+    version: str | None = typer.Option(None, "--version", help="Version for the evidence; default latest published."),
+    depth: int = typer.Option(3, "--depth", min=1, max=5, help="Levels of dependents to walk (1-5)."),
+    provenance: list[str] | None = typer.Option(
+        None, "--provenance", help="declared, derived or runtime (repeatable; default all)."
+    ),
+    output_format: str = _format_option(),
+) -> None:
+    """Ask what a change affects (POST …/blast-radius).
+
+    Lists the entities that depend on the change — direct consumers, then transitive dependents —
+    with their owner team, and how many pieces of evidence it invalidates (verification runs,
+    contracts, deploy-gate evaluations, SDK targets, agent tools, mock packs, consumers on
+    deprecated versions). With no ``--operation``, ``--schema`` or ``--pointer`` the whole project
+    changes. ``--format json`` prints the full answer, including every edge path.
+    """
+    fmt = _format(ctx, output_format)
+    normalised = _kind(kind)
+    try:
+        pointers = [operation_pointer(op) for op in operation or []]
+        pointers += [schema_pointer(name) for name in schema or []]
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--operation / --schema") from exc
+    pointers += [p.strip() for p in pointer or [] if p.strip()]
+    body: dict[str, Any] = {"entity": {"kind": normalised, "id": project}, "pointers": pointers, "depth": depth}
+    if provenance:
+        body["provenance"] = list(provenance)
+    if version:
+        body["version"] = version
+    client, tenant = tenant_scoped_client(ctx)
+    answer = _expect(client.post_raw(api_paths.graph_blast_radius(tenant), json=body)).json()
+    if fmt == "json":
+        emit_json(answer)
+        return
+    rows = impact_rows(answer)
+    if rows:
+        emit_list_table(rows, _IMPACT_COLUMNS, empty_message="Nothing depends on this change.")
+    else:
+        typer.echo("Nothing depends on this change.")
+    emit_list_table(evidence_rows(answer), _EVIDENCE_COLUMNS, empty_message="No evidence.")
+    if answer.get("truncated"):
+        typer.echo("The answer was truncated: raise --depth (at most 5) or narrow the change.", err=True)
+    for warning in answer.get("warnings") or []:
+        typer.echo(f"Warning: {warning}", err=True)

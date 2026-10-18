@@ -9,7 +9,14 @@ from pytest_httpx import HTTPXMock
 from typer.testing import CliRunner
 
 from apiome_cli.client import api_paths
-from apiome_cli.client.graph import dependency_rows, parse_depends_on
+from apiome_cli.client.graph import (
+    dependency_rows,
+    evidence_rows,
+    impact_rows,
+    operation_pointer,
+    parse_depends_on,
+    schema_pointer,
+)
 from apiome_cli.exit_codes import EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.main import app
 from helpers import strip_ansi
@@ -151,3 +158,102 @@ def test_a_refusal_exits_with_the_http_code(httpx_mock: HTTPXMock) -> None:
     result = runner.invoke(app, ["graph", "dependencies", "project", "orders"])
     assert result.exit_code == 2
     assert "no project 'orders' in this tenant" in strip_ansi(result.output)
+
+
+# ---------------------------------------------------------------------------------------------
+# impact (CDG-3.3 / #5968)
+# ---------------------------------------------------------------------------------------------
+
+_BLAST = "http://localhost:8000/v1/graph/acme-corp/blast-radius"
+
+
+def _answer(**extra: object) -> dict:
+    web = {"kind": "consumer", "id": "c1", "name": "Web", "slug": "web", "depth": 1, "edge_kind": "consumes",
+           "provenance": "derived", "pointers": [], "path": [], "owner": {"slug": "payments", "name": "Payments"}}
+    reporting = {**web, "id": "c2", "slug": "reporting", "depth": 2, "edge_kind": "depends_on",
+                 "provenance": "declared", "owner": None}
+    evidence = {key: [] for key in ("verification_runs", "consumer_contracts", "deploy_gate_evaluations",
+                                    "sdk_regen_targets", "agent_toolset_tools", "mock_fixture_packs",
+                                    "sunset_consumers")}
+    evidence["verification_runs"] = [{"run_id": "r1"}, {"run_id": "r2"}]
+    return {"direct": [web], "transitive": [reporting], "invalidated_evidence": evidence, "truncated": False,
+            "warnings": [], **extra}
+
+
+@pytest.mark.parametrize(
+    "operation,pointer",
+    [("GET /pets/{id}", "/paths/~1pets~1{id}/get"), ("post /a/b", "/paths/~1a~1b/post")],
+)
+def test_operation_pointer(operation: str, pointer: str) -> None:
+    assert operation_pointer(operation) == pointer
+
+
+@pytest.mark.parametrize("operation", ["", "GET", "FETCH /pets", "GET pets"])
+def test_operation_pointer_refuses(operation: str) -> None:
+    with pytest.raises(ValueError):
+        operation_pointer(operation)
+
+
+def test_schema_pointer() -> None:
+    assert schema_pointer("Pet") == "/components/schemas/Pet"
+    assert schema_pointer("a/b") == "/components/schemas/a~1b"
+    with pytest.raises(ValueError):
+        schema_pointer(" ")
+
+
+def test_impact_and_evidence_rows() -> None:
+    rows = impact_rows(_answer())
+    assert [(r["depth"], r["name"], r["owner"]) for r in rows] == [(1, "web", "payments"), (2, "reporting", "")]
+    counts = {r["evidence"]: r["count"] for r in evidence_rows(_answer())}
+    assert counts["Verification runs"] == 2 and counts["Agent toolset tools"] == 0
+
+
+def test_impact_posts_the_question(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(method="POST", url=_BLAST, json=_answer(truncated=True, warnings=["no document"]))
+    result = runner.invoke(
+        app,
+        ["graph", "impact", "--project", "petstore", "--operation", "GET /pets/{id}", "--schema", "Pet",
+         "--depth", "2", "--provenance", "declared", "--version", "1.0.0"],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    sent = json.loads(httpx_mock.get_requests()[0].content)
+    assert sent == {
+        "entity": {"kind": "project", "id": "petstore"},
+        "pointers": ["/paths/~1pets~1{id}/get", "/components/schemas/Pet"],
+        "depth": 2, "provenance": ["declared"], "version": "1.0.0",
+    }
+    output = strip_ansi(result.output)
+    assert "reporting" in output and "Verification runs" in output
+    assert "truncated" in output and "Warning: no document" in output
+
+
+def test_impact_json_prints_the_answer(httpx_mock: HTTPXMock) -> None:
+    httpx_mock.add_response(method="POST", url=_BLAST, json=_answer())
+    result = runner.invoke(app, ["graph", "impact", "--project", "petstore", "--format", "json"])
+    assert result.exit_code == EXIT_SUCCESS
+    assert json.loads(result.stdout)["direct"][0]["slug"] == "web"
+    assert json.loads(httpx_mock.get_requests()[0].content)["pointers"] == []
+
+
+def test_impact_with_nothing_affected(httpx_mock: HTTPXMock) -> None:
+    empty = _answer(direct=[], transitive=[])
+    empty["invalidated_evidence"]["verification_runs"] = []
+    httpx_mock.add_response(method="POST", url=_BLAST, json=empty)
+    result = runner.invoke(app, ["graph", "impact", "--project", "petstore", "--operation", "GET /nobody"])
+    assert result.exit_code == EXIT_SUCCESS
+    assert "Nothing depends on this change." in strip_ansi(result.output)
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["graph", "impact", "--project", "p", "--operation", "pets"],
+        ["graph", "impact", "--project", "p", "--depth", "6"],
+        ["graph", "impact", "--project", "p", "--kind", "galaxy"],
+        ["graph", "impact", "--operation", "GET /pets"],
+    ],
+)
+def test_impact_usage_errors_make_no_call(httpx_mock: HTTPXMock, args: list) -> None:
+    result = runner.invoke(app, args)
+    assert result.exit_code == EXIT_USAGE
+    assert httpx_mock.get_requests() == []
